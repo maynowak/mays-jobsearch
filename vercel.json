@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/**/*.mjs": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/digest",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}
