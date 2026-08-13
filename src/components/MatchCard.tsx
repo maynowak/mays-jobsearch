@@ -51,14 +51,16 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
           </p>
         )}
 
-        <a
-          className="apply-link"
-          href={m.url || "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {t("match.viewPosting")}
-        </a>
+        {m.url && (
+          <a
+            className="apply-link"
+            href={m.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("match.viewPosting")}
+          </a>
+        )}
 
         <button
           type="button"

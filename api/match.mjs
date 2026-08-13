@@ -133,12 +133,15 @@ export default async function handler(req, res) {
     }
 
     const bySlug = new Map(jobs.map((job) => [job.slug, job]));
-    const matches = parsed.slice(0, 5).map((m) => ({
-      score: m.score,
-      why: m.why,
-      prepare: m.prepare,
-      job: bySlug.get(m.slug) || null,
-    }));
+    const matches = parsed
+      .map((m) => ({
+        score: m.score,
+        why: m.why,
+        prepare: m.prepare,
+        job: bySlug.get(m.slug) || null,
+      }))
+      .filter((m) => m.job)
+      .slice(0, 5);
 
     return res.status(200).json({ matches, meta: { evaluated: jobs.length } });
   } catch (err) {
