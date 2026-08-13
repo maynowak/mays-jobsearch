@@ -13,6 +13,13 @@
 
 ## AI Collaborators
 
+**GPT (OpenAI)**
+
+- architecture and UX consultation
+- requirement refinement
+- technical review of changes (git diff / code review)
+- process guidance before implementation and deployment
+
 **DeepSeek V4 Flash Free (opencode)**
 
 - full application implementation
