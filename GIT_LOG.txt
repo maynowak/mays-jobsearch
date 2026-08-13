@@ -1,0 +1,61 @@
+commit 542d073dcecdef6f657325fcc428e82b830e21e2
+Author: maynowak <nowakbewerbung@gmail.com>
+Date:   2026-08-13 19:57:23 +0200
+
+    fix: always start the page at the very top on open
+
+---
+commit 2b4aebd8283bdda529515a51d5ff7decd1949e30
+Author: maynowak <nowakbewerbung@gmail.com>
+Date:   2026-08-13 19:55:03 +0200
+
+    refactor: slow the nav search scroll-to-top animation
+
+---
+commit 8cca0070cdeabea8317e3dd0600a79476d9e2eda
+Author: maynowak <nowakbewerbung@gmail.com>
+Date:   2026-08-13 19:53:10 +0200
+
+    refactor: merge Search and Matches nav into smooth-scroll-to-top Search item
+
+---
+commit f805462968bfe206f3e2e07e59709b1f79d3ff1b
+Author: maynowak <nowakbewerbung@gmail.com>
+Date:   2026-08-13 19:36:02 +0200
+
+    feat: bilingual EN/DE UI, DBE-style navbar, responsive split search
+
+- add i18n provider with EN/DE dictionaries and language toggle in navbar
+- add sticky navbar with mobile slide-in menu mirroring Digital-Book-Experience
+- split into two-column layout only when matches exist; show search
+  status directly under the search button
+- fix responsive search form: stack fields inside the narrow 340px split
+  sidebar so inputs no longer overflow the card
+- cover letter and document lang follow the selected UI language
+---
+commit 78fa02afbda9cb0a30454e173e39546a8053e025
+Author: maynowak <nowakbewerbung@gmail.com>
+Date:   2026-08-13 18:38:07 +0200
+
+    feat: rebuild frontend with React + TypeScript + Vite
+
+- port app.js/index.html/styles.css to src/ React components
+- add typed api client (src/api.ts) and shared types (src/types.ts)
+- keep serverless functions api/** unchanged
+- fix /api/match prompt bug introduced during chat() refactor
+- update docs (AGENTS, ARCHITECTURE, BUILD, CHANGELOG, DESIGN_SYSTEM, PROJECT_RESOURCES)
+---
+commit ed70c265bc662e712b0b4793eba0ce91f0b727fe
+Author: maynowak <nowakbewerbung@gmail.com>
+Date:   2026-08-13 18:27:30 +0200
+
+    feat: baseline - vanilla JS version of May's Job Matcher
+
+---
+commit f74d4f951ee5cbf3f632c53b76a64d1000ec125a
+Author: maynowak <nowakbewerbung@gmail.com>
+Date:   2026-08-13 17:11:35 +0200
+
+    first commit
+
+---
