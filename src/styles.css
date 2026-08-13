@@ -227,23 +227,51 @@ body {
 }
 
 .hero {
-  background: linear-gradient(135deg, var(--brand) 0%, #7c3aed 55%, var(--accent) 130%);
+  position: relative;
   color: #fff;
-  padding: 56px 20px 40px;
-  text-align: center;
+  padding: 64px 20px 48px;
+  text-align: left;
+  background:
+    linear-gradient(
+      to right,
+      rgba(24, 26, 58, 0.82) 0%,
+      rgba(49, 46, 129, 0.55) 45%,
+      rgba(76, 29, 149, 0.15) 72%,
+      rgba(34, 211, 238, 0) 100%
+    ),
+    url("assets/images/job-matcher-hero.png") center / cover no-repeat;
+}
+
+.hero-inner {
+  max-width: 640px;
 }
 
 .hero h1 {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3rem);
   letter-spacing: -0.03em;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
 }
 
 .tagline {
-  margin: 12px auto 0;
+  margin: 12px 0 0;
   max-width: 560px;
   font-size: 1.05rem;
-  opacity: 0.92;
+  opacity: 0.95;
+}
+
+@media (max-width: 560px) {
+  .hero {
+    padding: 48px 20px 40px;
+    background:
+      linear-gradient(
+        to right,
+        rgba(24, 26, 58, 0.85) 0%,
+        rgba(49, 46, 129, 0.72) 60%,
+        rgba(76, 29, 149, 0.4) 100%
+      ),
+      url("assets/images/job-matcher-hero.png") 70% center / cover no-repeat;
+  }
 }
 
 .container {
