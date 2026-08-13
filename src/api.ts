@@ -38,12 +38,13 @@ export async function fetchModel(): Promise<string> {
 export async function generateCoverLetter(
   profile: Profile,
   job: Job,
-  prepareQuestion: string
+  prepareQuestion: string,
+  language: string = "English"
 ): Promise<string> {
   const data = await apiFetch<{ letter: string }>("/api/cover-letter", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...profile, job, prepareQuestion, language: "German" }),
+    body: JSON.stringify({ ...profile, job, prepareQuestion, language }),
   });
   return data.letter;
 }

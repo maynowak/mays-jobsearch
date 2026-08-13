@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Job, Profile } from "../types";
 import { generateCoverLetter } from "../api";
+import { useLang } from "../i18n";
 
 interface Props {
   job: Job;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function LetterModal({ job, prepare, profile, onClose }: Props) {
+  const { t, lang } = useLang();
   const [letter, setLetter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,7 +22,7 @@ export default function LetterModal({ job, prepare, profile, onClose }: Props) {
     setLoading(true);
     setError("");
     setLetter("");
-    generateCoverLetter(profile, job, prepare)
+    generateCoverLetter(profile, job, prepare, lang === "de" ? "German" : "English")
       .then((text) => {
         if (cancelled) return;
         setLetter(text);
@@ -28,13 +30,13 @@ export default function LetterModal({ job, prepare, profile, onClose }: Props) {
       })
       .catch((err: Error) => {
         if (cancelled) return;
-        setError(err.message || "Couldn't generate the letter.");
+        setError(err.message || t("letter.error"));
         setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [job, prepare, profile]);
+  }, [job, prepare, profile, lang, t]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -62,8 +64,8 @@ export default function LetterModal({ job, prepare, profile, onClose }: Props) {
     a.href = url;
     const fileName =
       `${job.title} ${job.company_name}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") ||
-      "bewerbung";
-    a.download = `anschreiben-${fileName}.txt`;
+      t("letter.fileName");
+    a.download = `${t("letter.fileName")}-${fileName}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -72,13 +74,13 @@ export default function LetterModal({ job, prepare, profile, onClose }: Props) {
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-box" role="dialog" aria-modal="true" aria-label="Bewerbungsschreiben">
+      <div className="modal-box" role="dialog" aria-modal="true" aria-label={t("letter.heading")}>
         <div className="modal-head">
           <div>
-            <h3>Bewerbungsschreiben</h3>
+            <h3>{t("letter.heading")}</h3>
             <p className="modal-sub">{jobName}</p>
           </div>
-          <button type="button" className="modal-close" aria-label="Close" onClick={onClose}>
+          <button type="button" className="modal-close" aria-label={t("letter.closeAria")} onClick={onClose}>
             &times;
           </button>
         </div>
@@ -86,12 +88,15 @@ export default function LetterModal({ job, prepare, profile, onClose }: Props) {
         {loading && (
           <div className="letter-loading">
             <span className="spinner" />
-            Dein Anschreiben wird geschrieben…
+            {t("letter.loading")}
           </div>
         )}
 
         {!loading && error && (
-          <div className="letter-output">Fehler beim Generieren: {error}</div>
+          <div className="letter-output">
+            {t("letter.errorPrefix")}
+            {error}
+          </div>
         )}
 
         {!loading && !error && (
@@ -101,10 +106,10 @@ export default function LetterModal({ job, prepare, profile, onClose }: Props) {
         {!loading && !error && (
           <div className="modal-actions">
             <button type="button" className="btn-ghost" onClick={handleCopy}>
-              {copied ? "Kopiert ✓" : "Kopieren"}
+              {copied ? t("letter.copied") : t("letter.copy")}
             </button>
             <button type="button" className="btn-ghost" onClick={handleDownload}>
-              Download .txt
+              {t("letter.download")}
             </button>
           </div>
         )}

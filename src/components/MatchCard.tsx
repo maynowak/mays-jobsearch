@@ -1,5 +1,6 @@
 import type { Job, Match } from "../types";
 import ScoreBadge from "./ScoreBadge";
+import { useLang } from "../i18n";
 
 interface Props {
   match: Match;
@@ -8,11 +9,12 @@ interface Props {
 }
 
 export default function MatchCard({ match, index, onGenerateLetter }: Props) {
+  const { t } = useLang();
   const job = match.job ?? ({} as Partial<Job>);
   const m = (job as Job) || {};
 
   const location =
-    (m.location ?? []).join(", ") || (m.remote ? "Remote" : "Location not stated");
+    (m.location ?? []).join(", ") || (m.remote ? t("match.remote") : t("match.locationNotStated"));
 
   return (
     <li className="match-card">
@@ -21,13 +23,13 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
 
       <div className="match-body">
         <div className="match-head">
-          <h3>{m.title ?? "Unknown role"}</h3>
+          <h3>{m.title ?? t("match.unknownRole")}</h3>
           {m.company_name && <span className="company">{m.company_name}</span>}
         </div>
 
         <div className="meta">
           <span>{location}</span>
-          {m.remote && <span className="badge badge-remote">Remote</span>}
+          {m.remote && <span className="badge badge-remote">{t("match.remote")}</span>}
         </div>
 
         {(m.tags ?? []).length > 0 && (
@@ -44,7 +46,7 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
 
         {match.prepare && (
           <p className="prepare">
-            <strong>Prepare: </strong>
+            <strong>{t("match.prepare")} </strong>
             {match.prepare}
           </p>
         )}
@@ -55,7 +57,7 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          View original posting →
+          {t("match.viewPosting")}
         </a>
 
         <button
@@ -63,7 +65,7 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
           className="letter-btn"
           onClick={() => onGenerateLetter(m as Job, match.prepare || "")}
         >
-          Bewerbung generieren
+          {t("match.generateLetter")}
         </button>
       </div>
     </li>

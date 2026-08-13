@@ -30,6 +30,202 @@ body {
   line-height: 1.5;
 }
 
+/* Navbar (mirrors the Digital-Book-Experience menu) */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+}
+
+.navbar-title {
+  margin-right: auto;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: color 0.18s;
+}
+
+.nav-links a:hover {
+  color: var(--brand);
+}
+
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.lang-toggle button {
+  border: none;
+  background: none;
+  padding: 4px 11px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-toggle button.active {
+  background: var(--brand);
+  color: #fff;
+}
+
+.burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  z-index: 52;
+}
+
+.burger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  transform-origin: center;
+}
+
+.burger-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.burger-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.burger-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  animation: overlay-in 0.2s ease;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(320px, 80vw);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 5rem 2rem 2rem;
+  background: var(--surface);
+  box-shadow: -20px 0 50px rgba(15, 23, 42, 0.2);
+  animation: menu-in 0.25s ease;
+}
+
+.mobile-link {
+  text-decoration: none;
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  animation: link-in 0.3s ease both;
+}
+
+.mobile-link:hover {
+  color: var(--brand);
+}
+
+.mobile-lang {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.mobile-lang .lang-toggle {
+  display: flex;
+  width: 100%;
+}
+
+.mobile-lang .lang-toggle button {
+  flex: 1;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes menu-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes link-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+  .burger {
+    display: flex;
+  }
+}
+
+#search-form,
+#matches,
+#alerts {
+  scroll-margin-top: 76px;
+}
+
 .hero {
   background: linear-gradient(135deg, var(--brand) 0%, #7c3aed 55%, var(--accent) 130%);
   color: #fff;
@@ -225,7 +421,7 @@ body {
 /* Status messages */
 
 #status {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .alert {
@@ -544,4 +740,33 @@ body {
 .letter-loading .spinner {
   border-color: rgba(79, 70, 229, 0.25);
   border-top-color: var(--brand);
+}
+
+/* Split layout: narrow search sidebar + results on the right (only when results exist, wide screens) */
+@media (min-width: 900px) {
+  .container.layout-split {
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* Keep the whole search mask inside its own column, no hero overlap */
+  .container.layout-split .search-card {
+    margin-top: 0;
+  }
+
+  /* In the narrow 340px sidebar the two search fields must stack,
+     otherwise the inputs cannot shrink below their intrinsic width
+     and overflow the card. */
+  .container.layout-split .field-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .layout-split .sidebar {
+    position: sticky;
+    top: 20px;
+  }
 }

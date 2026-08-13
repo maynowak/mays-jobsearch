@@ -1,5 +1,6 @@
 import type { Job, Match } from "../types";
 import MatchCard from "./MatchCard";
+import { useLang } from "../i18n";
 
 interface Props {
   matches: Match[];
@@ -8,14 +9,15 @@ interface Props {
 }
 
 export default function Results({ matches, evaluated, onGenerateLetter }: Props) {
+  const { t } = useLang();
   if (matches.length === 0) return null;
 
   return (
-    <section className="results" aria-label="Matches">
+    <section id="matches" className="results" aria-label={t("results.aria")}>
       <div className="results-header">
-        <h2>{matches.length === 1 ? "Your top match" : `Your top ${matches.length} matches`}</h2>
+        <h2>{matches.length === 1 ? t("results.yourTop") : t("results.yourTopN", { count: matches.length })}</h2>
         <p className="results-sub">
-          {evaluated > 0 && `Scored ${evaluated} jobs by AI against your profile.`}
+          {evaluated > 0 && t("results.scored", { count: evaluated })}
         </p>
       </div>
       <ol className="match-list">

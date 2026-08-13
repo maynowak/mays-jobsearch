@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import type { Profile } from "../types";
 import { subscribeAlert, unsubscribeAlert } from "../api";
+import { useLang } from "../i18n";
 
 type AlertStatus = { type: "ok" | "err"; message: string } | null;
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function AlertCard({ profile }: Props) {
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<AlertStatus>(null);
   const [busy, setBusy] = useState(false);
@@ -18,7 +20,7 @@ export default function AlertCard({ profile }: Props) {
     event.preventDefault();
     const trimmed = email.trim();
     if (!trimmed) {
-      setStatus({ type: "err", message: "Please enter your email address." });
+      setStatus({ type: "err", message: t("alerts.needEmail") });
       return;
     }
     setBusy(true);
@@ -39,7 +41,7 @@ export default function AlertCard({ profile }: Props) {
   const handleUnsubscribe = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      setStatus({ type: "err", message: "Enter your email to cancel the alert." });
+      setStatus({ type: "err", message: t("alerts.needEmailUnsub") });
       return;
     }
     setBusy(true);
@@ -54,30 +56,28 @@ export default function AlertCard({ profile }: Props) {
   };
 
   return (
-    <section className="card alert-card">
-      <h2>Daily job alerts</h2>
-      <p className="alert-hint">
-        Get an email every morning with new matches for your current search.
-      </p>
+    <section id="alerts" className="card alert-card">
+      <h2>{t("alerts.heading")}</h2>
+      <p className="alert-hint">{t("alerts.hint")}</p>
       <form id="alert-form" onSubmit={handleSubscribe} noValidate>
         <div className="field">
-          <label htmlFor="alert-email">Email</label>
+          <label htmlFor="alert-email">{t("alerts.email")}</label>
           <input
             id="alert-email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t("alerts.emailPh")}
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         <button id="alert-btn" type="submit" disabled={busy}>
-          Subscribe to daily digest
+          {t("alerts.subscribe")}
         </button>
       </form>
       {status && <p className={`alert-status ${status.type}`}>{status.message}</p>}
       <button id="alert-unsub" type="button" className="btn-ghost" onClick={handleUnsubscribe} disabled={busy}>
-        Cancel my alert
+        {t("alerts.cancel")}
       </button>
     </section>
   );

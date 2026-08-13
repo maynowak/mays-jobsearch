@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Job, Match, Profile, StatusMessage } from "./types";
 import { fetchJobs, fetchMatches } from "./api";
+import { useLang } from "./i18n";
+import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import SearchForm from "./components/SearchForm";
 import ModelInfo from "./components/ModelInfo";
@@ -12,6 +14,7 @@ import LetterModal from "./components/LetterModal";
 type Phase = "idle" | "searching" | "scoring";
 
 export default function App() {
+  const { t } = useLang();
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -25,7 +28,7 @@ export default function App() {
     setMatches([]);
 
     if (!submitted.skills && !submitted.targetRole) {
-      setStatus({ type: "error", message: "Add at least a skill or a target role so we know what to look for." });
+      setStatus({ type: "error", message: t("status.noSkills") });
       return;
     }
 
@@ -34,11 +37,12 @@ export default function App() {
       const board = await fetchJobs(submitted);
 
       if (!board.jobs.length) {
+        const query = submitted.skills || submitted.targetRole;
         setStatus({
           type: "warn",
           message: submitted.city
-            ? `No jobs matched "${submitted.skills || submitted.targetRole}" near "${submitted.city}". Try broader skills or leave the city empty.`
-            : `No jobs matched "${submitted.skills || submitted.targetRole}". Try broader keywords or different skills.`,
+            ? t("status.noJobsCity", { q: query, city: submitted.city })
+            : t("status.noJobs", { q: query }),
         });
         return;
       }
@@ -49,7 +53,7 @@ export default function App() {
       if (!matchResult.matches.length) {
         setStatus({
           type: "warn",
-          message: matchResult.meta?.note || "We found jobs but the AI couldn't score them. Please try again.",
+          message: matchResult.meta?.note || t("status.noMatches"),
         });
         return;
       }
@@ -58,10 +62,10 @@ export default function App() {
       setEvaluated(matchResult.meta?.evaluated ?? matchResult.matches.length);
       setStatus({
         type: "info",
-        message: `Found ${board.meta?.totalFiltered ?? board.jobs.length} relevant jobs, scored your best ones.`,
+        message: t("status.found", { count: board.meta?.totalFiltered ?? board.jobs.length }),
       });
     } catch (err) {
-      setStatus({ type: "error", message: (err as Error).message || "Something went wrong. Please try again." });
+      setStatus({ type: "error", message: (err as Error).message || t("status.genericError") });
     } finally {
       setPhase("idle");
     }
@@ -69,21 +73,27 @@ export default function App() {
 
   return (
     <>
+      <Navbar />
       <Hero />
 
-      <main className="container">
-        <section className="card search-card">
-          <SearchForm phase={phase} onSubmit={runSearch} />
-          <ModelInfo />
-        </section>
+      <main className={`container${matches.length > 0 ? " layout-split" : ""}`}>
+        <aside className="sidebar">
+          <section className="card search-card">
+            <SearchForm phase={phase} onSubmit={runSearch} />
+            <Status status={status} />
+            <ModelInfo />
+          </section>
 
-        <AlertCard profile={profile} />
-        <Status status={status} />
-        <Results
-          matches={matches}
-          evaluated={evaluated}
-          onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
-        />
+          <AlertCard profile={profile} />
+        </aside>
+
+        <div className="content">
+          <Results
+            matches={matches}
+            evaluated={evaluated}
+            onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
+          />
+        </div>
       </main>
 
       {letterJob && (
@@ -97,11 +107,11 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Job listings &copy;{" "}
+          {t("footer.pre")}{" "}
           <a href="https://www.arbeitnow.com" target="_blank" rel="noopener noreferrer">
             Arbeitnow
           </a>
-          . Scores are AI-generated suggestions &mdash; always check the original posting.
+          {t("footer.post")}
         </p>
       </footer>
     </>

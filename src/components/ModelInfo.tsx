@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchModel } from "../api";
+import { useLang } from "../i18n";
 
 export default function ModelInfo() {
+  const { t } = useLang();
   const [model, setModel] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,5 +19,9 @@ export default function ModelInfo() {
   }, []);
 
   if (!model) return null;
-  return <p className="model-info">AI model: {model}</p>;
+  return (
+    <p className="model-info">
+      {t("model.label")} {model}
+    </p>
+  );
 }

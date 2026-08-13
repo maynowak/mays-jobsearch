@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import type { Profile } from "../types";
+import { useLang } from "../i18n";
 
 type Phase = "idle" | "searching" | "scoring";
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function SearchForm({ phase, onSubmit }: Props) {
+  const { t } = useLang();
   const [skills, setSkills] = useState("");
   const [targetRole, setTargetRole] = useState("");
   const [city, setCity] = useState("");
@@ -17,10 +19,10 @@ export default function SearchForm({ phase, onSubmit }: Props) {
   const busy = phase !== "idle";
   const label =
     phase === "searching"
-      ? "Searching the job board…"
+      ? t("search.searching")
       : phase === "scoring"
-        ? "Scoring your matches with AI…"
-        : "Find my matches";
+        ? t("search.scoring")
+        : t("search.button");
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -30,11 +32,11 @@ export default function SearchForm({ phase, onSubmit }: Props) {
   return (
     <form id="search-form" onSubmit={handleSubmit} noValidate>
         <div className="field">
-          <label htmlFor="skills">Skills</label>
+          <label htmlFor="skills">{t("search.skills")}</label>
           <input
             id="skills"
             type="text"
-            placeholder="e.g. JavaScript, React, Node.js, SQL"
+            placeholder={t("search.skillsPh")}
             value={skills}
             onChange={(e) => setSkills(e.target.value)}
             autoComplete="off"
@@ -43,22 +45,22 @@ export default function SearchForm({ phase, onSubmit }: Props) {
 
         <div className="field-row">
           <div className="field">
-            <label htmlFor="targetRole">Target role</label>
+            <label htmlFor="targetRole">{t("search.targetRole")}</label>
             <input
               id="targetRole"
               type="text"
-              placeholder="e.g. Frontend Developer"
+              placeholder={t("search.targetRolePh")}
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
               autoComplete="off"
             />
           </div>
           <div className="field">
-            <label htmlFor="city">City</label>
+            <label htmlFor="city">{t("search.city")}</label>
             <input
               id="city"
               type="text"
-              placeholder="e.g. Berlin, München, Hamburg"
+              placeholder={t("search.cityPh")}
               value={city}
               onChange={(e) => setCity(e.target.value)}
               autoComplete="off"
