@@ -4,12 +4,10 @@
 
 ## Overview
 
-The project is a static frontend plus serverless functions on Vercel.
-
-No framework, no build step, no npm dependencies.
+The project is a React + TypeScript + Vite frontend plus serverless functions on Vercel.
 
 ```
-Browser (index.html + app.js)
+Browser (src/ React app)
         │
         │ fetch (same origin)
         ▼
@@ -23,17 +21,27 @@ Vercel Functions (api/*.mjs)
 
 ## Frontend
 
-- `index.html` — single page: hero, search form, alert form, results list, letter modal.
-- `styles.css` — design tokens, layout, cards, modal, alerts.
-- `app.js` — form handling, API calls, result rendering, modal logic, alert subscription.
+- `src/main.tsx` — React entry, mounts `App`.
+- `src/App.tsx` — root component and central state: phase, status, matches, profile, letter modal.
+- `src/api.ts` — typed fetch wrappers for all endpoints.
+- `src/types.ts` — shared TypeScript contracts (`Job`, `Profile`, `Match`, …).
+- `src/styles.css` — design tokens and global styles.
 
 Flow:
 
-1. User submits the search form.
-2. `app.js` calls `GET /api/jobs?skills=&targetRole=&city=`.
-3. `app.js` calls `POST /api/match` with the profile + filtered jobs.
-4. Matches render as ranked cards.
-5. "Bewerbung generieren" calls `POST /api/cover-letter` and shows the letter in a modal.
+1. User submits the search form (`SearchForm`).
+2. `App` calls `fetchJobs` (`GET /api/jobs?skills=&targetRole=&city=`).
+3. `App` calls `fetchMatches` (`POST /api/match`) with the profile + filtered jobs.
+4. `Results` renders `MatchCard`s.
+5. "Bewerbung generieren" opens `LetterModal`, which calls `generateCoverLetter` (`POST /api/cover-letter`) and shows the letter with copy/download.
+
+## State model (`App.tsx`)
+
+- `phase`: `idle | searching | scoring` → drives the button label and spinner.
+- `status`: `StatusMessage | null` → rendered by `Status`.
+- `matches`: `Match[]` → rendered by `Results`.
+- `profile`: last submitted `Profile` → reused by alerts and cover letters.
+- `letterJob`: `{ job, prepare } | null` → modal open state.
 
 ## Serverless functions
 

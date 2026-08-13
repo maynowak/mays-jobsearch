@@ -1,124 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>May's Job Matcher</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>" />
-</head>
-<body>
-  <header class="hero">
-    <div class="hero-inner">
-      <h1>May's Job Matcher</h1>
-      <p class="tagline">
-        Live jobs from the Arbeitnow board, scored by AI against <em>your</em> profile.
-      </p>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="card search-card">
-      <form id="search-form" novalidate>
-        <div class="field">
-          <label for="skills">Skills</label>
-          <input
-            id="skills"
-            name="skills"
-            type="text"
-            placeholder="e.g. JavaScript, React, Node.js, SQL"
-            autocomplete="off"
-          />
-        </div>
-
-        <div class="field-row">
-          <div class="field">
-            <label for="targetRole">Target role</label>
-            <input
-              id="targetRole"
-              name="targetRole"
-              type="text"
-              placeholder="e.g. Frontend Developer"
-              autocomplete="off"
-            />
-          </div>
-          <div class="field">
-            <label for="city">City</label>
-            <input
-              id="city"
-              name="city"
-              type="text"
-              placeholder="e.g. Berlin, München, Hamburg"
-              autocomplete="off"
-            />
-          </div>
-        </div>
-
-        <button id="find-btn" type="submit">
-          <span class="btn-label">Find my matches</span>
-          <span class="spinner" hidden></span>
-        </button>
-        <p id="model-info" class="model-info"></p>
-      </form>
-    </section>
-
-    <section class="card alert-card">
-      <h2>Daily job alerts</h2>
-      <p class="alert-hint">
-        Get an email every morning with new matches for your current search.
-      </p>
-      <form id="alert-form" novalidate>
-        <div class="field">
-          <label for="alert-email">Email</label>
-          <input
-            id="alert-email"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-          />
-        </div>
-        <button id="alert-btn" type="submit">Subscribe to daily digest</button>
-      </form>
-      <p id="alert-status" class="alert-status" role="status"></p>
-      <button id="alert-unsub" type="button" class="btn-ghost" hidden>Cancel my alert</button>
-    </section>
-
-    <section id="status" aria-live="polite"></section>
-
-    <section id="results" class="results" hidden>
-      <div class="results-header">
-        <h2 id="results-title">Your top matches</h2>
-        <p id="results-sub" class="results-sub"></p>
-      </div>
-      <ol id="matches" class="match-list"></ol>
-    </section>
-  </main>
-
-  <div id="letter-modal" class="modal" hidden>
-    <div class="modal-box">
-      <div class="modal-head">
-        <div>
-          <h3 id="letter-title">Bewerbungsschreiben</h3>
-          <p id="letter-target" class="modal-sub"></p>
-        </div>
-        <button id="letter-close" class="modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div id="letter-loading" class="letter-loading" hidden></div>
-      <div id="letter-output" class="letter-output" hidden></div>
-      <div class="modal-actions" id="letter-actions" hidden>
-        <button id="letter-copy" type="button" class="btn-ghost">Kopieren</button>
-        <button id="letter-download" type="button" class="btn-ghost">Download .txt</button>
-      </div>
-    </div>
-  </div>
-
-  <footer class="footer">
-    <p>
-      Job listings &copy; <a href="https://www.arbeitnow.com" target="_blank" rel="noopener">Arbeitnow</a>.
-      Scores are AI-generated suggestions &mdash; always check the original posting.
-    </p>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>May's Job Matcher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

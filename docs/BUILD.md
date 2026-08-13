@@ -3,21 +3,22 @@
 ## Local development
 
 ```bash
-npm i -g vercel   # once
-vercel login      # once
-vercel dev        # start local server on http://localhost:3000
+npm install
+npm run dev        # Vite dev server on http://localhost:5173
+```
+
+To run everything together (frontend + serverless functions):
+
+```bash
+npm i -g vercel    # once
+vercel login       # once
+vercel dev         # http://localhost:3000
 ```
 
 ## Local validation
 
 ```bash
-node --check app.js
-node --check api/jobs.mjs
-node --check api/match.mjs
-node --check api/cover-letter.mjs
-node --check api/alerts.mjs
-node --check api/cron/digest.mjs
-node --check api/_lib/*.mjs
+npm run build      # tsc -b && vite build (type check + production build)
 ```
 
 ## Production deploy
@@ -28,17 +29,15 @@ vercel --prod
 
 ## Current status
 
-- Build successful (Vercel build, ~10s)
-- Production deployment verified
+- Build successful (`npm run build` verified)
+- TypeScript strict mode enabled
+- Production deployment on Vercel (static + functions)
 - Live: https://mays-job-matcher.vercel.app
-- Deployed: core matching, multi-city, cover-letter generator, daily alerts, model info display
+- Frontend: React + TypeScript + Vite (rebuilt on branch `feature/react-rebuild`)
+- Backend: serverless functions under `api/**/*.mjs` (unchanged)
 - Remaining TODOs: activate Upstash + Resend keys for real digest delivery; final accessibility audit
 
 ## Expected artifacts
 
-The deployment consists of:
-
-- static files: `index.html`, `styles.css`, `app.js`
-- serverless functions under `api/**/*.mjs`
-
-No build output directory is generated (static + functions setup).
+- `dist/` — production build output (HTML, JS, CSS)
+- `api/**/*.mjs` — serverless functions deployed by Vercel

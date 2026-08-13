@@ -540,3 +540,8 @@ body {
 .footer a {
   color: var(--muted);
 }
+
+.letter-loading .spinner {
+  border-color: rgba(79, 70, 229, 0.25);
+  border-top-color: var(--brand);
+}

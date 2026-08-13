@@ -4,9 +4,9 @@
 
 ## Design System
 
-**Version:** 1.0  
-**Projekt:** My Job Matcher  
-**Frontend:** HTML + CSS + Vanilla JavaScript  
+**Version:** 2.0  
+**Projekt:** May's Job Matcher  
+**Frontend:** React + TypeScript + Vite  
 **Deployment:** Vercel
 
 ---

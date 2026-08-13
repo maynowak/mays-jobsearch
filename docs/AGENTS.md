@@ -26,7 +26,10 @@ The project focuses on:
 
 # Tech Stack
 
-- HTML / CSS / Vanilla JavaScript (frontend, no build step)
+- React
+- TypeScript (strict)
+- Vite
+- CSS (custom properties / design tokens)
 - Node.js serverless functions (ESM, `.mjs`)
 - Vercel Functions + Vercel Cron
 - OpenRouter Chat API (scoring + cover letters)
@@ -39,14 +42,13 @@ The project focuses on:
 
 # Coding Style
 
-## JavaScript
+## TypeScript / React
 
-- Vanilla JS, no frameworks on the frontend
-- `const` / `let`, no `var`
-- Arrow functions for callbacks
-- Semicolons
-- Single quotes
-- No unnecessary comments
+- Functional components, hooks only
+- Strict mode, no `any`
+- Prefer interfaces for component props
+- Explicit types for API contracts (`src/types.ts`)
+- Arrow functions, semicolons, single quotes
 - Readable over clever
 
 ## Serverless functions
@@ -68,22 +70,28 @@ The project focuses on:
 # Folder Structure
 
 ```
-api/
-  _lib/
-    filter.mjs       shared Arbeitnow fetch + multi-city/keyword filtering
-    model.mjs        OpenRouter model resolution
-    ai.mjs           shared OpenRouter chat call + friendly error mapping
-    alerts.mjs       Upstash Redis storage for alert subscriptions
-  jobs.mjs           GET /api/jobs
-  match.mjs          POST /api/match
-  cover-letter.mjs   POST /api/cover-letter
-  model.mjs          GET /api/model
-  alerts.mjs         POST/DELETE/GET /api/alerts
-  cron/digest.mjs    POST /api/cron/digest (Vercel Cron)
+api/                          serverless functions
+  _lib/                       shared helpers (filter, model, ai, alerts)
+  jobs.mjs                    GET /api/jobs
+  match.mjs                   POST /api/match
+  cover-letter.mjs            POST /api/cover-letter
+  model.mjs                   GET /api/model
+  alerts.mjs                  POST/DELETE/GET /api/alerts
+  cron/digest.mjs             POST /api/cron/digest
+
+src/                          React frontend
+  App.tsx                     root component + state
+  api.ts                      typed API client
+  types.ts                    shared types
+  styles.css                  design system
+  main.tsx                    entry
+  components/
+    Hero.tsx       SearchForm.tsx   ModelInfo.tsx
+    AlertCard.tsx  Status.tsx       Results.tsx
+    MatchCard.tsx  ScoreBadge.tsx   LetterModal.tsx
 
 index.html
-styles.css
-app.js
+vite.config.ts
 vercel.json
 ```
 
@@ -133,7 +141,7 @@ chore:
 
 # Validation
 
-- `node --check <file>` after every source change
+- `npm run build` (type check + production build) after frontend changes
 - live endpoint checks with `curl` against the deployed functions
 - `vercel --prod` to deploy
 

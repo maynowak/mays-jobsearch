@@ -115,6 +115,7 @@ export default async function handler(req, res) {
       });
     }
 
+    const prompt = buildPrompt(profile, jobs);
     const content = await chat({
       system:
         "You are a precise career-matching assistant. You always reply with valid JSON only.",

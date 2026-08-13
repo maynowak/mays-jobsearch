@@ -29,21 +29,31 @@ Project documentation lives in [`docs/`](docs/):
 ## Project structure
 
 ```
-├── api/
-│   ├── _lib/filter.mjs       # shared Arbeitnow fetching + multi-city/keyword filtering
-│   ├── _lib/model.mjs        # OpenRouter model resolution
-│   ├── _lib/ai.mjs           # shared OpenRouter chat call + friendly error mapping
-│   ├── _lib/alerts.mjs       # Upstash Redis storage for alert subscriptions
-│   ├── jobs.mjs              # GET /api/jobs  → filtered jobs from Arbeitnow
-│   ├── match.mjs             # POST /api/match → AI-scored top 5 matches
-│   ├── cover-letter.mjs      # POST /api/cover-letter → AI cover letter for one job
-│   ├── model.mjs             # GET /api/model → model currently in use
-│   ├── alerts.mjs            # POST/DELETE/GET /api/alerts → manage digest subscriptions
-│   └── cron/digest.mjs       # POST /api/cron/digest → daily email digest (Vercel Cron)
-├── index.html                # form + results UI + letter modal + alert form
-├── app.js                    # frontend logic
-├── styles.css
-└── vercel.json               # function timeout + daily cron schedule
+├── api/                       # Vercel serverless functions (unchanged, JSON only)
+│   ├── _lib/                  # shared helpers (filter, model, ai, alerts)
+│   ├── jobs.mjs               # GET /api/jobs  → filtered jobs from Arbeitnow
+│   ├── match.mjs              # POST /api/match → AI-scored top 5 matches
+│   ├── cover-letter.mjs       # POST /api/cover-letter → AI cover letter
+│   ├── model.mjs              # GET /api/model → model currently in use
+│   ├── alerts.mjs             # POST/DELETE/GET /api/alerts → digest subscriptions
+│   └── cron/digest.mjs        # POST /api/cron/digest → daily email digest
+├── src/                       # React + TypeScript + Vite frontend
+│   ├── App.tsx                # root component + state
+│   ├── api.ts                 # typed API client
+│   ├── types.ts               # shared types
+│   ├── styles.css             # design system (CSS)
+│   └── components/
+│       ├── Hero.tsx
+│       ├── SearchForm.tsx
+│       ├── ModelInfo.tsx
+│       ├── AlertCard.tsx
+│       ├── Status.tsx
+│       ├── Results.tsx
+│       ├── MatchCard.tsx
+│       ├── ScoreBadge.tsx
+│       └── LetterModal.tsx
+├── index.html                 # Vite entry
+└── vercel.json                # function timeout + daily cron schedule
 ```
 
 ## Environment variables
@@ -62,9 +72,18 @@ All keys are server-side only.
 
 ## Run locally
 
-1. Install the Vercel CLI (once): `npm i -g vercel`
-2. `npm run dev` → opens the app at `http://localhost:3000`.
-3. For AI + alerts to work locally, create `.env` (see `.env.example`).
+```bash
+npm i -g vercel
+npm install
+vercel login
+vercel dev        # local server on http://localhost:3000 (React + functions)
+```
+
+Build and type-check:
+
+```bash
+npm run build
+```
 
 ## Deploying to Vercel + environment variables
 

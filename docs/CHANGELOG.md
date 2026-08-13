@@ -16,6 +16,21 @@ Multi-city search, AI cover-letter generator, daily email alerts.
 
 Modal visibility fix (`[hidden]` display handling).
 
+2.0
+
+Frontend rebuilt: React + TypeScript + Vite (replaces vanilla HTML/CSS/JS).
+
+## Unreleased — 2026-08-13
+
+Frontend migrated to React + TypeScript + Vite.
+
+- New `src/` structure: typed components, `api.ts` client, `types.ts`.
+- `App.tsx` holds state (phase, status, matches, profile, modal).
+- Components: `Hero`, `SearchForm`, `ModelInfo`, `AlertCard`, `Status`, `Results`, `MatchCard`, `ScoreBadge`, `LetterModal`.
+- Serverless functions (`api/**`) unchanged and reused as-is.
+- Build: `tsc -b && vite build` with strict TypeScript.
+- Git branch `feature/react-rebuild` created from the vanilla baseline.
+
 ## Unreleased — 2026-08-13
 
 Sprint 1.2 completed and verified.

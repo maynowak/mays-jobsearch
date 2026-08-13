@@ -113,14 +113,15 @@ https://resend.com
 
 **Frontend**
 
-- HTML
+- React
+- TypeScript (strict)
+- Vite
 - CSS (custom properties / design tokens)
-- Vanilla JavaScript
 
 **Backend**
 
 - Node.js serverless functions (`.mjs`, ESM)
-- global `fetch` (no npm dependencies)
+- global `fetch` (no npm dependencies in `api/`)
 
 **Deployment**
 
