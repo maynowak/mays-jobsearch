@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 import { useLang } from "../i18n";
 import type { Lang } from "../i18n";
 
@@ -40,10 +41,17 @@ export default function Navbar() {
   }, [isOpen, close]);
 
   const links: Array<[string, string]> = [
-    [t("nav.search"), "#search-form"],
-    [t("nav.matches"), "#matches"],
+    [t("nav.search"), "top"],
     [t("nav.alerts"), "#alerts"],
   ];
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
+    if (target === "top") {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    close();
+  };
 
   return (
     <header className="navbar">
@@ -54,7 +62,7 @@ export default function Navbar() {
 
         <div className="nav-links">
           {links.map(([label, href]) => (
-            <a key={href} href={href}>
+            <a key={href} href={href} onClick={(e) => handleClick(e, href)}>
               {label}
             </a>
           ))}
@@ -82,7 +90,7 @@ export default function Navbar() {
                   href={href}
                   className="mobile-link"
                   style={{ animationDelay: `${i * 50}ms` }}
-                  onClick={close}
+                  onClick={(e) => handleClick(e, href)}
                 >
                   {label}
                 </a>

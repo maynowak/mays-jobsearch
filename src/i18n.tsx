@@ -8,7 +8,6 @@ type Dict = Record<string, string>;
 const en: Dict = {
   "nav.aria": "Main navigation",
   "nav.search": "Search",
-  "nav.matches": "Matches",
   "nav.alerts": "Alerts",
   "nav.menuOpen": "Open menu",
   "nav.menuClose": "Close menu",
@@ -80,7 +79,6 @@ const en: Dict = {
 const de: Dict = {
   "nav.aria": "Hauptnavigation",
   "nav.search": "Suche",
-  "nav.matches": "Treffer",
   "nav.alerts": "Benachrichtigungen",
   "nav.menuOpen": "Menü öffnen",
   "nav.menuClose": "Menü schließen",
