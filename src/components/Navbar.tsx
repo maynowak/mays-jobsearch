@@ -45,10 +45,25 @@ export default function Navbar() {
     [t("nav.alerts"), "#alerts"],
   ];
 
+  const scrollToTopSlow = () => {
+    const start = window.scrollY;
+    if (start === 0) return;
+    const duration = 1200;
+    const startTime = performance.now();
+    const easeInOut = (t: number) =>
+      t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      window.scrollTo(0, Math.round(start * (1 - easeInOut(progress))));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
   const handleClick = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
     if (target === "top") {
       event.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToTopSlow();
     }
     close();
   };
