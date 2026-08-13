@@ -61,10 +61,13 @@ export default function Navbar() {
   };
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
+    event.preventDefault();
     if (target === "top") {
-      event.preventDefault();
       scrollToTopSlow();
+    } else {
+      document.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+    history.replaceState(null, "", window.location.pathname + window.location.search);
     close();
   };
 

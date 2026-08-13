@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Job, Match, Profile, StatusMessage } from "./types";
 import { fetchJobs, fetchMatches } from "./api";
 import { useLang } from "./i18n";
@@ -21,6 +21,14 @@ export default function App() {
   const [evaluated, setEvaluated] = useState(0);
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
+
+  useEffect(() => {
+    if (window.location.hash) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+  }, []);
 
   const runSearch = async (submitted: Profile) => {
     setProfile(submitted);
