@@ -422,9 +422,11 @@ body {
 }
 
 .search-card {
+  height: auto;
   padding: 24px;
   position: relative;
   z-index: 2;
+  overflow: hidden;
   background: rgba(255, 253, 248, 0.88);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -525,6 +527,7 @@ body {
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 /* Alerts */
@@ -606,6 +609,7 @@ body {
   border-radius: 10px;
   font-weight: 500;
   border: 1px solid transparent;
+  overflow-wrap: anywhere;
 }
 
 .alert-error {
