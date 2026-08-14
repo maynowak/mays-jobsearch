@@ -229,7 +229,7 @@ body {
 .hero {
   position: relative;
   color: var(--text);
-  padding: 64px 20px 56px;
+  padding: 64px 20px 72px;
   text-align: left;
   background:
     linear-gradient(
@@ -239,7 +239,7 @@ body {
       rgba(246, 241, 231, 0.2) 60%,
       rgba(246, 241, 231, 0.03) 100%
     ),
-    url("assets/images/job-matcher-next-step-searchpage.png") center / cover no-repeat;
+    url("assets/images/job-matcher-next-step-searchpage.png") center 55% / cover no-repeat;
   border-bottom: 1px solid rgba(190, 172, 140, 0.4);
 }
 
@@ -647,13 +647,20 @@ body {
   margin-top: 28px;
 }
 
+.results-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
 .results-header h2 {
-  margin: 0 0 4px;
+  margin: 0;
+  font-size: 1.5rem;
   letter-spacing: -0.02em;
 }
 
 .results-sub {
-  margin: 0 0 18px;
+  margin: 6px 0 0;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -664,44 +671,60 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .match-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
+  box-shadow: 0 14px 34px rgba(92, 76, 50, 0.12);
+  padding: 24px;
   display: flex;
-  gap: 18px;
+  gap: 20px;
   align-items: flex-start;
 }
 
 .rank {
-  font-size: 1.3rem;
+  flex-shrink: 0;
+  font-size: 1.15rem;
   font-weight: 800;
-  color: var(--muted);
-  min-width: 28px;
+  color: #b39a72;
+  min-width: 30px;
   text-align: center;
-  padding-top: 2px;
+  padding-top: 4px;
 }
 
 .score {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 58px;
-  padding: 6px 10px;
+  min-width: 54px;
+  padding: 6px 12px;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 1.05rem;
-  color: #fff;
+  font-size: 1rem;
+  border: 1px solid transparent;
 }
 
-.score-high { background: var(--green); }
-.score-mid  { background: var(--amber); }
-.score-low  { background: var(--red); }
+.score-high {
+  background: #e9f1e4;
+  border-color: rgba(63, 107, 67, 0.28);
+  color: #3f6b43;
+}
+
+.score-mid {
+  background: #f9eed6;
+  border-color: rgba(154, 106, 31, 0.32);
+  color: #96681f;
+}
+
+.score-low {
+  background: #f9e9e4;
+  border-color: rgba(163, 92, 68, 0.3);
+  color: #a35c44;
+}
 
 .match-body {
   flex: 1;
@@ -710,28 +733,34 @@ body {
 
 .match-head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
 }
 
 .match-head h3 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.3rem;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
 }
 
 .company {
   color: var(--muted);
   font-weight: 600;
+  font-size: 0.95rem;
+  flex-basis: 100%;
+  margin-top: 2px;
 }
 
 .meta {
-  margin: 6px 0 0;
+  margin: 10px 0 0;
   color: var(--muted);
   font-size: 0.92rem;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .badge {
@@ -740,42 +769,47 @@ body {
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
-  background: #eef2ff;
-  color: var(--brand);
+  background: #eeece3;
+  color: #5a5140;
 }
 
 .badge-remote {
-  background: #ecfeff;
-  color: #0e7490;
+  background: #eaf1ea;
+  color: #4f6b52;
 }
 
 .tags {
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .tag {
   background: var(--bg);
   border: 1px solid var(--border);
-  color: var(--muted);
+  color: #6b6255;
   font-size: 0.8rem;
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
 }
 
 .why {
-  margin: 12px 0 0;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  background: #faf6ec;
+  border: 1px solid #ede3cf;
+  border-radius: 10px;
   color: var(--text);
+  font-size: 0.95rem;
 }
 
 .prepare {
-  margin: 10px 0 0;
-  padding: 10px 14px;
-  background: #faf4e8;
-  border-left: 4px solid #c9b28a;
-  border-radius: 0 8px 8px 0;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: #f6eddb;
+  border-left: 4px solid #c9a86b;
+  border-radius: 0 10px 10px 0;
   font-size: 0.95rem;
 }
 
@@ -785,9 +819,10 @@ body {
 
 .apply-link {
   display: inline-block;
-  margin-top: 14px;
+  margin-top: 16px;
+  margin-right: 14px;
   font-weight: 700;
-  color: var(--brand);
+  color: #37506e;
   text-decoration: none;
 }
 
@@ -797,10 +832,9 @@ body {
 
 .letter-btn {
   display: inline-block;
-  margin-top: 14px;
-  margin-right: 8px;
-  padding: 6px 14px;
-  font-size: 0.88rem;
+  margin-top: 16px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
   border-radius: 8px;
@@ -1018,7 +1052,7 @@ body {
   padding: 8px 16px;
   font-weight: 700;
   font-size: 0.9rem;
-  color: var(--brand);
+  color: #37506e;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1026,7 +1060,7 @@ body {
 }
 
 .btn-ghost:hover {
-  border-color: var(--brand);
+  border-color: #37506e;
 }
 
 .footer {
@@ -1048,10 +1082,10 @@ body {
 /* Split layout: narrow search sidebar + results on the right (only when results exist, wide screens) */
 @media (min-width: 900px) {
   .container.layout-split {
-    max-width: 1100px;
+    max-width: 1220px;
     display: grid;
-    grid-template-columns: 340px minmax(0, 1fr);
-    gap: 28px;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 32px;
     align-items: start;
   }
 
@@ -1060,7 +1094,7 @@ body {
     margin-top: 0;
   }
 
-  /* In the narrow 340px sidebar the two search fields must stack,
+  /* In the narrow 360px sidebar the two search fields must stack,
      otherwise the inputs cannot shrink below their intrinsic width
      and overflow the card. */
   .container.layout-split .field-row {
@@ -1071,5 +1105,18 @@ body {
   .layout-split .sidebar {
     position: sticky;
     top: 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .match-card {
+    padding: 18px;
+    gap: 14px;
+  }
+  .match-head h3 {
+    font-size: 1.15rem;
+  }
+  .results-header h2 {
+    font-size: 1.3rem;
   }
 }
