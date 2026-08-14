@@ -80,6 +80,7 @@ export default async function handler(req, res) {
       json: false,
       temperature: 0.5,
       maxTokens: 1200,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });
 
     return res.status(200).json({

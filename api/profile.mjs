@@ -106,6 +106,7 @@ ${text}`;
       json: true,
       temperature: 0.2,
       maxTokens: 900,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });
 
     const profile = parseProfile(content);

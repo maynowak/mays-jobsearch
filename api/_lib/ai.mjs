@@ -1,5 +1,6 @@
 import { HttpError } from "./filter.mjs";
 import { getOpenRouterModel } from "./model.mjs";
+import { assertFreeModel } from "./models.mjs";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -15,9 +16,13 @@ export function requireOpenRouterKey() {
   return apiKey;
 }
 
-export async function chat({ system, prompt, json = false, temperature = 0.3, maxTokens = 1500 }) {
+export async function chat({ system, prompt, json = false, temperature = 0.3, maxTokens = 1500, model }) {
+  let resolvedModel = getOpenRouterModel();
+  if (model) {
+    await assertFreeModel(model);
+    resolvedModel = model;
+  }
   const apiKey = requireOpenRouterKey();
-  const model = getOpenRouterModel();
 
   let response;
   try {
@@ -28,7 +33,7 @@ export async function chat({ system, prompt, json = false, temperature = 0.3, ma
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model,
+        model: resolvedModel,
         messages: [
           { role: "system", content: system },
           { role: "user", content: prompt },

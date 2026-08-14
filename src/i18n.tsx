@@ -58,7 +58,11 @@ const en: Dict = {
   "cv.location": "Location",
   "cv.confirm": "Use profile and find jobs",
 
-  "model.label": "AI model:",
+  "model.label": "AI model",
+  "model.loading": "Loading AI models …",
+  "model.loadFailed": "Could not load model selection.",
+  "model.empty": "No free AI models are available right now.",
+  "model.none": "No model",
 
   "alerts.heading": "2. Daily job alerts",
   "alerts.hint": "Get an email every morning with new matches for your current search.",
@@ -161,7 +165,11 @@ const de: Dict = {
   "cv.location": "Stadt",
   "cv.confirm": "Profil übernehmen und Jobs finden",
 
-  "model.label": "KI-Modell:",
+  "model.label": "KI-Modell",
+  "model.loading": "KI-Modelle werden geladen …",
+  "model.loadFailed": "Modellauswahl konnte nicht geladen werden.",
+  "model.empty": "Aktuell sind keine kostenlosen KI-Modelle verfügbar.",
+  "model.none": "Kein Modell",
 
   "alerts.heading": "2. Tägliche Job-Benachrichtigungen",
   "alerts.hint":

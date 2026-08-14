@@ -47,6 +47,16 @@ export interface MatchResponse {
   };
 }
 
+export interface ModelOption {
+  id: string;
+  name: string;
+}
+
+export interface ModelsResponse {
+  models: ModelOption[];
+  defaultModel?: string;
+}
+
 export type StatusType = "error" | "info" | "warn";
 
 export interface StatusMessage {

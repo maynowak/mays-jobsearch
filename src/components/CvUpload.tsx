@@ -12,11 +12,12 @@ interface Props {
   busy: boolean;
   onSubmit: (profile: Profile) => void;
   onManual: () => void;
+  model: string | null;
 }
 
 type Phase = "idle" | "reading" | "creating" | "ready";
 
-export default function CvUpload({ busy, onSubmit, onManual }: Props) {
+export default function CvUpload({ busy, onSubmit, onManual, model }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
@@ -54,7 +55,7 @@ export default function CvUpload({ busy, onSubmit, onManual }: Props) {
         return;
       }
       setPhase("creating");
-      const profile = await createProfile(text);
+      const profile = await createProfile(text, model);
       setSuggested(profile);
       setPhase("ready");
     } catch {

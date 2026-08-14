@@ -7,13 +7,16 @@ import type { NavbarRoute } from "./components/Navbar";
 import Hero from "./components/Hero";
 import LandingHero from "./components/LandingHero";
 import SearchForm from "./components/SearchForm";
-import ModelInfo from "./components/ModelInfo";
+import ModelSelector from "./components/ModelSelector";
 import Status from "./components/Status";
 import Results from "./components/Results";
 import AlertCard from "./components/AlertCard";
 import LetterModal from "./components/LetterModal";
+import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring";
+
+const PREFERRED_FREE_MODEL = "poolside/laguna-s-2.1:free";
 
 export default function App() {
   const { t } = useLang();
@@ -26,6 +29,20 @@ export default function App() {
   const [evaluated, setEvaluated] = useState(0);
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
+
+  const { state: modelsState, models, defaultModel } = useAvailableModels();
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+
+  const effectiveModel =
+    modelsState === "ready"
+      ? selectedModel && models.some((m) => m.id === selectedModel)
+        ? selectedModel
+        : models.some((m) => m.id === defaultModel)
+          ? defaultModel
+          : models.some((m) => m.id === PREFERRED_FREE_MODEL)
+            ? PREFERRED_FREE_MODEL
+            : (models[0]?.id ?? null)
+      : selectedModel;
 
   useEffect(() => {
     if (window.location.hash) {
@@ -61,7 +78,7 @@ export default function App() {
       }
 
       setPhase("scoring");
-      const matchResult = await fetchMatches(submitted, board.jobs);
+      const matchResult = await fetchMatches(submitted, board.jobs, effectiveModel);
 
       if (!matchResult.matches.length) {
         setStatus({
@@ -97,9 +114,15 @@ export default function App() {
 
   const searchCard = (
     <section className="card search-card">
-      <SearchForm phase={phase} onSubmit={runSearch} />
+      <ModelSelector
+        state={modelsState}
+        models={models}
+        defaultModel={defaultModel}
+        value={effectiveModel}
+        onChange={setSelectedModel}
+      />
+      <SearchForm phase={phase} onSubmit={runSearch} model={effectiveModel} />
       <Status status={status} />
-      <ModelInfo />
     </section>
   );
 
@@ -149,6 +172,7 @@ export default function App() {
           job={letterJob.job}
           prepare={letterJob.prepare}
           profile={profile}
+          model={effectiveModel}
           onClose={() => setLetterJob(null)}
         />
       )}

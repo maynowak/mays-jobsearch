@@ -10,11 +10,12 @@ type Phase = "idle" | "searching" | "scoring";
 interface Props {
   phase: Phase;
   onSubmit: (profile: Profile) => void;
+  model: string | null;
 }
 
 type Mode = "manual" | "cv";
 
-export default function SearchForm({ phase, onSubmit }: Props) {
+export default function SearchForm({ phase, onSubmit, model }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
   const [skills, setSkills] = useState("");
@@ -152,7 +153,7 @@ export default function SearchForm({ phase, onSubmit }: Props) {
         </button>
         </div>
       ) : (
-        <CvUpload busy={busy} onSubmit={onSubmit} onManual={() => setMode("manual")} />
+        <CvUpload busy={busy} onSubmit={onSubmit} onManual={() => setMode("manual")} model={model} />
       )}
     </form>
   );

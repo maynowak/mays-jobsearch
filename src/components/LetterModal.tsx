@@ -7,10 +7,11 @@ interface Props {
   job: Job;
   prepare: string;
   profile: Profile;
+  model: string | null;
   onClose: () => void;
 }
 
-export default function LetterModal({ job, prepare, profile, onClose }: Props) {
+export default function LetterModal({ job, prepare, profile, model, onClose }: Props) {
   const { t, lang } = useLang();
   const [letter, setLetter] = useState("");
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,7 @@ export default function LetterModal({ job, prepare, profile, onClose }: Props) {
     setLoading(true);
     setError("");
     setLetter("");
-    generateCoverLetter(profile, job, prepare, lang === "de" ? "German" : "English")
+    generateCoverLetter(profile, job, prepare, lang === "de" ? "German" : "English", model)
       .then((text) => {
         if (cancelled) return;
         setLetter(text);

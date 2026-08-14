@@ -1,4 +1,11 @@
-import type { Job, JobsResponse, MatchResponse, Profile, SuggestedProfile } from "./types";
+import type {
+  Job,
+  JobsResponse,
+  MatchResponse,
+  ModelsResponse,
+  Profile,
+  SuggestedProfile,
+} from "./types";
 
 export async function apiFetch<T = unknown>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
@@ -22,12 +29,20 @@ export async function fetchJobs(profile: Profile): Promise<JobsResponse> {
   return apiFetch<JobsResponse>(`/api/jobs?${params.toString()}`);
 }
 
-export async function fetchMatches(profile: Profile, jobs: Job[]): Promise<MatchResponse> {
+export async function fetchMatches(
+  profile: Profile,
+  jobs: Job[],
+  model?: string | null
+): Promise<MatchResponse> {
   return apiFetch<MatchResponse>("/api/match", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...profile, jobs }),
+    body: JSON.stringify({ ...profile, jobs, ...(model ? { model } : {}) }),
   });
+}
+
+export async function fetchModels(): Promise<ModelsResponse> {
+  return apiFetch<ModelsResponse>("/api/models");
 }
 
 export async function fetchModel(): Promise<string> {
@@ -35,11 +50,11 @@ export async function fetchModel(): Promise<string> {
   return data.model;
 }
 
-export async function createProfile(text: string): Promise<SuggestedProfile> {
+export async function createProfile(text: string, model?: string | null): Promise<SuggestedProfile> {
   return apiFetch<SuggestedProfile>("/api/profile", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, ...(model ? { model } : {}) }),
   });
 }
 
@@ -47,12 +62,13 @@ export async function generateCoverLetter(
   profile: Profile,
   job: Job,
   prepareQuestion: string,
-  language: string = "English"
+  language: string = "English",
+  model?: string | null
 ): Promise<string> {
   const data = await apiFetch<{ letter: string }>("/api/cover-letter", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...profile, job, prepareQuestion, language }),
+    body: JSON.stringify({ ...profile, job, prepareQuestion, language, ...(model ? { model } : {}) }),
   });
   return data.letter;
 }

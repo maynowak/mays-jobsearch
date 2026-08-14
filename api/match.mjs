@@ -122,6 +122,7 @@ export default async function handler(req, res) {
       prompt,
       json: true,
       maxTokens: 1200,
+      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });
     const parsed = parseMatches(content);
 
