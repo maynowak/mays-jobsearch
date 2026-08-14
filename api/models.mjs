@@ -1,4 +1,4 @@
-import { getCompatibleFallback, getFreeModels } from "./_lib/models.mjs";
+import { getCompatibleFallback, getFreeModels, resolveDefaultModel } from "./_lib/models.mjs";
 import { getOpenRouterModel } from "./_lib/model.mjs";
 
 export default async function handler(req, res) {
@@ -15,6 +15,7 @@ export default async function handler(req, res) {
       models: models.map(({ id, name }) => ({ id, name })),
       defaultModel: configured,
       fallbackModel: await getCompatibleFallback(configured),
+      recommendedModel: await resolveDefaultModel(),
     });
   } catch (err) {
     const status = err && err.status ? err.status : 502;

@@ -62,6 +62,7 @@ export interface ModelsResponse {
   models: ModelOption[];
   defaultModel?: string;
   fallbackModel?: string | null;
+  recommendedModel?: string | null;
 }
 
 export type StatusType = "error" | "info" | "warn";

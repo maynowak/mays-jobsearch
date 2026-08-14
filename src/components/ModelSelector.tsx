@@ -8,6 +8,7 @@ interface Props {
   state: ModelsState;
   models: ModelOption[];
   defaultModel: string | null;
+  recommendedModel: string | null;
   value: string | null;
   onChange: (model: string) => void;
 }
@@ -56,7 +57,14 @@ function Check() {
   );
 }
 
-export default function ModelSelector({ state, models, defaultModel, value, onChange }: Props) {
+export default function ModelSelector({
+  state,
+  models,
+  defaultModel,
+  recommendedModel,
+  value,
+  onChange,
+}: Props) {
   const { t } = useLang();
   const labelId = useId();
   const [listId] = useState(() => `model-listbox-${Math.random().toString(36).slice(2, 9)}`);
@@ -69,20 +77,24 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
   const listRef = useRef<HTMLUListElement>(null);
   const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
 
-  const sorted = useMemo(() => {
-    if (state !== "ready") return [];
-    return [...models].sort((a, b) => {
-      if (a.id === value) return -1;
-      if (b.id === value) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }, [state, models, value]);
+  const recommended = useMemo(
+    () => (state === "ready" && recommendedModel ? (models.find((m) => m.id === recommendedModel) ?? null) : null),
+    [state, models, recommendedModel]
+  );
 
+  const others = useMemo(() => {
+    if (state !== "ready") return [];
+    return models
+      .filter((m) => m.id !== recommendedModel)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [state, models, recommendedModel]);
+
+  const options = recommended ? [recommended, ...others] : others;
   const selected = state === "ready" ? (models.find((m) => m.id === value) ?? null) : null;
-  const count = sorted.length;
+  const count = options.length;
 
   const openList = () => {
-    const start = value ? sorted.findIndex((m) => m.id === value) : 0;
+    const start = value ? options.findIndex((m) => m.id === value) : 0;
     setActiveIndex(start >= 0 ? start : 0);
 
     let up = false;
@@ -101,7 +113,7 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
   };
 
   const selectIndex = (index: number) => {
-    const option = sorted[index];
+    const option = options[index];
     if (!option) return;
     onChange(option.id);
     setOpen(false);
@@ -191,6 +203,27 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
   let control;
   if (state === "ready") {
     const activeId = open ? `${listId}-opt-${activeIndex}` : undefined;
+
+    const renderOption = (m: ModelOption, i: number) => (
+      <li
+        key={m.id}
+        id={`${listId}-opt-${i}`}
+        ref={(el) => {
+          optionRefs.current[i] = el;
+        }}
+        role="option"
+        aria-selected={m.id === value}
+        aria-label={
+          m.id === recommendedModel ? `${m.name} — ${t("model.recommended")}` : undefined
+        }
+        className={`model-option${m.id === recommendedModel ? " model-option--recommended" : ""}${activeIndex === i ? " model-option-active" : ""}`}
+        onClick={onOptionClick(i)}
+      >
+        <span className="model-option-label">{m.name}</span>
+        <Check />
+      </li>
+    );
+
     control = (
       <>
         <button
@@ -219,22 +252,21 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
           className={`model-popover${openUp ? " model-popover--up" : ""}`}
           hidden={!open}
         >
-          {sorted.map((m, i) => (
-            <li
-              key={m.id}
-              id={`${listId}-opt-${i}`}
-              ref={(el) => {
-                optionRefs.current[i] = el;
-              }}
-              role="option"
-              aria-selected={m.id === value}
-              className={`model-option${activeIndex === i ? " model-option-active" : ""}`}
-              onClick={onOptionClick(i)}
-            >
-              <span className="model-option-label">{m.name}</span>
-              <Check />
-            </li>
-          ))}
+          {recommended ? (
+            <>
+              <li className="model-group-label" role="presentation">
+                {t("model.sectionRecommended")}
+              </li>
+              {renderOption(recommended, 0)}
+              <li className="model-group-divider" role="separator" aria-hidden="true" />
+              <li className="model-group-label" role="presentation">
+                {t("model.sectionOthers")}
+              </li>
+              {others.map((m, i) => renderOption(m, i + 1))}
+            </>
+          ) : (
+            others.map((m, i) => renderOption(m, i))
+          )}
         </ul>
       </>
     );

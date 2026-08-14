@@ -28,7 +28,13 @@ export default function App() {
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
 
-  const { state: modelsState, models, defaultModel, fallbackModel } = useAvailableModels();
+  const {
+    state: modelsState,
+    models,
+    defaultModel,
+    fallbackModel,
+    recommendedModel,
+  } = useAvailableModels();
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
   const effectiveModel =
@@ -121,6 +127,7 @@ export default function App() {
         state={modelsState}
         models={models}
         defaultModel={defaultModel}
+        recommendedModel={recommendedModel}
         value={effectiveModel}
         onChange={setSelectedModel}
       />

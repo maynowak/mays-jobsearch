@@ -63,6 +63,9 @@ const en: Dict = {
   "model.loadFailed": "Could not load model selection.",
   "model.empty": "No free AI models are available right now.",
   "model.none": "No model",
+  "model.recommended": "Recommended",
+  "model.sectionRecommended": "RECOMMENDED",
+  "model.sectionOthers": "OTHER FREE MODELS",
   "model.unavailable":
     "This AI model is temporarily unavailable. Please choose another model.",
 
@@ -176,6 +179,9 @@ const de: Dict = {
   "model.loadFailed": "Modellauswahl konnte nicht geladen werden.",
   "model.empty": "Aktuell sind keine kostenlosen KI-Modelle verfügbar.",
   "model.none": "Kein Modell",
+  "model.recommended": "Empfohlen",
+  "model.sectionRecommended": "EMPFOHLEN",
+  "model.sectionOthers": "WEITERE KOSTENLOSE MODELLE",
   "model.unavailable":
     "Dieses KI-Modell ist momentan nicht verfügbar. Bitte wähle ein anderes Modell.",
 
