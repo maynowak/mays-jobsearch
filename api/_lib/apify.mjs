@@ -1,8 +1,45 @@
 import { SOURCE_APIFY_ARBEITSAGENTUR, tokenize, locationMatches, keywordHits } from "./filter.mjs";
+import { cacheGet, cacheSet } from "./cache.mjs";
 
 const APIFY_ACTOR_ID = "blackfalcondata~arbeitsagentur-jobs-feed";
 const APIFY_MAX_JOBS = 40;
 const APIFY_SYNC_TIMEOUT_SEC = 50;
+const APIFY_CACHE_TTL_SEC = 600;
+
+function cacheKeyFor(query, location) {
+  return `apify-jobs:${query.toLowerCase().trim()}|${location.toLowerCase().trim()}`;
+}
+
+async function runApify(apiToken, input) {
+  let response;
+  try {
+    response = await fetch(
+      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${encodeURIComponent(apiToken)}&timeout=${APIFY_SYNC_TIMEOUT_SEC}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      }
+    );
+  } catch {
+    return { error: "network" };
+  }
+
+  if (!response.ok) {
+    return { error: `upstream_${response.status}` };
+  }
+
+  let records;
+  try {
+    records = await response.json();
+  } catch {
+    return { error: "unreadable" };
+  }
+  if (!Array.isArray(records)) {
+    return { error: "unexpected" };
+  }
+  return { records };
+}
 
 function normalizeJob(record) {
   const published = record.publishedDate ? Date.parse(record.publishedDate) : NaN;
@@ -49,32 +86,16 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
     excludeEmptyFields: false,
   };
 
-  let response;
-  try {
-    response = await fetch(
-      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${encodeURIComponent(apiToken)}&timeout=${APIFY_SYNC_TIMEOUT_SEC}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }
-    );
-  } catch {
-    return emptyResult("network");
-  }
+  const cacheKey = cacheKeyFor(input.query, input.location);
+  const cached = await cacheGet(cacheKey);
+  let records = Array.isArray(cached) ? cached : null;
+  let error = null;
 
-  if (!response.ok) {
-    return emptyResult(`upstream_${response.status}`);
-  }
-
-  let records;
-  try {
-    records = await response.json();
-  } catch {
-    return emptyResult("unreadable");
-  }
-  if (!Array.isArray(records)) {
-    return emptyResult("unexpected");
+  if (!records) {
+    const run = await runApify(apiToken, input);
+    if (run.error) return emptyResult(run.error);
+    records = run.records;
+    if (records.length) await cacheSet(cacheKey, records, APIFY_CACHE_TTL_SEC);
   }
 
   const keywordTokens = [...tokenize(targetRole), ...tokenize(skills)];
