@@ -426,7 +426,7 @@ body {
   padding: 24px;
   position: relative;
   z-index: 2;
-  overflow: hidden;
+  container-type: inline-size;
   background: rgba(255, 253, 248, 0.88);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -446,6 +446,7 @@ body {
   gap: 6px;
   margin-bottom: 16px;
   flex: 1;
+  min-width: 0;
 }
 
 .field-row {
@@ -460,12 +461,22 @@ body {
   }
 }
 
+@container (max-width: 480px) {
+  .field-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
 .field label {
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .field input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 12px 14px;
   font-size: 1rem;
   border: 1px solid #e2d7c1;
