@@ -79,7 +79,7 @@ export function useCityAutocomplete(): {
         }));
       setSuggestions(list);
       setLoading(false);
-      setOpen(list.length > 0);
+      setOpen(true);
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         setSuggestions([]);

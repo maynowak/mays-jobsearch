@@ -104,7 +104,9 @@ export default function SearchForm({ phase, onSubmit }: Props) {
                   </li>
                 ))}
                 {!loading && suggestions.length === 0 && (
-                  <li className="city-suggestion-status">{t("search.noLocations")}</li>
+                  <li className="city-suggestion-status" role="status">
+                    {t("search.noLocations")}
+                  </li>
                 )}
               </ul>
             )}
