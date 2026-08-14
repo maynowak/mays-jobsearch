@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import type { Profile } from "../types";
 import { useLang } from "../i18n";
+import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 
 type Phase = "idle" | "searching" | "scoring";
 
@@ -14,7 +15,17 @@ export default function SearchForm({ phase, onSubmit }: Props) {
   const { t } = useLang();
   const [skills, setSkills] = useState("");
   const [targetRole, setTargetRole] = useState("");
-  const [city, setCity] = useState("");
+  const {
+    city,
+    suggestions,
+    open,
+    loading,
+    active,
+    boxRef,
+    handleChange: handleCityChange,
+    handleKeyDown: handleCityKeyDown,
+    select: selectCity,
+  } = useCityAutocomplete();
 
   const busy = phase !== "idle";
   const label =
@@ -56,16 +67,47 @@ export default function SearchForm({ phase, onSubmit }: Props) {
               autoComplete="off"
             />
           </div>
-          <div className="field">
+          <div className="field city-field" ref={boxRef}>
             <label htmlFor="city">{t("search.city")}</label>
             <input
               id="city"
               type="text"
               placeholder={t("search.cityPh")}
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={(e) => handleCityChange(e.target.value)}
+              onKeyDown={handleCityKeyDown}
               autoComplete="off"
+              role="combobox"
+              aria-expanded={open}
+              aria-controls="city-suggestions"
+              aria-activedescendant={active >= 0 ? `city-option-${active}` : undefined}
             />
+            {open && (
+              <ul id="city-suggestions" className="city-suggestions" role="listbox">
+                {loading && <li className="city-suggestion-status">{t("search.citySearching")}</li>}
+                {suggestions.map((s, i) => (
+                  <li key={s.key}>
+                    <button
+                      type="button"
+                      id={`city-option-${i}`}
+                      role="option"
+                      aria-selected={i === active}
+                      className={`city-suggestion${i === active ? " active" : ""}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        selectCity(s);
+                      }}
+                    >
+                      <span className="city-plz">{s.postalCode}</span>
+                      <span className="city-name">{s.name}</span>
+                    </button>
+                  </li>
+                ))}
+                {!loading && suggestions.length === 0 && (
+                  <li className="city-suggestion-status">{t("search.noLocations")}</li>
+                )}
+              </ul>
+            )}
           </div>
         </div>
 
