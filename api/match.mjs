@@ -2,6 +2,8 @@ import { HttpError } from "./_lib/filter.mjs";
 import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { chat } from "./_lib/ai.mjs";
 
+const MATCH_EVAL_LIMIT = 10;
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
@@ -17,7 +19,7 @@ function readBody(req) {
   });
 }
 
-function buildPrompt(profile, jobs) {
+function buildPrompt(profile, jobs, limit, detailCount) {
   const compactJobs = jobs.map((job, i) => ({
     id: i + 1,
     slug: job.slug,
@@ -46,9 +48,9 @@ Evaluate how well EACH job fits the candidate. Score every job from 0 to 100, wh
 Respond ONLY with valid JSON in exactly this shape (no markdown fences, no commentary):
 {"matches":[{"slug":"<exact job slug from the list>","score":<integer 0-100>,"why":"<EXACTLY two concise sentences explaining why this job fits the candidate>","prepare":"<ONE specific question the candidate should prepare for this interview>"}]}
 
-There are exactly ${jobs.length} jobs. Include ALL ${jobs.length} jobs in the "matches" array, one entry per job, and sort the array by score descending (highest score first).
+There are exactly ${jobs.length} jobs. Pick the ${limit} jobs that fit the candidate best and include exactly ${limit} match entries in the "matches" array, one entry per chosen job, sorted by score descending (highest score first).
 
-Only the 5 highest-scoring jobs must contain a filled "why" (exactly two sentences) and "prepare" (exactly one question). For every other job set "why" and "prepare" to an empty string "".`;
+Only the ${detailCount} highest-scoring entries must contain a filled "why" (EXACTLY two concise sentences) and "prepare" (EXACTLY one question). For every other entry set "why" and "prepare" to exactly an empty string "" — do NOT write any explanation for those jobs. Keep the JSON compact.`;
 }
 
 function toScore(raw) {
@@ -121,13 +123,15 @@ export default async function handler(req, res) {
       });
     }
 
-    const prompt = buildPrompt(profile, jobs);
+    const limit = Math.min(MATCH_EVAL_LIMIT, jobs.length);
+    const detailCount = Math.min(5, limit);
+    const prompt = buildPrompt(profile, jobs, limit, detailCount);
     const content = await chat({
       system:
         "You are a precise career-matching assistant. You always reply with valid JSON only.",
       prompt,
       json: true,
-      maxTokens: 4000,
+      maxTokens: 2500,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });
     const parsed = parseMatches(content);
@@ -147,7 +151,8 @@ export default async function handler(req, res) {
         prepare: m.prepare,
         job: bySlug.get(m.slug) || null,
       }))
-      .filter((m) => m.job);
+      .filter((m) => m.job)
+      .slice(0, limit);
 
     return res.status(200).json({
       matches,
