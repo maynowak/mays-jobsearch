@@ -229,9 +229,17 @@ body {
 .hero {
   position: relative;
   color: var(--text);
-  padding: 56px 20px 44px;
+  padding: 64px 20px 56px;
   text-align: left;
-  background: linear-gradient(120deg, #f6f1e7 0%, #ece3d3 55%, #dfd3bf 100%);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(246, 241, 231, 0.85) 0%,
+      rgba(246, 241, 231, 0.6) 34%,
+      rgba(246, 241, 231, 0.2) 60%,
+      rgba(246, 241, 231, 0.03) 100%
+    ),
+    url("assets/images/job-matcher-next-step-searchpage.png") center / cover no-repeat;
   border-bottom: 1px solid rgba(190, 172, 140, 0.4);
 }
 
