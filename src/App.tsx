@@ -86,10 +86,10 @@ export default function App() {
 
   if (route === "landing") {
     return (
-      <>
+      <div className="landing">
         <Navbar route="landing" />
         <LandingHero />
-      </>
+      </div>
     );
   }
 

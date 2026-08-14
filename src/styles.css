@@ -276,9 +276,17 @@ body {
 
 /* Landing page */
 
+.landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .landing-hero {
   position: relative;
-  min-height: 78vh;
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   color: #fff;
@@ -346,7 +354,6 @@ body {
 
 @media (max-width: 560px) {
   .landing-hero {
-    min-height: 60vh;
     background-position: 70% center;
   }
   .landing-hero-inner {
