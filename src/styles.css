@@ -266,6 +266,70 @@ body {
   }
 }
 
+/* Large search-page hero scene: real search card as an elegant panel
+   inside the atmospheric architecture image (initial state) */
+
+.search-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: clamp(560px, 74vh, 760px);
+  color: var(--text);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(246, 241, 231, 0.78) 0%,
+      rgba(246, 241, 231, 0.5) 40%,
+      rgba(246, 241, 231, 0.14) 65%,
+      rgba(246, 241, 231, 0.02) 100%
+    ),
+    url("assets/images/job-matcher-next-step-searchpage.png") center / cover no-repeat;
+  border-bottom: 1px solid rgba(190, 172, 140, 0.4);
+}
+
+.search-hero-inner {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 72px 20px;
+}
+
+.search-hero-text h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.03em;
+}
+
+.search-hero-text .tagline {
+  margin: 10px 0 0;
+}
+
+.search-hero .search-card {
+  max-width: 420px;
+  margin-top: 30px;
+}
+
+@media (max-width: 560px) {
+  .search-hero {
+    min-height: 0;
+    align-items: stretch;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(246, 241, 231, 0.85) 0%,
+        rgba(246, 241, 231, 0.62) 55%,
+        rgba(246, 241, 231, 0.3) 100%
+      ),
+      url("assets/images/job-matcher-next-step-searchpage.png") 75% center / cover no-repeat;
+  }
+  .search-hero-inner {
+    padding: 48px 20px;
+  }
+  .search-hero .search-card {
+    max-width: none;
+  }
+}
+
 /* Landing page */
 
 .landing {
@@ -359,12 +423,13 @@ body {
 
 .search-card {
   padding: 24px;
-  margin-top: -28px;
   position: relative;
   z-index: 2;
-  background: linear-gradient(180deg, #ffffff 0%, #fbf7ef 55%, #f5efe2 100%);
-  border-color: #e3d7bf;
-  box-shadow: 0 14px 38px rgba(92, 76, 50, 0.16);
+  background: rgba(255, 253, 248, 0.88);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-color: rgba(227, 215, 191, 0.92);
+  box-shadow: 0 18px 44px rgba(92, 76, 50, 0.22);
 }
 
 .search-card .step-heading {
@@ -463,6 +528,19 @@ body {
 }
 
 /* Alerts */
+
+.alerts-section {
+  padding: 48px 20px 0;
+}
+
+.alerts-section .card {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.alerts-section .alert-card {
+  margin-top: 0;
+}
 
 .alert-card {
   margin-top: 24px;

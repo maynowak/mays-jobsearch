@@ -93,30 +93,56 @@ export default function App() {
     );
   }
 
+  const hasMatches = matches.length > 0;
+
+  const searchCard = (
+    <section className="card search-card">
+      <SearchForm phase={phase} onSubmit={runSearch} />
+      <Status status={status} />
+      <ModelInfo />
+    </section>
+  );
+
   return (
     <>
       <Navbar route="matcher" />
-      <Hero />
 
-      <main className={`container${matches.length > 0 ? " layout-split" : ""}`}>
-        <aside className="sidebar">
-          <section className="card search-card">
-            <SearchForm phase={phase} onSubmit={runSearch} />
-            <Status status={status} />
-            <ModelInfo />
-          </section>
+      {hasMatches ? (
+        <Hero />
+      ) : (
+        <section className="search-hero">
+          <div className="search-hero-inner">
+            <div className="search-hero-text">
+              <h1>May&rsquo;s Job Matcher</h1>
+              <p className="tagline">{t("hero.tagline")}</p>
+            </div>
+            {searchCard}
+          </div>
+        </section>
+      )}
 
+      {hasMatches && (
+        <main className="container layout-split">
+          <aside className="sidebar">
+            {searchCard}
+            <AlertCard profile={profile} />
+          </aside>
+
+          <div className="content">
+            <Results
+              matches={matches}
+              evaluated={evaluated}
+              onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
+            />
+          </div>
+        </main>
+      )}
+
+      {!hasMatches && (
+        <section className="alerts-section">
           <AlertCard profile={profile} />
-        </aside>
-
-        <div className="content">
-          <Results
-            matches={matches}
-            evaluated={evaluated}
-            onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
-          />
-        </div>
-      </main>
+        </section>
+      )}
 
       {letterJob && (
         <LetterModal
