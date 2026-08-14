@@ -1,3 +1,5 @@
+export type JobSource = "existing" | "apify-arbeitsagentur";
+
 export interface Job {
   slug: string;
   title: string;
@@ -7,6 +9,7 @@ export interface Job {
   tags: string[];
   url: string;
   created_at?: number;
+  source?: JobSource[];
 }
 
 export interface Profile {
@@ -36,6 +39,9 @@ export interface JobsResponse {
     totalFiltered?: number;
     city?: string[];
     keywords?: string[];
+    sources?: Partial<Record<JobSource, number>>;
+    jobsCombined?: number;
+    apify?: { enabled?: boolean };
   };
 }
 

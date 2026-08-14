@@ -29,6 +29,7 @@ Live URL: https://mays-job-matcher.vercel.app
 |---|---|
 | `OPENROUTER_API_KEY` | AI scoring + cover letters |
 | `OPENROUTER_MODEL` (optional) | Override default model |
+| `APIFY_API_TOKEN` (optional) | Second job source: Arbeitsagentur feed via Apify. Without it, only Arbeitnow is used. |
 | `UPSTASH_REDIS_REST_URL` | Alert subscriptions |
 | `UPSTASH_REDIS_REST_TOKEN` | Alert subscriptions |
 | `RESEND_API_KEY` | Digest emails |

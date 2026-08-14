@@ -1,4 +1,5 @@
-import { fetchFilteredJobs, HttpError } from "./_lib/filter.mjs";
+import { HttpError } from "./_lib/filter.mjs";
+import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { chat } from "./_lib/ai.mjs";
 
 function readBody(req) {
@@ -25,6 +26,7 @@ function buildPrompt(profile, jobs) {
     location: (job.location || []).join(", ") || (job.remote ? "Remote" : "Not stated"),
     remote: job.remote === true,
     tags: job.tags || [],
+    source: job.source || [],
   }));
 
   return `You are a career coach. Match a candidate's profile to the list of job openings below.
@@ -36,6 +38,8 @@ CANDIDATE PROFILE
 
 JOBS (JSON):
 ${JSON.stringify(compactJobs)}
+
+The "source" field only tells you which job board a listing came from. It is NOT a quality signal: evaluate every job purely on how well it fits the candidate, regardless of its source.
 
 Evaluate how well EACH job fits the candidate. Score every job from 0 to 100, where 100 is a perfect match. Consider the overlap between the candidate's skills and the job's tags, how well the target role matches the job title, and location/remote preference.
 
@@ -102,7 +106,7 @@ export default async function handler(req, res) {
 
     let jobs = Array.isArray(body.jobs) ? body.jobs : null;
     if (!jobs) {
-      const fetched = await fetchFilteredJobs(profile);
+      const fetched = await fetchAllJobs(profile);
       jobs = fetched.jobs;
     }
     if (!jobs.length) {

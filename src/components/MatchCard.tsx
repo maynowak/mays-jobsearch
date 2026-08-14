@@ -1,6 +1,16 @@
-import type { Job, Match } from "../types";
+import type { Job, JobSource, Match } from "../types";
 import ScoreBadge from "./ScoreBadge";
 import { useLang } from "../i18n";
+
+const SOURCE_LABEL_KEYS: Record<JobSource, string> = {
+  "existing": "source.existing",
+  "apify-arbeitsagentur": "source.apify",
+};
+
+function sourceKeys(sources: JobSource[] | undefined): string[] {
+  const list: JobSource[] = Array.isArray(sources) && sources.length ? sources : ["existing"];
+  return list.map((s) => SOURCE_LABEL_KEYS[s] ?? "source.existing");
+}
 
 interface Props {
   match: Match;
@@ -30,6 +40,9 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
         <div className="meta">
           <span>{location}</span>
           {m.remote && <span className="badge badge-remote">{t("match.remote")}</span>}
+          <span className="badge badge-source">
+            {t("source.label")} {sourceKeys(m.source).map((key) => t(key)).join(" · ")}
+          </span>
         </div>
 
         {(m.tags ?? []).length > 0 && (

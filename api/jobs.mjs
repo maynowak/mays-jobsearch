@@ -1,4 +1,5 @@
-import { fetchFilteredJobs, HttpError } from "./_lib/filter.mjs";
+import { fetchAllJobs } from "./_lib/jobs.mjs";
+import { HttpError } from "./_lib/filter.mjs";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -7,7 +8,7 @@ export default async function handler(req, res) {
 
   try {
     const { skills = "", targetRole = "", city = "" } = req.query || {};
-    const result = await fetchFilteredJobs({ skills, targetRole, city });
+    const result = await fetchAllJobs({ skills, targetRole, city });
 
     return res.status(200).json(result);
   } catch (err) {

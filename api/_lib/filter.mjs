@@ -1,6 +1,9 @@
 const API_BASE = "https://www.arbeitnow.com/api/job-board-api";
 const MAX_JOBS_TO_AI = 40;
 
+export const SOURCE_ARBEITNOW = "existing";
+export const SOURCE_APIFY_ARBEITSAGENTUR = "apify-arbeitsagentur";
+
 export class HttpError extends Error {
   constructor(status, message, code = "error") {
     super(message);
@@ -9,7 +12,7 @@ export class HttpError extends Error {
   }
 }
 
-function tokenize(input) {
+export function tokenize(input) {
   if (!input) return [];
   return String(input)
     .toLowerCase()
@@ -34,7 +37,7 @@ function jobLocations(job) {
   return (Array.isArray(loc) ? loc : [loc]).map((l) => String(l).toLowerCase());
 }
 
-function locationMatches(job, cityQueries) {
+export function locationMatches(job, cityQueries) {
   if (!cityQueries.length) return true;
   const locs = jobLocations(job);
   const isRemote = job.remote === true;
@@ -44,7 +47,7 @@ function locationMatches(job, cityQueries) {
   );
 }
 
-function keywordHits(job, keywordTokens) {
+export function keywordHits(job, keywordTokens) {
   if (!keywordTokens.length) return 0;
   const title = (job.title || "").toLowerCase();
   const tags = (job.tags || []).join(" ").toLowerCase();
@@ -64,6 +67,7 @@ function compactJob(job) {
     tags: job.tags || [],
     url: job.url,
     created_at: job.created_at,
+    source: [SOURCE_ARBEITNOW],
   };
 }
 

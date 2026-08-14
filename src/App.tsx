@@ -183,6 +183,10 @@ export default function App() {
           <a href="https://www.arbeitnow.com" target="_blank" rel="noopener noreferrer">
             Arbeitnow
           </a>
+          {" · "}
+          <a href="https://www.arbeitsagentur.de" target="_blank" rel="noopener noreferrer">
+            Arbeitsagentur
+          </a>
           {t("footer.post")}
         </p>
       </footer>
