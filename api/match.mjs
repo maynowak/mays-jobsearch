@@ -1,4 +1,4 @@
-import { HttpError } from "./_lib/filter.mjs";
+import { HttpError, keywordHits, tokenize } from "./_lib/filter.mjs";
 import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { chat } from "./_lib/ai.mjs";
 
@@ -48,7 +48,7 @@ Evaluate how well EACH job fits the candidate. Score every job from 0 to 100, wh
 Respond ONLY with valid JSON in exactly this shape (no markdown fences, no commentary):
 {"matches":[{"slug":"<exact job slug from the list>","score":<integer 0-100>,"why":"<EXACTLY two concise sentences explaining why this job fits the candidate>","prepare":"<ONE specific question the candidate should prepare for this interview>"}]}
 
-There are exactly ${jobs.length} jobs. Pick the ${limit} jobs that fit the candidate best and include exactly ${limit} match entries in the "matches" array, one entry per chosen job, sorted by score descending (highest score first).
+There are exactly ${jobs.length} jobs. Include ALL ${jobs.length} jobs in the "matches" array, one entry per job, and sort the array by score descending (highest score first).
 
 Only the ${detailCount} highest-scoring entries must contain a filled "why" (EXACTLY two concise sentences) and "prepare" (EXACTLY one question). For every other entry set "why" and "prepare" to exactly an empty string "" — do NOT write any explanation for those jobs. Keep the JSON compact.`;
 }
@@ -125,7 +125,18 @@ export default async function handler(req, res) {
 
     const limit = Math.min(MATCH_EVAL_LIMIT, jobs.length);
     const detailCount = Math.min(5, limit);
-    const prompt = buildPrompt(profile, jobs, limit, detailCount);
+
+    let evalJobs = jobs;
+    if (jobs.length > limit) {
+      const keywordTokens = [...tokenize(profile.targetRole), ...tokenize(profile.skills)];
+      evalJobs = jobs
+        .map((job, index) => ({ job, index, hits: keywordHits(job, keywordTokens) }))
+        .sort((a, b) => b.hits - a.hits || a.index - b.index)
+        .slice(0, limit)
+        .map((entry) => entry.job);
+    }
+
+    const prompt = buildPrompt(profile, evalJobs, limit, detailCount);
     const content = await chat({
       system:
         "You are a precise career-matching assistant. You always reply with valid JSON only.",
@@ -143,7 +154,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const bySlug = new Map(jobs.map((job) => [job.slug, job]));
+    const bySlug = new Map(evalJobs.map((job) => [job.slug, job]));
     const matches = parsed
       .map((m) => ({
         score: m.score,
