@@ -1,4 +1,4 @@
-import type { Job, JobsResponse, MatchResponse, Profile } from "./types";
+import type { Job, JobsResponse, MatchResponse, Profile, SuggestedProfile } from "./types";
 
 export async function apiFetch<T = unknown>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
@@ -33,6 +33,14 @@ export async function fetchMatches(profile: Profile, jobs: Job[]): Promise<Match
 export async function fetchModel(): Promise<string> {
   const data = await apiFetch<{ model: string }>("/api/model");
   return data.model;
+}
+
+export async function createProfile(text: string): Promise<SuggestedProfile> {
+  return apiFetch<SuggestedProfile>("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
 }
 
 export async function generateCoverLetter(

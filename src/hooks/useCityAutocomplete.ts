@@ -30,7 +30,7 @@ function dedupeLocations(list: OpenPlzLocality[]): OpenPlzLocality[] {
   });
 }
 
-export function useCityAutocomplete(): {
+export function useCityAutocomplete(initialCity = ""): {
   city: string;
   suggestions: CitySuggestion[];
   open: boolean;
@@ -41,7 +41,7 @@ export function useCityAutocomplete(): {
   handleKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   select: (suggestion: CitySuggestion) => void;
 } {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState(initialCity);
   const [suggestions, setSuggestions] = useState<CitySuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);

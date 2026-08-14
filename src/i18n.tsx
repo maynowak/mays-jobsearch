@@ -34,6 +34,27 @@ const en: Dict = {
   "search.searching": "Searching the job board…",
   "search.scoring": "Scoring your matches with AI…",
 
+  "cv.modeLabel": "How to create your profile",
+  "cv.manual": "Enter manually",
+  "cv.tabCv": "Upload CV",
+  "cv.uploadAction": "Upload my CV (PDF)",
+  "cv.privacyNote":
+    "Private: Your PDF stays on your device. Only the extracted text is sent to the AI to create your profile.",
+  "cv.reading": "Reading CV locally…",
+  "cv.creating": "Creating profile…",
+  "cv.notPdf": "Please select a PDF file.",
+  "cv.tooLarge": "The PDF is too large. Please use a file up to 10 MB.",
+  "cv.scannedError":
+    "This CV does not appear to contain readable text. Please use a text-based PDF or enter your profile manually.",
+  "cv.processError":
+    "We couldn't process your CV right now. You can still enter your profile manually.",
+  "cv.resultHeading": "Your suggested search profile",
+  "cv.skills": "Skills",
+  "cv.experienceLevel": "Experience level",
+  "cv.targetRoles": "Target role",
+  "cv.location": "Location",
+  "cv.confirm": "Use profile and find jobs",
+
   "model.label": "AI model:",
 
   "alerts.heading": "2. Daily job alerts",
@@ -112,6 +133,27 @@ const de: Dict = {
   "search.button": "Meine Treffer finden",
   "search.searching": "Suche auf der Jobbörse…",
   "search.scoring": "Bewerte deine Treffer mit KI…",
+
+  "cv.modeLabel": "So erstellst du dein Profil",
+  "cv.manual": "Manuell eingeben",
+  "cv.tabCv": "Lebenslauf hochladen",
+  "cv.uploadAction": "Meinen Lebenslauf hochladen (PDF)",
+  "cv.privacyNote":
+    "Privat: Die PDF bleibt auf deinem Gerät. Nur der gelesene Text wird zur Profilerstellung an die KI gesendet.",
+  "cv.reading": "Lebenslauf wird lokal gelesen …",
+  "cv.creating": "Profil wird erstellt …",
+  "cv.notPdf": "Bitte wähle eine PDF-Datei aus.",
+  "cv.tooLarge": "Die PDF ist zu groß. Bitte verwende eine Datei mit maximal 10 MB.",
+  "cv.scannedError":
+    "Dieser Lebenslauf enthält offenbar keinen auslesbaren Text. Bitte verwende eine textbasierte PDF oder nutze die manuelle Eingabe.",
+  "cv.processError":
+    "Dein Lebenslauf konnte gerade nicht ausgewertet werden. Du kannst dein Profil weiterhin manuell eingeben.",
+  "cv.resultHeading": "Dein vorgeschlagenes Suchprofil",
+  "cv.skills": "Skills",
+  "cv.experienceLevel": "Erfahrungslevel",
+  "cv.targetRoles": "Zielrolle",
+  "cv.location": "Stadt",
+  "cv.confirm": "Profil übernehmen und Jobs finden",
 
   "model.label": "KI-Modell:",
 

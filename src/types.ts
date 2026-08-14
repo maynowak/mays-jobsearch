@@ -15,6 +15,13 @@ export interface Profile {
   city: string;
 }
 
+export interface SuggestedProfile {
+  skills: string[];
+  experienceLevel: string;
+  targetRoles: string[];
+  location: string;
+}
+
 export interface Match {
   score: number;
   why: string;

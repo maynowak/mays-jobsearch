@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import type { Profile } from "../types";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
+import CvUpload from "./CvUpload";
 
 type Phase = "idle" | "searching" | "scoring";
 
@@ -11,8 +12,11 @@ interface Props {
   onSubmit: (profile: Profile) => void;
 }
 
+type Mode = "manual" | "cv";
+
 export default function SearchForm({ phase, onSubmit }: Props) {
   const { t } = useLang();
+  const [mode, setMode] = useState<Mode>("manual");
   const [skills, setSkills] = useState("");
   const [targetRole, setTargetRole] = useState("");
   const {
@@ -37,12 +41,41 @@ export default function SearchForm({ phase, onSubmit }: Props) {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
+    if (mode === "cv") return;
     onSubmit({ skills: skills.trim(), targetRole: targetRole.trim(), city: city.trim() });
   };
 
   return (
     <form id="search-form" onSubmit={handleSubmit} noValidate>
-        <h2 className="step-heading">{t("search.step")}</h2>
+      <h2 className="step-heading">{t("search.step")}</h2>
+
+      <div className="cv-mode-switch" role="tablist" aria-label={t("cv.modeLabel")}>
+        <button
+          type="button"
+          role="tab"
+          id="mode-manual"
+          aria-selected={mode === "manual"}
+          aria-controls="manual-panel"
+          className={`cv-mode-btn${mode === "manual" ? " active" : ""}`}
+          onClick={() => setMode("manual")}
+        >
+          {t("cv.manual")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="mode-cv"
+          aria-selected={mode === "cv"}
+          aria-controls="cv-panel"
+          className={`cv-mode-btn${mode === "cv" ? " active" : ""}`}
+          onClick={() => setMode("cv")}
+        >
+          {t("cv.tabCv")}
+        </button>
+      </div>
+
+      {mode === "manual" ? (
+        <div id="manual-panel">
         <div className="field">
           <label htmlFor="skills">{t("search.skills")}</label>
           <input
@@ -117,6 +150,10 @@ export default function SearchForm({ phase, onSubmit }: Props) {
           <span className="btn-label">{label}</span>
           {busy && <span className="spinner" />}
         </button>
-      </form>
+        </div>
+      ) : (
+        <CvUpload busy={busy} onSubmit={onSubmit} onManual={() => setMode("manual")} />
+      )}
+    </form>
   );
 }
