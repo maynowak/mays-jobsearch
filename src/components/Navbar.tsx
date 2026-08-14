@@ -54,10 +54,10 @@ export default function Navbar({ route }: Props) {
         [t("nav.alerts"), "#alerts"],
       ];
 
-  const scrollToTopSlow = () => {
+  const scrollToTopSmooth = () => {
     const start = window.scrollY;
     if (start === 0) return;
-    const duration = 1200;
+    const duration = 500;
     const startTime = performance.now();
     const easeInOut = (t: number) =>
       t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -72,7 +72,7 @@ export default function Navbar({ route }: Props) {
   const handleClick = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
     if (target === "top") {
       event.preventDefault();
-      scrollToTopSlow();
+      scrollToTopSmooth();
     } else if (target.startsWith("#")) {
       event.preventDefault();
       document.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
