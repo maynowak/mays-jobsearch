@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import type { Profile, SuggestedProfile } from "../types";
-import { createProfile } from "../api";
+import { createProfile, isModelUnavailable } from "../api";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 
@@ -58,9 +58,9 @@ export default function CvUpload({ busy, onSubmit, onManual, model }: Props) {
       const profile = await createProfile(text, model);
       setSuggested(profile);
       setPhase("ready");
-    } catch {
+    } catch (err) {
       setPhase("idle");
-      setError(t("cv.processError"));
+      setError(isModelUnavailable(err) ? t("model.unavailable") : t("cv.processError"));
     }
   };
 

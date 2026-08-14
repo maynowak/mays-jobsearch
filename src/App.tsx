@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Job, Match, Profile, StatusMessage } from "./types";
-import { fetchJobs, fetchMatches } from "./api";
+import { fetchJobs, fetchMatches, isModelUnavailable } from "./api";
 import { useLang } from "./i18n";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
@@ -16,8 +16,6 @@ import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring";
 
-const PREFERRED_FREE_MODEL = "poolside/laguna-s-2.1:free";
-
 export default function App() {
   const { t } = useLang();
   const [route] = useState<NavbarRoute>(() =>
@@ -30,7 +28,7 @@ export default function App() {
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
 
-  const { state: modelsState, models, defaultModel } = useAvailableModels();
+  const { state: modelsState, models, defaultModel, fallbackModel } = useAvailableModels();
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
   const effectiveModel =
@@ -39,8 +37,8 @@ export default function App() {
         ? selectedModel
         : models.some((m) => m.id === defaultModel)
           ? defaultModel
-          : models.some((m) => m.id === PREFERRED_FREE_MODEL)
-            ? PREFERRED_FREE_MODEL
+          : fallbackModel && models.some((m) => m.id === fallbackModel)
+            ? fallbackModel
             : (models[0]?.id ?? null)
       : selectedModel;
 
@@ -95,7 +93,10 @@ export default function App() {
         message: t("status.found", { count: board.meta?.totalFiltered ?? board.jobs.length }),
       });
     } catch (err) {
-      setStatus({ type: "error", message: (err as Error).message || t("status.genericError") });
+      setStatus({
+        type: "error",
+        message: isModelUnavailable(err) ? t("model.unavailable") : (err as Error).message || t("status.genericError"),
+      });
     } finally {
       setPhase("idle");
     }
@@ -114,6 +115,8 @@ export default function App() {
 
   const searchCard = (
     <section className="card search-card">
+      <SearchForm phase={phase} onSubmit={runSearch} model={effectiveModel} />
+      <div className="model-divider" aria-hidden="true" />
       <ModelSelector
         state={modelsState}
         models={models}
@@ -121,7 +124,6 @@ export default function App() {
         value={effectiveModel}
         onChange={setSelectedModel}
       />
-      <SearchForm phase={phase} onSubmit={runSearch} model={effectiveModel} />
       <Status status={status} />
     </section>
   );

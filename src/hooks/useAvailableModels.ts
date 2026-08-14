@@ -7,6 +7,7 @@ export type ModelsState = "loading" | "ready" | "error" | "empty";
 interface ModelsCache {
   models: ModelOption[];
   defaultModel: string | null;
+  fallbackModel: string | null;
 }
 
 let cache: ModelsCache | null = null;
@@ -15,6 +16,7 @@ export function useAvailableModels() {
   const [state, setState] = useState<ModelsState>("loading");
   const [models, setModels] = useState<ModelOption[]>([]);
   const [defaultModel, setDefaultModel] = useState<string | null>(null);
+  const [fallbackModel, setFallbackModel] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
@@ -24,16 +26,19 @@ export function useAvailableModels() {
       setState("loading");
       let list: ModelOption[] | null = null;
       let configured: string | null = null;
+      let fallback: string | null = null;
 
       if (cache) {
         list = cache.models;
         configured = cache.defaultModel;
+        fallback = cache.fallbackModel;
       } else {
         try {
           const res = await fetchModels();
           list = res.models ?? [];
           configured = res.defaultModel ?? null;
-          cache = { models: list, defaultModel: configured };
+          fallback = res.fallbackModel ?? null;
+          cache = { models: list, defaultModel: configured, fallbackModel: fallback };
         } catch {
           list = null;
         }
@@ -50,6 +55,7 @@ export function useAvailableModels() {
       if (cancelled) return;
       setModels(list ?? []);
       setDefaultModel(configured);
+      setFallbackModel(fallback);
 
       if (list === null) setState("error");
       else if (list.length === 0) setState("empty");
@@ -66,6 +72,7 @@ export function useAvailableModels() {
     state,
     models,
     defaultModel,
+    fallbackModel,
     reload: () => setReload((n) => n + 1),
   };
 }

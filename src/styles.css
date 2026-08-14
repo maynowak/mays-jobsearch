@@ -770,6 +770,11 @@ body {
   min-width: 0;
 }
 
+.model-divider {
+  margin: 2px 0 14px;
+  border-top: 1px solid var(--border);
+}
+
 .model-label {
   font-weight: 600;
   font-size: 0.9rem;

@@ -1,8 +1,15 @@
 import { HttpError } from "./filter.mjs";
-import { getOpenRouterModel } from "./model.mjs";
-import { assertFreeModel } from "./models.mjs";
+import { assertFreeModel, resolveDefaultModel } from "./models.mjs";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+function modelUnavailable() {
+  return new HttpError(
+    502,
+    "This AI model is temporarily unavailable. Please choose another model.",
+    "model_unavailable"
+  );
+}
 
 export function requireOpenRouterKey() {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -17,7 +24,7 @@ export function requireOpenRouterKey() {
 }
 
 export async function chat({ system, prompt, json = false, temperature = 0.3, maxTokens = 1500, model }) {
-  let resolvedModel = getOpenRouterModel();
+  let resolvedModel = await resolveDefaultModel();
   if (model) {
     await assertFreeModel(model);
     resolvedModel = model;
@@ -44,7 +51,7 @@ export async function chat({ system, prompt, json = false, temperature = 0.3, ma
       }),
     });
   } catch {
-    throw new HttpError(502, "Couldn't reach the AI service. Please try again in a moment.", "network");
+    throw modelUnavailable();
   }
 
   if (response.status === 401) {
@@ -62,26 +69,22 @@ export async function chat({ system, prompt, json = false, temperature = 0.3, ma
     );
   }
   if (response.status === 429) {
-    throw new HttpError(429, "The AI is rate-limited right now. Please wait a moment and try again.", "rate_limited");
+    throw modelUnavailable();
   }
   if (!response.ok) {
-    throw new HttpError(
-      502,
-      `The AI service hit an error (HTTP ${response.status}). Please try again shortly.`,
-      "upstream"
-    );
+    throw modelUnavailable();
   }
 
   let jsonBody;
   try {
     jsonBody = await response.json();
   } catch {
-    throw new HttpError(502, "The AI service sent back an unreadable response. Try again shortly.", "upstream");
+    throw modelUnavailable();
   }
 
   const content = jsonBody?.choices?.[0]?.message?.content;
   if (!content) {
-    throw new HttpError(502, "The AI returned an empty response. Please try again.", "empty");
+    throw modelUnavailable();
   }
   return content;
 }

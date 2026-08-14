@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Job, Profile } from "../types";
-import { generateCoverLetter } from "../api";
+import { generateCoverLetter, isModelUnavailable } from "../api";
 import { useLang } from "../i18n";
 
 interface Props {
@@ -31,7 +31,7 @@ export default function LetterModal({ job, prepare, profile, model, onClose }: P
       })
       .catch((err: Error) => {
         if (cancelled) return;
-        setError(err.message || t("letter.error"));
+        setError(isModelUnavailable(err) ? t("model.unavailable") : err.message || t("letter.error"));
         setLoading(false);
       });
     return () => {

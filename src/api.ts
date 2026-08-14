@@ -7,16 +7,36 @@ import type {
   SuggestedProfile,
 } from "./types";
 
+export class ApiError extends Error {
+  readonly code?: string;
+  readonly status?: number;
+
+  constructor(message: string, status?: number, code?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export function isModelUnavailable(err: unknown): boolean {
+  return err instanceof ApiError && err.code === "model_unavailable";
+}
+
 export async function apiFetch<T = unknown>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
-  let data: { error?: string } = {};
+  let data: { error?: string; code?: string } = {};
   try {
     data = await res.json();
   } catch {
     /* noop */
   }
   if (!res.ok) {
-    throw new Error(data.error || `Something went wrong (HTTP ${res.status}).`);
+    throw new ApiError(
+      data.error || `Something went wrong (HTTP ${res.status}).`,
+      res.status,
+      data.code
+    );
   }
   return data as T;
 }
