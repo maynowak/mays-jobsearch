@@ -61,9 +61,11 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
   const labelId = useId();
   const [listId] = useState(() => `model-listbox-${Math.random().toString(36).slice(2, 9)}`);
   const [open, setOpen] = useState(false);
+  const [openUp, setOpenUp] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
 
@@ -82,6 +84,19 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
   const openList = () => {
     const start = value ? sorted.findIndex((m) => m.id === value) : 0;
     setActiveIndex(start >= 0 ? start : 0);
+
+    let up = false;
+    const trigger = buttonRef.current;
+    if (trigger) {
+      const rowHeight = 37;
+      const maxHeight = 240;
+      const gap = 6;
+      const estHeight = Math.min(maxHeight, count * rowHeight + 12);
+      const rect = trigger.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      up = spaceBelow < estHeight + gap && rect.top >= estHeight + gap;
+    }
+    setOpenUp(up);
     setOpen(true);
   };
 
@@ -180,6 +195,7 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
       <>
         <button
           type="button"
+          ref={buttonRef}
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
@@ -200,7 +216,7 @@ export default function ModelSelector({ state, models, defaultModel, value, onCh
           ref={listRef}
           role="listbox"
           aria-labelledby={labelId}
-          className="model-popover"
+          className={`model-popover${openUp ? " model-popover--up" : ""}`}
           hidden={!open}
         >
           {sorted.map((m, i) => (
