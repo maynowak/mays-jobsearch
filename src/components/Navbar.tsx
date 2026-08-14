@@ -22,7 +22,13 @@ function LangToggle() {
   );
 }
 
-export default function Navbar() {
+export type NavbarRoute = "landing" | "matcher";
+
+interface Props {
+  route: NavbarRoute;
+}
+
+export default function Navbar({ route }: Props) {
   const { t } = useLang();
   const [isOpen, setIsOpen] = useState(false);
   const close = useCallback(() => setIsOpen(false), []);
@@ -40,10 +46,13 @@ export default function Navbar() {
     };
   }, [isOpen, close]);
 
-  const links: Array<[string, string]> = [
-    [t("nav.search"), "top"],
-    [t("nav.alerts"), "#alerts"],
-  ];
+  const isLanding = route === "landing";
+  const links: Array<[string, string]> = isLanding
+    ? [[t("nav.search"), "/top"]]
+    : [
+        [t("nav.search"), "top"],
+        [t("nav.alerts"), "#alerts"],
+      ];
 
   const scrollToTopSlow = () => {
     const start = window.scrollY;
@@ -61,20 +70,21 @@ export default function Navbar() {
   };
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
-    event.preventDefault();
     if (target === "top") {
+      event.preventDefault();
       scrollToTopSlow();
-    } else {
+    } else if (target.startsWith("#")) {
+      event.preventDefault();
       document.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      history.replaceState(null, "", window.location.pathname + window.location.search);
     }
-    history.replaceState(null, "", window.location.pathname + window.location.search);
     close();
   };
 
   return (
     <header className="navbar">
       <nav className="nav-inner" aria-label={t("nav.aria")}>
-        <a href="#search-form" className="navbar-title">
+        <a href={isLanding ? "/" : "#search-form"} className="navbar-title">
           May&rsquo;s Job Matcher
         </a>
 

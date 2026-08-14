@@ -9,5 +9,11 @@
       "path": "/api/cron/digest",
       "schedule": "0 7 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/top",
+      "destination": "/index.html"
+    }
   ]
 }

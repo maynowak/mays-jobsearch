@@ -3,7 +3,9 @@ import type { Job, Match, Profile, StatusMessage } from "./types";
 import { fetchJobs, fetchMatches } from "./api";
 import { useLang } from "./i18n";
 import Navbar from "./components/Navbar";
+import type { NavbarRoute } from "./components/Navbar";
 import Hero from "./components/Hero";
+import LandingHero from "./components/LandingHero";
 import SearchForm from "./components/SearchForm";
 import ModelInfo from "./components/ModelInfo";
 import Status from "./components/Status";
@@ -15,6 +17,9 @@ type Phase = "idle" | "searching" | "scoring";
 
 export default function App() {
   const { t } = useLang();
+  const [route] = useState<NavbarRoute>(() =>
+    window.location.pathname === "/top" ? "matcher" : "landing"
+  );
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -79,9 +84,18 @@ export default function App() {
     }
   };
 
+  if (route === "landing") {
+    return (
+      <>
+        <Navbar route="landing" />
+        <LandingHero />
+      </>
+    );
+  }
+
   return (
     <>
-      <Navbar />
+      <Navbar route="matcher" />
       <Hero />
 
       <main className={`container${matches.length > 0 ? " layout-split" : ""}`}>

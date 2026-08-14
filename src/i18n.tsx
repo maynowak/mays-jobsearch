@@ -16,6 +16,11 @@ const en: Dict = {
   "hero.tagline":
     "Live jobs from the Arbeitnow board, scored by AI against your profile.",
 
+  "landing.claim": "Find jobs that really fit you.",
+  "landing.text":
+    "Discover current jobs and let AI check how well they match your profile.",
+  "landing.cta": "Find jobs →",
+
   "search.skills": "Skills",
   "search.skillsPh": "e.g. JavaScript, React, Node.js, SQL",
   "search.targetRole": "Target role",
@@ -86,6 +91,11 @@ const de: Dict = {
 
   "hero.tagline":
     "Live-Jobs von der Arbeitnow-Börse, per KI gegen dein Profil bewertet.",
+
+  "landing.claim": "Finde Jobs, die wirklich zu dir passen.",
+  "landing.text":
+    "Entdecke aktuelle Jobs und lass KI prüfen, wie gut sie zu deinem Profil passen.",
+  "landing.cta": "Jobs finden →",
 
   "search.skills": "Skills",
   "search.skillsPh": "z. B. JavaScript, React, Node.js, SQL",
