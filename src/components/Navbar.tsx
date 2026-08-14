@@ -84,7 +84,7 @@ export default function Navbar({ route }: Props) {
   return (
     <header className="navbar">
       <nav className="nav-inner" aria-label={t("nav.aria")}>
-        <a href={isLanding ? "/" : "#search-form"} className="navbar-title">
+        <a href="/" className="navbar-title">
           May&rsquo;s Job Matcher
         </a>
 
