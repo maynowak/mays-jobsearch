@@ -1052,6 +1052,24 @@ body {
   font-size: 0.95rem;
 }
 
+.results-toggle {
+  margin-top: 12px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #37506e;
+  background: #fffdf9;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.results-toggle:hover {
+  border-color: #c9b28a;
+}
+
 .match-list {
   list-style: none;
   margin: 0;

@@ -50,6 +50,8 @@ export interface MatchResponse {
   meta?: {
     evaluated?: number;
     note?: string;
+    totalFound?: number;
+    displayedInitially?: number;
   };
 }
 

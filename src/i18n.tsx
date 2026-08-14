@@ -93,6 +93,11 @@ const en: Dict = {
   "results.yourTop": "Your top match",
   "results.yourTopN": "Your top {count} matches",
   "results.scored": "Scored {count} jobs by AI against your profile.",
+  "results.yourBest": "BEST MATCHES",
+  "results.allMatches": "ALL MATCHES",
+  "results.topOf": "Top {shown} of {total} matches",
+  "results.expandAll": "Show all {count} matches",
+  "results.collapse": "Show only top matches",
 
   "match.locationNotStated": "Location not stated",
   "match.remote": "Remote",
@@ -210,6 +215,11 @@ const de: Dict = {
   "results.yourTop": "Dein bester Treffer",
   "results.yourTopN": "Deine {count} besten Treffer",
   "results.scored": "{count} Jobs wurden per KI gegen dein Profil bewertet.",
+  "results.yourBest": "BESTE TREFFER",
+  "results.allMatches": "ALLE TREFFER",
+  "results.topOf": "Top {shown} von {total} Treffern",
+  "results.expandAll": "Alle {count} Treffer anzeigen",
+  "results.collapse": "Nur Top-Matches anzeigen",
 
   "match.locationNotStated": "Ort nicht angegeben",
   "match.remote": "Remote",

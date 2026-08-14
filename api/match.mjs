@@ -46,7 +46,9 @@ Evaluate how well EACH job fits the candidate. Score every job from 0 to 100, wh
 Respond ONLY with valid JSON in exactly this shape (no markdown fences, no commentary):
 {"matches":[{"slug":"<exact job slug from the list>","score":<integer 0-100>,"why":"<EXACTLY two concise sentences explaining why this job fits the candidate>","prepare":"<ONE specific question the candidate should prepare for this interview>"}]}
 
-Include the top 5 jobs with the highest scores, sorted by score descending. "why" must be exactly two sentences. "prepare" must be exactly one question.`;
+There are exactly ${jobs.length} jobs. Include ALL ${jobs.length} jobs in the "matches" array, one entry per job, and sort the array by score descending (highest score first).
+
+Only the 5 highest-scoring jobs must contain a filled "why" (exactly two sentences) and "prepare" (exactly one question). For every other job set "why" and "prepare" to an empty string "".`;
 }
 
 function toScore(raw) {
@@ -125,7 +127,7 @@ export default async function handler(req, res) {
         "You are a precise career-matching assistant. You always reply with valid JSON only.",
       prompt,
       json: true,
-      maxTokens: 1200,
+      maxTokens: 4000,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });
     const parsed = parseMatches(content);
@@ -145,10 +147,16 @@ export default async function handler(req, res) {
         prepare: m.prepare,
         job: bySlug.get(m.slug) || null,
       }))
-      .filter((m) => m.job)
-      .slice(0, 5);
+      .filter((m) => m.job);
 
-    return res.status(200).json({ matches, meta: { evaluated: jobs.length } });
+    return res.status(200).json({
+      matches,
+      meta: {
+        evaluated: matches.length,
+        totalFound: jobs.length,
+        displayedInitially: 5,
+      },
+    });
   } catch (err) {
     if (err instanceof HttpError) {
       return res.status(err.status).json({ error: err.message, code: err.code });
