@@ -39,6 +39,7 @@ export default function SearchForm({ phase, onSubmit, model }: Props) {
       : phase === "scoring"
         ? t("search.scoring")
         : t("search.button");
+  const loadingLabel = busy ? label : "";
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -153,7 +154,13 @@ export default function SearchForm({ phase, onSubmit, model }: Props) {
         </button>
         </div>
       ) : (
-        <CvUpload busy={busy} onSubmit={onSubmit} onManual={() => setMode("manual")} model={model} />
+        <CvUpload
+          busy={busy}
+          loadingLabel={loadingLabel}
+          onSubmit={onSubmit}
+          onManual={() => setMode("manual")}
+          model={model}
+        />
       )}
     </form>
   );

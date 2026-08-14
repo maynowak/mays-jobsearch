@@ -10,6 +10,7 @@ const MIN_READABLE_CHARS = 20;
 
 interface Props {
   busy: boolean;
+  loadingLabel: string;
   onSubmit: (profile: Profile) => void;
   onManual: () => void;
   model: string | null;
@@ -17,7 +18,7 @@ interface Props {
 
 type Phase = "idle" | "reading" | "creating" | "ready";
 
-export default function CvUpload({ busy, onSubmit, onManual, model }: Props) {
+export default function CvUpload({ busy, loadingLabel, onSubmit, onManual, model }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
@@ -106,7 +107,13 @@ export default function CvUpload({ busy, onSubmit, onManual, model }: Props) {
 
   if (phase === "ready" && suggested) {
     return (
-      <EditableProfile suggested={suggested} busy={busy} onSubmit={onSubmit} onManual={onManual} />
+      <EditableProfile
+        suggested={suggested}
+        busy={busy}
+        loadingLabel={loadingLabel}
+        onSubmit={onSubmit}
+        onManual={onManual}
+      />
     );
   }
 
@@ -185,11 +192,13 @@ export default function CvUpload({ busy, onSubmit, onManual, model }: Props) {
 function EditableProfile({
   suggested,
   busy,
+  loadingLabel,
   onSubmit,
   onManual,
 }: {
   suggested: SuggestedProfile;
   busy: boolean;
+  loadingLabel: string;
   onSubmit: (profile: Profile) => void;
   onManual: () => void;
 }) {
@@ -299,7 +308,8 @@ function EditableProfile({
       </div>
 
       <button type="button" className="cv-confirm" onClick={confirm} disabled={busy}>
-        {t("cv.confirm")}
+        <span className="btn-label">{busy ? loadingLabel : t("cv.confirm")}</span>
+        {busy && <span className="spinner" />}
       </button>
 
       <button type="button" className="btn-ghost cv-manual" onClick={onManual}>
