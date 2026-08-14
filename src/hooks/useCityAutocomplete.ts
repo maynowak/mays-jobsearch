@@ -17,7 +17,7 @@ interface OpenPlzLocality {
 
 const MIN_LENGTH = 3;
 const DEBOUNCE_MS = 300;
-const MAX_SUGGESTIONS = 8;
+const MAX_SUGGESTIONS = 5;
 const OPENPLZ_URL = "https://openplzapi.org/de/Localities";
 
 function dedupeLocations(list: OpenPlzLocality[]): OpenPlzLocality[] {
@@ -57,7 +57,12 @@ export function useCityAutocomplete(): {
 
     const params = new URLSearchParams();
     params.set("pageSize", String(MAX_SUGGESTIONS));
-    params.set(/^\d+$/.test(query) ? "postalCode" : "name", query);
+    if (/^\d+$/.test(query)) {
+      const postalCode = query.length < 5 ? `^${query}` : query;
+      params.set("postalCode", postalCode);
+    } else {
+      params.set("name", query);
+    }
 
     try {
       const res = await fetch(`${OPENPLZ_URL}?${params.toString()}`, {
