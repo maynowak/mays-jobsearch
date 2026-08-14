@@ -1,14 +1,14 @@
 :root {
-  --bg: #f4f6fb;
-  --surface: #ffffff;
+  --bg: #f4eee2;
+  --surface: #fffdf8;
   --text: #1b2333;
-  --muted: #64748b;
+  --muted: #6b6255;
   --brand: #4f46e5;
   --brand-dark: #4338ca;
   --accent: #22d3ee;
-  --border: #e2e8f0;
+  --border: #e3d8c2;
   --radius: 14px;
-  --shadow: 0 10px 30px rgba(30, 41, 59, 0.08);
+  --shadow: 0 10px 30px rgba(92, 76, 50, 0.1);
   --green: #16a34a;
   --amber: #d97706;
   --red: #dc2626;
@@ -228,18 +228,11 @@ body {
 
 .hero {
   position: relative;
-  color: #fff;
-  padding: 64px 20px 48px;
+  color: var(--text);
+  padding: 56px 20px 44px;
   text-align: left;
-  background:
-    linear-gradient(
-      to right,
-      rgba(24, 26, 58, 0.82) 0%,
-      rgba(49, 46, 129, 0.55) 45%,
-      rgba(76, 29, 149, 0.15) 72%,
-      rgba(34, 211, 238, 0) 100%
-    ),
-    url("assets/images/job-matcher-hero.png") center / cover no-repeat;
+  background: linear-gradient(120deg, #f6f1e7 0%, #ece3d3 55%, #dfd3bf 100%);
+  border-bottom: 1px solid rgba(190, 172, 140, 0.4);
 }
 
 .hero-inner {
@@ -250,27 +243,18 @@ body {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3rem);
   letter-spacing: -0.03em;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
 }
 
 .tagline {
   margin: 12px 0 0;
   max-width: 560px;
   font-size: 1.05rem;
-  opacity: 0.95;
+  color: #6b5f4b;
 }
 
 @media (max-width: 560px) {
   .hero {
     padding: 48px 20px 40px;
-    background:
-      linear-gradient(
-        to right,
-        rgba(24, 26, 58, 0.85) 0%,
-        rgba(49, 46, 129, 0.72) 60%,
-        rgba(76, 29, 149, 0.4) 100%
-      ),
-      url("assets/images/job-matcher-hero.png") 70% center / cover no-repeat;
   }
 }
 
@@ -292,13 +276,13 @@ body {
   color: #fff;
   background:
     linear-gradient(
-      to right,
-      rgba(24, 26, 58, 0.82) 0%,
-      rgba(49, 46, 129, 0.5) 45%,
-      rgba(76, 29, 149, 0.12) 72%,
-      rgba(34, 211, 238, 0) 100%
+      115deg,
+      rgba(24, 19, 12, 0.66) 0%,
+      rgba(24, 19, 12, 0.5) 30%,
+      rgba(24, 19, 12, 0.22) 55%,
+      rgba(24, 19, 12, 0.06) 100%
     ),
-    url("assets/images/job-matcher-hero.png") center / cover no-repeat;
+    url("assets/images/job-matcher-next-step.png") 55% center / cover no-repeat;
 }
 
 .landing-hero-inner {
@@ -341,7 +325,7 @@ body {
 
 @media (max-width: 560px) {
   .landing-hero {
-    background-position: 70% center;
+    background-position: 72% center;
   }
   .landing-hero-inner {
     padding: 72px 20px;
@@ -370,6 +354,15 @@ body {
   margin-top: -28px;
   position: relative;
   z-index: 2;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf7ef 55%, #f5efe2 100%);
+  border-color: #e3d7bf;
+  box-shadow: 0 14px 38px rgba(92, 76, 50, 0.16);
+}
+
+.search-card .step-heading {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
 }
 
 .field {
@@ -400,17 +393,21 @@ body {
 .field input {
   padding: 12px 14px;
   font-size: 1rem;
-  border: 1px solid var(--border);
+  border: 1px solid #e2d7c1;
   border-radius: 10px;
-  background: #fbfcfe;
+  background: #fffdf9;
   color: var(--text);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+.field input::placeholder {
+  color: #a49883;
+}
+
 .field input:focus {
   outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  border-color: #c9b28a;
+  box-shadow: 0 0 0 3px rgba(201, 178, 138, 0.3);
 }
 
 #find-btn {
@@ -462,6 +459,8 @@ body {
 .alert-card {
   margin-top: 24px;
   padding: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf7ef 55%, #f5efe2 100%);
+  border-color: #e3d7bf;
 }
 
 .alert-card h2 {
@@ -673,14 +672,14 @@ body {
 .prepare {
   margin: 10px 0 0;
   padding: 10px 14px;
-  background: #f5f3ff;
-  border-left: 4px solid var(--brand);
+  background: #faf4e8;
+  border-left: 4px solid #c9b28a;
   border-radius: 0 8px 8px 0;
   font-size: 0.95rem;
 }
 
 .prepare strong {
-  color: var(--brand-dark);
+  color: #8a6f43;
 }
 
 .apply-link {

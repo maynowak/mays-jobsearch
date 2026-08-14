@@ -31,6 +31,7 @@ export default function SearchForm({ phase, onSubmit }: Props) {
 
   return (
     <form id="search-form" onSubmit={handleSubmit} noValidate>
+        <h2 className="step-heading">{t("search.step")}</h2>
         <div className="field">
           <label htmlFor="skills">{t("search.skills")}</label>
           <input

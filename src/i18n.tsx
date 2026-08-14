@@ -21,6 +21,7 @@ const en: Dict = {
     "Discover current jobs and let AI check how well they match your profile.",
   "landing.cta": "Find jobs →",
 
+  "search.step": "1. Your search",
   "search.skills": "Skills",
   "search.skillsPh": "e.g. JavaScript, React, Node.js, SQL",
   "search.targetRole": "Target role",
@@ -33,7 +34,7 @@ const en: Dict = {
 
   "model.label": "AI model:",
 
-  "alerts.heading": "Daily job alerts",
+  "alerts.heading": "2. Daily job alerts",
   "alerts.hint": "Get an email every morning with new matches for your current search.",
   "alerts.email": "Email",
   "alerts.emailPh": "you@example.com",
@@ -97,6 +98,7 @@ const de: Dict = {
     "Entdecke aktuelle Jobs und lass KI prüfen, wie gut sie zu deinem Profil passen.",
   "landing.cta": "Jobs finden →",
 
+  "search.step": "1. Deine Suche",
   "search.skills": "Skills",
   "search.skillsPh": "z. B. JavaScript, React, Node.js, SQL",
   "search.targetRole": "Zielrolle",
@@ -109,7 +111,7 @@ const de: Dict = {
 
   "model.label": "KI-Modell:",
 
-  "alerts.heading": "Tägliche Job-Benachrichtigungen",
+  "alerts.heading": "2. Tägliche Job-Benachrichtigungen",
   "alerts.hint":
     "Erhalte jeden Morgen eine E-Mail mit neuen Treffern für deine aktuelle Suche.",
   "alerts.email": "E-Mail",
