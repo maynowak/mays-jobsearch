@@ -38,6 +38,9 @@ const en: Dict = {
   "cv.manual": "Enter manually",
   "cv.tabCv": "Upload CV",
   "cv.uploadAction": "Upload my CV (PDF)",
+  "cv.dropZone": "Drop your CV here",
+  "cv.dropZoneAlt": "or choose a PDF",
+  "cv.dropZoneOver": "Drop PDF here",
   "cv.privacyNote":
     "Private: Your PDF stays on your device. Only the extracted text is sent to the AI to create your profile.",
   "cv.reading": "Reading CV locally…",
@@ -138,6 +141,9 @@ const de: Dict = {
   "cv.manual": "Manuell eingeben",
   "cv.tabCv": "Lebenslauf hochladen",
   "cv.uploadAction": "Meinen Lebenslauf hochladen (PDF)",
+  "cv.dropZone": "Lebenslauf hier ablegen",
+  "cv.dropZoneAlt": "oder PDF auswählen",
+  "cv.dropZoneOver": "PDF hier ablegen",
   "cv.privacyNote":
     "Privat: Die PDF bleibt auf deinem Gerät. Nur der gelesene Text wird zur Profilerstellung an die KI gesendet.",
   "cv.reading": "Lebenslauf wird lokal gelesen …",

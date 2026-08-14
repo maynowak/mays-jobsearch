@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { ChangeEvent } from "react";
+import { useRef, useState } from "react";
+import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import type { Profile, SuggestedProfile } from "../types";
 import { createProfile } from "../api";
 import { useLang } from "../i18n";
@@ -18,12 +18,20 @@ type Phase = "idle" | "reading" | "creating" | "ready";
 
 export default function CvUpload({ busy, onSubmit, onManual }: Props) {
   const { t } = useLang();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dragDepth = useRef(0);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [suggested, setSuggested] = useState<SuggestedProfile | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const processing = phase === "reading" || phase === "creating";
 
   const handleFile = async (file: File) => {
+    if (processing) return;
     setError(null);
+    setFileName(file.name);
 
     const mimeOk = file.type === "application/pdf" || file.type === "";
     const extOk = file.name.toLowerCase().endsWith(".pdf");
@@ -61,39 +69,102 @@ export default function CvUpload({ busy, onSubmit, onManual }: Props) {
     if (file) void handleFile(file);
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLLabelElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      inputRef.current?.click();
+    }
+  };
+
+  const handleDragEnter = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    dragDepth.current += 1;
+    setDragOver(true);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    dragDepth.current -= 1;
+    if (dragDepth.current <= 0) {
+      dragDepth.current = 0;
+      setDragOver(false);
+    }
+  };
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    dragDepth.current = 0;
+    setDragOver(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void handleFile(file);
+  };
+
   if (phase === "ready" && suggested) {
     return (
       <EditableProfile suggested={suggested} busy={busy} onSubmit={onSubmit} onManual={onManual} />
     );
   }
 
+  const mainText = processing
+    ? fileName ?? ""
+    : dragOver
+      ? t("cv.dropZoneOver")
+      : t("cv.dropZone");
+  const altText = processing
+    ? phase === "reading"
+      ? t("cv.reading")
+      : t("cv.creating")
+    : t("cv.dropZoneAlt");
+
   return (
     <div id="cv-panel" className="cv-panel">
       <p className="cv-privacy">{t("cv.privacyNote")}</p>
 
-      <label className="cv-upload">
-        <span>{t("cv.uploadAction")}</span>
+      <label
+        className={`cv-dropzone${dragOver ? " cv-dropzone-over" : ""}`}
+        tabIndex={0}
+        role="button"
+        aria-label={t("cv.uploadAction")}
+        onKeyDown={handleKeyDown}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <span className="cv-dropzone-icon" aria-hidden="true">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <path d="M14 2v6h6" />
+            <path d="M12 12v6" />
+            <path d="M9 15l3-3 3 3" />
+          </svg>
+        </span>
+        <span className="cv-dropzone-main">{mainText}</span>
+        <span className="cv-dropzone-status" role={processing ? "status" : undefined}>
+          {processing && <span className="spinner" aria-hidden="true" />}
+          <span>{altText}</span>
+        </span>
         <input
+          ref={inputRef}
           type="file"
           accept="application/pdf,.pdf"
           onChange={handleChange}
           className="visually-hidden"
         />
       </label>
-
-      {phase === "reading" && (
-        <p className="cv-status" role="status">
-          <span className="spinner" aria-hidden="true" />
-          {t("cv.reading")}
-        </p>
-      )}
-
-      {phase === "creating" && (
-        <p className="cv-status" role="status">
-          <span className="spinner" aria-hidden="true" />
-          {t("cv.creating")}
-        </p>
-      )}
 
       {error && (
         <p className="alert alert-error cv-error" role="alert">
