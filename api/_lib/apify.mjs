@@ -180,9 +180,12 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
         const read = await readDataset(apiToken, dataset.datasetId);
         if (read.records) {
           records = read.records;
-        } else {
-          console.error("[apify] L2 dataset read failed:", dataset.datasetId, read.error, "datasetAgeSec:", Math.round((Date.now() - dataset.createdAt) / 1000));
+        } else if (read.error.startsWith("upstream_4")) {
+          console.error("[apify] L2 dataset gone:", dataset.datasetId, read.error);
           await cacheDel(datasetKey);
+        } else {
+          console.error("[apify] L2 dataset read failed (transient):", dataset.datasetId, read.error);
+          return emptyResult(read.error);
         }
       } else {
         console.error("[apify] L2 dataset stale, ageSec:", dataset.createdAt ? Math.round((Date.now() - dataset.createdAt) / 1000) : "n/a");
