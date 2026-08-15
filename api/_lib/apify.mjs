@@ -181,8 +181,11 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
         if (read.records) {
           records = read.records;
         } else {
+          console.error("[apify] L2 dataset read failed:", dataset.datasetId, read.error, "datasetAgeSec:", Math.round((Date.now() - dataset.createdAt) / 1000));
           await cacheDel(datasetKey);
         }
+      } else {
+        console.error("[apify] L2 dataset stale, ageSec:", dataset.createdAt ? Math.round((Date.now() - dataset.createdAt) / 1000) : "n/a");
       }
     }
 
