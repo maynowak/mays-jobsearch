@@ -69,3 +69,4 @@ Model selection, CV upload and second job source.
 - Top-5 / Top-10 result presentation: the UI shows the top 5 initially and expands locally to all evaluated matches without a second request.
 - Found/evaluated/displayed metadata: `/api/match` returns `totalFound`, `evaluated` and `displayedInitially`; the status line reports them honestly (e.g. "52 Jobs gefunden · 10 passende Kandidaten mit KI bewertet").
 - CV matching loading state: the confirm button shows a loading state while the profile is being matched.
+- Automatic model fallback: when the selected/recommended free model is temporarily unavailable (`model_unavailable`), the client retries the same operation with up to two other eligible free models from the `/api/models` catalogue (max 3 attempts), shows a subtle notice when a fallback was used, and never permanently changes the user's model selection. Applies to `/api/profile`, `/api/match` and `/api/cover-letter`.

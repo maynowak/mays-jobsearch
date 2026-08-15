@@ -107,6 +107,7 @@ Frontend behavior:
 - The selector is a custom accessible listbox (ARIA combobox/listbox semantics, keyboard navigation, type-ahead, outside-click close).
 - The popover flips upward automatically when there is not enough space below the trigger.
 - The model ID is not presented as a large technical UI element — the friendly model name is shown.
+- Automatic fallback (`withModelFallback` in `src/api.ts`): if the selected model fails with `model_unavailable`, the same operation is retried with up to two other eligible free models (deterministic order: selected → recommended → remaining catalogue order, max 3 attempts). A subtle notice is shown when a fallback was used; the user's selection is never permanently changed. Applies to `/api/profile`, `/api/match` and `/api/cover-letter`. The catalogue's presence of a model only means "currently eligible per metadata" — availability is discovered at runtime.
 
 ## CV upload + profile extraction
 
