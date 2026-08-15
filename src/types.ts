@@ -70,6 +70,7 @@ export interface ModelsResponse {
   defaultModel?: string;
   fallbackModel?: string | null;
   recommendedModel?: string | null;
+  fallbackMaxAttempts?: number;
 }
 
 export type StatusType = "error" | "info" | "warn";

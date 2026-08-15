@@ -107,7 +107,7 @@ Frontend behavior:
 - The selector is a custom accessible listbox (ARIA combobox/listbox semantics, keyboard navigation, type-ahead, outside-click close).
 - The popover flips upward automatically when there is not enough space below the trigger.
 - The model ID is not presented as a large technical UI element — the friendly model name is shown.
-- Automatic fallback (`withModelFallback` in `src/api.ts`): if the selected model fails with `model_unavailable`, the same operation is retried with up to two other eligible free models (deterministic order: selected → recommended → remaining catalogue order, max 3 attempts). A subtle notice is shown when a fallback was used; the user's selection is never permanently changed. Applies to `/api/profile`, `/api/match` and `/api/cover-letter`. The catalogue's presence of a model only means "currently eligible per metadata" — availability is discovered at runtime.
+- Automatic fallback (`withModelFallback` in `src/api.ts`): if the selected model fails with `model_unavailable`, the same operation is retried with up to two other eligible free models (deterministic order: selected → recommended → remaining catalogue order). The attempt cap defaults to 3 and is configurable via `MODEL_FALLBACK_MAX_ATTEMPTS`, which `/api/models` exposes as `fallbackMaxAttempts` (no source edit needed). A subtle notice is shown when a fallback was used; the user's selection is never permanently changed. Applies to `/api/profile`, `/api/match` and `/api/cover-letter`. The catalogue's presence of a model only means "currently eligible per metadata" — availability is discovered at runtime.
 
 ## CV upload + profile extraction
 
@@ -158,19 +158,28 @@ The Apify source uses a two-layer cache to avoid unnecessary paid Actor runs.
 Key concept: the cache keys are built from the normalized **query + location**:
 
 - L1 key: `apify-jobs:<query>|<location>` — Redis job-record cache, TTL **600 seconds (10 min)** (`APIFY_CACHE_TTL_SEC`).
-- L2 key: `apify-dataset:<query>|<location>` — Apify Dataset reuse metadata `{ datasetId, createdAt }`, TTL 24 h; freshness window **24 hours** (`APIFY_DATASET_MAX_AGE_SEC` / `APIFY_DATASET_MAX_AGE_MS`).
+- L2 key: `apify-dataset:<query>|<location>` — Apify Dataset reuse metadata `{ datasetId, createdAt }`; the application freshness window is **time-of-day aware** (see below).
 
 Behavior:
 
 1. First search (Redis miss, no usable dataset) → start an Apify Actor run → dataset created → `datasetId` retained in Redis → records read → L1 populated.
 2. Repeated search within 10 minutes → L1 Redis hit → no dataset read, no Actor run.
-3. After L1 expiry but within the dataset age window → Redis miss → existing Apify dataset is reused → no new Actor run.
+3. After L1 expiry but within the dataset freshness window → Redis miss → existing Apify dataset is reused → no new Actor run.
 4. Dataset no longer available (read returns `404` / `410`) → cache entry removed → new Actor run.
 
 Cost policy:
 
 - Only `404` / `410` (dataset truly gone) triggers a refresh.
 - Transient errors (`429`, other 5xx, network, parse) **keep** the existing `datasetId` and return an empty result instead of discarding the dataset. The point is to avoid unnecessary paid Actor runs — dataset reuse avoids new Actor compute (dataset reads are the low-cost path).
+
+### Time-of-day dataset refresh
+
+The L2 dataset freshness window is no longer a fixed 24 h — it depends on the server-local hour (`api/_lib/config.mjs`):
+
+- Peak hours **08:00–18:00** (server local time; UTC on Vercel) → reuse window `APIFY_DATASET_REFRESH_PEAK_HOURS` (default **6 h**) — fresher data during high-traffic time.
+- Off-peak hours **18:00–08:00** → reuse window `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default **12 h**) — longer reuse, fewer paid runs.
+
+`datasetRefreshHours(date)` / `datasetRefreshMs(date)` compute the window; `isPeakTime(date)` decides which one applies. The Redis TTL written for the dataset metadata matches the same window.
 
 ## Apify async run architecture
 
@@ -223,6 +232,54 @@ The UI distinguishes three numbers honestly:
 
 Example: "52 Jobs gefunden · 10 passende Kandidaten mit KI bewertet", then "Top 5 von 10", and after expansion "Alle 10 bewerteten Treffer".
 
+## Cost guard & usage
+
+The app keeps its own monthly usage counters (Upstash Redis, month-scoped keys `mj-usage:<name>:<YYYY-MM>`) and a read-only diagnostics endpoint `GET /api/usage`.
+
+### Central configuration (`api/_lib/config.mjs`)
+
+All tunables are environment variables with safe defaults (see `docs/DEPLOYMENT.md`). `getConfig()` reads the env on every call, so values can be changed on Vercel without touching source code:
+
+| Config | Env var | Default |
+|---|---|---|
+| OpenRouter advisory spend limit (USD) | `OPENROUTER_MONTHLY_SOFT_LIMIT_USD` | 0.80 |
+| Apify advisory spend limit (USD) | `APIFY_MONTHLY_SOFT_LIMIT_USD` | 4.00 |
+| Max AI fallback attempts | `MODEL_FALLBACK_MAX_ATTEMPTS` | 3 |
+| Apify dataset reuse window, peak hours | `APIFY_DATASET_REFRESH_PEAK_HOURS` | 6 |
+| Apify dataset reuse window, off-peak hours | `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` | 12 |
+| AI request-count backstop | `OPENROUTER_MONTHLY_MAX_REQUESTS` | 1000 |
+| Apify run-count backstop | `APIFY_MONTHLY_MAX_RUNS` | 30 |
+
+### Counters (`api/_lib/usage.mjs`)
+
+- OpenRouter: `requests`, `failures`, `fallbackAttempts` (from the client's `x-mj-attempt` header, attempt > 1), plus a per-model hash.
+- Apify: `runs`, `datasetReuses`, `cacheHits`, `cacheMisses`.
+
+Counters are incremented with atomic Redis `INCR` / `HINCRBY` (helpers in `api/_lib/cache.mjs`); TTL is set only on first write.
+
+### What the guards do (and do not)
+
+- These are **application-side counters, not provider billing**. The OpenRouter and Apify dashboards remain authoritative for real spend.
+- The `*_SOFT_LIMIT_USD` values are advisory operator thresholds surfaced in `/api/usage`; the app does **not** block on them (it cannot derive exact spend from its own counters).
+- **OpenRouter:** before each AI call, `openRouterLimitReached()` checks the monthly request count. At the backstop it throws `503 limit_reached` (fail fast — no provider call, no counter increment). The client's `withModelFallback` stays bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`, which the server exposes via `/api/models` (`fallbackMaxAttempts`).
+- **Apify:** before starting a new Actor run, `apifyRunLimitReached()` checks the monthly run count. At the backstop, no new paid run is started and the source returns `emptyResult("limit_reached")` — cached and dataset-reused searches keep working; Arbeitnow is unaffected.
+- A missing Redis connection degrades gracefully: `cacheCommand` returns `null`, so counters read as `0` and the guards never block.
+
+### Diagnostics (`/api/usage`)
+
+`GET /api/usage` returns the snapshot from `getUsageSnapshot()` — counters, configured limits, and clarifying notes. It contains **no secrets** (no API keys, no tokens, no Redis credentials). Example shape:
+
+```json
+{ "generatedAt": "...", "month": "2026-08",
+  "openRouter": { "requestCount": 1, "failureCount": 0, "fallbackAttempts": 0, "byModel": { "openai/gpt-4o-mini": 1 } },
+  "apify": { "actorRuns": 1, "datasetReuses": 0, "cacheHits": 0, "cacheMisses": 1 },
+  "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "apifyMonthlySoftLimitUsd": 4.0,
+               "openRouterMonthlyMaxRequests": 1000, "apifyMonthlyMaxRuns": 30,
+               "modelFallbackMaxAttempts": 3,
+               "apifyDatasetRefreshPeakHours": 6, "apifyDatasetRefreshOffpeakHours": 12 },
+  "notes": { "openRouter": "...", "apify": "...", "limits": "..." } }
+```
+
 ## Redis (Upstash)
 
 Redis serves multiple, distinct purposes with different TTLs — do not treat them as one cache:
@@ -230,14 +287,15 @@ Redis serves multiple, distinct purposes with different TTLs — do not treat th
 | Purpose | Key pattern | Retention |
 |---|---|---|
 | Apify job-record cache (L1) | `apify-jobs:<query>\|<location>` | Redis TTL 600 s (10 min) |
-| Apify dataset reuse metadata (L2) | `apify-dataset:<query>\|<location>` | Redis TTL 24 h; application freshness window 24 h |
+| Apify dataset reuse metadata (L2) | `apify-dataset:<query>\|<location>` | Redis TTL + application freshness window: peak 6 h / off-peak 12 h (configurable) |
 | CV profile cache | `cv-profile:<hash>` | Redis TTL 30 days |
 | Alert subscriptions | `alerts` (hash) | persistent (no TTL) |
+| Usage counters (monthly) | `mj-usage:<name>:<YYYY-MM>` (+ `mj-usage:openrouter:model:<YYYY-MM>` hash) | Redis TTL 62 days; month-scoped, reset by month rollover |
 
 Clearly distinguish:
 
 - **Redis TTL** — how long the value stays in Redis (`SETEX`).
-- **Apify dataset age** — application freshness check against `dataset.createdAt` (24 h).
+- **Apify dataset age** — application freshness check against `dataset.createdAt` (time-of-day window).
 - **Application refresh policy** — only `404`/`410` dataset reads trigger a new Actor run.
 
 ## State model (`App.tsx`)
@@ -276,14 +334,25 @@ Shared job logic:
 ### `api/_lib/ai.mjs`
 
 - `chat(...)` — one shared OpenRouter call with consistent error mapping (401 / 402 / 429 / network / malformed); resolves/validates a free model per request.
+- Cost guard: checks `openRouterLimitReached()` before each call and throws `503 limit_reached` when the monthly request backstop is hit; increments the monthly request counter (and per-model hash), counts failures, and counts fallback attempts when `attempt > 1`.
 
 ### `api/_lib/cache.mjs`
 
-- Upstash Redis REST helpers: `cacheGet`, `cacheSet` (`SETEX`, default TTL 600 s), `cacheDel`.
+- Upstash Redis REST helpers: `cacheGet`, `cacheSet` (`SETEX`, default TTL 600 s), `cacheDel`, plus counter primitives `cacheIncr`, `cacheHIncrBy`, `cacheHGetAll`.
 
 ### `api/_lib/apify.mjs`
 
 - Apify Arbeitsagentur source: async run + polling, dataset read, two-layer cache, 404/410-only refresh policy.
+- Time-of-day dataset freshness (`datasetRefreshMs`), usage counters (cache hit/miss, dataset reuse, Actor runs), and the `apifyRunLimitReached()` guard that stops new paid runs at the monthly run backstop.
+
+### `api/_lib/config.mjs`
+
+- `getConfig()` — central env configuration with safe defaults (see Cost guard & usage).
+- `isPeakTime(date)` / `datasetRefreshHours(date)` / `datasetRefreshMs(date)` — time-of-day Apify refresh policy.
+
+### `api/_lib/usage.mjs`
+
+- Monthly Redis usage counters (OpenRouter + Apify), guard checks (`openRouterLimitReached`, `apifyRunLimitReached`), and `getUsageSnapshot()` for `/api/usage`.
 
 ### `api/_lib/jobs.mjs`
 
@@ -305,6 +374,7 @@ Shared job logic:
 | `/api/cover-letter` | POST | AI cover letter for one job |
 | `/api/alerts` | POST / DELETE / GET | Manage digest subscriptions |
 | `/api/cron/digest` | POST | Daily email digest (cron protected) |
+| `/api/usage` | GET | Read-only usage counters + configured limits (no secrets) |
 
 ## Data contracts
 
@@ -326,7 +396,9 @@ Shared job logic:
 
 (returns the cached profile on hash hit).
 
-### `/api/models` → `{ models[], defaultModel, fallbackModel, recommendedModel }`
+### `/api/models` → `{ models[], defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`
+
+`fallbackMaxAttempts` mirrors `MODEL_FALLBACK_MAX_ATTEMPTS` (default 3) and configures the client's `withModelFallback` attempt cap without editing source code.
 
 ### `/api/match` → `{ matches[], meta }`
 

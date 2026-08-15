@@ -88,7 +88,7 @@ export default function App() {
         initialModel: effectiveModel,
         availableModels: models.map((model) => model.id),
         recommendedModel,
-        request: (model) => fetchMatches(submitted, board.jobs, model),
+        request: (model, attempt) => fetchMatches(submitted, board.jobs, model, attempt),
       });
 
       if (!matchResult.matches.length) {

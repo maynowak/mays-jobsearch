@@ -70,3 +70,16 @@ Model selection, CV upload and second job source.
 - Found/evaluated/displayed metadata: `/api/match` returns `totalFound`, `evaluated` and `displayedInitially`; the status line reports them honestly (e.g. "52 Jobs gefunden · 10 passende Kandidaten mit KI bewertet").
 - CV matching loading state: the confirm button shows a loading state while the profile is being matched.
 - Automatic model fallback: when the selected/recommended free model is temporarily unavailable (`model_unavailable`), the client retries the same operation with up to two other eligible free models from the `/api/models` catalogue (max 3 attempts), shows a subtle notice when a fallback was used, and never permanently changes the user's model selection. Applies to `/api/profile`, `/api/match` and `/api/cover-letter`.
+
+## Unreleased — 2026-08-15
+
+Cost control & usage guard.
+
+- Central server-side configuration (`api/_lib/config.mjs`): env vars with safe defaults — `OPENROUTER_MONTHLY_SOFT_LIMIT_USD=0.80`, `APIFY_MONTHLY_SOFT_LIMIT_USD=4.00`, `MODEL_FALLBACK_MAX_ATTEMPTS=3`, `APIFY_DATASET_REFRESH_PEAK_HOURS=6`, `APIFY_DATASET_REFRESH_OFFPEAK_HOURS=12`, plus counter backstops `OPENROUTER_MONTHLY_MAX_REQUESTS=1000` and `APIFY_MONTHLY_MAX_RUNS=30`.
+- Monthly usage counters in Upstash Redis (`api/_lib/usage.mjs`, month-scoped keys): OpenRouter requests/failures/fallback attempts/per-model and Apify Actor runs/dataset reuses/cache hits/misses.
+- Read-only diagnostics endpoint `GET /api/usage` — counters + configured limits, no secrets.
+- OpenRouter guard: at the monthly request backstop, AI endpoints fail fast with `503 limit_reached` (no provider call); fallback stays bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`.
+- Apify guard: at the monthly run backstop no new paid Actor runs are started (graceful empty result); cached and dataset-reused searches keep working.
+- Time-of-day Apify dataset refresh: peak hours (08:00–18:00 server local time) reuse the dataset up to 6 h, off-peak up to 12 h (configurable) — fewer paid runs.
+- The soft limits are explicitly NOT billing: the app cannot compute exact provider spend from its own counters, so the provider dashboards remain authoritative and the USD limits only surface in `/api/usage`.
+- `MODEL_FALLBACK_MAX_ATTEMPTS` is exposed to the client via `/api/models` (`fallbackMaxAttempts`) so the attempt cap is configurable without editing source; the client forwards the fallback attempt index via the `x-mj-attempt` header for counting.

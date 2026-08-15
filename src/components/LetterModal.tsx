@@ -39,7 +39,8 @@ export default function LetterModal({
       initialModel: model,
       availableModels,
       recommendedModel,
-      request: (m) => generateCoverLetter(profile, job, prepare, lang === "de" ? "German" : "English", m),
+      request: (m, attempt) =>
+        generateCoverLetter(profile, job, prepare, lang === "de" ? "German" : "English", m, attempt),
     })
       .then(({ data: text, usedFallback }) => {
         if (cancelled) return;

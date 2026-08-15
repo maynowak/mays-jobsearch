@@ -127,7 +127,7 @@ export default function CvUpload({
         initialModel: model,
         availableModels,
         recommendedModel,
-        request: (m) => createProfile(text, m, hash ?? undefined),
+        request: (m, attempt) => createProfile(text, m, hash ?? undefined, attempt),
       });
       if (hash) writeLocalProfile(hash, profile);
       setSuggested(profile);

@@ -1,12 +1,18 @@
 import { SOURCE_APIFY_ARBEITSAGENTUR, tokenize, locationMatches, keywordHits, stripHtml } from "./filter.mjs";
 import { cacheGet, cacheSet, cacheDel } from "./cache.mjs";
+import { datasetRefreshMs } from "./config.mjs";
+import {
+  apifyRunLimitReached,
+  countApifyCacheHit,
+  countApifyCacheMiss,
+  countApifyDatasetReuse,
+  countApifyRun,
+} from "./usage.mjs";
 
 const APIFY_ACTOR_ID = "blackfalcondata~arbeitsagentur-jobs-feed";
 const APIFY_MAX_JOBS = 40;
 const APIFY_SYNC_TIMEOUT_SEC = 50;
 const APIFY_CACHE_TTL_SEC = 600;
-const APIFY_DATASET_MAX_AGE_SEC = 24 * 60 * 60;
-const APIFY_DATASET_MAX_AGE_MS = APIFY_DATASET_MAX_AGE_SEC * 1000;
 
 function cacheKeyFor(query, location) {
   return `apify-jobs:${query.toLowerCase().trim()}|${location.toLowerCase().trim()}`;
@@ -175,20 +181,25 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
 
   const cacheKey = cacheKeyFor(input.query, input.location);
   const datasetKey = datasetKeyFor(input.query, input.location);
+  const refreshMs = datasetRefreshMs();
   const cached = await cacheGet(cacheKey);
   let records = Array.isArray(cached) ? cached : null;
-  let error = null;
 
-  if (!records) {
+  if (records) {
+    await countApifyCacheHit();
+  } else {
+    await countApifyCacheMiss();
+
     const dataset = await cacheGet(datasetKey);
     if (dataset && typeof dataset.datasetId === "string") {
       const fresh =
         Number.isFinite(dataset.createdAt) &&
-        Date.now() - dataset.createdAt < APIFY_DATASET_MAX_AGE_MS;
+        Date.now() - dataset.createdAt < refreshMs;
       if (fresh) {
         const read = await readDataset(apiToken, dataset.datasetId);
         if (read.records) {
           records = read.records;
+          await countApifyDatasetReuse();
         } else if (read.error === "upstream_404" || read.error === "upstream_410") {
           console.error("[apify] L2 dataset gone:", dataset.datasetId, read.error);
           await cacheDel(datasetKey);
@@ -200,8 +211,12 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
     }
 
     if (!records) {
+      if (await apifyRunLimitReached()) {
+        return emptyResult("limit_reached");
+      }
       const started = await startApifyRun(apiToken, input);
       if (started.error) return emptyResult(started.error);
+      await countApifyRun();
       const waited = await waitForRun(apiToken, started.run.id, APIFY_SYNC_TIMEOUT_SEC * 1000);
       if (waited.error) return emptyResult(waited.error);
       const read = await readDataset(apiToken, waited.run.defaultDatasetId);
@@ -211,7 +226,7 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
         await cacheSet(
           datasetKey,
           { datasetId: waited.run.defaultDatasetId, createdAt: Date.now() },
-          APIFY_DATASET_MAX_AGE_SEC
+          Math.round(refreshMs / 1000)
         );
       }
     }

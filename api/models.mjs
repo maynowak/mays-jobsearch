@@ -1,5 +1,6 @@
 import { getCompatibleFallback, getFreeModels, resolveDefaultModel } from "./_lib/models.mjs";
 import { getOpenRouterModel } from "./_lib/model.mjs";
+import { getConfig } from "./_lib/config.mjs";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -16,6 +17,7 @@ export default async function handler(req, res) {
       defaultModel: configured,
       fallbackModel: await getCompatibleFallback(configured),
       recommendedModel: await resolveDefaultModel(),
+      fallbackMaxAttempts: getConfig().modelFallbackMaxAttempts,
     });
   } catch (err) {
     const status = err && err.status ? err.status : 502;

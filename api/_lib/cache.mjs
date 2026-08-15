@@ -45,3 +45,29 @@ export async function cacheSet(key, value, ttlSec = DEFAULT_TTL_SEC) {
 export async function cacheDel(key) {
   await cacheCommand("DEL", key);
 }
+
+export async function cacheIncr(key, ttlSec) {
+  const result = await cacheCommand("INCR", key);
+  if (typeof result === "number" && result === 1 && ttlSec) {
+    await cacheCommand("EXPIRE", key, ttlSec);
+  }
+  return typeof result === "number" ? result : null;
+}
+
+export async function cacheHIncrBy(key, field, by = 1, ttlSec) {
+  const result = await cacheCommand("HINCRBY", key, field, by);
+  if (typeof result === "number" && result === by && ttlSec) {
+    await cacheCommand("EXPIRE", key, ttlSec);
+  }
+  return typeof result === "number" ? result : null;
+}
+
+export async function cacheHGetAll(key) {
+  const result = await cacheCommand("HGETALL", key);
+  if (!Array.isArray(result)) return {};
+  const out = {};
+  for (let i = 0; i + 1 < result.length; i += 2) {
+    out[String(result[i])] = Number(result[i + 1]) || 0;
+  }
+  return out;
+}

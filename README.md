@@ -15,6 +15,8 @@ Find live jobs that actually fit you. You either upload a **CV (PDF)** or type y
 
 Your API keys (OpenRouter, Apify, Upstash, Resend) live **only** on the server — they are never exposed to the browser.
 
+The app also tracks its own OpenRouter/Apify usage and can refuse new paid calls once an operator-configured monthly threshold is reached — see **Cost guard & usage** below.
+
 ## 🤖 Documentation
 
 Project documentation lives in [`docs/`](docs/):
@@ -79,6 +81,32 @@ All keys are server-side only.
 | `RESEND_API_KEY` | Sending digest emails | <https://resend.com> (free) |
 | `DIGEST_FROM` | Sender address (verified domain in Resend) | Resend |
 | `CRON_SECRET` | Protects `/api/cron/digest` | any random string |
+| `OPENROUTER_MONTHLY_MAX_REQUESTS` (optional) | AI request-count backstop for the cost guard (default `1000`/month) | — |
+| `APIFY_MONTHLY_MAX_RUNS` (optional) | Apify Actor-run backstop for the cost guard (default `30`/month) | — |
+| `MODEL_FALLBACK_MAX_ATTEMPTS` (optional) | Max AI fallback attempts, exposed to the client (default `3`) | — |
+| `APIFY_DATASET_REFRESH_PEAK_HOURS` (optional) | Apify dataset reuse window during peak hours (default `6`) | — |
+| `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (optional) | Apify dataset reuse window off-peak (default `12`) | — |
+| `OPENROUTER_MONTHLY_SOFT_LIMIT_USD` / `APIFY_MONTHLY_SOFT_LIMIT_USD` (optional) | Advisory spend limits (operator reference only, shown in `/api/usage`) | — |
+
+## Cost guard & usage
+
+The app keeps its own monthly usage counters (in Upstash Redis) and exposes them read-only via `GET /api/usage`. It contains **no secrets** — only counters and configured limits:
+
+```json
+{ "month": "2026-08", "openRouter": { "requestCount": 12, "failureCount": 0, "fallbackAttempts": 0, "byModel": {} },
+  "apify": { "actorRuns": 1, "datasetReuses": 2, "cacheHits": 3, "cacheMisses": 1 },
+  "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "apifyMonthlySoftLimitUsd": 4, ... } }
+```
+
+Important — these are **application-side counters, not provider billing**:
+
+- The provider dashboards (OpenRouter, Apify console) remain authoritative for real spend.
+- The `*_SOFT_LIMIT_USD` values are advisory operator thresholds shown in `/api/usage`; the app cannot derive exact spend from its counters and therefore does **not** block on them.
+- The guards use the counter backstops instead:
+  - **OpenRouter:** once the monthly request count reaches `OPENROUTER_MONTHLY_MAX_REQUESTS` (default `1000`), `/api/match`, `/api/profile` and `/api/cover-letter` fail fast with the existing friendly `model_unavailable`-style UX. Fallbacks stay bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`.
+  - **Apify:** once the monthly Actor-run count reaches `APIFY_MONTHLY_MAX_RUNS` (default `30`), no new paid Actor runs are started. Cached / dataset-reused results keep working; only brand-new searches that would need a run return empty for the Apify source (Arbeitnow still works).
+- Apify dataset reuse is **time-of-day aware**: during peak hours (08:00–18:00 server local time, i.e. UTC on Vercel) the dataset refresh window is `APIFY_DATASET_REFRESH_PEAK_HOURS` (default 6 h); off-peak it is `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default 12 h). Longer off-peak reuse means fewer paid runs.
+- The Redis L1 job cache (10 min), the Apify L2 dataset reuse, the CV-profile cache and the automatic model fallback are all unchanged.
 
 ## Run locally
 

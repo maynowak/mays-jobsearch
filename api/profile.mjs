@@ -78,6 +78,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const attempt = Number.parseInt(req.headers["x-mj-attempt"] ?? "", 10) || 0;
     const body = req.body || (await readBody(req));
     const text = typeof body.text === "string" ? body.text.trim() : "";
     const hash = isHash(body.hash) ? body.hash.toLowerCase() : "";
@@ -124,6 +125,7 @@ ${text}`;
       json: true,
       temperature: 0.2,
       maxTokens: 900,
+      attempt,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });
 

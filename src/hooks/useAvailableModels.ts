@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ModelOption } from "../types";
-import { fetchModel, fetchModels } from "../api";
+import { fetchModel, fetchModels, setFallbackMaxAttempts } from "../api";
 
 export type ModelsState = "loading" | "ready" | "error" | "empty";
 
@@ -43,6 +43,7 @@ export function useAvailableModels() {
           configured = res.defaultModel ?? null;
           fallback = res.fallbackModel ?? null;
           recommended = res.recommendedModel ?? null;
+          setFallbackMaxAttempts(res.fallbackMaxAttempts ?? 3);
           cache = {
             models: list,
             defaultModel: configured,

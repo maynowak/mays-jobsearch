@@ -1,5 +1,11 @@
 import { HttpError } from "./filter.mjs";
 import { assertFreeModel, resolveDefaultModel } from "./models.mjs";
+import {
+  countOpenRouterAttempt,
+  countOpenRouterFailure,
+  countOpenRouterRequest,
+  openRouterLimitReached,
+} from "./usage.mjs";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_TIMEOUT_MS = 40_000;
@@ -9,6 +15,14 @@ function modelUnavailable() {
     502,
     "This AI model is temporarily unavailable. Please choose another model.",
     "model_unavailable"
+  );
+}
+
+function budgetReached() {
+  return new HttpError(
+    503,
+    "The free AI request budget for this month has been reached. Please try again next month.",
+    "limit_reached"
   );
 }
 
@@ -24,7 +38,15 @@ export function requireOpenRouterKey() {
   return apiKey;
 }
 
-export async function chat({ system, prompt, json = false, temperature = 0.3, maxTokens = 1500, model }) {
+export async function chat({
+  system,
+  prompt,
+  json = false,
+  temperature = 0.3,
+  maxTokens = 1500,
+  model,
+  attempt = 0,
+}) {
   let resolvedModel = await resolveDefaultModel();
   if (model) {
     await assertFreeModel(model);
@@ -32,6 +54,32 @@ export async function chat({ system, prompt, json = false, temperature = 0.3, ma
   }
   const apiKey = requireOpenRouterKey();
 
+  if (await openRouterLimitReached()) {
+    throw budgetReached();
+  }
+
+  await countOpenRouterRequest(resolvedModel);
+  if (attempt > 1) {
+    await countOpenRouterAttempt();
+  }
+
+  try {
+    return await requestOpenRouter({
+      apiKey,
+      system,
+      prompt,
+      json,
+      temperature,
+      maxTokens,
+      model: resolvedModel,
+    });
+  } catch (err) {
+    await countOpenRouterFailure();
+    throw err;
+  }
+}
+
+async function requestOpenRouter({ apiKey, system, prompt, json, temperature, maxTokens, model }) {
   let response;
   try {
     response = await fetch(OPENROUTER_URL, {
@@ -41,7 +89,7 @@ export async function chat({ system, prompt, json = false, temperature = 0.3, ma
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: resolvedModel,
+        model,
         messages: [
           { role: "system", content: system },
           { role: "user", content: prompt },

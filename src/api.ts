@@ -62,10 +62,19 @@ export interface FallbackResult<T> {
   usedFallback: boolean;
 }
 
+let fallbackMaxAttempts = 3;
+
+export function setFallbackMaxAttempts(limit: number) {
+  if (Number.isFinite(limit) && limit > 0) {
+    fallbackMaxAttempts = Math.floor(limit);
+  }
+}
+
 function fallbackOrder(
   initial: string | null,
   available: string[],
-  recommended: string | null
+  recommended: string | null,
+  maxAttempts = fallbackMaxAttempts
 ): (string | null)[] {
   const seen = new Set<string>();
   const order: (string | null)[] = [];
@@ -86,7 +95,7 @@ function fallbackOrder(
   }
   if (order.length === 0) order.push(null);
 
-  return order.slice(0, 3);
+  return order.slice(0, Math.max(1, maxAttempts));
 }
 
 export async function withModelFallback<T>({
@@ -98,7 +107,7 @@ export async function withModelFallback<T>({
   initialModel: string | null;
   availableModels: string[];
   recommendedModel: string | null;
-  request: (model: string | null) => Promise<T>;
+  request: (model: string | null, attempt: number) => Promise<T>;
 }): Promise<FallbackResult<T>> {
   const order = fallbackOrder(initialModel, availableModels, recommendedModel);
   let lastError: unknown = null;
@@ -107,7 +116,7 @@ export async function withModelFallback<T>({
   for (const model of order) {
     attempt += 1;
     try {
-      const data = await request(model);
+      const data = await request(model, attempt);
       if (attempt > 1) {
         console.warn("[model] fallback attempt", attempt - 1, "succeeded with model:", model);
       }
@@ -153,11 +162,14 @@ export async function fetchJobs(profile: Profile): Promise<JobsResponse> {
 export async function fetchMatches(
   profile: Profile,
   jobs: Job[],
-  model?: string | null
+  model?: string | null,
+  attempt?: number
 ): Promise<MatchResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (attempt && attempt > 1) headers["x-mj-attempt"] = String(attempt);
   return apiFetch<MatchResponse>("/api/match", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ ...profile, jobs, ...(model ? { model } : {}) }),
   });
 }
@@ -174,11 +186,14 @@ export async function fetchModel(): Promise<string> {
 export async function createProfile(
   text: string,
   model?: string | null,
-  hash?: string
+  hash?: string,
+  attempt?: number
 ): Promise<SuggestedProfile> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (attempt && attempt > 1) headers["x-mj-attempt"] = String(attempt);
   return apiFetch<SuggestedProfile>("/api/profile", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ text, ...(hash ? { hash } : {}), ...(model ? { model } : {}) }),
   });
 }
@@ -188,11 +203,14 @@ export async function generateCoverLetter(
   job: Job,
   prepareQuestion: string,
   language: string = "English",
-  model?: string | null
+  model?: string | null,
+  attempt?: number
 ): Promise<string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (attempt && attempt > 1) headers["x-mj-attempt"] = String(attempt);
   const data = await apiFetch<{ letter: string }>("/api/cover-letter", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ ...profile, job, prepareQuestion, language, ...(model ? { model } : {}) }),
   });
   return data.letter;

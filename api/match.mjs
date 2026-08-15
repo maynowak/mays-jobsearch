@@ -101,6 +101,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const attempt = Number.parseInt(req.headers["x-mj-attempt"] ?? "", 10) || 0;
     const body = req.body || (await readBody(req));
     const profile = {
       skills: String(body.skills || "").trim(),
@@ -143,6 +144,7 @@ export default async function handler(req, res) {
       prompt,
       json: true,
       maxTokens: 2500,
+      attempt,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });
     const parsed = parseMatches(content);
