@@ -172,6 +172,7 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
 
   if (!records) {
     const dataset = await cacheGet(datasetKey);
+    console.error("[apify] L2 dbg:", JSON.stringify(dataset), "type:", dataset ? typeof dataset.createdAt : "-", "ageMs:", dataset ? Date.now() - Number(dataset.createdAt || 0) : "-", "maxAge:", APIFY_DATASET_MAX_AGE_SEC, "fresh:", dataset ? (Number.isFinite(dataset.createdAt) && Date.now() - dataset.createdAt < APIFY_DATASET_MAX_AGE_SEC) : "-");
     if (dataset && typeof dataset.datasetId === "string") {
       const fresh =
         Number.isFinite(dataset.createdAt) &&
