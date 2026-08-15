@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Job, Match } from "../types";
 import { computeRemainingJobs } from "../lib/jobPool";
 import MatchCard from "./MatchCard";
@@ -16,9 +16,13 @@ interface Props {
 export default function Results({ matches, foundJobs, onGenerateLetter }: Props) {
   const { t } = useLang();
   const [expanded, setExpanded] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState<boolean>(() => matches.length === 0);
 
   const remainingJobs = computeRemainingJobs(foundJobs, matches);
+
+  useEffect(() => {
+    setMoreOpen(matches.length === 0);
+  }, [matches.length]);
 
   if (matches.length === 0 && remainingJobs.length === 0) return null;
 

@@ -1184,6 +1184,8 @@ body {
 
 .results-remaining-note {
   margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
   color: var(--muted);
   font-size: 0.9rem;
 }
