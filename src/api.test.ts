@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { ApiError, setFallbackMaxAttempts, withModelFallback } from "./api";
+import { ApiError, isFreeQuotaExceeded, setFallbackMaxAttempts, withModelFallback } from "./api";
 
 const unavailable = () => new ApiError("unavailable", 502, "model_unavailable");
 
@@ -106,5 +106,31 @@ describe("withModelFallback", () => {
 
     expect(attempts[0]).toBe("m-selected");
     expect(attempts).toContain("m-selected");
+  });
+});
+
+describe("free_quota_exceeded (OpenRouter 429 free-models-per-day)", () => {
+  it("isFreeQuotaExceeded erkennt den Fehler", () => {
+    expect(isFreeQuotaExceeded(new ApiError("quota", 429, "free_quota_exceeded"))).toBe(true);
+    expect(isFreeQuotaExceeded(new ApiError("unavailable", 502, "model_unavailable"))).toBe(false);
+    expect(isFreeQuotaExceeded(new Error("x"))).toBe(false);
+  });
+
+  it("gilt NICHT als model_unavailable → der Fallback stoppt sofort (keine weiteren Versuche)", async () => {
+    const quota = () => new ApiError("quota", 429, "free_quota_exceeded");
+    const attempts: (string | null)[] = [];
+    await expect(
+      withModelFallback({
+        initialModel: "a",
+        availableModels: ["b", "c"],
+        recommendedModel: null,
+        request: async (model) => {
+          attempts.push(model);
+          throw quota();
+        },
+      })
+    ).rejects.toMatchObject({ code: "free_quota_exceeded" });
+
+    expect(attempts).toEqual(["a"]);
   });
 });

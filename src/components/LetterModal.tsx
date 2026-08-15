@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Job, Profile } from "../types";
-import { generateCoverLetter, isModelUnavailable, withModelFallback } from "../api";
+import { generateCoverLetter, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 
 interface Props {
@@ -50,7 +50,13 @@ export default function LetterModal({
       })
       .catch((err: Error) => {
         if (cancelled) return;
-        setError(isModelUnavailable(err) ? t("model.unavailable") : err.message || t("letter.error"));
+        setError(
+          isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : isModelUnavailable(err)
+              ? t("model.unavailable")
+              : err.message || t("letter.error")
+        );
         setLoading(false);
       });
     return () => {

@@ -3,8 +3,8 @@
 Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), and the app:
 
 1. **CV upload (optional):** the PDF is read in the browser (PDF.js), text-extracted and turned into an editable search profile by the AI (`/api/profile`). The profile is cached per CV hash, so repeated uploads of the same CV are instant. The PDF file itself is never sent to the server, and raw CV text is never stored.
-2. **Model selection:** the app dynamically shows the currently available free OpenRouter models and preselects a recommended one. The user can switch to any other free model (`/api/models`).
-3. Fetches current openings from two sources — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api) and the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`) — and filters them by your keywords and cities (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse) to avoid unnecessary paid Apify runs.
+2. **Model selection:** the app dynamically shows the currently available free OpenRouter models and preselects a recommended one. The user can switch to any other free model (`/api/models`). During a running search/scoring the selector is locked so the chosen model cannot be changed mid-flight.
+3. Fetches current openings from two sources — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api) and the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`) — and filters them by your keywords and cities (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse) to avoid unnecessary paid Apify runs. Once jobs are delivered, a small "Jobquellen" module directly below the search button shows the real per-source counts (e.g. "Arbeitnow 26 Stellen · Arbeitsagentur 40 Stellen"), computed dynamically from the delivered jobs and clearly separated from the AI model selector.
 4. Sends the filtered pool + your profile to the OpenRouter chat API (`/api/match`). To stay within the function timeout, the pool is narrowed to **max 10 candidates** by keyword hits, the AI scores those **0–100** and the **top 5** are shown with:
    - the score,
    - **two sentences on why** it fits you,
@@ -55,6 +55,7 @@ Project documentation lives in [`docs/`](docs/):
 │       ├── LandingHero.tsx
 │       ├── Navbar.tsx
 │       ├── SearchForm.tsx
+│       ├── JobSources.tsx     # per-source counts (Arbeitnow / Arbeitsagentur) from delivered jobs
 │       ├── CvUpload.tsx       # PDF upload → extract → hash → profile cache → /api/profile
 │       ├── ModelSelector.tsx  # accessible free-model listbox with recommended section
 │       ├── AlertCard.tsx
@@ -150,6 +151,7 @@ The daily digest runs automatically via the cron in `vercel.json` (07:00 UTC).
 - Job board unreachable / rate-limited / broken → friendly message, no crash.
 - Missing keys (`OPENROUTER_API_KEY`, Upstash, Resend) → clear "not configured yet" message.
 - Invalid key (401) / out of credits (402) / AI rate limit (429) / malformed AI response → each gets its own clear message.
+- OpenRouter's daily free-model quota (`free-models-per-day`) is detected on the server and shown as a specific friendly message ("Die kostenlosen KI-Anfragen für heute sind aufgebraucht…") — the fallback does **not** try further free models, because the account-wide daily limit affects all of them.
 
 ## Example
 

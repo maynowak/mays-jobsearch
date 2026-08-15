@@ -83,3 +83,13 @@ Cost control & usage guard.
 - Time-of-day Apify dataset refresh: peak hours (08:00–18:00 server local time) reuse the dataset up to 6 h, off-peak up to 12 h (configurable) — fewer paid runs.
 - The soft limits are explicitly NOT billing: the app cannot compute exact provider spend from its own counters, so the provider dashboards remain authoritative and the USD limits only surface in `/api/usage`.
 - `MODEL_FALLBACK_MAX_ATTEMPTS` is exposed to the client via `/api/models` (`fallbackMaxAttempts`) so the attempt cap is configurable without editing source; the client forwards the fallback attempt index via the `x-mj-attempt` header for counting.
+
+## Unreleased — 2026-08-15
+
+UX / Datenquellen-Runde.
+
+- **Jobquellen module:** new `JobSources` component directly below the search button shows real, dynamically computed per-source counts (Arbeitnow / Arbeitsagentur) from the delivered jobs; sources with zero jobs are omitted and a total line is shown. Clearly separated from the AI model selector. Pure frontend computation over `foundJobs` — no extra request.
+- **Found jobs stay visible:** `Results` shows all delivered (found) jobs — evaluated matches as `MatchCard`s and the rest as `RemainingCard`s (`computeRemainingJobs`) — even when the AI evaluated only a subset (or none). Expanding the found list is local and never triggers a second `/api/jobs` or `/api/match` request.
+- **Model selector lock:** `ModelSelector` accepts a `disabled` prop; the trigger is disabled (locked) while a search/scoring runs and re-enables after completion. UI-only — fallback logic unchanged.
+- **OpenRouter 429 free-models-per-day UX:** `api/_lib/ai.mjs` detects the provider's daily free-quota message and returns a distinct `429 free_quota_exceeded` error. The client maps it to a specific friendly message ("Die kostenlosen KI-Anfragen für heute sind aufgebraucht…") and treats it as **not** `model_unavailable`, so the fallback stops immediately instead of futilely retrying other free models (account-wide daily limit). `isFreeQuotaExceeded` helper added to `src/api.ts`; handling in `App.tsx`, `CvUpload.tsx` and `LetterModal.tsx`.
+- Tests: Results found/evaluated/displayed counts (A/B), JobSources counts + zero-source omission (C/D), selector lock during searching/scoring/after (E/F/G), quota message (K), existing `model_unavailable` fallback intact (L), no extra requests when expanding found jobs (M), plus `free_quota_exceeded` fallback-stop in `api.test.ts` and a server-side 429 detection test (`tests/api/quota-429.test.mjs`).

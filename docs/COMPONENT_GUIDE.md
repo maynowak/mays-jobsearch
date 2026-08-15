@@ -19,6 +19,9 @@ CV upload
 Model selector
 ✅ Complete
 
+Job sources
+✅ Complete
+
 Alert form (daily digest)
 ✅ Complete
 
@@ -97,8 +100,19 @@ Behavior
 State
 
 - loading → disabled trigger with "Loading…"
-- ready → interactive listbox
+- ready → interactive listbox; **disabled (locked) while a search/scoring is running** (`disabled` prop from `App`, driven by `isSearching`), re-enabled once the search completes
 - error / empty → disabled trigger with a hint
+
+---
+
+## Job sources
+
+Behavior
+
+- small module directly below the search button, clearly separated from the AI model selector
+- computes real per-source counts (Arbeitnow / Arbeitsagentur) from the delivered jobs' `source[]` arrays
+- only sources with a count > 0 are shown; a total line summarizes all delivered jobs
+- pure frontend computation over the delivered `foundJobs` — no additional request
 
 ---
 

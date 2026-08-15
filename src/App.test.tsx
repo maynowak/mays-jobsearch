@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Job, JobsResponse, MatchResponse, ModelsResponse, SuggestedProfile } from "./types";
 
 vi.mock("./api", async () => {
@@ -517,5 +517,116 @@ describe("Old results stay visible while a new search is running", () => {
     attempt1.reject(new ApiError("unavailable", 502, "model_unavailable"));
     await screen.findByText("Java Engineer");
     expect(screen.queryByText("AWS Engineer")).toBeNull();
+  });
+});
+
+describe("UX-/Datenquellen-Runde: Tests E, F, G, K, L, M", () => {
+  const modelTrigger = () => document.querySelector(".model-trigger") as HTMLButtonElement;
+
+  async function waitForModelsReady() {
+    await waitFor(() => {
+      const trigger = modelTrigger();
+      expect(trigger && !trigger.disabled).toBe(true);
+    });
+  }
+
+  async function runSearchA() {
+    vi.mocked(fetchJobs).mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+  }
+
+  it("Test E: Modellauswahl ist während der Suche deaktiviert", async () => {
+    const jobs = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
+    renderApp();
+    await waitForModelsReady();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
+    expect(modelTrigger().disabled).toBe(true);
+
+    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
+    await screen.findByText("AWS Engineer");
+  });
+
+  it("Test F: Modellauswahl ist während der KI-Bewertung deaktiviert", async () => {
+    const jobs = deferred<JobsResponse>();
+    const matches = deferred<MatchResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
+    vi.mocked(fetchMatches).mockReturnValue(matches.promise);
+    renderApp();
+    await waitForModelsReady();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
+    await screen.findByText("Bewerte deine Treffer mit KI…");
+    expect(modelTrigger().disabled).toBe(true);
+
+    matches.resolve({
+      matches: [{ score: 90, why: "gut", prepare: "Frage", job }],
+    } as MatchResponse);
+    await screen.findByText("AWS Engineer");
+  });
+
+  it("Test G: Modellauswahl ist nach Abschluss wieder aktiv", async () => {
+    await runSearchA();
+    expect(modelTrigger().disabled).toBe(false);
+  });
+
+  it("Test K: OpenRouter 429 free-models-per-day → spezifische freundliche Meldung", async () => {
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    vi.mocked(fetchMatches).mockRejectedValue(new ApiError("quota", 429, "free_quota_exceeded"));
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    await screen.findByText(/kostenlosen KI-Anfragen für heute sind aufgebraucht/);
+    expect(screen.getByText(/kostenlosen KI-Anfragen für heute sind aufgebraucht/)).toBeTruthy();
+  });
+
+  it("Test L: normales model_unavailable → bestehende Fallback-/Fehlerlogik bleibt intakt", async () => {
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    vi.mocked(fetchMatches).mockRejectedValue(new ApiError("unavailable", 502, "model_unavailable"));
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    // Mit dem Ein-Modell-Katalog bleibt nur ein Versuch übrig -> bestehende Fehlermeldung
+    await screen.findByText(/momentan nicht verfügbar/);
+    expect(vi.mocked(fetchMatches)).toHaveBeenCalledTimes(1);
+  });
+
+  it("Test M: Erweitern der gefundenen Jobs löst KEINE zusätzlichen Requests aus", async () => {
+    vi.mocked(fetchJobs).mockResolvedValueOnce({
+      jobs: [job, jobB],
+      meta: { totalFiltered: 2 },
+    });
+    vi.mocked(fetchMatches).mockResolvedValueOnce({
+      matches: [{ score: 90, why: "gut", prepare: "Frage", job }],
+    } as MatchResponse);
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+
+    const jobsCalls = vi.mocked(fetchJobs).mock.calls.length;
+    const matchCalls = vi.mocked(fetchMatches).mock.calls.length;
+
+    fireEvent.click(screen.getByText("Weitere gefundene Jobs ansehen →"));
+    expect(screen.getByText("Java Engineer")).toBeTruthy();
+
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(jobsCalls);
+    expect(vi.mocked(fetchMatches).mock.calls.length).toBe(matchCalls);
   });
 });

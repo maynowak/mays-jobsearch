@@ -18,6 +18,10 @@ function modelUnavailable() {
   );
 }
 
+export function isFreeDailyQuotaError(providerError) {
+  return typeof providerError === "string" && /free-models-per-day/i.test(providerError);
+}
+
 function logModelError(stage, { model, attempt, status, providerError, retryAfter }) {
   const parts = [`[ai] model=${model ?? "(none)"}`];
   parts.push(`stage=${stage}`);
@@ -157,6 +161,13 @@ async function requestOpenRouter({
       retryAfter: response.headers?.get?.("retry-after") ?? "",
       providerError,
     });
+    if (isFreeDailyQuotaError(providerError)) {
+      throw new HttpError(
+        429,
+        "The free AI request quota for today has been used up. Please try again later.",
+        "free_quota_exceeded"
+      );
+    }
     throw modelUnavailable();
   }
   if (!response.ok) {

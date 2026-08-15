@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import type { Profile, SuggestedProfile } from "../types";
-import { createProfile, isModelUnavailable, withModelFallback } from "../api";
+import { createProfile, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 
@@ -135,7 +135,13 @@ export default function CvUpload({
       setPhase("ready");
     } catch (err) {
       setPhase("idle");
-      setError(isModelUnavailable(err) ? t("model.unavailable") : t("cv.processError"));
+      setError(
+        isFreeQuotaExceeded(err)
+          ? t("model.quotaExceeded")
+          : isModelUnavailable(err)
+            ? t("model.unavailable")
+            : t("cv.processError")
+      );
     }
   };
 

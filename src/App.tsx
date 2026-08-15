@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import type { Job, Match, Profile, StatusMessage } from "./types";
-import { fetchJobs, fetchMatches, isModelUnavailable, withModelFallback } from "./api";
+import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "./api";
 import { useLang } from "./i18n";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
 import Hero from "./components/Hero";
 import LandingHero from "./components/LandingHero";
 import SearchForm from "./components/SearchForm";
+import JobSources from "./components/JobSources";
 import ModelSelector from "./components/ModelSelector";
 import Status from "./components/Status";
 import Results from "./components/Results";
@@ -111,7 +112,11 @@ export default function App() {
     } catch (err) {
       setStatus({
         type: "error",
-        message: isModelUnavailable(err) ? t("model.unavailable") : (err as Error).message || t("status.genericError"),
+        message: isFreeQuotaExceeded(err)
+          ? t("model.quotaExceeded")
+          : isModelUnavailable(err)
+            ? t("model.unavailable")
+            : (err as Error).message || t("status.genericError"),
       });
     } finally {
       setPhase("idle");
@@ -145,6 +150,7 @@ export default function App() {
         availableModels={models.map((model) => model.id)}
         recommendedModel={recommendedModel}
       />
+      <JobSources jobs={foundJobs} />
       <div className="model-divider" aria-hidden="true" />
       <ModelSelector
         state={modelsState}
@@ -153,6 +159,7 @@ export default function App() {
         recommendedModel={recommendedModel}
         value={effectiveModel}
         onChange={setSelectedModel}
+        disabled={isSearching}
       />
       <Status status={status} />
     </section>

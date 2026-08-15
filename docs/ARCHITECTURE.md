@@ -103,6 +103,7 @@ Free OpenRouter models are discovered dynamically from OpenRouter's model metada
 Frontend behavior:
 
 - The `ModelSelector` shows a recommended-model section plus the other free models.
+- While a search/scoring is running, the selector is disabled (locked) so the model cannot be changed mid-flight; it re-enables once the search completes.
 - The user can select any available free model; the selection is passed to `/api/match`, `/api/profile` and `/api/cover-letter`.
 - The selector is a custom accessible listbox (ARIA combobox/listbox semantics, keyboard navigation, type-ahead, outside-click close).
 - The popover flips upward automatically when there is not enough space below the trigger.
@@ -232,6 +233,8 @@ The UI distinguishes three numbers honestly:
 
 Example: "52 Jobs gefunden · 10 passende Kandidaten mit KI bewertet", then "Top 5 von 10", and after expansion "Alle 10 bewerteten Treffer".
 
+Separately, the sidebar shows the delivered-job counts per source (`.job-sources` / `JobSources`): it counts the `source[]` arrays of the actual delivered jobs, lists only sources with a count > 0, and shows a total. This is purely computed on the frontend from the delivered `foundJobs` — it is **not** taken from `/api/jobs` `meta.sources` and makes no additional request.
+
 ## Cost guard & usage
 
 The app keeps its own monthly usage counters (Upstash Redis, month-scoped keys `mj-usage:<name>:<YYYY-MM>`) and a read-only diagnostics endpoint `GET /api/usage`.
@@ -345,7 +348,7 @@ Shared job logic:
 
 ### `api/_lib/ai.mjs`
 
-- `chat(...)` — one shared OpenRouter call with consistent error mapping (401 / 402 / 429 / network / malformed); resolves/validates a free model per request.
+- `chat(...)` — one shared OpenRouter call with consistent error mapping (401 / 402 / 429 / network / malformed); resolves/validates a free model per request. On HTTP 429 it reads the provider message: the account-wide daily free quota (`free-models-per-day`) is mapped to a distinct `429 free_quota_exceeded` error, while all other 429s stay `model_unavailable`.
 - Cost guard: checks `openRouterLimitReached()` before each call and throws `503 limit_reached` when the monthly request backstop is hit; increments the monthly request counter (and per-model hash), counts failures, and counts fallback attempts when `attempt > 1`.
 
 ### `api/_lib/cache.mjs`

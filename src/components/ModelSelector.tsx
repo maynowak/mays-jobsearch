@@ -11,6 +11,7 @@ interface Props {
   recommendedModel: string | null;
   value: string | null;
   onChange: (model: string) => void;
+  disabled?: boolean;
 }
 
 function Chevron() {
@@ -64,6 +65,7 @@ export default function ModelSelector({
   recommendedModel,
   value,
   onChange,
+  disabled = false,
 }: Props) {
   const { t } = useLang();
   const labelId = useId();
@@ -94,6 +96,7 @@ export default function ModelSelector({
   const count = options.length;
 
   const openList = () => {
+    if (disabled) return;
     const start = value ? options.findIndex((m) => m.id === value) : 0;
     setActiveIndex(start >= 0 ? start : 0);
 
@@ -113,11 +116,16 @@ export default function ModelSelector({
   };
 
   const selectIndex = (index: number) => {
+    if (disabled) return;
     const option = options[index];
     if (!option) return;
     onChange(option.id);
     setOpen(false);
   };
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
 
   useEffect(() => {
     if (!open) return;
@@ -144,7 +152,7 @@ export default function ModelSelector({
   }, [open, activeIndex]);
 
   const onTriggerKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (state !== "ready" || count === 0) return;
+    if (state !== "ready" || count === 0 || disabled) return;
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
@@ -236,9 +244,14 @@ export default function ModelSelector({
           aria-labelledby={labelId}
           aria-activedescendant={activeId}
           aria-label={selected ? `${selected.name} (${selected.id})` : undefined}
+          aria-disabled={disabled}
+          disabled={disabled}
           title={selected ? selected.id : undefined}
           className="model-trigger"
-          onClick={() => (open ? setOpen(false) : openList())}
+          onClick={() => {
+            if (disabled) return;
+            open ? setOpen(false) : openList();
+          }}
           onKeyDown={onTriggerKeyDown}
         >
           <span className="model-trigger-text">{selected ? selected.name : t("model.none")}</span>

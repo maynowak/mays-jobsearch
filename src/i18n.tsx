@@ -68,6 +68,8 @@ const en: Dict = {
   "model.sectionOthers": "OTHER FREE MODELS",
   "model.unavailable":
     "This AI model is temporarily unavailable. Please choose another model.",
+  "model.quotaExceeded":
+    "Today's free AI request quota has been used up. Please try again later.",
   "model.fallbackNote":
     "The selected AI model is temporarily unavailable. We are using another free model for this request.",
 
@@ -131,6 +133,10 @@ const en: Dict = {
   "source.label": "Source",
   "source.existing": "Arbeitnow",
   "source.apify": "Arbeitsagentur",
+
+  "sources.heading": "Job sources",
+  "sources.total": "Total",
+  "sources.unit": "jobs",
 
   "score.title": "{score}/100 match",
 
@@ -211,6 +217,8 @@ const de: Dict = {
   "model.sectionOthers": "WEITERE KOSTENLOSE MODELLE",
   "model.unavailable":
     "Dieses KI-Modell ist momentan nicht verfügbar. Bitte wähle ein anderes Modell.",
+  "model.quotaExceeded":
+    "Die kostenlosen KI-Anfragen für heute sind aufgebraucht. Bitte versuche es später erneut.",
   "model.fallbackNote":
     "Das ausgewählte KI-Modell ist momentan nicht verfügbar. Wir verwenden vorübergehend ein anderes kostenloses Modell.",
 
@@ -275,6 +283,10 @@ const de: Dict = {
   "source.label": "Quelle",
   "source.existing": "Arbeitnow",
   "source.apify": "Arbeitsagentur",
+
+  "sources.heading": "Jobquellen",
+  "sources.total": "Insgesamt",
+  "sources.unit": "Stellen",
 
   "score.title": "{score}/100 Übereinstimmung",
 

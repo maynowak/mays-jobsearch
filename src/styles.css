@@ -788,6 +788,60 @@ body {
   border-top: 1px solid var(--border);
 }
 
+.job-sources {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.6), rgba(244, 238, 226, 0.35));
+}
+
+.job-sources-title {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a49883;
+}
+
+.job-sources-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.job-sources-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 0.86rem;
+}
+
+.job-sources-name {
+  color: var(--text);
+}
+
+.job-sources-count {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.job-sources-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 .model-label {
   font-weight: 600;
   font-size: 0.78rem;
