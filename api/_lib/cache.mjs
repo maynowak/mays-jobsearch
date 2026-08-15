@@ -41,3 +41,7 @@ export async function cacheGet(key) {
 export async function cacheSet(key, value, ttlSec = DEFAULT_TTL_SEC) {
   await cacheCommand("SETEX", key, ttlSec, JSON.stringify(value));
 }
+
+export async function cacheDel(key) {
+  await cacheCommand("DEL", key);
+}

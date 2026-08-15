@@ -70,11 +70,15 @@ export async function fetchModel(): Promise<string> {
   return data.model;
 }
 
-export async function createProfile(text: string, model?: string | null): Promise<SuggestedProfile> {
+export async function createProfile(
+  text: string,
+  model?: string | null,
+  hash?: string
+): Promise<SuggestedProfile> {
   return apiFetch<SuggestedProfile>("/api/profile", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, ...(model ? { model } : {}) }),
+    body: JSON.stringify({ text, ...(hash ? { hash } : {}), ...(model ? { model } : {}) }),
   });
 }
 

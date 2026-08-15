@@ -1,7 +1,17 @@
 import { HttpError } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
+import { cacheGet, cacheSet } from "./_lib/cache.mjs";
 
 const MAX_TEXT_LENGTH = 30000;
+const CV_PROFILE_CACHE_TTL_SEC = 30 * 24 * 60 * 60;
+
+function profileCacheKey(hash) {
+  return `cv-profile:${hash}`;
+}
+
+function isHash(value) {
+  return typeof value === "string" && /^[a-f0-9]{32,128}$/.test(value);
+}
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -70,6 +80,7 @@ export default async function handler(req, res) {
   try {
     const body = req.body || (await readBody(req));
     const text = typeof body.text === "string" ? body.text.trim() : "";
+    const hash = isHash(body.hash) ? body.hash.toLowerCase() : "";
 
     if (!text) {
       return res.status(400).json({
@@ -82,6 +93,13 @@ export default async function handler(req, res) {
         error: "The extracted text is too long. Please use a shorter document.",
         code: "text_too_long",
       });
+    }
+
+    if (hash) {
+      const cached = await cacheGet(profileCacheKey(hash));
+      if (cached && typeof cached === "object" && !Array.isArray(cached)) {
+        return res.status(200).json(cached);
+      }
     }
 
     const system =
@@ -115,6 +133,10 @@ ${text}`;
         error: "The AI didn't return a usable profile. Please try again in a moment.",
         code: "bad_ai_response",
       });
+    }
+
+    if (hash) {
+      await cacheSet(profileCacheKey(hash), profile, CV_PROFILE_CACHE_TTL_SEC);
     }
 
     return res.status(200).json(profile);

@@ -1,20 +1,25 @@
 import { SOURCE_APIFY_ARBEITSAGENTUR, tokenize, locationMatches, keywordHits } from "./filter.mjs";
-import { cacheGet, cacheSet } from "./cache.mjs";
+import { cacheGet, cacheSet, cacheDel } from "./cache.mjs";
 
 const APIFY_ACTOR_ID = "blackfalcondata~arbeitsagentur-jobs-feed";
 const APIFY_MAX_JOBS = 40;
 const APIFY_SYNC_TIMEOUT_SEC = 50;
 const APIFY_CACHE_TTL_SEC = 600;
+const APIFY_DATASET_MAX_AGE_SEC = 24 * 60 * 60;
 
 function cacheKeyFor(query, location) {
   return `apify-jobs:${query.toLowerCase().trim()}|${location.toLowerCase().trim()}`;
 }
 
-async function runApify(apiToken, input) {
+function datasetKeyFor(query, location) {
+  return `apify-dataset:${query.toLowerCase().trim()}|${location.toLowerCase().trim()}`;
+}
+
+async function runApifyRun(apiToken, input) {
   let response;
   try {
     response = await fetch(
-      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${encodeURIComponent(apiToken)}&timeout=${APIFY_SYNC_TIMEOUT_SEC}`,
+      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync?token=${encodeURIComponent(apiToken)}&timeout=${APIFY_SYNC_TIMEOUT_SEC}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,13 +34,42 @@ async function runApify(apiToken, input) {
     return { error: `upstream_${response.status}` };
   }
 
-  let records;
+  let run;
   try {
-    records = await response.json();
+    const data = await response.json();
+    run = data?.data ?? data;
   } catch {
     return { error: "unreadable" };
   }
-  if (!Array.isArray(records)) {
+  if (!run || typeof run !== "object" || typeof run.defaultDatasetId !== "string") {
+    return { error: "unexpected" };
+  }
+  return { run };
+}
+
+async function readDataset(apiToken, datasetId) {
+  let response;
+  try {
+    response = await fetch(
+      `https://api.apify.com/v2/datasets/${datasetId}/items?token=${encodeURIComponent(apiToken)}`,
+      { headers: { "Accept": "application/json" } }
+    );
+  } catch {
+    return { error: "network" };
+  }
+
+  if (!response.ok) {
+    return { error: `upstream_${response.status}` };
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    return { error: "unreadable" };
+  }
+  const records = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : null;
+  if (!records) {
     return { error: "unexpected" };
   }
   return { records };
@@ -87,14 +121,42 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
   };
 
   const cacheKey = cacheKeyFor(input.query, input.location);
+  const datasetKey = datasetKeyFor(input.query, input.location);
   const cached = await cacheGet(cacheKey);
   let records = Array.isArray(cached) ? cached : null;
   let error = null;
 
   if (!records) {
-    const run = await runApify(apiToken, input);
-    if (run.error) return emptyResult(run.error);
-    records = run.records;
+    const dataset = await cacheGet(datasetKey);
+    if (dataset && typeof dataset.datasetId === "string") {
+      const fresh =
+        Number.isFinite(dataset.createdAt) &&
+        Date.now() - dataset.createdAt < APIFY_DATASET_MAX_AGE_SEC;
+      if (fresh) {
+        const read = await readDataset(apiToken, dataset.datasetId);
+        if (read.records) {
+          records = read.records;
+        } else {
+          await cacheDel(datasetKey);
+        }
+      }
+    }
+
+    if (!records) {
+      const run = await runApifyRun(apiToken, input);
+      if (run.error) return emptyResult(run.error);
+      const read = await readDataset(apiToken, run.run.defaultDatasetId);
+      if (read.error) return emptyResult(read.error);
+      records = read.records;
+      if (records.length && run.run.status === "SUCCEEDED") {
+        await cacheSet(
+          datasetKey,
+          { datasetId: run.run.defaultDatasetId, createdAt: Date.now() },
+          APIFY_DATASET_MAX_AGE_SEC
+        );
+      }
+    }
+
     if (records.length) await cacheSet(cacheKey, records, APIFY_CACHE_TTL_SEC);
   }
 

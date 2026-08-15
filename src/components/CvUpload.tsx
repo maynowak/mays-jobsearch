@@ -7,6 +7,51 @@ import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
 const MIN_READABLE_CHARS = 20;
+const CV_PROFILE_LOCAL_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const CV_PROFILE_STORE_PREFIX = "mj-cv-profile:";
+
+function normalizeText(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+async function sha256Hex(text: string): Promise<string | null> {
+  try {
+    if (!crypto?.subtle) return null;
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return null;
+  }
+}
+
+function readLocalProfile(hash: string): SuggestedProfile | null {
+  try {
+    const raw = localStorage.getItem(`${CV_PROFILE_STORE_PREFIX}${hash}`);
+    if (!raw) return null;
+    const stored = JSON.parse(raw) as { profile?: SuggestedProfile; savedAt?: number };
+    if (!stored?.profile || typeof stored.savedAt !== "number") return null;
+    if (Date.now() - stored.savedAt > CV_PROFILE_LOCAL_TTL_MS) {
+      localStorage.removeItem(`${CV_PROFILE_STORE_PREFIX}${hash}`);
+      return null;
+    }
+    return stored.profile;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalProfile(hash: string, profile: SuggestedProfile): void {
+  try {
+    localStorage.setItem(
+      `${CV_PROFILE_STORE_PREFIX}${hash}`,
+      JSON.stringify({ profile, savedAt: Date.now() })
+    );
+  } catch {
+    /* noop */
+  }
+}
 
 interface Props {
   busy: boolean;
@@ -56,7 +101,18 @@ export default function CvUpload({ busy, loadingLabel, onSubmit, onManual, model
         return;
       }
       setPhase("creating");
-      const profile = await createProfile(text, model);
+      const normalized = normalizeText(text);
+      const hash = await sha256Hex(normalized);
+      if (hash) {
+        const cachedProfile = readLocalProfile(hash);
+        if (cachedProfile) {
+          setSuggested(cachedProfile);
+          setPhase("ready");
+          return;
+        }
+      }
+      const profile = await createProfile(text, model, hash ?? undefined);
+      if (hash) writeLocalProfile(hash, profile);
       setSuggested(profile);
       setPhase("ready");
     } catch (err) {
