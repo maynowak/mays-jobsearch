@@ -19,8 +19,42 @@ export class ApiError extends Error {
   }
 }
 
+const TRANSIENT_STATUSES = new Set([429, 502, 503, 504]);
+
+const NON_TRANSIENT_CODES = new Set([
+  "bad_request",
+  "method",
+  "unauthorized",
+  "model_invalid",
+  "model_not_free",
+  "key_invalid",
+  "insufficient_credits",
+  "missing_key",
+  "missing_config",
+  "bad_ai_response",
+  "text_too_long",
+  "missing_text",
+  "models_unavailable",
+  "internal",
+  "error",
+]);
+
 export function isModelUnavailable(err: unknown): boolean {
-  return err instanceof ApiError && err.code === "model_unavailable";
+  if (err instanceof ApiError) {
+    if (err.code === "model_unavailable") return true;
+    if (
+      err.status &&
+      TRANSIENT_STATUSES.has(err.status) &&
+      !(err.code && NON_TRANSIENT_CODES.has(err.code))
+    ) {
+      return true;
+    }
+    return false;
+  }
+  return (
+    err instanceof Error &&
+    (err.name === "TypeError" || err.name === "TimeoutError" || err.name === "AbortError")
+  );
 }
 
 export interface FallbackResult<T> {
@@ -100,9 +134,9 @@ export async function apiFetch<T = unknown>(url: string, options?: RequestInit):
   }
   if (!res.ok) {
     throw new ApiError(
-      data.error || `Something went wrong (HTTP ${res.status}).`,
+      typeof data.error === "string" ? data.error : `Something went wrong (HTTP ${res.status}).`,
       res.status,
-      data.code
+      typeof data.code === "string" ? data.code : undefined
     );
   }
   return data as T;

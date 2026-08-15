@@ -2,6 +2,7 @@ import { HttpError } from "./filter.mjs";
 import { assertFreeModel, resolveDefaultModel } from "./models.mjs";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_TIMEOUT_MS = 40_000;
 
 function modelUnavailable() {
   return new HttpError(
@@ -49,8 +50,12 @@ export async function chat({ system, prompt, json = false, temperature = 0.3, ma
         max_tokens: maxTokens,
         ...(json ? { response_format: { type: "json_object" } } : {}),
       }),
+      signal: AbortSignal.timeout(OPENROUTER_TIMEOUT_MS),
     });
-  } catch {
+  } catch (err) {
+    if (err && (err.name === "TimeoutError" || err.name === "AbortError")) {
+      console.warn(`[ai] OpenRouter request timed out after ${OPENROUTER_TIMEOUT_MS}ms`);
+    }
     throw modelUnavailable();
   }
 
