@@ -3,6 +3,7 @@ import type { KeyboardEvent, MouseEvent } from "react";
 import type { ModelOption } from "../types";
 import type { ModelsState } from "../hooks/useAvailableModels";
 import { useLang } from "../i18n";
+import { modelDisplayName } from "../lib/modelDisplayName";
 
 interface Props {
   state: ModelsState;
@@ -222,12 +223,14 @@ export default function ModelSelector({
         role="option"
         aria-selected={m.id === value}
         aria-label={
-          m.id === recommendedModel ? `${m.name} — ${t("model.recommended")}` : undefined
+          m.id === recommendedModel
+            ? `${modelDisplayName(m)} — ${t("model.recommended")}`
+            : modelDisplayName(m)
         }
         className={`model-option${m.id === recommendedModel ? " model-option--recommended" : ""}${activeIndex === i ? " model-option-active" : ""}`}
         onClick={onOptionClick(i)}
       >
-        <span className="model-option-label">{m.name}</span>
+        <span className="model-option-label">{modelDisplayName(m)}</span>
         <Check />
       </li>
     );
@@ -243,7 +246,7 @@ export default function ModelSelector({
           aria-controls={listId}
           aria-labelledby={labelId}
           aria-activedescendant={activeId}
-          aria-label={selected ? `${selected.name} (${selected.id})` : undefined}
+          aria-label={selected ? `${modelDisplayName(selected)} (${selected.id})` : undefined}
           aria-disabled={disabled}
           disabled={disabled}
           title={selected ? selected.id : undefined}
@@ -254,7 +257,9 @@ export default function ModelSelector({
           }}
           onKeyDown={onTriggerKeyDown}
         >
-          <span className="model-trigger-text">{selected ? selected.name : t("model.none")}</span>
+          <span className="model-trigger-text">
+            {selected ? modelDisplayName(selected) : t("model.none")}
+          </span>
           <Chevron />
         </button>
         <ul

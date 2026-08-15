@@ -12,6 +12,30 @@ const APIFY_REUSE_KEY = "mj-usage:apify:datasetReuses";
 const APIFY_CACHE_HIT_KEY = "mj-usage:apify:cacheHits";
 const APIFY_CACHE_MISS_KEY = "mj-usage:apify:cacheMisses";
 
+const OPENROUTER_KEYS = {
+  requests: REQUEST_KEY,
+  failures: FAILURE_KEY,
+  attempts: ATTEMPT_KEY,
+  model: OPENROUTER_MODEL_KEY,
+};
+
+function providerKeys(provider) {
+  if (provider === "openrouter") return OPENROUTER_KEYS;
+  return {
+    requests: `mj-usage:ai:${provider}:requests`,
+    failures: `mj-usage:ai:${provider}:failures`,
+    attempts: `mj-usage:ai:${provider}:fallbackAttempts`,
+    model: `mj-usage:ai:${provider}:model`,
+  };
+}
+
+function providerLimit(provider) {
+  const cfg = getConfig();
+  if (provider === "openrouter") return cfg.openRouterMonthlyMaxRequests;
+  if (provider === "edenai") return cfg.edenaiMonthlyMaxRequests;
+  return cfg.openRouterMonthlyMaxRequests;
+}
+
 function currentMonth() {
   const now = new Date();
   const year = now.getFullYear();
@@ -24,16 +48,31 @@ function monthScoped(base) {
 }
 
 export async function countOpenRouterRequest(model) {
-  await cacheIncr(monthScoped(REQUEST_KEY), MONTH_TTL_SEC);
-  if (model) await cacheHIncrBy(monthScoped(OPENROUTER_MODEL_KEY), String(model), 1, MONTH_TTL_SEC);
+  return countAiRequest("openrouter", model);
 }
 
 export async function countOpenRouterFailure() {
-  await cacheIncr(monthScoped(FAILURE_KEY), MONTH_TTL_SEC);
+  return countAiFailure("openrouter");
 }
 
 export async function countOpenRouterAttempt() {
-  await cacheIncr(monthScoped(ATTEMPT_KEY), MONTH_TTL_SEC);
+  return countAiAttempt("openrouter");
+}
+
+export async function countAiRequest(provider, model) {
+  const keys = providerKeys(provider);
+  await cacheIncr(monthScoped(keys.requests), MONTH_TTL_SEC);
+  if (model) await cacheHIncrBy(monthScoped(keys.model), String(model), 1, MONTH_TTL_SEC);
+}
+
+export async function countAiFailure(provider) {
+  const keys = providerKeys(provider);
+  await cacheIncr(monthScoped(keys.failures), MONTH_TTL_SEC);
+}
+
+export async function countAiAttempt(provider) {
+  const keys = providerKeys(provider);
+  await cacheIncr(monthScoped(keys.attempts), MONTH_TTL_SEC);
 }
 
 export async function countApifyRun() {
@@ -58,9 +97,12 @@ async function readCount(base) {
 }
 
 export async function openRouterLimitReached() {
-  const cfg = getConfig();
-  const requests = await readCount(REQUEST_KEY);
-  return requests >= cfg.openRouterMonthlyMaxRequests;
+  return aiLimitReached("openrouter");
+}
+
+export async function aiLimitReached(provider) {
+  const requests = await readCount(providerKeys(provider).requests);
+  return requests >= providerLimit(provider);
 }
 
 export async function apifyRunLimitReached() {
@@ -72,6 +114,7 @@ export async function apifyRunLimitReached() {
 export async function getUsageSnapshot() {
   const cfg = getConfig();
   const now = new Date();
+  const edenaiKeys = providerKeys("edenai");
   return {
     generatedAt: now.toISOString(),
     month: currentMonth(),
@@ -80,6 +123,12 @@ export async function getUsageSnapshot() {
       failureCount: await readCount(FAILURE_KEY),
       fallbackAttempts: await readCount(ATTEMPT_KEY),
       byModel: await cacheHGetAll(monthScoped(OPENROUTER_MODEL_KEY)),
+    },
+    edenai: {
+      requestCount: await readCount(edenaiKeys.requests),
+      failureCount: await readCount(edenaiKeys.failures),
+      fallbackAttempts: await readCount(edenaiKeys.attempts),
+      byModel: await cacheHGetAll(monthScoped(edenaiKeys.model)),
     },
     apify: {
       actorRuns: await readCount(APIFY_RUN_KEY),
@@ -91,6 +140,8 @@ export async function getUsageSnapshot() {
       openRouterMonthlySoftLimitUsd: cfg.openRouterMonthlySoftLimitUsd,
       apifyMonthlySoftLimitUsd: cfg.apifyMonthlySoftLimitUsd,
       openRouterMonthlyMaxRequests: cfg.openRouterMonthlyMaxRequests,
+      edenaiMonthlySoftLimitUsd: cfg.edenaiMonthlySoftLimitUsd,
+      edenaiMonthlyMaxRequests: cfg.edenaiMonthlyMaxRequests,
       apifyMonthlyMaxRuns: cfg.apifyMonthlyMaxRuns,
       modelFallbackMaxAttempts: cfg.modelFallbackMaxAttempts,
       apifyDatasetRefreshPeakHours: cfg.apifyDatasetRefreshPeakHours,
@@ -102,10 +153,12 @@ export async function getUsageSnapshot() {
     notes: {
       openRouter:
         "Application-side request counter, not provider billing. The OpenRouter dashboard is authoritative for spend.",
+      edenai:
+        "Application-side request counter, not provider billing. The EdenAI dashboard is authoritative for spend.",
       apify:
         "Application-side run counter, not provider billing. The Apify console is authoritative for spend.",
       limits:
-        "Soft limits are advisory operator thresholds. Guards use the application-side counter backstops (openRouterMonthlyMaxRequests / apifyMonthlyMaxRuns).",
+        "Soft limits are advisory operator thresholds. Guards use the application-side counter backstops (openRouterMonthlyMaxRequests / edenaiMonthlyMaxRequests / apifyMonthlyMaxRuns).",
     },
   };
 }

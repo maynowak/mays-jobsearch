@@ -9,6 +9,13 @@ function parsePositiveInt(value, fallback) {
   return Math.max(1, n);
 }
 
+function parseBoolean(value, fallback) {
+  const s = String(value ?? "").trim().toLowerCase();
+  if (s === "true" || s === "1" || s === "yes") return true;
+  if (s === "false" || s === "0" || s === "no") return false;
+  return fallback;
+}
+
 function parseTimezone(value, fallback) {
   const tz = String(value || "").trim();
   if (!tz) return fallback;
@@ -86,6 +93,16 @@ export function getConfig() {
       1000
     ),
     apifyMonthlyMaxRuns: parsePositiveInt(process.env.APIFY_MONTHLY_MAX_RUNS, 30),
+    openRouterEnabled: parseBoolean(process.env.OPENROUTER_ENABLED, true),
+    edenaiEnabled: parseBoolean(process.env.EDENAI_ENABLED, true),
+    edenaiMonthlySoftLimitUsd: parsePositiveNumber(
+      process.env.EDENAI_MONTHLY_SOFT_LIMIT_USD,
+      1.0
+    ),
+    edenaiMonthlyMaxRequests: parsePositiveInt(
+      process.env.EDENAI_MONTHLY_MAX_REQUESTS,
+      200
+    ),
   };
 }
 

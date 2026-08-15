@@ -60,13 +60,20 @@ export interface MatchResponse {
   };
 }
 
-export interface ModelOption {
+export interface ModelProvider {
   id: string;
   name: string;
 }
 
+export interface ModelOption {
+  id: string;
+  name: string;
+  provider?: ModelProvider;
+}
+
 export interface ModelsResponse {
   models: ModelOption[];
+  providers?: ModelProvider[];
   defaultModel?: string;
   fallbackModel?: string | null;
   recommendedModel?: string | null;

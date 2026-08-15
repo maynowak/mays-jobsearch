@@ -91,13 +91,31 @@ Flow:
 
 ## Model selection
 
-Free OpenRouter models are discovered dynamically from OpenRouter's model metadata instead of being hardcoded:
+Free AI models are discovered dynamically from provider metadata instead of being hardcoded. The app supports multiple AI providers behind a single provider router:
 
-- `api/_lib/models.mjs` fetches the OpenRouter model catalogue (`https://openrouter.ai/api/v1/models`) and keeps an in-memory cache (10 min).
-- A model is eligible if its pricing is free (`prompt`, `completion`, `request` all `"0"`), it supports text input and text output modalities, and it is not expired.
-- There is no hardcoded provider/model blacklist, and structured-output support is tracked but **not** required for eligibility (some working free models do not advertise it).
-- `api/_lib/model.mjs` resolves the configured default (`OPENROUTER_MODEL` env, falling back to a default model constant) — the recommended model is always resolved dynamically against the current free catalogue and may change.
-- `api/models.mjs` exposes `GET /api/models` → `{ models, defaultModel, fallbackModel, recommendedModel }`.
+- `api/_lib/providers/index.mjs` is the **provider router**: it owns `chat()`, aggregates the free-model catalogue across providers, resolves which provider owns a given model ID, and performs provider-level fallback.
+- `api/_lib/providers/openrouter.mjs` — the OpenRouter provider (catalogue from `https://openrouter.ai/api/v1/models`, chat via `https://openrouter.ai/api/v1/chat/completions`).
+- `api/_lib/providers/edenai.mjs` — the EdenAI provider (V3 OpenAI-compatible catalogue `https://api.edenai.run/v3/models` and chat `https://api.edenai.run/v3/chat/completions`).
+- `api/_lib/ai.mjs` and `api/_lib/models.mjs` are thin facades re-exporting the router for backward compatibility.
+- Each provider keeps an in-memory catalogue cache (10 min) and exposes the same interface: `enabled()`, `getModels()`, `ownsModel(id)`, `getEligibleModel(preferred)`, `getDefaultModel()`, `chat()`, `limitReached()`, `countRequest/countFailure/countAttempt`.
+
+Eligibility rules:
+
+- **OpenRouter:** a model is eligible if its pricing is free (`prompt`, `completion`, `request` all `"0"`), it supports text input and text output modalities, and it is not expired.
+- **EdenAI:** a model is eligible if its catalogue `pricing` is zero-cost (`input_cost_per_token` and `output_cost_per_token` are `"0"` — no name-based heuristic), it supports text input and text output, and the output modalities do not include audio.
+- There is no hardcoded provider/model blacklist. Structured-output support is tracked per model (`structured` flag) but **not** required for eligibility.
+
+Provider resolution and fallback:
+
+- `/api/models` aggregates the eligible free models of all **enabled** providers and deduplicates by model ID (OpenRouter first). Each entry carries `provider: { id, name }`; the response also contains a `providers[]` array.
+- When a request sends a `model`, the router resolves the owning provider via catalogue membership (`ownsModel`). If no provider owns the ID, the request is rejected with `model_not_free`.
+- **Provider-level fallback:** if the primary provider reports a provider-exhausted error (`free_quota_exceeded`, `quota_exhausted`, `insufficient_credits`, `limit_reached`), the router retries the same operation on the next enabled provider with that provider's own eligible model. The number of attempts is bounded by the number of enabled providers (no infinite loop) and capped at `MODEL_FALLBACK_MAX_ATTEMPTS`. There are **no parallel** AI requests.
+- Model-level errors (`model_unavailable`, timeout, network, bad response) are **not** treated as provider exhaustion — they propagate so the client's `withModelFallback` can retry with another model ID. Only provider-exhaustion categories switch the provider.
+
+Normalized error codes (`api/_lib/providers/errors.mjs`): `model_unavailable`, `quota_exhausted`, `free_quota_exceeded`, `rate_limited`, `timeout`, `network_error`, `authentication_failed`, `model_invalid`, `bad_request`, `bad_ai_response`, `key_invalid`, `insufficient_credits`, `limit_reached`, `missing_key`, `models_unavailable`, `model_not_free`. The existing frontend codes are preserved unchanged.
+
+- `api/_lib/model.mjs` resolves the configured defaults (`OPENROUTER_MODEL` / `EDENAI_MODEL` env, falling back to default constants) — the recommended model is always resolved dynamically against the current free catalogue and may change.
+- `api/models.mjs` exposes `GET /api/models` → `{ models, providers, defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`.
 - `api/model.mjs` exposes `GET /api/model` → `{ model }` (resolved default).
 
 Frontend behavior:
@@ -109,6 +127,7 @@ Frontend behavior:
 - The popover flips upward automatically when there is not enough space below the trigger.
 - The model ID is not presented as a large technical UI element — the friendly model name is shown.
 - Automatic fallback (`withModelFallback` in `src/api.ts`): if the selected model fails with `model_unavailable`, the same operation is retried with up to two other eligible free models (deterministic order: selected → recommended → remaining catalogue order). The attempt cap defaults to 3 and is configurable via `MODEL_FALLBACK_MAX_ATTEMPTS`, which `/api/models` exposes as `fallbackMaxAttempts` (no source edit needed). A subtle notice is shown when a fallback was used; the user's selection is never permanently changed. Applies to `/api/profile`, `/api/match` and `/api/cover-letter`. The catalogue's presence of a model only means "currently eligible per metadata" — availability is discovered at runtime.
+- The model selector displays "Provider · Model name" (e.g. "OpenRouter · GPT-OSS 20B" / "EdenAI · Gemma") so users can see which provider a model belongs to.
 
 ## CV upload + profile extraction
 
@@ -246,20 +265,24 @@ All tunables are environment variables with safe defaults (see `docs/DEPLOYMENT.
 | Config | Env var | Default |
 |---|---|---|
 | OpenRouter advisory spend limit (USD) | `OPENROUTER_MONTHLY_SOFT_LIMIT_USD` | 0.80 |
+| EdenAI advisory spend limit (USD) | `EDENAI_MONTHLY_SOFT_LIMIT_USD` | 1.00 |
 | Apify advisory spend limit (USD) | `APIFY_MONTHLY_SOFT_LIMIT_USD` | 4.00 |
 | Max AI fallback attempts | `MODEL_FALLBACK_MAX_ATTEMPTS` | 3 |
+| OpenRouter provider enabled | `OPENROUTER_ENABLED` | true |
+| EdenAI provider enabled | `EDENAI_ENABLED` | true |
 | Apify dataset reuse window, peak hours | `APIFY_DATASET_REFRESH_PEAK_HOURS` | 6 |
 | Apify dataset reuse window, off-peak hours | `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` | 12 |
 | Apify peak window IANA timezone | `APIFY_DATASET_REFRESH_TIMEZONE` | `Europe/Berlin` |
 | Apify peak window start | `APIFY_DATASET_REFRESH_PEAK_START` | `08:00` |
 | Apify peak window end | `APIFY_DATASET_REFRESH_PEAK_END` | `18:00` |
 | AI request-count backstop | `OPENROUTER_MONTHLY_MAX_REQUESTS` | 1000 |
+| EdenAI request-count backstop | `EDENAI_MONTHLY_MAX_REQUESTS` | 200 |
 | Apify run-count backstop | `APIFY_MONTHLY_MAX_RUNS` | 30 |
 | Diagnostics token for `GET /api/usage` | `USAGE_DIAGNOSTICS_TOKEN` | unset → endpoint disabled |
 
 ### Counters (`api/_lib/usage.mjs`)
 
-- OpenRouter: `requests`, `failures`, `fallbackAttempts` (from the client's `x-mj-attempt` header, attempt > 1), plus a per-model hash.
+- Per AI provider (`openrouter`, `edenai`): `requests`, `failures`, `fallbackAttempts` (from the client's `x-mj-attempt` header, attempt > 1), plus a per-model hash. OpenRouter keeps its existing Redis keys (`mj-usage:openrouter:*`); EdenAI uses `mj-usage:ai:edenai:*`.
 - Apify: `runs`, `datasetReuses`, `cacheHits`, `cacheMisses`.
 
 Counters are incremented with atomic Redis `INCR` / `HINCRBY` (helpers in `api/_lib/cache.mjs`); TTL is set only on first write.
@@ -268,7 +291,7 @@ Counters are incremented with atomic Redis `INCR` / `HINCRBY` (helpers in `api/_
 
 - These are **application-side counters, not provider billing**. The OpenRouter and Apify dashboards remain authoritative for real spend.
 - The `*_SOFT_LIMIT_USD` values are advisory operator thresholds surfaced in `/api/usage`; the app does **not** block on them (it cannot derive exact spend from its own counters).
-- **OpenRouter:** before each AI call, `openRouterLimitReached()` checks the monthly request count. At the backstop it throws `503 limit_reached` (fail fast — no provider call, no counter increment). The client's `withModelFallback` stays bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`, which the server exposes via `/api/models` (`fallbackMaxAttempts`).
+- **AI providers (per provider):** before each AI call, the provider's `limitReached()` checks the monthly request count. At the backstop it throws `503 limit_reached` (fail fast — no provider call, no counter increment). If one provider is at its backstop, the router continues with the next enabled provider; only when all enabled providers are at their backstop does the request fail. The client's `withModelFallback` stays bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`, which the server exposes via `/api/models` (`fallbackMaxAttempts`).
 - **Apify:** before starting a new Actor run, `apifyRunLimitReached()` checks the monthly run count. At the backstop, no new paid run is started and the source returns `emptyResult("limit_reached")` — cached and dataset-reused searches keep working; Arbeitnow is unaffected.
 - A missing Redis connection degrades gracefully: `cacheCommand` returns `null`, so counters read as `0` and the guards never block.
 
@@ -285,14 +308,15 @@ The token is compared with a constant-time string comparison, is never logged, n
 ```json
 { "generatedAt": "...", "month": "2026-08",
   "openRouter": { "requestCount": 1, "failureCount": 0, "fallbackAttempts": 0, "byModel": { "openai/gpt-4o-mini": 1 } },
+  "edenai": { "requestCount": 0, "failureCount": 0, "fallbackAttempts": 0, "byModel": {} },
   "apify": { "actorRuns": 1, "datasetReuses": 0, "cacheHits": 0, "cacheMisses": 1 },
-  "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "apifyMonthlySoftLimitUsd": 4.0,
-               "openRouterMonthlyMaxRequests": 1000, "apifyMonthlyMaxRuns": 30,
+  "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "edenaiMonthlySoftLimitUsd": 1.0, "apifyMonthlySoftLimitUsd": 4.0,
+               "openRouterMonthlyMaxRequests": 1000, "edenaiMonthlyMaxRequests": 200, "apifyMonthlyMaxRuns": 30,
                "modelFallbackMaxAttempts": 3,
                "apifyDatasetRefreshPeakHours": 6, "apifyDatasetRefreshOffpeakHours": 12,
                "apifyDatasetRefreshTimezone": "Europe/Berlin",
                "apifyDatasetRefreshPeakStart": "08:00", "apifyDatasetRefreshPeakEnd": "18:00" },
-  "notes": { "openRouter": "...", "apify": "...", "limits": "..." } }
+  "notes": { "openRouter": "...", "edenai": "...", "apify": "...", "limits": "..." } }
 ```
 
 ## Redis (Upstash)
@@ -305,7 +329,7 @@ Redis serves multiple, distinct purposes with different TTLs — do not treat th
 | Apify dataset reuse metadata (L2) | `apify-dataset:<query>\|<location>` | Redis TTL + application freshness window: peak 6 h / off-peak 12 h (configurable, timezone-aware via `Europe/Berlin`) |
 | CV profile cache | `cv-profile:<hash>` | Redis TTL 30 days |
 | Alert subscriptions | `alerts` (hash) | persistent (no TTL) |
-| Usage counters (monthly) | `mj-usage:<name>:<YYYY-MM>` (+ `mj-usage:openrouter:model:<YYYY-MM>` hash) | Redis TTL 62 days; month-scoped, reset by month rollover |
+| Usage counters (monthly) | `mj-usage:<name>:<YYYY-MM>` (+ `mj-usage:openrouter:model:<YYYY-MM>` and `mj-usage:ai:edenai:model:<YYYY-MM>` hashes) | Redis TTL 62 days; month-scoped, reset by month rollover |
 
 Clearly distinguish:
 
@@ -335,21 +359,46 @@ Shared job logic:
 - `HttpError` — error class carrying `status`, `code`, and a human-readable message.
 - Source constants `SOURCE_ARBEITNOW` (`"existing"`) and `SOURCE_APIFY_ARBEITSAGENTUR` (`"apify-arbeitsagentur"`).
 
+### `api/_lib/providers/index.mjs`
+
+Provider router:
+
+- `enabledProviders()` / `allProvidersInfo()` — which providers are configured and enabled.
+- `providerForModel(model)` — resolves the owning provider via catalogue membership (OpenRouter first for deduplicated IDs).
+- `chat(...)` — picks the primary provider (owning provider of the requested model, or the first enabled provider), then performs bounded **provider-level fallback** on provider-exhausted errors (`free_quota_exceeded`, `quota_exhausted`, `insufficient_credits`, `limit_reached`) using each next provider's eligible model. Model-level errors propagate unchanged. Cost guard per provider: `limitReached()` → `503 limit_reached` before the call; counts requests/failures/attempts per provider.
+- `getFreeModels()` / `assertFreeModel(id)` / `getCompatibleFallback(preferred)` / `resolveDefaultModel()` — aggregated across providers, deduplicated by model ID (OpenRouter first), each model tagged with `provider: { id, name }`.
+- `isFreeDailyQuotaError(text)` — forwarded from the OpenRouter provider.
+
+### `api/_lib/providers/errors.mjs`
+
+- `AiError` (extends `HttpError`) with a `category` (`model` / `provider` / `client`) plus the normalized `ERROR_CODES`.
+- `isProviderExhausted(err)` — true only for the provider-exhaustion codes that trigger provider fallback.
+
+### `api/_lib/providers/openrouter.mjs`
+
+- OpenRouter provider: catalogue fetch + free eligibility (pricing free, text in/out, not expired), cached 10 min in-memory.
+- `chat(...)` with consistent error mapping (401 → `key_invalid`, 402 → `insufficient_credits`, 429 with `free-models-per-day` → `free_quota_exceeded`, other 429 → `model_unavailable`, network/timeout → `model_unavailable`).
+- Cost guard + per-provider usage counters (requests, failures, fallback attempts, per-model hash).
+
+### `api/_lib/providers/edenai.mjs`
+
+- EdenAI provider: V3 OpenAI-compatible catalogue (`/v3/models`, public) + chat (`/v3/chat/completions`).
+- Free eligibility via zero-cost `pricing` metadata (no name heuristic); structured output via `capabilities.supports_response_schema`.
+- Key selection: `EDENAI_ENV` overrides the mode, otherwise `VERCEL_ENV === "production"` → `EDENAI_API_KEY`, else `EDENAI_DEV_API_KEY` preferred (sandbox, simulated responses, no cost). Missing keys only disable this provider.
+- Error mapping: 401/403 → `key_invalid`, 402 → `insufficient_credits`, 429 → `quota_exhausted` (quota hint) or `rate_limited`, 400/422 → `model_invalid` (model hint) or `bad_request`, 5xx/network/timeout → `model_unavailable`.
+
+### `api/_lib/ai.mjs`
+
+Facade that re-exports `chat(...)` and `isFreeDailyQuotaError(...)` from the provider router. All endpoints import from here; tests mock this module.
+
 ### `api/_lib/models.mjs`
 
-- `getFreeModels()` — eligible free models from OpenRouter metadata (pricing free + text in/out + not expired), cached 10 min in-memory.
-- `assertFreeModel(id)` — rejects model IDs not currently in the free catalogue.
-- `getCompatibleFallback(preferred)` — prefers `:free` models, then structured-output support, then name.
-- `resolveDefaultModel()` — fallback or configured default.
+Facade that re-exports `getFreeModels`, `assertFreeModel`, `getCompatibleFallback`, `resolveDefaultModel` from the provider router.
 
 ### `api/_lib/model.mjs`
 
 - `getOpenRouterModel()` — `OPENROUTER_MODEL` env or a default model constant.
-
-### `api/_lib/ai.mjs`
-
-- `chat(...)` — one shared OpenRouter call with consistent error mapping (401 / 402 / 429 / network / malformed); resolves/validates a free model per request. On HTTP 429 it reads the provider message: the account-wide daily free quota (`free-models-per-day`) is mapped to a distinct `429 free_quota_exceeded` error, while all other 429s stay `model_unavailable`.
-- Cost guard: checks `openRouterLimitReached()` before each call and throws `503 limit_reached` when the monthly request backstop is hit; increments the monthly request counter (and per-model hash), counts failures, and counts fallback attempts when `attempt > 1`.
+- `getEdenaiModel()` — `EDENAI_MODEL` env or a default EdenAI constant.
 
 ### `api/_lib/cache.mjs`
 
@@ -367,7 +416,7 @@ Shared job logic:
 
 ### `api/_lib/usage.mjs`
 
-- Monthly Redis usage counters (OpenRouter + Apify), guard checks (`openRouterLimitReached`, `apifyRunLimitReached`), and `getUsageSnapshot()` for `/api/usage`.
+- Monthly Redis usage counters (AI providers + Apify), generic `aiLimitReached(provider)` / `countAiRequest|Failure|Attempt(provider)` (OpenRouter maps onto the legacy `mj-usage:openrouter:*` keys, EdenAI onto `mj-usage:ai:edenai:*`), the Apify guard (`apifyRunLimitReached`), and `getUsageSnapshot()` for `/api/usage`.
 
 ### `api/_lib/jobs.mjs`
 
@@ -411,9 +460,11 @@ Shared job logic:
 
 (returns the cached profile on hash hit).
 
-### `/api/models` → `{ models[], defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`
+### `/api/models` → `{ models[], providers[], defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`
 
-`fallbackMaxAttempts` mirrors `MODEL_FALLBACK_MAX_ATTEMPTS` (default 3) and configures the client's `withModelFallback` attempt cap without editing source code.
+- `models[]`: `{ id, name, provider: { id, name } }` — aggregated across enabled providers, deduplicated by ID (OpenRouter first).
+- `providers[]`: `{ id, name, enabled, configured }` — provider status.
+- `fallbackMaxAttempts` mirrors `MODEL_FALLBACK_MAX_ATTEMPTS` (default 3) and configures the client's `withModelFallback` attempt cap without editing source code.
 
 ### `/api/match` → `{ matches[], meta }`
 

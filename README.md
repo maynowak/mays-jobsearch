@@ -3,9 +3,9 @@
 Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), and the app:
 
 1. **CV upload (optional):** the PDF is read in the browser (PDF.js), text-extracted and turned into an editable search profile by the AI (`/api/profile`). The profile is cached per CV hash, so repeated uploads of the same CV are instant. The PDF file itself is never sent to the server, and raw CV text is never stored.
-2. **Model selection:** the app dynamically shows the currently available free OpenRouter models and preselects a recommended one. The user can switch to any other free model (`/api/models`). During a running search/scoring the selector is locked so the chosen model cannot be changed mid-flight.
+2. **Model selection:** the app dynamically shows the currently available free AI models and preselects a recommended one. The user can switch to any other free model (`/api/models`). Models come from a provider router with **OpenRouter** as the primary provider and **EdenAI** as an optional second provider; when one provider reports a quota exhaustion the router automatically falls back to the other. During a running search/scoring the selector is locked so the chosen model cannot be changed mid-flight.
 3. Fetches current openings from two sources — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api) and the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`) — and filters them by your keywords and cities (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse) to avoid unnecessary paid Apify runs. Once jobs are delivered, a small "Jobquellen" module directly below the search button shows the real per-source counts (e.g. "Arbeitnow 26 Stellen · Arbeitsagentur 40 Stellen"), computed dynamically from the delivered jobs and clearly separated from the AI model selector.
-4. Sends the filtered pool + your profile to the OpenRouter chat API (`/api/match`). To stay within the function timeout, the pool is narrowed to **max 10 candidates** by keyword hits, the AI scores those **0–100** and the **top 5** are shown with:
+4. Sends the filtered pool + your profile to the AI provider (`/api/match`). To stay within the function timeout, the pool is narrowed to **max 10 candidates** by keyword hits, the AI scores those **0–100** and the **top 5** are shown with:
    - the score,
    - **two sentences on why** it fits you,
    - **one question** to prepare for the interview.
@@ -23,6 +23,7 @@ Project documentation lives in [`docs/`](docs/):
 
 - [AGENTS.md](docs/AGENTS.md) — project overview, stack, coding rules
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) — system structure & data flow
+- [AI_PROVIDERS.md](docs/AI_PROVIDERS.md) — AI provider architecture, keys, fallback, error codes
 - [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — visual design & components
 - [BUILD.md](docs/BUILD.md) — local dev, validation, deploy
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md) — Vercel + environment variables
@@ -34,7 +35,7 @@ Project documentation lives in [`docs/`](docs/):
 
 ```
 ├── api/                       # Vercel serverless functions (JSON only)
-│   ├── _lib/                  # shared helpers (filter, jobs, model(s), ai, cache, apify, alerts)
+│   ├── _lib/                  # shared helpers (filter, jobs, model(s), ai, providers, cache, apify, alerts)
 │   ├── jobs.mjs               # GET /api/jobs    → combined filtered jobs (Arbeitnow + Apify)
 │   ├── profile.mjs            # POST /api/profile → AI search profile from CV text (cached by hash)
 │   ├── match.mjs              # POST /api/match  → AI-scored top matches (max 10 evaluated)
@@ -74,15 +75,21 @@ All keys are server-side only.
 
 | Variable | Needed for | Where to get it |
 |---|---|---|
-| `OPENROUTER_API_KEY` | Matching, CV profile extraction, cover letters | <https://openrouter.ai/keys> |
+| `OPENROUTER_API_KEY` | Matching, CV profile extraction, cover letters (primary provider) | <https://openrouter.ai/keys> |
 | `OPENROUTER_MODEL` (optional) | Override the default model | — |
+| `EDENAI_API_KEY` (optional) | Second AI provider, production key | <https://www.edenai.co> |
+| `EDENAI_DEV_API_KEY` (optional) | EdenAI sandbox token for dev/preview (simulated responses, no cost) | EdenAI |
+| `EDENAI_ENV` (optional) | Force EdenAI key mode (`production` or sandbox); defaults to `VERCEL_ENV` | — |
+| `EDENAI_MODEL` (optional) | Override the default EdenAI model | — |
 | `APIFY_API_TOKEN` (optional) | Second job source: Arbeitsagentur feed via Apify | <https://console.apify.com/settings/integrations> |
 | `UPSTASH_REDIS_REST_URL` | Apify job cache, CV profile cache, alert subscriptions | <https://upstash.com> (free Redis) |
 | `UPSTASH_REDIS_REST_TOKEN` | Same as above | Upstash |
 | `RESEND_API_KEY` | Sending digest emails | <https://resend.com> (free) |
 | `DIGEST_FROM` | Sender address (verified domain in Resend) | Resend |
 | `CRON_SECRET` | Protects `/api/cron/digest` | any random string |
-| `OPENROUTER_MONTHLY_MAX_REQUESTS` (optional) | AI request-count backstop for the cost guard (default `1000`/month) | — |
+| `OPENROUTER_MONTHLY_MAX_REQUESTS` (optional) | OpenRouter AI request-count backstop for the cost guard (default `1000`/month) | — |
+| `EDENAI_MONTHLY_MAX_REQUESTS` (optional) | EdenAI request-count backstop (default `200`/month) | — |
+| `OPENROUTER_ENABLED` / `EDENAI_ENABLED` (optional) | Enable/disable each AI provider (default `true`) | — |
 | `APIFY_MONTHLY_MAX_RUNS` (optional) | Apify Actor-run backstop for the cost guard (default `30`/month) | — |
 | `MODEL_FALLBACK_MAX_ATTEMPTS` (optional) | Max AI fallback attempts, exposed to the client (default `3`) | — |
 | `APIFY_DATASET_REFRESH_PEAK_HOURS` (optional) | Apify dataset reuse window during peak hours (default `6`) | — |
@@ -90,7 +97,7 @@ All keys are server-side only.
 | `APIFY_DATASET_REFRESH_TIMEZONE` (optional) | IANA timezone for the peak window (default `Europe/Berlin`; DST handled automatically) | — |
 | `APIFY_DATASET_REFRESH_PEAK_START` / `APIFY_DATASET_REFRESH_PEAK_END` (optional) | Peak window start/end (default `08:00` / `18:00`) | — |
 | `USAGE_DIAGNOSTICS_TOKEN` (optional) | Token required to read `GET /api/usage`; without it the endpoint is disabled (403) | any random string |
-| `OPENROUTER_MONTHLY_SOFT_LIMIT_USD` / `APIFY_MONTHLY_SOFT_LIMIT_USD` (optional) | Advisory spend limits (operator reference only, shown in `/api/usage`) | — |
+| `OPENROUTER_MONTHLY_SOFT_LIMIT_USD` / `EDENAI_MONTHLY_SOFT_LIMIT_USD` / `APIFY_MONTHLY_SOFT_LIMIT_USD` (optional) | Advisory spend limits (operator reference only, shown in `/api/usage`) | — |
 
 ## Cost guard & usage
 
@@ -98,8 +105,9 @@ The app keeps its own monthly usage counters (in Upstash Redis) and exposes them
 
 ```json
 { "month": "2026-08", "openRouter": { "requestCount": 12, "failureCount": 0, "fallbackAttempts": 0, "byModel": {} },
+  "edenai": { "requestCount": 0, "failureCount": 0, "fallbackAttempts": 0, "byModel": {} },
   "apify": { "actorRuns": 1, "datasetReuses": 2, "cacheHits": 3, "cacheMisses": 1 },
-  "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "apifyMonthlySoftLimitUsd": 4, ... } }
+  "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "edenaiMonthlySoftLimitUsd": 1.0, "apifyMonthlySoftLimitUsd": 4, ... } }
 ```
 
 Important — these are **application-side counters, not provider billing**:
@@ -108,7 +116,7 @@ Important — these are **application-side counters, not provider billing**:
 - `GET /api/usage` is **protected**: it requires the `USAGE_DIAGNOSTICS_TOKEN` (sent via the `x-usage-token` header or `Authorization: Bearer <token>`). Without a token configured the endpoint is disabled (HTTP 403); a wrong/missing token returns HTTP 401. The token is server-side only and never appears in the response or any client bundle.
 - The `*_SOFT_LIMIT_USD` values are advisory operator thresholds shown in `/api/usage`; the app cannot derive exact spend from its counters and therefore does **not** block on them.
 - The guards use the counter backstops instead:
-  - **OpenRouter:** once the monthly request count reaches `OPENROUTER_MONTHLY_MAX_REQUESTS` (default `1000`), `/api/match`, `/api/profile` and `/api/cover-letter` fail fast with the existing friendly `model_unavailable`-style UX. Fallbacks stay bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`.
+  - **AI providers:** once a provider's monthly request count reaches its backstop (`OPENROUTER_MONTHLY_MAX_REQUESTS` default `1000`, `EDENAI_MONTHLY_MAX_REQUESTS` default `200`), the router fails fast for that provider (`503 limit_reached`) and automatically tries the next enabled provider; only when all are exhausted does the request fail with the existing friendly UX. Client-side fallbacks stay bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`.
   - **Apify:** once the monthly Actor-run count reaches `APIFY_MONTHLY_MAX_RUNS` (default `30`), no new paid Actor runs are started. Cached / dataset-reused results keep working; only brand-new searches that would need a run return empty for the Apify source (Arbeitnow still works).
 - Apify dataset reuse is **time-of-day aware** in a configurable IANA timezone: during the peak window (`APIFY_DATASET_REFRESH_PEAK_START`–`APIFY_DATASET_REFRESH_PEAK_END`, default 08:00–18:00 `Europe/Berlin`) the dataset refresh window is `APIFY_DATASET_REFRESH_PEAK_HOURS` (default 6 h); off-peak it is `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default 12 h). Longer off-peak reuse means fewer paid runs. Summer/winter time is resolved automatically from the IANA timezone (no hardcoded UTC offset).
 - The Redis L1 job cache (10 min), the Apify L2 dataset reuse, the CV-profile cache and the automatic model fallback are all unchanged.
@@ -149,9 +157,10 @@ The daily digest runs automatically via the cron in `vercel.json` (07:00 UTC).
 ## Error handling
 
 - Job board unreachable / rate-limited / broken → friendly message, no crash.
-- Missing keys (`OPENROUTER_API_KEY`, Upstash, Resend) → clear "not configured yet" message.
+- Missing keys (both AI providers, Upstash, Resend) → clear "not configured yet" message.
 - Invalid key (401) / out of credits (402) / AI rate limit (429) / malformed AI response → each gets its own clear message.
-- OpenRouter's daily free-model quota (`free-models-per-day`) is detected on the server and shown as a specific friendly message ("Die kostenlosen KI-Anfragen für heute sind aufgebraucht…") — the fallback does **not** try further free models, because the account-wide daily limit affects all of them.
+- OpenRouter's daily free-model quota (`free-models-per-day`) is detected on the server and shown as a specific friendly message ("Die kostenlosen KI-Anfragen für heute sind aufgebraucht…") — the client does **not** try further free models, because the account-wide daily limit affects all of them; the server may transparently fall back to the EdenAI provider instead.
+- See [`docs/AI_PROVIDERS.md`](docs/AI_PROVIDERS.md) for the full provider architecture, key selection and error codes.
 
 ## Example
 

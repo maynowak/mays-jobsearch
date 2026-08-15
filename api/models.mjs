@@ -1,4 +1,5 @@
 import { getCompatibleFallback, getFreeModels, resolveDefaultModel } from "./_lib/models.mjs";
+import { allProvidersInfo } from "./_lib/providers/index.mjs";
 import { getOpenRouterModel } from "./_lib/model.mjs";
 import { getConfig } from "./_lib/config.mjs";
 
@@ -13,7 +14,13 @@ export default async function handler(req, res) {
     const models = await getFreeModels();
     const configured = getOpenRouterModel();
     return res.status(200).json({
-      models: models.map(({ id, name }) => ({ id, name })),
+      models: models.map(({ id, name, provider }) => ({ id, name, provider })),
+      providers: allProvidersInfo().map(({ id, name, enabled, configured: providerConfigured }) => ({
+        id,
+        name,
+        enabled,
+        configured: providerConfigured,
+      })),
       defaultModel: configured,
       fallbackModel: await getCompatibleFallback(configured),
       recommendedModel: await resolveDefaultModel(),

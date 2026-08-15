@@ -92,6 +92,7 @@ Behavior
 
 - custom listbox (ARIA combobox/listbox) replacing the native select
 - shows a recommended-model section plus the other free models from `/api/models`
+- models are labeled "Provider · Modellname" (`modelDisplayName`), because the catalogue aggregates multiple AI providers (OpenRouter first, EdenAI second)
 - keyboard navigation: Arrow keys, Home/End, Enter/Space, Escape, Tab
 - outside-click and Escape close the popover
 - popover flips upward when there is not enough space below the trigger

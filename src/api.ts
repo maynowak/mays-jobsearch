@@ -36,6 +36,8 @@ const NON_TRANSIENT_CODES = new Set([
   "missing_text",
   "models_unavailable",
   "free_quota_exceeded",
+  "quota_exhausted",
+  "authentication_failed",
   "internal",
   "error",
 ]);
@@ -59,7 +61,10 @@ export function isModelUnavailable(err: unknown): boolean {
 }
 
 export function isFreeQuotaExceeded(err: unknown): boolean {
-  return err instanceof ApiError && err.code === "free_quota_exceeded";
+  return (
+    err instanceof ApiError &&
+    (err.code === "free_quota_exceeded" || err.code === "quota_exhausted")
+  );
 }
 
 export interface FallbackResult<T> {
