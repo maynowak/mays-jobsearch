@@ -57,6 +57,7 @@ export async function fetchAllJobs({ skills, targetRole, city }) {
       jobsCombined: combined.length,
       apify: {
         enabled: apifyResult.meta?.enabled === true,
+        reason: apifyResult.meta?.reason ?? null,
       },
     },
   };
