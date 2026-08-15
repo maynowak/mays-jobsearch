@@ -7,7 +7,16 @@
 Hero / Header
 ✅ Complete
 
+Landing hero / Navbar
+✅ Complete
+
 Search form
+✅ Complete
+
+CV upload
+✅ Complete
+
+Model selector
 ✅ Complete
 
 Alert form (daily digest)
@@ -17,6 +26,9 @@ Status / alert messages
 ✅ Complete
 
 Match cards
+✅ Complete
+
+Results (top-5 + expand)
 ✅ Complete
 
 Score badge
@@ -36,7 +48,7 @@ Behavior
 
 - collects `skills`, `targetRole`, `city`
 - requires at least one of skills or target role
-- validates in `app.js`
+- validated in `App.tsx` (`runSearch`)
 - calls `GET /api/jobs` then `POST /api/match`
 
 State
@@ -47,13 +59,56 @@ State
 
 ---
 
+## CV upload
+
+Behavior
+
+- drop zone + file input accept only PDF (drag & drop, keyboard, click)
+- validates file type and size (max 10 MB)
+- reads the PDF in the browser with PDF.js (`src/lib/pdf.ts`)
+- normalizes the extracted text and computes a SHA-256 hash (`crypto.subtle`)
+- checks the profile cache (localStorage L1, then `/api/profile` with the hash → Redis L2)
+- on cache hit the stored profile is shown; on miss the AI builds one
+- `EditableProfile` lets the user edit skills, experience level, target roles and city (with autocomplete) before confirming
+
+Privacy
+
+- the PDF is never uploaded as a file; only extracted text is sent once
+- cache stores only the hash and the structured profile, never raw CV text
+
+State
+
+- idle → reading (PDF parse) → creating (AI) → ready (editable profile)
+- error states: not a PDF, too large, scanned/unreadable, model unavailable
+
+---
+
+## Model selector
+
+Behavior
+
+- custom listbox (ARIA combobox/listbox) replacing the native select
+- shows a recommended-model section plus the other free models from `/api/models`
+- keyboard navigation: Arrow keys, Home/End, Enter/Space, Escape, Tab
+- outside-click and Escape close the popover
+- popover flips upward when there is not enough space below the trigger
+- selection is passed to `/api/match`, `/api/profile` and `/api/cover-letter`
+
+State
+
+- loading → disabled trigger with "Loading…"
+- ready → interactive listbox
+- error / empty → disabled trigger with a hint
+
+---
+
 ## Match card
 
 Props / data
 
 - rank
 - score (0–100)
-- job: title, company, location[], remote, tags[], url
+- job: title, company, location[], remote, tags[], url, source[]
 - why (two sentences)
 - prepare (one question)
 
@@ -61,6 +116,17 @@ Actions
 
 - "View original posting →" link
 - "Bewerbung generieren" button → opens the cover-letter modal
+
+---
+
+## Results
+
+Behavior
+
+- shows the top 5 matches initially (`INITIAL_MATCHES = 5`)
+- if more than 5 evaluated matches exist, a toggle expands the list locally to all evaluated matches
+- expanding/collapsing is local — it never triggers another `/api/match` request
+- heading reflects the count ("Deine besten Matches", "Top 5 von 10", "Alle 10 bewerteten Treffer")
 
 ---
 

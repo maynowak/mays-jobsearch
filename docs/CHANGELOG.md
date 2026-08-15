@@ -52,3 +52,20 @@ Sprint 1.3 completed.
 
 - The application is deployed to production and all endpoints verified live.
 - Remaining work: Upstash + Resend keys for real digest delivery, final accessibility audit, candidate profile persistence (roadmap).
+
+## Unreleased — 2026-08-15
+
+Model selection, CV upload and second job source.
+
+- Dynamic OpenRouter free-model selection: `/api/models` exposes the current free-model catalogue (determined from OpenRouter pricing/metadata, not hardcoded) plus `defaultModel`, `fallbackModel` and `recommendedModel`; `/api/model` returns the resolved default.
+- Accessible model selector: custom listbox with ARIA semantics, keyboard navigation, recommended-model section, popover that flips upward when space is tight.
+- CV upload + profile extraction: browser-side PDF.js text extraction, normalized text → SHA-256 hash → profile cache lookup → `/api/profile` (AI) on miss → editable structured profile → matching. The PDF file is never uploaded and raw CV text is never stored.
+- CV profile caching: two layers (browser `localStorage` L1 + Upstash Redis L2), keyed by CV hash, TTL 30 days; repeated identical CVs hit the cache instead of re-running the AI.
+- Apify Arbeitsagentur source: job pool now combines Arbeitnow and the Apify Actor `blackfalcondata~arbeitsagentur-jobs-feed`; source metadata is preserved per job and cross-source dedup is active.
+- Redis Apify cache: L1 job-record cache (`apify-jobs:<query>|<location>`, 600 s) + L2 Apify dataset reuse (`apify-dataset:<query>|<location>`, 24 h freshness) to avoid unnecessary paid Actor runs.
+- Apify async run/polling: the Actor's `run-sync` returned an empty body, so runs are started asynchronously and polled to completion before reading the dataset.
+- Apify dataset reuse fix: dataset age was compared in seconds against a millisecond timestamp, shrinking the 24 h reuse window to ~86 s; introduced `APIFY_DATASET_MAX_AGE_MS` — 24 h reuse now works.
+- Matching candidate preselection: the combined pool is narrowed to max 10 candidates via `keywordHits` before AI evaluation, keeping requests within the Vercel function timeout.
+- Top-5 / Top-10 result presentation: the UI shows the top 5 initially and expands locally to all evaluated matches without a second request.
+- Found/evaluated/displayed metadata: `/api/match` returns `totalFound`, `evaluated` and `displayedInitially`; the status line reports them honestly (e.g. "52 Jobs gefunden · 10 passende Kandidaten mit KI bewertet").
+- CV matching loading state: the confirm button shows a loading state while the profile is being matched.

@@ -1,17 +1,19 @@
 # My Job Matcher
 
-Find live jobs that actually fit you. You type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), and the app:
+Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), and the app:
 
-1. Fetches current openings from the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api) (no key needed).
-2. Filters them by your keywords and cities (`/api/jobs`).
-3. Sends the filtered jobs + your profile to the OpenRouter chat API (`/api/match`), which scores each job **0–100** and returns the **top 5** with:
+1. **CV upload (optional):** the PDF is read in the browser (PDF.js), text-extracted and turned into an editable search profile by the AI (`/api/profile`). The profile is cached per CV hash, so repeated uploads of the same CV are instant. The PDF file itself is never sent to the server, and raw CV text is never stored.
+2. **Model selection:** the app dynamically shows the currently available free OpenRouter models and preselects a recommended one. The user can switch to any other free model (`/api/models`).
+3. Fetches current openings from two sources — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api) and the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`) — and filters them by your keywords and cities (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse) to avoid unnecessary paid Apify runs.
+4. Sends the filtered pool + your profile to the OpenRouter chat API (`/api/match`). To stay within the function timeout, the pool is narrowed to **max 10 candidates** by keyword hits, the AI scores those **0–100** and the **top 5** are shown with:
    - the score,
    - **two sentences on why** it fits you,
    - **one question** to prepare for the interview.
-4. **AI-Bewerbungsgenerator:** on any match card, click "Bewerbung generieren" — the AI writes a personalized cover letter (with a suggested answer to the prep question) that you can copy or download (`/api/cover-letter`).
-5. **Daily job alerts:** subscribe with your email to get a morning digest of new matches (`/api/alerts` + `/api/cron/digest`).
+   The status line reports honestly how many were found vs. evaluated ("52 Jobs gefunden · 10 passende Kandidaten mit KI bewertet"); the list can be expanded locally without another AI request.
+5. **AI-Bewerbungsgenerator:** on any match card, click "Bewerbung generieren" — the AI writes a personalized cover letter (with a suggested answer to the prep question) that you can copy or download (`/api/cover-letter`).
+6. **Daily job alerts:** subscribe with your email to get a morning digest of new matches (`/api/alerts` + `/api/cron/digest`).
 
-Your OpenRouter API key lives **only** on the server — it is never exposed to the browser.
+Your API keys (OpenRouter, Apify, Upstash, Resend) live **only** on the server — they are never exposed to the browser.
 
 ## 🤖 Documentation
 
@@ -29,12 +31,14 @@ Project documentation lives in [`docs/`](docs/):
 ## Project structure
 
 ```
-├── api/                       # Vercel serverless functions (unchanged, JSON only)
-│   ├── _lib/                  # shared helpers (filter, model, ai, alerts)
-│   ├── jobs.mjs               # GET /api/jobs  → filtered jobs from Arbeitnow
-│   ├── match.mjs              # POST /api/match → AI-scored top 5 matches
+├── api/                       # Vercel serverless functions (JSON only)
+│   ├── _lib/                  # shared helpers (filter, jobs, model(s), ai, cache, apify, alerts)
+│   ├── jobs.mjs               # GET /api/jobs    → combined filtered jobs (Arbeitnow + Apify)
+│   ├── profile.mjs            # POST /api/profile → AI search profile from CV text (cached by hash)
+│   ├── match.mjs              # POST /api/match  → AI-scored top matches (max 10 evaluated)
 │   ├── cover-letter.mjs       # POST /api/cover-letter → AI cover letter
-│   ├── model.mjs              # GET /api/model → model currently in use
+│   ├── models.mjs             # GET /api/models  → free model catalogue + recommended model
+│   ├── model.mjs              # GET /api/model   → model currently in use
 │   ├── alerts.mjs             # POST/DELETE/GET /api/alerts → digest subscriptions
 │   └── cron/digest.mjs        # POST /api/cron/digest → daily email digest
 ├── src/                       # React + TypeScript + Vite frontend
@@ -42,13 +46,18 @@ Project documentation lives in [`docs/`](docs/):
 │   ├── api.ts                 # typed API client
 │   ├── types.ts               # shared types
 │   ├── styles.css             # design system (CSS)
+│   ├── hooks/                 # useAvailableModels, useCityAutocomplete
+│   ├── lib/                   # pdf.ts (browser-side PDF text extraction)
 │   └── components/
 │       ├── Hero.tsx
+│       ├── LandingHero.tsx
+│       ├── Navbar.tsx
 │       ├── SearchForm.tsx
-│       ├── ModelInfo.tsx
+│       ├── CvUpload.tsx       # PDF upload → extract → hash → profile cache → /api/profile
+│       ├── ModelSelector.tsx  # accessible free-model listbox with recommended section
 │       ├── AlertCard.tsx
 │       ├── Status.tsx
-│       ├── Results.tsx
+│       ├── Results.tsx        # top-5 initial view + local expand
 │       ├── MatchCard.tsx
 │       ├── ScoreBadge.tsx
 │       └── LetterModal.tsx
@@ -62,10 +71,11 @@ All keys are server-side only.
 
 | Variable | Needed for | Where to get it |
 |---|---|---|
-| `OPENROUTER_API_KEY` | Scoring + cover letters | <https://openrouter.ai/keys> |
-| `OPENROUTER_MODEL` (optional) | Override the model | — |
-| `UPSTASH_REDIS_REST_URL` | Alert subscriptions | <https://upstash.com> (free Redis) |
-| `UPSTASH_REDIS_REST_TOKEN` | Alert subscriptions | Upstash |
+| `OPENROUTER_API_KEY` | Matching, CV profile extraction, cover letters | <https://openrouter.ai/keys> |
+| `OPENROUTER_MODEL` (optional) | Override the default model | — |
+| `APIFY_API_TOKEN` (optional) | Second job source: Arbeitsagentur feed via Apify | <https://console.apify.com/settings/integrations> |
+| `UPSTASH_REDIS_REST_URL` | Apify job cache, CV profile cache, alert subscriptions | <https://upstash.com> (free Redis) |
+| `UPSTASH_REDIS_REST_TOKEN` | Same as above | Upstash |
 | `RESEND_API_KEY` | Sending digest emails | <https://resend.com> (free) |
 | `DIGEST_FROM` | Sender address (verified domain in Resend) | Resend |
 | `CRON_SECRET` | Protects `/api/cron/digest` | any random string |
@@ -96,8 +106,10 @@ npm i -g vercel
 vercel login
 vercel link
 vercel env add OPENROUTER_API_KEY          # + the other vars above
-vercel --prod
+vercel --prod --scope maymilly              # --scope is required for this project
 ```
+
+The project does not rely on automatic Vercel Git deployment — production is deployed explicitly with the CLI.
 
 The daily digest runs automatically via the cron in `vercel.json` (07:00 UTC).
 
