@@ -5,7 +5,7 @@ import { aiLimitReached, countAiAttempt, countAiFailure, countAiRequest } from "
 
 const CHAT_URL = "https://api.edenai.run/v3/chat/completions";
 const MODELS_URL = "https://api.edenai.run/v3/models";
-const TIMEOUT_MS = 40_000;
+const TIMEOUT_MS = 55_000;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 let cache = null;
