@@ -6,6 +6,7 @@ const APIFY_MAX_JOBS = 40;
 const APIFY_SYNC_TIMEOUT_SEC = 50;
 const APIFY_CACHE_TTL_SEC = 600;
 const APIFY_DATASET_MAX_AGE_SEC = 24 * 60 * 60;
+const APIFY_DATASET_MAX_AGE_MS = APIFY_DATASET_MAX_AGE_SEC * 1000;
 
 function cacheKeyFor(query, location) {
   return `apify-jobs:${query.toLowerCase().trim()}|${location.toLowerCase().trim()}`;
@@ -172,11 +173,10 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
 
   if (!records) {
     const dataset = await cacheGet(datasetKey);
-    console.error("[apify] L2 dbg:", JSON.stringify(dataset), "type:", dataset ? typeof dataset.createdAt : "-", "ageMs:", dataset ? Date.now() - Number(dataset.createdAt || 0) : "-", "maxAge:", APIFY_DATASET_MAX_AGE_SEC, "fresh:", dataset ? (Number.isFinite(dataset.createdAt) && Date.now() - dataset.createdAt < APIFY_DATASET_MAX_AGE_SEC) : "-");
     if (dataset && typeof dataset.datasetId === "string") {
       const fresh =
         Number.isFinite(dataset.createdAt) &&
-        Date.now() - dataset.createdAt < APIFY_DATASET_MAX_AGE_SEC;
+        Date.now() - dataset.createdAt < APIFY_DATASET_MAX_AGE_MS;
       if (fresh) {
         const read = await readDataset(apiToken, dataset.datasetId);
         if (read.records) {
@@ -188,11 +188,7 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
           console.error("[apify] L2 dataset read failed (transient):", dataset.datasetId, read.error);
           return emptyResult(read.error);
         }
-      } else {
-        console.error("[apify] L2 not fresh: ageSec", dataset.createdAt ? Math.round((Date.now() - dataset.createdAt) / 1000) : "n/a");
       }
-    } else {
-      console.error("[apify] L2 cache miss: dataset=", dataset === null ? "null" : typeof dataset, "datasetId=", dataset ? String(dataset.datasetId) : "-");
     }
 
     if (!records) {
