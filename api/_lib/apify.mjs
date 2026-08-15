@@ -180,7 +180,7 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
         const read = await readDataset(apiToken, dataset.datasetId);
         if (read.records) {
           records = read.records;
-        } else if (read.error.startsWith("upstream_4")) {
+        } else if (read.error === "upstream_404" || read.error === "upstream_410") {
           console.error("[apify] L2 dataset gone:", dataset.datasetId, read.error);
           await cacheDel(datasetKey);
         } else {
