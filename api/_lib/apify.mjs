@@ -36,7 +36,14 @@ async function runApifyRun(apiToken, input) {
 
   let run;
   try {
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error("[apify] run-sync body not JSON:", text.slice(0, 300));
+      return { error: "unreadable" };
+    }
     run = data?.data ?? data;
   } catch {
     return { error: "unreadable" };
@@ -64,7 +71,13 @@ async function readDataset(apiToken, datasetId) {
 
   let data;
   try {
-    data = await response.json();
+    const text = await response.text();
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error("[apify] dataset items body not JSON:", text.slice(0, 300));
+      return { error: "unreadable" };
+    }
   } catch {
     return { error: "unreadable" };
   }
