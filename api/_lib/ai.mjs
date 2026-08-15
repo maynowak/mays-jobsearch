@@ -18,11 +18,12 @@ function modelUnavailable() {
   );
 }
 
-function logModelError(stage, { model, attempt, status, providerError }) {
+function logModelError(stage, { model, attempt, status, providerError, retryAfter }) {
   const parts = [`[ai] model=${model ?? "(none)"}`];
   parts.push(`stage=${stage}`);
   if (attempt) parts.push(`attempt=${attempt}`);
   if (status) parts.push(`status=${status}`);
+  if (retryAfter) parts.push(`retryAfter=${retryAfter}`);
   if (providerError) parts.push(`provider=${providerError}`);
   console.error(parts.join(" "));
 }
@@ -142,7 +143,20 @@ async function requestOpenRouter({
     );
   }
   if (response.status === 429) {
-    logModelError("http-429", { model, attempt, status: response.status });
+    let providerError = "";
+    try {
+      const errBody = await response.json();
+      providerError = String(errBody?.error?.message ?? "").slice(0, 180);
+    } catch {
+      /* body not readable */
+    }
+    logModelError("http-429", {
+      model,
+      attempt,
+      status: response.status,
+      retryAfter: response.headers?.get?.("retry-after") ?? "",
+      providerError,
+    });
     throw modelUnavailable();
   }
   if (!response.ok) {
