@@ -221,4 +221,16 @@ describe("EdenAI chat", () => {
       code: "model_unavailable",
     });
   });
+
+  it("liest den Erfolgs-Response-Body nur einmal (kein doppeltes response.json)", async () => {
+    vi.stubEnv("EDENAI_API_KEY", "prod-key");
+    const realResponse = new Response(
+      JSON.stringify({ choices: [{ message: { content: "Hallo" } }] }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+    vi.mocked(fetch).mockResolvedValue(realResponse);
+    await expect(
+      chat({ system: "s", prompt: "p", json: false, model: "m" })
+    ).resolves.toBe("Hallo");
+  });
 });

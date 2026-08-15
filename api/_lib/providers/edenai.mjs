@@ -226,16 +226,17 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
     );
   }
 
-  let errorMessage = "";
-  try {
-    const errBody = await response.json();
-    errorMessage = String(errBody?.error?.message ?? errBody?.message ?? "").slice(0, 180);
-  } catch {
-    /* body not readable */
+  async function errorMessage() {
+    try {
+      const errBody = await response.json();
+      return String(errBody?.error?.message ?? errBody?.message ?? "").slice(0, 180);
+    } catch {
+      return "";
+    }
   }
 
   if (response.status === 401 || response.status === 403) {
-    logModelError("http-401", { model, attempt, status: response.status, providerError: errorMessage });
+    logModelError("http-401", { model, attempt, status: response.status, providerError: await errorMessage() });
     throw aiError(
       502,
       "The EdenAI API key on the server is invalid. Check the EDENAI_API_KEY / EDENAI_DEV_API_KEY environment variable.",
@@ -243,7 +244,7 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
     );
   }
   if (response.status === 402) {
-    logModelError("http-402", { model, attempt, status: response.status, providerError: errorMessage });
+    logModelError("http-402", { model, attempt, status: response.status, providerError: await errorMessage() });
     throw aiError(
       402,
       "The EdenAI account has run out of credits. Add credits to keep matching.",
@@ -251,16 +252,18 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
     );
   }
   if (response.status === 429) {
-    const isQuota = /quota|limit|too many/i.test(errorMessage);
-    logModelError("http-429", { model, attempt, status: response.status, providerError: errorMessage });
+    const msg = await errorMessage();
+    const isQuota = /quota|limit|too many/i.test(msg);
+    logModelError("http-429", { model, attempt, status: response.status, providerError: msg });
     if (isQuota) {
       throw aiError(429, "The AI request quota has been used up. Please try again later.", ERROR_CODES.quotaExhausted);
     }
     throw aiError(429, "Too many requests. Please try again shortly.", ERROR_CODES.rateLimited);
   }
   if (response.status === 400 || response.status === 422) {
-    const isModel = /model/i.test(errorMessage);
-    logModelError("http-4xx", { model, attempt, status: response.status, providerError: errorMessage });
+    const msg = await errorMessage();
+    const isModel = /model/i.test(msg);
+    logModelError("http-4xx", { model, attempt, status: response.status, providerError: msg });
     throw aiError(
       502,
       isModel
@@ -270,7 +273,7 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
     );
   }
   if (!response.ok) {
-    logModelError("http-error", { model, attempt, status: response.status, providerError: errorMessage });
+    logModelError("http-error", { model, attempt, status: response.status, providerError: await errorMessage() });
     throw aiError(502, "This AI model is temporarily unavailable. Please choose another model.", ERROR_CODES.modelUnavailable);
   }
 
