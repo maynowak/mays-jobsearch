@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Job, Match } from "../types";
 import { computeRemainingJobs } from "../lib/jobPool";
 import MatchCard from "./MatchCard";
-import SourceBadge from "./SourceBadge";
+import RemainingCard from "./RemainingCard";
 import { useLang } from "../i18n";
 
 const INITIAL_MATCHES = 5;
@@ -74,6 +74,9 @@ export default function Results({ matches, foundJobs, onGenerateLetter }: Props)
 
       {remainingJobs.length > 0 && (
         <div className="results-remaining">
+          {matches.length === 0 && (
+            <p className="results-remaining-note">{t("results.evaluatedUnavailable")}</p>
+          )}
           <div className="results-remaining-head">
             <button
               type="button"
@@ -82,38 +85,25 @@ export default function Results({ matches, foundJobs, onGenerateLetter }: Props)
               aria-controls="remaining-jobs"
               onClick={() => setMoreOpen((value) => !value)}
             >
-              {moreOpen ? t("results.hideMore") : t("results.moreFound")}
+              {moreOpen
+                ? matches.length === 0
+                  ? t("results.hideFound")
+                  : t("results.hideMore")
+                : matches.length === 0
+                  ? t("results.viewFound", { count: remainingJobs.length })
+                  : t("results.moreFound")}
             </button>
-            <span className="results-remaining-count">
-              {t("results.remaining", { count: remainingJobs.length })}
-            </span>
+            {matches.length > 0 && (
+              <span className="results-remaining-count">
+                {t("results.remaining", { count: remainingJobs.length })}
+              </span>
+            )}
           </div>
 
           {moreOpen && (
             <ol id="remaining-jobs" className="remaining-list">
               {remainingJobs.map((job) => (
-                <li key={job.slug} className="remaining-card">
-                  <h4>{job.title || t("match.unknownRole")}</h4>
-                  {job.company_name && <p className="remaining-company">{job.company_name}</p>}
-                  <div className="remaining-meta">
-                    <span>
-                      {(job.location ?? []).join(", ") ||
-                        (job.remote ? t("match.remote") : t("match.locationNotStated"))}
-                    </span>
-                    {job.remote && <span className="badge badge-remote">{t("match.remote")}</span>}
-                    <SourceBadge sources={job.source} />
-                  </div>
-                  {job.url && (
-                    <a
-                      className="remaining-link"
-                      href={job.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {t("match.viewPosting")}
-                    </a>
-                  )}
-                </li>
+                <RemainingCard key={job.slug} job={job} />
               ))}
             </ol>
           )}

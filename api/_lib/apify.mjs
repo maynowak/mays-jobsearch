@@ -1,4 +1,4 @@
-import { SOURCE_APIFY_ARBEITSAGENTUR, tokenize, locationMatches, keywordHits } from "./filter.mjs";
+import { SOURCE_APIFY_ARBEITSAGENTUR, tokenize, locationMatches, keywordHits, stripHtml } from "./filter.mjs";
 import { cacheGet, cacheSet, cacheDel } from "./cache.mjs";
 
 const APIFY_ACTOR_ID = "blackfalcondata~arbeitsagentur-jobs-feed";
@@ -124,6 +124,10 @@ function normalizeJob(record) {
   const published = record.publishedDate ? Date.parse(record.publishedDate) : NaN;
   const location = record.location ? [String(record.location).trim()].filter(Boolean) : [];
   const slugSource = record.referenceId || record.contentHash || record.title || "job";
+  const description = stripHtml(record.description || "");
+  const contractType = typeof record.contractType === "string" ? record.contractType.trim() : "";
+  const salary = typeof record.salary === "string" ? record.salary.trim() : "";
+  const startDate = typeof record.startDate === "string" ? record.startDate.trim() : "";
   return {
     slug: `aa-${String(slugSource).replace(/\s+/g, "-")}`,
     title: String(record.title || "").trim(),
@@ -134,6 +138,10 @@ function normalizeJob(record) {
     url: String(record.portalUrl || "").trim(),
     created_at: Number.isFinite(published) ? Math.floor(published / 1000) : undefined,
     source: [SOURCE_APIFY_ARBEITSAGENTUR],
+    description: description || undefined,
+    contractType: contractType || undefined,
+    salary: salary || undefined,
+    startDate: startDate || undefined,
   };
 }
 

@@ -21,7 +21,7 @@ export function tokenize(input) {
     .filter((t) => t.length > 0);
 }
 
-function stripHtml(html) {
+export function stripHtml(html) {
   return String(html)
     .replace(/<[^>]*>/g, " ")
     .replace(/&amp;/g, "&")
@@ -58,6 +58,7 @@ export function keywordHits(job, keywordTokens) {
 
 function compactJob(job) {
   const loc = job.location || [];
+  const description = stripHtml(job.description || "");
   return {
     slug: job.slug,
     title: job.title,
@@ -68,6 +69,9 @@ function compactJob(job) {
     url: job.url,
     created_at: job.created_at,
     source: [SOURCE_ARBEITNOW],
+    description: description || undefined,
+    jobTypes:
+      Array.isArray(job.job_types) && job.job_types.length ? job.job_types : undefined,
   };
 }
 

@@ -8,8 +8,13 @@ export interface Job {
   remote: boolean;
   tags: string[];
   url: string;
-  created_at?: number;
+  created_at?: number | string;
   source?: JobSource[];
+  description?: string;
+  jobTypes?: string[];
+  contractType?: string;
+  salary?: string;
+  startDate?: string;
 }
 
 export interface Profile {

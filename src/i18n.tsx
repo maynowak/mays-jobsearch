@@ -103,6 +103,23 @@ const en: Dict = {
   "results.moreFound": "View more found jobs →",
   "results.hideMore": "Hide more found jobs",
   "results.remaining": "{count} more jobs from your search",
+  "results.viewFound": "View {count} found jobs",
+  "results.hideFound": "Hide found jobs",
+  "results.evaluatedUnavailable":
+    "These jobs were found but could not be AI-evaluated right now. You can still browse them below.",
+  "results.showMore": "Show more",
+  "results.showLess": "Show less",
+  "results.published": "Published {date}",
+
+  "jobtype.fullTime": "Full-time",
+  "jobtype.partTime": "Part-time",
+  "jobtype.remote": "Remote",
+  "jobtype.freelance": "Freelance",
+  "jobtype.internship": "Internship",
+  "jobtype.contract": "Contract",
+
+  "contract.permanent": "Permanent",
+  "contract.fixedTerm": "Fixed-term",
 
   "match.locationNotStated": "Location not stated",
   "match.remote": "Remote",
@@ -230,6 +247,23 @@ const de: Dict = {
   "results.moreFound": "Weitere gefundene Jobs ansehen →",
   "results.hideMore": "Weitere gefundene Jobs ausblenden",
   "results.remaining": "{count} weitere Stellen aus deiner Suche",
+  "results.viewFound": "{count} gefundene Stellen ansehen",
+  "results.hideFound": "Gefundene Stellen ausblenden",
+  "results.evaluatedUnavailable":
+    "Diese Jobs wurden gefunden, konnten aber gerade nicht per KI bewertet werden. Du kannst sie unten trotzdem durchstöbern.",
+  "results.showMore": "Mehr anzeigen",
+  "results.showLess": "Weniger anzeigen",
+  "results.published": "Veröffentlicht am {date}",
+
+  "jobtype.fullTime": "Vollzeit",
+  "jobtype.partTime": "Teilzeit",
+  "jobtype.remote": "Remote",
+  "jobtype.freelance": "Freelance",
+  "jobtype.internship": "Praktikum",
+  "jobtype.contract": "Befristet",
+
+  "contract.permanent": "Unbefristet",
+  "contract.fixedTerm": "Befristet",
 
   "match.locationNotStated": "Ort nicht angegeben",
   "match.remote": "Remote",
