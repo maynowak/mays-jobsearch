@@ -2,39 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { Job, JobsResponse, MatchResponse, ModelsResponse, SuggestedProfile } from "./types";
 
-vi.mock("./api", () => {
-  class ApiError extends Error {
-    code?: string;
-    status?: number;
-    constructor(message: string, status?: number, code?: string) {
-      super(message);
-      this.name = "ApiError";
-      this.status = status;
-      this.code = code;
-    }
-  }
-  const isModelUnavailable = (err: unknown): boolean => {
-    if (err instanceof ApiError) {
-      if (err.code === "model_unavailable") return true;
-      if (typeof err.status === "number" && [429, 502, 503, 504].includes(err.status)) return true;
-      return false;
-    }
-    return err instanceof Error && (err.name === "TypeError" || err.name === "TimeoutError" || err.name === "AbortError");
-  };
+vi.mock("./api", async () => {
+  const actual = await vi.importActual<typeof import("./api")>("./api");
   return {
-    ApiError,
-    isModelUnavailable,
-    withModelFallback: async ({
-      request,
-    }: {
-      request: (model: string | null, attempt: number) => Promise<unknown>;
-    }) => ({ data: await request(null, 1), usedFallback: false }),
+    ...actual,
     fetchJobs: vi.fn(),
     fetchMatches: vi.fn(),
     fetchModels: vi.fn(),
     fetchModel: vi.fn(),
     createProfile: vi.fn(),
-    setFallbackMaxAttempts: vi.fn(),
   };
 });
 
@@ -42,9 +18,17 @@ vi.mock("./lib/pdf", () => ({
   extractPdfText: vi.fn(async () => "React Developer with five years of experience in Berlin"),
 }));
 
-import { createProfile, fetchJobs, fetchMatches, fetchModels } from "./api";
+import {
+  ApiError,
+  createProfile,
+  fetchJobs,
+  fetchMatches,
+  fetchModels,
+  setFallbackMaxAttempts,
+} from "./api";
 import App from "./App";
 import { LangProvider } from "./i18n";
+import { __resetModelsCacheForTests } from "./hooks/useAvailableModels";
 
 const job: Job = {
   slug: "aws-job",
@@ -54,6 +38,16 @@ const job: Job = {
   remote: false,
   tags: ["aws"],
   url: "https://example.com/job",
+};
+
+const jobB: Job = {
+  slug: "java-job",
+  title: "Java Engineer",
+  company_name: "Beta",
+  location: ["Frankfurt"],
+  remote: false,
+  tags: ["java"],
+  url: "https://example.com/job-b",
 };
 
 function deferred<T>() {
@@ -84,6 +78,8 @@ const models: ModelsResponse = {
 beforeEach(() => {
   localStorage.setItem("mj-lang", "de");
   window.history.pushState({}, "", "/top");
+  __resetModelsCacheForTests();
+  setFallbackMaxAttempts(3);
   vi.mocked(fetchJobs).mockReset();
   vi.mocked(fetchMatches).mockReset();
   vi.mocked(fetchModels).mockReset();
@@ -347,5 +343,179 @@ describe("No landing-page flash during a search", () => {
     jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
     await screen.findByText("AWS Engineer");
     expect(document.querySelector(".landing")).toBeNull();
+  });
+});
+
+describe("Old results stay visible while a new search is running", () => {
+  async function runSearchA() {
+    vi.mocked(fetchJobs).mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+  }
+
+  it("Test A: Ergebnisse A bleiben sichtbar, während Suche B läuft (kein leerer Bereich/Hero/Landing)", async () => {
+    await runSearchA();
+
+    const jobsB = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    // Neue Suche läuft, Ergebnisse A bleiben sichtbar, Layout bleibt die Ergebnisansicht
+    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".search-hero")).toBeNull();
+    expect(document.querySelector(".landing-hero")).toBeNull();
+    expect(document.querySelector(".landing")).toBeNull();
+    // Der kompakte Ergebnis-Hero (header.hero) gehört zur Ergebnisansicht und ist korrekt sichtbar
+    expect(document.querySelector(".hero")).toBeTruthy();
+  });
+
+  it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
+    await runSearchA();
+
+    const jobsB = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
+    vi.mocked(fetchMatches).mockResolvedValueOnce({
+      matches: [{ score: 80, why: "gut", prepare: "Frage", job: jobB }],
+    } as MatchResponse);
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+
+    jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
+    await screen.findByText("Java Engineer");
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+  });
+
+  it("Test C: Neue Suche schlägt fehl -> A bleibt sichtbar + Fehlermeldung", async () => {
+    await runSearchA();
+
+    const jobsB = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    jobsB.reject(new Error("boom"));
+    await screen.findByText("boom");
+
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".landing")).toBeNull();
+  });
+
+  it("Test D: Neue Suche mit 0 AI-Evaluation -> erst nach Abschluss Zero-Evaluation von B", async () => {
+    await runSearchA();
+
+    const jobsB = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
+    vi.mocked(fetchMatches).mockResolvedValueOnce({
+      matches: [],
+      meta: { note: "Keine KI-Bewertung verfügbar." },
+    } as MatchResponse);
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    // Solange B läuft: A bleibt sichtbar
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+
+    jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
+    await screen.findByText("Java Engineer");
+
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    expect(screen.getByText(/konnten aber gerade nicht per KI bewertet werden/)).toBeTruthy();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+  });
+
+  it("Test E: SearchForm zeigt B, Results zeigt währenddessen A", async () => {
+    await runSearchA();
+
+    const jobsB = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("java");
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    expect(screen.queryByText("Java Engineer")).toBeNull();
+  });
+
+  it("Test F: CV-Suche während Ergebnisse A sichtbar -> A bleibt bis zum Abschluss", async () => {
+    await runSearchA();
+
+    const jobsB = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
+    vi.mocked(fetchMatches).mockResolvedValueOnce({
+      matches: [{ score: 80, why: "gut", prepare: "Frage", job: jobB }],
+    } as MatchResponse);
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["Java"],
+      experienceLevel: "Senior",
+      targetRoles: ["Backend"],
+      location: "Frankfurt",
+    } as SuggestedProfile);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      "cv.pdf",
+      { type: "application/pdf" }
+    );
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+    fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
+
+    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+
+    jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
+    await screen.findByText("Java Engineer");
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
+  });
+
+  it("Test G: Model-Fallback während Suche B -> A bleibt sichtbar, Spinner aktiv", async () => {
+    vi.mocked(fetchModels).mockResolvedValue({
+      models: [
+        { id: "m-a", name: "Modell A" },
+        { id: "m-b", name: "Modell B" },
+        { id: "m-c", name: "Modell C" },
+      ],
+      defaultModel: "m-a",
+      fallbackModel: null,
+      recommendedModel: null,
+    } as ModelsResponse);
+    await runSearchA();
+
+    const jobsB = deferred<JobsResponse>();
+    const attempt1 = deferred<MatchResponse>();
+    vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
+    vi.mocked(fetchMatches).mockReturnValueOnce(attempt1.promise);
+    vi.mocked(fetchMatches).mockResolvedValueOnce({
+      matches: [{ score: 80, why: "gut", prepare: "Frage", job: jobB }],
+    } as MatchResponse);
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+
+    jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
+    await screen.findByText("Bewerte deine Treffer mit KI…");
+
+    // Während des (potenziell mehrstufigen) Model-Calls bleibt A sichtbar
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+
+    attempt1.reject(new ApiError("unavailable", 502, "model_unavailable"));
+    await screen.findByText("Java Engineer");
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
   });
 });

@@ -11,7 +11,18 @@ interface ModelsCache {
   recommendedModel: string | null;
 }
 
-let cache: ModelsCache | null = null;
+const MODELS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface ModelsCacheEntry {
+  data: ModelsCache;
+  fetchedAt: number;
+}
+
+let cache: ModelsCacheEntry | null = null;
+
+export function __resetModelsCacheForTests() {
+  cache = null;
+}
 
 export function useAvailableModels() {
   const [state, setState] = useState<ModelsState>("loading");
@@ -31,11 +42,13 @@ export function useAvailableModels() {
       let fallback: string | null = null;
       let recommended: string | null = null;
 
-      if (cache) {
-        list = cache.models;
-        configured = cache.defaultModel;
-        fallback = cache.fallbackModel;
-        recommended = cache.recommendedModel;
+      const cached =
+        cache && Date.now() - cache.fetchedAt < MODELS_CACHE_TTL_MS ? cache : null;
+      if (cached) {
+        list = cached.data.models;
+        configured = cached.data.defaultModel;
+        fallback = cached.data.fallbackModel;
+        recommended = cached.data.recommendedModel;
       } else {
         try {
           const res = await fetchModels();
@@ -44,12 +57,7 @@ export function useAvailableModels() {
           fallback = res.fallbackModel ?? null;
           recommended = res.recommendedModel ?? null;
           setFallbackMaxAttempts(res.fallbackMaxAttempts ?? 3);
-          cache = {
-            models: list,
-            defaultModel: configured,
-            fallbackModel: fallback,
-            recommendedModel: recommended,
-          };
+          cache = { data: { models: list, defaultModel: configured, fallbackModel: fallback, recommendedModel: recommended }, fetchedAt: Date.now() };
         } catch {
           list = null;
         }
@@ -86,6 +94,9 @@ export function useAvailableModels() {
     defaultModel,
     fallbackModel,
     recommendedModel,
-    reload: () => setReload((n) => n + 1),
+    reload: () => {
+      cache = null;
+      setReload((n) => n + 1);
+    },
   };
 }

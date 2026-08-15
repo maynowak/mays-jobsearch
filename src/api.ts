@@ -62,6 +62,14 @@ export interface FallbackResult<T> {
   usedFallback: boolean;
 }
 
+function describeError(err: unknown): string {
+  if (err instanceof ApiError) {
+    return `status=${err.status ?? "-"} code=${err.code ?? "-"}`;
+  }
+  if (err instanceof Error) return err.name;
+  return String(err);
+}
+
 let fallbackMaxAttempts = 3;
 
 export function setFallbackMaxAttempts(limit: number) {
@@ -118,15 +126,18 @@ export async function withModelFallback<T>({
     try {
       const data = await request(model, attempt);
       if (attempt > 1) {
-        console.warn("[model] fallback attempt", attempt - 1, "succeeded with model:", model);
+        console.warn(
+          `[model] attempt=${attempt} model=${model ?? "(none)"} succeeded (fallback used)`
+        );
       }
       return { data, usedFallback: attempt > 1 };
     } catch (err) {
       if (!isModelUnavailable(err)) throw err;
       lastError = err;
-      if (attempt < order.length) {
-        console.warn("[model] model unavailable, fallback attempt", attempt + 1);
-      }
+      console.warn(
+        `[model] attempt=${attempt} model=${model ?? "(none)"} unavailable (${describeError(err)}); ` +
+          `${attempt < order.length ? `trying fallback attempt=${attempt + 1}` : "no more fallbacks left"}`
+      );
     }
   }
 

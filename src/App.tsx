@@ -59,20 +59,17 @@ export default function App() {
   const runSearch = async (submitted: Profile) => {
     setProfile(submitted);
     setStatus(null);
-    setMatches([]);
-    setFoundJobs([]);
 
     if (!submitted.skills && !submitted.targetRole) {
       setStatus({ type: "error", message: t("status.noSkills") });
       return;
     }
 
-      setPhase("searching");
-      try {
-        const board = await fetchJobs(submitted);
-        setFoundJobs(board.jobs);
+    setPhase("searching");
+    try {
+      const board = await fetchJobs(submitted);
 
-        if (!board.jobs.length) {
+      if (!board.jobs.length) {
         const query = submitted.skills || submitted.targetRole;
         setStatus({
           type: "warn",
@@ -91,23 +88,26 @@ export default function App() {
         request: (model, attempt) => fetchMatches(submitted, board.jobs, model, attempt),
       });
 
-      if (!matchResult.matches.length) {
+      // The old displayed results stay visible until the new search is complete.
+      // Only now do we replace them (even for the zero-evaluation case).
+      setFoundJobs(board.jobs);
+      setMatches(matchResult.matches);
+
+      if (matchResult.matches.length) {
+        const found = t("status.found", {
+          count: board.meta?.totalFiltered ?? board.jobs.length,
+          evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
+        });
+        setStatus({
+          type: "info",
+          message: usedFallback ? `${found} ${t("model.fallbackNote")}` : found,
+        });
+      } else {
         setStatus({
           type: "warn",
           message: matchResult.meta?.note || t("status.noMatches"),
         });
-        return;
       }
-
-      setMatches(matchResult.matches);
-      const found = t("status.found", {
-        count: board.meta?.totalFiltered ?? board.jobs.length,
-        evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
-      });
-      setStatus({
-        type: "info",
-        message: usedFallback ? `${found} ${t("model.fallbackNote")}` : found,
-      });
     } catch (err) {
       setStatus({
         type: "error",
@@ -129,8 +129,10 @@ export default function App() {
     );
   }
 
+  // matches/foundJobs are the DISPLAYED results. They are not cleared when a new
+  // search starts, so the previous results stay visible while the new search runs.
   const hasResults = matches.length > 0 || foundJobs.length > 0;
-  const showResults = !isSearching && hasResults;
+  const showResults = hasResults;
 
   const searchCard = (
     <section className="card search-card">

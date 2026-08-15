@@ -18,6 +18,15 @@ function modelUnavailable() {
   );
 }
 
+function logModelError(stage, { model, attempt, status, providerError }) {
+  const parts = [`[ai] model=${model ?? "(none)"}`];
+  parts.push(`stage=${stage}`);
+  if (attempt) parts.push(`attempt=${attempt}`);
+  if (status) parts.push(`status=${status}`);
+  if (providerError) parts.push(`provider=${providerError}`);
+  console.error(parts.join(" "));
+}
+
 function budgetReached() {
   return new HttpError(
     503,
@@ -72,6 +81,7 @@ export async function chat({
       temperature,
       maxTokens,
       model: resolvedModel,
+      attempt,
     });
   } catch (err) {
     await countOpenRouterFailure();
@@ -79,7 +89,16 @@ export async function chat({
   }
 }
 
-async function requestOpenRouter({ apiKey, system, prompt, json, temperature, maxTokens, model }) {
+async function requestOpenRouter({
+  apiKey,
+  system,
+  prompt,
+  json,
+  temperature,
+  maxTokens,
+  model,
+  attempt = 0,
+}) {
   let response;
   try {
     response = await fetch(OPENROUTER_URL, {
@@ -101,13 +120,13 @@ async function requestOpenRouter({ apiKey, system, prompt, json, temperature, ma
       signal: AbortSignal.timeout(OPENROUTER_TIMEOUT_MS),
     });
   } catch (err) {
-    if (err && (err.name === "TimeoutError" || err.name === "AbortError")) {
-      console.warn(`[ai] OpenRouter request timed out after ${OPENROUTER_TIMEOUT_MS}ms`);
-    }
+    const timedOut = Boolean(err && (err.name === "TimeoutError" || err.name === "AbortError"));
+    logModelError(timedOut ? "timeout" : "network", { model, attempt });
     throw modelUnavailable();
   }
 
   if (response.status === 401) {
+    logModelError("http-401", { model, attempt, status: response.status });
     throw new HttpError(
       502,
       "The OpenRouter API key on the server is invalid. Check the OPENROUTER_API_KEY environment variable.",
@@ -115,6 +134,7 @@ async function requestOpenRouter({ apiKey, system, prompt, json, temperature, ma
     );
   }
   if (response.status === 402) {
+    logModelError("http-402", { model, attempt, status: response.status });
     throw new HttpError(
       402,
       "The OpenRouter account has run out of credits. Top up at openrouter.ai to keep matching.",
@@ -122,9 +142,18 @@ async function requestOpenRouter({ apiKey, system, prompt, json, temperature, ma
     );
   }
   if (response.status === 429) {
+    logModelError("http-429", { model, attempt, status: response.status });
     throw modelUnavailable();
   }
   if (!response.ok) {
+    let providerError = "";
+    try {
+      const errBody = await response.json();
+      providerError = String(errBody?.error?.message ?? errBody?.message ?? "").slice(0, 180);
+    } catch {
+      /* body not readable */
+    }
+    logModelError("http-error", { model, attempt, status: response.status, providerError });
     throw modelUnavailable();
   }
 
@@ -132,11 +161,13 @@ async function requestOpenRouter({ apiKey, system, prompt, json, temperature, ma
   try {
     jsonBody = await response.json();
   } catch {
+    logModelError("json-parse", { model, attempt, status: response.status });
     throw modelUnavailable();
   }
 
   const content = jsonBody?.choices?.[0]?.message?.content;
   if (!content) {
+    logModelError("empty-content", { model, attempt, status: response.status });
     throw modelUnavailable();
   }
   return content;
