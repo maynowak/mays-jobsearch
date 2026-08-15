@@ -24,7 +24,6 @@ export default function App() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [evaluated, setEvaluated] = useState(0);
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
 
@@ -93,10 +92,12 @@ export default function App() {
       }
 
       setMatches(matchResult.matches);
-      setEvaluated(matchResult.meta?.evaluated ?? matchResult.matches.length);
       setStatus({
         type: "info",
-        message: t("status.found", { count: board.meta?.totalFiltered ?? board.jobs.length }),
+        message: t("status.found", {
+          count: board.meta?.totalFiltered ?? board.jobs.length,
+          evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
+        }),
       });
     } catch (err) {
       setStatus({
@@ -163,7 +164,6 @@ export default function App() {
           <div className="content">
             <Results
               matches={matches}
-              evaluated={evaluated}
               onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
             />
           </div>

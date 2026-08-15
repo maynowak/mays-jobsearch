@@ -7,11 +7,10 @@ const INITIAL_MATCHES = 5;
 
 interface Props {
   matches: Match[];
-  evaluated: number;
   onGenerateLetter: (job: Job, prepare: string) => void;
 }
 
-export default function Results({ matches, evaluated, onGenerateLetter }: Props) {
+export default function Results({ matches, onGenerateLetter }: Props) {
   const { t } = useLang();
   const [expanded, setExpanded] = useState(false);
 
@@ -21,23 +20,22 @@ export default function Results({ matches, evaluated, onGenerateLetter }: Props)
   const visible = hasMore && !expanded ? matches.slice(0, INITIAL_MATCHES) : matches;
 
   const heading = hasMore
-    ? expanded
-      ? t("results.allMatches")
-      : t("results.yourBest")
+    ? t("results.yourBest")
     : matches.length === 1
       ? t("results.yourTop")
       : t("results.yourTopN", { count: matches.length });
+
+  const subline = hasMore
+    ? expanded
+      ? t("results.allEvaluated", { count: matches.length })
+      : t("results.topOf", { shown: INITIAL_MATCHES, total: matches.length })
+    : null;
 
   return (
     <section id="matches" className="results" aria-label={t("results.aria")}>
       <div className="results-header">
         <h2>{heading}</h2>
-        <p className="results-sub">
-          {evaluated > 0 && t("results.scored", { count: evaluated })}
-          {hasMore &&
-            !expanded &&
-            ` · ${t("results.topOf", { shown: INITIAL_MATCHES, total: matches.length })}`}
-        </p>
+        {subline && <p className="results-sub">{subline}</p>}
         {hasMore && (
           <button
             type="button"
