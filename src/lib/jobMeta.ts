@@ -50,9 +50,18 @@ export function jobTypeLabelKey(code: string): string | null {
   return JOB_TYPE_LABEL_KEYS[code] ?? null;
 }
 
+export const CONTRACT_TYPE_NO_DATA = new Set(["KEINE_ANGABE", "NONE", "NO_INDICATION", "NICHT_ANGEGEBEN"]);
+
+export function isContractTypeNoData(value: string | undefined): boolean {
+  if (!value) return true;
+  return CONTRACT_TYPE_NO_DATA.has(value.trim().toUpperCase());
+}
+
 export function contractTypeLabelKey(value: string | undefined): string | null {
   if (!value) return null;
-  return CONTRACT_TYPE_LABEL_KEYS[value.trim().toUpperCase()] ?? null;
+  const normalized = value.trim().toUpperCase();
+  if (CONTRACT_TYPE_NO_DATA.has(normalized)) return null;
+  return CONTRACT_TYPE_LABEL_KEYS[normalized] ?? null;
 }
 
 export function descriptionPreview(

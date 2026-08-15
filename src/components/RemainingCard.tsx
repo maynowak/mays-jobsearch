@@ -6,6 +6,7 @@ import {
   formatJobDate,
   jobTypeLabelKey,
   contractTypeLabelKey,
+  isContractTypeNoData,
   prettifyCode,
   descriptionPreview,
 } from "../lib/jobMeta";
@@ -27,11 +28,11 @@ export default function RemainingCard({ job }: { job: Job }) {
     return key ? t(key) : prettifyCode(code);
   });
 
-  const contractLabel = contractTypeLabelKey(job.contractType)
-    ? t(contractTypeLabelKey(job.contractType)!)
-    : job.contractType
-      ? prettifyCode(job.contractType)
-      : null;
+  let contractLabel: string | null = null;
+  if (job.contractType && !isContractTypeNoData(job.contractType)) {
+    const key = contractTypeLabelKey(job.contractType);
+    contractLabel = key ? t(key) : prettifyCode(job.contractType);
+  }
 
   const description = descriptionPreview(job.description, DESCRIPTION_PREVIEW_LENGTH, expanded);
   const showDescriptionToggle =
