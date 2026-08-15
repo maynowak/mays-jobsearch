@@ -95,6 +95,14 @@ export function getConfig() {
     apifyMonthlyMaxRuns: parsePositiveInt(process.env.APIFY_MONTHLY_MAX_RUNS, 30),
     openRouterEnabled: parseBoolean(process.env.OPENROUTER_ENABLED, true),
     edenaiEnabled: parseBoolean(process.env.EDENAI_ENABLED, true),
+    jobSourceArbeitnowEnabled: parseBoolean(
+      process.env.JOB_SOURCE_ARBEITNOW_ENABLED,
+      true
+    ),
+    jobSourceArbeitsagenturEnabled: parseBoolean(
+      process.env.JOB_SOURCE_ARBEITSAGENTUR_ENABLED,
+      true
+    ),
     edenaiMonthlySoftLimitUsd: parsePositiveNumber(
       process.env.EDENAI_MONTHLY_SOFT_LIMIT_USD,
       1.0

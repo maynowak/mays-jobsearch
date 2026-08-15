@@ -1,4 +1,12 @@
-export type JobSource = "existing" | "apify-arbeitsagentur";
+export type JobSource = "arbeitnow" | "arbeitsagentur";
+
+export interface SourceInfo {
+  id: string;
+  displayName: string;
+  provider: string;
+  enabled: boolean;
+  actorId?: string;
+}
 
 export interface Job {
   slug: string;
@@ -45,6 +53,9 @@ export interface JobsResponse {
     city?: string[];
     keywords?: string[];
     sources?: Partial<Record<JobSource, number>>;
+    sourceCounts?: Partial<Record<JobSource, number>>;
+    disabledSources?: string[];
+    sourceDetails?: SourceInfo[];
     jobsCombined?: number;
     apify?: { enabled?: boolean };
   };

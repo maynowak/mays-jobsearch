@@ -1,5 +1,7 @@
 import { getConfig } from "./config.mjs";
 import { cacheGet, cacheHGetAll, cacheHIncrBy, cacheIncr } from "./cache.mjs";
+import { APIFY_ACTORS } from "./sources/apify/actors.mjs";
+import { SOURCE_ID as ARBEITNOW_SOURCE_ID } from "./sources/arbeitnow.mjs";
 
 const MONTH_TTL_SEC = 62 * 24 * 60 * 60;
 const OPENROUTER_MODEL_KEY = "mj-usage:openrouter:model";
@@ -91,6 +93,45 @@ export async function countApifyCacheMiss() {
   await cacheIncr(monthScoped(APIFY_CACHE_MISS_KEY), MONTH_TTL_SEC);
 }
 
+function jobSourceKeys(sourceId) {
+  return {
+    requests: `mj-usage:jobs:${sourceId}:requests`,
+    runs: `mj-usage:jobs:${sourceId}:runs`,
+    datasetReuses: `mj-usage:jobs:${sourceId}:datasetReuses`,
+    cacheHits: `mj-usage:jobs:${sourceId}:cacheHits`,
+    cacheMisses: `mj-usage:jobs:${sourceId}:cacheMisses`,
+  };
+}
+
+export async function countJobSourceRequest(sourceId) {
+  await cacheIncr(monthScoped(jobSourceKeys(sourceId).requests), MONTH_TTL_SEC);
+}
+
+export async function countJobSourceRun(sourceId) {
+  await cacheIncr(monthScoped(jobSourceKeys(sourceId).runs), MONTH_TTL_SEC);
+}
+
+export async function countJobSourceDatasetReuse(sourceId) {
+  await cacheIncr(monthScoped(jobSourceKeys(sourceId).datasetReuses), MONTH_TTL_SEC);
+}
+
+export async function countJobSourceCacheHit(sourceId) {
+  await cacheIncr(monthScoped(jobSourceKeys(sourceId).cacheHits), MONTH_TTL_SEC);
+}
+
+export async function countJobSourceCacheMiss(sourceId) {
+  await cacheIncr(monthScoped(jobSourceKeys(sourceId).cacheMisses), MONTH_TTL_SEC);
+}
+
+async function readJobSourceCounts(sourceId) {
+  const keys = jobSourceKeys(sourceId);
+  const out = { requests: 0, runs: 0, datasetReuses: 0, cacheHits: 0, cacheMisses: 0 };
+  for (const [name, base] of Object.entries(keys)) {
+    out[name] = await readCount(base);
+  }
+  return out;
+}
+
 async function readCount(base) {
   const raw = await cacheGet(monthScoped(base));
   return Number.isFinite(raw) ? raw : 0;
@@ -135,6 +176,16 @@ export async function getUsageSnapshot() {
       datasetReuses: await readCount(APIFY_REUSE_KEY),
       cacheHits: await readCount(APIFY_CACHE_HIT_KEY),
       cacheMisses: await readCount(APIFY_CACHE_MISS_KEY),
+    },
+    jobSources: {
+      [ARBEITNOW_SOURCE_ID]: {
+        requests: await readCount(jobSourceKeys(ARBEITNOW_SOURCE_ID).requests),
+      },
+      ...Object.fromEntries(
+        await Promise.all(
+          APIFY_ACTORS.map(async (actor) => [actor.sourceId, await readJobSourceCounts(actor.sourceId)])
+        )
+      ),
     },
     limits: {
       openRouterMonthlySoftLimitUsd: cfg.openRouterMonthlySoftLimitUsd,

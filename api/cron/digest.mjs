@@ -1,4 +1,5 @@
-import { HttpError, fetchFilteredJobs } from "../_lib/filter.mjs";
+import { HttpError } from "../_lib/filter.mjs";
+import { fetchFilteredJobs } from "../_lib/sources/arbeitnow.mjs";
 import { listSubscriptions } from "../_lib/alerts.mjs";
 
 const MAX_PER_DIGEST = 6;

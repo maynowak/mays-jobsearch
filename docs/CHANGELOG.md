@@ -55,6 +55,22 @@ Sprint 1.3 completed.
 
 ## Unreleased — 2026-08-15
 
+Modular Job Source Architecture + Apify Actor Registry
+
+- New `api/_lib/sources/` layer: pluggable Job Source Registry (`index.mjs`) with Arbeitnow (`arbeitnow.mjs`) and Apify (`apify/`) sources.
+- Apify Actor Registry (`apify/actors.mjs`) — add new job sources by adding a config object (actorId, normalize, buildInput). Currently: `arbeitsagentur` → `blackfalcondata~arbeitsagentur-jobs-feed`.
+- Generic Apify infrastructure (`apify/index.mjs` + `apify/client.mjs`) preserves all existing behavior: L1/L2 cache, time-of-day refresh, 404/410-only policy, cost guard, async run + polling.
+- Cache keys now collision-free across Actors: `job-source:<sourceId>:<query>|<location>` (L1) and `job-source:<sourceId>:dataset:<query>|<location>` (L2).
+- Each source independently enableable/disableable via `JOB_SOURCE_ARBEITNOW_ENABLED` / `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` (default `true`). Disabled = no request, no cost, no jobs; other sources unaffected.
+- `/api/jobs` meta extended: `sourceCounts` (post-dedup), `disabledSources`, `sourceDetails` (id, displayName, provider, enabled, actorId?). Legacy `sources` (pre-dedup) and `apify` kept for backward compat.
+- Per-source usage counters in `/api/usage` (`jobSources` object): `requests` for all sources; `runs`, `datasetReuses`, `cacheHits`, `cacheMisses` for Apify-based sources.
+- Source ids canonicalized: `arbeitnow` (was `existing`), `arbeitsagentur` (was `apify-arbeitsagentur`). Frontend `JobSources` and `SourceBadge` data-driven with fallback to raw id for future sources.
+- `api/_lib/filter.mjs` slimmed to generic utilities only (`tokenize`, `stripHtml`, `locationMatches`, `keywordHits`, `HttpError`). Arbeitnow logic moved to `sources/arbeitnow.mjs`. `api/_lib/apify.mjs` removed (logic moved to `sources/apify/`).
+- `api/_lib/jobs.mjs` now a thin facade re-exporting `fetchAllJobs` from the registry.
+- Tests: 12 new tests covering A–N (enable/disable, combined pool, dedup, cache keys, dataset reuse, refresh policy, cost guard, registrability).
+
+---
+
 Model selection, CV upload and second job source.
 
 - Dynamic OpenRouter free-model selection: `/api/models` exposes the current free-model catalogue (determined from OpenRouter pricing/metadata, not hardcoded) plus `defaultModel`, `fallbackModel` and `recommendedModel`; `/api/model` returns the resolved default.

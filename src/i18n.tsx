@@ -131,8 +131,8 @@ const en: Dict = {
   "match.generateLetter": "Generate application",
 
   "source.label": "Source",
-  "source.existing": "Arbeitnow",
-  "source.apify": "Arbeitsagentur",
+  "source.arbeitnow": "Arbeitnow",
+  "source.arbeitsagentur": "Arbeitsagentur",
 
   "sources.heading": "Job sources",
   "sources.total": "Total",
@@ -281,8 +281,8 @@ const de: Dict = {
   "match.generateLetter": "Bewerbung generieren",
 
   "source.label": "Quelle",
-  "source.existing": "Arbeitnow",
-  "source.apify": "Arbeitsagentur",
+  "source.arbeitnow": "Arbeitnow",
+  "source.arbeitsagentur": "Arbeitsagentur",
 
   "sources.heading": "Jobquellen",
   "sources.total": "Insgesamt",

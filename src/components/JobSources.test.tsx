@@ -36,8 +36,8 @@ function renderSources(jobs: Job[]) {
 describe("JobSources", () => {
   it("Test C: Anzahlen werden dynamisch aus den gelieferten Jobs berechnet", () => {
     const jobs = [
-      ...Array.from({ length: 26 }, (_, i) => makeJob(`a${i}`, "existing")),
-      ...Array.from({ length: 40 }, (_, i) => makeJob(`b${i}`, "apify-arbeitsagentur")),
+      ...Array.from({ length: 26 }, (_, i) => makeJob(`a${i}`, "arbeitnow")),
+      ...Array.from({ length: 40 }, (_, i) => makeJob(`b${i}`, "arbeitsagentur")),
     ];
     renderSources(jobs);
 
@@ -51,7 +51,7 @@ describe("JobSources", () => {
   });
 
   it("Test D: Eine Quelle mit 0 Ergebnissen wird nicht als liefernd angezeigt", () => {
-    const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "existing"));
+    const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
     renderSources(jobs);
 
     const rowCount = document.querySelector(".job-sources-count");

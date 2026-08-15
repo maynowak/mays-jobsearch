@@ -21,7 +21,7 @@ function makeJobs(n: number): Job[] {
     remote: false,
     tags: ["react"],
     url: `https://example.com/${i}`,
-    source: ["existing"],
+    source: ["arbeitnow"],
   }));
 }
 

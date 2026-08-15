@@ -39,7 +39,9 @@ Live URL: https://mays-job-matcher.vercel.app
 | `EDENAI_ENV` (optional) | Force EdenAI key mode: `production` → `EDENAI_API_KEY`, anything else → prefers `EDENAI_DEV_API_KEY`; defaults to `VERCEL_ENV` (`production` → `EDENAI_API_KEY`) | `api/_lib/providers/edenai.mjs` | Optional | No |
 | `EDENAI_MODEL` (optional) | Override the default EdenAI model | `api/_lib/model.mjs` | Optional (default model constant used if unset) | No |
 | `EDENAI_ENABLED` (optional) | Enable/disable the EdenAI provider (default `true`) | `api/_lib/providers/index.mjs` | Optional (safe default) | No |
-| `APIFY_API_TOKEN` (optional) | Apify authentication for the Arbeitsagentur job source | `api/_lib/apify.mjs` | Optional — without it only Arbeitnow is used | Yes |
+| `APIFY_API_TOKEN` (optional) | Apify authentication for Apify-based job sources (currently Arbeitsagentur) | `api/_lib/sources/apify/client.mjs` | Optional — without it only Arbeitnow is used | Yes |
+| `JOB_SOURCE_ARBEITNOW_ENABLED` (optional) | Enable/disable the Arbeitnow job source (default `true`) | `api/_lib/config.mjs` | Optional (safe default) | No |
+| `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` (optional) | Enable/disable the Arbeitsagentur job source (default `true`) | `api/_lib/config.mjs` | Optional (safe default) | No |
 | `UPSTASH_REDIS_REST_URL` | Upstash REST endpoint for Apify job cache, CV profile cache and alert subscriptions | `api/_lib/cache.mjs`, `api/_lib/alerts.mjs` | Required for caching and alerts | Credentials — server-side only |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash REST token (same uses as above) | `api/_lib/cache.mjs`, `api/_lib/alerts.mjs` | Required for caching and alerts | Yes |
 | `RESEND_API_KEY` | Resend authentication for the daily digest emails | `api/cron/digest.mjs` | Required for digest emails | Yes |
@@ -104,7 +106,10 @@ Defined in `vercel.json`:
 - The app tracks its own monthly usage counters in Upstash Redis and exposes them via `GET /api/usage` (no secrets in the response). The endpoint is protected by `USAGE_DIAGNOSTICS_TOKEN`; without it, it is disabled (403). See `README.md` → "Cost guard & usage" and `ARCHITECTURE.md` → "Cost guard & usage".
 - Guards use counter-based backstops (`OPENROUTER_MONTHLY_MAX_REQUESTS`, `EDENAI_MONTHLY_MAX_REQUESTS`, `APIFY_MONTHLY_MAX_RUNS`). The `*_SOFT_LIMIT_USD` values are advisory and never block.
 - AI provider fallback: when one AI provider hits its request-count backstop (or its quota is exhausted: `free_quota_exceeded`, `quota_exhausted`, `insufficient_credits`, `limit_reached`), the router automatically retries on the other enabled provider. See `docs/AI_PROVIDERS.md`.
+- **Job Source Registry**: job sources are now modular (`api/_lib/sources/`). Each source can be independently enabled/disabled via `JOB_SOURCE_*_ENABLED`. Disabled sources produce no requests, no cost, no jobs. The `/api/jobs` meta includes `sourceCounts` (post-dedup per source), `disabledSources`, and `sourceDetails`.
+- **Per-source usage counters**: the `/api/usage` snapshot now includes a `jobSources` object with per-source counters (`requests` for all sources; `runs`, `datasetReuses`, `cacheHits`, `cacheMisses` for Apify-based sources).
 - Apify dataset reuse is time-of-day aware in `Europe/Berlin` (default): peak 08:00–18:00 uses the peak reuse window (6 h), off-peak the off-peak window (12 h). Summer/winter time is resolved automatically via the IANA timezone.
+- Apify cache keys are now collision-free across multiple Actors: `job-source:<sourceId>:<query>|<location>` (L1) and `job-source:<sourceId>:dataset:<query>|<location>` (L2).
 
 ## CI/CD
 

@@ -111,9 +111,10 @@ State
 Behavior
 
 - small module directly below the search button, clearly separated from the AI model selector
-- computes real per-source counts (Arbeitnow / Arbeitsagentur) from the delivered jobs' `source[]` arrays
+- computes real per-source counts from the delivered jobs' `source[]` arrays (source ids: `arbeitnow`, `arbeitsagentur`, and any future sources)
 - only sources with a count > 0 are shown; a total line summarizes all delivered jobs
 - pure frontend computation over the delivered `foundJobs` — no additional request
+- label mapping is data-driven with a fallback to the raw source id for future sources (no code changes needed when a new source is added)
 
 ---
 

@@ -2,9 +2,14 @@ import type { Job, JobSource } from "../types";
 import { useLang } from "../i18n";
 
 const SOURCE_LABEL_KEYS: Record<JobSource, string> = {
-  existing: "source.existing",
-  "apify-arbeitsagentur": "source.apify",
+  arbeitnow: "source.arbeitnow",
+  arbeitsagentur: "source.arbeitsagentur",
 };
+
+function sourceLabel(source: JobSource, t: (key: string) => string): string {
+  const key = SOURCE_LABEL_KEYS[source];
+  return key ? t(key) : source;
+}
 
 interface Props {
   jobs: Job[];
@@ -23,7 +28,7 @@ export default function JobSources({ jobs }: Props) {
 
   const rows = [...counts.entries()]
     .filter(([, count]) => count > 0)
-    .sort((a, b) => (a[0] === "existing" ? -1 : 1) - (b[0] === "existing" ? -1 : 1));
+    .sort((a, b) => (a[0] === "arbeitnow" ? -1 : 1) - (b[0] === "arbeitnow" ? -1 : 1));
 
   if (rows.length === 0) return null;
 
@@ -33,7 +38,7 @@ export default function JobSources({ jobs }: Props) {
       <ul className="job-sources-list">
         {rows.map(([source, count]) => (
           <li key={source} className="job-sources-row">
-            <span className="job-sources-name">{t(SOURCE_LABEL_KEYS[source])}</span>
+            <span className="job-sources-name">{sourceLabel(source, t)}</span>
             <span className="job-sources-count">
               {count} {t("sources.unit")}
             </span>

@@ -160,25 +160,28 @@ Observed verification (not guaranteed performance):
 
 ## Job sources
 
-The combined job pool comes from two sources, normalized into the same job model:
+The combined job pool comes from a **modular Job Source Registry** (`api/_lib/sources/`) with pluggable sources:
 
-1. **Arbeitnow** (`api/_lib/filter.mjs`, source label `"existing"`) — public API, no key; one page ≈ 176 jobs; filtered by location + keyword hits, capped at 40 jobs.
-2. **Apify Actor `blackfalcondata~arbeitsagentur-jobs-feed`** (`api/_lib/apify.mjs`, source label `"apify-arbeitsagentur"`) — the German Arbeitsagentur feed; requires `APIFY_API_TOKEN`; capped at 40 jobs.
+1. **Arbeitnow** (`api/_lib/sources/arbeitnow.mjs`, source id `"arbeitnow"`, provider `"direct-api"`) — public API, no key; one page ≈ 176 jobs; filtered by location + keyword hits, capped at 40 jobs.
+2. **Arbeitsagentur** via Apify Actor (`api/_lib/sources/apify/actors.mjs`, source id `"arbeitsagentur"`, provider `"apify"`, actor `blackfalcondata~arbeitsagentur-jobs-feed`) — the German Arbeitsagentur feed; requires `APIFY_API_TOKEN`; capped at 40 jobs.
 
-`api/_lib/jobs.mjs` fetches both sources in parallel (`Promise.allSettled`) and merges them:
+The registry (`api/_lib/sources/index.mjs`) fetches all **enabled** sources in parallel (`Promise.allSettled`), merges them, and returns a combined pool:
 
-- Source metadata is preserved per job (`job.source: ["existing" | "apify-arbeitsagentur", …]`) and exposed to the frontend; recommendation cards show their source (e.g. "Arbeitnow" / "Arbeitsagentur").
+- Source metadata is preserved per job (`job.source: ["arbeitnow" | "arbeitsagentur", …]`) and exposed to the frontend; recommendation cards show their source (e.g. "Arbeitnow" / "Arbeitsagentur").
 - Cross-source deduplication is active: jobs matching on `title | company | location` are merged and their sources combined.
-- If the Apify source is disabled or fails, the app keeps working with Arbeitnow only.
+- Each source can be **enabled/disabled** independently via env vars (`JOB_SOURCE_ARBEITNOW_ENABLED`, `JOB_SOURCE_ARBEITSAGENTUR_ENABLED`). Disabled sources produce no requests, no cost, no jobs. Other sources keep working. If all disabled → clean empty state.
+- `api/_lib/jobs.mjs` is now a thin facade re-exporting `fetchAllJobs` from the registry.
 
 ## Apify cache architecture
 
 The Apify source uses a two-layer cache to avoid unnecessary paid Actor runs.
 
-Key concept: the cache keys are built from the normalized **query + location**:
+Key concept: the cache keys are built from the normalized **query + location**, **scoped by source id** to avoid collisions between multiple Actors:
 
-- L1 key: `apify-jobs:<query>|<location>` — Redis job-record cache, TTL **600 seconds (10 min)** (`APIFY_CACHE_TTL_SEC`).
-- L2 key: `apify-dataset:<query>|<location>` — Apify Dataset reuse metadata `{ datasetId, createdAt }`; the application freshness window is **time-of-day aware** (see below).
+- L1 key: `job-source:<sourceId>:<query>|<location>` — Redis job-record cache, TTL **600 seconds (10 min)** (`APIFY_CACHE_TTL_SEC`).
+- L2 key: `job-source:<sourceId>:dataset:<query>|<location>` — Apify Dataset reuse metadata `{ datasetId, createdAt }`; the application freshness window is **time-of-day aware** (see below).
+
+The cache keys include the source id (e.g. `job-source:arbeitsagentur:...`) so multiple Actors can coexist without key collisions. Existing keys (`apify-jobs:...`, `apify-dataset:...`) are no longer written; on first deploy after this change a one-time cache miss is expected (harmless).
 
 Behavior:
 
@@ -283,7 +286,8 @@ All tunables are environment variables with safe defaults (see `docs/DEPLOYMENT.
 ### Counters (`api/_lib/usage.mjs`)
 
 - Per AI provider (`openrouter`, `edenai`): `requests`, `failures`, `fallbackAttempts` (from the client's `x-mj-attempt` header, attempt > 1), plus a per-model hash. OpenRouter keeps its existing Redis keys (`mj-usage:openrouter:*`); EdenAI uses `mj-usage:ai:edenai:*`.
-- Apify: `runs`, `datasetReuses`, `cacheHits`, `cacheMisses`.
+- Apify (global legacy counters, kept for backward compat): `runs`, `datasetReuses`, `cacheHits`, `cacheMisses`.
+- **Per job source** (`api/_lib/sources/`): each registered source gets its own `requests` counter; Apify-based sources additionally get `runs`, `datasetReuses`, `cacheHits`, `cacheMisses`. Keys: `mj-usage:jobs:<sourceId>:<counter>`. The `/api/usage` snapshot includes a `jobSources` object with these per-source counters.
 
 Counters are incremented with atomic Redis `INCR` / `HINCRBY` (helpers in `api/_lib/cache.mjs`); TTL is set only on first write.
 
@@ -310,6 +314,10 @@ The token is compared with a constant-time string comparison, is never logged, n
   "openRouter": { "requestCount": 1, "failureCount": 0, "fallbackAttempts": 0, "byModel": { "openai/gpt-4o-mini": 1 } },
   "edenai": { "requestCount": 0, "failureCount": 0, "fallbackAttempts": 0, "byModel": {} },
   "apify": { "actorRuns": 1, "datasetReuses": 0, "cacheHits": 0, "cacheMisses": 1 },
+  "jobSources": {
+    "arbeitnow": { "requests": 5 },
+    "arbeitsagentur": { "requests": 3, "runs": 1, "datasetReuses": 0, "cacheHits": 2, "cacheMisses": 1 }
+  },
   "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "edenaiMonthlySoftLimitUsd": 1.0, "apifyMonthlySoftLimitUsd": 4.0,
                "openRouterMonthlyMaxRequests": 1000, "edenaiMonthlyMaxRequests": 200, "apifyMonthlyMaxRuns": 30,
                "modelFallbackMaxAttempts": 3,
@@ -325,11 +333,12 @@ Redis serves multiple, distinct purposes with different TTLs — do not treat th
 
 | Purpose | Key pattern | Retention |
 |---|---|---|
-| Apify job-record cache (L1) | `apify-jobs:<query>\|<location>` | Redis TTL 600 s (10 min) |
-| Apify dataset reuse metadata (L2) | `apify-dataset:<query>\|<location>` | Redis TTL + application freshness window: peak 6 h / off-peak 12 h (configurable, timezone-aware via `Europe/Berlin`) |
+| Apify job-record cache (L1) | `job-source:<sourceId>:<query>\|<location>` | Redis TTL 600 s (10 min) |
+| Apify dataset reuse metadata (L2) | `job-source:<sourceId>:dataset:<query>\|<location>` | Redis TTL + application freshness window: peak 6 h / off-peak 12 h (configurable, timezone-aware via `Europe/Berlin`) |
 | CV profile cache | `cv-profile:<hash>` | Redis TTL 30 days |
 | Alert subscriptions | `alerts` (hash) | persistent (no TTL) |
 | Usage counters (monthly) | `mj-usage:<name>:<YYYY-MM>` (+ `mj-usage:openrouter:model:<YYYY-MM>` and `mj-usage:ai:edenai:model:<YYYY-MM>` hashes) | Redis TTL 62 days; month-scoped, reset by month rollover |
+| Job source usage (monthly) | `mj-usage:jobs:<sourceId>:<counter>:<YYYY-MM>` | Redis TTL 62 days; month-scoped |
 
 Clearly distinguish:
 
@@ -351,13 +360,11 @@ Clearly distinguish:
 
 ### `api/_lib/filter.mjs`
 
-Shared job logic:
+Shared job logic (generic utilities, no source-specific code):
 
-- `fetchArbeitnow()` — fetches one page (~176 jobs) from the Arbeitnow API with friendly error mapping.
-- `fetchFilteredJobs({ skills, targetRole, city })` — filters by location (multi-city or remote) and keyword hits (title + tags + description), ranks by hits, caps at 40 jobs.
-- `keywordHits(job, tokens)` / `locationMatches(job, cityQueries)` — shared by matching and the Apify filter.
+- `tokenize(input)` / `stripHtml(html)` / `locationMatches(job, cityQueries)` / `keywordHits(job, keywordTokens)` — used by all job sources.
 - `HttpError` — error class carrying `status`, `code`, and a human-readable message.
-- Source constants `SOURCE_ARBEITNOW` (`"existing"`) and `SOURCE_APIFY_ARBEITSAGENTUR` (`"apify-arbeitsagentur"`).
+- `fetchFilteredJobs` moved to `api/_lib/sources/arbeitnow.mjs` (Arbeitnow source). The legacy `fetchArbeitnow` is also there for backwards compatibility.
 
 ### `api/_lib/providers/index.mjs`
 
@@ -404,10 +411,43 @@ Facade that re-exports `getFreeModels`, `assertFreeModel`, `getCompatibleFallbac
 
 - Upstash Redis REST helpers: `cacheGet`, `cacheSet` (`SETEX`, default TTL 600 s), `cacheDel`, plus counter primitives `cacheIncr`, `cacheHIncrBy`, `cacheHGetAll`.
 
-### `api/_lib/apify.mjs`
+### `api/_lib/sources/index.mjs`
 
-- Apify Arbeitsagentur source: async run + polling, dataset read, two-layer cache, 404/410-only refresh policy.
-- Time-of-day dataset freshness (`datasetRefreshMs`), usage counters (cache hit/miss, dataset reuse, Actor runs), and the `apifyRunLimitReached()` guard that stops new paid runs at the monthly run backstop.
+Job Source Registry (router):
+
+- `SOURCES` — ordered list of all registered sources (Arbeitnow + Apify actors).
+- `enabledSources()` / `disabledSources()` / `sourceDetails()` — registry queries.
+- `fetchAllJobs({ skills, targetRole, city })` — parallel fetch of enabled sources, cross-source dedup, combined meta (`sources`, `sourceCounts`, `disabledSources`, `sourceDetails`, `jobsCombined`, `apify`).
+- `jobKey(job)` / `dedupJobs(jobs)` — cross-source deduplication by `title | company | location`.
+
+### `api/_lib/sources/arbeitnow.mjs`
+
+Arbeitnow source module (`id: "arbeitnow"`, `provider: "direct-api"`, `critical: true`):
+
+- `fetchJobs(params)` — fetches, filters, normalizes Arbeitnow jobs; source label `"arbeitnow"`.
+- `fetchFilteredJobs` — legacy export for cron digest compatibility.
+- Throws `HttpError` on failure (critical source → propagates to caller).
+
+### `api/_lib/sources/apify/index.mjs`
+
+Generic Apify infrastructure (shared by all Apify actors):
+
+- `fetchActorJobs(actor, params)` — full L1/L2 cache flow, dataset reuse, time-of-day refresh, 404/410-only refresh, cost guard (`apifyRunLimitReached`).
+- `createApifySource(actor)` — factory producing a JobSource from an actor config.
+- Cache keys: `job-source:<sourceId>:<query>|<location>` (L1), `job-source:<sourceId>:dataset:<query>|<location>` (L2).
+- Usage counters per source: `countJobSourceRun`, `countJobSourceDatasetReuse`, `countJobSourceCacheHit`, `countJobSourceCacheMiss` (plus global legacy counters for backward compat).
+
+### `api/_lib/sources/apify/actors.mjs`
+
+Apify Actor Registry (config-driven, no code changes to add actors):
+
+- `APIFY_ACTORS` array — each entry: `sourceId`, `displayName`, `actorId`, `enabled()`, `maxJobs`, `buildInput()`, `normalize()`.
+- Currently one actor: `"arbeitsagentur"` → `blackfalcondata~arbeitsagentur-jobs-feed`.
+- Adding a new actor = add one config object to this array.
+
+### `api/_lib/sources/apify/client.mjs`
+
+Low-level Apify API client: `startApifyRun`, `waitForRun`, `readDataset`.
 
 ### `api/_lib/config.mjs`
 
@@ -420,7 +460,7 @@ Facade that re-exports `getFreeModels`, `assertFreeModel`, `getCompatibleFallbac
 
 ### `api/_lib/jobs.mjs`
 
-- `fetchAllJobs(...)` — parallel fetch of both sources, cross-source dedup, combined meta (`sources`, `apify.enabled`/`reason`, `totalScanned`, `totalFiltered`).
+- Thin facade re-exporting `fetchAllJobs`, `jobKey`, `dedupJobs` from `api/_lib/sources/index.mjs`.
 
 ### `api/_lib/alerts.mjs`
 
@@ -430,7 +470,7 @@ Facade that re-exports `getFreeModels`, `assertFreeModel`, `getCompatibleFallbac
 
 | Route | Method | Purpose |
 |---|---|---|
-| `/api/jobs` | GET | Combined, filtered jobs from Arbeitnow + Apify |
+| `/api/jobs` | GET | Combined, filtered jobs from all enabled job sources |
 | `/api/profile` | POST | Extract structured search profile from CV text (cached by hash) |
 | `/api/models` | GET | Free model catalogue + default/fallback/recommended |
 | `/api/model` | GET | Resolved default model |
@@ -450,7 +490,13 @@ Facade that re-exports `getFreeModels`, `assertFreeModel`, `getCompatibleFallbac
 { slug, title, company_name, location[], remote, tags[], url, created_at, source[] }
 ```
 
-`meta`: `{ totalScanned, totalFiltered, city[], keywords[], sources, jobsCombined, apify: { enabled, reason } }`.
+`meta`: `{ totalScanned, totalFiltered, city[], keywords[], sources, sourceCounts, disabledSources, sourceDetails, jobsCombined, apify: { enabled, reason } }`.
+
+- `sources` — per-source job counts from the source fetch (pre-dedup).
+- `sourceCounts` — per-source job counts from the final deduped pool (post-dedup, derived from `job.source[]`).
+- `disabledSources` — array of registered source ids that are currently disabled.
+- `sourceDetails` — array of `{ id, displayName, provider, enabled, actorId? }` for all registered sources.
+- `apify` — legacy field for the Arbeitsagentur source (`enabled`, `reason`); retained for backward compatibility.
 
 ### `/api/profile` → `SuggestedProfile`
 
