@@ -187,8 +187,6 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
           console.error("[apify] L2 dataset read failed (transient):", dataset.datasetId, read.error);
           return emptyResult(read.error);
         }
-      } else {
-        console.error("[apify] L2 dataset stale, ageSec:", dataset.createdAt ? Math.round((Date.now() - dataset.createdAt) / 1000) : "n/a");
       }
     }
 
