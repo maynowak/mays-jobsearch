@@ -215,3 +215,137 @@ describe("CV workflow", () => {
     expect((screen.getByLabelText("Stadt") as HTMLInputElement).value).toBe("Berlin");
   });
 });
+
+describe("No landing-page flash during a search", () => {
+  it("Initialzustand: Search-Hero wird angezeigt, keine Landingpage", () => {
+    renderApp();
+    expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".landing-hero")).toBeNull();
+    expect(document.querySelector(".search-hero")).toBeTruthy();
+    expect(document.querySelector(".layout-split")).toBeNull();
+  });
+
+  it("Bug-Regression: runSearch -> phase=searching -> Landingpage NICHT gerendert", async () => {
+    const jobs = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    // phase === "searching"
+    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
+    expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".landing-hero")).toBeNull();
+    expect(document.querySelector(".search-hero")).toBeTruthy();
+    expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
+    // the pathname must not change while a search is running
+    expect(window.location.pathname).toBe("/top");
+
+    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
+    await screen.findByText("AWS Engineer");
+    expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+  });
+
+  it("Scoring (foundJobs gesetzt, Matches ausstehend): Suchansicht bleibt, kein Hero-/Ergebnis-Wechsel", async () => {
+    const jobs = deferred<JobsResponse>();
+    const matches = deferred<MatchResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
+    vi.mocked(fetchMatches).mockReturnValue(matches.promise);
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
+    await screen.findByText("Bewerte deine Treffer mit KI…");
+
+    // While the model call runs the app must stay on the search UI,
+    // not flip to the sparse results hero (the observed "landing flash").
+    expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".landing-hero")).toBeNull();
+    expect(document.querySelector(".search-hero")).toBeTruthy();
+    expect(document.querySelector(".hero")).toBeNull();
+    expect(document.querySelector(".layout-split")).toBeNull();
+    expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
+
+    matches.resolve({
+      matches: [{ score: 90, why: "gut", prepare: "Bereite dich vor", job }],
+    } as MatchResponse);
+    await screen.findByText("AWS Engineer");
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".search-hero")).toBeNull();
+  });
+
+  it("Fehler: keine Landingpage, Werte bleiben erhalten", async () => {
+    const jobs = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    jobs.reject(new Error("boom"));
+    await screen.findByText("boom");
+
+    expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".landing-hero")).toBeNull();
+    expect(document.querySelector(".search-hero")).toBeTruthy();
+    expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
+  });
+
+  it("0 AI-Evaluation: kein Landing-Rücksprung, Zero-Evaluation-UX wird gezeigt", async () => {
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    vi.mocked(fetchMatches).mockResolvedValue({
+      matches: [],
+      meta: { note: "Keine KI-Bewertung verfügbar." },
+    } as MatchResponse);
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    await screen.findByText(/konnten aber gerade nicht per KI bewertet werden/);
+
+    expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".landing-hero")).toBeNull();
+    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
+  });
+
+  it("CV-Suche: kein Landing-Flicker während der Suche", async () => {
+    const jobs = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      "cv.pdf",
+      { type: "application/pdf" }
+    );
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+    fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
+
+    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
+    expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".landing-hero")).toBeNull();
+    expect(document.querySelector(".search-hero")).toBeTruthy();
+    expect(window.location.pathname).toBe("/top");
+
+    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
+    await screen.findByText("AWS Engineer");
+    expect(document.querySelector(".landing")).toBeNull();
+  });
+});

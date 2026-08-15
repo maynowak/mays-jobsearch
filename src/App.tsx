@@ -118,7 +118,9 @@ export default function App() {
     }
   };
 
-  if (route === "landing") {
+  const isSearching = phase === "searching" || phase === "scoring";
+
+  if (route === "landing" && !isSearching) {
     return (
       <div className="landing">
         <Navbar route="landing" />
@@ -128,6 +130,7 @@ export default function App() {
   }
 
   const hasResults = matches.length > 0 || foundJobs.length > 0;
+  const showResults = !isSearching && hasResults;
 
   const searchCard = (
     <section className="card search-card">
@@ -157,7 +160,7 @@ export default function App() {
     <>
       <Navbar route="matcher" />
 
-      {hasResults ? (
+      {showResults ? (
         <Hero />
       ) : (
         <section className="search-hero">
@@ -171,7 +174,7 @@ export default function App() {
         </section>
       )}
 
-      {hasResults && (
+      {showResults && (
         <main className="container layout-split">
           <aside className="sidebar">
             {searchCard}
@@ -188,7 +191,7 @@ export default function App() {
         </main>
       )}
 
-      {!hasResults && (
+      {!showResults && (
         <section className="alerts-section">
           <AlertCard profile={profile} />
         </section>
