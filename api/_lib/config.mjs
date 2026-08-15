@@ -9,8 +9,49 @@ function parsePositiveInt(value, fallback) {
   return Math.max(1, n);
 }
 
-const PEAK_START_HOUR = 8;
-const PEAK_END_HOUR = 18;
+function parseTimezone(value, fallback) {
+  const tz = String(value || "").trim();
+  if (!tz) return fallback;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return tz;
+  } catch {
+    return fallback;
+  }
+}
+
+function parseClockTime(value, fallback) {
+  const s = String(value || "").trim();
+  const m = /^(\d{1,2}):(\d{2})$/.exec(s);
+  if (!m) return fallback;
+  const hour = Number(m[1]);
+  const minute = Number(m[2]);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return fallback;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function toMinutesOfDay(clock) {
+  const m = /^(\d{2}):(\d{2})$/.exec(clock);
+  if (!m) return NaN;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+function minuteOfDayInZone(date, timeZone) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hourCycle: "h23",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).formatToParts(date);
+    const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+    const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return NaN;
+    return hour * 60 + minute;
+  } catch {
+    return NaN;
+  }
+}
 
 export function getConfig() {
   return {
@@ -28,6 +69,18 @@ export function getConfig() {
       process.env.APIFY_DATASET_REFRESH_OFFPEAK_HOURS,
       12
     ),
+    apifyDatasetRefreshTimezone: parseTimezone(
+      process.env.APIFY_DATASET_REFRESH_TIMEZONE,
+      "Europe/Berlin"
+    ),
+    apifyDatasetRefreshPeakStart: parseClockTime(
+      process.env.APIFY_DATASET_REFRESH_PEAK_START,
+      "08:00"
+    ),
+    apifyDatasetRefreshPeakEnd: parseClockTime(
+      process.env.APIFY_DATASET_REFRESH_PEAK_END,
+      "18:00"
+    ),
     openRouterMonthlyMaxRequests: parsePositiveInt(
       process.env.OPENROUTER_MONTHLY_MAX_REQUESTS,
       1000
@@ -37,8 +90,13 @@ export function getConfig() {
 }
 
 export function isPeakTime(date = new Date()) {
-  const hour = date.getHours();
-  return hour >= PEAK_START_HOUR && hour < PEAK_END_HOUR;
+  const cfg = getConfig();
+  const nowMin = minuteOfDayInZone(date, cfg.apifyDatasetRefreshTimezone);
+  const startMin = toMinutesOfDay(cfg.apifyDatasetRefreshPeakStart);
+  const endMin = toMinutesOfDay(cfg.apifyDatasetRefreshPeakEnd);
+  if (!Number.isFinite(nowMin) || !Number.isFinite(startMin) || !Number.isFinite(endMin)) return false;
+  if (endMin <= startMin) return false;
+  return nowMin >= startMin && nowMin < endMin;
 }
 
 export function datasetRefreshHours(date = new Date()) {

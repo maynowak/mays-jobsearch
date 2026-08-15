@@ -86,6 +86,9 @@ All keys are server-side only.
 | `MODEL_FALLBACK_MAX_ATTEMPTS` (optional) | Max AI fallback attempts, exposed to the client (default `3`) | — |
 | `APIFY_DATASET_REFRESH_PEAK_HOURS` (optional) | Apify dataset reuse window during peak hours (default `6`) | — |
 | `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (optional) | Apify dataset reuse window off-peak (default `12`) | — |
+| `APIFY_DATASET_REFRESH_TIMEZONE` (optional) | IANA timezone for the peak window (default `Europe/Berlin`; DST handled automatically) | — |
+| `APIFY_DATASET_REFRESH_PEAK_START` / `APIFY_DATASET_REFRESH_PEAK_END` (optional) | Peak window start/end (default `08:00` / `18:00`) | — |
+| `USAGE_DIAGNOSTICS_TOKEN` (optional) | Token required to read `GET /api/usage`; without it the endpoint is disabled (403) | any random string |
 | `OPENROUTER_MONTHLY_SOFT_LIMIT_USD` / `APIFY_MONTHLY_SOFT_LIMIT_USD` (optional) | Advisory spend limits (operator reference only, shown in `/api/usage`) | — |
 
 ## Cost guard & usage
@@ -101,11 +104,12 @@ The app keeps its own monthly usage counters (in Upstash Redis) and exposes them
 Important — these are **application-side counters, not provider billing**:
 
 - The provider dashboards (OpenRouter, Apify console) remain authoritative for real spend.
+- `GET /api/usage` is **protected**: it requires the `USAGE_DIAGNOSTICS_TOKEN` (sent via the `x-usage-token` header or `Authorization: Bearer <token>`). Without a token configured the endpoint is disabled (HTTP 403); a wrong/missing token returns HTTP 401. The token is server-side only and never appears in the response or any client bundle.
 - The `*_SOFT_LIMIT_USD` values are advisory operator thresholds shown in `/api/usage`; the app cannot derive exact spend from its counters and therefore does **not** block on them.
 - The guards use the counter backstops instead:
   - **OpenRouter:** once the monthly request count reaches `OPENROUTER_MONTHLY_MAX_REQUESTS` (default `1000`), `/api/match`, `/api/profile` and `/api/cover-letter` fail fast with the existing friendly `model_unavailable`-style UX. Fallbacks stay bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`.
   - **Apify:** once the monthly Actor-run count reaches `APIFY_MONTHLY_MAX_RUNS` (default `30`), no new paid Actor runs are started. Cached / dataset-reused results keep working; only brand-new searches that would need a run return empty for the Apify source (Arbeitnow still works).
-- Apify dataset reuse is **time-of-day aware**: during peak hours (08:00–18:00 server local time, i.e. UTC on Vercel) the dataset refresh window is `APIFY_DATASET_REFRESH_PEAK_HOURS` (default 6 h); off-peak it is `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default 12 h). Longer off-peak reuse means fewer paid runs.
+- Apify dataset reuse is **time-of-day aware** in a configurable IANA timezone: during the peak window (`APIFY_DATASET_REFRESH_PEAK_START`–`APIFY_DATASET_REFRESH_PEAK_END`, default 08:00–18:00 `Europe/Berlin`) the dataset refresh window is `APIFY_DATASET_REFRESH_PEAK_HOURS` (default 6 h); off-peak it is `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default 12 h). Longer off-peak reuse means fewer paid runs. Summer/winter time is resolved automatically from the IANA timezone (no hardcoded UTC offset).
 - The Redis L1 job cache (10 min), the Apify L2 dataset reuse, the CV-profile cache and the automatic model fallback are all unchanged.
 
 ## Run locally

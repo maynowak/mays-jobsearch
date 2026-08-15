@@ -95,6 +95,9 @@ export async function getUsageSnapshot() {
       modelFallbackMaxAttempts: cfg.modelFallbackMaxAttempts,
       apifyDatasetRefreshPeakHours: cfg.apifyDatasetRefreshPeakHours,
       apifyDatasetRefreshOffpeakHours: cfg.apifyDatasetRefreshOffpeakHours,
+      apifyDatasetRefreshTimezone: cfg.apifyDatasetRefreshTimezone,
+      apifyDatasetRefreshPeakStart: cfg.apifyDatasetRefreshPeakStart,
+      apifyDatasetRefreshPeakEnd: cfg.apifyDatasetRefreshPeakEnd,
     },
     notes: {
       openRouter:

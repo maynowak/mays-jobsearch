@@ -174,12 +174,12 @@ Cost policy:
 
 ### Time-of-day dataset refresh
 
-The L2 dataset freshness window is no longer a fixed 24 h — it depends on the server-local hour (`api/_lib/config.mjs`):
+The L2 dataset freshness window depends on the current time in a configurable **IANA timezone** (`api/_lib/config.mjs`):
 
-- Peak hours **08:00–18:00** (server local time; UTC on Vercel) → reuse window `APIFY_DATASET_REFRESH_PEAK_HOURS` (default **6 h**) — fresher data during high-traffic time.
-- Off-peak hours **18:00–08:00** → reuse window `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default **12 h**) — longer reuse, fewer paid runs.
+- Peak window: `APIFY_DATASET_REFRESH_PEAK_START`–`APIFY_DATASET_REFRESH_PEAK_END`, default **08:00–18:00** in `APIFY_DATASET_REFRESH_TIMEZONE` (default **`Europe/Berlin`**) → reuse window `APIFY_DATASET_REFRESH_PEAK_HOURS` (default **6 h**) — fresher data during high-traffic time.
+- Off-peak (outside that window) → reuse window `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default **12 h**) — longer reuse, fewer paid runs.
 
-`datasetRefreshHours(date)` / `datasetRefreshMs(date)` compute the window; `isPeakTime(date)` decides which one applies. The Redis TTL written for the dataset metadata matches the same window.
+The wall-clock time in the configured zone is computed with `Intl.DateTimeFormat` (`hourCycle: "h23"`), so summer/winter time (DST) is resolved automatically from the IANA timezone — no hardcoded UTC+1/UTC+2 offsets. `datasetRefreshHours(date)` / `datasetRefreshMs(date)` compute the window; `isPeakTime(date)` decides which one applies. The Redis TTL written for the dataset metadata matches the same window.
 
 ## Apify async run architecture
 
@@ -247,8 +247,12 @@ All tunables are environment variables with safe defaults (see `docs/DEPLOYMENT.
 | Max AI fallback attempts | `MODEL_FALLBACK_MAX_ATTEMPTS` | 3 |
 | Apify dataset reuse window, peak hours | `APIFY_DATASET_REFRESH_PEAK_HOURS` | 6 |
 | Apify dataset reuse window, off-peak hours | `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` | 12 |
+| Apify peak window IANA timezone | `APIFY_DATASET_REFRESH_TIMEZONE` | `Europe/Berlin` |
+| Apify peak window start | `APIFY_DATASET_REFRESH_PEAK_START` | `08:00` |
+| Apify peak window end | `APIFY_DATASET_REFRESH_PEAK_END` | `18:00` |
 | AI request-count backstop | `OPENROUTER_MONTHLY_MAX_REQUESTS` | 1000 |
 | Apify run-count backstop | `APIFY_MONTHLY_MAX_RUNS` | 30 |
+| Diagnostics token for `GET /api/usage` | `USAGE_DIAGNOSTICS_TOKEN` | unset → endpoint disabled |
 
 ### Counters (`api/_lib/usage.mjs`)
 
@@ -267,7 +271,13 @@ Counters are incremented with atomic Redis `INCR` / `HINCRBY` (helpers in `api/_
 
 ### Diagnostics (`/api/usage`)
 
-`GET /api/usage` returns the snapshot from `getUsageSnapshot()` — counters, configured limits, and clarifying notes. It contains **no secrets** (no API keys, no tokens, no Redis credentials). Example shape:
+`GET /api/usage` is **protected**. It requires `USAGE_DIAGNOSTICS_TOKEN` (server-side secret) sent via the `x-usage-token` header or `Authorization: Bearer <token>`:
+
+- Token not configured → endpoint disabled, HTTP **403** (secure default; no accidental public diagnostics endpoint).
+- Wrong/missing token → HTTP **401**.
+- Correct token → HTTP 200 with the snapshot from `getUsageSnapshot()`.
+
+The token is compared with a constant-time string comparison, is never logged, never returned in a response, and never sent to the browser. The response itself contains **no secrets** (no API keys, no tokens, no Redis credentials). Example shape:
 
 ```json
 { "generatedAt": "...", "month": "2026-08",
@@ -276,7 +286,9 @@ Counters are incremented with atomic Redis `INCR` / `HINCRBY` (helpers in `api/_
   "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "apifyMonthlySoftLimitUsd": 4.0,
                "openRouterMonthlyMaxRequests": 1000, "apifyMonthlyMaxRuns": 30,
                "modelFallbackMaxAttempts": 3,
-               "apifyDatasetRefreshPeakHours": 6, "apifyDatasetRefreshOffpeakHours": 12 },
+               "apifyDatasetRefreshPeakHours": 6, "apifyDatasetRefreshOffpeakHours": 12,
+               "apifyDatasetRefreshTimezone": "Europe/Berlin",
+               "apifyDatasetRefreshPeakStart": "08:00", "apifyDatasetRefreshPeakEnd": "18:00" },
   "notes": { "openRouter": "...", "apify": "...", "limits": "..." } }
 ```
 
@@ -287,7 +299,7 @@ Redis serves multiple, distinct purposes with different TTLs — do not treat th
 | Purpose | Key pattern | Retention |
 |---|---|---|
 | Apify job-record cache (L1) | `apify-jobs:<query>\|<location>` | Redis TTL 600 s (10 min) |
-| Apify dataset reuse metadata (L2) | `apify-dataset:<query>\|<location>` | Redis TTL + application freshness window: peak 6 h / off-peak 12 h (configurable) |
+| Apify dataset reuse metadata (L2) | `apify-dataset:<query>\|<location>` | Redis TTL + application freshness window: peak 6 h / off-peak 12 h (configurable, timezone-aware via `Europe/Berlin`) |
 | CV profile cache | `cv-profile:<hash>` | Redis TTL 30 days |
 | Alert subscriptions | `alerts` (hash) | persistent (no TTL) |
 | Usage counters (monthly) | `mj-usage:<name>:<YYYY-MM>` (+ `mj-usage:openrouter:model:<YYYY-MM>` hash) | Redis TTL 62 days; month-scoped, reset by month rollover |
@@ -348,7 +360,7 @@ Shared job logic:
 ### `api/_lib/config.mjs`
 
 - `getConfig()` — central env configuration with safe defaults (see Cost guard & usage).
-- `isPeakTime(date)` / `datasetRefreshHours(date)` / `datasetRefreshMs(date)` — time-of-day Apify refresh policy.
+- `isPeakTime(date)` / `datasetRefreshHours(date)` / `datasetRefreshMs(date)` — time-of-day Apify refresh policy. The peak window and timezone are configurable (`APIFY_DATASET_REFRESH_TIMEZONE`, `APIFY_DATASET_REFRESH_PEAK_START`/`_END`, default `Europe/Berlin` 08:00–18:00); wall-clock time is resolved via `Intl.DateTimeFormat`, so DST is handled automatically.
 
 ### `api/_lib/usage.mjs`
 
@@ -374,7 +386,7 @@ Shared job logic:
 | `/api/cover-letter` | POST | AI cover letter for one job |
 | `/api/alerts` | POST / DELETE / GET | Manage digest subscriptions |
 | `/api/cron/digest` | POST | Daily email digest (cron protected) |
-| `/api/usage` | GET | Read-only usage counters + configured limits (no secrets) |
+| `/api/usage` | GET | Protected usage counters + configured limits (`USAGE_DIAGNOSTICS_TOKEN`; no secrets in the response) |
 
 ## Data contracts
 
