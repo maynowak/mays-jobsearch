@@ -88,7 +88,7 @@ const en: Dict = {
     'No jobs matched "{q}". Try broader keywords or different skills.',
   "status.noMatches":
     "We found jobs but the AI couldn't score them. Please try again.",
-  "status.found": "Found {count} jobs · {evaluated} matching candidates evaluated by AI.",
+  "status.found": "Found {count} jobs · {evaluated} candidates evaluated by AI.",
   "status.genericError": "Something went wrong. Please try again.",
 
   "results.aria": "Matches",
@@ -99,6 +99,10 @@ const en: Dict = {
   "results.topOf": "Top {shown} of {total}",
   "results.expandAll": "Show all {count} matches",
   "results.collapse": "Show top matches only",
+  "results.evaluatedBadge": "AI evaluated",
+  "results.moreFound": "View more found jobs →",
+  "results.hideMore": "Hide more found jobs",
+  "results.remaining": "{count} more jobs from your search",
 
   "match.locationNotStated": "Location not stated",
   "match.remote": "Remote",
@@ -211,7 +215,7 @@ const de: Dict = {
     'Keine Jobs zu „{q}" gefunden. Versuche breitere Begriffe oder andere Fähigkeiten.',
   "status.noMatches":
     "Wir haben Jobs gefunden, aber die KI konnte sie nicht bewerten. Bitte versuche es erneut.",
-  "status.found": "{count} Jobs gefunden · {evaluated} passende Kandidaten mit KI bewertet.",
+  "status.found": "{count} Jobs gefunden · {evaluated} Kandidaten mit KI bewertet.",
   "status.genericError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
 
   "results.aria": "Treffer",
@@ -222,6 +226,10 @@ const de: Dict = {
   "results.topOf": "Top {shown} von {total}",
   "results.expandAll": "Alle {count} Treffer anzeigen",
   "results.collapse": "Nur Top-Matches anzeigen",
+  "results.evaluatedBadge": "KI bewertet",
+  "results.moreFound": "Weitere gefundene Jobs ansehen →",
+  "results.hideMore": "Weitere gefundene Jobs ausblenden",
+  "results.remaining": "{count} weitere Stellen aus deiner Suche",
 
   "match.locationNotStated": "Ort nicht angegeben",
   "match.remote": "Remote",

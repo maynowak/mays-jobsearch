@@ -24,6 +24,7 @@ export default function App() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [foundJobs, setFoundJobs] = useState<Job[]>([]);
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
 
@@ -59,17 +60,19 @@ export default function App() {
     setProfile(submitted);
     setStatus(null);
     setMatches([]);
+    setFoundJobs([]);
 
     if (!submitted.skills && !submitted.targetRole) {
       setStatus({ type: "error", message: t("status.noSkills") });
       return;
     }
 
-    setPhase("searching");
-    try {
-      const board = await fetchJobs(submitted);
+      setPhase("searching");
+      try {
+        const board = await fetchJobs(submitted);
+        setFoundJobs(board.jobs);
 
-      if (!board.jobs.length) {
+        if (!board.jobs.length) {
         const query = submitted.skills || submitted.targetRole;
         setStatus({
           type: "warn",
@@ -124,7 +127,7 @@ export default function App() {
     );
   }
 
-  const hasMatches = matches.length > 0;
+  const hasResults = matches.length > 0 || foundJobs.length > 0;
 
   const searchCard = (
     <section className="card search-card">
@@ -152,7 +155,7 @@ export default function App() {
     <>
       <Navbar route="matcher" />
 
-      {hasMatches ? (
+      {hasResults ? (
         <Hero />
       ) : (
         <section className="search-hero">
@@ -166,7 +169,7 @@ export default function App() {
         </section>
       )}
 
-      {hasMatches && (
+      {hasResults && (
         <main className="container layout-split">
           <aside className="sidebar">
             {searchCard}
@@ -176,13 +179,14 @@ export default function App() {
           <div className="content">
             <Results
               matches={matches}
+              foundJobs={foundJobs}
               onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
             />
           </div>
         </main>
       )}
 
-      {!hasMatches && (
+      {!hasResults && (
         <section className="alerts-section">
           <AlertCard profile={profile} />
         </section>

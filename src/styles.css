@@ -1082,6 +1082,106 @@ body {
   border-color: #c9b28a;
 }
 
+.results-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Remaining found jobs (found but not AI-evaluated) */
+
+.results-remaining {
+  margin-top: 34px;
+  border-top: 1px dashed var(--border);
+  padding-top: 20px;
+}
+
+.results-remaining-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.results-remaining-toggle {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #37506e;
+  background: #fffdf9;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.results-remaining-toggle:hover {
+  border-color: #c9b28a;
+}
+
+.results-remaining-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.results-remaining-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.remaining-list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.remaining-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.remaining-card h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.remaining-company {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.remaining-meta {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.remaining-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-weight: 700;
+  color: #37506e;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.remaining-link:hover {
+  text-decoration: underline;
+}
+
 .match-list {
   list-style: none;
   margin: 0;
@@ -1198,6 +1298,12 @@ body {
 .badge-source {
   background: #e8ecf3;
   color: #41526b;
+}
+
+.badge-evaluated {
+  background: #f0e6cf;
+  border: 1px solid rgba(154, 118, 53, 0.3);
+  color: #7a6238;
 }
 
 .tags {
