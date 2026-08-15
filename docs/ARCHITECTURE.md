@@ -383,7 +383,7 @@ Provider router:
 ### `api/_lib/providers/edenai.mjs`
 
 - EdenAI provider: V3 OpenAI-compatible catalogue (`/v3/models`, public) + chat (`/v3/chat/completions`).
-- Free eligibility via zero-cost `pricing` metadata (no name heuristic); structured output via `capabilities.supports_response_schema`.
+- Free eligibility via zero-cost `pricing` metadata (no name heuristic); structured output via `capabilities.supports_response_schema`. Reasoning models (`capabilities.supports_reasoning`) are ranked last for the fallback/default choice: their internal thinking can exhaust the token budget before any usable content is produced, so non-reasoning free models are preferred for reliability.
 - Key selection: `EDENAI_ENV` overrides the mode, otherwise `VERCEL_ENV === "production"` → `EDENAI_API_KEY`, else `EDENAI_DEV_API_KEY` preferred (sandbox, simulated responses, no cost). Missing keys only disable this provider.
 - Error mapping: 401/403 → `key_invalid`, 402 → `insufficient_credits`, 429 → `quota_exhausted` (quota hint) or `rate_limited`, 400/422 → `model_invalid` (model hint) or `bad_request`, 5xx/network/timeout → `model_unavailable`.
 

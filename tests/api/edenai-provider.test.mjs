@@ -142,7 +142,7 @@ describe("EdenAI model catalog", () => {
   it("liefert beim nicht erreichbaren Katalog kein Fallback-Modell", async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ error: "nope" }, 500));
     await expect(getCompatibleFallback(null)).resolves.toBeNull();
-    await expect(getDefaultModel()).resolves.toBe("google/gemma-4-26b-a4b-it");
+    await expect(getDefaultModel()).resolves.toBe("cloudflare/@cf/google/gemma-7b-it-lora");
   });
 });
 

@@ -73,7 +73,7 @@ All values are environment variables with safe defaults (see `docs/DEPLOYMENT.md
 | `EDENAI_API_KEY` | — | EdenAI production key |
 | `EDENAI_DEV_API_KEY` | — | EdenAI sandbox token (dev, simulated responses, no cost) |
 | `EDENAI_ENV` | — | Override mode: `production` uses `EDENAI_API_KEY`, anything else prefers `EDENAI_DEV_API_KEY`. Without it, `VERCEL_ENV === "production"` decides. |
-| `EDENAI_MODEL` | `google/gemma-4-26b-a4b-it` | Preferred EdenAI model |
+| `EDENAI_MODEL` | `cloudflare/@cf/google/gemma-7b-it-lora` | Preferred EdenAI model |
 | `EDENAI_ENABLED` | `true` | Enable/disable the EdenAI provider |
 | `OPENROUTER_MONTHLY_MAX_REQUESTS` | `1000` | OpenRouter request-count backstop |
 | `EDENAI_MONTHLY_MAX_REQUESTS` | `200` | EdenAI request-count backstop |

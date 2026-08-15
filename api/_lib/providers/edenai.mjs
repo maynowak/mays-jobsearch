@@ -65,6 +65,10 @@ function supportsStructuredOutput(m) {
   return m?.capabilities?.supports_response_schema === true;
 }
 
+function supportsReasoning(m) {
+  return m?.capabilities?.supports_reasoning === true;
+}
+
 function isEligible(m) {
   return pricingIsFree(m) && supportsTextIn(m) && supportsTextOut(m);
 }
@@ -99,6 +103,7 @@ async function fetchEligibleModels() {
       id: String(m.id || "").trim(),
       name: String(m.model_name || m.id || "").trim(),
       structured: supportsStructuredOutput(m),
+      reasoning: supportsReasoning(m),
     }))
     .filter((m) => m.id)
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -136,6 +141,7 @@ export async function getCompatibleFallback(preferred) {
   if (preferred && models.some((m) => m.id === preferred)) return preferred;
 
   const ranked = [...models].sort((a, b) => {
+    if (a.reasoning !== b.reasoning) return a.reasoning ? 1 : -1;
     if (a.structured !== b.structured) return a.structured ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
