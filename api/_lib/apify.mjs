@@ -15,11 +15,11 @@ function datasetKeyFor(query, location) {
   return `apify-dataset:${query.toLowerCase().trim()}|${location.toLowerCase().trim()}`;
 }
 
-async function runApifyRun(apiToken, input) {
+async function startApifyRun(apiToken, input) {
   let response;
   try {
     response = await fetch(
-      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/run-sync?token=${encodeURIComponent(apiToken)}&timeout=${APIFY_SYNC_TIMEOUT_SEC}`,
+      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/runs?token=${encodeURIComponent(apiToken)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,22 +36,53 @@ async function runApifyRun(apiToken, input) {
 
   let run;
   try {
-    const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      console.error("[apify] run-sync body not JSON:", text.slice(0, 300));
-      return { error: "unreadable" };
-    }
+    const data = await response.json();
     run = data?.data ?? data;
   } catch {
     return { error: "unreadable" };
   }
-  if (!run || typeof run !== "object" || typeof run.defaultDatasetId !== "string") {
+  if (!run || typeof run !== "object" || typeof run.id !== "string") {
     return { error: "unexpected" };
   }
   return { run };
+}
+
+async function waitForRun(apiToken, runId, maxWaitMs) {
+  const started = Date.now();
+  while (Date.now() - started < maxWaitMs) {
+    let response;
+    try {
+      response = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${encodeURIComponent(apiToken)}`,
+        { headers: { "Accept": "application/json" } }
+      );
+    } catch {
+      return { error: "network" };
+    }
+
+    if (!response.ok) {
+      return { error: `upstream_${response.status}` };
+    }
+
+    let run;
+    try {
+      const data = await response.json();
+      run = data?.data ?? data;
+    } catch {
+      return { error: "unreadable" };
+    }
+    if (!run || typeof run !== "object") {
+      return { error: "unexpected" };
+    }
+    if (run.status === "SUCCEEDED") {
+      return { run };
+    }
+    if (["FAILED", "ABORTED", "TIMED-OUT"].includes(run.status)) {
+      return { error: `run_${run.status}` };
+    }
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+  return { error: "run_timeout" };
 }
 
 async function readDataset(apiToken, datasetId) {
@@ -156,15 +187,17 @@ export async function fetchArbeitsagenturJobs({ skills, targetRole, city }) {
     }
 
     if (!records) {
-      const run = await runApifyRun(apiToken, input);
-      if (run.error) return emptyResult(run.error);
-      const read = await readDataset(apiToken, run.run.defaultDatasetId);
+      const started = await startApifyRun(apiToken, input);
+      if (started.error) return emptyResult(started.error);
+      const waited = await waitForRun(apiToken, started.run.id, APIFY_SYNC_TIMEOUT_SEC * 1000);
+      if (waited.error) return emptyResult(waited.error);
+      const read = await readDataset(apiToken, waited.run.defaultDatasetId);
       if (read.error) return emptyResult(read.error);
       records = read.records;
-      if (records.length && run.run.status === "SUCCEEDED") {
+      if (records.length) {
         await cacheSet(
           datasetKey,
-          { datasetId: run.run.defaultDatasetId, createdAt: Date.now() },
+          { datasetId: waited.run.defaultDatasetId, createdAt: Date.now() },
           APIFY_DATASET_MAX_AGE_SEC
         );
       }
