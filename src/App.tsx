@@ -133,6 +133,8 @@ export default function App() {
     <section className="card search-card">
       <SearchForm
         phase={phase}
+        value={profile}
+        onChange={setProfile}
         onSubmit={runSearch}
         model={effectiveModel}
         availableModels={models.map((model) => model.id)}

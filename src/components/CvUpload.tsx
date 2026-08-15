@@ -283,6 +283,7 @@ function EditableProfile({
   const [skills, setSkills] = useState(suggested.skills.join(", "));
   const [experienceLevel, setExperienceLevel] = useState(suggested.experienceLevel);
   const [targetRoles, setTargetRoles] = useState(suggested.targetRoles.join(", "));
+  const [cityValue, setCityValue] = useState(suggested.location);
   const {
     city,
     suggestions,
@@ -293,7 +294,7 @@ function EditableProfile({
     handleChange: handleCityChange,
     handleKeyDown: handleCityKeyDown,
     select: selectCity,
-  } = useCityAutocomplete(suggested.location);
+  } = useCityAutocomplete(cityValue, setCityValue);
 
   const confirm = () => {
     onSubmit({

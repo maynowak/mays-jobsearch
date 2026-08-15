@@ -9,6 +9,8 @@ type Phase = "idle" | "searching" | "scoring";
 
 interface Props {
   phase: Phase;
+  value: Profile;
+  onChange: (profile: Profile) => void;
   onSubmit: (profile: Profile) => void;
   model: string | null;
   availableModels: string[];
@@ -17,11 +19,18 @@ interface Props {
 
 type Mode = "manual" | "cv";
 
-export default function SearchForm({ phase, onSubmit, model, availableModels, recommendedModel }: Props) {
+export default function SearchForm({
+  phase,
+  value,
+  onChange,
+  onSubmit,
+  model,
+  availableModels,
+  recommendedModel,
+}: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
-  const [skills, setSkills] = useState("");
-  const [targetRole, setTargetRole] = useState("");
+  const { skills, targetRole } = value;
   const {
     city,
     suggestions,
@@ -32,7 +41,7 @@ export default function SearchForm({ phase, onSubmit, model, availableModels, re
     handleChange: handleCityChange,
     handleKeyDown: handleCityKeyDown,
     select: selectCity,
-  } = useCityAutocomplete();
+  } = useCityAutocomplete(value.city, (city) => onChange({ ...value, city }));
 
   const busy = phase !== "idle";
   const label =
@@ -87,7 +96,7 @@ export default function SearchForm({ phase, onSubmit, model, availableModels, re
             type="text"
             placeholder={t("search.skillsPh")}
             value={skills}
-            onChange={(e) => setSkills(e.target.value)}
+            onChange={(e) => onChange({ ...value, skills: e.target.value })}
             autoComplete="off"
           />
         </div>
@@ -100,7 +109,7 @@ export default function SearchForm({ phase, onSubmit, model, availableModels, re
               type="text"
               placeholder={t("search.targetRolePh")}
               value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
+              onChange={(e) => onChange({ ...value, targetRole: e.target.value })}
               autoComplete="off"
             />
           </div>
