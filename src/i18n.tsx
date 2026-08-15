@@ -68,6 +68,8 @@ const en: Dict = {
   "model.sectionOthers": "OTHER FREE MODELS",
   "model.unavailable":
     "This AI model is temporarily unavailable. Please choose another model.",
+  "model.fallbackNote":
+    "The selected AI model is temporarily unavailable. We are using another free model for this request.",
 
   "alerts.heading": "2. Daily job alerts",
   "alerts.hint": "Get an email every morning with new matches for your current search.",
@@ -188,6 +190,8 @@ const de: Dict = {
   "model.sectionOthers": "WEITERE KOSTENLOSE MODELLE",
   "model.unavailable":
     "Dieses KI-Modell ist momentan nicht verfügbar. Bitte wähle ein anderes Modell.",
+  "model.fallbackNote":
+    "Das ausgewählte KI-Modell ist momentan nicht verfügbar. Wir verwenden vorübergehend ein anderes kostenloses Modell.",
 
   "alerts.heading": "2. Tägliche Job-Benachrichtigungen",
   "alerts.hint":

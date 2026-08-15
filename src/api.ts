@@ -23,6 +23,73 @@ export function isModelUnavailable(err: unknown): boolean {
   return err instanceof ApiError && err.code === "model_unavailable";
 }
 
+export interface FallbackResult<T> {
+  data: T;
+  usedFallback: boolean;
+}
+
+function fallbackOrder(
+  initial: string | null,
+  available: string[],
+  recommended: string | null
+): (string | null)[] {
+  const seen = new Set<string>();
+  const order: (string | null)[] = [];
+
+  if (initial) {
+    order.push(initial);
+    seen.add(initial);
+  }
+  if (recommended && !seen.has(recommended)) {
+    order.push(recommended);
+    seen.add(recommended);
+  }
+  for (const id of available) {
+    if (id && !seen.has(id)) {
+      order.push(id);
+      seen.add(id);
+    }
+  }
+  if (order.length === 0) order.push(null);
+
+  return order.slice(0, 3);
+}
+
+export async function withModelFallback<T>({
+  initialModel,
+  availableModels,
+  recommendedModel,
+  request,
+}: {
+  initialModel: string | null;
+  availableModels: string[];
+  recommendedModel: string | null;
+  request: (model: string | null) => Promise<T>;
+}): Promise<FallbackResult<T>> {
+  const order = fallbackOrder(initialModel, availableModels, recommendedModel);
+  let lastError: unknown = null;
+  let attempt = 0;
+
+  for (const model of order) {
+    attempt += 1;
+    try {
+      const data = await request(model);
+      if (attempt > 1) {
+        console.warn("[model] fallback attempt", attempt - 1, "succeeded with model:", model);
+      }
+      return { data, usedFallback: attempt > 1 };
+    } catch (err) {
+      if (!isModelUnavailable(err)) throw err;
+      lastError = err;
+      if (attempt < order.length) {
+        console.warn("[model] model unavailable, fallback attempt", attempt + 1);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 export async function apiFetch<T = unknown>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);
   let data: { error?: string; code?: string } = {};

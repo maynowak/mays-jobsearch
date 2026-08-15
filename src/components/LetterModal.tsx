@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Job, Profile } from "../types";
-import { generateCoverLetter, isModelUnavailable } from "../api";
+import { generateCoverLetter, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 
 interface Props {
@@ -8,25 +8,43 @@ interface Props {
   prepare: string;
   profile: Profile;
   model: string | null;
+  availableModels: string[];
+  recommendedModel: string | null;
   onClose: () => void;
 }
 
-export default function LetterModal({ job, prepare, profile, model, onClose }: Props) {
+export default function LetterModal({
+  job,
+  prepare,
+  profile,
+  model,
+  availableModels,
+  recommendedModel,
+  onClose,
+}: Props) {
   const { t, lang } = useLang();
   const [letter, setLetter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [fallbackNote, setFallbackNote] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError("");
     setLetter("");
-    generateCoverLetter(profile, job, prepare, lang === "de" ? "German" : "English", model)
-      .then((text) => {
+    setFallbackNote(false);
+    withModelFallback({
+      initialModel: model,
+      availableModels,
+      recommendedModel,
+      request: (m) => generateCoverLetter(profile, job, prepare, lang === "de" ? "German" : "English", m),
+    })
+      .then(({ data: text, usedFallback }) => {
         if (cancelled) return;
         setLetter(text);
+        setFallbackNote(usedFallback);
         setLoading(false);
       })
       .catch((err: Error) => {
@@ -37,7 +55,7 @@ export default function LetterModal({ job, prepare, profile, model, onClose }: P
     return () => {
       cancelled = true;
     };
-  }, [job, prepare, profile, lang, t]);
+  }, [job, prepare, profile, lang, t, model, availableModels, recommendedModel]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -98,6 +116,10 @@ export default function LetterModal({ job, prepare, profile, model, onClose }: P
             {t("letter.errorPrefix")}
             {error}
           </div>
+        )}
+
+        {!loading && !error && fallbackNote && (
+          <p className="fallback-note letter-fallback-note">{t("model.fallbackNote")}</p>
         )}
 
         {!loading && !error && (

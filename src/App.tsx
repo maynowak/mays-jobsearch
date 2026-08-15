@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Job, Match, Profile, StatusMessage } from "./types";
-import { fetchJobs, fetchMatches, isModelUnavailable } from "./api";
+import { fetchJobs, fetchMatches, isModelUnavailable, withModelFallback } from "./api";
 import { useLang } from "./i18n";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
@@ -81,7 +81,12 @@ export default function App() {
       }
 
       setPhase("scoring");
-      const matchResult = await fetchMatches(submitted, board.jobs, effectiveModel);
+      const { data: matchResult, usedFallback } = await withModelFallback({
+        initialModel: effectiveModel,
+        availableModels: models.map((model) => model.id),
+        recommendedModel,
+        request: (model) => fetchMatches(submitted, board.jobs, model),
+      });
 
       if (!matchResult.matches.length) {
         setStatus({
@@ -92,12 +97,13 @@ export default function App() {
       }
 
       setMatches(matchResult.matches);
+      const found = t("status.found", {
+        count: board.meta?.totalFiltered ?? board.jobs.length,
+        evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
+      });
       setStatus({
         type: "info",
-        message: t("status.found", {
-          count: board.meta?.totalFiltered ?? board.jobs.length,
-          evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
-        }),
+        message: usedFallback ? `${found} ${t("model.fallbackNote")}` : found,
       });
     } catch (err) {
       setStatus({
@@ -122,7 +128,13 @@ export default function App() {
 
   const searchCard = (
     <section className="card search-card">
-      <SearchForm phase={phase} onSubmit={runSearch} model={effectiveModel} />
+      <SearchForm
+        phase={phase}
+        onSubmit={runSearch}
+        model={effectiveModel}
+        availableModels={models.map((model) => model.id)}
+        recommendedModel={recommendedModel}
+      />
       <div className="model-divider" aria-hidden="true" />
       <ModelSelector
         state={modelsState}
@@ -182,6 +194,8 @@ export default function App() {
           prepare={letterJob.prepare}
           profile={profile}
           model={effectiveModel}
+          availableModels={models.map((model) => model.id)}
+          recommendedModel={recommendedModel}
           onClose={() => setLetterJob(null)}
         />
       )}

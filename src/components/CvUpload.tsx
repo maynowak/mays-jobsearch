@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import type { Profile, SuggestedProfile } from "../types";
-import { createProfile, isModelUnavailable } from "../api";
+import { createProfile, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 
@@ -59,11 +59,21 @@ interface Props {
   onSubmit: (profile: Profile) => void;
   onManual: () => void;
   model: string | null;
+  availableModels: string[];
+  recommendedModel: string | null;
 }
 
 type Phase = "idle" | "reading" | "creating" | "ready";
 
-export default function CvUpload({ busy, loadingLabel, onSubmit, onManual, model }: Props) {
+export default function CvUpload({
+  busy,
+  loadingLabel,
+  onSubmit,
+  onManual,
+  model,
+  availableModels,
+  recommendedModel,
+}: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
@@ -72,12 +82,14 @@ export default function CvUpload({ busy, loadingLabel, onSubmit, onManual, model
   const [suggested, setSuggested] = useState<SuggestedProfile | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fallbackNote, setFallbackNote] = useState(false);
 
   const processing = phase === "reading" || phase === "creating";
 
   const handleFile = async (file: File) => {
     if (processing) return;
     setError(null);
+    setFallbackNote(false);
     setFileName(file.name);
 
     const mimeOk = file.type === "application/pdf" || file.type === "";
@@ -111,9 +123,15 @@ export default function CvUpload({ busy, loadingLabel, onSubmit, onManual, model
           return;
         }
       }
-      const profile = await createProfile(text, model, hash ?? undefined);
+      const { data: profile, usedFallback } = await withModelFallback({
+        initialModel: model,
+        availableModels,
+        recommendedModel,
+        request: (m) => createProfile(text, m, hash ?? undefined),
+      });
       if (hash) writeLocalProfile(hash, profile);
       setSuggested(profile);
+      setFallbackNote(usedFallback);
       setPhase("ready");
     } catch (err) {
       setPhase("idle");
@@ -163,13 +181,16 @@ export default function CvUpload({ busy, loadingLabel, onSubmit, onManual, model
 
   if (phase === "ready" && suggested) {
     return (
-      <EditableProfile
-        suggested={suggested}
-        busy={busy}
-        loadingLabel={loadingLabel}
-        onSubmit={onSubmit}
-        onManual={onManual}
-      />
+      <>
+        {fallbackNote && <p className="fallback-note">{t("model.fallbackNote")}</p>}
+        <EditableProfile
+          suggested={suggested}
+          busy={busy}
+          loadingLabel={loadingLabel}
+          onSubmit={onSubmit}
+          onManual={onManual}
+        />
+      </>
     );
   }
 

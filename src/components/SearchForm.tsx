@@ -11,11 +11,13 @@ interface Props {
   phase: Phase;
   onSubmit: (profile: Profile) => void;
   model: string | null;
+  availableModels: string[];
+  recommendedModel: string | null;
 }
 
 type Mode = "manual" | "cv";
 
-export default function SearchForm({ phase, onSubmit, model }: Props) {
+export default function SearchForm({ phase, onSubmit, model, availableModels, recommendedModel }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
   const [skills, setSkills] = useState("");
@@ -160,6 +162,8 @@ export default function SearchForm({ phase, onSubmit, model }: Props) {
           onSubmit={onSubmit}
           onManual={() => setMode("manual")}
           model={model}
+          availableModels={availableModels}
+          recommendedModel={recommendedModel}
         />
       )}
     </form>
