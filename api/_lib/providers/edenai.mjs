@@ -10,8 +10,19 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 
 let cache = null;
 
+// Safety observation (optional, enabled when observer is set)
+let safetyObserver = null;
+
 export const PROVIDER_ID = "edenai";
 export const PROVIDER_NAME = "EdenAI";
+
+export function setSafetyObserver(observer) {
+  safetyObserver = observer;
+}
+
+export function getSafetyObserver() {
+  return safetyObserver;
+}
 
 export function apiKey() {
   const env = String(process.env.EDENAI_ENV || "").trim().toLowerCase();
@@ -213,6 +224,28 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
       "The server is missing an EdenAI API key (EDENAI_API_KEY / EDENAI_DEV_API_KEY), so EdenAI features aren't available.",
       ERROR_CODES.missingKey
     );
+  }
+
+  // Safety observation: emit event based on current environment before provider request
+  if (safetyObserver) {
+    const keyMode = keyMode();
+    const isSandbox = keyMode === "sandbox";
+    const isProduction = keyMode === "production";
+
+    let eventCategory = "NONE";
+    if (isSandbox) {
+      eventCategory = "SANDBOX_REQUEST";
+    } else if (isProduction) {
+      eventCategory = "PRODUCTION_REQUEST";
+    }
+
+    safetyObserver.emit({
+      type: "edenai_provider_request",
+      source: "edenai",
+      category: eventCategory,
+      model,
+      blocked: eventCategory !== "NONE" && eventCategory !== "SANDBOX_REQUEST",
+    });
   }
 
   // Runtime guard: if a reasoning model somehow passes eligibility checks,

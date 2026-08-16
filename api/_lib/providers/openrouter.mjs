@@ -18,8 +18,19 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 
 let cache = null;
 
+// Safety observation (optional, enabled when observer is set)
+let safetyObserver = null;
+
 export const PROVIDER_ID = "openrouter";
 export const PROVIDER_NAME = "OpenRouter";
+
+export function setSafetyObserver(observer) {
+  safetyObserver = observer;
+}
+
+export function getSafetyObserver() {
+  return safetyObserver;
+}
 
 export function isConfigured() {
   return Boolean(process.env.OPENROUTER_API_KEY);
@@ -206,6 +217,24 @@ export function countAttempt() {
 
 export async function chat({ system, prompt, json, temperature, maxTokens, model, attempt }) {
   const apiKey = requireApiKey();
+  // Safety observation: emit event based on current environment before provider request
+  if (safetyObserver) {
+    const isProduction = String(process.env.OPENROUTER_ENV || "").trim().toLowerCase() === "production";
+    const isSandbox = !isProduction;
+    let eventCategory = "NONE";
+    if (isSandbox) {
+      eventCategory = "FREE_QUOTA_REQUEST";
+    } else if (isProduction) {
+      eventCategory = "PRODUCTION_REQUEST";
+    }
+    safetyObserver.emit({
+      type: "openrouter_provider_request",
+      source: "openrouter",
+      category: eventCategory,
+      model,
+      blocked: eventCategory !== "NONE" && eventCategory !== "FREE_QUOTA_REQUEST",
+    });
+  }
   let response;
   try {
     response = await fetch(OPENROUTER_URL, {

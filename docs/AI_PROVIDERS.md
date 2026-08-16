@@ -91,7 +91,111 @@ else (dev / preview / local):                      → EDENAI_DEV_API_KEY prefer
 
 Sandbox tokens return simulated/mock responses at no cost through the same endpoints (there is no separate sandbox host). A missing key simply disables that provider; it never blocks the other provider.
 
-## Usage & cost guards
+
+
+## Development / Sandbox Testing
+
+### Vercel Environment
+- **Development**: AI-Testumgebung mit simulierten Responses
+- **Preview**: Isoliertes Deployment, AI-Provider nur bei Setzen von `EDENAI_DEV_API_KEY` aktiv
+- **Production**: Echte Provider-Keys und Budget
+
+### EdenAI
+- **Sandbox (Development/Preview)**:
+  - Key: `EDENAI_DEV_API_KEY`
+  - Lieferte simulierte/mockierte Responses bei keinem Kostenaufwand
+  - Same Endpoint wie Production (`/v3/chat/completions`)
+  - Wird bevorzugt wenn `EDENAI_ENV !== "production"`
+  - Kein Production-Key erforderlich
+- **Production**:
+  - Key: `EDENAI_API_KEY`
+  - Echtes Guthaben/Contingent
+
+### OpenRouter
+- **Sandbox/Dev**: Es gibt keinen separaten Sandbox-Modus.
+- Free-Modelle können für Development-Tests verwendet werden,
+  aber Requests zählen gegen die jeweiligen Free-/Account-Limits.
+- **Entwicklungshinweis**: Sollte EdenAI Sandbox verfügbar sein,
+  wird dieser für normale Development-Provider-Tests vorgezogen,
+  um OpenRouter-Free-Kontingent nicht unnötig zu verbrauchen.
+
+### Teststrategie
+- **PRIORITÄT 1**: EdenAI Sandbox in Vercel Development
+- **PRIORITÄT 2**: andere echte Provider-Sandbox/Dev-Umgebung, falls vorhanden
+- **PRIORITÄT 3**: Free-Modelle eines Providers, wenn keine Sandbox existiert
+- **PRIORITÄT 4**: Production-Provider nur nach ausdrücklicher Freigabe
+
+### Wichtige Regeln
+- Keine unnötigen kostenpflichtigen Requests
+- Keine unnötigen Apify-Runs
+- Keine Production-Keys in Development
+- Keine Sandbox-Keys in Production
+- Keine Umgehung von Rate Limits
+
+### OpenRouter Besonderheit
+- OpenRouter Free ≠ Sandbox.
+- Free-Modelle können für Development-Tests verwendet werden,
+  aber Requests zählen gegen die jeweiligen Free-/Account-Limits.
+- EdenAI Sandbox (falls verfügbar) soll für normale
+  Development-Provider-Tests bevorzugt werden,
+  damit OpenRouter-Free-Kontingent nicht unnötig verbraucht wird.',
+''
+
+if '## Usage & cost guards' in content:
+    content = content.replace('## Usage & cost guards', new_section + '## Usage & cost guards')
+else:
+    # Fallback: insert after Key selection section
+    content = content.replace('### Key selection (EdenAI)
+Sandbox tokens return simulated/mock responses at no cost through the same endpoints (there is no separate sandbox host). A missing key simply disables that provider; it never blocks the other provider.', 
+                              '### Key selection (EdenAI)
+Sandbox tokens return simulated/mock responses at no cost through the same endpoints (there is no separate sandbox host). A missing key simply disables that provider; it never blocks the other provider.
+
+## Development / Sandbox Testing
+
+### Vercel Environment
+- **Development**: AI-Testumgebung mit simulierten Responses
+- **Preview**: Isoliertes Deployment, AI-Provider nur bei Setzen von `EDENAI_DEV_API_KEY` aktiv
+- **Production**: Echte Provider-Keys und Budget
+
+### EdenAI
+- **Sandbox (Development/Preview)**:
+  - Key: `EDENAI_DEV_API_KEY`
+  - Lieferte simulierte/mockierte Responses bei keinem Kostenaufwand
+  - Same Endpoint wie Production (`/v3/chat/completions`)
+  - Wird bevorzugt wenn `EDENAI_ENV !== "production"`
+  - Kein Production-Key erforderlich
+- **Production**:
+  - Key: `EDENAI_API_KEY`
+  - Echtes Guthaben/Contingent
+
+### OpenRouter
+- **Sandbox/Dev**: Es gibt keinen separaten Sandbox-Modus.
+- Free-Modelle können für Development-Tests verwendet werden,
+  aber Requests zählen gegen die jeweiligen Free-/Account-Limits.
+- **Entwicklungshinweis**: Sollte EdenAI Sandbox verfügbar sein,
+  wird dieser für normale Development-Provider-Tests vorgezogen,
+  um OpenRouter-Free-Kontingent nicht unnötig zu verbrauchen.
+
+### Teststrategie
+- **PRIORITÄT 1**: EdenAI Sandbox in Vercel Development
+- **PRIORITÄT 2**: andere echte Provider-Sandbox/Dev-Umgebung, falls vorhanden
+- **PRIORITÄT 3**: Free-Modelle eines Providers, wenn keine Sandbox existiert
+- **PRIORITÄT 4**: Production-Provider nur nach ausdrücklicher Freigabe
+
+### Wichtige Regeln
+- Keine unnötigen kostenpflichtigen Requests
+- Keine unnötigen Apify-Runs
+- Keine Production-Keys in Development
+- Keine Sandbox-Keys in Production
+- Keine Umgehung von Rate Limits
+
+### OpenRouter Besonderheit
+- OpenRouter Free ≠ Sandbox.
+- Free-Modelle können für Development-Tests verwendet werden,
+  aber Requests zählen gegen die jeweiligen Free-/Account-Limits.
+- EdenAI Sandbox (falls verfügbar) soll für normale
+  Development-Provider-Tests vorgezogen werden,
+  damit OpenRouter-Free-Kontingent nicht unnötig verbraucht wird.## Usage & cost guards
 
 - Per-provider monthly counters live in Upstash Redis: OpenRouter keeps its original keys (`mj-usage:openrouter:*`), EdenAI uses `mj-usage:ai:edenai:*`.
 - Before a call, the provider's `limitReached()` checks the request-count backstop → `503 limit_reached` without calling the provider. The router then tries the next enabled provider; only when all are exhausted does the request fail.
