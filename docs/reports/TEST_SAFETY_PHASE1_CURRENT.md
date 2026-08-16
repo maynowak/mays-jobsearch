@@ -3,6 +3,7 @@
 ## Status
 - Recovery / Complete
 - Step 2.4-B (Vercel Dev Blocker: Yarn) — **BLOCKED** (neuer Blocker: `@vercel/static-build` Port-Detection)
+- Branch: `fix/vercel-dev-runtime` — Diagnose des Port-Konflikts (RUNNING)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -254,3 +255,52 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - `EDENAI_DEV_API_KEY`-Verfügbarkeit: **NICHT verifizierbar** — ohne funktionierende Development-Runtime können die Development Environment Variables nicht im Development-Kontext abgefragt werden (keine Secret-Werte ausgegeben).
 - Step 2.4-B Status: **BLOCKED**
 - Keine weiteren Workarounds per Workflow-Regeln.
+
+## Vercel Dev Runtime — Diagnose des Port-Konflikts
+- Branch: `fix/vercel-dev-runtime` (erstellt von `main` @ `329f331`)
+- Current Step: Ursache des `Failed to detect a server running on port <X>`-Fehlers ermitteln
+- Step Status: **COMPLETE** (Diagnose, keine Projektdatei-Änderung)
+- Vorheriger Stand: `5b5beb0` feat: add provider safety observers (Referenz, unverändert)
+- Getesteter Zustand: `329f331` auf Branch `fix/vercel-dev-runtime`, `vercel dev` (CLI 58.11.0) startet, Vite 8.2.1 läuft, Port-Detection schlägt fehl
+
+### Substep 1 — Vercel Static-Builder-Code analysieren
+- Status: **COMPLETE**
+- Fundstelle: `/home/dci-student/.nvm/.../node_modules/@vercel/static-build/dist/index.js:36295-36324`
+- Ablauf im Dev-Modus (`meta.isDev`):
+  1. `devPort = await getPort()` — Vercel wählt einen **zufälligen freien Port** (z.B. 37269)
+  2. Vercel startet `cmd = devCommand || yarn run <devScript>` also `yarn run dev` → `vite`
+  3. Dabei wird die Env-Variable **`PORT`** auf den zufälligen Port gesetzt: `env: { ...cliEnv, PORT: String(devPort) }`
+  4. `await checkForPort(devPort, 5m)` wartet, bis auf diesem Port ein Server antwortet
+  5. Schlägt das fehl → `Failed to detect a server running on port <devPort>` (Zeile 36318-36321)
+- Konsequenz: Vercel erwartet, dass das Frontend auf dem **dynamisch über `PORT` übergebenen Port** lauscht
+
+### Substep 2 — Vite-Port-Verhalten experimentell prüfen
+- Status: **COMPLETE**
+- Test: `PORT=37777 yarn run dev` (Vite 8.2.1)
+- Ergebnis: Vite ignoriert `PORT` vollständig und bindet trotzdem auf **5173** (Log: `Local: http://localhost:5173/`)
+- `vite.config.ts` enthält **keine** Port-Konfiguration (kein `server.port`, kein `strictPort`, kein `host`)
+- Vite 8.2.1 respektiert die von Vercel gesetzte `PORT`-Env-Variable **nicht** standardmäßig
+
+### Ursache (bestätigt, keine Spekulation)
+- Vercel CLI startet den Dev-Server mit `PORT=<dynamisch>` und wartet auf genau diesen Port.
+- Vite 8.2.1 bindet ohne Konfiguration immer auf 5173 und ignoriert `PORT`.
+- Ergebnis: `checkForPort` findet nie einen Server → Fehler `Failed to detect a server running on port 37269` → Proxy-Requests HTTP 000.
+- Der Konflikt entsteht in der **Kombination** `vercel dev` (Vercel CLI) + `@vercel/static-build` (übergibt `PORT`) + Vite (nutzt `PORT` nicht).
+- `vercel.json`, `package.json` (dev-Script `vite`) und die Vercel-Projekt-Konfiguration sind korrekt und müssen nicht geändert werden.
+
+### Antworten auf die Diagnosefragen
+1. **Warum startet Vite auf 5173?** Vite-Standard-Port; `vite.config.ts` setzt keinen `server.port`; Vite liest `PORT` nicht automatisch.
+2. **Warum erwartet der Builder Port 37269?** `getPort()` wählt einen zufälligen freien Port und reicht ihn via `PORT`-Env an den Dev-Server weiter (static-build `index.js:36304,36309`).
+3. **Wie kommunizieren `vercel dev`, Static Builder und Vite?** `vercel dev` → `@vercel/static-build` (Dev-Modus) → spawnet `yarn run dev` (Vite) mit `PORT=<devPort>` → `checkForPort` pollt diesen Port → Vite bindet aber auf 5173 → Detection fehlschlägt.
+4. **Welche Konfiguration bestimmt den Dev-Port?** Der Dev-Port kommt dynamisch von Vercel (`getPort()` → `PORT`-Env). Vite müsste ihn über `server.port: Number(process.env.PORT)` aus der Config übernehmen — aktuell fehlt das in `vite.config.ts`.
+5. **Ist es vite.config.ts / vercel.json / package.json / CLI / static-build / Kombination?** Kombination aus Vercel CLI + `@vercel/static-build` (übergibt `PORT` korrekt) und Vite (nutzt `PORT` nicht). Die behebbare Seite liegt in `vite.config.ts`. `vercel.json` und `package.json` bleiben unverändert.
+6. **Wie wurde das Projekt bisher betrieben?** Production per `vercel --prod --scope maymilly` (Build `tsc -b && vite build` → statische Ausgabe). `vercel dev` wurde nie erfolgreich genutzt (früher Yarn-Blocker, jetzt Port-Detection).
+7. **Bestehende Vercel-Konfiguration beibehalten?** Ja — `vercel.json` (functions `maxDuration`, crons, rewrite `/top`) und Vercel-Project-Settings bleiben unverändert.
+
+### Mögliche vorgeschlagene Änderung (NOCH NICHT durchgeführt)
+- Datei: `vite.config.ts`
+- Änderung: `server: { port: process.env.PORT ? Number(process.env.PORT) : 5173 }` (dynamischer Port aus Vercel, Fallback 5173 für lokales `npm run dev`)
+- Begründung: Vercel übergibt den Dev-Port dynamisch via `PORT`-Env; festes Hardcoding wäre falsch
+- Risiko / Production: `server.port` betrifft nur den Vite-Dev-Server; Production-Build (`vite build`) ignoriert `server.*`, daher keine Production-Auswirkung
+- Rückfall: Config-Zeile entfernen → zurück zu Vite-Standard 5173
+- **FREIGABE AUSSTEHEND** — keine Änderung durchgeführt (per Workflow-Regeln)
