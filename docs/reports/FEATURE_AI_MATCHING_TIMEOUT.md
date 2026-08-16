@@ -17,7 +17,7 @@ COMPLETE
 | Step | Thema | Status | Commit |
 | 1 | Bestandsanalyse | COMPLETE | 0079993 |
 | 2 | Timeout-Werte senken + Fehler-Codes + Client-Unterscheidung | COMPLETE | 9eb4813 |
-| 3 | Fallback-/Performance-Verifikation | COMPLETE | (nach Push aktualisiert) |
+| 3 | Fallback-/Performance-Verifikation | COMPLETE | 7fb86df |
 | 4 | Development Live Test | PENDING | — |
 
 ## Recovery-Regel
@@ -223,7 +223,7 @@ Commit: 9eb4813
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 7fb86df
 
 ### GEZIELTE TESTS (nur relevante, zuerst)
 
