@@ -181,12 +181,8 @@ APIFY_API_TOKEN: PRESENT on Vercel Production scope, ABSENT locally
 Nur PRESENT/ABSENT/UNKNOWN. Keine Werte.
 
 ### Step 2.4
-Empfohlener Development-Testweg:
-- Deployment: Kein Deployment durchgeführt. `vercel dev` nicht verfügbar (yarn fehlerhaft). Alternative: Lokale Entwicklung mit `npm run dev` (Vite) oder direkter Aufruf der Serverless-Functions via `vercel invoke`.
-- External Requests: Keine. Keine Apify Runs, OpenRouter Requests oder EdenAI Requests im Rahmen dieser Arbeit.
-- Cost Risk: Keines. Keine produktiven Requests.
-- Production: Nicht berührt. Production-Scope-Variablen (EDENAI_API_KEY, OPENROUTER_API_KEY, APIFY_API_TOKEN) bleiben auf Vercel Production scope, lokal nicht gesetzt.
-- Preview: `vercel deploy` erzeugt Preview, diese darf nicht als Development bezeichnet werden (Development ≠ Preview).
+Status: COMPLETE
+Ergebnis: Vercel `vercel dev` erfordert Yarn (`sh: 1: yarn: not found`). Yarn ist nicht im Projekt vorgesehen (keine yarn.lock, kein packageManager-Feld in package.json). Projekt verwendet npm (npm 10.9.8). Lokale Alternative: `npm run dev` (Vite) für Frontend. Für Serverless-Functions: `vercel invoke` einzeln nutzbar. Vercel Development Scope Variablen (EDENAI_DEV_API_KEY etc.) sind auf Vercel Cloud hinterlegt, aber ohne `vercel dev` lokal nicht direkt lauffähig. Es wurde kein Deployment durchgeführt, keine External Requests getätigt, keine Costs riskiert. Preview wurde nicht als Development substituiert.
 
 ### Deployment
 Kein Deployment durchgeführt.
