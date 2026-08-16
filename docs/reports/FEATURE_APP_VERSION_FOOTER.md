@@ -22,7 +22,7 @@ COMPLETE
 | 5 | Development Live Test | COMPLETE | c6238d5 |
 | 6 | Preview / Abnahme | COMPLETE | 131f48f |
 | 7 | Merge-Vorbereitung | COMPLETE | df23c0c |
-| 8 | Merge nach main | COMPLETE | (nach Push aktualisiert) |
+| 8 | Merge nach main | COMPLETE | 657f9cc |
 | 9 | Production | PENDING | — |
 | 10 | Feature-Branch schließen | PENDING | — |
 
@@ -449,7 +449,7 @@ Alles grün:
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 657f9cc
 
 ### MERGE-METHODE
 
