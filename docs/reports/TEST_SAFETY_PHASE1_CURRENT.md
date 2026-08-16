@@ -9,7 +9,7 @@
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
-- Step 3 — Development AI Live Test — **BLOCKED** (Substep 3.5 — Safety Observer nicht verdrahtet, letzter Commit `d039e57`)
+- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.5 — Safety Observer verdrahtet, LIVE verifiziert; letzter Commit `9800e78`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -628,3 +628,61 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint
 - Commit: `docs: report safety observer blocked in development`
 - Next Step: **STOPP** — Step 3.6 (Development Live Test Abschluss) NICHT automatisch fortgesetzt; Abschluss erst nach Klärung des Observer-Blockers freigeben
+
+## Step 3.5-W — Safety Observer Runtime Wiring
+- Current Step: BLOCKER beheben — EXISTIERENDEN Provider Safety Observer im laufenden System verdrahten, LIVE beobachtbar machen
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `9800e78` — docs: report safety observer blocked in development
+
+### Ursache des ursprünglichen Blockers
+- `setSafetyObserver()` wurde im Betrieb nirgends aufgerufen — nur in `tests/api/safety-observer.test.mjs`
+- Zusätzlich TDZ-Bug in `api/_lib/providers/edenai.mjs:231`: `const keyMode = keyMode()` — lokale Const shadowed die gleichnamige Funktion → ReferenceError bei aktivem Observer (im 3.4-Test nicht sichtbar, weil Observer damals null war)
+- Beides zusammen: selbst nach Registrierung wäre der EdenAI-Request sofort mit `ReferenceError: Cannot access 'keyMode' before initialization` abgestürzt
+
+### Architektur-Analyse (Step 3.5-A)
+- Provider werden in `api/_lib/providers/index.mjs` initialisiert (PROVIDERS = [openrouter, edenai])
+- Zentraler Runtime-Kontext für AI: `api/_lib/ai.mjs` — wird von `api/match.mjs`, `api/profile.mjs`, `api/cover-letter.mjs` importiert (einziger gemeinsamer AI-Einstiegspunkt)
+- Kein bestehender Observer-Sink/Endpoint — Observer wird als optionale Instanz via `setSafetyObserver(observer)` an den Provider übergeben
+- Gewählte Integrationsstelle: `api/_lib/ai.mjs` (zentrale AI-Abstraktion, kein Provider-Code künstlich umgebaut)
+
+### Minimaler Fix (Step 3.5-B)
+1. `api/_lib/providers/edenai.mjs:231` — TDZ-Fix: `const keyMode = keyMode()` → `const currentKeyMode = keyMode()` (+ Folgeverwendung)
+2. `api/_lib/ai.mjs` — Runtime-Wiring: Observer-Instanz mit In-Memory-Event-Store (max 100 Events), registriert via `setSafetyObserver()` auf **beiden** Providern (edenai + openrouter); Exports `getSafetyEvents()`
+- Observer bleibt optional (Provider-Verhalten ohne Observer unverändert — `if (safetyObserver)` Guard bleibt bestehen)
+- KEINE Safety-Blocking-Logik, KEIN Cost-Guard, KEINE Eligibility-Änderung, KEINE neuen Provider-Aufrufe
+
+### Tests (Step 3.5-C)
+- `npm test` → **88/88 passed** (13 Dateien)
+- `npx tsc -b` → **grün** (Exit 0)
+- `npm run build` → **grün** (Vite-Build)
+- Keine Testregression durch das Wiring (ai.mjs ist in match-/profile-cache-Tests gemockt; quota-429 importiert ai.mjs real, aber nur `isFreeDailyQuotaError`)
+
+### Development Live Test (Step 3.5-D)
+- Umgebung: `vercel dev` (Development Runtime), Proxy `http://localhost:3000`, Vite dynamischer Port
+- Temporärer Serverless-Endpoint `api/tmp-observer-live.mjs` (nur Status + EIN Request + Events, danach gelöscht)
+- **Observer Registration**: `edenaiObserverRegistered: true`, `openrouterObserverRegistered: true`
+- **GENAU EIN kontrollierter EdenAI-Sandbox-Request** (POST), Modell `cloudflare/@cf/google/gemma-7b-it-lora`, EDENAI_DEV_API_KEY
+- Ergebnis: **HTTP 200**, content vorhanden (97 Zeichen), verwertbar
+
+### Tatsächliches Safety Event (LIVE beobachtet)
+- `type: "edenai_provider_request"`
+- `source: "edenai"`
+- `category: "SANDBOX_REQUEST"` ✅ (KEIN `PRODUCTION_REQUEST`)
+- `model: "cloudflare/@cf/google/gemma-7b-it-lora"`
+- `blocked: false`
+- `eventCount: 1`
+- Event wurde tatsächlich erzeugt und über `getSafetyEvents()` live ausgelesen — nicht nur aus Code abgeleitet
+- Observer verursacht keinen Fehler im normalen Providerablauf
+
+### Dokumentation
+- Geänderte Dateien: `api/_lib/providers/edenai.mjs` (TDZ-Fix), `api/_lib/ai.mjs` (Runtime-Wiring)
+- External Requests (dieser Step): 1 × EdenAI Chat-Completions (Sandbox) — kein OpenRouter, kein Apify, kein Upstash-Redis (fehlende Dev-Keys)
+- Cost Risk: **NONE** (Sandbox)
+- Production: **NOT USED** · OpenRouter: **NOT USED** · Apify: **NOT USED**
+- Temporäre Datei `api/tmp-observer-live.mjs`: gelöscht, nicht committet
+- Log-Audit: keine Secret-Patterns im `vercel dev`-Log
+- Keine Secret-Werte im Report
+
+### Checkpoint
+- Commit: `feat: wire provider safety observer runtime`
+- Next Step: Step 3.6 — Development Live Test Abschluss (Abschlussmatrix)

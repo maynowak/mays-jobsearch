@@ -228,9 +228,9 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
 
   // Safety observation: emit event based on current environment before provider request
   if (safetyObserver) {
-    const keyMode = keyMode();
-    const isSandbox = keyMode === "sandbox";
-    const isProduction = keyMode === "production";
+    const currentKeyMode = keyMode();
+    const isSandbox = currentKeyMode === "sandbox";
+    const isProduction = currentKeyMode === "production";
 
     let eventCategory = "NONE";
     if (isSandbox) {
