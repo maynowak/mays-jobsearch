@@ -24,7 +24,7 @@ COMPLETE
 | 7 | Merge-Vorbereitung | COMPLETE | df23c0c |
 | 8 | Merge nach main | COMPLETE | 657f9cc |
 | 9 | Production | COMPLETE | e935ade |
-| 10 | Feature-Branch schließen | COMPLETE | (nach Push aktualisiert) |
+| 10 | Feature-Branch schließen | COMPLETE | cd9f521 |
 
 ## Recovery-Regel
 
@@ -546,7 +546,7 @@ Commit: e935ade
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: cd9f521
 
 ### VORAUSSETZUNGEN (vor dem Löschen geprüft)
 
