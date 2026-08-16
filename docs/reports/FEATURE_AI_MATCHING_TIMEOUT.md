@@ -18,7 +18,7 @@ COMPLETE
 | 1 | Bestandsanalyse | COMPLETE | 0079993 |
 | 2 | Timeout-Werte senken + Fehler-Codes + Client-Unterscheidung | COMPLETE | 9eb4813 |
 | 3 | Fallback-/Performance-Verifikation | COMPLETE | 7fb86df |
-| 4 | Development Live Test | COMPLETE | (nach Push aktualisiert) |
+| 4 | Development Live Test | COMPLETE | 6e7cc5d |
 | 5 | Preview / Abnahme | PENDING | — |
 
 ## Recovery-Regel
@@ -294,7 +294,7 @@ KEIN Retry. `model_unavailable` ebenfalls nicht enthalten → wie dokumentiert (
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 6e7cc5d
 
 ### DEVELOPMENT RUNTIME
 
