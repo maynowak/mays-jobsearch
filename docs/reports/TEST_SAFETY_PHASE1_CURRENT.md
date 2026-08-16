@@ -9,7 +9,8 @@
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
-- Step 3 — Development AI Live Test — **COMPLETE** (letzter Commit `44ccde8`, Abschluss-Commit folgt)
+- Step 3 — Development AI Live Test — **COMPLETE** (letzter Commit `44ccde8`, Abschluss-Commit `4d7f497`)
+- Step 4 — Production Deploy — **COMPLETE** (letzter Commit `4d7f497`, Deployment `mays-job-matcher-7am6njn2h`, URL `https://mays-job-matcher.vercel.app`, Report-Commit folgt)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -738,3 +739,56 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Commit: `docs: complete development ai live test`
 - Step 3 = **COMPLETE**
 - Next Step: **STOPP** — kein weiterer Step ohne neuen Auftrag
+
+## Step 4 — Production Deploy
+- Current Step: Aktuellen Stand von `origin/main` als Vercel Production deployen und verifizieren
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `4d7f497` — docs: complete development ai live test
+
+### Pre-Deploy Check (alle grün)
+- `git status`: sauber (nur Report-Änderung, bekannte unversionierte Dateien `ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`)
+- `git log -1 --oneline`: `4d7f497` docs: complete development ai live test
+- `git rev-parse HEAD` == `git rev-parse origin/main` == `4d7f497` ✅ (synchron)
+- `npm test`: **88/88 passed** (13 Dateien)
+- `npx tsc -b`: grün (Exit 0)
+- `npm run build`: grün (Vite-Build, dist erzeugt)
+- `git diff --check`: sauber
+- Secret Audit: **keine Secrets im Diff**, `.env.local` gitignored
+- Keine Codeänderungen vor dem Deploy
+
+### Wichtiger Befund (Projekt-Zuordnung)
+- Erster Deploy-Versuch ging auf das Projekt `mays-job-matcher-9agrxtwnu` (dort KEINE Env-Vars, EdenAI `configured: false`, 0 Modelle)
+- Korrektes Production-Projekt ist **`maymilly/mays-job-matcher`** — dort liegen alle Env-Vars (EDENAI_DEV_API_KEY → Development, EDENAI_API_KEY/UPSTASH/APIFY/OPENROUTER → Production, alle Sensitive)
+- Deploy auf das korrekte Projekt `mays-job-matcher` erneut ausgeführt
+
+### Production Deployment
+- Deployment-ID / URL: **`mays-job-matcher-7am6njn2h-maymilly.vercel.app`**
+- Production URL (Alias): **`https://mays-job-matcher.vercel.app`**
+- Deployment Status: **Ready** (Build 13s, Vercel CLI 58.11.0, Node 24.x)
+- Deployed Commit: `4d7f497` — docs: complete development ai live test
+
+### HTTP Smoke Test (Production)
+- `GET https://mays-job-matcher.vercel.app/` → **HTTP 200** (0.41s), `<title>May's Job Matcher</title>`
+- `GET /api/model` → **HTTP 200** (1.61s), resolved model: `dots-studio/dots-3-note-preview:free`
+- `GET /api/models` → **HTTP 200** (1.47s), **23 Modelle**
+  - OpenRouter: `enabled: true`, `configured: true`
+  - EdenAI: `enabled: true`, `configured: true`
+  - default: `openai/gpt-4o-mini`, fallback: `dots-studio/dots-3-note-preview:free`, recommended: `dots-studio/dots-3-note-preview:free`
+- Keine AI-Generierungs-Requests während des Smoke Tests (nur Katalog/Modellauflösung, soweit sicher möglich)
+
+### Bewertung
+- **Bestätigt**: "Der in Development vollständig verifizierte Build wurde erfolgreich als Production Deployment veröffentlicht."
+- **NICHT behauptet**: "Production AI wurde vollständig live getestet." — Production-AI-Requests wurden NICHT durchgeführt
+- Production verwendet Production Environment + Production Keys (EDENAI_API_KEY etc.) — Keys wurden NICHT ausgegeben/geschrieben
+- Kein umfangreiches Matching, kein Apify Run, kein OpenRouter-Test, kein Cache-Refresh
+
+### Dokumentation
+- External Requests: 0 AI-Generierungs-Requests in Production (nur 2 Katalog-Endpoint-Calls im Smoke Test)
+- Cost Risk: **NONE** (keine AI-Generierung ausgelöst)
+- Production AI Requests: **NONE** · OpenRouter: **NONE** · Apify: **NONE**
+- Keine Secrets im Report, Secret Audit PASS
+
+### Checkpoint
+- Commit: `docs: record production deployment`
+- Step 4 = **COMPLETE**
+- **PRODUCTION LIVE — WARTET AUF WEITERE ANWEISUNG**
