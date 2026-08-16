@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 7
+Step 8
 
 Aktueller Status:
 COMPLETE
@@ -22,7 +22,8 @@ COMPLETE
 | 5 | Preview / Abnahme | COMPLETE | 3133446 |
 | 6 | Merge-Vorbereitung | COMPLETE | 410c095 |
 | 7 | Merge nach main | COMPLETE | 2709a5d |
-| 8 | Production Deployment | PENDING | — |
+| 8 | Production Deployment | COMPLETE | (nach Push aktualisiert) |
+| 9 | Performance-/Live-Verifikation | PENDING | — |
 
 ## Recovery-Regel
 
@@ -566,6 +567,64 @@ Commit: 2709a5d
 - Preview getestet mit `b557632`; seitdem nur Doku-Commits (Step 6: Code-Diff = 0)
 - → Preview-Abnahme gilt für den gemergten Code weiterhin
 - NICHT behauptet, dass Production bereits getestet wurde
+
+### GIT-STAND
+
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 8 — Production Deployment
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### VOR DEPLOYMENT
+
+- Branch: `main`, HEAD == origin/main == `6ff72e7`
+- Working Tree sauber (nur dauerhafte untracked Dateien)
+
+### PRODUCTION DEPLOYMENT
+
+- **Deployment ID:** `dpl_DH75keaahuFaa19W7GKxRYPBJg4e`
+- **Status:** READY
+- **Environment:** production
+- **Source Branch:** main
+- **Production Deployment Commit:** `6ff72e7cc9f667e9efe43dd999c251767546d782` (Message: docs: record step 7 commit in feature report)
+- **Git main HEAD:** `6ff72e7` → **Deployment Commit == Git HEAD** ✓
+- **Production URL:** https://mays-job-matcher-5w7dxumj4-maymilly.vercel.app (Alias: https://mays-job-matcher.vercel.app)
+- Genau EIN Production-Deployment; keine weiteren Deployments, keine Preview
+
+### FOOTER / BUILD IDENTITY
+
+- Footer auf Production (`/top`): **`Version 2.0.0 · production · 6ff72e7`**
+- **Production Deployment Commit == Footer Build SHA** ✓
+
+### TIMEOUT-CODE NACHWEIS (deployed Code, via Vercel File API)
+
+- `edenai.mjs`: `TIMEOUT_MS = 30_000`, Timeout→`ERROR_CODES.timeout`, Netzwerk→`ERROR_CODES.networkError` (Status 504/502)
+- `openrouter.mjs`: `TIMEOUT_MS = 25_000`, Timeout→`ERROR_CODES.timeout`, Netzwerk→`ERROR_CODES.networkError`
+- → Production enthält den gemergten Feature-Code (identische File-UIDs wie Preview)
+
+### SMOKE TEST (Production)
+
+- `/` → HTTP 200 (0.44 s)
+- `/top` (Matcher-Seite) → HTTP 200 (0.49 s); H1 + Formular laden, kein Fehler
+- `/api/model` → HTTP 200 (1.47 s)
+- `/api/models` → HTTP 200 (1.40 s)
+- Console/Network: keine offensichtlichen Fehler (keine AI Requests ausgelöst)
+
+### KOSTEN-/NUTZUNGSNACHWEIS
+
+- **AI Requests:** 0 (kein /api/match-Aufruf, kein AI-Live-Test)
+- **Apify:** 0
+- Kostenrisiko dieses Steps: minimal (nur statische Seiten + Modell-Listen-Endpunkte)
+
+### VERIFIKATION
+
+- Deployment Ready, Source main, Deployment Commit nachvollziehbar
+- Production URL erreichbar, Footer Build Identity korrekt
+- Relevante Seiten laden, keine offensichtlichen Console/Network Errors
+- Secret Audit sauber, `git diff --check` sauber
 
 ### GIT-STAND
 
