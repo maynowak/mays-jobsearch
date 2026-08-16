@@ -9,7 +9,7 @@
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
-- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.5 — Safety Observer verdrahtet, LIVE verifiziert; letzter Commit `9800e78`)
+- Step 3 — Development AI Live Test — **COMPLETE** (letzter Commit `44ccde8`, Abschluss-Commit folgt)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -686,3 +686,55 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint
 - Commit: `feat: wire provider safety observer runtime`
 - Next Step: Step 3.6 — Development Live Test Abschluss (Abschlussmatrix)
+
+## Step 3.6 — Development Live Test Abschluss
+- Current Step: Gesamten Development-Live-Test zusammenfassen, Abschlussmatrix erstellen
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `44ccde8` — feat: wire provider safety observer runtime
+
+### Abschlussmatrix
+| Prüfung | Ergebnis |
+|---|---|
+| Vercel Development Runtime | ✅ OK — `vercel dev`, Proxy `http://localhost:3000`, Vite dynamischer PORT, HTTP 200 |
+| Development ENV | ✅ OK — `EDENAI_DEV_API_KEY` PRESENT, `keyMode: "sandbox"` |
+| EdenAI Sandbox | ✅ aktiv/configured |
+| /api/models | ✅ HTTP 200 — 4 Modelle, default/fallback/recommended dokumentiert |
+| /api/model | ✅ HTTP 200 — `cloudflare/@cf/google/gemma-7b-it-lora` |
+| NON-REASONING Model | ✅ FREE + NON-REASONING → matching-eligible (Fix 52639af greift) |
+| AI Response | ✅ HTTP 200, verwertbarer Text (97 Zeichen) |
+| Safety Observer | ✅ LIVE registriert (edenai+openrouter), Event `edenai_provider_request`, category `SANDBOX_REQUEST`, blocked false |
+| Production Key | **NOT USED** |
+| OpenRouter | **NOT USED** |
+| Apify | **NOT USED** |
+| Preview | **NOT USED** |
+| External Requests | 2 × EdenAI Chat-Completions (Sandbox): 3.4 + 3.5-W Live-Test; 0 OpenRouter, 0 Apify, 0 Redis |
+| Cost Risk | **NONE** (Sandbox, kein Provider-Charge) |
+| Tests | ✅ **88/88 passed** (13 Dateien) |
+| Build | ✅ grün (`npx tsc -b` + `npm run build`) |
+
+### Verwendete Commits (Step 3)
+- `9687194` — docs: verify development environment for live test (Step 3.1)
+- `05a0f8f` — test: verify development model catalog (Step 3.2)
+- `5fd3a88` — test: verify development model resolution (Step 3.3)
+- `d039e57` — test: verify edenai development sandbox request (Step 3.4)
+- `9800e78` — docs: report safety observer blocked in development (Step 3.5 Blockade)
+- `44ccde8` — feat: wire provider safety observer runtime (Step 3.5-W Fix)
+- Letzter Commit: `44ccde8` — feat: wire provider safety observer runtime
+
+### Git Status / Synchronität
+- Branch `main`, synchron mit `origin/main` (HEAD == origin/main, `44ccde8`)
+- Keine unbeabsichtigten Dateien: nur Report-Änderung ausstehend (wird committet)
+- Unversioniert (vorab vorhanden, nicht Teil dieses Steps): `ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`
+- Keine Secrets im Git (Secret Audit PASS)
+- Keine Production Requests, kein Preview Deploy, kein Production Deploy
+- Temporäre Test-Endpoints (`tmp-*`, `dev-env-check`, `sandbox-test`, `observer-live`) alle gelöscht, nicht committet
+
+### Zusammenfassung
+- Der komplette Development-AI-Workflow ist LIVE verifiziert: Environment → Modellkatalog → Modellauflösung → echter Sandbox-AI-Request → Safety Observer erkennt den Request korrekt als `SANDBOX_REQUEST`
+- Der zuvor BLOCKED Status (3.5) wurde durch minimales Runtime-Wiring behoben (TDZ-Fix in edenai.mjs + Observer-Registrierung in ai.mjs)
+- Development-Ziel erreicht: Entwicklungsumgebung kann jetzt mit EDENAI_DEV_API_KEY sicher arbeiten; Production bleibt unberührt
+
+### Checkpoint
+- Commit: `docs: complete development ai live test`
+- Step 3 = **COMPLETE**
+- Next Step: **STOPP** — kein weiterer Step ohne neuen Auftrag
