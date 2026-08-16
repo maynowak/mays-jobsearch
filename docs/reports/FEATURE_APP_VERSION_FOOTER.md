@@ -17,7 +17,7 @@ COMPLETE
 | Step | Thema | Status | Commit |
 | 1 | Bestandsanalyse | COMPLETE | 99c2fac |
 | 2 | Versionstrategie | COMPLETE | 884b94e |
-| 3 | Implementierung | COMPLETE | — |
+| 3 | Implementierung | COMPLETE | ac7199f |
 | 4 | Tests | PENDING | — |
 | 5 | Development Live Test | PENDING | — |
 | 6 | Preview / Abnahme | PENDING | — |
@@ -150,7 +150,7 @@ Commit: 884b94e
 
 Status: COMPLETE
 
-Commit: —
+Commit: ac7199f
 
 ### IMPLEMENTIERTE DATEIEN
 
