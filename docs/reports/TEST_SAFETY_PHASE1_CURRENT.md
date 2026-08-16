@@ -9,7 +9,7 @@
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
-- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.3 — `/api/model`, letzter Commit `05a0f8f`)
+- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.4 — EdenAI Sandbox Request, letzter Commit `5fd3a88`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -540,3 +540,51 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint
 - Commit: `test: verify development model resolution`
 - Next Step: Step 3.4 — Ein kontrollierter EdenAI-Sandbox-AI-Request
+
+## Step 3.4 — Ein kontrollierter EdenAI-Sandbox-AI-Request
+- Current Step: Erster externer AI-Request — Development-EdenAI-Sandbox (EDENAI_DEV_API_KEY) liefert verwertbaren AI-Response?
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `5fd3a88` — test: verify development model resolution
+- Umgebung: `vercel dev` (Development Runtime), Proxy `http://localhost:3000`
+- AUSSCHLIESSLICH: Provider EdenAI, Environment Vercel Development, Credential EDENAI_DEV_API_KEY
+
+### Request
+- Methode: temporärer Serverless-Endpoint (`api/tmp-sandbox-test.mjs`), der `chat()` aus `api/_lib/ai.mjs` mit minimalem Test-Input aufruft; danach gelöscht (nicht committet)
+- GENAU EIN AI-Request — kein Loop, keine Retries, kein Massentest, kein paralleler Provider-Test
+- Modell: `cloudflare/@cf/google/gemma-7b-it-lora` (in Step 3.3 aufgelöst: FREE + NON-REASONING, matching-eligible)
+- Input: minimal (System: "You are a test assistant...", Prompt: "Reply with the single word: OK"), maxTokens 40, temperature 0
+- KEINE echten personenbezogenen Daten, KEINE Produktionsdaten
+
+### Ergebnis
+- HTTP-Status: **200** (Response in 5.06s)
+- Provider response: **vorhanden**
+- content: **vorhanden**, Länge 97 Zeichen (nicht null/leer)
+- Inhalt: `"Hello! It's nice to meet you..."` (verwertbarer Text-Output)
+- Kein unerwarteter Fehler
+- Verwendetes Modell: `cloudflare/@cf/google/gemma-7b-it-lora`
+- Environment: Vercel Development (EDENAI_DEV_API_KEY → keyMode `sandbox` via `api/_lib/providers/edenai.mjs:35-39`, `apiKey()` bevorzugt devKey)
+
+### Kosten-/Safety-Prüfung
+- EdenAI Development Sandbox (EDENAI_DEV_API_KEY) → **kein Provider-Charge** gemäß dokumentierter Sandbox-Konfiguration
+- Request als **EXTERNAL_REQUEST** dokumentiert (1 EdenAI Chat-Completions-Request)
+- Cost Risk: **kein Provider-Charge erwartet** (Sandbox), kein Hinweis auf kostenpflichtigen Request
+- Production Key: **NOT USED** — `EDENAI_API_KEY` (Production-Scope) wird im Development-Kontext nicht geladen
+- OpenRouter: **NOT USED**, Apify: **NOT USED**
+- Usage-Count: `countAiRequest("edenai", ...)` in-memory/null (keine UPSTASH-Keys im Development-Kontext → kein externer Redis-Request, `api/_lib/cache.mjs:6-8,10-12`)
+- Log-Audit: keine Secret-Patterns im `vercel dev`-Log, keine Secret-Werte im Report
+
+### Safety-Observer-Befund (relevant für Step 3.5)
+- `edenai.mjs:230` — `if (safetyObserver)` → Observer-Event `edenai_provider_request` wird NUR bei gesetztem Observer emittiert
+- **Befund**: `setSafetyObserver()` wird im Betrieb nirgends aufgerufen (nur in `tests/api/safety-observer.test.mjs`). Der Observer ist definiert, aber **nicht verdrahtet** — es wird keine Instanz registriert
+- Konsequenz: `getSafetyObserver()` liefert im laufenden Dev-Server `null`; das Event `edenai_provider_request` wurde daher während des 3.4-Requests vermutlich NICHT emittiert (kein Beobachter registriert)
+- Kein selbstgebauter Workaround, keine Provider-Code-Änderung — dokumentiert für die Live-Verifikation in Step 3.5
+
+### Dokumentation
+- Externe Requests: 1 × EdenAI Chat-Completions (Sandbox), KEIN OpenRouter, KEIN Apify, KEIN Upstash-Redis (fehlende Dev-Keys)
+- Cost Risk: NONE (Sandbox) — kein Hinweis auf Produktions-Charge
+- Temporäre Datei `api/tmp-sandbox-test.mjs`: nach erfolgreichem Request gelöscht, nicht committet
+- Keine Secret-Werte ausgegeben
+
+### Checkpoint
+- Commit: `test: verify edenai development sandbox request`
+- Next Step: Step 3.5 — Safety Observer Live verifizieren
