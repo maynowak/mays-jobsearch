@@ -20,7 +20,7 @@ COMPLETE
 | 3 | Implementierung | COMPLETE | ac7199f |
 | 4 | Tests | COMPLETE | d5fa838 |
 | 5 | Development Live Test | COMPLETE | c6238d5 |
-| 6 | Preview / Abnahme | COMPLETE | (nach Push aktualisiert) |
+| 6 | Preview / Abnahme | COMPLETE | 131f48f |
 | 7 | Merge-Vorbereitung | PENDING | — |
 | 8 | Merge nach main | PENDING | — |
 | 9 | Production | PENDING | — |
@@ -306,7 +306,7 @@ Commit: c6238d5
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 131f48f
 
 ### PREVIEW-DEPLOYMENT
 
