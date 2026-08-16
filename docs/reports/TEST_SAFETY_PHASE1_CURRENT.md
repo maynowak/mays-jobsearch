@@ -8,7 +8,8 @@
 - Vercel Dev Port Fix — **COMPLETE** (Commit `ebabc1c`)
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
-- Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit folgt)
+- Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
+- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.2 — `/api/models`, letzter Commit `9687194`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -472,3 +473,43 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Commit: `docs: verify development environment for live test` (folgt)
 - git status / git diff / git diff --check / Secret Audit: durchzuführen
 - Next Step: **STOPP** — Step 3.2 (Development AI Live Test) separat freizugeben
+
+## Step 3.2 — `/api/models` Development Live Check
+- Current Step: `/api/models` über den laufenden Vercel-Development-Server prüfen (noch KEIN AI-Generierungs-Request)
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `9687194` — docs: verify development environment for live test
+- Umgebung: `vercel dev` (Development Runtime), Vite dynamischer Port (45831), Proxy `http://localhost:3000`
+
+### Prüfungen
+- HTTP-Status: **200** (Response in 4.75s — Provider-Katalogabruf, kein AI-Generierungs-Request)
+- Anzahl Modelle: **4**
+- Modelle:
+  - `cloudflare/@cf/google/gemma-2b-it-lora` (EdenAI)
+  - `cloudflare/@cf/google/gemma-7b-it-lora` (EdenAI)
+  - `cloudflare/@cf/meta-llama/llama-2-7b-chat-hf-lora` (EdenAI)
+  - `cloudflare/@cf/mistral/mistral-7b-instruct-v0.2-lora` (EdenAI)
+- Provider-Status:
+  - OpenRouter: `enabled: false`, `configured: false` — **nicht aktiv**
+  - EdenAI: `enabled: true`, `configured: true` — **aktiv**, Development-Kontext
+- defaultModel: `openai/gpt-4o-mini` (aus `getOpenRouterModel()`, konfiguriert aber OpenRouter-Provider disabled)
+- fallbackModel: `cloudflare/@cf/google/gemma-2b-it-lora`
+- recommendedModel: `cloudflare/@cf/google/gemma-7b-it-lora`
+- fallbackMaxAttempts: 3
+
+### Reasoning-Eligibility (Fix aus Commit 52639af verifiziert)
+- `api/_lib/providers/edenai.mjs:97` — `isEligible()` = `pricingIsFree && supportsTextIn && supportsTextOut && !supportsReasoning`
+- `fetchEligibleModels()` (Zeile 125) filtert mit `isEligible`, sortiert non-reasoning zuerst (Zeile 134-138)
+- Ergebnis: ALLE 4 zurückgegebenen Modelle sind FREE + NON-REASONING → matching-eligible
+- **KEINE Reasoning-Modelle** in der Liste (z.B. gemma-4/gpt-4o-reasoning fehlen) — Fix greift
+- Reasoning-Modelle bleiben im Provider-Katalog (nicht in `/api/models` aufgelistet), Modellliste wurde NICHT eigenmächtig verändert
+
+### Dokumentation
+- Verwendete Environment: Vercel Development (`vercel dev`)
+- Externe Requests: 1 Provider-Katalogabruf (EdenAI MODELS_URL) + OpenRouter-Provider-Check — kein AI-Generierungs-Request, kein Apify
+- Cost Risk: **NONE** (Modellkatalogabruf, keine Generierung)
+- Production Key: **NOT USED**
+- Keine Secret-Werte ausgegeben
+
+### Checkpoint
+- Commit: `test: verify development model catalog`
+- Next Step: Step 3.3 — `/api/model` Development Model Resolution
