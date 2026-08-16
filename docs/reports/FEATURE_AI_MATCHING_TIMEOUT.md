@@ -22,7 +22,7 @@ COMPLETE
 | 5 | Preview / Abnahme | COMPLETE | 3133446 |
 | 6 | Merge-Vorbereitung | COMPLETE | 410c095 |
 | 7 | Merge nach main | COMPLETE | 2709a5d |
-| 8 | Production Deployment | COMPLETE | (nach Push aktualisiert) |
+| 8 | Production Deployment | COMPLETE | 1c65946 |
 | 9 | Performance-/Live-Verifikation | PENDING | — |
 
 ## Recovery-Regel
@@ -576,7 +576,7 @@ Commit: 2709a5d
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 1c65946
 
 ### VOR DEPLOYMENT
 
