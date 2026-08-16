@@ -19,7 +19,7 @@ COMPLETE
 | 2 | Timeout-Werte senken + Fehler-Codes + Client-Unterscheidung | COMPLETE | 9eb4813 |
 | 3 | Fallback-/Performance-Verifikation | COMPLETE | 7fb86df |
 | 4 | Development Live Test | COMPLETE | 6e7cc5d |
-| 5 | Preview / Abnahme | COMPLETE | (nach Push aktualisiert) |
+| 5 | Preview / Abnahme | COMPLETE | 3133446 |
 | 6 | Merge-Vorbereitung | PENDING | — |
 
 ## Recovery-Regel
@@ -394,7 +394,7 @@ Alle beobachteten Live-Fehler waren `bad_ai_response` (nicht-transient im Client
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 3133446
 
 ### VORBEGINN (bestätigt)
 
