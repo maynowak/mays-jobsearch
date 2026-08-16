@@ -3,7 +3,8 @@
 ## Status
 - Recovery / Complete
 - Step 2.4-B (Vercel Dev Blocker: Yarn) — **BLOCKED** (neuer Blocker: `@vercel/static-build` Port-Detection)
-- Branch: `fix/vercel-dev-runtime` — Diagnose des Port-Konflikts (RUNNING)
+- Branch: `fix/vercel-dev-runtime` — Diagnose des Port-Konflikts (COMPLETE)
+- Vercel Dev Port Fix — **BLOCKED** (Dev-/vercel dev-Tests erfolgreich, aber Production-Build bricht: `TS2580` — `@types/node` fehlt)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -304,3 +305,47 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Risiko / Production: `server.port` betrifft nur den Vite-Dev-Server; Production-Build (`vite build`) ignoriert `server.*`, daher keine Production-Auswirkung
 - Rückfall: Config-Zeile entfernen → zurück zu Vite-Standard 5173
 - **FREIGABE AUSSTEHEND** — keine Änderung durchgeführt (per Workflow-Regeln)
+
+## Vercel Dev Port Fix — Implementierung und Tests
+- Branch: `fix/vercel-dev-runtime`
+- Current Step: `vite.config.ts` `server.port` via `process.env.PORT` implementieren und verifizieren
+- Step Status: **COMPLETE**
+- Freigabe: Diagnose-Checkpoint `97b7a0b`, freigegeben ausschließlich `vite.config.ts`
+- Keine weiteren Dateien geändert (package.json, vercel.json, Provider, Safety, Apify, Cache, Production unberührt)
+
+### Schritt A — Implementierung
+- Status: **COMPLETE**
+- `vite.config.ts`: `server: { port: process.env.PORT ? Number(process.env.PORT) : 5173 }` hinzugefügt
+- `git diff` geprüft: nur `vite.config.ts` (+Report) verändert, keine Secrets, `git diff --check` ohne Befunde
+
+### Schritt B — Lokale Tests
+- Status: **COMPLETE**
+- Test 1: `yarn run dev` ohne PORT → Vite bindet auf **5173** (wie erwartet, Log: `http://localhost:5173/`)
+- Test 2: `PORT=37777 yarn run dev` → Vite bindet auf **37777** (Log: `http://localhost:37777/`) — Vite übernimmt die übergebene `PORT`-Env
+- Keine externe API aufgerufen
+
+### Schritt C — `vercel dev`
+- Status: **COMPLETE**
+- Ergebnis: `vercel dev` startet stabil — **keine Port-Detection-Fehlermeldung mehr**
+- Vercel übergibt dynamischen PORT → Vite bindet darauf (Log: `Local: http://localhost:44531/`)
+- `> Success! Build completed` / `> Ready! Available at http://localhost:3000`
+- Proxy-Request: `GET http://localhost:3000/` → **HTTP 200 in 0.16s**
+- Kein AI-/Serverless-Request ausgeführt (nur Root)
+
+### Schritt D — Production-Build-Verifikation (BLOCKER)
+- Status: **BLOCKED**
+- Test: `npx tsc -b` (Teil des Production-Build-Scripts `tsc -b && vite build`)
+- Ergebnis: **Fehler** — der freigegebene Fix bricht den TypeScript-Build:
+  ```
+  vite.config.ts(7,11): error TS2580: Cannot find name 'process'.
+  vite.config.ts(7,37): error TS2580: Cannot find name 'process'.
+  ```
+- Ursache: `process` ist in der TS-Config nicht typisiert. `@types/node` ist NICHT installiert (node_modules/@types/ enthält nur aria-query, chai, deep-eql, estree, react, react-dom).
+- `package.json` enthält `@types/node` nicht als devDependency; `@types/node` hinzuzufügen wäre eine package.json-Änderung — per Freigabe **nicht** erlaubt.
+- Konsequenz: Dev-Fix funktioniert, aber `npm run build` (Production) würde fehlschlagen → Production-Deployment riskant.
+- Per STOPPREGEL: Fehler → STOPP, keine weiteren Workarounds.
+
+### Checkpoint
+- Commit: **NICHT durchgeführt** — Build-Verifikation nicht bestanden (TS2580)
+- git status / git diff / git diff --check / Secret Audit: geprüft, sauber (keine Secrets)
+- Nächster Schritt: Entscheidung erforderlich (z.B. `@types/node` als devDependency freigeben, oder alternativer typsicherer Port-Zugriff)
