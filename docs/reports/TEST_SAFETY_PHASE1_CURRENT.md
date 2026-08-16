@@ -826,3 +826,28 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint 4.1
 - Commit: `test: verify production model catalog`
 - Next Step: 4.2 — Ein kontrollierter Production AI Request
+
+### Substep 4.2 — Ein kontrollierter Production AI Request
+- Endpoint: `POST https://mays-job-matcher.vercel.app/api/profile` (ein `chat()`-Aufruf, minimaler Input)
+- GENAU EIN Production-AI-Request — kein Loop, keine manuellen Retries, kein Massentest, kein Apify, kein paralleler OpenRouter-Test
+- Input (minimal, nicht personenbezogen, keine Produktionsdaten): `"Test candidate profile. JavaScript developer with experience in React and Node.js, located in Berlin."`
+- Kein `hash` gesendet → kein Cache-Refresh, kein Cache-Schreibkonflikt
+- **HTTP-Status: 200** (11.34s)
+- **AI Response: vorhanden, verwertbar** — valid JSON:
+  `{"skills":["JavaScript","React","Node.js"],"experienceLevel":"","targetRoles":["JavaScript Developer","React Developer","Node.js Developer"],"location":"Berlin"}`
+- content **nicht null/leer**, kein 502, kein `model_unavailable`, kein `bad_ai_response`
+- Verwendeter Provider (aus Auflösungslogik, nicht erzwungen): **OpenRouter** — `api/_lib/providers/index.mjs` Provider-Reihenfolge `[openrouter, edenai]`, Production `/api/model` resolvt `dots-studio/dots-3-note-preview:free` (OpenRouter); kein Modell im Request angegeben → `chat()` nutzt `primary = providers[0]` = OpenRouter
+- Kein künstlich erzwungener Provider; der tatsächlich aufgelöste Production-Pfad wurde verwendet
+- Logs: `vercel logs` zeigt `λ POST /api/profile` (Invocation bestätigt); Modell/Attempt-Zähler nicht im Log sichtbar, Usage-Diagnostics ohne Token disabled
+
+### Kosten-/Safety-Prüfung 4.2
+- GENAU 1 Production-AI-Request — potentiell kostenrelevant, deshalb strikt auf 1 begrenzt
+- Provider-interne Fallback-Logik: NICHT verändert, nur beobachtet
+- Kein Hinweis auf unerwartetes kostenpflichtiges Modell — aufgelöster Pfad ist ein `:free`-Modell (OpenRouter)
+- Apify: **NOT USED** · OpenRouter nur als bereits konfigurierter Production-Provider (nicht zusätzlich getestet)
+- Keine personenbezogenen/Produktionsdaten im Input
+- Keine Secret-Werte ausgegeben
+
+### Checkpoint 4.2
+- Commit: `test: verify production ai request`
+- Next Step: 4.3 — Modell/Fallback-Verhalten
