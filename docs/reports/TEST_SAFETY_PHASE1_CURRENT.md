@@ -851,3 +851,25 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint 4.2
 - Commit: `test: verify production ai request`
 - Next Step: 4.3 — Modell/Fallback-Verhalten
+
+### Substep 4.3 — Modell/Fallback-Verhalten
+- Observation auf Basis des EINEN Production-Requests (4.2) + Auflösungslogik — KEINE weiteren AI-Requests (NO-GO)
+- Request-Pfad: `chat()` ohne `model` → `api/_lib/providers/index.mjs:62` `primary = providers[0]` = **OpenRouter**; `getEligibleModel` (`openrouter.mjs:189`) → configured `openai/gpt-4o-mini` + Fallback
+- Ergebnis: **Request erfolgreich** (HTTP 200, valid JSON, kein 502, kein `model_unavailable`, kein `bad_ai_response`)
+- Fallback/Observation:
+  - direkt verfügbares Modell: erfolgreich (Response kam durch, kein Fehler an Client)
+  - `model_unavailable`: **nicht aufgetreten**
+  - 502: **nicht aufgetreten**
+  - Fallback: nicht direkt beobachtbar (Usage-Diagnostics-Token disabled, Logs zeigen nur Invocation `λ POST /api/profile`, keine Modell-/Attempt-Zähler)
+- Anzahl Versuche: nicht direkt sichtbar ohne Diagnose-Endpoint — nicht behauptet
+- Erfolgreiches Modell: aufgelöster OpenRouter-Pfad (`dots-studio/dots-3-note-preview:free` laut `/api/model`, `:free`-Modell)
+
+### Development vs Production — Fallback-Vergleich
+- Development-Befund (früher): attempt=1 `dots-studio/dots-3-note-preview:free` → unavailable; attempt=2 `openai/gpt-4o-mini-2024-07-18:free` → unavailable; attempt=3 `openrouter/free` → succeeded
+- Production-Befund (jetzt): Request **erfolgreich** — 1 kontrollierter Request, verwertbare Response; internes Fallback-Verhalten nicht beobachtbar (kein Diagnose-Endpoint aktiv)
+- **Befund NICHT repariert** — nur Vergleich/Observation, keine Optimierung, keine Fallback-Logik-Änderung
+- Keine weiteren AI-Requests zur genaueren Messung durchgeführt (bewusst)
+
+### Checkpoint 4.3
+- Commit: `test: observe production model fallback`
+- Next Step: 4.4 — Production Test Abschluss
