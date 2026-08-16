@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 5
+Step 6
 
 Aktueller Status:
 COMPLETE
@@ -20,7 +20,7 @@ COMPLETE
 | 3 | Implementierung | COMPLETE | ac7199f |
 | 4 | Tests | COMPLETE | d5fa838 |
 | 5 | Development Live Test | COMPLETE | c6238d5 |
-| 6 | Preview / Abnahme | PENDING | — |
+| 6 | Preview / Abnahme | COMPLETE | (nach Push aktualisiert) |
 | 7 | Merge-Vorbereitung | PENDING | — |
 | 8 | Merge nach main | PENDING | — |
 | 9 | Production | PENDING | — |
@@ -296,6 +296,61 @@ Commit: c6238d5
 ### VERBLEIBENDE RISIKEN
 
 - Keine funktionalen Risiken. Hinweis: Der `vercel dev`-Prozess ist ein Dev-Prozess; die Fallback-Werte (lokales Git) sind im Dev-Kontext die korrekte Dev-Identität. Preview/Production erhalten in Step 6/9 ihre eigenen VERCEL_*-Werte.
+
+### GIT-STAND
+
+- Branch: `feature/app-version-footer`
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 6 — Preview / Abnahme
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### PREVIEW-DEPLOYMENT
+
+- **Preview URL**: https://mays-job-matcher-bai9rg1g3-maymilly.vercel.app
+- **Deployment ID**: `mays-job-matcher-bai9rg1g3-maymilly`
+- **Environment**: Preview (target `preview`, NICHT production)
+- **Source Branch**: `feature/app-version-footer`
+- **Git HEAD (zum Deploy-Zeitpunkt)**: `6c6708d`
+- **Deployment Commit (Vercel-API, meta.githubCommitSha)**: `6c6708d` — identisch mit Git HEAD
+- **Deployment Commit Message**: `docs: record step 5 commit in feature report`
+- **Vercel CLI**: 58.11.0; Auth: Projekt `mays-job-matcher`, Scope `maymilly`
+
+### ABNAHMEKRITERIEN
+
+1. **Preview-Deployment-Commit == Footer-Build-SHA**: Deployment `6c6708d` == Footer zeigt `6c6708d` → **erfüllt**. Der Footer friert die Build-Identität genau dieses Preview-Deployments ein.
+2. **Version**: Footer zeigt `Version 2.0.0` (aus package.json, im Preview-Bundle verifiziert).
+3. **Environment-Label**: `preview` — korrekt, klar von Production unterscheidbar.
+4. **DE + EN**: Bundle enthält beide Sprachen (`Jobangebote`/`Bewertungen sind KI-generierte Vorschläge` sowie `Job listings`/`Scores are AI-generated`). Footer gerendert mit `Job listings … Scores are AI-generated suggestions — always check the original posting.`
+5. **Links**: Arbeitnow → `https://www.arbeitnow.com/`, Arbeitsagentur → `https://www.arbeitsagentur.de/`, beide `target="_blank" rel="noopener noreferrer"`.
+
+### LAYOUT-ABNAHME (DOM-Geometrie, Chrome Headless, 1440×900)
+
+- Footer ist das letzte Element des Dokuments: footer.bottom == document.scrollHeight == 1410 → liegt am Seitenende, nichts überlagert/es folgt nichts darunter.
+- Volle Breite (1425px), keine horizontale Überlagerung (scrollWidth == viewport), `position: static`, `display: block`, zentrierter Text.
+- Versionszeile `.footer-version` sichtbar: `Version 2.0.0 · preview · 6c6708d` (Text, Position und Style aus realem gerendertem DOM gemessen).
+- Keine Console-/Netz-Fehler im Preview (Chrome Headless stderr: keine Uncaught/TypeError/ReferenceError/ERR_).
+
+### SICHERHEIT
+
+- Gerenderter Preview-DOM auf Secret-Muster gescannt: keine API-Keys, Tokens, `sk-`/`eyJ`-Muster, kein `Bearer`, keine Env-Werte. Nur öffentliche Build-Informationen (Version, Env-Label, kurze Commit-SHA, Branch).
+- Keine externen Provider-/AI-/Apify-Requests; nur die Preview-Origin und die eigenen externen Footer-Links (Arbeitnow/Arbeitsagentur, `_blank`).
+- Keine Env-/Secret-Änderungen am Vercel-Projekt vorgenommen.
+
+### KOSTENRISIKO
+
+- EIN Preview-Deployment (kostenlos im Vercel Hobby-Plan). Keine Production-Umgebung berührt, keine wiederkehrenden Kosten, keine Cron-/Alert-Ausführung ausgelöst.
+
+### ERGEBNIS (Checkpoint)
+
+- `npm test` → 15 Files, 107 Tests passed
+- `npx tsc -b` → ok
+- `npm run build` → ok
+- `git status` / `git diff --check` / Secret Audit → sauber
+- Temporäre Abnahme-Dateien entfernt; keine Screenshots committet.
 
 ### GIT-STAND
 
