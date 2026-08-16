@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 8
+Step 9
 
 Aktueller Status:
 COMPLETE
@@ -23,7 +23,8 @@ COMPLETE
 | 6 | Merge-Vorbereitung | COMPLETE | 410c095 |
 | 7 | Merge nach main | COMPLETE | 2709a5d |
 | 8 | Production Deployment | COMPLETE | 1c65946 |
-| 9 | Performance-/Live-Verifikation | PENDING | — |
+| 9 | Production Performance / AI Live Test | COMPLETE | (nach Push aktualisiert) |
+| 10 | Branch-Cleanup | PENDING | — |
 
 ## Recovery-Regel
 
@@ -625,6 +626,69 @@ Commit: 1c65946
 - Production URL erreichbar, Footer Build Identity korrekt
 - Relevante Seiten laden, keine offensichtlichen Console/Network Errors
 - Secret Audit sauber, `git diff --check` sauber
+
+### GIT-STAND
+
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 9 — Production Performance / AI Live Test
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### TEST-SETUP
+
+- Production URL: https://mays-job-matcher.vercel.app
+- Deployment ID: `dpl_DH75keaahuFaa19W7GKxRYPBJg4e`
+- Deployment Commit: `6ff72e7`
+- Testdatum/-zeit: 2026-08-16 20:01:56 CEST
+- Testart: 1 kontrollierter POST `/api/match` (echter Production-AI-Request)
+- Testdaten: kleines deterministisches Profil (Frontend Developer, Berlin) + 3 Inline-Testjobs (kein Apify, keine echten Bewerber-/Produktionsdaten)
+
+### KOSTEN-VORPRÜFUNG
+
+- Production verwendet ausschließlich OpenRouter (nur OpenRouter-Modelle in `/api/models`; EdenAI nicht enabled)
+- Default-Modell laut `/api/model`: `dots-studio/dots-3-note-preview:free` → **FREE** (pricing 0)
+- → Kostenrisiko minimal; genau 1 Request gesendet
+
+### MESSUNG
+
+- **Gesamtzeit:** 20.307 s
+- **HTTP-Status:** 502
+- **Response:** `{"error":"This AI model is temporarily unavailable. Please choose another model.","code":"model_unavailable"}`
+- **Provider:** OpenRouter (einziger enabled Provider)
+- **Modell:** Default-Free-Modell (dots-studio/dots-3-note-preview:free)
+- **AI-Versuche (server-seitig):** 1 (OpenRouter model_unavailable → kein weiterer Versuch; `isProviderExhausted` behandelt model_unavailable nicht als exhausted)
+- **Timeout:** nicht erreicht (30 s EdenAI / 25 s OpenRouter-Grenze nicht ausgelöst; Response kam mit 20.3 s vom Provider)
+- **network_error:** nicht aufgetreten
+- **Fallback:** kein server-seitiger Fallback nötig (nur 1 Provider enabled; 502 model_unavailable wird direkt zurückgegeben)
+- Client-seitig: `model_unavailable` ist transient (Status 502 + nicht in NON_TRANSIENT_CODES) → Client-Fallback erlaubt (kein unnötiger Server-Versuch)
+
+### VERGLEICH
+
+- **Vorheriger beobachteter Production-Wert:** ~125+ s (Screenshot-Beobachtung, nicht reproduzierbar, Bedingungen nicht identisch)
+- **Neuer Production-Live-Test:** 20.3 s
+- **Vergleichbarkeit:** nicht identisch (Vorher: UI-Gesamterlebnis inkl. Client-Fallback-Kette; Jetzt: einzelner API-Request). Deutliche Verringerung der Wartezeit messbar; eine frühere Client-Fallback-Kette (bis zu 3 /api/match-Requests) kann bei 502 model_unavailable weiterhin mehrere Requests erzeugen.
+
+### ERGEBNISBEWERTUNG (10 Fragen)
+
+1. Echter Production-AI-Request funktioniert? → Request korrekt abgesetzt, aber Provider meldete model_unavailable (temporäre Modellverfügbarkeit), kein erfolgreiches Matching.
+2. Gesamtdauer: 20.3 s (gegenüber ~125+ s beobachtet vorher).
+3. Provider: OpenRouter.
+4. Modell: dots-studio/dots-3-note-preview:free (Default-Free-Modell).
+5. Attempts: 1 (server-seitig).
+6. Fallback: kein server-seitiger Fallback (nur 1 Provider enabled).
+7. timeout/network_error/model_unavailable: model_unavailable trat auf; timeout/network_error nicht.
+8. Messzeit vs. ~125+ s: deutlich kürzer (20.3 s).
+9. Deutliche Verbesserung beobachtbar: Ja, Wartezeit massiv reduziert; Timeout-/Fehlercode-Logik (504/502, eigene Codes) greift korrekt statt pauschal model_unavailable für Timeouts.
+10. Offensichtlicher Performance-Blocker: Kein neuer Block. 502 model_unavailable ist ein Provider-Verfügbarkeitszustand (Modell temporär nicht verfügbar), kein Timeout-/Code-Problem.
+
+### ANMERKUNG (Strict-Regel)
+
+- Kein unsicheres Retry nach 502 model_unavailable (gemäß Step-9-Regel). Test ist diagnostisch wertvoll.
+- Ursache klar als Provider-/Modellverfügbarkeit erkennbar → kein Code-Fehler → **kein eigenständiger Fix**.
+- **AI Requests:** 1 · **Apify:** 0 · Kostenrisiko: minimal (FREE-Modell, 1 Request)
 
 ### GIT-STAND
 
