@@ -15,7 +15,7 @@ COMPLETE
 ## Step-Matrix
 
 | Step | Thema | Status | Commit |
-| 1 | Bestandsanalyse | COMPLETE | (nach Push aktualisiert) |
+| 1 | Bestandsanalyse | COMPLETE | 0079993 |
 | 2 | ... | PENDING | — |
 
 ## Recovery-Regel
@@ -63,7 +63,7 @@ AI-Live-Requests, keine Provider-/Env-/Secret-Änderungen.
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 0079993
 
 ### AUSGANGSLAGE (Git)
 
