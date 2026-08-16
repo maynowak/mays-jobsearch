@@ -20,7 +20,7 @@ COMPLETE
 | 3 | Fallback-/Performance-Verifikation | COMPLETE | 7fb86df |
 | 4 | Development Live Test | COMPLETE | 6e7cc5d |
 | 5 | Preview / Abnahme | COMPLETE | 3133446 |
-| 6 | Merge-Vorbereitung | COMPLETE | (nach Push aktualisiert) |
+| 6 | Merge-Vorbereitung | COMPLETE | 410c095 |
 | 7 | Merge nach main | PENDING | — |
 
 ## Recovery-Regel
@@ -471,7 +471,7 @@ Commit: 3133446
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 410c095
 
 ### GIT-ZUSTAND (tatsächlich, geprüft)
 
