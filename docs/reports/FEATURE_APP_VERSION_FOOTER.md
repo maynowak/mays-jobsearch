@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 6
+Step 7
 
 Aktueller Status:
 COMPLETE
@@ -21,7 +21,7 @@ COMPLETE
 | 4 | Tests | COMPLETE | d5fa838 |
 | 5 | Development Live Test | COMPLETE | c6238d5 |
 | 6 | Preview / Abnahme | COMPLETE | 131f48f |
-| 7 | Merge-Vorbereitung | PENDING | — |
+| 7 | Merge-Vorbereitung | COMPLETE | (nach Push aktualisiert) |
 | 8 | Merge nach main | PENDING | — |
 | 9 | Production | PENDING | — |
 | 10 | Feature-Branch schließen | PENDING | — |
@@ -351,6 +351,94 @@ Commit: 131f48f
 - `npm run build` → ok
 - `git status` / `git diff --check` / Secret Audit → sauber
 - Temporäre Abnahme-Dateien entfernt; keine Screenshots committet.
+
+### GIT-STAND
+
+- Branch: `feature/app-version-footer`
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 7 — Merge-Vorbereitung
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### 1. BRANCH- UND REMOTE-CHECK
+
+- Aktueller Branch: `feature/app-version-footer`
+- Feature HEAD: `03eec1c` (`docs: record step 6 commit in feature report`)
+- `origin/feature/app-version-footer`: `03eec1c` — identisch mit lokalem HEAD (synchron, nichts zu pushen aus Code-Änderungen; nur Report-Update in diesem Step)
+- `main` (lokal): `0da8d7b`
+- `origin/main`: `0da8d7b` — identisch mit lokalem `main`
+- Gemeinsame Basis `git merge-base feature/app-version-footer origin/main`: `0da8d7b` == aktueller `main`-HEAD
+- **`git merge-base --is-ancestor origin/main HEAD` → JA**: Feature-Branch liegt direkt auf dem aktuellen `main` (11 Commits voraus, fast-forward möglich). main ist NICHT weitergelaufen, seit der Branch erstellt wurde.
+- Bewertung: Kein Rebase/Merge erforderlich — Feature basiert bereits auf dem aktuellen Stand von `main`. Keine Historie umgeschrieben.
+
+### 2. FEATURE-SCOPE
+
+`git diff --stat origin/main...HEAD` → 15 Dateien, +644/−17:
+
+- `buildInfo.ts` (neu) — Build-Info-Injektion (Version aus package.json, VERCEL_*-Env, Git-Fallback)
+- `src/lib/appInfo.ts` (neu) + `src/components/Footer.tsx` (neu) — Feature-Code
+- `src/App.tsx` — Inline-Footer durch `<Footer />` ersetzt
+- `vite.config.ts`, `vitest.config.ts`, `tsconfig.node.json`, `src/vite-env.d.ts` — Build-/Typ-Konfiguration
+- `src/i18n.tsx` — Key `footer.version` (de/en)
+- `src/styles.css` — `.footer-version`-Style
+- `src/lib/appInfo.test.ts` (neu), `src/components/Footer.test.tsx` (neu), `src/App.test.tsx` (erweitert) — Tests
+- `docs/reports/FEATURE_APP_VERSION_FOOTER.md` (neu) — Feature-Report
+- `docs/reports/TEST_SAFETY_PHASE1_CURRENT.md` — Step-1-Bestandsanalyse dieses Features (Commit `99c2fac`), kein Fremdinhalt
+
+**Keine fachfremden Änderungen**: keine Provider-/Matching-/Cache-/Apify-/Safety-/Job-Source-Änderungen (`git diff --name-status ... -- api/ package.json package-lock.json vercel.json src/hooks src/types.ts src/api.ts` → leer). Keine Dependency-Änderungen. Keine Secrets. Keine temporären Dateien im Diff.
+
+### 3. DATEI- UND GIT-CHECK
+
+- `git status`: Working Tree sauber (nichts staged/modified). Es existieren zwei dauerhaft untracked Dateien: `ROOT_CAUSE_ASSESSMENT.md` und `tests/screenshotsdev/` — beides KEINE Feature-Artefakte, bewusst unversioniert (seit vor dem Feature vorhanden), NICHT Teil des Feature-Diffs, nicht entfernt (keine temporären Feature-Dateien).
+- `git diff --check origin/main...HEAD` → sauber (keine Whitespace-Fehler)
+- `git diff --check` (working tree) → sauber
+- Keine untracked Test-/Screenshot-/Temp-Dateien aus diesem Feature.
+
+### 4. TESTS
+
+- `npm test` → 15 Files, 107 Tests passed (identische Anzahl wie Step 6 — keine Änderung dokumentiert)
+- `npx tsc -b` → ok
+- `npm run build` → ok
+
+### 5. SECRET AUDIT
+
+`git diff origin/main...HEAD` auf Muster geprüft:
+
+- `EDENAI_API_KEY`, `EDENAI_DEV_API_KEY`, `OPENROUTER_API_KEY`, `APIFY_API_TOKEN`, `UPSTASH_*`, `sk-`/`eyJ`/`ghp_`/`gho_`/`xox*`, `BEGIN (RSA|OPENSSH|PRIVATE)`, `password=`/`secret=`/`token=`-Werte, `.env`-Inhalte → **keine Treffer**
+- Einzige `process.env`-Nutzung im Diff: `process.env.PORT` (bestehende Vite-Config) und `process.env.VERCEL_ENV`/`VERCEL_GIT_COMMIT_SHA`/`VERCEL_GIT_COMMIT_REF` (Feature-Intent: öffentliche Build-Metadaten).
+- Die 2 Regex-Treffer im Audit sind beschreibender Text im Feature-Report („keine API-Keys, Tokens …"), keine echten Werte.
+- Ergebnis: **keine Secret-Werte im Feature-Diff.**
+
+### 6. DEPLOYMENT-IDENTITÄT
+
+- Feature HEAD (aktuell): `03eec1c`
+- Letzter getesteter Preview-Commit: `6c6708d`
+- Preview Deployment: `mays-job-matcher-bai9rg1g3-maymilly`
+- Feature HEAD ist 2 Commits weiter als der Preview-Commit (`131f48f` test, `03eec1c` docs). Beides sind Report-/Dokumentations-Commits NACH dem Preview-Deployment — es gab KEINE Code-Änderung seit dem getesteten Preview-Build.
+- Korrekte Formulierung: Der aktuelle HEAD wurde NICHT erneut Preview-getestet (nur reine Docs-Commits nach dem Test). Der geprüfte Preview-Stand (`6c6708d`) ist inhaltlich identisch mit dem aktuellen Code-Stand.
+
+### 7. PRODUKTIONSSTATUS
+
+- NICHT deployed. NICHT Production getestet. NICHT Preview neu deployed.
+- Production bleibt unverändert (kein Deployment ausgelöst).
+- `main` bleibt unverändert (`0da8d7b` lokal == `0da8d7b` origin/main).
+- Feature-Branch enthält den geprüften Footer (Komponente, appInfo/buildInfo, Tests, Report).
+
+### 8. MERGE-ENTSCHEIDUNG
+
+Alles grün:
+
+- Branch: `feature/app-version-footer` @ `03eec1c`, liegt direkt auf `origin/main` (`0da8d7b`, fast-forward möglich)
+- Feature-Diff: 15 Dateien, ausschließlich Feature-Scope, keine Fremdänderungen
+- Tests: 107/107 passed · TypeScript: grün · Build: grün
+- Secret Audit: sauber
+- Preview-Teststand: Deployment `mays-job-matcher-bai9rg1g3-maymilly`, Build `6c6708d`, Footer live geprüft
+- Bekannte Unterschiede Preview-Commit vs. Feature HEAD: nur 2 Dokumentations-Commits (kein Code)
+
+**Merge-Bereitschaft: JA (merge-ready).** Wichtig: merge-ready ≠ merged. Merge nach main erfolgt erst in Step 8 auf ausdrückliche Freigabe.
 
 ### GIT-STAND
 
