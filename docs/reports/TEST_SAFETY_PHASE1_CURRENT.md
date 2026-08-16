@@ -5,6 +5,7 @@
 - Step 2.4-B (Vercel Dev Blocker: Yarn) — **BLOCKED** (neuer Blocker: `@vercel/static-build` Port-Detection)
 - Branch: `fix/vercel-dev-runtime` — Diagnose des Port-Konflikts (COMPLETE)
 - Vercel Dev Port Fix — **BLOCKED** (Dev-/vercel dev-Tests erfolgreich, aber Production-Build bricht: `TS2580` — `@types/node` fehlt)
+- Step 2.4-B.3 Type-Support — **RUNNING** (freigegeben: `npm i -D @types/node`, vorheriger Commit `bd4a4b0`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -349,3 +350,41 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Commit: **NICHT durchgeführt** — Build-Verifikation nicht bestanden (TS2580)
 - git status / git diff / git diff --check / Secret Audit: geprüft, sauber (keine Secrets)
 - Nächster Schritt: Entscheidung erforderlich (z.B. `@types/node` als devDependency freigeben, oder alternativer typsicherer Port-Zugriff)
+
+## Step 2.4-B.3 — Type-Support für Vite/Node Config
+- Branch: `fix/vercel-dev-runtime`
+- Current Step: `npm i -D @types/node` — `process.env.PORT` in `vite.config.ts` typisieren
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `bd4a4b0`
+- Freigabe: ausschließlich `npm i -D @types/node`; keine anderen Dependency-/Version-/package.json-/lock-Änderungen manuell
+
+### Substep 1 — Dependency hinzufügen
+- Status: **COMPLETE**
+- `npm i -D @types/node` → 2 Pakete added, 0 vulnerabilities
+- Geänderte Dateien: `package.json` (devDependencies), `package-lock.json`
+
+### Substep 2 — Tests
+- Status: **COMPLETE**
+- `npm test` → **88/88 Tests passed** (13 Files)
+
+### Substep 3 — Production Build
+- Status: **COMPLETE**
+- `npx tsc -b` → Exit 0 (TS2580 behoben)
+- `npm run build` → Exit 0, Vite Build erfolgreich (dist/index.html, assets)
+
+### Substep 4 — `vercel dev`
+- Status: **COMPLETE**
+- Vercel CLI startet stabil, **keine Port-Detection-Fehlermeldung**
+- Vite bindet auf dynamischen Vercel-Port (Log: `http://localhost:38577/`)
+- `> Success! Build completed` / `> Ready! Available at http://localhost:3000`
+- Proxy-Request: `GET http://localhost:3000/` → **HTTP 200 in 0.16s**
+- Dynamischer Vercel-Port funktioniert (Vite lauscht auf 38577, Proxy auf 3000)
+
+### Dokumentation
+- External Requests: **Keine** (kein EdenAI/OpenRouter/Apify, kein Preview/Production Deploy)
+- Cost Risk: **Keines**
+- Production Status: **Nicht berührt** (kein Production Deploy)
+
+### Checkpoint
+- Commit: `fix: support dynamic vercel dev port` (folgt im Checkpoint-Schritt)
+- git status / git diff / git diff --check / Secret Audit: durchzuführen
