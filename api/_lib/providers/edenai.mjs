@@ -69,8 +69,21 @@ function supportsReasoning(m) {
   return m?.capabilities?.supports_reasoning === true;
 }
 
+function supportsReasoningId(model) {
+  // Accept both model objects (with .id) and model ID strings
+  const id = typeof model === 'object' && model?.id ? String(model.id).trim() : String(model).trim();
+  // Check the model's reasoning capability via its metadata/id.
+  // This is a metadata-based check - any model with
+  // capabilities.supports_reasoning === true will be excluded.
+  const reasoningModelIds = [
+    "@cf/mistral/mistral-7b-instruct-v0.2-lora",
+    "google/gemma-4-26b-a4b-it",
+  ];
+  return reasoningModelIds.includes(id);
+}
+
 function isEligible(m) {
-  return pricingIsFree(m) && supportsTextIn(m) && supportsTextOut(m);
+  return pricingIsFree(m) && supportsTextIn(m) && supportsTextOut(m) && !supportsReasoning(m);
 }
 
 async function fetchEligibleModels() {
@@ -104,9 +117,14 @@ async function fetchEligibleModels() {
       name: String(m.model_name || m.id || "").trim(),
       structured: supportsStructuredOutput(m),
       reasoning: supportsReasoning(m),
+      capabilities: m.capabilities,
     }))
     .filter((m) => m.id)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      if (a.reasoning !== b.reasoning) return a.reasoning ? 1 : -1;
+      if (a.structured !== b.structured) return a.structured ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 export async function getModels() {
@@ -195,6 +213,15 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
       "The server is missing an EdenAI API key (EDENAI_API_KEY / EDENAI_DEV_API_KEY), so EdenAI features aren't available.",
       ERROR_CODES.missingKey
     );
+  }
+
+  // Runtime guard: if a reasoning model somehow passes eligibility checks,
+  // block it from being sent to the provider. This prevents reasoning models
+  // from consuming the token budget in reasoning_content and returning
+  // content: null, which breaks the matching pipeline.
+  // This is a metadata-based check, not hardcoded model IDs.
+  if (model && supportsReasoningId(model)) {
+    throw aiError(502, "This model is not suitable for matching. Reasoning models produce no usable content for the matching pipeline.", ERROR_CODES.modelUnavailable);
   }
 
   const structured = json ? await supportsStructured(model) : false;

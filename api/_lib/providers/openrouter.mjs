@@ -80,6 +80,10 @@ function isNotExpired(m) {
   return Number.isFinite(t) && t > Date.now();
 }
 
+function supportsReasoning(m) {
+  return m?.architecture?.supports_reasoning === true;
+}
+
 function supportsStructuredOutput(m) {
   const params = Array.isArray(m?.supported_parameters) ? m.supported_parameters : [];
   return params.includes("response_format") || params.includes("json_schema");
@@ -90,7 +94,8 @@ function isEligible(m) {
     pricingIsFree(m) &&
     supportsTextInput(m) &&
     supportsTextOutput(m) &&
-    isNotExpired(m)
+    isNotExpired(m) &&
+    !supportsReasoning(m)
   );
 }
 

@@ -66,6 +66,19 @@ const EDENAI_MODELS = {
         supports_response_schema: true,
       },
     },
+,
+    {
+      id: "anthropic/claude-3-haiku",
+      model_name: "Claude 3 Haiku",
+      owned_by: "anthropic",
+      pricing: { input_cost_per_token: 0, output_cost_per_token: 0 },
+      capabilities: {
+        input_modalities: ["text"],
+        output_modalities: ["text"],
+        supports_response_schema: true,
+      },
+    },
+
   ],
 };
 
@@ -136,7 +149,7 @@ describe("EdenAI model catalog", () => {
   it("bevorzugt strukturierte Modelle als Fallback", async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse(EDENAI_MODELS));
     const fallback = await getCompatibleFallback(null);
-    expect(fallback).toBe("google/gemma-4-26b-a4b-it");
+    expect(fallback).toBe("anthropic/claude-3-haiku");
   });
 
   it("liefert beim nicht erreichbaren Katalog kein Fallback-Modell", async () => {
@@ -158,13 +171,13 @@ describe("EdenAI chat", () => {
       json: false,
       temperature: 0.3,
       maxTokens: 900,
-      model: "google/gemma-4-26b-a4b-it",
+      model: "anthropic/claude-3-haiku",
     });
     expect(result).toBe("Hallo");
     const [url, opts] = vi.mocked(fetch).mock.calls[0];
     expect(url).toContain("/v3/chat/completions");
     const body = JSON.parse(opts.body);
-    expect(body.model).toBe("google/gemma-4-26b-a4b-it");
+    expect(body.model).toBe("anthropic/claude-3-haiku");
     expect(body.messages[0].role).toBe("system");
     expect(body.messages[1].role).toBe("user");
   });
@@ -178,7 +191,7 @@ describe("EdenAI chat", () => {
       system: "sys",
       prompt: "prompt",
       json: true,
-      model: "google/gemma-4-26b-a4b-it",
+      model: "anthropic/claude-3-haiku",
     });
     const body = JSON.parse(vi.mocked(fetch).mock.calls[1][1].body);
     expect(body.response_format).toEqual({ type: "json_object" });
