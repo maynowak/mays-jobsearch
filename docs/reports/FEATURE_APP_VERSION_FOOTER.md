@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 8
+Step 9
 
 Aktueller Status:
 COMPLETE
@@ -23,7 +23,7 @@ COMPLETE
 | 6 | Preview / Abnahme | COMPLETE | 131f48f |
 | 7 | Merge-Vorbereitung | COMPLETE | df23c0c |
 | 8 | Merge nach main | COMPLETE | 657f9cc |
-| 9 | Production | PENDING | — |
+| 9 | Production | COMPLETE | (nach Push aktualisiert) |
 | 10 | Feature-Branch schließen | PENDING | — |
 
 ## Recovery-Regel
@@ -476,6 +476,66 @@ Commit: 657f9cc
 
 - KEINE Production-Änderung in Step 8. Kein Deployment, kein Production-Test.
 - Git-Identität und Deployment-Identität weiterhin getrennt behandelt; der Report-Commit selbst verändert den getesteten Feature-Code nicht.
+
+### GIT-STAND
+
+- Branch: `main`
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 9 — Production Deployment
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### DEPLOYMENT (GENAU EIN PRODUCTION-DEPLOYMENT)
+
+- **Production URL**: https://mays-job-matcher.vercel.app (Alias)
+- **Deployment URL**: https://mays-job-matcher-r2bqjjuf3-maymilly.vercel.app
+- **Deployment ID**: `dpl_6QtUJ1mKeFSDJPNDsmG3va9fYJwZ`
+- **Environment**: Production (target `production`, `vercel deploy --prod`)
+- **Source Branch**: `main`
+- **Git main HEAD (vor Deployment)**: `77ad38d` — identisch mit `origin/main`
+- **Production Deployment Commit (Vercel-API meta.githubCommitSha)**: `77ad38dea6afa1777e3b69648baecc81a518f470` == Git main HEAD
+- **Deployment Commit Message**: `docs: record step 8 commit in feature report`
+- **Deployment Status**: READY
+- KEIN Feature-Branch-/Preview-Deployment. Source = main.
+
+### PRODUCTION-IDENTITÄT
+
+- **Git main HEAD** = `77ad38d`
+- **Production Deployment Commit** = `77ad38d`
+- **Footer Build SHA** (im Production-Artefakt) = `77ad38d`
+- **Ergebnis: Production Deployment Commit == Footer Build SHA ✓** (Build-Zeit-Injektion: der Footer zeigt die Identität des tatsächlich deployten Production-Artefakts, nicht einen späteren Git-HEAD).
+
+### PRODUCTION FOOTER TEST (Chrome Headless, 1440×900, gerenderter DOM)
+
+- Footer sichtbar auf `/top` (Matcher-Layout; Landing-Route rendert bewusst keinen Footer).
+- **Version** = `2.0.0` · **Environment** = `production` · **Build SHA** = `77ad38d` → `Version 2.0.0 · production · 77ad38d`
+- Arbeitnow-/Arbeitsagentur-Links intakt (`https://www.arbeitnow.com/`, `https://www.arbeitsagentur.de/`, `target="_blank" rel="noopener noreferrer"`).
+- Deutsch: `Jobangebote … Bewertungen sind KI-generierte Vorschläge — prüfe immer die Original-Anzeige.` + `Version 2.0.0 · production · 77ad38d`
+- Englisch: `Job listings … Scores are AI-generated suggestions — always check the original posting.` + `Version 2.0.0 · production · 77ad38d`
+- Layout: Footer ist letztes Element (bottom 1410 == scrollHeight 1410), volle Breite, keine horizontale Überlagerung, keine Overlays.
+- Console-/Netz-Fehler (CDP Eventlog): **keine relevanten** Fehler/Warnungen/Exceptions/Net-Failures.
+
+### AI / PROVIDER
+
+- **KEIN** AI-Smoke-Test ausgeführt. Kein EdenAI-, kein OpenRouter-Request, kein Apify-Run, kein Profil-/Job-Matching. Production-System nicht unnötig belastet. (Einziger API-Aufruf: die reine App-Logik der Seite selbst.)
+
+### SECRET AUDIT (nach Deployment)
+
+- Keine Secrets im Git (Diff seit Step 8 nur Report-Doku).
+- Keine Secrets im Footer / im gerenderten Production-DOM (sk-, eyJ-, Bearer-, api-key-, token-Muster: keine Treffer).
+- Keine API-Keys/Tokens/vollständige Env-Werte sichtbar.
+
+### ERGEBNIS (Checkpoint)
+
+- Production Ready, Source main, Deployment Commit == Footer Build SHA, DE/EN korrekt, Footer korrekt, keine Secrets, keine unerwarteten Änderungen.
+- `npm test` → 107/107 (drei Läufe grün; ein früherer Flake-Lauf dokumentiert), `tsc` ok, Build ok.
+
+### KOSTENRISIKO
+
+- Ein Production-Deployment (im bestehenden Vercel-Hosting enthalten). Keine AI-/Provider-Kosten durch diesen Feature-Test (0 AI-Requests, 0 Apify-Runs).
 
 ### GIT-STAND
 
