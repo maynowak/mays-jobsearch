@@ -21,7 +21,7 @@ COMPLETE
 | 4 | Development Live Test | COMPLETE | 6e7cc5d |
 | 5 | Preview / Abnahme | COMPLETE | 3133446 |
 | 6 | Merge-Vorbereitung | COMPLETE | 410c095 |
-| 7 | Merge nach main | COMPLETE | (nach Push aktualisiert) |
+| 7 | Merge nach main | COMPLETE | 2709a5d |
 | 8 | Production Deployment | PENDING | — |
 
 ## Recovery-Regel
@@ -534,7 +534,7 @@ Merge-ready = **JA**
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 2709a5d
 
 ### MERGE (Fast-forward)
 
