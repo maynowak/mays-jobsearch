@@ -955,3 +955,29 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
   - keine neuen Deployments ausgelöst (nur GET/`target ls`, keine Deploy-Command) ✅
 - Kein Commit/Push erforderlich (keine Einstellung geändert)
 - **STOPP**
+
+## Feature: App Version Footer — Step 1 Bestandsanalyse
+- Status: **COMPLETE**
+- Branch: `feature/app-version-footer` (ausgehend von `main` == `origin/main` == `0da8d7b`; Vercel-Verifizierungs-Report zuvor auf `main` committed)
+- **Ausgangszustand vor Branch-Erstellung**:
+  - aktueller Branch: `main` ✅
+  - HEAD == `1221985` ✅
+  - `origin/main` == `1221985` ✅
+  - working tree: sauber bis auf dauerhafte untracked Dateien (`ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`) ✅
+  - `git diff --check`: sauber ✅
+- **Bestandsanalyse**:
+  - `package.json` `version`: **`2.0.0`** (auch `docs/DESIGN_SYSTEM.md` nennt Version 2.0)
+  - Keine zentrale Build-/Versions-Konfiguration im Frontend (kein `import.meta.env`, kein `process.env` in `src/`); `vite-env.d.ts` nur `/// <reference types="vite/client" />`
+  - **Footer existiert bereits** als Inline-Markup in `src/App.tsx:221-233` (`<footer className="footer">` mit Arbeitnow/Arbeitsagentur-Links und i18n-Texten `footer.pre`/`footer.post`) — KEIN eigene Footer-Komponente
+  - Layout-Struktur: `App.tsx` (Single-Page, `route` landing/matcher), Navbar + Main + Footer inline; kein `<main>`-Wrapper für alle Routen (landing gibt frühzeitig zurück)
+  - i18n: `src/i18n.tsx` — `LangProvider`, `useLang()`, Dicts `en`/`de` mit `t(key, vars)`, Vars via `{name}`-Substitution; bestehende Footer-Keys vorhanden
+  - Vercel-/Git-Metadaten: im Backend genutzt (`process.env.VERCEL_ENV` in `api/_lib/providers/edenai.mjs`); Vercel Projekt `autoExposeSystemEnvs: true` → `VERCEL_ENV`, `VERCEL_GIT_COMMIT_SHA`, `VERCEL_GIT_COMMIT_REF` zuverlässig in Vercel-Deployments verfügbar (Build-/Runtime-Zeit); lokal/`vercel dev` NICHT automatisch gesetzt → Fallback nötig
+  - Design-System: `src/styles.css` — CSS-Custom-Properties in `:root` (Design-Tokens `--muted`, `--border`, `--bg`, `--surface`, `--brand` …); Footer-Style `.footer` existiert (`text-align: center`, `color: var(--muted)`, `font-size: 0.88rem`)
+  - Tests: Vitest + Testing Library; Komponenten-Tests in `src/components/*.test.tsx` (z. B. `JobSources.test.tsx`), `App.test.tsx`; kein Footer-Test vorhanden
+  - CHANGELOG: `docs/CHANGELOG.md` (Versionen 1.0–2.0), keine laufende Version im Footer
+- **Verfügbarkeit Build/Runtime**:
+  - App-Version: aus `package.json` (`2.0.0`) zuverlässig verfügbar → einzige Quelle
+  - Commit/Build: `VERCEL_GIT_COMMIT_SHA` + `VERCEL_GIT_COMMIT_REF` + `VERCEL_ENV` in Vercel (Build-Zeit injizierbar); lokal `git rev-parse HEAD` als Dev-Fallback (Build-Zeit); wenn weder Vercel-Env noch git verfügbar → sicherer Fallback (z. B. "dev")
+- **Entscheidung (noch keine Umsetzung)**: Bestehende Strukturen bevorzugen — inline Footer in `App.tsx` erweitern oder in dedizierte Footer-Komponente extrahieren (im Einklang mit vorhandener Component-Struktur); Version aus `package.json`, Git-/Build-Info via Vercel-System-Env mit Fallback. Details in Step 2.
+- Commit: `docs: record version footer feature analysis`
+- **STOPP nach Step 1**
