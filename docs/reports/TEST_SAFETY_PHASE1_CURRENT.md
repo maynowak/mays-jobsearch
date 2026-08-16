@@ -107,14 +107,15 @@ Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Mo
 
 ## Vercel Environment — Step 2
 - Current Step: Vercel Target klären
-- Step Status: **COMPLETE**
+- Step Status: **BLOCKED**
+- Reason: Step 2.4 blocked — Development Environment Variables (EDENAI_DEV_API_KEY) cannot be accessed locally; `vercel dev` fails (yarn not available); no Development deployment exists; `vercel invoke` not a valid CLI command; cannot proceed to Step 3 per workflow rules
 - Step 2.1: Vercel project connected — Project `mays-job-matcher-9agrxtwnu` (user `maymilly`), Production branch `main`, known Environments: `Development` and `Production`
 - Step 2.2: Development vs Preview vs Production — `vercel dev` fails (yarn not available), `vercel deploy` produces Preview Deployment which is NOT Development per workflow rules. Cannot falsely claim Preview as Development.
 - Step 2.3: Environment variable scopes — EDENAI_DEV_API_KEY: PRESENT on Vercel Development scope, ABSENT locally. OPENROUTER_API_KEY: PRESENT on Vercel Production scope, ABSENT locally. APIFY_API_TOKEN: PRESENT on Vercel Production scope, ABSENT locally. No secret values exposed.
 - Previous Step Commit: e5c2aa1 (kept intact)
-- Current Step: committed below
-- Open Points: None for Step 2
-- Next Step: Step 3 — only nach Prüfung/Freigabe.
+- Current Step: blocked — Step 2.4 cannot be completed without valid Development workflow
+- Open Points: Development Environment Variable Access — cannot verify EDENAI_DEV_API_KEY locally without Vercel Development deployment
+- Next Step: STOPP — cannot proceed to Step 3 per workflow rules
 
 ## Vercel Environment
 - EDENAI_DEV_API_KEY: ABSENT (local .env files gitignored; would be set on Vercel Development scope)
