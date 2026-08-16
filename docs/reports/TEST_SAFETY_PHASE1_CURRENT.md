@@ -9,7 +9,7 @@
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
-- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.4 — EdenAI Sandbox Request, letzter Commit `5fd3a88`)
+- Step 3 — Development AI Live Test — **BLOCKED** (Substep 3.5 — Safety Observer nicht verdrahtet, letzter Commit `d039e57`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -588,3 +588,43 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint
 - Commit: `test: verify edenai development sandbox request`
 - Next Step: Step 3.5 — Safety Observer Live verifizieren
+
+## Step 3.5 — Safety Observer Live verifizieren
+- Current Step: Prüfen, ob der in Step 3.4 ausgeführte Provider-Request vom Safety Observer erkannt wurde (LIVE-Verifikation)
+- Step Status: **BLOCKED**
+- Vorheriger Commit: `d039e57` — test: verify edenai development sandbox request
+- Umgebung: `vercel dev` (Development Runtime), Proxy `http://localhost:3000`
+
+### Erwartetes Event
+- `edenai_provider_request`
+- Environment-Typ: `SANDBOX_REQUEST`
+- NICHT `PRODUCTION_REQUEST`
+
+### Live-Verifikation (durchgeführt)
+- Methode: temporärer Serverless-Endpoint (`api/tmp-safety-check.mjs`), der den IST-Zustand des Observers im laufenden Dev-Server liest (via `getSafetyObserver()` aus `api/_lib/providers/edenai.mjs` und `openrouter.mjs`); danach gelöscht (nicht committet)
+- Ergebnis (HTTP 200):
+  - `edenaiObserverRegistered: false`
+  - `openrouterObserverRegistered: false`
+  - `keyMode: "sandbox"` (EdenAI im Development-Kontext korrekt als Sandbox erkannt)
+
+### Befund
+- **BLOCKER**: Das Event `edenai_provider_request` wurde beim 3.4-Request NICHT emittiert, weil kein Observer registriert ist
+- Ursache (code-seitig): `api/_lib/providers/edenai.mjs:230` — `if (safetyObserver)` → Event wird nur bei gesetztem Observer emittiert; `setSafetyObserver()` wird im Betrieb nirgends aufgerufen (nur in `tests/api/safety-observer.test.mjs`)
+- Der Safety Observer ist definiert (API existiert, Tests grün), aber **nicht verdrahtet** — es gibt keine Instanz, die registriert wird, und keinen Beobachtungs-Endpoint/Log-Sink für die Events
+- Safety-Events: **nicht beobachtbar** im laufenden System
+- Kein Production-Event aufgetreten (kein `PRODUCTION_REQUEST`)
+
+### Regelkonformes Vorgehen (kein Workaround)
+- Laut Step-3.5-Regel: "Wenn das Event nicht beobachtbar ist: → BLOCKED. Nicht selbst neue Observer-Logik bauen."
+- Keine Provider-Code-Änderung, keine neue Observer-Infrastruktur, keine Cache-/Job-Source-Änderung vorgenommen
+- Temporäre Datei `api/tmp-safety-check.mjs`: nach Live-Verifikation gelöscht, nicht committet
+
+### Sicherheits-/Kostenstand
+- External Requests (Step 3.4): 1 × EdenAI Chat-Completions (Sandbox) — dokumentiert
+- Cost Risk: NONE (Sandbox)
+- Production Key: **NOT USED** · OpenRouter: **NOT USED** · Apify: **NOT USED**
+- Keine Secret-Werte im Report, kein Secret-Audit-Fund
+
+### Checkpoint
+- Commit: `docs: report safety observer blocked in development`
+- Next Step: **STOPP** — Step 3.6 (Development Live Test Abschluss) NICHT automatisch fortgesetzt; Abschluss erst nach Klärung des Observer-Blockers freigeben
