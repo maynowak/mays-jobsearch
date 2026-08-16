@@ -23,7 +23,7 @@ COMPLETE
 | 6 | Preview / Abnahme | COMPLETE | 131f48f |
 | 7 | Merge-Vorbereitung | COMPLETE | df23c0c |
 | 8 | Merge nach main | COMPLETE | 657f9cc |
-| 9 | Production | COMPLETE | (nach Push aktualisiert) |
+| 9 | Production | COMPLETE | e935ade |
 | 10 | Feature-Branch schließen | PENDING | — |
 
 ## Recovery-Regel
@@ -486,7 +486,7 @@ Commit: 657f9cc
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: e935ade
 
 ### DEPLOYMENT (GENAU EIN PRODUCTION-DEPLOYMENT)
 
