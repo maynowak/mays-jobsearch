@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 3
+Step 4
 
 Aktueller Status:
 COMPLETE
@@ -18,7 +18,8 @@ COMPLETE
 | 1 | Bestandsanalyse | COMPLETE | 0079993 |
 | 2 | Timeout-Werte senken + Fehler-Codes + Client-Unterscheidung | COMPLETE | 9eb4813 |
 | 3 | Fallback-/Performance-Verifikation | COMPLETE | 7fb86df |
-| 4 | Development Live Test | PENDING | — |
+| 4 | Development Live Test | COMPLETE | (nach Push aktualisiert) |
+| 5 | Preview / Abnahme | PENDING | — |
 
 ## Recovery-Regel
 
@@ -288,3 +289,102 @@ KEIN Retry. `model_unavailable` ebenfalls nicht enthalten → wie dokumentiert (
 
 - Commit: siehe Step-Matrix (nach Push aktualisiert)
 - Status vor Commit: Branch `feature/ai-matching-timeout`, HEAD == origin == vorheriger Checkpoint
+
+## Step 4 — Development Live Test
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### DEVELOPMENT RUNTIME
+
+- `vercel dev --listen 3000` gestartet (Vercel CLI 58.11.0, Node 22.23.1)
+- Vite-Dev-Server auf dynamischem Port (46405), App auf **http://localhost:3000**
+- Hürde: Vorhandenes `dist/` (Build-Artefakt) ließ Vercel das Framework als „static" erkennen
+  → „Failed to detect a server running on port 37269". Nach temporärer Verschiebung von `dist/`
+  startete Vercel Dev sauber; `dist/` wurde danach wiederhergestellt.
+- Endpunkte: `GET /` HTTP 200, `GET /api/models` HTTP 200, `GET /api/model` HTTP 200,
+  Vite-Module `/src/main.tsx`, `/src/App.tsx` HTTP 200.
+- KEIN Preview, KEIN Production.
+
+### UMGEBUNG (Development-Env)
+
+- Nur `EDENAI_DEV_API_KEY` in Development verfügbar → EdenAI Sandbox aktiv
+- OpenRouter: KEIN Key in Development → `enabled()` false → deaktiviert
+- `/api/model` → `cloudflare/@cf/google/gemma-7b-it-lora`; `/api/models` listet 4 EdenAI-Modelle
+- Testfall: 3 inline-Jobs im POST-Body (kein Apify-Aufruf; `jobs` wurden mitgeliefert)
+
+### TATSÄCHLICHE AI-VERSUCHE (Live, beobachtet)
+
+Versuch 1 (Default gemma-7b-lora):
+EdenAI, `cloudflare/@cf/google/gemma-7b-it-lora`, HTTP 502, code=bad_ai_response, 7.0 s
+
+Versuch 2 (attempt=2, llama-2-7b-lora):
+EdenAI, `cloudflare/@cf/meta-llama/llama-2-7b-chat-hf-lora`, HTTP 502, code=bad_ai_response, 6.4 s
+
+Versuch 3 (attempt=3, gemma-2b-lora):
+EdenAI, `cloudflare/@cf/google/gemma-2b-it-lora`, HTTP 502, code=bad_ai_response, 5.5 s
+
+Einzelnachweis über direktes Provider-Probe-Skript (EDENAI_DEV_API_KEY, Development):
+- Default-Modell: OK 4.20 s, Inhalt = Konversation („Hello! It's nice to meet you…") statt JSON
+- llama-2-7b-lora: OK 1.60 s, Inhalt = Konversation statt JSON
+
+Kernbefund: Die Sandbox-Modelle antworten schnell mit Konversationstext statt Matching-JSON.
+`parseMatches` findet kein JSON → `bad_ai_response` (502). Das ist ein Modell-/Prompt-Verhalten
+der Sandbox, KEIN Timeout/Netzwerk/model_unavailable.
+
+### ZEITMESSUNG
+
+BEFORE (beobachteter Production-Screenshot-Befund, NICHT reproduzierbar):
+- Versuch 1 ≈ 56.7 s, Versuch 2 ≈ 27.0 s, Versuch 3 ≈ 41.9 s, Gesamt ≈ 125+ s
+- Ursache laut Step-1-Analyse: hohe Provider-Timeout-Werte + serielle Client-Kette
+
+AFTER (tatsächliche Development-Messung):
+- Einzelne Versuche: 5.5 / 6.4 / 7.0 s (je `bad_ai_response`)
+- Kein Versuch erreichte den neuen Timeout (EdenAI 30 s / OpenRouter 25 s)
+- Gesamt (3 sequenzielle Requests): ~18.9 s kumuliert
+
+Vergleichsbarkeit: **NICHT direkt vergleichbar** (Production vs. Sandbox-Modelle,
+unterschiedliche Modell-Reihen). Die Development-Zeiten sind aber deutlich unter den
+beobachteten Production-Werten und weit unter den neuen Timeout-Grenzen.
+
+### FALLUNTERSCHEIDUNG (Live)
+
+- A) `model_unavailable` (502): **trat live nicht natürlich auf** → bereits in Step 3
+  gezielt getestet (Fallback aktiv). Im Live-Test nicht erzwingen.
+- B) `timeout` (504): **trat live nicht auf** → kein Versuch erreichte die 30/25-s-Grenze.
+  In Step 3 gezielt getestet (Client stoppt, kein weiterer Versuch).
+- C) `network_error` (502): **trat live nicht auf** → Step-3-Tests decken das ab.
+
+Alle beobachteten Live-Fehler waren `bad_ai_response` (nicht-transient im Client →
+`NON_TRANSIENT_CODES`; kein unnötiger weiterer Fallback-Versuch veranlasst).
+
+### UI-VERHALTEN
+
+- Suche startet (App + Module laden), UI serviert (HTTP 200)
+- Kein Browser-Automation-Test durchgeführt; Live-Check über API/HTTP-Ebene
+- Kein unnötig langer Spinner beobachtbar (einzelne Versuche 5.5–7 s, weit unter Timeout)
+- Ergebnis: sinnvoller Fehler (`bad_ai_response` mit freundlicher Meldung) statt Hänger
+
+### EXTERNE REQUESTS / KOSTEN
+
+- Verwendet: `EDENAI_DEV_API_KEY` (Sandbox) für die Live-Match-Requests + 2 direkte Probe-Aufrufe
+- Kein OpenRouter-Request (kein Production-Key, OpenRouter in Development deaktiviert)
+- Kein Apify-Aufruf (Testfall mitgelieferte `jobs`)
+- Kein Production-Request, keine Production-Daten geändert
+- Kostenrisiko: minimal (nur Sandbox-Key; keine kostenpflichtigen Modelle/Requests)
+
+### REGRESSION (abschließendes Gate)
+
+- Gezielte Timeout/Fallback-Tests: 38/38 grün
+- `npm test`: **116/116 grün** (16 Dateien)
+- `npx tsc -b`: grün
+- `npm run build`: grün
+
+### SECRET AUDIT
+
+- Vor Commit: `git diff --check` sauber, Secret-Audit sauber (keine Keys in Diff/Report)
+
+### GIT-STAND
+
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
