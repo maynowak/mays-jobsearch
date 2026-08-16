@@ -13,6 +13,7 @@
 - Step 4 — Production Deploy — **COMPLETE** (letzter Commit `4d7f497`, Deployment `mays-job-matcher-7am6njn2h`, URL `https://mays-job-matcher.vercel.app`, Report-Commit `efc3c9d`)
 - Step 4-AI — Production AI Smoke Test — **COMPLETE** (letzter Commit `dd72434`, Abschluss-Commit `76a7f54`)
 - GitHub Default Branch — **COMPLETE** (auf `main` korrigiert, nur Repository-Einstellung, kein Commit nötig)
+- Vercel Production Branch — **COMPLETE** (Verifizierung: bereits `main`, keine Änderung nötig)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -932,4 +933,25 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
   - Vercel Production unverändert (kein Deploy ausgelöst) ✅
 - **Dokumentation**: "GitHub Default Branch auf main korrigiert."
 - Kein künstlicher Commit erzeugt (nur Repository-Einstellung geändert) — Report-Änderung bleibt optional/ungepusht
+- **STOPP**
+
+## Vercel Production Branch — Verifizierung
+- Status: **COMPLETE** (keine Änderung erforderlich)
+- Ausgangslage: GitHub Default Branch = `main`; lokaler Branch = `main`; `origin/main` == `1221985` (Report-Commit aus Checkpoint GitHub Default Branch); Production zuvor erfolgreich getestet
+- **VORHER geprüft (read-only)**:
+  - Vercel Project = `mays-job-matcher` (`prj_wdzpRfrGENG82Txi9Sa9QTzKruk9`, Scope `maymilly`) ✅
+  - `vercel target ls` (Branch-Tracking): **Production → `main`**, Preview → "All unassigned git branches", Development → "Accessible via CLI" ✅
+  - Projekt-API (`/v9/projects/{id}`): **kein `link`/`productionBranch`-Eintrag**, kein `feature/react-rebuild` im gesamten Projekt-JSON (einzige `feature`-Erwähnung = Web-Analytics-Flag) ✅
+  - Alle Production-Deployments: `githubCommitRef = main` (50 Deployments geprüft) ✅
+  - GitHub Default = `main` ✅
+- **Befund**: Das Projekt hat **keine explizite Production-Branch-Override** (`link` leer). Vercel folgt damit automatisch dem Git-Default-Branch des Repos — nach der Korrektur des GitHub Default Branch auf `main` (voriger Checkpoint) ist der Vercel Production Branch **bereits `main`**.
+- **Geänderte Aktion**: **keine** — die Einstellung ist bereits korrekt; keine Modifikation nötig (das in der Community beschriebene Dashboard-Endpoint `/v9/projects/{id}/branch` existiert für dieses Projekt nicht / 404)
+- **Dokumentation**: "Vercel Production Branch auf main korrigiert." → präzisiert: bereits `main`, Verifizierung abgeschlossen
+- **Verifiziert danach**:
+  - Vercel Production Branch Tracking = `main` ✅
+  - GitHub Default = `main` ✅
+  - `origin/main` == HEAD == `1221985` (unverändert) ✅
+  - bestehende Production unverändert (Deployment `mays-job-matcher-7am6njn2h`, URL `https://mays-job-matcher.vercel.app`) ✅
+  - keine neuen Deployments ausgelöst (nur GET/`target ls`, keine Deploy-Command) ✅
+- Kein Commit/Push erforderlich (keine Einstellung geändert)
 - **STOPP**
