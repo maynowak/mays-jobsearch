@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 1
+Step 2
 
 Aktueller Status:
 COMPLETE
@@ -16,7 +16,8 @@ COMPLETE
 
 | Step | Thema | Status | Commit |
 | 1 | Bestandsanalyse | COMPLETE | 0079993 |
-| 2 | ... | PENDING | — |
+| 2 | Timeout-Werte senken + Fehler-Codes + Client-Unterscheidung | COMPLETE | 9eb4813 |
+| 3 | ... | PENDING | — |
 
 ## Recovery-Regel
 
@@ -154,3 +155,65 @@ Commit: 0079993
 
 - Branch: `feature/ai-matching-timeout`
 - Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 2 — Timeout-Werte senken, Fehler-Codes unterscheiden, Client-Fallback anpassen
+
+Status: COMPLETE
+
+Commit: 9eb4813
+
+### ÄNDERUNGEN (3 Bausteine)
+
+1. **Timeout-Werte gesenkt (sicher unter Vercel `maxDuration: 60`)**
+   - EdenAI: `TIMEOUT_MS` 55 s → **30 s** (`api/_lib/providers/edenai.mjs`)
+   - OpenRouter: `TIMEOUT_MS` 40 s → **25 s** (`api/_lib/providers/openrouter.mjs`)
+
+2. **Timeout/Netzwerk als eigene Fehler-Codes (A/B-Trennung)**
+   - In beiden Providern wird der fetch-Catch-Zweig nicht mehr pauschal auf `model_unavailable`
+     gemappt:
+     - Timeout/Abort (`AbortSignal.timeout`) → **`timeout`**, HTTP 504
+     - Netzwerkfehler (fetch-Reject) → **`network_error`**, HTTP 502
+   - `ERROR_CODES.timeout` / `ERROR_CODES.networkError` existierten bereits
+     (`errors.mjs`), werden aber jetzt erstmals im Chat-Pfad tatsächlich gesetzt.
+
+3. **Client-Unterscheidung 502 vs. Timeout (`src/api.ts`)**
+   - `timeout` und `network_error` zu `NON_TRANSIENT_CODES` hinzugefügt.
+   - Effekt: `withModelFallback` fällt bei einem Timeout/Netzwerkfehler **nicht mehr zurück**
+     (kein unnötiger weiterer `/api/match`-Request), sondern reicht den Fehler sofort weiter.
+   - Sofortiges 502 / `model_unavailable` bleibt weiterhin transient → Fallback-Kette (wie bisher).
+
+### VERHALTENSBESCHREIBUNG NACH DER ÄNDERUNG
+
+- **A) Modell sofort tot (502, `model_unavailable`):** weiterhin schneller Fallback im Client.
+- **B) Timeout (`timeout`, 504) / Netzwerk (`network_error`, 502):** Client stoppt sofort,
+  kein weiterer Request → die serielle Fallback-Kette wird NICHT mehr mit Timeouts multipliziert.
+- **C) Erfolg:** unverändert.
+
+### ERWARTETE AUSWIRKUNG
+
+- Worst-Case-Wartezeit eines einzelnen Versuchs sinkt von bis zu 55 s auf max. 30 s (EdenAI)
+  bzw. 25 s (OpenRouter), deutlich unter Vercel `maxDuration: 60`.
+- Timeouts verursachen keine multiplizierte Wartezeit mehr (vorher bis zu 3 × 55 s ≈ 165 s
+  in der Client-Kette).
+
+### TESTS
+
+- `tests/api/edenai-provider.test.mjs`: Timeout → `timeout`/504, Netzwerk → `network_error`/502
+- `tests/api/openrouter-provider.test.mjs` (NEU): Timeout → `timeout`/504, Netzwerk →
+  `network_error`/502, 402 → `insufficient_credits`, Model-Katalog-Filterung, Chat-Request
+- `src/api.test.ts`: `withModelFallback` fällt bei `timeout` und `network_error` NICHT zurück
+- Gesamt: 116/116 Tests grün, `tsc -b` + `vite build` grün, `git diff --check` sauber,
+  Secret Audit sauber
+
+### RISIKEN / HINWEISE
+
+- Timeout-Senkung kann langsamere, aber erfolgreiche Provider-Antworten abschneiden
+  (Trade-off Responsiveness vs. Erfolgsquote) — bewusst gewählt zugunsten Responsiveness.
+- Verhaltensänderung im Client (kein Fallback bei Timeout) ist bewusst: Ein Timeout ist
+  meist provider-/netzwerkweit; ein weiterer Versuch verlängert nur die Wartezeit.
+- `model_unavailable` bleibt für den Server-Loop unverändert (kein Providerwechsel im
+  Server; siehe `tests/api/providers.test.mjs:115`).
+
+### GIT-STAND
+
+- Commit: 9eb4813 (gepusht)
