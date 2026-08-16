@@ -105,7 +105,35 @@ Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Mo
 - Open Points: Vercel CLI access needed to verify actual scoped environment variables
 - Next Step: Step 2 — Vercel Target klären (Development vs Preview)
 
+## Vercel Environment — Step 2
+- Current Step: Vercel Target klären
+- Step Status: **BLOCKED**
+- Reason: `vercel dev` fails — requires `yarn` which is not available in this environment (`sh: 1: yarn: not found`)
+- `vercel deploy` would produce a Preview Deployment, which is NOT Development (Development ≠ Preview per workflow rules)
+- Cannot falsely claim Preview as Development
+- Previous Step Commit: e5c2aa1 (kept intact)
+- Current Step: NOT committed (STOPPED per workflow)
+- Open Points: Need yarn installation or alternative Development workflow for Vercel
+- Next Step: STOPPED — cannot proceed without valid Development workflow
+
 ## Vercel Environment
+- EDENAI_DEV_API_KEY: ABSENT (local .env files gitignored; would be set on Vercel Development scope)
+- EDENAI_API_KEY: ABSENT (local .env files gitignored; would be set on Vercel Production scope)
+- OPENROUTER_API_KEY: ABSENT (placeholder only in .env.example; would be set on Vercel if configured)
+- APIFY_API_TOKEN: ABSENT (not set locally; would be set on Vercel if Apify enabled)
+- VERCEL_ENV: not locally determinable (set on Vercel dashboard)
+- Scope correctness: cannot verify without Vercel CLI access; keys must not be mixed across scopes
+
+## Step 2 — Vercel Target klären
+- Current Step: Vercel Target klären
+- Step Status: **BLOCKED**
+- Reason: `vercel dev` fails — requires `yarn` which is not available in this environment (`sh: 1: yarn: not found`)
+- `vercel deploy` would produce a Preview Deployment, which is NOT Development (Development ≠ Preview per workflow rules)
+- Cannot falsely claim Preview as Development
+- Previous Step Commit: e5c2aa1 (kept intact)
+- Current Step: NOT committed (STOPPED per workflow)
+- Open Points: Need yarn installation or alternative Development workflow for Vercel
+- Next Step: STOPPED — cannot proceed without valid Development workflow
 - EDENAI_DEV_API_KEY: ABSENT (local .env files gitignored; would be set on Vercel Development scope)
 - EDENAI_API_KEY: ABSENT (local .env files gitignored; would be set on Vercel Production scope)
 - OPENROUTER_API_KEY: ABSENT (placeholder only in .env.example; would be set on Vercel if configured)
