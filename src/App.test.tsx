@@ -630,3 +630,18 @@ describe("UX-/Datenquellen-Runde: Tests E, F, G, K, L, M", () => {
     expect(vi.mocked(fetchMatches).mock.calls.length).toBe(matchCalls);
   });
 });
+
+describe("Footer im App-Layout (Regression)", () => {
+  it("Footer wird im Matcher-Layout gerendert und zeigt die Build-Identität", () => {
+    renderApp();
+    const footer = document.querySelector(".footer");
+    expect(footer).toBeTruthy();
+    expect(footer?.textContent).toContain("Version");
+  });
+
+  it("Footer zeigt Version aus package.json und kein hartcodiertes Label", () => {
+    renderApp();
+    const footer = document.querySelector(".footer-version");
+    expect(footer?.textContent).toContain("Version");
+  });
+});

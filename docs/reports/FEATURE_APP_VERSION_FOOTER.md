@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 3
+Step 4
 
 Aktueller Status:
 COMPLETE
@@ -18,7 +18,7 @@ COMPLETE
 | 1 | Bestandsanalyse | COMPLETE | 99c2fac |
 | 2 | Versionstrategie | COMPLETE | 884b94e |
 | 3 | Implementierung | COMPLETE | ac7199f |
-| 4 | Tests | PENDING | — |
+| 4 | Tests | COMPLETE | — |
 | 5 | Development Live Test | PENDING | — |
 | 6 | Preview / Abnahme | PENDING | — |
 | 7 | Merge-Vorbereitung | PENDING | — |
@@ -191,6 +191,50 @@ Commit: ac7199f
 - `npm test` → 13 Files, 88 Tests passed.
 - `npx tsc -b` → ok.
 - `npm run build` → ok; Bundle enthält exakt `2.0.0`/`development`/`884b94e`/`feature/app-version-footer` (lokaler Build-Stand als Fallback verifiziert), keine `__APP_*`-Platzhalter übrig.
+
+### GIT-STAND
+
+- Branch: `feature/app-version-footer`
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 4 — Tests
+
+Status: COMPLETE
+
+Commit: —
+
+### NEUE/GEÄNDERTE TESTDATEIEN
+
+- `src/lib/appInfo.test.ts` (neu) — prüft die Build-Identität (Version, Env, Commit, Branch) gegen `package.json` und die eingefrorenen `define`-Konstanten.
+- `src/components/Footer.test.tsx` (neu) — rendert Footer, prüft Version/Env/Commit-Anzeige, Links, i18n de/en, Deployment ≠ Git HEAD, Lokaler Fallback, alle drei Environments.
+- `src/App.test.tsx` (erweitert) — Regression: Footer wird im Matcher-Layout gerendert und zeigt die Build-Identität.
+
+### TESTFÄLLE
+
+1. VERSION: `appInfo.version` === `package.json.version` (keine zweite Versionsquelle), Semver-Format.
+2. VERCEL BUILD-METADATEN: Footer zeigt Env-Label (development/preview/production) und Commit-SHA korrekt an.
+3. LOKALER FALLBACK: `development`-Env-Fallback, `dev`-Commit-Fallback werden dargestellt.
+4. DEPLOYMENT ≠ GIT HEAD: Footer zeigt die zur Build-Zeit eingefrorene SHA (884b94e) an, NICHT den späteren HEAD (1221985) — testet mit einer explizit übergebenen Build-SHA, unabhängig vom aktuellen Git-Stand.
+5. ENVIRONMENT: development/preview/production jeweils getrennt geprüft, keine echten Secrets.
+6. FOOTER: rendert, zeigt Version, Env, Commit; bestehende Inhalte und Arbeitnow-/Arbeitsagentur-Links bleiben erhalten.
+7. I18N: de + en, bestehende Übersetzungen funktionsfähig, keine hardcodierten UI-Texte.
+8. REGRESSION: bestehende App-Tests unverändert grün.
+
+### BESONDERE PRÜFUNG DEPLOYMENT ≠ GIT HEAD
+
+- `Footer.test.tsx` "Deployment ≠ Git HEAD": übergebene Build-SHA `884b94e` wird angezeigt, `1221985` (späterer HEAD) taucht NICHT auf. Der Test hängt nicht von einer Identität von Build- und Git-HEAD ab.
+- `appInfo.test.ts` "stabil": `appInfo` wird beim Modul-Load eingefroren und nicht aus dem aktuellen Git neu gelesen.
+
+### ERGEBNISSE
+
+- `npm test` → 15 Files, 107 Tests passed (vorher 13/88; neu: appInfo + Footer + App-Regression)
+- `npx tsc -b` → ok
+- `npm run build` → ok
+- Secret Audit → keine API-Keys, Tokens, Secrets oder Env-Werte im Diff/Testcode
+
+### VERBLEIBENDE RISIKEN
+
+- Lokaler `dev`-Fallback (kein Git) ist nur als reine Anzeige-Logik im Footer getestet; die `buildInfo()`-Fallback-Kette (Vercel → git → dev) wird beim realen Build geprüft, nicht als Unit-Test (Git-Kommando ist im jsdom-Test nicht reproduzierbar). Kein funktionales Risiko fürs Feature.
 
 ### GIT-STAND
 
