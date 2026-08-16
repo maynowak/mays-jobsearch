@@ -10,7 +10,8 @@
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
 - Step 3 — Development AI Live Test — **COMPLETE** (letzter Commit `44ccde8`, Abschluss-Commit `4d7f497`)
-- Step 4 — Production Deploy — **COMPLETE** (letzter Commit `4d7f497`, Deployment `mays-job-matcher-7am6njn2h`, URL `https://mays-job-matcher.vercel.app`, Report-Commit folgt)
+- Step 4 — Production Deploy — **COMPLETE** (letzter Commit `4d7f497`, Deployment `mays-job-matcher-7am6njn2h`, URL `https://mays-job-matcher.vercel.app`, Report-Commit `efc3c9d`)
+- Step 4-AI — Production AI Smoke Test — **RUNNING** (Substep 4.1 — Production Model Check, letzter Commit `efc3c9d`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -792,3 +793,36 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Commit: `docs: record production deployment`
 - Step 4 = **COMPLETE**
 - **PRODUCTION LIVE — WARTET AUF WEITERE ANWEISUNG**
+
+## Step 4-AI — Production AI Smoke Test
+- Current Step: Production-AI-Workflow kontrolliert testen (Substeps 4.1 → 4.4), bewusster Production-AI-Smoke-Test
+- Step Status: **RUNNING** (Substep 4.1 abgeschlossen, 4.2 folgt)
+- Production URL: `https://mays-job-matcher.vercel.app`
+- Production Deployment: `mays-job-matcher-7am6njn2h-maymilly.vercel.app`
+- Aktueller Commit: `efc3c9d` — docs: record production deployment
+
+### Substep 4.1 — Production Model Check
+- `/api/models` → **HTTP 200** (1.84s)
+- `/api/model` → **HTTP 200** (1.87s)
+- Provider: OpenRouter (`enabled: true`, `configured: true`) + EdenAI (`enabled: true`, `configured: true`)
+- Anzahl Modelle: **23**
+- defaultModel: `openai/gpt-4o-mini`
+- fallbackModel: `dots-studio/dots-3-note-preview:free`
+- recommendedModel: `dots-studio/dots-3-note-preview:free`
+- fallbackMaxAttempts: 3
+- Aufgelöstes Modell: `dots-studio/dots-3-note-preview:free` (OpenRouter) — **im Katalog**, hat isEligible-Filter passiert → **FREE + NON-REASONING** (nicht reasoning, daher matching-eligible)
+- Kein Reasoning-Modell als Matching-Modell aufgelöst → **kein Blocker**
+- Modellkonfiguration NICHT geändert
+
+### Development vs Production — Modellauflösung
+- Development (Step 3): `cloudflare/@cf/google/gemma-7b-it-lora` (EdenAI)
+- Production (Step 4.1): `dots-studio/dots-3-note-preview:free` (OpenRouter)
+- **Unterschiedlich** — erwartet: In Production ist OpenRouter konfiguriert (OPENROUTER_API_KEY) und Provider-Reihenfolge `[openrouter, edenai]` wählt OpenRouter; Development hatte nur EdenAI (OpenRouter disabled)
+- Beide Modelle FREE + NON-REASONING, beide matching-eligible
+
+### Hinweis (nur Observation, keine Änderung)
+- Katalog enthält auch `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` — wird von der bestehenden Metadata-basierten isEligible-Logik geführt; NICHT verändert, NICHT aufgelöst als Matching-Modell
+
+### Checkpoint 4.1
+- Commit: `test: verify production model catalog`
+- Next Step: 4.2 — Ein kontrollierter Production AI Request
