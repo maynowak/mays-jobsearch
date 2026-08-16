@@ -83,6 +83,30 @@ This document defines the project phases and the sprint backlog aligned with the
 
 ---
 
+## Sprint 2.2 Model Availability / Health Check
+
+🟡 Planned (Backlog-Hinweis aus Feature „AI Matching Timeout & Fallback“, Abschluss 2026-08-16)
+
+Hintergrund: Der Production-AI-Live-Test (Step 9) zeigte, dass der Modellkatalog verfügbare
+Modelle listet, ein Modell beim tatsächlichen Request aber temporär mit `model_unavailable`
+antworten kann.
+
+Idee:
+
+- UI lädt sofort; Availability-Prüfung läuft im Hintergrund.
+- Ergebnis wird gecacht; Model-Combobox zeigt danach den tatsächlichen Modellstatus.
+- Nicht bei jedem Seitenaufruf alle Modelle einzeln anfragen.
+- Free-Modelle bevorzugen bzw. Kosten kontrollieren; keine unnötigen Provider-Requests, keine
+  künstliche Last.
+- Während einer laufenden Matching-Suche ist die Model-Combobox deaktiviert
+  (Seitenaufbau → UI sofort verfügbar → Background Availability Check → Modellstatus aktualisieren;
+  Suche startet → Combobox deaktivieren → Matching läuft → fertig → Combobox wieder aktivieren).
+
+Hinweis: Kein Bestandteil des abgeschlossenen Timeout-Features; separat von `main` als neuer
+Feature-/Analyse-Branch umzusetzen.
+
+---
+
 ## Notes
 
 - Follow the rules in `docs/PROJECT_RULES.md` and `docs/AI_CONTEXT.md`.

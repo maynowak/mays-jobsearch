@@ -693,3 +693,40 @@ Commit: 1b2d9ba
 ### GIT-STAND
 
 - Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Abschluss — Feature fachlich abgeschlossen (2026-08-16)
+
+Das Feature **AI Matching Timeout & Fallback Responsiveness** ist fachlich abgeschlossen:
+
+- Implementierung vollständig (Steps 1–2)
+- Verifikation/Regression grün (Step 3)
+- Development Live Test (Step 4)
+- Preview-Abnahme (Step 5)
+- Merge-Vorbereitung + Fast-forward-Merge nach `main` (Steps 6–7)
+- Production-Deployment + Smoke Test (Step 8)
+- Genau 1 kontrollierter Production-AI-Live-Test (Step 9)
+- Keine weitere Codeänderung für dieses Feature vorgesehen
+
+Technischer Endstand:
+
+- Timeouts: EdenAI 30 s, OpenRouter 25 s; Fehlercodes `model_unavailable` / `timeout` / `network_error`.
+- Client: `model_unavailable` transient (Fallback möglich), `timeout`/`network_error` → kein unnötiger weiterer Request.
+- Production enthält den Timeout-Code (via Vercel File API belegt).
+- Production-Live-Ergebnis: Gesamtzeit 20.3 s, HTTP 502, `model_unavailable`, Provider OpenRouter,
+  Modell `dots-studio/dots-3-note-preview:free` (FREE), 1 Attempt, kein Fallback (nur 1 Provider enabled),
+  kein Timeout, kein network_error, Apify 0, AI Requests 1.
+- Vergleich: „Der kontrollierte Production-Test benötigte 20,3 s und lag damit deutlich unter dem zuvor
+  beobachteten Production-Wert von ~125+ s." (alter Wert nur beobachtet, nicht reproduzierbar,
+  Bedingungen nicht identisch)
+
+Follow-up (nur Backlog, NICHT implementiert — in `docs/ROADMAP.md` Sprint 2.2):
+
+- **Model Availability / Health Check**: UI lädt sofort, Background Availability Check, gecachtes
+  Ergebnis, Model-Combobox zeigt tatsächlichen Status, Free-Modelle bevorzugen, keine unnötigen
+  Provider-Requests, keine künstliche Last.
+- **Matching-UI-Lock**: Model-Combobox während laufender Matching-Suche deaktivieren.
+
+Offen:
+
+- Step 10 (Branch-Cleanup) ist **PENDING** und wird separat freigegeben.
+- Feature-Branch `feature/ai-matching-timeout` bleibt offen (nicht löschen).
