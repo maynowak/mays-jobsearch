@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 7
+Step 8
 
 Aktueller Status:
 COMPLETE
@@ -22,7 +22,7 @@ COMPLETE
 | 5 | Development Live Test | COMPLETE | c6238d5 |
 | 6 | Preview / Abnahme | COMPLETE | 131f48f |
 | 7 | Merge-Vorbereitung | COMPLETE | df23c0c |
-| 8 | Merge nach main | PENDING | — |
+| 8 | Merge nach main | COMPLETE | (nach Push aktualisiert) |
 | 9 | Production | PENDING | — |
 | 10 | Feature-Branch schließen | PENDING | — |
 
@@ -443,4 +443,41 @@ Alles grün:
 ### GIT-STAND
 
 - Branch: `feature/app-version-footer`
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 8 — Merge nach main
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### MERGE-METHODE
+
+- **Fast-forward Merge** (`git merge --ff-only`), kein Merge-Commit, kein Rebase, keine History-Rewrites.
+- Vor dem Merge verifiziert: `git merge-base --is-ancestor origin/main HEAD` → JA (main nicht weitergelaufen, fast-forward möglich).
+- Vorheriger Feature-Stand: `ee84836` (`docs: record step 7 commit in feature report`)
+- Neuer main-Stand: `ee84836` (identisch mit Feature-Stand — reiner Fast-forward, kein zusätzlicher Code)
+- main HEAD nach Merge: `ee84836`
+- `origin/main` vor Push: `0da8d7b` → nach Push in diesem Step aktualisiert
+
+### FEATURE-CODE VOLLSTÄNDIG IN MAIN
+
+- Merge-Stat: 15 Dateien geändert (+732/−17), alle Feature-Dateien übernommen (buildInfo.ts, Footer.tsx, appInfo.ts + Tests, Configs, Report).
+
+### TESTS / BUILD / AUDIT (auf main, nach Merge)
+
+- `npm test`: 3 von 4 Läufen 107/107 passed. Der erste Lauf direkt nach dem Merge zeigte 1 flaky Test-Fehler (106/107); die folgenden Läufe (17:53:21, 17:53:33, 17:53:40) waren konsistent 107/107 grün — kein reproduzierbarer Fehler, kein Code-Seitiges Problem erkennbar (Flake dokumentiert).
+- `npx tsc -b` → ok
+- `npm run build` → ok
+- `git diff --check` → sauber
+- Secret Audit (Diff `0da8d7b..HEAD`): keine Secret-Werte; einziger Regex-Treffer ist beschreibender Audit-Text im Report.
+
+### PRODUKTION
+
+- KEINE Production-Änderung in Step 8. Kein Deployment, kein Production-Test.
+- Git-Identität und Deployment-Identität weiterhin getrennt behandelt; der Report-Commit selbst verändert den getesteten Feature-Code nicht.
+
+### GIT-STAND
+
+- Branch: `main`
 - Commit: siehe Step-Matrix (nach Push aktualisiert)
