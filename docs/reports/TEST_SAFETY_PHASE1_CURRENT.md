@@ -8,6 +8,7 @@
 - Vercel Dev Port Fix — **COMPLETE** (Commit `ebabc1c`)
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
+- Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit folgt)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -418,3 +419,56 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Secret Audit: **PASS** — keine Secrets im Git
 - **`EDENAI_DEV_API_KEY`-Hinweis**: wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der eigentliche Development AI-Live-Test ist der nächste separate Step.
 - Next Step: **Step 3 — Development AI Live Test** (separat freizugeben)
+
+## Step 3.1 — Development Environment Live Check
+- Current Step: Verifizieren, dass `vercel dev` im Vercel DEVELOPMENT-Kontext läuft und die Development Environment für den späteren EdenAI-Sandbox-Test bereitsteht
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `2ab98e5` — docs: complete vercel development workflow
+- NOCH KEIN AI-REQUEST
+
+### Prüfung 1 — `vercel dev` starten / Runtime
+- Status: **COMPLETE**
+- `vercel dev` startet stabil, **keine Port-Detection-Fehlermeldung**
+- Vercel CLI 58.11.0 → Vercel Development Runtime aktiv
+- Vite 8.2.1 bindet auf dynamischen Port (z.B. 39499, 39095)
+- `> Success! Build completed` / `> Ready! Available at http://localhost:3000`
+
+### Prüfung 2 — Proxy HTTP 200
+- Status: **COMPLETE**
+- `GET http://localhost:3000/` → **HTTP 200** (via Proxy)
+
+### Prüfung 3 — Development-Kontext / EDENAI_DEV_API_KEY
+- Status: **COMPLETE**
+- Methode: temporäre Serverless-Function (`api/tmpdevcheck.mjs`, ohne Secret-Werte) über den `vercel dev`-Proxy ausgeführt, danach gelöscht (nicht committet)
+- Ergebnis:
+  - `edenaiDevApiKey`: **PRESENT** — `EDENAI_DEV_API_KEY` ist im Development-Kontext vorhanden
+  - `vercelEnv`: UNKNOWN (Vercel CLI setzt `VERCEL_ENV` in `vercel dev` lokal nicht — bekanntes CLI-Verhalten, kein Fehler)
+  - `nodeEnv`: UNKNOWN
+- KEINE Secret-Werte ausgegeben — nur Status (PRESENT/ABSENT/UNKNOWN)
+
+### Prüfung 4 — Production-Key nicht verwendet
+- Status: **COMPLETE**
+- `edenaiApiKey`: **UNKNOWN/ABSENT** im Development-Kontext — `EDENAI_API_KEY` (Production-Scope) wird nicht geladen
+- Kein Production-Key für diesen Test verwendet
+
+### Prüfung 5 — OpenRouter/Apify nicht verwendet
+- Status: **COMPLETE**
+- `openrouterApiKey`: UNKNOWN/ABSENT im Development-Kontext — nicht verwendet
+- `apifyApiToken`: UNKNOWN/ABSENT im Development-Kontext — nicht verwendet
+- Keine OpenRouter-Requests, keine Apify-Runs
+
+### Dokumentation
+- Development Runtime: **aktiv** (`vercel dev`, Port 3000 Proxy, dynamischer Vite-Port)
+- URL/Port: `http://localhost:3000` (Proxy), dynamischer Vite-Port (nicht geheim)
+- EDENAI_DEV_API_KEY: **PRESENT** (im Development-Kontext)
+- Production Key: **NOT USED**
+- OpenRouter: **NOT USED**
+- Apify: **NOT USED**
+- External Requests: **NONE**
+- Cost Risk: **NONE**
+- Temporäre Datei `api/tmpdevcheck.mjs` + `api/_tmp-dev-env-check.mjs`: erstellt für Status-Check, danach **gelöscht**, nicht committet
+
+### Checkpoint
+- Commit: `docs: verify development environment for live test` (folgt)
+- git status / git diff / git diff --check / Secret Audit: durchzuführen
+- Next Step: **STOPP** — Step 3.2 (Development AI Live Test) separat freizugeben
