@@ -77,6 +77,40 @@ describe("withModelFallback", () => {
     expect(attempts).toEqual(["a"]);
   });
 
+  it("fällt bei timeout NICHT zurück (kein weiterer Request)", async () => {
+    const attempts: (string | null)[] = [];
+    await expect(
+      withModelFallback({
+        initialModel: "a",
+        availableModels: ["b"],
+        recommendedModel: null,
+        request: async (model) => {
+          attempts.push(model);
+          throw new ApiError("timeout", 504, "timeout");
+        },
+      })
+    ).rejects.toMatchObject({ code: "timeout" });
+
+    expect(attempts).toEqual(["a"]);
+  });
+
+  it("fällt bei network_error NICHT zurück (kein weiterer Request)", async () => {
+    const attempts: (string | null)[] = [];
+    await expect(
+      withModelFallback({
+        initialModel: "a",
+        availableModels: ["b"],
+        recommendedModel: null,
+        request: async (model) => {
+          attempts.push(model);
+          throw new ApiError("net", 502, "network_error");
+        },
+      })
+    ).rejects.toMatchObject({ code: "network_error" });
+
+    expect(attempts).toEqual(["a"]);
+  });
+
   it("wirft bei Erfolg im späteren Versuch kein Fallback-Note-Ergebnis zurück (usedFallback=true)", async () => {
     const result = await withModelFallback({
       initialModel: "a",

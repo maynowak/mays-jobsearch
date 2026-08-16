@@ -13,7 +13,7 @@ import {
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODELS_URL = "https://openrouter.ai/api/v1/models";
-const TIMEOUT_MS = 40_000;
+const TIMEOUT_MS = 25_000;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 let cache = null;
@@ -258,7 +258,13 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
   } catch (err) {
     const timedOut = Boolean(err && (err.name === "TimeoutError" || err.name === "AbortError"));
     logModelError(timedOut ? "timeout" : "network", { model, attempt });
-    throw aiError(502, "This AI model is temporarily unavailable. Please choose another model.", ERROR_CODES.modelUnavailable);
+    throw aiError(
+      timedOut ? 504 : 502,
+      timedOut
+        ? "The OpenRouter request timed out. Please try again shortly."
+        : "Couldn't reach OpenRouter. Please try again shortly.",
+      timedOut ? ERROR_CODES.timeout : ERROR_CODES.networkError
+    );
   }
 
   if (response.status === 401) {

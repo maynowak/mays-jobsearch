@@ -235,6 +235,26 @@ describe("EdenAI chat", () => {
     });
   });
 
+  it("mappt einen Timeout (AbortSignal) auf timeout statt model_unavailable", async () => {
+    vi.stubEnv("EDENAI_API_KEY", "prod-key");
+    const timeoutErr = new Error("The operation was aborted");
+    timeoutErr.name = "TimeoutError";
+    vi.mocked(fetch).mockRejectedValue(timeoutErr);
+    await expect(chat({ system: "s", prompt: "p", model: "m" })).rejects.toMatchObject({
+      code: "timeout",
+      status: 504,
+    });
+  });
+
+  it("mappt einen Netzwerkfehler auf network_error statt model_unavailable", async () => {
+    vi.stubEnv("EDENAI_API_KEY", "prod-key");
+    vi.mocked(fetch).mockRejectedValue(new TypeError("fetch failed"));
+    await expect(chat({ system: "s", prompt: "p", model: "m" })).rejects.toMatchObject({
+      code: "network_error",
+      status: 502,
+    });
+  });
+
   it("liest den Erfolgs-Response-Body nur einmal (kein doppeltes response.json)", async () => {
     vi.stubEnv("EDENAI_API_KEY", "prod-key");
     const realResponse = new Response(

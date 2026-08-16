@@ -38,6 +38,8 @@ const NON_TRANSIENT_CODES = new Set([
   "free_quota_exceeded",
   "quota_exhausted",
   "authentication_failed",
+  "timeout",
+  "network_error",
   "internal",
   "error",
 ]);

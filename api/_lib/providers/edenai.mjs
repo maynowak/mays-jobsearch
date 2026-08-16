@@ -5,7 +5,7 @@ import { aiLimitReached, countAiAttempt, countAiFailure, countAiRequest } from "
 
 const CHAT_URL = "https://api.edenai.run/v3/chat/completions";
 const MODELS_URL = "https://api.edenai.run/v3/models";
-const TIMEOUT_MS = 55_000;
+const TIMEOUT_MS = 30_000;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 let cache = null;
@@ -286,9 +286,11 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
     const timedOut = Boolean(err && (err.name === "TimeoutError" || err.name === "AbortError"));
     logModelError(timedOut ? "timeout" : "network", { model, attempt });
     throw aiError(
-      502,
-      "This AI model is temporarily unavailable. Please choose another model.",
-      ERROR_CODES.modelUnavailable
+      timedOut ? 504 : 502,
+      timedOut
+        ? "The EdenAI request timed out. Please try again shortly."
+        : "Couldn't reach EdenAI. Please try again shortly.",
+      timedOut ? ERROR_CODES.timeout : ERROR_CODES.networkError
     );
   }
 
