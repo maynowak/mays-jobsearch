@@ -1725,6 +1725,12 @@ body {
   padding: 24px 20px 40px;
 }
 
+.footer .footer-version {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+
 .footer a {
   color: var(--muted);
 }

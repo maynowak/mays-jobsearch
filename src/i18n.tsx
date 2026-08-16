@@ -152,6 +152,7 @@ const en: Dict = {
 
   "footer.pre": "Job listings",
   "footer.post": ". Scores are AI-generated suggestions — always check the original posting.",
+  "footer.version": "Version",
 };
 
 const de: Dict = {
@@ -302,6 +303,7 @@ const de: Dict = {
 
   "footer.pre": "Jobangebote",
   "footer.post": ". Bewertungen sind KI-generierte Vorschläge — prüfe immer die Original-Anzeige.",
+  "footer.version": "Version",
 };
 
 const translations: Record<Lang, Dict> = { en, de };

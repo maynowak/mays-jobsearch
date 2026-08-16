@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 2
+Step 3
 
 Aktueller Status:
 COMPLETE
@@ -16,8 +16,8 @@ COMPLETE
 
 | Step | Thema | Status | Commit |
 | 1 | Bestandsanalyse | COMPLETE | 99c2fac |
-| 2 | Versionstrategie | COMPLETE | — |
-| 3 | Implementierung | PENDING | — |
+| 2 | Versionstrategie | COMPLETE | 884b94e |
+| 3 | Implementierung | COMPLETE | — |
 | 4 | Tests | PENDING | — |
 | 5 | Development Live Test | PENDING | — |
 | 6 | Preview / Abnahme | PENDING | — |
@@ -72,7 +72,7 @@ Kurzfassung der bereits durchgeführten Analyse:
 
 Status: COMPLETE
 
-Commit: —
+Commit: 884b94e
 
 ### 1. VERSIONQUELLE
 
@@ -145,3 +145,54 @@ Commit: —
 - `src/i18n.tsx` — ggf. neue Keys (z. B. `footer.versionLabel`) de/en
 - `src/styles.css` — ggf. geringe Erweiterung des `.footer`-Styles für die Versionszeile
 - `src/vite-env.d.ts` — Typ-Deklaration für `__APP_VERSION__` etc.
+
+## Step 3 — Implementierung
+
+Status: COMPLETE
+
+Commit: —
+
+### IMPLEMENTIERTE DATEIEN
+
+- `buildInfo.ts` (neu, Wurzel) — zentrale Build-Info: liest `package.json`-Version, `VERCEL_ENV`/`VERCEL_GIT_COMMIT_SHA`/`VERCEL_GIT_COMMIT_REF`, lokalen Git-Fallback (`git rev-parse --short=7 HEAD`, `git rev-parse --abbrev-ref HEAD`), liefert die `define`-Konstanten. Gemeinsam von Vite- und Vitest-Config genutzt → einzige Quelle der Build-Identität.
+- `vite.config.ts` — injiziert `__APP_VERSION__`, `__APP_ENV__`, `__APP_COMMIT_SHA__`, `__APP_BRANCH__` via `define: buildInfo()`.
+- `vitest.config.ts` — gleiche `define`-Konstanten, damit Tests die identischen Werte sehen.
+- `tsconfig.node.json` — include erweitert um `vitest.config.ts`, `buildInfo.ts`.
+- `src/vite-env.d.ts` — Deklarationen für `__APP_VERSION__`, `__APP_ENV__`, `__APP_COMMIT_SHA__`, `__APP_BRANCH__` als `string`.
+- `src/lib/appInfo.ts` (neu) — typisierte Aggregation `{ version, env, commitSha, branch }` als `appInfo`.
+- `src/components/Footer.tsx` (neu) — Footer-Komponente: bestehende Arbeitnow-/Arbeitsagentur-Links + bestehende i18n-Keys (`footer.pre`, `footer.post`); neue Zeile `Version {version} · {env} · {commitSha}` mit neuer i18n-Key `footer.version`. Nimmt optional `info`-Prop (Partial) zum Testen unterschiedlicher Build-Identitäten; Default = `appInfo`.
+- `src/App.tsx` — Inline-`<footer>` entfernt, durch `<Footer />` ersetzt.
+- `src/styles.css` — `.footer-version`-Style (margin-top, kleinere Schrift, opacity).
+
+### VERSIONQUELLE
+
+- `package.json` → `version` (`2.0.0`) ist die einzige Quelle. Keine manuelle Versionsnummer im React-Code. Build-Zeit-Injektion über `buildInfo()`.
+
+### BUILD-IDENTITÄT (Deployment ≠ Git-HEAD)
+
+- Die Konstanten werden ZUR BUILD-ZEIT eingefroren. Ein gebautes Artefakt behält die Identität des tatsächlich gebauten Stands — unabhängig von späterem lokalen HEAD oder origin/main.
+- Deployment-Fälle:
+  - **Vercel Production/Preview**: `VERCEL_ENV`, `VERCEL_GIT_COMMIT_SHA`, `VERCEL_GIT_COMMIT_REF` vom Vercel-Build → Footer zeigt die Identität genau dieses Deployments.
+  - **Lokal / vercel dev**: Fallback auf lokales Git (kurze SHA, Branch) und `development` → klar als lokaler Build erkennbar, kein falsches Production-Label.
+  - Fallback-Kette: Vercel-Env → lokales Git → `"dev"`.
+
+### VERHALTEN PRO UMGEBUNG
+
+- **Development**: `v2.0.0 · development · <lokale Kurz-SHA>`
+- **Preview**: `v2.0.0 · preview · <Preview-Build-SHA>`
+- **Production**: `v2.0.0 · production · <Production-Build-SHA>` (kann bewusst von aktuellem HEAD abweichen — gewünscht)
+
+### SICHERHEITSPRÜFUNG
+
+- Nur öffentliche Werte: Version, Env-Label, kurze Commit-SHA, Branch-Name. Keine Secrets, keine API-Keys, keine Tokens, keine vollständigen Env-Werte im Bundle.
+
+### TESTS / BUILD
+
+- `npm test` → 13 Files, 88 Tests passed.
+- `npx tsc -b` → ok.
+- `npm run build` → ok; Bundle enthält exakt `2.0.0`/`development`/`884b94e`/`feature/app-version-footer` (lokaler Build-Stand als Fallback verifiziert), keine `__APP_*`-Platzhalter übrig.
+
+### GIT-STAND
+
+- Branch: `feature/app-version-footer`
+- Commit: siehe Step-Matrix (nach Push aktualisiert)

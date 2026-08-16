@@ -12,6 +12,7 @@ import ModelSelector from "./components/ModelSelector";
 import Status from "./components/Status";
 import Results from "./components/Results";
 import AlertCard from "./components/AlertCard";
+import Footer from "./components/Footer";
 import LetterModal from "./components/LetterModal";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
@@ -218,19 +219,7 @@ export default function App() {
         />
       )}
 
-      <footer className="footer">
-        <p>
-          {t("footer.pre")}{" "}
-          <a href="https://www.arbeitnow.com" target="_blank" rel="noopener noreferrer">
-            Arbeitnow
-          </a>
-          {" · "}
-          <a href="https://www.arbeitsagentur.de" target="_blank" rel="noopener noreferrer">
-            Arbeitsagentur
-          </a>
-          {t("footer.post")}
-        </p>
-      </footer>
+      <Footer />
     </>
   );
 }
