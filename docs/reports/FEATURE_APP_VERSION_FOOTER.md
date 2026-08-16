@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 4
+Step 5
 
 Aktueller Status:
 COMPLETE
@@ -19,7 +19,7 @@ COMPLETE
 | 2 | Versionstrategie | COMPLETE | 884b94e |
 | 3 | Implementierung | COMPLETE | ac7199f |
 | 4 | Tests | COMPLETE | d5fa838 |
-| 5 | Development Live Test | PENDING | — |
+| 5 | Development Live Test | COMPLETE | — |
 | 6 | Preview / Abnahme | PENDING | — |
 | 7 | Merge-Vorbereitung | PENDING | — |
 | 8 | Merge nach main | PENDING | — |
@@ -235,6 +235,67 @@ Commit: d5fa838
 ### VERBLEIBENDE RISIKEN
 
 - Lokaler `dev`-Fallback (kein Git) ist nur als reine Anzeige-Logik im Footer getestet; die `buildInfo()`-Fallback-Kette (Vercel → git → dev) wird beim realen Build geprüft, nicht als Unit-Test (Git-Kommando ist im jsdom-Test nicht reproduzierbar). Kein funktionales Risiko fürs Feature.
+
+### GIT-STAND
+
+- Branch: `feature/app-version-footer`
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 5 — Development Live Test
+
+Status: COMPLETE
+
+Commit: —
+
+### DEVELOPMENT RUNTIME
+
+- Start: `vercel dev` (Standardweg, Port 3000). Vite läuft auf dynamischem Vercel-Port (z. B. 39167), Vercel-Port 3000.
+- HTTP-Status: `GET /` → 200, `GET /top` → 200, `GET /api/model` → 200 (nur lokale Runtime-Probe, KEINE externen Provider).
+- App erreichbar, kein Port-Fehler.
+
+### GEFUNDENER UND BEHOBENER DEV-FEHLER (Codekorrektur in Step 5)
+
+- Symptom: Der laufende `vercel dev` lieferte `appInfo.ts` mit rohen `__APP_VERSION__`-Platzhaltern → die Browser-App wäre mit `ReferenceError` gelaufen.
+- Ursache: Vite 8 wendet die top-level `define`-Konstanten im Dev-Transform NICHT automatisch an (der `vite:define`-Transform-Handler überspringt Client-Consumer in Dev; Dev-Transforms laufen über Oxc). Build und Tests funktionierten bereits (Build-Pipeline wendet `define` an), Dev nicht.
+- Fix: `oxc: { define: buildInfo() }` zusätzlich zu `define: buildInfo()` in `vite.config.ts` und `vitest.config.ts`. Damit werden die Konstanten im Dev-Transform (Oxc) korrekt ersetzt.
+- Verifikation nach Fix: `appInfo.ts` im laufenden Dev-Build liefert `version: "2.0.0"`, `env: "development"`, `commitSha: "ef74882"`, `branch: "feature/app-version-footer"`. Tests/Build unverändert grün.
+
+### FOOTER LIVE GEPRÜFT (Chrome Headless, gerenderter DOM)
+
+- Footer sichtbar: `<footer class="footer">` + `<p class="footer-version">`.
+- Version: `Version 2.0.0` (aus package.json, live bestätigt).
+- Environment: `development` (korrekt als Dev erkennbar).
+- Build-/Commit-Identität: `ef74882` — entspricht dem tatsächlich gebauten Dev-Artefakt.
+- Bestehende Footer-Links: `Arbeitnow` → https://www.arbeitnow.com, `Arbeitsagentur` → https://www.arbeitsagentur.de, beide mit `target="_blank" rel="noopener noreferrer"`.
+- Deutsch: Footer zeigt `Jobangebote … Bewertungen sind KI-generierte Vorschläge — prüfe immer die Original-Anzeige.` (live via localStorage `mj-lang=de`-Preset verifiziert).
+- Englisch: Footer zeigt `Job listings … Scores are AI-generated suggestions …` (Default, ohne gesetztes `mj-lang`).
+- Versionszeile identisch in beiden Sprachen: `Version 2.0.0 · development · ef74882`.
+- Keine sichtbaren UI-Regressionen; keine relevanten Console-/Netz-Fehler (Chrome stderr: keine Uncaught/TypeError/ReferenceError/ERR_).
+
+### VERGLEICH GIT HEAD vs BUILD-IDENTITÄT
+
+- Aktueller Git HEAD: `ef74882`
+- Tatsächliche Build-/Runtime-Identität: `ef74882`
+- Ergebnis: identisch, weil der laufende Dev-Build den aktuellen Feature-Stand baut. Kein künstlich erzeugter Unterschied. Die Unabhängigkeit Build ≠ späterer HEAD ist durch die eingefrorenen Build-Konstanten (Build-Zeit-Injektion) und den Step-4-Test `Deployment ≠ Git HEAD` logisch abgesichert.
+
+### SICHERHEIT
+
+- Gerendertes DOM (Chrome Headless) auf Secret-Muster gescannt: keine API-Keys, Tokens, `sk-`/`eyJ`-Muster, kein `Bearer`, keine Env-Werte sichtbar. Nur öffentliche Build-Informationen (Version, Env-Label, kurze Commit-SHA, Branch).
+
+### KEINE EXTERNEN PROVIDER
+
+- Kein EdenAI/OpenRouter/Apify-Request, kein Preview-/Production-Deployment. Nur die lokale Vercel-Dev-Runtime und die Anwendung selbst.
+
+### ERGEBNISSE (Checkpoint)
+
+- `npm test` → 15 Files, 107 Tests passed
+- `npx tsc -b` → ok
+- `npm run build` → ok
+- `git status` / `git diff --check` / Secret Audit → sauber
+
+### VERBLEIBENDE RISIKEN
+
+- Keine funktionalen Risiken. Hinweis: Der `vercel dev`-Prozess ist ein Dev-Prozess; die Fallback-Werte (lokales Git) sind im Dev-Kontext die korrekte Dev-Identität. Preview/Production erhalten in Step 6/9 ihre eigenen VERCEL_*-Werte.
 
 ### GIT-STAND
 
