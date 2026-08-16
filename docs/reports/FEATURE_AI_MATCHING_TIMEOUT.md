@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 5
+Step 6
 
 Aktueller Status:
 COMPLETE
@@ -20,7 +20,8 @@ COMPLETE
 | 3 | Fallback-/Performance-Verifikation | COMPLETE | 7fb86df |
 | 4 | Development Live Test | COMPLETE | 6e7cc5d |
 | 5 | Preview / Abnahme | COMPLETE | 3133446 |
-| 6 | Merge-Vorbereitung | PENDING | — |
+| 6 | Merge-Vorbereitung | COMPLETE | (nach Push aktualisiert) |
+| 7 | Merge nach main | PENDING | — |
 
 ## Recovery-Regel
 
@@ -461,6 +462,68 @@ Commit: 3133446
   Identität nachvollziehbar (Deployment == Build == Git HEAD)
 - Frontend/UI funktioniert, keine Regression, keine Secrets exponiert
 - Preview ohne AI-Keys korrekt betreibbar (erwarteter No-Key-Zustand)
+
+### GIT-STAND
+
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 6 — Merge-Vorbereitung
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### GIT-ZUSTAND (tatsächlich, geprüft)
+
+- Aktueller Branch: `feature/ai-matching-timeout`
+- Feature HEAD: `f676040` == origin/feature/ai-matching-timeout == `f676040` (synchron)
+- main: `d9ab072` == origin/main == `d9ab072`
+- Gemeinsamer Ausgangspunkt (merge-base): `d9ab072` == main
+- **main seit Feature-Erstellung NICHT weitergelaufen** (0 Commits seit merge-base)
+- **Fast-forward möglich: JA** (Feature-Branch ist strikter Nachfahre von main)
+
+### FEATURE-SCOPE (git diff main...HEAD --stat)
+
+7 Dateien, 659 insertions / 6 deletions, ausschließlich Feature-bezogen:
+
+- `api/_lib/providers/edenai.mjs` — TIMEOUT_MS 55 s→30 s, Timeout/Netzwerk als eigene Codes (504/502)
+- `api/_lib/providers/openrouter.mjs` — TIMEOUT_MS 40 s→25 s, Timeout/Netzwerk als eigene Codes
+- `src/api.ts` — `timeout`/`network_error` zu NON_TRANSIENT_CODES (kein Client-Fallback bei Timeout)
+- `src/api.test.ts` — Client-Tests (kein Fallback bei timeout/network_error)
+- `tests/api/edenai-provider.test.mjs` — Timeout/Netzwerk-Mapping-Tests
+- `tests/api/openrouter-provider.test.mjs` (neu) — OpenRouter-Provider-Tests
+- `docs/reports/FEATURE_AI_MATCHING_TIMEOUT.md` — Feature-Report
+
+NICHT enthalten (Scope sauber): kein Footer-Feature, keine Job-Import-/Apify-/Safety-Änderungen,
+keine unrelated UI changes, keine Production-ENV-Änderungen, keine Secrets.
+
+### PREVIEW-IDENTITÄT
+
+- Preview Build/Deployment Commit: `b557632` (dpl_2kokHToLnhUG3HAaT3Txk9HDQTte)
+- Feature HEAD jetzt: `f676040`
+- Commits zwischen Preview `b557632` und HEAD `f676040`:
+  - `3133446` (test: complete preview verification for ai timeout) — nur Report
+  - `f676040` (docs: record step 5 commit in feature report) — nur Report
+- **Nur Dokumentation seit Preview** (Code-Diff b557632..HEAD = 0 Zeilen Code)
+- → Preview-Abnahme bleibt gültig, kein erneuter Preview-Test nötig
+
+### TEST-/BUILD-GATE
+
+- `npm test`: **116/116 grün** (16 Dateien)
+- `npx tsc -b`: PASS
+- `npm run build`: PASS
+- `git diff --check`: sauber
+- Secret Audit (kompletter Feature-Diff main...HEAD): sauber — keine Keys/Tokens/ENV-Werte
+
+### MERGE-READINESS
+
+Merge-ready = **JA**
+
+- Feature Branch korrekt, origin synchron
+- main-Zustand bekannt, Fast-forward möglich (bevorzugte Methode)
+- Feature-Scope sauber, keine unerwarteten Codeänderungen
+- Tests/tsc/build grün, diff-check sauber, Secret Audit sauber
+- Preview-Abnahme weiterhin gültig (nur Doku-Commits seit Preview)
 
 ### GIT-STAND
 
