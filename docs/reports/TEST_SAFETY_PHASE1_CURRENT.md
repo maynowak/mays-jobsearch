@@ -11,7 +11,8 @@
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
 - Step 3 — Development AI Live Test — **COMPLETE** (letzter Commit `44ccde8`, Abschluss-Commit `4d7f497`)
 - Step 4 — Production Deploy — **COMPLETE** (letzter Commit `4d7f497`, Deployment `mays-job-matcher-7am6njn2h`, URL `https://mays-job-matcher.vercel.app`, Report-Commit `efc3c9d`)
-- Step 4-AI — Production AI Smoke Test — **COMPLETE** (letzter Commit `dd72434`, Abschluss-Commit folgt)
+- Step 4-AI — Production AI Smoke Test — **COMPLETE** (letzter Commit `dd72434`, Abschluss-Commit `76a7f54`)
+- GitHub Default Branch — **COMPLETE** (auf `main` korrigiert, nur Repository-Einstellung, kein Commit nötig)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -914,3 +915,21 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Commit: `docs: complete production ai smoke test`
 - Step 4-AI = **COMPLETE**
 - **STOPP** — kein weiterer Step ohne neuen Auftrag
+
+## GitHub Default Branch — Korrektur
+- Status: **COMPLETE**
+- Vorheriger Zustand (geprüft, unverändert):
+  - lokaler Branch: `main`
+  - `origin/main` == HEAD == `76a7f54`
+  - Production deployed von `main` (Deployment `mays-job-matcher-7am6njn2h`)
+  - GitHub Default Branch: `feature/react-rebuild` (nicht unser Production-Stand)
+- **Geänderte Aktion**: ausschließlich die GitHub-Repository-Einstellung `default_branch` auf `main` gesetzt (REST-API PATCH, HTTP 200, authentifiziert als Repo-Owner `maynowak`)
+- NICHT geändert: keine Dateien, kein `main`, kein `feature/react-rebuild` gemergt/gelöscht, kein Commit, kein Push, kein Vercel-Deploy, keine Production-Veränderung
+- **Verifiziert danach**:
+  - GitHub `default_branch` = **main** ✅
+  - `origin/main` == HEAD == `76a7f54` (unverändert) ✅
+  - `git remote show origin`: Hauptbranch `main`; `feature/react-rebuild` + `main` weiterhin getrackt ✅
+  - Vercel Production unverändert (kein Deploy ausgelöst) ✅
+- **Dokumentation**: "GitHub Default Branch auf main korrigiert."
+- Kein künstlicher Commit erzeugt (nur Repository-Einstellung geändert) — Report-Änderung bleibt optional/ungepusht
+- **STOPP**
