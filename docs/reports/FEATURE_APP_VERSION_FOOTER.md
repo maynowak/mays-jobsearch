@@ -19,7 +19,7 @@ COMPLETE
 | 2 | Versionstrategie | COMPLETE | 884b94e |
 | 3 | Implementierung | COMPLETE | ac7199f |
 | 4 | Tests | COMPLETE | d5fa838 |
-| 5 | Development Live Test | COMPLETE | — |
+| 5 | Development Live Test | COMPLETE | c6238d5 |
 | 6 | Preview / Abnahme | PENDING | — |
 | 7 | Merge-Vorbereitung | PENDING | — |
 | 8 | Merge nach main | PENDING | — |
@@ -245,7 +245,7 @@ Commit: d5fa838
 
 Status: COMPLETE
 
-Commit: —
+Commit: c6238d5
 
 ### DEVELOPMENT RUNTIME
 
