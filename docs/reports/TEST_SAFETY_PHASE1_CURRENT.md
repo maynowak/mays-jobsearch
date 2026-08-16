@@ -90,6 +90,21 @@ Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Mo
 - .env.example contains only placeholder values
 - Test files stub env vars with dummy keys (not real secrets)
 
+## Vercel Environment — Step 1
+- Current Step: Vercel Environment Audit
+- Step Status: COMPLETE
+- Previous Step Commit: 5b5beb0 (feat: add provider safety observers)
+- Current Step Commit: e5c2aa1 (chore: vercel environment audit step 1)
+- Changed Files: docs/reports/TEST_SAFETY_PHASE1_CURRENT.md
+- Tests: 88/88 passing (no test changes in this step)
+- Build: successful (npm run build)
+- External Requests: none
+- Cost Risk: none
+- Environment: EDENAI_DEV_API_KEY ABSENT, EDENAI_API_KEY ABSENT, OPENROUTER_API_KEY ABSENT, APIFY_API_TOKEN ABSENT
+  — all local .env files gitignored; keys would be set on respective Vercel scopes
+- Open Points: Vercel CLI access needed to verify actual scoped environment variables
+- Next Step: Step 2 — Vercel Target klären (Development vs Preview)
+
 ## Vercel Environment
 - EDENAI_DEV_API_KEY: ABSENT (local .env files gitignored; would be set on Vercel Development scope)
 - EDENAI_API_KEY: ABSENT (local .env files gitignored; would be set on Vercel Production scope)
