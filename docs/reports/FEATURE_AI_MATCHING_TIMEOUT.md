@@ -23,7 +23,7 @@ COMPLETE
 | 6 | Merge-Vorbereitung | COMPLETE | 410c095 |
 | 7 | Merge nach main | COMPLETE | 2709a5d |
 | 8 | Production Deployment | COMPLETE | 1c65946 |
-| 9 | Production Performance / AI Live Test | COMPLETE | (nach Push aktualisiert) |
+| 9 | Production Performance / AI Live Test | COMPLETE | 1b2d9ba |
 | 10 | Branch-Cleanup | PENDING | — |
 
 ## Recovery-Regel
@@ -635,7 +635,7 @@ Commit: 1c65946
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: 1b2d9ba
 
 ### TEST-SETUP
 
