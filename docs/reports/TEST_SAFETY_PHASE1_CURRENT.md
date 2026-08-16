@@ -4,8 +4,8 @@
 - Recovery / Complete
 - Step 2.4-B (Vercel Dev Blocker: Yarn) — **BLOCKED** (neuer Blocker: `@vercel/static-build` Port-Detection)
 - Branch: `fix/vercel-dev-runtime` — Diagnose des Port-Konflikts (COMPLETE)
-- Vercel Dev Port Fix — **BLOCKED** (Dev-/vercel dev-Tests erfolgreich, aber Production-Build bricht: `TS2580` — `@types/node` fehlt)
-- Step 2.4-B.3 Type-Support — **RUNNING** (freigegeben: `npm i -D @types/node`, vorheriger Commit `bd4a4b0`)
+- Vercel Dev Port Fix — **COMPLETE** (Commit `ebabc1c`)
+- Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -386,5 +386,7 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - Production Status: **Nicht berührt** (kein Production Deploy)
 
 ### Checkpoint
-- Commit: `fix: support dynamic vercel dev port` (folgt im Checkpoint-Schritt)
-- git status / git diff / git diff --check / Secret Audit: durchzuführen
+- Commit: `fix: support dynamic vercel dev port` — **ebabc1c**
+- git status / git diff / git diff --check / Secret Audit: geprüft, sauber (keine Secrets)
+- Betroffene Dateien (nur erwartete): `package.json`, `package-lock.json`, `vite.config.ts`, `docs/reports/TEST_SAFETY_PHASE1_CURRENT.md`
+- Nächster Schritt: **STOPP** — kein AI-Live-Test, kein Preview/Production Deploy (separat freizugeben)
