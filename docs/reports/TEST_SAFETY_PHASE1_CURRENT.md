@@ -11,7 +11,7 @@
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
 - Step 3 — Development AI Live Test — **COMPLETE** (letzter Commit `44ccde8`, Abschluss-Commit `4d7f497`)
 - Step 4 — Production Deploy — **COMPLETE** (letzter Commit `4d7f497`, Deployment `mays-job-matcher-7am6njn2h`, URL `https://mays-job-matcher.vercel.app`, Report-Commit `efc3c9d`)
-- Step 4-AI — Production AI Smoke Test — **RUNNING** (Substep 4.1 — Production Model Check, letzter Commit `efc3c9d`)
+- Step 4-AI — Production AI Smoke Test — **COMPLETE** (letzter Commit `dd72434`, Abschluss-Commit folgt)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -873,3 +873,44 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint 4.3
 - Commit: `test: observe production model fallback`
 - Next Step: 4.4 — Production Test Abschluss
+
+### Substep 4.4 — Production Test Abschluss
+- Step Status: **COMPLETE** (gesamter Step 4-AI abgeschlossen)
+
+#### Abschlussmatrix
+| Prüfung | Ergebnis |
+|---|---|
+| Production URL | `https://mays-job-matcher.vercel.app` |
+| Deployment | `mays-job-matcher-7am6njn2h-maymilly.vercel.app` (Ready, Production) |
+| Commit | `4d7f497` (deployed) + Report-Commits `efc3c9d`/`d791d07`/`79afaf0`/`dd72434` |
+| /api/models | ✅ HTTP 200, 23 Modelle, OpenRouter+EdenAI enabled |
+| /api/model | ✅ HTTP 200, `dots-studio/dots-3-note-preview:free` |
+| Provider | OpenRouter (Production-Auflösung) |
+| Modell | `dots-studio/dots-3-note-preview:free` (OpenRouter, `:free`, isEligible passiert) |
+| AI Request | ✅ 1 kontrollierter Production-AI-Request (POST /api/profile) |
+| AI Response | ✅ HTTP 200, valid JSON, content nicht leer |
+| Fallback | nicht beobachtbar (Diagnose disabled) — Request erfolgreich, kein 502/`model_unavailable` |
+| Anzahl Requests | **GENAU 1** Production-AI-Request |
+| Cost Risk | **NONE** (1 `:free`-Modell-Request) |
+| Apify | **NOT USED** |
+| Git | synchron mit `origin/main` (`dd72434`) |
+| Secrets | **keine Secrets im Git**, kein Secret im Report |
+
+#### Development vs Production Vergleich
+| Aspekt | Development (Step 3) | Production (Step 4-AI) |
+|---|---|---|
+| Modellauflösung | `cloudflare/@cf/google/gemma-7b-it-lora` (EdenAI) | `dots-studio/dots-3-note-preview:free` (OpenRouter) |
+| Provider | EdenAI (OpenRouter disabled im Dev) | OpenRouter (beide enabled in Prod) |
+| Modelltyp | FREE + NON-REASONING | FREE (`:free`) + NON-REASONING (isEligible) |
+| Fallback | 3 Attempts (free-Modelle) | nicht beobachtbar (kein Diagnose-Endpoint) |
+| Response | HTTP 200, verwertbarer Text | HTTP 200, valid JSON (Profil) |
+| Safety Observer | Event `edenai_provider_request` / `SANDBOX_REQUEST` / blocked false | nicht separat gemessen (kein Diagnose-Endpoint; nur Invocation-Log) |
+
+- **Bestätigt**: "Der veröffentlichte Stand kann in Production einen kontrollierten echten AI Request erfolgreich ausführen."
+- **NICHT behauptet**: Production wurde vollständig getestet — es handelt sich um einen kontrollierten Smoke-Test
+- Keine Codeänderung, kein Provider-Wechsel erzwungen, keine Fallback-/Eligibility-/Cost-Guard-Änderung, kein Apify, kein Cache-Refresh, kein Re-Deploy
+
+### Checkpoint 4.4
+- Commit: `docs: complete production ai smoke test`
+- Step 4-AI = **COMPLETE**
+- **STOPP** — kein weiterer Step ohne neuen Auftrag
