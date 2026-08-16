@@ -9,7 +9,7 @@
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
 - **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 - Step 3.1 — Development Environment Live Check — **COMPLETE** (Commit `9687194`)
-- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.2 — `/api/models`, letzter Commit `9687194`)
+- Step 3 — Development AI Live Test — **RUNNING** (Substep 3.3 — `/api/model`, letzter Commit `05a0f8f`)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -513,3 +513,30 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 ### Checkpoint
 - Commit: `test: verify development model catalog`
 - Next Step: Step 3.3 — `/api/model` Development Model Resolution
+
+## Step 3.3 — `/api/model` Development Model Resolution
+- Current Step: Prüfen, welches konkrete Modell der Development-Kontext für den Matching-Workflow auflöst
+- Step Status: **COMPLETE**
+- Vorheriger Commit: `05a0f8f` — test: verify development model catalog
+- Umgebung: `vercel dev` (Development Runtime), Proxy `http://localhost:3000`
+
+### Prüfungen
+- HTTP-Status: **200** (Response in 3.26s — Provider-Katalogabruf via `getCompatibleFallback`, kein AI-Generierungs-Request)
+- resolved model: `cloudflare/@cf/google/gemma-7b-it-lora`
+- provider: **EdenAI** (enabled + configured im Development-Kontext)
+- free status: **FREE** (Cloudflare LoRA-Modell, aus Step 3.2 Katalog als free bestätigt)
+- reasoning status: **NON-REASONING**
+- matching-eligible: **YES** (FREE + NON-REASONING)
+- Kein Reasoning-Modell erzwungen oder aufgelöst → **kein Blocker**
+- Auflösungspfad: `api/model.mjs` → `resolveDefaultModel()` (`api/_lib/providers/index.mjs:153`) → enabled provider (EdenAI) → `getCompatibleFallback` → Rückgabe; kein AI-Request, nur Katalog-Lookup
+
+### Dokumentation
+- Verwendete Environment: Vercel Development (`vercel dev`)
+- Externe Requests: Provider-Katalogabruf (EdenAI) — kein AI-Generierungs-Request, kein OpenRouter, kein Apify
+- Cost Risk: **NONE**
+- Production Key: **NOT USED**
+- Keine Secret-Werte ausgegeben
+
+### Checkpoint
+- Commit: `test: verify development model resolution`
+- Next Step: Step 3.4 — Ein kontrollierter EdenAI-Sandbox-AI-Request
