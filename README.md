@@ -1,4 +1,4 @@
-# My Job Matcher
+# May's Job Matcher
 
 Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), and the app:
 
