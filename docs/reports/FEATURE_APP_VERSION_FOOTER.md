@@ -18,7 +18,7 @@ COMPLETE
 | 1 | Bestandsanalyse | COMPLETE | 99c2fac |
 | 2 | Versionstrategie | COMPLETE | 884b94e |
 | 3 | Implementierung | COMPLETE | ac7199f |
-| 4 | Tests | COMPLETE | — |
+| 4 | Tests | COMPLETE | d5fa838 |
 | 5 | Development Live Test | PENDING | — |
 | 6 | Preview / Abnahme | PENDING | — |
 | 7 | Merge-Vorbereitung | PENDING | — |
@@ -201,7 +201,7 @@ Commit: ac7199f
 
 Status: COMPLETE
 
-Commit: —
+Commit: d5fa838
 
 ### NEUE/GEÄNDERTE TESTDATEIEN
 
