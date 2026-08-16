@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 2
+Step 3
 
 Aktueller Status:
 COMPLETE
@@ -17,7 +17,8 @@ COMPLETE
 | Step | Thema | Status | Commit |
 | 1 | Bestandsanalyse | COMPLETE | 0079993 |
 | 2 | Timeout-Werte senken + Fehler-Codes + Client-Unterscheidung | COMPLETE | 9eb4813 |
-| 3 | ... | PENDING | — |
+| 3 | Fallback-/Performance-Verifikation | COMPLETE | (nach Push aktualisiert) |
+| 4 | Development Live Test | PENDING | — |
 
 ## Recovery-Regel
 
@@ -217,3 +218,73 @@ Commit: 9eb4813
 ### GIT-STAND
 
 - Commit: 9eb4813 (gepusht)
+
+## Step 3 — Fallback-/Performance-Verifikation
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### GEZIELTE TESTS (nur relevante, zuerst)
+
+Ausgeführt (5 Dateien, 42 Tests, alle grün):
+
+- `tests/api/edenai-provider.test.mjs` — Timeout→`timeout`/504, Netzwerk→`network_error`/502, 5xx→`model_unavailable`, Erfolg
+- `tests/api/openrouter-provider.test.mjs` (neu) — Timeout/Netzwerk/402/Erfolg/Katalog
+- `tests/api/providers.test.mjs` — Router-Loop, `model_unavailable` ohne Providerwechsel, Quota-Fallback
+- `tests/api/match-cache.test.mjs` — `/api/match`-Endpoints
+- `src/api.test.ts` — `withModelFallback`-Verhalten
+
+### A/B/C/D-VERIFIKATION (Codepfad + gezielte Testläufe)
+
+| Fall | Erwartung | Ergebnis |
+| A) `model_unavailable` (502) | Fallback auslösen | ✓ `isModelUnavailable`→true; `providers.test.mjs`-Fallback-Tests grün |
+| B) `timeout` (504) | KEIN unnötiger weiterer `/api/match`-Fallback | ✓ `timeout` in `NON_TRANSIENT_CODES`; `src/api.test.ts`-Test „fällt bei timeout NICHT zurück" grün |
+| C) `network_error` (502) | KEIN unnötiger weiterer Fallback | ✓ `network_error` in `NON_TRANSIENT_CODES`; zugehöriger Test grün |
+| D) Erfolgreicher Request | normales Verhalten unverändert | ✓ Provider-Chat-Erfolgstests grün |
+
+Server-Loop-Check: `isProviderExhausted` enthält weder `timeout` noch `network_error`
+(`errors.mjs:47`) → beide werden im Server-Loop sofort weitergeworfen, KEIN Provider-Wechsel,
+KEIN Retry. `model_unavailable` ebenfalls nicht enthalten → wie dokumentiert (Test
+`providers.test.mjs:115`).
+
+### ZEITVERHALTEN (aus Codepfaden abgeleitet, kontrollierte Mocks)
+
+- Single-Versuch max.: **EdenAI 30 s** (`edenai.mjs:8`), **OpenRouter 25 s** (`openrouter.mjs:16`),
+  beide via `AbortSignal.timeout` im fetch. Zeitmessung liegt unter Vercel `maxDuration: 60`.
+- `model_unavailable` (sofortiger HTTP-502): kein Warten bis Timeout — sofortiger Throw im Provider.
+- Timeout/Netzwerk: Abort bricht den fetch nach 30/25 s ab; Client stoppt (kein Retry).
+- **Max. Fallback-Kette:** `timeout`/`network_error` = 1 Versuch → STOPP (max. 30/25 s).
+  `model_unavailable` = bis zu 3 schnelle Versuche (jeder endet sofort mit 502 → schnelle
+  Antwort, KEINE Timeout-Addierung). KEIN „30 s + zusätzlicher Retry".
+- Resterisiko (dokumentiert, bekannt): Model-Katalog-Fetch (`fetchEligibleModels`) hat keinen
+  eigenen Timeout; bei kaltem Cache kann der erste Katalog-Abruf unbegrenzt dauern
+  (Cache `CACHE_TTL_MS = 10 min` dämpft das im Normalbetrieb). Kein Scope von Step 3.
+
+### REGRESSION (vollständige Suite + Build)
+
+- `npm test`: **116/116 grün** (16 Dateien)
+- `npx tsc -b`: grün
+- `npm run build`: grün (vite build erfolgreich)
+
+### BEWERTUNG
+
+1. **Wird `model_unavailable` korrekt gefallbackt?** Ja — weiterhin transient (Client-Fallback aktiv).
+2. **Werden `timeout`/`network_error` korrekt getrennt?** Ja — Server mappt Timeout→504/`timeout`,
+   Netzwerk→502/`network_error`; beide sind eigenständige Codes (nicht mehr `model_unavailable`).
+3. **Stoppt der Client bei `timeout`/`network_error`?** Ja — beide in `NON_TRANSIENT_CODES`,
+   `isModelUnavailable`→false → `withModelFallback` reicht den Fehler sofort weiter.
+4. **Gibt es unnötige Retries?** Nein — weder Server-Loop noch Client-Fallback wiederholen
+   Timeout/Netzwerkfehler. `model_unavailable`-Kette ist gewollt (schnelle 502-Antworten).
+5. **Max. Dauer eines einzelnen Versuchs:** 30 s (EdenAI) / 25 s (OpenRouter).
+6. **Max. Dauer einer Fallback-Kette:** bei Timeout/Netzwerk 1× (30/25 s); bei `model_unavailable`
+   bis zu 3 schnelle Versuche (keine Timeout-Addierung). Vorher (Step 1): bis zu 3 × 55 s ≈ 165 s.
+7. **Plausible Reduktion ggü. Production-Screenshot?** Ja — die serielle 3-×-55-s-Kette ist durch
+   Timeout-Senkung + Nicht-Fallback auf Timeout ersetzt. NICHT als bewiesen behauptet; Live-Test folgt in Step 4.
+8. **Offensichtlicher Performance-Blocker?** Keiner im Chat-/Fallback-Pfad. Einzige Restlücke:
+   Model-Katalog-Fetch ohne Timeout (siehe oben) — kein Blocker im Normalbetrieb (Cache).
+
+### GIT-STAND
+
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+- Status vor Commit: Branch `feature/ai-matching-timeout`, HEAD == origin == vorheriger Checkpoint
