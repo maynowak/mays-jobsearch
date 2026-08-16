@@ -1,11 +1,13 @@
 # Test Safety Phase 1 — Current Report
 
 ## Status
-- Recovery / Complete
-- Step 2.4-B (Vercel Dev Blocker: Yarn) — **BLOCKED** (neuer Blocker: `@vercel/static-build` Port-Detection)
+- Step 2 (Vercel Target klären + Development-Workflow) — **COMPLETE**
+- Development-Workflow funktionsfähig: `vercel dev` → Vercel Development Runtime → Vite dynamischer PORT → HTTP 200
+- Step 2.4-B (Vercel Dev Blocker: Yarn) — **COMPLETE** (Yarn via corepack, `vercel dev` startet wieder)
 - Branch: `fix/vercel-dev-runtime` — Diagnose des Port-Konflikts (COMPLETE)
 - Vercel Dev Port Fix — **COMPLETE** (Commit `ebabc1c`)
 - Step 2.4-B.3 Type-Support — **COMPLETE** (Commit `ebabc1c`)
+- **WICHTIG**: `EDENAI_DEV_API_KEY` wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der Development AI-Live-Test ist der nächste separate Step (Step 3).
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -222,7 +224,7 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 
 ## Step 2.4-B — Vercel Dev Blocker: Yarn
 - Current Step: 2.4-B — Yarn lokal verfügbar machen, damit `vercel dev` läuft
-- Step Status: **RUNNING**
+- Step Status: **COMPLETE** (Yarn installiert; nachfolgend static-build-Port-Blocker separat gelöst in "Vercel Dev Port Fix")
 - Confirmed Workflow: Visual Studio → `vercel dev` → Vercel Development Environment → `EDENAI_DEV_API_KEY` → Live Development Test
 - Preview ≠ Development, Production ≠ Development, `npm run dev` ≠ Development
 - Current Commit (vor Substep): `74ddfe0` — "Step 2.4: final verification — Development Environment Variable access blocked, cannot proceed to Step 3"
@@ -390,3 +392,29 @@ STOPP — cannot proceed to Step 3 without valid Development workflow.
 - git status / git diff / git diff --check / Secret Audit: geprüft, sauber (keine Secrets)
 - Betroffene Dateien (nur erwartete): `package.json`, `package-lock.json`, `vite.config.ts`, `docs/reports/TEST_SAFETY_PHASE1_CURRENT.md`
 - Nächster Schritt: **STOPP** — kein AI-Live-Test, kein Preview/Production Deploy (separat freizugeben)
+
+## Step 2 — Abschluss
+- Step Status: **COMPLETE**
+- Bestätigter Development-Workflow (getestet und funktionsfähig):
+  - Visual Studio / Terminal → `vercel dev`
+  - Vercel CLI 58.11.0 startet → Vercel Development Runtime
+  - `@vercel/static-build` übergibt dynamischen `PORT`-Wert
+  - Vite 8.2.1 bindet auf den dynamischen Port (z.B. 38577, 44531)
+  - Vercel-Proxy auf Port 3000 antwortet **HTTP 200**
+- Verifikationen:
+  - `npm test` → **88/88** Tests passed
+  - `npx tsc -b` → Exit 0 (grün)
+  - `npm run build` → Exit 0 (grün)
+  - `@types/node` korrekt als devDependency ergänzt
+  - Yarn-Voraussetzung behoben (Yarn 1.22.22 via corepack)
+- Relevante Commits:
+  - `97b7a0b` — Diagnose Portproblem
+  - `bd4a4b0` — Blocker dokumentiert
+  - `ebabc1c` — fix: support dynamic vercel dev port
+  - `2cc21ac` — docs: report Step 2.4-B.3 complete
+- External Requests: **Keine** — keine AI Requests, keine OpenRouter Requests, keine Apify Runs
+- Cost Risk: **Keines**
+- Production: **Nicht berührt** — kein Preview Deploy, kein Production Deploy
+- Secret Audit: **PASS** — keine Secrets im Git
+- **`EDENAI_DEV_API_KEY`-Hinweis**: wurde **NOCH NICHT** für einen AI-Live-Request verwendet. Der eigentliche Development AI-Live-Test ist der nächste separate Step.
+- Next Step: **Step 3 — Development AI Live Test** (separat freizugeben)
