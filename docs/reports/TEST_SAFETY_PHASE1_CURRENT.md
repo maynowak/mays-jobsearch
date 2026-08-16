@@ -2,6 +2,7 @@
 
 ## Status
 - Recovery / Complete
+- Step 2.4-B (Vercel Dev Blocker: Yarn) — **BLOCKED** (neuer Blocker: `@vercel/static-build` Port-Detection)
 
 ## Ausgangszustand
 Phase-1-Aufgabe ist in zwei Komponenten getrennt zu betrachten: Das Reasoning-Model-Exclusion-Feature ist vollständig implementiert und committed, während die Safety-Observer-Basis fertiggestellt und getestet wurde.
@@ -215,3 +216,41 @@ Nicht berührt.
 
 ### Next Step
 STOPP — cannot proceed to Step 3 without valid Development workflow.
+
+## Step 2.4-B — Vercel Dev Blocker: Yarn
+- Current Step: 2.4-B — Yarn lokal verfügbar machen, damit `vercel dev` läuft
+- Step Status: **RUNNING**
+- Confirmed Workflow: Visual Studio → `vercel dev` → Vercel Development Environment → `EDENAI_DEV_API_KEY` → Live Development Test
+- Preview ≠ Development, Production ≠ Development, `npm run dev` ≠ Development
+- Current Commit (vor Substep): `74ddfe0` — "Step 2.4: final verification — Development Environment Variable access blocked, cannot proceed to Step 3"
+- Previous Step Commit: `74ddfe0` (kept intact)
+- Projekt: npm (package-lock.json, kein yarn.lock, kein packageManager-Feld)
+- Ziel: nur lokalen Blocker beheben (Yarn als lokale Vercel-CLI-Voraussetzung). KEINE Projektdatei-Änderung, KEIN Package-Manager-Wechsel, KEIN yarn.lock, KEINE package.json/package-lock-Änderung.
+- Scope-Einschränkung: Kein Preview/Production Deploy, kein AI/OpenRouter/Apify Request, keine Secret-Ausgabe.
+
+### Substep 1 — Yarn-Verfügbarkeit prüfen
+- Status: **COMPLETE**
+- `which yarn` → vor Installation nicht gefunden (`yarn: Befehl nicht gefunden`)
+- `yarn --version` → vor Installation fehlgeschlagen
+- Node.js v22.23.1, npm 10.9.8 vorhanden
+- Yarn fehlte tatsächlich nur lokal — reine Tool-Installation, keine Projektänderung nötig
+- Lösung: `corepack enable yarn` → Yarn 1.22.22 installiert (`/home/dci-student/.nvm/versions/node/v22.23.1/bin/yarn`)
+- Verifiziert: `yarn --version` → `1.22.22`
+- Keine Projektdatei geändert (git status zeigt nur Report-Änderung)
+
+### Substep 2 — `vercel dev` starten
+- Status: **BLOCKED**
+- Noch KEIN AI-Live-Request. Nur Prüfung: startet vercel dev? Läuft die Vercel Development Runtime? Sind Development Environment Variables verfügbar? Ist `EDENAI_DEV_API_KEY` im Development-Kontext vorhanden (ohne Secret-Wert-Ausgabe)?
+- Ergebnis: `vercel dev` startet, der Yarn-Blocker ist behoben — Vercel CLI führt `yarn run vite` aus, Vite 8.2.1 läuft (HTTP 200 auf http://localhost:5173/), Vercel-Proxy lauscht auf Port 3000.
+- ABER: Serverless-/Proxy-Requests bleiben hängen (HTTP 000, keine Antwort). Der `@vercel/static-build`-Builder kann keinen Dev-Server auf dem von ihm zugewiesenen Port detektieren.
+- Exakte Fehlermeldung (mehrfach wiederholt):
+  ```
+  Error: Failed to detect a server running on port 37269.
+  Details: https://err.sh/vercel/vercel/now-static-build-failed-to-detect-a-server
+  Error: An unexpected error occurred!
+      at Object.build (/home/dci-student/.nvm/versions/node/v22.23.1/lib/node_modules/vercel/node_modules/@vercel/static-build/dist/index.js:36318:17)
+  ```
+- Ursache: Vercel CLI 58.11.0 bindet die statische Frontend-Runtime über `@vercel/static-build`, das einen Dev-Server auf einem zugewiesenen Port erwartet. Vite bindet standardmäßig auf Port 5173. Die Port-Detection schlägt fehl → keine funktionierende Development-Runtime über den Vercel-Proxy.
+- `EDENAI_DEV_API_KEY`-Verfügbarkeit: **NICHT verifizierbar** — ohne funktionierende Development-Runtime können die Development Environment Variables nicht im Development-Kontext abgefragt werden (keine Secret-Werte ausgegeben).
+- Step 2.4-B Status: **BLOCKED**
+- Keine weiteren Workarounds per Workflow-Regeln.
