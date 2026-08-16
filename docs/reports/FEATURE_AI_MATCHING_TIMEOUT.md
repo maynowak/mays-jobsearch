@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 6
+Step 7
 
 Aktueller Status:
 COMPLETE
@@ -21,7 +21,8 @@ COMPLETE
 | 4 | Development Live Test | COMPLETE | 6e7cc5d |
 | 5 | Preview / Abnahme | COMPLETE | 3133446 |
 | 6 | Merge-Vorbereitung | COMPLETE | 410c095 |
-| 7 | Merge nach main | PENDING | — |
+| 7 | Merge nach main | COMPLETE | (nach Push aktualisiert) |
+| 8 | Production Deployment | PENDING | — |
 
 ## Recovery-Regel
 
@@ -524,6 +525,47 @@ Merge-ready = **JA**
 - Feature-Scope sauber, keine unerwarteten Codeänderungen
 - Tests/tsc/build grün, diff-check sauber, Secret Audit sauber
 - Preview-Abnahme weiterhin gültig (nur Doku-Commits seit Preview)
+
+### GIT-STAND
+
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 7 — Merge Feature → main
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### MERGE (Fast-forward)
+
+- **Merge-Methode:** fast-forward (git merge --ff-only)
+- Feature HEAD vor Merge: `002fa73`
+- main HEAD vor Merge: `d9ab072`
+- Gemeinsamer merge-base: `d9ab072` == main (main nicht weitergelaufen)
+- **Neuer main HEAD:** `002fa73` (== Feature HEAD, FF)
+- **origin/main:** `002fa73` (gepusht)
+- Merge-Commit: **nicht vorhanden** (reiner Fast-forward, keine History-Rewrite)
+- Feature-Commits (0079993 … 002fa73) vollständig in main enthalten
+
+### TEST-/BUILD-GATE AUF MAIN (erster vollständiger Test auf integriertem Stand)
+
+- `npm test`: **116/116 grün** (16 Dateien)
+- `npx tsc -b`: PASS
+- `npm run build`: PASS
+- `git diff --check`: sauber
+- Secret Audit: sauber
+
+### VERIFIKATION NACH PUSH
+
+- main == origin/main == `002fa73`
+- Working Tree sauber (nur dauerhafte untracked Dateien)
+- Feature-Code vollständig in main
+
+### PREVIEW-IDENTITÄT
+
+- Preview getestet mit `b557632`; seitdem nur Doku-Commits (Step 6: Code-Diff = 0)
+- → Preview-Abnahme gilt für den gemergten Code weiterhin
+- NICHT behauptet, dass Production bereits getestet wurde
 
 ### GIT-STAND
 
