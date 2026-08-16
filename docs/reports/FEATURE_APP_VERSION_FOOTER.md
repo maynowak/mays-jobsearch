@@ -21,7 +21,7 @@ COMPLETE
 | 4 | Tests | COMPLETE | d5fa838 |
 | 5 | Development Live Test | COMPLETE | c6238d5 |
 | 6 | Preview / Abnahme | COMPLETE | 131f48f |
-| 7 | Merge-Vorbereitung | COMPLETE | (nach Push aktualisiert) |
+| 7 | Merge-Vorbereitung | COMPLETE | df23c0c |
 | 8 | Merge nach main | PENDING | — |
 | 9 | Production | PENDING | — |
 | 10 | Feature-Branch schließen | PENDING | — |
@@ -361,7 +361,7 @@ Commit: 131f48f
 
 Status: COMPLETE
 
-Commit: (nach Push aktualisiert)
+Commit: df23c0c
 
 ### 1. BRANCH- UND REMOTE-CHECK
 
