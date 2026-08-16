@@ -24,6 +24,8 @@ AI was used as an active development partner, not only for text generation.
 ### Documented AI collaborators
 
 - **DeepSeek V4 Flash Free (opencode)** — implementation of the full application: frontend, serverless functions, error handling, shared `_lib` modules, multi-city filtering, cover-letter generator, alert system, cron digest, deployment to Vercel, environment variable setup, live endpoint verification, project documentation.
+- **GPT (OpenAI)** — Chief Architect: planning, architecture and technical review.
+- **Nemotron** — analysis, cross-checking, technical second opinion, documentation review and plausibility control (role details in `docs/AI_TEAM.md`).
 
 The project documentation was used as a shared context so that AI-assisted changes remained aligned with the project architecture.
 
@@ -77,3 +79,24 @@ Every feature follows the same iterative loop:
 8. Next iteration
 
 The AI replaces neither the project decision nor the QA process. The project owner decides design, functionality and final implementation; AI contributions are proposals that must be verified against the real application before they are accepted.
+
+## Verbindliche Arbeitsregeln für Agenten
+
+Der vollständige Ablauf ist in **`docs/DEVELOPMENT_WORKFLOW.md`** dokumentiert.
+Die folgenden Regeln sind für jeden Agenten verbindlich:
+
+- **Feature-Arbeiten erfolgen auf Feature-Branches.**
+  `main` bleibt Integrations-/Release-Branch.
+- Ein Feature wird nach erfolgreicher Abnahme nach `main` gemergt.
+- Nach dem Production-Deployment wird der Feature-Branch geschlossen.
+- **Jeder Step erzeugt einen nachvollziehbaren Checkpoint.**
+  Nach jedem Step: Report aktualisieren → Tests → `git status` → `git diff --check` →
+  Secret Audit → Commit → Push.
+- **BLOCKED bedeutet STOPP.** Keine eigenständigen Workarounds, kein Übergehen ohne Freigabe.
+- **Die Recovery-Datei ist nach einem Absturz maßgeblich.**
+  `docs/reports/FEATURE_*.md` ist die Arbeitsgrundlage; nicht aus alten Chat-/Terminal-Ausgaben
+  rekonstruieren.
+- **Deployment-Stand und Git-HEAD sind unterschiedliche Zustände.**
+  Kein Agent darf aus einem vermeintlich aktuellen Git-HEAD schließen, dass dieser bereits
+  Production entspricht. Jedes Deployment wird über seine tatsächliche Deployment-Identität
+  (Deployment Commit / Build Identity / Environment) geprüft.

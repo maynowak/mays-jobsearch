@@ -2,6 +2,11 @@
 
 This document defines the project phases and the sprint backlog aligned with the project's matching and UX goals. Treat this file as the official development roadmap; all work should align with `docs/AI_CONTEXT.md` and `docs/ARCHITECTURE.md`.
 
+> **Definition of Done:** Seit dem App Version Footer Feature ist der professionelle
+> Feature-/Release-Workflow etabliert (`docs/DEVELOPMENT_WORKFLOW.md`) und gilt künftig als
+> Definition of Done für größere Features: Feature-Branch → Steps mit Checkpoints → Development
+> Live Test → Preview-Abnahme → Merge nach `main` → Production → Branch schließen.
+
 ---
 
 ## Project Phases

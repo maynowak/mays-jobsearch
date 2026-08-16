@@ -8,6 +8,44 @@
 
 #Environment Variables
 
+## Environments: Development → Preview → Production
+
+Die reale Vercel-Strategie unterscheidet drei Umgebungen:
+
+| Umgebung | Befehl | `VERCEL_ENV` | Zweck |
+|---|---|---|---|
+| Development | `vercel dev` | `development` | lokale Runtime, interne Tests |
+| Preview | `vercel deploy` | `preview` | öffentliche Abnahme-Umgebung |
+| Production | `vercel --prod` | `production` | Live-Betrieb |
+
+**Development ≠ Preview ≠ Production.** Jede Umgebung hat eine eigene `VERCEL_ENV`-Bezeichnung
+und eigene Deployment-Artefakte.
+
+## Deployment vs. Git-HEAD
+
+**Ein Deployment entspricht NICHT automatisch dem aktuellen Git-HEAD.**
+
+Bei der Abnahme werden folgende Werte getrennt dokumentiert und miteinander verglichen:
+
+| Wert | Bedeutung |
+|---|---|
+| Git HEAD | aktueller lokaler Commit |
+| Deployment Commit | Commit, aus dem das Deployment tatsächlich gebaut wurde (Vercel-API, `meta.githubCommitSha`) |
+| Build Identity | zur Build-Zeit im Artefakt eingefrorene Werte (Version / Environment / Commit-SHA) |
+| Environment | `development` / `preview` / `production` |
+
+Prüfung pro Umgebung:
+
+1. Deployment-Commit (Vercel-API) == Git-HEAD des deployten Stands.
+2. Build Identity im Artefakt == Deployment-Commit (der Footer zeigt `Version · Environment · Commit-SHA`
+   des tatsächlich gebauten Artefakts).
+3. Environment-Label des Artefakts == erwartete Umgebung.
+
+Der zuletzt getestete Deployment-Stand kann älter sein als der aktuelle Git-HEAD (z. B. nach
+Report-/Doku-Commits ohne neues Deployment). Der Footer friert die Identität des gebauten
+Artefakts ein und wechselt nicht, wenn Git danach weiterverändert wird. Keine Secrets in
+Build-Informationen aufnehmen.
+
 ## Deploy
 
 The project does **not** rely on automatic Vercel Git deployment — production is deployed explicitly.

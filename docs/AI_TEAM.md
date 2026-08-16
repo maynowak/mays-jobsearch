@@ -13,14 +13,15 @@
 
 ## AI Collaborators
 
-**GPT (OpenAI)**
+**GPT (OpenAI) — Chief Architect / Planung / Review**
 
 - architecture and UX consultation
 - requirement refinement
 - technical review of changes (git diff / code review)
 - process guidance before implementation and deployment
+- planning and review authority for technical decisions
 
-**DeepSeek V4 Flash Free (opencode)**
+**DeepSeek V4 Flash Free (opencode) — Implementation / Engineering**
 
 - full application implementation
 - serverless functions and shared helpers
@@ -32,6 +33,24 @@
 - Vercel deployment and environment setup
 - live endpoint verification
 - project documentation
+
+**Nemotron — Analyse / Gegenprüfung / technische Zweitmeinung**
+
+- analysis and cross-checking of existing decisions and implementations
+- technical second opinion and plausibility control
+- documentation review (consistency, completeness, risks)
+- points out inconsistencies, risks and missing documentation
+
+Nemotron may review existing decisions and flag problems. Nemotron must **not** independently:
+
+- deploy to production
+- change secrets
+- modify provider configuration
+- bypass safety rules
+- override a BLOCKED step on its own
+- continue the workflow without approval
+
+The role integrates into the existing team structure; no existing role is renamed.
 
 ## Working Agreement
 
