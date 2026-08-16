@@ -7,7 +7,7 @@ Base:
 main
 
 Aktueller Step:
-Step 4
+Step 5
 
 Aktueller Status:
 COMPLETE
@@ -19,7 +19,8 @@ COMPLETE
 | 2 | Timeout-Werte senken + Fehler-Codes + Client-Unterscheidung | COMPLETE | 9eb4813 |
 | 3 | Fallback-/Performance-Verifikation | COMPLETE | 7fb86df |
 | 4 | Development Live Test | COMPLETE | 6e7cc5d |
-| 5 | Preview / Abnahme | PENDING | — |
+| 5 | Preview / Abnahme | COMPLETE | (nach Push aktualisiert) |
+| 6 | Merge-Vorbereitung | PENDING | — |
 
 ## Recovery-Regel
 
@@ -384,6 +385,82 @@ Alle beobachteten Live-Fehler waren `bad_ai_response` (nicht-transient im Client
 ### SECRET AUDIT
 
 - Vor Commit: `git diff --check` sauber, Secret-Audit sauber (keine Keys in Diff/Report)
+
+### GIT-STAND
+
+- Commit: siehe Step-Matrix (nach Push aktualisiert)
+
+## Step 5 — Preview / Abnahme
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### VORBEGINN (bestätigt)
+
+- Branch: `feature/ai-matching-timeout`, HEAD == origin/feature/ai-matching-timeout == `b557632`
+- Step 4 = COMPLETE; Working Tree nur erwartete untracked Dateien
+- NICHT auf main gewechselt, KEIN Merge, KEIN Production-Deploy
+
+### PREVIEW DEPLOYMENT
+
+- Genau EIN Preview-Deployment erstellt: `npx vercel deploy --yes`
+- **Preview URL:** https://mays-job-matcher-mevsubnto-maymilly.vercel.app
+- **Deployment ID:** dpl_2kokHToLnhUG3HAaT3Txk9HDQTte
+- **Environment:** preview
+- **Source Branch:** feature/ai-matching-timeout
+- **Deployment Commit (tatsächlich, aus Vercel-API):** `b557632af7a585f6ce9b25b6748fea2a16eb704f`
+  (githubCommitSha aus Deployment-Metadaten) == Git HEAD `b557632`
+- gitDirty: 1 (nur untracked Dateien im Repo, erwartet; KEINE Commits am Feature-Code geändert)
+- KEIN Production-Deployment, KEINE Environment-Änderung
+
+### BUILD-IDENTITÄT
+
+- Client-Bundle: `index-DzIvqmVQ.js`
+- Footer im Matcher-Layout (Route `/top`): **`Version 2.0.0 · preview · b557632`**
+- **Deployment Commit == Build Identity == Git HEAD == b557632** → verifiziert ✓
+- Kein künstlicher Code-Change nötig (Build-Identität bereits sichtbar)
+
+### FEATURE-CODE IM ARTEFAKT
+
+- Client-Bundle enthält die neuen Fehlercodes: `model_unavailable`, `timeout`, `network_error` ✓
+  (Timeout-Werte 30 s/25 s liegen im Server-Code, nicht im Client-Bundle)
+- Deployment-Quellbaum (Vercel-Files-API) enthält den geänderten Server-Code
+  (api/_lib/providers/edenai.mjs, openrouter.mjs, src/api.ts) aus Commit `b557632`
+
+### FRONTEND-ABNAHME (CDP, Headless-Chrome)
+
+- App lädt: Titel „May's Job Matcher", H1 vorhanden, readyState=complete, Root gerendert
+- Landing-Seite: Hero + „Find jobs" + Sprache (EN/DE) + Navigation funktionsfähig
+- Matcher-Seite (Route `/top`): Formular mit Skills/Target-Role/City/Alerts, „Find my matches",
+  Model-Selector zeigt „No free AI models are available right now" (= erwarteter Zustand ohne Keys)
+- Footer gerendert mit Build-Identität (siehe oben)
+- KEINE relevanten Console Errors / Runtime Exceptions beobachtet
+- KEINE relevanten Frontend Network Errors (alle Endpoints HTTP 200)
+
+### AI / API
+
+- **AI Live Test NICHT durchgeführt** in Preview:
+  - Preview besitzt keine AI-Provider-Keys (beide Provider `enabled:false`, `configured:false`)
+  - Begründung: AI-Fehlerpfade wurden bereits in Step 3 kontrolliert getestet;
+    Development-Live-Verhalten in Step 4 verifiziert.
+- API-Routen geprüft (kein AI, keine Keys): `/` 200, `/api/model` 200 (model=null),
+  `/api/models` 200 (leer, Provider disabled), `/api/jobs` 200 (Arbeitnow, kein Apify),
+  CSS 200. `/api/models` erster Aufruf 15 s (Cold-Start), warm 0.3 s.
+- KEIN Apify-Run, KEIN EdenAI/OpenRouter/Production-Request
+
+### SECRET AUDIT
+
+- Preview-HTML: keine Keys/Tokens/ENV ✓
+- Client-Bundle: keine API-Key-Namen, keine `process.env`-Verweise, keine JWT-ähnlichen Tokens ✓
+- Deployment enthält keine exponierten Secrets
+
+### ERGEBNIS
+
+- Feature-Code korrekt gebaut, Deployment stammt vom richtigen Branch/Commit,
+  Identität nachvollziehbar (Deployment == Build == Git HEAD)
+- Frontend/UI funktioniert, keine Regression, keine Secrets exponiert
+- Preview ohne AI-Keys korrekt betreibbar (erwarteter No-Key-Zustand)
 
 ### GIT-STAND
 
