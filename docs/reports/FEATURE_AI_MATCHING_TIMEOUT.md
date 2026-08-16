@@ -24,7 +24,7 @@ COMPLETE
 | 7 | Merge nach main | COMPLETE | 2709a5d |
 | 8 | Production Deployment | COMPLETE | 1c65946 |
 | 9 | Production Performance / AI Live Test | COMPLETE | 1b2d9ba |
-| 10 | Branch-Cleanup | PENDING | — |
+| 10 | Branch-Cleanup | COMPLETE | (nach Push aktualisiert) |
 
 ## Recovery-Regel
 
@@ -730,3 +730,46 @@ Offen:
 
 - Step 10 (Branch-Cleanup) ist **PENDING** und wird separat freigegeben.
 - Feature-Branch `feature/ai-matching-timeout` bleibt offen (nicht löschen).
+
+## Step 10 — Feature-Branch schließen
+
+Status: COMPLETE
+
+Commit: (nach Push aktualisiert)
+
+### FINALER GIT-CHECK (vor Cleanup)
+
+- Branch: `main` == `origin/main` == `70989a5`
+- Working Tree sauber (nur dauerhafte untracked: `ROOT_CAUSE_ASSESSMENT.md`, `docs1608261813.zip`, `tests/screenshotsdev/`)
+- Feature-Branch `feature/ai-matching-timeout` (lokal + remote) vorhanden
+
+### MERGE-INTEGRITÄT (geprüft)
+
+- `git branch --merged main` → Feature-Branch enthalten
+- Commits auf Feature, die NICHT in main sind: **0**
+- main == origin/main (beide Richtungen: 0 Commits Differenz)
+- Feature-Dateien auf main vorhanden (Report, edenai.mjs, src/api.ts)
+- → kein Feature-Code verloren; Löschung sicher
+
+### CLEANUP
+
+- Lokaler Feature-Branch gelöscht: `git branch -d feature/ai-matching-timeout` (war `002fa73`)
+- Remote-Feature-Branch gelöscht: `git push origin --delete feature/ai-matching-timeout`
+- Keine anderen Branches gelöscht; `main` nicht angefasst
+
+### NACH-CLEANUP PRÜFUNG
+
+- `git branch -a`: `main` + unverwandte Branches; `feature/ai-matching-timeout` nicht mehr vorhanden
+- main == origin/main == `70989a5`
+- Working Tree unverändert sauber (nur bekannte dauerhafte untracked, unangetastet)
+- Keine unerwarteten Änderungen
+
+### ABSCHLUSS
+
+- **main HEAD:** `70989a5`
+- **origin/main:** `70989a5`
+- **Working Tree:** sauber (abgesehen von bekannten dauerhaften untracked Dateien)
+- Feature **AI Matching Timeout & Fallback Responsiveness** = **VOLLSTÄNDIG GESCHLOSSEN**
+- Production weiterhin auf abgeschlossenem Stand (Deployment `dpl_DH75keaahuFaa19W7GKxRYPBJg4e`, Commit `6ff72e7`)
+- Kein Code geändert; kein Deploy; keine AI Requests; kein Apify; keine Secrets geändert
+- Für zukünftige Arbeit: neuer Feature-Branch von aktuellem `main`
