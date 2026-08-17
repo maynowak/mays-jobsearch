@@ -384,7 +384,7 @@ Provider router:
 ### `api/_lib/providers/openrouter.mjs`
 
 - OpenRouter provider: catalogue fetch + free eligibility (pricing free, text in/out, not expired), cached 10 min in-memory.
-- `chat(...)` with consistent error mapping (401 → `key_invalid`, 402 → `insufficient_credits`, 429 with `free-models-per-day` → `free_quota_exceeded`, other 429 → `model_unavailable`, network/timeout → `model_unavailable`).
+- `chat(...)` with consistent error mapping (401 → `key_invalid`, 402 → `insufficient_credits`, 429 with `free-models-per-day` → `free_quota_exceeded`, other 429 → `model_unavailable`, timeout → `timeout` (504), network → `network_error` (502)).
 - Cost guard + per-provider usage counters (requests, failures, fallback attempts, per-model hash).
 
 ### `api/_lib/providers/edenai.mjs`
@@ -392,7 +392,7 @@ Provider router:
 - EdenAI provider: V3 OpenAI-compatible catalogue (`/v3/models`, public) + chat (`/v3/chat/completions`).
 - Free eligibility via zero-cost `pricing` metadata (no name heuristic); structured output via `capabilities.supports_response_schema`. Reasoning models (`capabilities.supports_reasoning`) are ranked last for the fallback/default choice: their internal thinking can exhaust the token budget before any usable content is produced, so non-reasoning free models are preferred for reliability.
 - Key selection: `EDENAI_ENV` overrides the mode, otherwise `VERCEL_ENV === "production"` → `EDENAI_API_KEY`, else `EDENAI_DEV_API_KEY` preferred (sandbox, simulated responses, no cost). Missing keys only disable this provider.
-- Error mapping: 401/403 → `key_invalid`, 402 → `insufficient_credits`, 429 → `quota_exhausted` (quota hint) or `rate_limited`, 400/422 → `model_invalid` (model hint) or `bad_request`, 5xx/network/timeout → `model_unavailable`.
+- Error mapping: 401/403 → `key_invalid`, 402 → `insufficient_credits`, 429 → `quota_exhausted` (quota hint) or `rate_limited`, 400/422 → `model_invalid` (model hint) or `bad_request`, timeout → `timeout` (504), network → `network_error` (502), other 5xx → `model_unavailable`.
 
 ### `api/_lib/ai.mjs`
 

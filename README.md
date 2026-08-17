@@ -1,5 +1,17 @@
 # May's Job Matcher
 
+A job search assistant that matches your profile (typed or extracted from a CV) against live job
+openings and scores them 0–100 with free AI models — right in the browser.
+
+- **Live Demo:** <https://mays-job-matcher.vercel.app>
+- **Status:** live in production — core matching, AI cover letters and daily digest alerts implemented
+- **Stack:** React + TypeScript + Vite · Node.js serverless functions (ESM) · Vercel Functions + Cron
+- **AI:** free models via OpenRouter (primary) and EdenAI (optional second provider), dynamic model catalogue
+
+---
+
+## What it does
+
 Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), and the app:
 
 1. **CV upload (optional):** the PDF is read in the browser (PDF.js), text-extracted and turned into an editable search profile by the AI (`/api/profile`). The profile is cached per CV hash, so repeated uploads of the same CV are instant. The PDF file itself is never sent to the server, and raw CV text is never stored.
@@ -24,12 +36,15 @@ Project documentation lives in [`docs/`](docs/):
 - [AGENTS.md](docs/AGENTS.md) — project overview, stack, coding rules
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) — system structure & data flow
 - [AI_PROVIDERS.md](docs/AI_PROVIDERS.md) — AI provider architecture, keys, fallback, error codes
+- [DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md) — mandatory feature/release workflow
 - [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — visual design & components
 - [BUILD.md](docs/BUILD.md) — local dev, validation, deploy
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md) — Vercel + environment variables
 - [ROADMAP.md](docs/ROADMAP.md) — phases & sprint backlog
 - [CHANGELOG.md](docs/CHANGELOG.md) — version history
 - [AI_CONTEXT.md](docs/AI_CONTEXT.md) — context for AI assistants
+- [CERTIFICATION_SUBMISSION.md](docs/CERTIFICATION_SUBMISSION.md) — full project evidence for review/certification
+- Feature reports: [`docs/reports/`](docs/reports/) — step-by-step evidence per feature (e.g. `FEATURE_AI_MATCHING_TIMEOUT.md`)
 
 ## Project structure
 
@@ -171,3 +186,47 @@ City:          Berlin, München
 ```
 
 → `Find my matches` → ranked cards with scores, short "why this fits", a prep question, and a "Bewerbung generieren" button.
+
+## Testing
+
+- **116/116 tests passing** (`npm test`, Vitest) across frontend, serverless functions and provider integration.
+- `npx tsc -b` — strict TypeScript build, PASS.
+- `npm run build` — Vite production build, PASS.
+- Live endpoint verification against the deployed Vercel functions where possible.
+
+## Development workflow
+
+The project follows a strict, verifiable feature workflow (`docs/DEVELOPMENT_WORKFLOW.md`):
+
+```
+main → feature/<name> → Development → Preview → Abnahme → Merge → Production → Branch schließen
+```
+
+- Every feature runs on its own branch; `main` stays the integration/release branch.
+- Each step produces a checkpoint: report → tests → `git status` → `git diff --check` → secret audit → commit → push.
+- Recovery is based on a documented recovery file per feature (`docs/reports/FEATURE_*.md`).
+- Deployment identity is verified against the actual built commit (Deployment Commit / Build Identity), not assumed from `git HEAD`.
+- Example: the **AI Matching Timeout & Fallback** feature (Steps 1–10, including a controlled production AI test) is fully documented in `docs/reports/FEATURE_AI_MATCHING_TIMEOUT.md`.
+
+## Current status
+
+| Area | Status |
+|---|---|
+| Core matching (jobs + AI scoring) | ✅ live |
+| Multi-city search | ✅ live |
+| AI cover-letter generator | ✅ live |
+| Daily digest alerts | ✅ implemented (needs Upstash + Resend keys for real delivery) |
+| Model selection (dynamic free-model catalogue) | ✅ live |
+| AI provider fallback (OpenRouter ↔ EdenAI) | ✅ live |
+| AI timeout / error-code handling | ✅ live (verified in production) |
+| Model availability / health check | 🟡 planned — see below |
+
+## Planned
+
+- **Model Availability / Health Check** (backlog): UI loads immediately, an availability check runs in
+  the background, the result is cached, and the model combobox shows the real status of each model —
+  instead of deriving availability only from the catalogue. Free models are preferred and costs
+  controlled; no unnecessary provider requests and no artificial load.
+- **Matching UI lock:** disable the model combobox while a matching search is running and re-enable it
+  after completion.
+- Final accessibility audit and candidate profile persistence (roadmap, see `docs/ROADMAP.md`).
