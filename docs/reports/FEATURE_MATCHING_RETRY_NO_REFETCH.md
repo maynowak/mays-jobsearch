@@ -7,16 +7,17 @@ Base:
 main
 
 Aktueller Step:
-Step 2
+Step 3
 
 Aktueller Status:
-COMPLETE
+BLOCKED — Production enthält Feature noch nicht (kein Production-Test möglich)
 
 ## Step-Matrix
 
 | Step | Thema | Status | Commit |
 | 1 | Repository-Analyse + Architekturplan (KEINE Codeänderung) | COMPLETE | (Analyse in Chat, kein Commit) |
-| 2 | Implementierung: Dataset-Persist, Search/Match-Trennung, UI-Lock, Server-Schutz, Tests | COMPLETE | (nach Push aktualisiert) |
+| 2 | Implementierung: Dataset-Persist, Search/Match-Trennung, UI-Lock, Server-Schutz, Tests | COMPLETE | 12d547f |
+| 3 | Production Verification | BLOCKED | (nach Push aktualisiert) |
 
 ## Recovery-Regel
 
@@ -204,3 +205,75 @@ Keine Live-AI-Requests. Kein Apify-Live-Test. Kein Deployment. Kein Preview.
 
 - Kein BLOCKED. Nächste Steps (Preview/Abnahme, Merge, Deployment) sind PENDING
   und werden separat freigegeben.
+
+## Step 3 — Production Verification
+
+Status: BLOCKED
+
+Commit: (nach Push aktualisiert)
+
+### Deployment-Verifikation (VOR dem Test, gemäß Regel)
+
+Vor jedem Production-Test wurde geprüft, ob Production den Feature-Code enthält:
+
+| Prüfung | Ergebnis |
+|---|---|
+| Git Feature-HEAD | `12d547f` (feature/matching-retry-no-refetch) |
+| Git `origin/main` / `main` | `4fa80b4` |
+| Feature-Commit `12d547f` in main | NEIN (Branch nicht gemergt) |
+| Production Deployment Commit (Footer `commitSha` aus deployed Client-Bundle) | `6ff72e7` (älteres Timeout-Feature-Deployment) |
+| Production Build SHA == Feature-Commit | NEIN |
+
+Feature-Marker im deployed Production-Bundle (`index-D5VSUyLy.js`,
+https://mays-job-matcher.vercel.app/assets/index-D5VSUyLy.js):
+
+| Marker | Im Production-Bundle |
+|---|---|
+| `busyRef` | ABSENT |
+| `performMatch` | ABSENT |
+| `handleModelChange` | ABSENT |
+| `handleProfileChange` | ABSENT |
+| `JobDataset` | ABSENT |
+| `This endpoint requires the job list` (Server-Message) | ABSENT |
+| `model_unavailable` / `Bewerte deine Treffer mit KI…` (Alt-Code) | PRESENT |
+
+Fazit: **Production enthält den Feature-Commit NICHT.**
+
+### Konsequenz (laut Vorgabe)
+
+Regel: „Wenn Production NICHT den aktuellen Feature-Code enthält: STOPP.
+Kein eigenmächtiges Production-Deployment. In diesem Fall melden:
+'Production enthält Feature noch nicht.'"
+
+→ **KEIN Production-Test ausgeführt.**
+→ **KEIN eigenmächtiges Deployment.**
+→ **KEINE Requests an Production gesendet** (kein `/api/jobs`, kein `/api/match`,
+   kein AI-Request, kein Apify-Request).
+
+### Dokumentationspflicht (Punkte 1–14)
+
+1. Production Deployment / Commit: `6ff72e7` (verifiziert via deployed Bundle `commitSha`); Feature `12d547f` NICHT deployed.
+2. getestete Suche: NICHT getestet (Feature nicht deployed).
+3. initiale Job-Fetch-Requests: nicht direkt verifiziert (kein Test).
+4. initiale Match-Requests: nicht direkt verifiziert (kein Test).
+5. Model-Retry: nicht direkt verifiziert (kein Test).
+6. `/api/jobs` während Model-Retry: nicht direkt verifiziert (kein Test).
+7. Apify-Verhalten: nicht direkt verifiziert (kein Test, bewusst kein Apify-Probe-Request).
+8. `/api/match` während Model-Retry: nicht direkt verifiziert (kein Test).
+9. UI-Locking: nicht direkt verifiziert (kein Test; in Step 2 per Unit-Tests abgedeckt).
+10. Dataset-Persistenz: nicht direkt verifiziert (kein Test; in Step 2 per Unit-Tests abgedeckt).
+11. Suchparameter-Invalidierung: nicht direkt verifiziert (kein Test).
+12. Ergebnis: **BLOCKED** — Production enthält Feature noch nicht.
+13. Kosten-/Request-Befund: 0 zusätzliche Requests an Production (kein `/api/jobs`, kein `/api/match`, kein AI, kein Apify). Keine Kosten entstanden.
+14. Unerwartete Beobachtungen: keine.
+
+### GIT
+
+- Nur Dokumentation geändert (`docs/reports/FEATURE_MATCHING_RETRY_NO_REFETCH.md`).
+- Commit + Push, HEAD == origin verifiziert.
+- KEIN Merge nach main. KEIN Branch-Löschen. KEIN Deployment.
+
+### Nächster sinnvoller Step
+
+Feature zuerst nach `main` mergen und auf Production deployen (separate Freigabe).
+Danach Step 3 erneut möglich — erst dann ist der Production-Test zulässig.
