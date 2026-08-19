@@ -7,10 +7,10 @@ Base:
 main
 
 Aktueller Step:
-Step 4
+Step 6
 
 Aktueller Status:
-MERGE-READY (alle Gates PASS)
+STEP 5 = PASS · STEP 6 = PASS
 
 ## Step-Matrix
 
@@ -18,7 +18,9 @@ MERGE-READY (alle Gates PASS)
 | 1 | Repository-Analyse + Architekturplan (KEINE Codeänderung) | COMPLETE | (Analyse in Chat, kein Commit) |
 | 2 | Implementierung: Dataset-Persist, Search/Match-Trennung, UI-Lock, Server-Schutz, Tests | COMPLETE | 12d547f |
 | 3 | Production Verification | BLOCKED | d25a8f8 |
-| 4 | Merge Preparation | COMPLETE (MERGE-READY) | (nach Push aktualisiert) |
+| 4 | Merge Preparation | COMPLETE (MERGE-READY) | 624a878 |
+| 5 | Merge nach main | COMPLETE (PASS) | 624a878 (main) |
+| 6 | Production Deployment | COMPLETE (PASS) | 624a878 (deployed) |
 
 ## Recovery-Regel
 
@@ -408,3 +410,124 @@ Keine Production-Requests. Keine Apify-Live-Requests. Keine AI-Requests.
 
 - Keine BLOCKED-Gründe. Nächste Schritte (Merge nach main, Deployment, Production-Test,
   Branch-Cleanup) sind PENDING und benötigen separate Freigabe.
+
+## Step 5 — Merge nach main
+
+Status: **PASS**
+
+### Merge-Methode
+
+`git merge --ff-only feature/matching-retry-no-refetch` (ausgeführt auf main).
+KEIN Rebase. KEIN Merge-Commit. KEINE History-Rewrite.
+
+### Werte
+
+| Wert | Vorher | Nachher |
+|---|---|---|
+| Feature HEAD | `624a878` | — |
+| main HEAD | `4fa80b4` | `624a878` |
+| origin/main | `4fa80b4` | `624a878` (gepusht) |
+| Fast-forward | JA (Merge Base == main HEAD) | — |
+
+### Feature-Commits vollständig in main enthalten
+
+`12d547f` (Feature-Code), `d25a8f8` (Step-3-Docs), `624a878` (Step-4-Docs) — alle via FF in main.
+
+### Working Tree
+
+Sauber (nur dauerhaft untracked: `ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/` — nicht Teil des Deploys).
+
+### Post-Merge-Gate (alle PASS)
+
+| Gate | Ergebnis |
+|---|---|
+| `npm test` | **130/130 PASS (16 Dateien)** |
+| `npx tsc -b` | PASS |
+| `npm run build` | PASS |
+| `git diff --check` | sauber |
+| Secret Audit | sauber (nur `tokenize`-Code-/Report-Texttreffer, keine Secrets, keine `process.env`-Refs) |
+
+### Bestehende Features erhalten
+
+Vollständiger Diff gegen Vor-Merge-main geprüft: Jobquellen, Apify/Cache, Matching,
+`withModelFallback`, ModelSelector, CV-Flow, Old-results-visible,
+Quota/Unavailable-Fehler, effectiveModel-Logik — alle unverändert. Nur die
+beabsichtigte Entkopplung (Dataset-Persist, runSearch/performMatch, UI-Lock,
+Server-400-Pflicht) ist hinzugekommen.
+
+## Step 6 — Production Deployment
+
+Status: **PASS**
+
+### Deployment-Identität
+
+| Eigenschaft | Wert |
+|---|---|
+| Production URL | https://mays-job-matcher.vercel.app |
+| Deployment-URL | https://mays-job-matcher-jxejqop3z-maymilly.vercel.app |
+| Deployment ID (Vercel API) | `dpl_5wY5XN9z7TWNXrfib645ffNxhU4t` |
+| Environment (Vercel API) | `production` |
+| State (Vercel API) | `READY` |
+| tatsächlicher Deployment-Commit (Vercel API `meta.gitCommitSha`) | `624a8785def3b1807eb8bc8bcd1e443b68b459d8` |
+| main HEAD | `624a8785def3b1807eb8bc8bcd1e443b68b459d8` |
+| Deployment-Commit == main HEAD | **JA** (exakter String-Vergleich) |
+
+Deployment erfolgte aus einem sauberen git-Worktree von exakt `624a878`
+(detached HEAD), damit der Inhalt exakt dem gemergten main-Stand entspricht
+(keine untracked Dateien im Deploy-Payload). Deployment via Vercel CLI `--prod`.
+
+### Build-/Feature-Identität (hart verifiziert)
+
+1. Deployment-Commit per Vercel-API ausgelesen: == main HEAD (siehe oben).
+2. Deployed Client-Bundle (`/assets/index-CAjHj6ol.js`) heruntergeladen.
+3. Lokaler Rebuild von exakt `624a878` im detached Worktree mit
+   Vercel-äquivalenter Build-Env (`VERCEL_ENV=production`, `VERCEL_GIT_COMMIT_SHA=""`,
+   `VERCEL_GIT_COMMIT_REF=""`) → identisches Bundle `index-CAjHj6ol.js`.
+4. SHA-256: `3f50ab61…` == `3f50ab61…` → **Bundle byte-identisch**.
+
+⇒ Der Production-Client enthält exakt den Code von main `624a878`, inklusive
+Feature-Code (Dataset-State, runSearch/performMatch, handleModelChange,
+handleProfileChange, busyRef-Guard, UI-Lock).
+
+### Feature-Marker / Server-Verhalten
+
+- `buildInfo` im Bundle gebacken: `production` (Env), Branch `HEAD` (detached),
+  `commitSha` leer (CLI-Deploy setzt kein `VERCEL_GIT_COMMIT_SHA`; der
+  authoritative Deployment-Commit stammt aus der Vercel-API, siehe oben).
+- Server-Verhalten `/api/match` ohne jobs → 400 `bad_request`:
+  **nicht direkt per Request verifiziert** (laut Vorgabe „Keine /api/match-Anfrage");
+  abgedeckt durch Unit-Tests (`tests/api/match-cache.test.mjs`) und dadurch, dass
+  das Deployment aus exakt dem Commit mit dieser Server-Logik gebaut wurde.
+
+### Technische Smoke Tests (kostenfrei, kein AI/Apify)
+
+| Endpoint | HTTP |
+|---|---|
+| `/` | 200 |
+| `/top` | 200 |
+| `/api/model` | 200 (`{"model":"dots-studio/dots-3-note-preview:free"}`) |
+| `/api/models` | 200 (Modell-Liste, OpenRouter) |
+
+Keine `/api/match`-, keine `/api/jobs`-Anfrage, kein Apify-/AI-Request ausgeführt.
+
+### Requests / Kosten
+
+0 zusätzliche kostenpflichtige Requests. Kein AI. Kein Apify. Kein Job-Source-Fetch.
+
+### Unerwartete Beobachtungen
+
+- Vom CLI erzeugtes Deployment baked keine `VERCEL_GIT_COMMIT_SHA` ein →
+  Footer-Commit-SHA im Bundle leer (kosmetisch; Deployment-Commit ist über die
+  Vercel-API belegt und Bundle wurde byte-identisch zum Commit-Build verifiziert).
+- `.vercel/` ist nur lokal vorhanden (nicht getrackt); für exakte Inhaltsdeployments
+  wurde ein Worktree-Ausbau des main-Commits verwendet.
+
+## Feature-Branch
+
+Noch NICHT gelöscht (laut Vorgabe: Löschung erst nach Production-Test + vollständigem
+Feature-Abschluss in separatem Step freigeben).
+
+## Offene Punkte
+
+Nächster Schritt (PENDING, separate Freigabe): gezielte Production-Verifikation des
+Features (kontrollierte Suche, Model-Retry ohne Job-Re-Fetch, Request-Nachweis).
