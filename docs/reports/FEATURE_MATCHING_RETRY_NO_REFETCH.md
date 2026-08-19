@@ -7,17 +7,18 @@ Base:
 main
 
 Aktueller Step:
-Step 3
+Step 4
 
 Aktueller Status:
-BLOCKED — Production enthält Feature noch nicht (kein Production-Test möglich)
+MERGE-READY (alle Gates PASS)
 
 ## Step-Matrix
 
 | Step | Thema | Status | Commit |
 | 1 | Repository-Analyse + Architekturplan (KEINE Codeänderung) | COMPLETE | (Analyse in Chat, kein Commit) |
 | 2 | Implementierung: Dataset-Persist, Search/Match-Trennung, UI-Lock, Server-Schutz, Tests | COMPLETE | 12d547f |
-| 3 | Production Verification | BLOCKED | (nach Push aktualisiert) |
+| 3 | Production Verification | BLOCKED | d25a8f8 |
+| 4 | Merge Preparation | COMPLETE (MERGE-READY) | (nach Push aktualisiert) |
 
 ## Recovery-Regel
 
@@ -277,3 +278,133 @@ Kein eigenmächtiges Production-Deployment. In diesem Fall melden:
 
 Feature zuerst nach `main` mergen und auf Production deployen (separate Freigabe).
 Danach Step 3 erneut möglich — erst dann ist der Production-Test zulässig.
+
+## Step 4 — Merge Preparation
+
+Status: COMPLETE → MERGE-READY
+
+Commit: (nach Push aktualisiert)
+
+### 1. Git / Branch-Analyse
+
+| Prüfung | Ergebnis |
+|---|---|
+| Aktueller Branch | `feature/matching-retry-no-refetch` |
+| Feature HEAD | `d25a8f8` |
+| origin Feature HEAD | `d25a8f8` (in Sync) |
+| main HEAD | `4fa80b4` |
+| origin/main | `4fa80b4` (in Sync) |
+| Merge Base | `4fa80b4` == main HEAD |
+| Fast-forward möglich | **JA** (Feature ist strikter Nachfahre von main, kein Rebase/Merge-Commit nötig) |
+| Commits auf Feature (nicht in main) | `12d547f` (Feature-Code), `d25a8f8` (Step-3-Docs) |
+
+Kein History-Rewrite durchgeführt.
+
+### 2. Feature-Scope
+
+`git diff main...feature/matching-retry-no-refetch`: 7 Dateien, +637 / −52.
+
+| Datei | Änderung | Scope |
+|---|---|---|
+| `src/App.tsx` | Dataset-State, runSearch/performMatch-Split, handleModelChange, handleProfileChange, busyRef-Guard, describeError/profilesEqual | Feature-kern |
+| `src/components/SearchForm.tsx` | 3 Inputs `disabled={busy}` | UI-Locking |
+| `src/components/CvUpload.tsx` | Dropzone-Guard + 4 EditableProfile-Inputs `disabled={busy}` | UI-Locking |
+| `api/match.mjs` | jobs-Pflicht (400 bad_request), `fetchAllJobs`-Fallback entfernt | Server-Schutz |
+| `src/App.test.tsx` | +237 (11 Feature-Szenarien) | Tests |
+| `tests/api/match-cache.test.mjs` | +24 (Server-400-Tests) | Tests |
+| `docs/reports/FEATURE_MATCHING_RETRY_NO_REFETCH.md` | Feature-Report | Dokumentation |
+
+Alle 50 entfernten Zeilen (exkl. Headers) sind Teil der beabsichtigten Entkopplung:
+- `api/match.mjs`: `fetchAllJobs`-Import + jobs-Fallback → 400-Pflicht
+- `src/App.tsx`: `runSearch`-Zusammenlegung → Split in runSearch/performMatch; 2 `onChange`-Props → neue Handler
+- `src/components/CvUpload.tsx`: `if (processing) return;` → `if (processing || busy) return;` (additiv)
+
+Keine Datei außerhalb des Feature-Scope verändert.
+
+### 3. Bestehende Features — Absolut-Regel
+
+Vollständiger Diff geprüft: **KEINE bestehende Funktion entfernt.**
+
+| Feature | Status |
+|---|---|
+| Jobquellen (Apify, Arbeitnow, Arbeitsagentur, `_lib/jobs.mjs`, `_lib/sources/`) | unverändert |
+| Apify-Cache / Cache-Logik | unverändert |
+| Matching-Funktionen (`keywordHits`, `tokenize`, `filter.mjs`, `ai.mjs`) | unverändert |
+| Fallback-Logik (`withModelFallback`, `model_unavailable`) | unverändert |
+| ModelSelector-Funktionen | unverändert |
+| CV-Flow (`CvUpload`, PDF-Lesen) | unverändert (nur additive Busy-Sperre) |
+| Old-results-visible (Ergebnisse bleiben bis zum Erfolg sichtbar) | erhalten (`setFoundJobs` nur bei Erfolg) |
+| Such-Validierung (noSkills/noJobs/noJobsCity-Warnungen) | erhalten (identisch in runSearch/performMatch) |
+| Quota-/Unavailable-Fehlermeldungen | erhalten (`describeError` identische Pfade) |
+| Effektive-Model-/Recommended-Logik | erhalten |
+
+### 4. Server-Änderung (api/match.mjs)
+
+- `/api/match` ohne `jobs` (oder leeres Array) → HTTP 400 `bad_request`,
+  Meldung: „This endpoint requires the job list. Run a search first to get jobs."
+- kein `fetchAllJobs()`-Aufruf mehr möglich aus dem Handler (Import entfernt)
+- kein Apify-/Job-Source-Fetch über Match-Pfad
+- Caller-Audit (erneut): Frontend `fetchMatches` sendet `jobs` immer; Cron-Digest nutzt
+  `fetchFilteredJobs` (Arbeitnow) separat; Tests senden `jobs` in Erfolgsfällen
+- Job-Source-Implementierungen (`_lib/sources/`) unverändert
+
+### 5. Tests / Regression (alle grün)
+
+| Gate | Ergebnis |
+|---|---|
+| `npm test` | **130/130 PASS (16 Dateien)** |
+| `npx tsc -b` | PASS |
+| `npm run build` | PASS (vite build ok) |
+| `git diff --check` | sauber |
+| Secret Audit | sauber (keine Keys/Tokens/ENV in Diff) |
+
+Regressionsbereiche geprüft: SearchForm (Test E/F/G), CV-Flow (Tests in CvUpload),
+ModelSelector, Fallback-Note, Old-results-visible (Tests A–G), Remount (Hero↔Sidebar),
+Matching, API /api/match — alle bestehenden Tests unverändert grün.
+
+### 6. Feature-Tests (11 Szenarien)
+
+| # | Szenario | Test |
+|---|---|---|
+| 1 | Erste Suche → Job-Fetch genau einmal | Test 1 (`toHaveBeenCalledTimes(1)`) |
+| 2 | Erfolgreiches Matching → kein weiterer Job-Fetch | Test 2 |
+| 3 | Matching-Fehler → Dataset bleibt erhalten | Test 3 |
+| 4 | Modellwechsel nach Fehler → kein Job-Fetch | Test 4 (`mock.calls.length` unverändert) |
+| 5 | Modellwechsel → Matching mit vorhandenem Dataset | Test 5 (fetchMatches mit exaktem Dataset + Modell) |
+| 6 | Suchparameteränderung → Dataset invalidiert | Test 6 |
+| 7 | Neue Suche → Job-Fetch wieder erlaubt | Test 7 (`2` Calls) |
+| 8 | Suchmaske während busy disabled | Test 8 (Skills/Zielrolle/Stadt) |
+| 9 | Model-Combobox während busy disabled | Test 9 |
+| 10 | Paralleler Suchstart verhindert | Test 10 (Re-Entrancy-Guard) |
+| 11 | /api/match ohne jobs → 400 ohne fetchAllJobs | match-cache: „/api/match ohne jobs → 400 bad_request und KEIN fetchAllJobs/Apify", „mit leerem jobs-Array → 400" |
+
+Keine Production-Requests. Keine Apify-Live-Requests. Keine AI-Requests.
+
+### 7. Deployment-Identität
+
+- Production enthält den Feature-Code derzeit NICHT (in Step 3 verifiziert:
+  deployed Bundle `commitSha 6ff72e7`, Feature-Marker ABSENT).
+- In diesem Step NICHT getestet/deployt.
+- Nach dem Merge wird Production anhand der tatsächlichen Deployment-/Build-Identität erneut geprüft.
+
+### 8. Zusammenfassung / Ergebnis
+
+- Merge-Vorbereitung: **COMPLETE**
+- Feature HEAD: `d25a8f8` · main HEAD: `4fa80b4` · Merge Base: `4fa80b4`
+- Fast-forward: **JA**
+- Feature-Scope: klein, additiv, ausschließlich Feature-Zweck
+- Bestehende Features: alle erhalten (kein Löschen/Deaktivieren)
+- Tests: 130/130 · Build: PASS · tsc: PASS · diff-check: sauber · Secret Audit: sauber
+- Deployment-Hinweis: Production enthält Feature noch nicht (Merge + Deploy separat freigegeben)
+
+### 9. Git
+
+- Commit für Step-4-Dokumentation erstellt, Push nur auf
+  `origin/feature/matching-retry-no-refetch`.
+- HEAD == origin/feature/matching-retry-no-refetch (nach Push verifiziert).
+- KEIN Merge nach main. KEIN Branch-Löschen. KEIN Deployment.
+
+### Offene Punkte
+
+- Keine BLOCKED-Gründe. Nächste Schritte (Merge nach main, Deployment, Production-Test,
+  Branch-Cleanup) sind PENDING und benötigen separate Freigabe.
