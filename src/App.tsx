@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Job, Match, Profile, StatusMessage } from "./types";
 import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "./api";
 import { useLang } from "./i18n";
@@ -18,6 +18,11 @@ import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring";
 
+interface JobDataset {
+  jobs: Job[];
+  profile: Profile;
+}
+
 export default function App() {
   const { t } = useLang();
   const [route] = useState<NavbarRoute>(() =>
@@ -29,6 +34,8 @@ export default function App() {
   const [foundJobs, setFoundJobs] = useState<Job[]>([]);
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
+  const [dataset, setDataset] = useState<JobDataset | null>(null);
+  const busyRef = useRef(false);
 
   const {
     state: modelsState,
@@ -58,12 +65,64 @@ export default function App() {
     window.scrollTo(0, 0);
   }, []);
 
+  const profilesEqual = (a: Profile, b: Profile) =>
+    a.skills === b.skills && a.targetRole === b.targetRole && a.city === b.city;
+
+  const describeError = (err: unknown): string =>
+    isFreeQuotaExceeded(err)
+      ? t("model.quotaExceeded")
+      : isModelUnavailable(err)
+        ? t("model.unavailable")
+        : (err as Error).message || t("status.genericError");
+
+  const performMatch = async (nextDataset: JobDataset, model: string | null) => {
+    setStatus(null);
+    setPhase("scoring");
+    try {
+      const { data: matchResult, usedFallback } = await withModelFallback({
+        initialModel: model,
+        availableModels: models.map((m) => m.id),
+        recommendedModel,
+        request: (m, attempt) =>
+          fetchMatches(nextDataset.profile, nextDataset.jobs, m, attempt),
+      });
+
+      // The old displayed results stay visible until the new search is complete.
+      // Only now do we replace them (even for the zero-evaluation case).
+      setFoundJobs(nextDataset.jobs);
+      setMatches(matchResult.matches);
+
+      if (matchResult.matches.length) {
+        const found = t("status.found", {
+          count: nextDataset.jobs.length,
+          evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
+        });
+        setStatus({
+          type: "info",
+          message: usedFallback ? `${found} ${t("model.fallbackNote")}` : found,
+        });
+      } else {
+        setStatus({
+          type: "warn",
+          message: matchResult.meta?.note || t("status.noMatches"),
+        });
+      }
+    } catch (err) {
+      setStatus({ type: "error", message: describeError(err) });
+    } finally {
+      setPhase("idle");
+    }
+  };
+
   const runSearch = async (submitted: Profile) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setProfile(submitted);
     setStatus(null);
 
     if (!submitted.skills && !submitted.targetRole) {
       setStatus({ type: "error", message: t("status.noSkills") });
+      busyRef.current = false;
       return;
     }
 
@@ -82,45 +141,32 @@ export default function App() {
         return;
       }
 
-      setPhase("scoring");
-      const { data: matchResult, usedFallback } = await withModelFallback({
-        initialModel: effectiveModel,
-        availableModels: models.map((model) => model.id),
-        recommendedModel,
-        request: (model, attempt) => fetchMatches(submitted, board.jobs, model, attempt),
-      });
-
-      // The old displayed results stay visible until the new search is complete.
-      // Only now do we replace them (even for the zero-evaluation case).
-      setFoundJobs(board.jobs);
-      setMatches(matchResult.matches);
-
-      if (matchResult.matches.length) {
-        const found = t("status.found", {
-          count: board.meta?.totalFiltered ?? board.jobs.length,
-          evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
-        });
-        setStatus({
-          type: "info",
-          message: usedFallback ? `${found} ${t("model.fallbackNote")}` : found,
-        });
-      } else {
-        setStatus({
-          type: "warn",
-          message: matchResult.meta?.note || t("status.noMatches"),
-        });
-      }
+      const nextDataset: JobDataset = { jobs: board.jobs, profile: submitted };
+      setDataset(nextDataset);
+      await performMatch(nextDataset, effectiveModel);
     } catch (err) {
-      setStatus({
-        type: "error",
-        message: isFreeQuotaExceeded(err)
-          ? t("model.quotaExceeded")
-          : isModelUnavailable(err)
-            ? t("model.unavailable")
-            : (err as Error).message || t("status.genericError"),
-      });
+      setStatus({ type: "error", message: describeError(err) });
     } finally {
+      busyRef.current = false;
       setPhase("idle");
+    }
+  };
+
+  const handleProfileChange = (next: Profile) => {
+    setProfile(next);
+    if (dataset && !profilesEqual(next, dataset.profile)) {
+      setDataset(null);
+    }
+  };
+
+  const handleModelChange = (model: string) => {
+    setSelectedModel(model);
+    if (busyRef.current) return;
+    if (dataset && profilesEqual(dataset.profile, profile)) {
+      busyRef.current = true;
+      void performMatch(dataset, model).finally(() => {
+        busyRef.current = false;
+      });
     }
   };
 
@@ -145,7 +191,7 @@ export default function App() {
       <SearchForm
         phase={phase}
         value={profile}
-        onChange={setProfile}
+        onChange={handleProfileChange}
         onSubmit={runSearch}
         model={effectiveModel}
         availableModels={models.map((model) => model.id)}
@@ -159,7 +205,7 @@ export default function App() {
         defaultModel={defaultModel}
         recommendedModel={recommendedModel}
         value={effectiveModel}
-        onChange={setSelectedModel}
+        onChange={handleModelChange}
         disabled={isSearching}
       />
       <Status status={status} />

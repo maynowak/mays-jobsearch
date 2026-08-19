@@ -135,6 +135,30 @@ describe("/api/match result caching", () => {
     for (const spy of allCacheSpies()) expect(spy).not.toHaveBeenCalled();
   });
 
+  it("/api/match ohne jobs → 400 bad_request und KEIN fetchAllJobs/Apify", async () => {
+    const res = makeRes();
+    await handler(makeReq({ skills: "React", targetRole: "Frontend" }), res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("bad_request");
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("/api/match mit leerem jobs-Array → 400 bad_request", async () => {
+    const res = makeRes();
+    await handler(makeReq({ skills: "React", targetRole: "Frontend", jobs: [] }), res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("bad_request");
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("der Match-Handler importiert fetchAllJobs nicht mehr (kein Server-Re-Fetch)", () => {
+    const source = readFileSync(new URL("../../api/match.mjs", import.meta.url), "utf8");
+    expect(source).not.toMatch(/fetchAllJobs/);
+    expect(source).not.toMatch(/_lib\/jobs/);
+  });
+
   it("der Match-Handler importiert keinerlei Cache-Modul (strukturelle Absicherung)", () => {
     const source = readFileSync(new URL("../../api/match.mjs", import.meta.url), "utf8");
     expect(source).not.toMatch(/import.*cache/i);

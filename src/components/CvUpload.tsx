@@ -87,7 +87,7 @@ export default function CvUpload({
   const processing = phase === "reading" || phase === "creating";
 
   const handleFile = async (file: File) => {
-    if (processing) return;
+    if (processing || busy) return;
     setError(null);
     setFallbackNote(false);
     setFileName(file.name);
@@ -321,6 +321,7 @@ function EditableProfile({
           type="text"
           value={skills}
           onChange={(e) => setSkills(e.target.value)}
+          disabled={busy}
           autoComplete="off"
         />
       </div>
@@ -332,6 +333,7 @@ function EditableProfile({
           type="text"
           value={experienceLevel}
           onChange={(e) => setExperienceLevel(e.target.value)}
+          disabled={busy}
           autoComplete="off"
         />
       </div>
@@ -343,6 +345,7 @@ function EditableProfile({
           type="text"
           value={targetRoles}
           onChange={(e) => setTargetRoles(e.target.value)}
+          disabled={busy}
           autoComplete="off"
         />
       </div>
@@ -355,6 +358,7 @@ function EditableProfile({
           value={city}
           onChange={(e) => handleCityChange(e.target.value)}
           onKeyDown={handleCityKeyDown}
+          disabled={busy}
           autoComplete="off"
           role="combobox"
           aria-expanded={open}

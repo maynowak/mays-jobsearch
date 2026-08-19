@@ -97,6 +97,7 @@ export default function SearchForm({
             placeholder={t("search.skillsPh")}
             value={skills}
             onChange={(e) => onChange({ ...value, skills: e.target.value })}
+            disabled={busy}
             autoComplete="off"
           />
         </div>
@@ -110,6 +111,7 @@ export default function SearchForm({
               placeholder={t("search.targetRolePh")}
               value={targetRole}
               onChange={(e) => onChange({ ...value, targetRole: e.target.value })}
+              disabled={busy}
               autoComplete="off"
             />
           </div>
@@ -122,6 +124,7 @@ export default function SearchForm({
               value={city}
               onChange={(e) => handleCityChange(e.target.value)}
               onKeyDown={handleCityKeyDown}
+              disabled={busy}
               autoComplete="off"
               role="combobox"
               aria-expanded={open}

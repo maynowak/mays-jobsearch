@@ -1,5 +1,4 @@
 import { HttpError, keywordHits, tokenize } from "./_lib/filter.mjs";
-import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { chat } from "./_lib/ai.mjs";
 
 const MATCH_EVAL_LIMIT = 10;
@@ -109,20 +108,13 @@ export default async function handler(req, res) {
       city: String(body.city || "").trim(),
     };
 
-    let jobs = Array.isArray(body.jobs) ? body.jobs : null;
-    if (!jobs) {
-      const fetched = await fetchAllJobs(profile);
-      jobs = fetched.jobs;
-    }
-    if (!jobs.length) {
-      return res.status(200).json({
-        matches: [],
-        meta: {
-          evaluated: 0,
-          note: "No matching jobs were found, so there's nothing to score.",
-        },
+    if (!Array.isArray(body.jobs) || body.jobs.length === 0) {
+      return res.status(400).json({
+        error: "This endpoint requires the job list. Run a search first to get jobs.",
+        code: "bad_request",
       });
     }
+    const jobs = body.jobs;
 
     const limit = Math.min(MATCH_EVAL_LIMIT, jobs.length);
     const detailCount = Math.min(5, limit);
