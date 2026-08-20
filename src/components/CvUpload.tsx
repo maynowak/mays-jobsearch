@@ -307,6 +307,9 @@ function EditableProfile({
       skills: skills.trim(),
       targetRole: targetRoles.trim(),
       city: city.trim(),
+      radiusKm: null,
+      workModes: [],
+      employmentTypes: ["full_time"],
     });
   };
 

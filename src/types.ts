@@ -25,10 +25,23 @@ export interface Job {
   startDate?: string;
 }
 
+export type WorkMode = "remote" | "hybrid" | "onsite";
+
+export type EmploymentType = "full_time" | "part_time";
+
+export const RADIUS_KM_OPTIONS = [10, 25, 50, 100] as const;
+
+export const WORK_MODES: WorkMode[] = ["remote", "hybrid", "onsite"];
+
+export const EMPLOYMENT_TYPES: EmploymentType[] = ["full_time", "part_time"];
+
 export interface Profile {
   skills: string;
   targetRole: string;
   city: string;
+  radiusKm: number | null;
+  workModes: WorkMode[];
+  employmentTypes: EmploymentType[];
 }
 
 export interface SuggestedProfile {

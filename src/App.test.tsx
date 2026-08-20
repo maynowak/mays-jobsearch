@@ -68,6 +68,18 @@ function renderApp() {
   );
 }
 
+function baseProfile(overrides: { skills?: string; targetRole?: string; city?: string } = {}) {
+  return {
+    skills: "",
+    targetRole: "",
+    city: "",
+    radiusKm: null,
+    workModes: [],
+    employmentTypes: ["full_time"],
+    ...overrides,
+  };
+}
+
 const models: ModelsResponse = {
   models: [{ id: "model-x", name: "X" }],
   defaultModel: "model-x",
@@ -196,11 +208,9 @@ describe("CV workflow", () => {
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
     fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
 
-    expect(vi.mocked(fetchJobs)).toHaveBeenCalledWith({
-      skills: "React",
-      targetRole: "Frontend",
-      city: "Berlin",
-    });
+    expect(vi.mocked(fetchJobs)).toHaveBeenCalledWith(
+      baseProfile({ skills: "React", targetRole: "Frontend", city: "Berlin" })
+    );
 
     jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
     await screen.findByText("AWS Engineer");
@@ -751,7 +761,7 @@ describe("Matching Retry ohne Job-Re-Fetch (Feature)", () => {
     const calls = vi.mocked(fetchMatches).mock.calls;
     expect(calls.length).toBe(3);
     // call[0]/[1] = erster Versuch (m-a, m-b), call[2] = Re-Match auf vorhandenem Dataset
-    expect(calls[2][0]).toEqual({ skills: "aws", targetRole: "", city: "" });
+    expect(calls[2][0]).toEqual(baseProfile({ skills: "aws" }));
     expect(calls[2][1]).toEqual([job]);
     expect(calls[2][2]).toBe("m-b");
   });
@@ -1191,5 +1201,219 @@ describe("UX-Korrektur: Manueller Modell-Retry (Step 4a)", () => {
       matches: [{ score: 90, why: "gut", prepare: "Frage", job }],
     } as MatchResponse);
     await screen.findByText("AWS Engineer");
+  });
+});
+
+describe("Suchparameter-Erweiterung (Lifecycle, Step 7)", () => {
+  const twoModels: ModelsResponse = {
+    models: [
+      { id: "m-a", name: "Modell A" },
+      { id: "m-b", name: "Modell B" },
+    ],
+    defaultModel: "m-a",
+    fallbackModel: null,
+    recommendedModel: null,
+  };
+
+  const modelTrigger = () => document.querySelector(".model-trigger") as HTMLButtonElement;
+  const findBtn = () => document.getElementById("find-btn") as HTMLButtonElement;
+
+  async function waitForModelsReady() {
+    await waitFor(() => {
+      const trigger = modelTrigger();
+      expect(trigger && !trigger.disabled).toBe(true);
+    });
+  }
+
+  function fillSkills(value = "aws") {
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value } });
+  }
+
+  it("13: Änderung Umkreis invalidiert Dataset -> manuelle neue Suche mit /api/jobs", async () => {
+    vi.mocked(fetchJobs)
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } })
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    fillSkills();
+    fireEvent.change(screen.getByLabelText("Umkreis"), { target: { value: "10" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls[0][0].radiusKm).toBe(10);
+
+    // Umkreis ändern -> Dataset invalidieren, KEINE automatische Suche
+    const before = vi.mocked(fetchJobs).mock.calls.length;
+    fireEvent.change(screen.getByLabelText("Umkreis"), { target: { value: "25" } });
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(before);
+
+    // manueller Start -> neue Suche über /api/jobs
+    fireEvent.click(findBtn());
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(before + 1);
+    expect(vi.mocked(fetchJobs).mock.calls.at(-1)![0].radiusKm).toBe(25);
+  });
+
+  it("14: Änderung Arbeitsmodell invalidiert Dataset und wird an /api/jobs übergeben", async () => {
+    vi.mocked(fetchJobs)
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } })
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    fillSkills();
+    fireEvent.click(screen.getByLabelText("Remote"));
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls[0][0].workModes).toEqual(["remote"]);
+
+    fireEvent.click(screen.getByLabelText("Hybrid"));
+    fireEvent.click(findBtn());
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls.at(-1)![0].workModes).toEqual(["remote", "hybrid"]);
+  });
+
+  it("15: Änderung Arbeitszeit invalidiert Dataset und wird an /api/jobs übergeben", async () => {
+    vi.mocked(fetchJobs)
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } })
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    fillSkills();
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls[0][0].employmentTypes).toEqual(["full_time"]);
+
+    fireEvent.click(screen.getByLabelText("Teilzeit"));
+    fireEvent.click(findBtn());
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls.at(-1)![0].employmentTypes).toEqual([
+      "full_time",
+      "part_time",
+    ]);
+  });
+
+  it("16: Änderung von Skills invalidiert weiterhin das Dataset", async () => {
+    vi.mocked(fetchJobs)
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } })
+      .mockResolvedValueOnce({ jobs: [jobB], meta: { totalFiltered: 1 } });
+    vi.mocked(fetchMatches)
+      .mockResolvedValueOnce({
+        matches: [{ score: 90, why: "gut", prepare: "Bereite dich vor", job }],
+      } as MatchResponse)
+      .mockResolvedValueOnce({
+        matches: [{ score: 90, why: "gut", prepare: "Bereite dich vor", job: jobB }],
+      } as MatchResponse);
+    renderApp();
+
+    fillSkills();
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    fireEvent.click(findBtn());
+    await screen.findByText("Java Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(2);
+    expect(vi.mocked(fetchJobs).mock.calls[1][0].skills).toBe("java");
+  });
+
+  it("17/18: neue Suche bleibt manuell und darf /api/jobs verwenden", async () => {
+    vi.mocked(fetchJobs)
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } })
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    fillSkills();
+    fireEvent.change(screen.getByLabelText("Umkreis"), { target: { value: "50" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+
+    // Parameteränderung -> KEINE automatische Suche (kein /api/jobs)
+    const before = vi.mocked(fetchJobs).mock.calls.length;
+    fireEvent.change(screen.getByLabelText("Umkreis"), { target: { value: "100" } });
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(before);
+
+    // manueller Start -> /api/jobs erlaubt
+    fireEvent.click(findBtn());
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(before + 1);
+  });
+
+  it("19/20/21: Modellwechsel invalidiert Dataset NICHT und löst kein /api/jobs/Apify aus", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    vi.mocked(fetchMatches).mockResolvedValue({
+      matches: [{ score: 90, why: "gut", prepare: "Frage", job }],
+    } as MatchResponse);
+    renderApp();
+    await waitForModelsReady();
+
+    fillSkills();
+    fireEvent.change(screen.getByLabelText("Umkreis"), { target: { value: "10" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText("AWS Engineer");
+
+    const jobsBefore = vi.mocked(fetchJobs).mock.calls.length;
+    const matchesBefore = vi.mocked(fetchMatches).mock.calls.length;
+    fireEvent.click(modelTrigger());
+    fireEvent.click(screen.getByRole("option", { name: "Modell B" }));
+
+    // Modellwahl allein -> kein /api/jobs (=> kein Apify), kein Auto-Match
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(jobsBefore);
+    expect(vi.mocked(fetchMatches).mock.calls.length).toBe(matchesBefore);
+
+    // manueller Retry -> vorhandenes Dataset, kein neues /api/jobs
+    fireEvent.click(findBtn());
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(jobsBefore);
+  });
+
+  it("22: manueller Retry verwendet vorhandenes Dataset (exakte Jobs + Modell)", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    vi.mocked(fetchMatches)
+      .mockRejectedValueOnce(new ApiError("unavailable", 502, "model_unavailable"))
+      .mockRejectedValueOnce(new ApiError("unavailable", 502, "model_unavailable"))
+      .mockResolvedValueOnce({
+        matches: [{ score: 90, why: "gut", prepare: "Frage", job }],
+      } as MatchResponse);
+    renderApp();
+    await waitForModelsReady();
+
+    fillSkills();
+    fireEvent.change(screen.getByLabelText("Umkreis"), { target: { value: "10" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
+
+    fireEvent.click(modelTrigger());
+    fireEvent.click(screen.getByRole("option", { name: "Modell B" }));
+    fireEvent.click(findBtn());
+    await screen.findByText("AWS Engineer");
+
+    expect(vi.mocked(fetchJobs)).toHaveBeenCalledTimes(1);
+    const calls = vi.mocked(fetchMatches).mock.calls;
+    expect(calls.length).toBe(3);
+    expect(calls[2][0].radiusKm).toBe(10);
+    expect(calls[2][1]).toEqual([job]);
+    expect(calls[2][2]).toBe("m-b");
+  });
+
+  it("24: UI-Locking — neue Suchparameter sind während der Suche gesperrt", async () => {
+    const jobs = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
+    renderApp();
+
+    fillSkills();
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
+    expect((screen.getByLabelText("Umkreis") as HTMLSelectElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Remote") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Hybrid") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Vor Ort") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Vollzeit") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Teilzeit") as HTMLInputElement).disabled).toBe(true);
+
+    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
+    await screen.findByText("AWS Engineer");
+    expect((screen.getByLabelText("Umkreis") as HTMLSelectElement).disabled).toBe(false);
   });
 });

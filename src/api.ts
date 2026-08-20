@@ -188,6 +188,10 @@ export async function fetchJobs(profile: Profile): Promise<JobsResponse> {
   if (profile.skills) params.set("skills", profile.skills);
   if (profile.targetRole) params.set("targetRole", profile.targetRole);
   if (profile.city) params.set("city", profile.city);
+  if (profile.radiusKm) params.set("radiusKm", String(profile.radiusKm));
+  if (profile.workModes?.length) params.set("workMode", profile.workModes.join(","));
+  if (profile.employmentTypes?.length)
+    params.set("employmentType", profile.employmentTypes.join(","));
   return apiFetch<JobsResponse>(`/api/jobs?${params.toString()}`);
 }
 

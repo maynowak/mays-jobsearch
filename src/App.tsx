@@ -19,6 +19,10 @@ import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring";
 
+function arraysEqual<T>(a: T[], b: T[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
 interface JobDataset {
   jobs: Job[];
   profile: Profile;
@@ -33,7 +37,14 @@ export default function App() {
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [foundJobs, setFoundJobs] = useState<Job[]>([]);
-  const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
+  const [profile, setProfile] = useState<Profile>({
+    skills: "",
+    targetRole: "",
+    city: "",
+    radiusKm: null,
+    workModes: [],
+    employmentTypes: ["full_time"],
+  });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
   const [dataset, setDataset] = useState<JobDataset | null>(null);
   const [modelExhausted, setModelExhausted] = useState(false);
@@ -68,7 +79,12 @@ export default function App() {
   }, []);
 
   const profilesEqual = (a: Profile, b: Profile) =>
-    a.skills === b.skills && a.targetRole === b.targetRole && a.city === b.city;
+    a.skills === b.skills &&
+    a.targetRole === b.targetRole &&
+    a.city === b.city &&
+    a.radiusKm === b.radiusKm &&
+    arraysEqual(a.workModes, b.workModes) &&
+    arraysEqual(a.employmentTypes, b.employmentTypes);
 
   const modelLabel = (id: string | null | undefined): string => {
     if (!id) return t("model.none");

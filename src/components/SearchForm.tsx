@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import type { Profile } from "../types";
+import type { EmploymentType, Profile, WorkMode } from "../types";
+import { EMPLOYMENT_TYPES, RADIUS_KM_OPTIONS, WORK_MODES } from "../types";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import CvUpload from "./CvUpload";
@@ -58,10 +59,28 @@ export default function SearchForm({
           : t("search.button");
   const loadingLabel = busy ? label : "";
 
+  const toggleIn = (list: WorkMode[], mode: WorkMode): WorkMode[] =>
+    list.includes(mode) ? list.filter((m) => m !== mode) : [...list, mode];
+
+  const toggleEmployment = (list: EmploymentType[], type: EmploymentType): EmploymentType[] => {
+    if (list.includes(type)) {
+      const next = list.filter((t) => t !== type);
+      return next.length > 0 ? next : list;
+    }
+    return [...list, type];
+  };
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (mode === "cv") return;
-    onSubmit({ skills: skills.trim(), targetRole: targetRole.trim(), city: city.trim() });
+    onSubmit({
+      skills: skills.trim(),
+      targetRole: targetRole.trim(),
+      city: city.trim(),
+      radiusKm: value.radiusKm,
+      workModes: value.workModes,
+      employmentTypes: value.employmentTypes,
+    });
   };
 
   return (
@@ -165,6 +184,67 @@ export default function SearchForm({
                 )}
               </ul>
             )}
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="radius">{t("search.radius")}</label>
+          <select
+            id="radius"
+            value={value.radiusKm ?? ""}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                radiusKm: e.target.value === "" ? null : Number(e.target.value),
+              })
+            }
+            disabled={busy}
+          >
+            <option value="">{t("search.radiusNone")}</option>
+            {RADIUS_KM_OPTIONS.map((km) => (
+              <option key={km} value={km}>
+                {t("search.radiusOption", { km })}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field">
+          <span className="field-label">{t("search.workMode")}</span>
+          <div className="check-group" role="group" aria-label={t("search.workMode")}>
+            {WORK_MODES.map((mode) => (
+              <label key={mode} className="check-item">
+                <input
+                  type="checkbox"
+                  checked={value.workModes.includes(mode)}
+                  onChange={() => onChange({ ...value, workModes: toggleIn(value.workModes, mode) })}
+                  disabled={busy}
+                />
+                <span>{t(`workMode.${mode}`)}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="field">
+          <span className="field-label">{t("search.employmentType")}</span>
+          <div className="check-group" role="group" aria-label={t("search.employmentType")}>
+            {EMPLOYMENT_TYPES.map((type) => (
+              <label key={type} className="check-item">
+                <input
+                  type="checkbox"
+                  checked={value.employmentTypes.includes(type)}
+                  onChange={() =>
+                    onChange({
+                      ...value,
+                      employmentTypes: toggleEmployment(value.employmentTypes, type),
+                    })
+                  }
+                  disabled={busy}
+                />
+                <span>{t(`employmentType.${type}`)}</span>
+              </label>
+            ))}
           </div>
         </div>
 

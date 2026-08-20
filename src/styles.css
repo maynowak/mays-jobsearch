@@ -496,6 +496,76 @@ body {
   box-shadow: 0 0 0 3px rgba(201, 178, 138, 0.3);
 }
 
+.field select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  padding-right: 36px;
+  font-size: 1rem;
+  border: 1px solid #e2d7c1;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #a49883 50%),
+    linear-gradient(135deg, #a49883 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.field select:focus {
+  outline: none;
+  border-color: #c9b28a;
+  box-shadow: 0 0 0 3px rgba(201, 178, 138, 0.3);
+}
+
+.field select:disabled,
+.field input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.check-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.check-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid #e2d7c1;
+  border-radius: 10px;
+  background: #fffdf9;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.check-item:has(input:checked) {
+  border-color: #c9b28a;
+  background: #f6efe2;
+}
+
+.check-item input {
+  margin: 0;
+  accent-color: #c9b28a;
+}
+
 /* City autocomplete (OpenPLZ) */
 
 .city-field {

@@ -666,3 +666,80 @@ COMPLETE
 - Branch-Cleanup: NICHT durchgeführt.
 - AI-Requests / Apify: KEINE.
 - Implementierung der neuen Suchparameter: KEINE (nur PLANNED dokumentiert).
+
+---
+
+# STEP 7 — ABSCHLUSS FEATURE-BLOCK + SEARCH-PARAMETER-ERWEITERUNG
+
+## 1. Repository-/Git-Ist-Stand
+
+- Action: Ist-Stand zu Beginn feststellen.
+- Command: `git branch --show-current` / `git rev-parse HEAD` / `git rev-parse origin/feature/precise-model-fallback-feedback` / `git rev-parse main` / `git rev-parse origin/main` / `git status --short` / `ls docs/reports/`.
+- Result: Branch `feature/precise-model-fallback-feedback`; HEAD `68f56b2`; origin/feature `68f56b2` (in Sync); main == origin/main `f5f5ee2`; Working Tree nur dauerhaft untracked (`ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`). Feature-Status: MERGE-READY, Preview ACCEPTED, Tests 144/144. Vorhandene Doku: 7 Report-Dateien in `docs/reports/`.
+- Evidence: Kommando-Ausgaben.
+- Impact: Verifizierte Ausgangslage.
+- Next step: Code-Erkundung (SearchForm/Dataset-/Search-/Match-Flow).
+
+## 2. Bestehende Dokumentation
+
+- Action: Vorhandene Reports prüfen (Feature-Report + Execution Log als Leitdokumente).
+- Command: Read `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK*.md`.
+- Result: Feature-Report enthält MERGE-READY-Status + PLANNED-Scope (Umkreis/Arbeitsmodell/Arbeitszeit); Execution Log Steps 1–6 vollständig.
+- Evidence: Dateien.
+- Impact: Konsistente Basis für den Abschluss.
+- Next step: SearchForm-/Flow-Analyse.
+
+## 3. Aktueller Feature-Stand
+
+- Action: Feature-Verhalten aus dem Merge-Gate bestätigen.
+- Command: `git log --oneline main..feature` / Diff-Review (Steps 2–6).
+- Result: Precise-Fallback-Feedback + manueller Modell-Retry implementiert und abgenommen; MERGE-READY.
+- Evidence: Git-Log/Diff.
+- Impact: Abgenommenes Verhalten wird beibehalten (TEIL 1).
+- Next step: SearchForm-Stand.
+
+## 4. Aktueller SearchForm-Stand
+
+- Action: `src/components/SearchForm.tsx` lesen.
+- Command: Read `src/components/SearchForm.tsx`.
+- Result: Felder Skills, Zielrolle, Stadt; Submit-Button kontextabhängig (`onSubmit`), CV-Modus; Busy-Locking; `rematch`-Label vorhanden. KEINE Felder für Umkreis/Arbeitsmodell/Arbeitszeit.
+- Evidence: Datei.
+- Impact: Erweiterung baut auf bestehender Struktur auf (kein UI-Architektur-Wechsel).
+- Next step: Dataset-/Search-/Match-Flow.
+
+## 5. Aktueller Dataset-/Search-/Match-Flow
+
+- Action: `src/App.tsx` + `src/api.ts` + Serverless prüfen.
+- Command: Read `src/App.tsx` (runSearch/performMatch/handleProfileChange/handleSubmit), `src/api.ts` (fetchJobs), `api/jobs.mjs` + `api/_lib/` (Filter).
+- Result: `profile` = {skills,targetRole,city}; `profilesEqual` invalidiert Dataset; `runSearch` → fetchJobs → Dataset → performMatch; Modellwechsel getrennt (nur /api/match, manueller Start).
+- Evidence: Dateien.
+- Impact: Die neuen Parameter müssen in `Profile`, `profilesEqual` und SearchForm integriert werden.
+- Next step: Implementierung.
+
+## 6. Implementierung Client (Suchparameter)
+
+- Action: `Profile` um `radiusKm`, `workModes`, `employmentTypes` erweitern und durch UI/API durchreichen.
+- Command: Edit `src/types.ts` (WorkMode, EmploymentType, RADIUS_KM_OPTIONS [10,25,50,100], WORK_MODES, EMPLOYMENT_TYPES; neue Profilfelder REQUIRED), `src/App.tsx` (initial profile, `arraysEqual`, `profilesEqual` über alle 6 Felder), `src/components/SearchForm.tsx` (Umkreis-Select `#radius`, Arbeitsmodell-/Arbeitszeit-Checkboxen, `toggleIn`/`toggleEmployment` mit „nie leer", `handleSubmit` reicht neue Felder durch, alles `disabled={busy}`), `src/components/CvUpload.tsx` (confirm() baut vollständiges Profile), `src/api.ts` (fetchJobs sendet `radiusKm`/`workMode`/`employmentType`), `src/i18n.tsx` (DE+EN Keys), `src/styles.css` (Select-Optik, Check-Gruppen, `:has(input:checked)`), `src/components/AlertCard.tsx` (subscribeAlert-Profil vervollständigt).
+- Result: Typen, UI, API-Passthrough und Styling umgesetzt; `npx tsc -b` grün.
+- Evidence: `git diff` (13 geänderte Dateien), TSC ohne Fehler.
+- Impact: Neue Parameter sind echte Suchprofil-Parameter; Verhalten ohne Angabe unverändert.
+- Next step: Server-Filter.
+
+## 7. Implementierung Server (Best-Effort-Filter)
+
+- Action: Filterlogik additiv in `api/_lib/filter.mjs` ergänzen und durch `/api/jobs` reichen.
+- Command: Edit `api/_lib/filter.mjs` (`parseList`, `EMPLOYMENT_ALIASES`, `jobEmploymentTokens`, `employmentMatches`, `workModeMatches`, `applySearchFilters`), `api/_lib/sources/index.mjs` (fetchAllJobs übernimmt neue Parameter, filtert nach dedup, `totalFiltered = filtered.length`), `api/jobs.mjs` (liest Query-Parameter).
+- Result: `employmentMatches` schließt Stellen OHNE Beschäftigungs-Info NICHT aus (sonst künstlich leere Standard-Suche „Vollzeit"); Alias-Sets DE/EN; `workModeMatches` filtert nur bei ausschließlich „remote" (per `job.remote`); „hybrid"/„onsite" und `radiusKm` ohne Geocoding nicht ableitbar -> offene Punkte, ehrlich dokumentiert.
+- Evidence: `git diff`; `node --check` auf allen geänderten .mjs grün.
+- Impact: Standardverhalten ohne Parameter identisch; neue Filter wirken nur wenn angefordert.
+- Next step: Tests.
+
+## 8. Tests / Gates (Step 7)
+
+- Action: TEIL-8-Testpunkte umsetzen.
+- Command: Edit `src/components/SearchForm.test.tsx` (7 neue UI-Tests: Umkreis-Dropdown 10/25/50/100, Auswahl je Wert, Arbeitsmodell-Checkboxen vorhanden, Mehrfachauswahl über StatefulForm, Vollzeit-Default, Teilzeit auswählbar, Vollzeit+Teilzeit/mind. eine aktiv), `src/App.test.tsx` (8 neue Lifecycle-Tests: Umkreis-/Arbeitsmodell-/Arbeitszeit-Änderung invalidiert Dataset und landet als neue /api/jobs-Suche; Skills-Änderung weiterhin; neue Suche manuell; Modellwechsel invalidiert NICHT + kein /api/jobs (=> kein Apify) + kein Auto-Match; manueller Retry nutzt vorhandenes Dataset; UI-Locking der neuen Felder während Suche).
+- Command: `npx tsc -b`, `npm test`, `npm run build`, `git diff --check`, Secret-Audit (`git diff | grep ...`).
+- Result: Tests 159/159 (144 + 15 neue) PASS; TSC OK; Build OK; `git diff --check` OK; Secret-Scan ohne Treffer.
+- Evidence: Kommando-Ausgaben.
+- Impact: Alle abgenommenen Verhaltensweisen (precise fallback, manueller Retry, kein Auto-Match bei Modellwahl, Dataset-Erhalt) bleiben grün (Regression).
+- Next step: Commit Step 7, dann TEIL 10 Env-Matrix, TEIL 11 Dev-Deployment.

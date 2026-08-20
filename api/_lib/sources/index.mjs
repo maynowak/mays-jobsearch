@@ -2,6 +2,7 @@ import * as arbeitnow from "./arbeitnow.mjs";
 import { APIFY_ACTORS } from "./apify/actors.mjs";
 import { createApifySource } from "./apify/index.mjs";
 import { countJobSourceRequest } from "../usage.mjs";
+import { applySearchFilters } from "../filter.mjs";
 
 export const SOURCES = [arbeitnow, ...APIFY_ACTORS.map(createApifySource)];
 
@@ -46,7 +47,7 @@ export function dedupJobs(jobs) {
   return result;
 }
 
-export async function fetchAllJobs({ skills, targetRole, city }) {
+export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMode, employmentType }) {
   const sources = enabledSources();
   const settled = await Promise.allSettled(
     sources.map((source) => source.fetchJobs({ skills, targetRole, city }))
@@ -67,12 +68,13 @@ export async function fetchAllJobs({ skills, targetRole, city }) {
   }
 
   const combined = dedupJobs(results.flatMap((result) => result.jobs));
+  const filtered = applySearchFilters(combined, { radiusKm, workMode, employmentType });
 
   const sourcesMeta = {};
   for (const result of results) sourcesMeta[result.sourceId] = result.jobs.length;
 
   const sourceCounts = {};
-  for (const job of combined) {
+  for (const job of filtered) {
     for (const source of job.source || []) sourceCounts[source] = (sourceCounts[source] || 0) + 1;
   }
 
@@ -80,10 +82,10 @@ export async function fetchAllJobs({ skills, targetRole, city }) {
   const apifyResult = results.find((result) => result.sourceId === "arbeitsagentur");
 
   return {
-    jobs: combined,
+    jobs: filtered,
     meta: {
       totalScanned: results.reduce((sum, result) => sum + (result.meta?.totalScanned ?? 0), 0),
-      totalFiltered: combined.length,
+      totalFiltered: filtered.length,
       city: arbeitnowResult?.meta?.city ?? results[0]?.meta?.city ?? [],
       keywords: arbeitnowResult?.meta?.keywords ?? results[0]?.meta?.keywords ?? [],
       sources: sourcesMeta,

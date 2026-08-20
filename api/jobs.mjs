@@ -7,8 +7,9 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
 
   try {
-    const { skills = "", targetRole = "", city = "" } = req.query || {};
-    const result = await fetchAllJobs({ skills, targetRole, city });
+    const { skills = "", targetRole = "", city = "", radiusKm, workMode, employmentType } =
+      req.query || {};
+    const result = await fetchAllJobs({ skills, targetRole, city, radiusKm, workMode, employmentType });
 
     return res.status(200).json(result);
   } catch (err) {

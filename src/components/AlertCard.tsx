@@ -29,6 +29,9 @@ export default function AlertCard({ profile }: Props) {
         skills: profile.skills,
         targetRole: profile.targetRole,
         city: profile.city,
+        radiusKm: profile.radiusKm,
+        workModes: profile.workModes,
+        employmentTypes: profile.employmentTypes,
       });
       setStatus({ type: "ok", message });
     } catch (err) {
