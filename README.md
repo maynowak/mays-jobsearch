@@ -4,7 +4,7 @@ A job search assistant that matches your profile (typed or extracted from a CV) 
 openings and scores them 0–100 with free AI models — right in the browser.
 
 - **Live Demo:** <https://mays-job-matcher.vercel.app>
-- **Status:** live in production — core matching, AI cover letters and daily digest alerts implemented
+- **Status:** live in production — core matching, AI cover letters, daily digest alerts and search parameters (Umkreis / Arbeitsmodell / Arbeitszeit) implemented
 - **Stack:** React + TypeScript + Vite · Node.js serverless functions (ESM) · Vercel Functions + Cron
 - **AI:** free models via OpenRouter (primary) and EdenAI (optional second provider), dynamic model catalogue
 
@@ -12,11 +12,13 @@ openings and scores them 0–100 with free AI models — right in the browser.
 
 ## What it does
 
-Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), and the app:
+Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), plus the optional search parameters **Umkreis** (10/25/50/100 km), **Arbeitsmodell** (Remote/Hybrid/Vor Ort, multi-select) and **Arbeitszeit** (Vollzeit default, Teilzeit additionally selectable), and the app:
 
 1. **CV upload (optional):** the PDF is read in the browser (PDF.js), text-extracted and turned into an editable search profile by the AI (`/api/profile`). The profile is cached per CV hash, so repeated uploads of the same CV are instant. The PDF file itself is never sent to the server, and raw CV text is never stored.
 2. **Model selection:** the app dynamically shows the currently available free AI models and preselects a recommended one. The user can switch to any other free model (`/api/models`). Models come from a provider router with **OpenRouter** as the primary provider and **EdenAI** as an optional second provider; when one provider reports a quota exhaustion the router automatically falls back to the other. During a running search/scoring the selector is locked so the chosen model cannot be changed mid-flight.
-3. Fetches current openings from two sources — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api) and the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`) — and filters them by your keywords and cities (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse) to avoid unnecessary paid Apify runs. Once jobs are delivered, a small "Jobquellen" module directly below the search button shows the real per-source counts (e.g. "Arbeitnow 26 Stellen · Arbeitsagentur 40 Stellen"), computed dynamically from the delivered jobs and clearly separated from the AI model selector.
+3. Fetches current openings from two sources — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api) and the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`) — and filters them by your keywords, cities and search parameters (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse) to avoid unnecessary paid Apify runs. Once jobs are delivered, a small "Jobquellen" module directly below the search button shows the real per-source counts (e.g. "Arbeitnow 26 Stellen · Arbeitsagentur 40 Stellen"), computed dynamically from the delivered jobs and clearly separated from the AI model selector.
+   - **Suchparameter (server-side, best-effort):** `employmentType` filters jobs that carry employment-type metadata (`full_time`/`part_time`, DE/EN aliases); jobs without metadata are **not** excluded, so the default "Vollzeit" search is not artificially empty. `workMode` filters to remote jobs only when **only "remote"** is selected (derivable from the job data); `hybrid`/`onsite` are not derivable from the current sources — documented open point. `radiusKm` is sent with the search but not yet geocoded — documented open point.
+   - **Dataset invalidation:** every change to a search parameter invalidates the current job dataset; the next search must be started manually and may call `/api/jobs` again. Changing the **AI model does not** invalidate the dataset, does not call `/api/jobs` and does not trigger Apify — it only re-matches the existing dataset manually (see precise-fallback UX below).
 4. Sends the filtered pool + your profile to the AI provider (`/api/match`). To stay within the function timeout, the pool is narrowed to **max 10 candidates** by keyword hits, the AI scores those **0–100** and the **top 5** are shown with:
    - the score,
    - **two sentences on why** it fits you,
@@ -189,7 +191,7 @@ City:          Berlin, München
 
 ## Testing
 
-- **116/116 tests passing** (`npm test`, Vitest) across frontend, serverless functions and provider integration.
+- **159/159 tests passing** (`npm test`, Vitest) across frontend, serverless functions and provider integration.
 - `npx tsc -b` — strict TypeScript build, PASS.
 - `npm run build` — Vite production build, PASS.
 - Live endpoint verification against the deployed Vercel functions where possible.
@@ -214,11 +216,13 @@ main → feature/<name> → Development → Preview → Abnahme → Merge → Pr
 |---|---|
 | Core matching (jobs + AI scoring) | ✅ live |
 | Multi-city search | ✅ live |
+| Search parameters (Umkreis / Arbeitsmodell / Arbeitszeit) | ✅ live (see open points above) |
 | AI cover-letter generator | ✅ live |
 | Daily digest alerts | ✅ implemented (needs Upstash + Resend keys for real delivery) |
 | Model selection (dynamic free-model catalogue) | ✅ live |
 | AI provider fallback (OpenRouter ↔ EdenAI) | ✅ live |
 | AI timeout / error-code handling | ✅ live (verified in production) |
+| Precise fallback feedback + manual model retry (no job re-fetch) | ✅ live (verified in production) |
 | Model availability / health check | 🟡 planned — see below |
 
 ## Planned
@@ -227,6 +231,6 @@ main → feature/<name> → Development → Preview → Abnahme → Merge → Pr
   the background, the result is cached, and the model combobox shows the real status of each model —
   instead of deriving availability only from the catalogue. Free models are preferred and costs
   controlled; no unnecessary provider requests and no artificial load.
-- **Matching UI lock:** disable the model combobox while a matching search is running and re-enable it
-  after completion.
+- **Geocoding for `radiusKm`:** convert the city + Umkreis into a real geo-radius filter instead of the current passthrough (server-side best-effort; needs a geocoding source).
+- **Arbeitsmodell hybrid/onsite:** only `remote` is currently derivable from the job data; hybrid/onsite filtering would need richer metadata from the job sources.
 - Final accessibility audit and candidate profile persistence (roadmap, see `docs/ROADMAP.md`).

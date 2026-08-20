@@ -7,10 +7,10 @@ Base:
 main
 
 Aktueller Step:
-Step 3
+Step 7
 
 Aktueller Status:
-COMPLETE — PREVIEW ACCEPTED
+COMPLETE — SUCHPARAMETER IMPLEMENTIERT UND IN PRODUCTION DEPLOYED
 
 ## Step-Matrix
 
@@ -18,6 +18,10 @@ COMPLETE — PREVIEW ACCEPTED
 | 1 | Analyse (UX-/Error-Flow, Model-State, i18n, Architektur) | COMPLETE | (Analyse in Chat, kein Commit) |
 | 2 | Implementierung: Fallback-Trace, präzise Meldungen, i18n, Tests | COMPLETE | 14dd323 |
 | 3 | Preview / Abnahme | COMPLETE (PREVIEW ACCEPTED) | (nach Push aktualisiert) |
+| 4 | UX-Korrektur: manueller Modell-Retry (kein Auto-Start) | COMPLETE | ddd6fc0 |
+| 5 | Preview / Abnahme (4b) | COMPLETE (PREVIEW ACCEPTED) | cf8744a |
+| 6 | Merge-Vorbereitung + zukünftiger Scope | COMPLETE (MERGE-READY) | 68f56b2 |
+| 7 | Suchparameter-Erweiterung + Merge + Production | COMPLETE | d53c4c9, 0305d52 |
 
 ## Recovery-Regel
 
@@ -360,11 +364,13 @@ CV-Flow, LetterModal, bestehende Fallback-Logik, zukünftige Erweiterungsmöglic
 
 ---
 
-# NEXT DEVELOPMENT SCOPE — NEUE SUCHPARAMETER (PLANNED, NICHT IMPLEMENTIERT)
+# SUCHPARAMETER-ERWEITERUNG (IMPLEMENTIERT, IN PRODUCTION DEPLOYED)
 
-> **PLANNED / NEXT DEVELOPMENT SCOPE** — Die folgenden Anforderungen wurden beim echten UX-Test
-> identifiziert. Sie gehören NICHT zum aktuellen Feature-Merge. Sie werden in einem späteren,
-> eigenen Feature-/Step analysiert und umgesetzt. Nichts davon ist implementiert.
+> **IMPLEMENTED / COMPLETE** — Die zuvor als NEXT DEVELOPMENT SCOPE dokumentierten Anforderungen
+> (Umkreis / Arbeitsmodell / Arbeitszeit) wurden in Step 7 umgesetzt, abgenommen, nach main
+> gemerged (FF) und in Production deployed (Deployment `dpl_DJRUFY1BtYjnY7ZPr81hhwGsswL7`,
+> Commit `0305d52`). Die Testpunkte 1–15 unten sind umgesetzt und als automatisierte Tests grün
+> (159/159). Die Implementierungsdetails stehen im Abschnitt „STEP 7" oben.
 
 ## Suchparameter vs. Modell-Retry (verbindliche Trennung)
 
@@ -406,28 +412,28 @@ Dataset → nur `/api/match` → manueller Matching-Start.
 Offener Punkt (keine eigenmächtige Änderung): Falls die spätere Analyse eine andere technische
 Behandlung eines Parameters zeigt, wird das als offener Punkt dokumentiert, nicht eigenmächtig geändert.
 
-## Testplan für die spätere Suchparameter-Phase (geplant, noch NICHT implementiert)
+## Testplan der Suchparameter-Phase (umgesetzt, Tests grün)
 
-1. Umkreis erscheint korrekt
-2. 10/25/50/100 km auswählbar
-3. Remote/Hybrid/Vor Ort vorhanden
-4. Arbeitsmodell-Mehrfachauswahl funktioniert
-5. Vollzeit standardmäßig aktiv
-6. Teilzeit zusätzlich auswählbar
-7. Änderung Umkreis invalidiert Dataset
-8. Änderung Arbeitsmodell invalidiert Dataset
-9. Änderung Arbeitszeit invalidiert Dataset
-10. neue Suche muss manuell gestartet werden
-11. neue Suche darf `/api/jobs` aufrufen
-12. neue Suche darf Apify verwenden
-13. Modellwechsel darf weiterhin NICHT `/api/jobs` auslösen
-14. Modellwechsel darf weiterhin NICHT Apify auslösen
-15. bestehende Dataset-Re-Match-Logik bleibt erhalten
+1. Umkreis erscheint korrekt — grün (SearchForm-Test)
+2. 10/25/50/100 km auswählbar — grün
+3. Remote/Hybrid/Vor Ort vorhanden — grün
+4. Arbeitsmodell-Mehrfachauswahl funktioniert — grün
+5. Vollzeit standardmäßig aktiv — grün
+6. Teilzeit zusätzlich auswählbar — grün
+7. Änderung Umkreis invalidiert Dataset — grün
+8. Änderung Arbeitsmodell invalidiert Dataset — grün
+9. Änderung Arbeitszeit invalidiert Dataset — grün
+10. neue Suche muss manuell gestartet werden — grün
+11. neue Suche darf `/api/jobs` aufrufen — grün
+12. neue Suche darf Apify verwenden — grün (via `/api/jobs`)
+13. Modellwechsel darf weiterhin NICHT `/api/jobs` auslösen — grün
+14. Modellwechsel darf weiterhin NICHT Apify auslösen — grün (via `/api/jobs`)
+15. bestehende Dataset-Re-Match-Logik bleibt erhalten — grün
 
 ## In diesem Step NICHT durchgeführt
 
-- KEINE UI-Felder hinzugefügt, KEINE API-, Jobquellen-, Apify-, Dataset-, Matching-Änderungen.
-- KEIN Merge nach main. KEIN Production-Deployment. KEIN Branch-Löschen. KEIN AI-Request. KEIN Apify.
+- KEINE Erweiterung des Scopes (keine weiteren Parameter, Provider oder Jobquellen).
+- KEINE AI-/Apify-Live-Requests während der Entwicklung; nur im expliziten Test-Step (siehe Execution Log TEIL 12).
 
 # STEP 7 — SUCHPARAMETER-ERWEITERUNG (IMPLEMENTIERT, in Abnahme)
 

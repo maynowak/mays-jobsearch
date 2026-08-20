@@ -756,3 +756,33 @@ COMPLETE
 - Evidence: Deployment-URL, Vercel-API-Ausgabe, curl-Ausgaben.
 - Impact: Funktionierende Abnahme-Instanz der Suchparameter; Server-Filter real bestätigt.
 - Next step: Merge nach main (TEIL 12) + Production-Deployment.
+
+## 10. Merge nach main + Production-Deployment (TEIL 12)
+
+- Action: FF-Merge prüfen, main auf Stand bringen, Production deployen, Identität + Smoke verifizieren.
+- Command: `git merge-base main feature` == `f5f5ee2` == origin/main → FF möglich. `git checkout main && git merge --ff-only feature/precise-model-fallback-feedback` → main == `0305d52`. `git push origin main`. Sauberer Worktree `0305d52` + `npx vercel --prod --yes`.
+- Result: Production `https://mays-job-matcher.vercel.app`, Deployment `dpl_DJRUFY1BtYjnY7ZPr81hhwGsswL7`, READY, `target=production`.
+- Deployment-Identität: Vercel-API `meta.gitCommitSha = 0305d526b677d28ccb34e97babe873bcdf437112` == main HEAD. ✓
+- Smoke Tests (Production): `/` 200, `/top` 200, `/api/model` 200 (`{"model":"dots-studio/dots-3-note-preview:free"}` → AI konfiguriert), `/api/models` 200.
+- Suchparameter live (Production): baseline 40 Jobs (5 remote); `workMode=remote` → 5, alle remote ✓; `employmentType=part_time` → 15 ✓; `radiusKm=25` → 40 (Passthrough, offener Punkt) ✓.
+- Live-AI-Matching: POST `/api/match` mit React-Frontend-Beispiel → 100/100, plausible Begründung + Vorbereitungsfrage. ✓ (echter Live-Test, da AI in Production konfiguriert)
+- Evidence: Deployment-URL, Vercel-API, curl-Ausgaben.
+- Impact: Neues Feature in Production aktiv und verifiziert; FF-Merge, main == origin/main.
+- Next step: Doku finalisieren (TEIL 13/14) + Abschluss (TEIL 15).
+
+## 11. Doku-Finalisierung (TEIL 13/14)
+
+- Action: Feature-Report (PLANNED → IMPLEMENTED/COMPLETE, Step-Matrix, Testpunkte 1–15 grün), README (Status, Suchparameter inkl. offener Punkte, Current-Status-Tabelle, Testing 159/159, Planned aktualisiert), CHANGELOG (Eintrag 2026-08-20).
+- Command: Edit `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK.md`, `README.md`, `docs/CHANGELOG.md`.
+- Result: Doku konsistent; nichts als implementiert dargestellt, was nicht verifiziert wurde (offene Punkte radiusKm/hybrid/onsite explizit).
+- Evidence: Dateien.
+- Impact: Projektübersicht + Reports vollständig.
+- Next step: Abschluss (TEIL 15).
+
+## 12. Abschluss (TEIL 15)
+
+- Action: Gates final fahren, Git-Integrität prüfen, Feature-Branch erst ganz am Ende löschen.
+- Command: `npm test`, `npx tsc -b`, `npm run build`, `git diff --check`, Secret-Audit, `git status`.
+- Result: (wird nach Abschluss der Gates ergänzt)
+- Evidence: Kommando-Ausgaben.
+- Impact: STATUS = COMPLETE.
