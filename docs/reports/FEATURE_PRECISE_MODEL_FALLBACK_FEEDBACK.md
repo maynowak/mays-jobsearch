@@ -7,16 +7,17 @@ Base:
 main
 
 Aktueller Step:
-Step 2
+Step 3
 
 Aktueller Status:
-COMPLETE
+COMPLETE — PREVIEW ACCEPTED
 
 ## Step-Matrix
 
 | Step | Thema | Status | Commit |
 | 1 | Analyse (UX-/Error-Flow, Model-State, i18n, Architektur) | COMPLETE | (Analyse in Chat, kein Commit) |
-| 2 | Implementierung: Fallback-Trace, präzise Meldungen, i18n, Tests | COMPLETE | (nach Push aktualisiert) |
+| 2 | Implementierung: Fallback-Trace, präzise Meldungen, i18n, Tests | COMPLETE | 14dd323 |
+| 3 | Preview / Abnahme | COMPLETE (PREVIEW ACCEPTED) | (nach Push aktualisiert) |
 
 ## Recovery-Regel
 
@@ -139,3 +140,107 @@ Keine AI-Live-Requests. Kein Apify. Kein Production Deployment.
 
 - Keine. Nächste Steps (Preview/Abnahme, Merge, Deployment, Production-Test) sind
   PENDING und werden separat freigegeben.
+
+## Step 3 — Preview / Abnahme
+
+Status: **COMPLETE — PREVIEW ACCEPTED**
+
+### Preview Deployment / Deployment-Identität
+
+| Eigenschaft | Wert |
+|---|---|
+| Preview URL | https://mays-job-matcher-5zl0hhk2h-maymilly.vercel.app |
+| Deployment ID (Vercel API) | `dpl_9PFMTY7eVrqVonR2bn4fgT3bwCHj` |
+| State (Vercel API) | `READY` |
+| tatsächlicher Deployment-Commit (Vercel API `meta.gitCommitSha`) | `e554c1807c0db8b99b180bf55d6f87c52502df40` |
+| Feature HEAD | `e554c1807c0db8b99b180bf55d6f87c52502df40` |
+| Preview-Deployment-Commit == Feature HEAD | **JA** |
+
+Deployment erfolgte aus einem sauberen git-Worktree von exakt `e554c18`
+(detached HEAD, kein untracked Dateien im Payload) via Vercel CLI (Preview).
+
+### Feature-Identität (im Preview-Artefakt nachgewiesen)
+
+1. Deployment-Commit per Vercel-API == Feature HEAD (siehe oben).
+2. Preview-Bundle (`/assets/index-B9BucZZW.js`) heruntergeladen; alle neuen
+   i18n-Strings DE + EN im Bundle vorhanden:
+   - „Ihre bereits gefundenen Stellen bleiben erhalten"
+   - „Das ausgewählte AI-Modell ist derzeit nicht verfügbar"
+   - „anderes verfügbares Modell auswählen" / „ohne die Jobs erneut zu laden"
+   - „Das Modell … / automatisch mit …"
+   - „Your found jobs are kept" / „without re-running the search" / „We'll automatically try"
+3. Lokaler Rebuild von exakt `e554c18` im Worktree mit Vercel-äquivalenter
+   Build-Env (`VERCEL_ENV=preview`, leere GIT_SHA/REF) → identisches Bundle
+   `index-B9BucZZW.js`, **SHA-256 `1975d952…` == deployed** → **byte-identisch**.
+
+⇒ Preview enthält exakt den Code von `e554c18` inkl. Fallback-Trace (`attempts`),
+präzise Modellnamen (Runtime-Katalog), neue i18n-Keys und die „Jobs bleiben
+erhalten"-/„Modellwahl ohne neue Suche"-Hinweise.
+
+### UI-Abnahme / Fallback-Meldungen / ModelSelector
+
+- Interaktive Browser-Klicks im Preview konnten NICHT direkt ausgeführt werden
+  (kein Browser-Automatisierungswerkzeug verfügbar) → „nicht direkt verifiziert".
+- Fachlich abgedeckt durch: 137/137 Tests (u. a. „Präzises Model-Fallback-Feedback":
+  Fallback-Erfolg nennt fehlgeschlagenes + verwendetes Modell + Job-Erhalt;
+  vollständiger Fehlschlag nennt Modell-Wahl ohne neue Suche; Ein-Modell-Katalog;
+  Modellwechsel nur `/api/match`; EN-i18n) + Bundle-Nachweis der exakten Texte.
+- ModelSelector: Funktionstests (Test E/F/G: Sperre während Suche/Bewertung,
+  Freigabe nach Abschluss; Retry-Tests 1–11; Trace-Tests) grün. Architektur unverändert;
+  fehlgeschlagenes Modell bleibt im Katalog sichtbar; Modellwechsel löst ausschließlich
+  `/api/match` auf dem vorhandenen Dataset aus (kein `/api/jobs`, kein Apify).
+
+### Request-/Runtime-Prüfung
+
+| Endpoint | HTTP |
+|---|---|
+| `/` | 200 |
+| `/top` | 200 |
+| `/api/model` | 200 |
+| `/api/models` | 200 (Provider `configured:false` — Preview hat KEINE AI-Keys) |
+
+Kein AI-Live-Test (Preview besitzt keine AI-Keys → laut Vorgabe NICHT durchgeführt).
+Kein Apify. Keine künstlichen Job-Suchen. Keine kostenpflichtigen Provider-Requests.
+
+### Regression / technische Validierung
+
+| Gate | Ergebnis |
+|---|---|
+| `npm test` | **137/137 PASS (16 Dateien)** |
+| `npx tsc -b` | PASS |
+| `npm run build` | PASS |
+| `git diff --check` | sauber |
+| Secret Audit (Code-Diff) | sauber |
+
+Code seit Step-2-Gates unverändert (seitdem nur Docs-Commit `e554c18`); Gates erneut
+frisch ausgeführt. Bestehende Features erhalten (Matching Retry, Dataset-Persistenz,
+Search/Match-Trennung, withModelFallback, ModelSelector, Timeout/Network-Handling,
+Jobquellen, Apify/Cache, CV-Flow, LetterModal, bestehende Fallback-Logik).
+
+### Abnahmekriterien
+
+| Kriterium | Status |
+|---|---|
+| Preview Commit == Feature HEAD | PASS (`e554c18`) |
+| Feature-Code im Preview-Artefakt nachgewiesen | PASS (Bundle byte-identisch + i18n-Strings) |
+| neue Fallback-Meldungen vorhanden | PASS (Bundle-Strings DE/EN) |
+| Modellnamen korrekt dynamisch | PASS (via `modelDisplayName` aus Runtime-Katalog; Tests) |
+| Jobs-Erhalt kommuniziert | PASS |
+| Modellwechsel ohne neue Suche kommuniziert | PASS |
+| ModelSelector funktioniert | PASS (Tests) |
+| keine Regression sichtbar | PASS (137/137, Smoke 200) |
+| Tests/Build/Audits sauber | PASS |
+| keine Secrets | PASS |
+| keine unerlaubten externen Requests | PASS (kein AI/Apify/Production) |
+| Interaktive Browser-Klicks im Preview | nicht verifiziert (kein Browser-Tooling; durch Tests + Bundle belegt) |
+
+### Git / Deployment
+
+- Branch: `feature/precise-model-fallback-feedback`
+- Push ausschließlich auf `origin/feature/precise-model-fallback-feedback`.
+- KEIN Merge nach main. KEIN Production-Deployment. KEIN Branch-Löschen.
+
+### Offene Punkte
+
+- Keine. Nächste Steps (Merge nach main, Deployment, Production-Test) sind PENDING
+  und benötigen separate Freigabe.
