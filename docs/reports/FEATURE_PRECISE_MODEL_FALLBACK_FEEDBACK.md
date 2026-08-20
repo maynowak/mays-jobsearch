@@ -428,3 +428,63 @@ Behandlung eines Parameters zeigt, wird das als offener Punkt dokumentiert, nich
 
 - KEINE UI-Felder hinzugefügt, KEINE API-, Jobquellen-, Apify-, Dataset-, Matching-Änderungen.
 - KEIN Merge nach main. KEIN Production-Deployment. KEIN Branch-Löschen. KEIN AI-Request. KEIN Apify.
+
+# STEP 7 — SUCHPARAMETER-ERWEITERUNG (IMPLEMENTIERT, in Abnahme)
+
+## Implementierung (Client + Server)
+
+Neue Suchprofil-Parameter: `Umkreis` (10/25/50/100 km, Select), `Arbeitsmodell`
+(Remote/Hybrid/Vor Ort, Mehrfachauswahl), `Arbeitszeit` (Vollzeit standardmäßig aktiv,
+Teilzeit zusätzlich aktivierbar; mindestens eine bleibt aktiv).
+
+- `Profile` erweitert (REQUIRED): `radiusKm: number|null`, `workModes: WorkMode[]`,
+  `employmentTypes: EmploymentType[]`. `profilesEqual`/`arraysEqual` vergleichen alle Felder.
+- Dataset-Invalidierung: jede Änderung eines Suchparameters invalidiert das Job-Dataset.
+  Keine automatische neue Suche. Manuelle neue Suche darf `/api/jobs` (und damit die
+  Jobquellen/Apify) erneut aufrufen.
+- Modellwechsel bleibt getrennt (TEIL 5): invalidiert das Dataset NICHT, kein `/api/jobs`,
+  kein Apify, nur manueller Re-Match auf dem vorhandenen Dataset.
+- UI-Locking: während Suche/Matching sind Suchparameter, ModelSelector und CV/Profil gesperrt.
+- Server: best-effort Filter in `api/_lib/filter.mjs` (additiv; ohne Parameter identisches
+  Verhalten). `employmentMatches` (DE/EN-Alias-Sets, Stellen ohne Beschäftigungs-Info werden
+  NICHT ausgeschlossen), `workModeMatches` (nur bei ausschließlich „remote" filterbar via
+  `job.remote`). `radiusKm` ohne Geocoding nicht filterbar.
+- Commit: `d53c4c9` (Branch `feature/precise-model-fallback-feedback`).
+
+## Env-Variablen-Matrix (TEIL 10, KEINE Werte)
+
+| Variable | Verwendung | Dev | Preview | Production | Sandbox möglich | Kostenrisiko |
+|---|---|---|---|---|---|---|
+| OPENROUTER_ENABLED | Schalter AI-Scoring/Anschreiben | – | ✓ | ✓ | ja | nein (nur Schalter) |
+| OPENROUTER_ENV | Umgebungskennung | dev | preview | production | ja | nein |
+| OPENROUTER_MODEL | Standardmodell | dev | prod | prod | ja | nein |
+| OPENROUTER_API_KEY | Schlüssel OpenRouter | dev | prod | prod | ja | hoch (pro Request) |
+| OPENROUTER_MONTHLY_MAX_REQUESTS | Request-Limit pro Monat | dev | prod | prod | ja | Reduktion |
+| OPENROUTER_MONTHLY_SOFT_LIMIT_USD | Ausgaben-Schwelle | dev | prod | prod | ja | Reduktion |
+| EDENAI_ENABLED | Schalter Fallback-Modell | – | ✓ | ✓ | ja | nein |
+| EDENAI_ENV | Umgebungskennung | dev | preview | production | ja | nein |
+| EDENAI_MODEL | Fallback-Modell | dev | prod | prod | ja | nein |
+| EDENAI_API_KEY | Schlüssel Eden AI | prod | prod | prod | ja | mittel |
+| EDENAI_DEV_API_KEY | Schlüssel Eden AI (Dev) | dev | – | – | ja | mittel |
+| EDENAI_MONTHLY_MAX_REQUESTS | Request-Limit pro Monat | dev | prod | prod | ja | Reduktion |
+| EDENAI_MONTHLY_SOFT_LIMIT_USD | Ausgaben-Schwelle | dev | prod | prod | ja | Reduktion |
+| APIFY_API_TOKEN | Token Apify (Jobquellen) | dev | prod | prod | ja | hoch (pro Run) |
+| APIFY_MONTHLY_MAX_RUNS | Max. Runs pro Monat | dev | prod | prod | ja | Reduktion |
+| APIFY_MONTHLY_SOFT_LIMIT_USD | Ausgaben-Schwelle | dev | prod | prod | ja | Reduktion |
+| APIFY_DATASET_REFRESH_PEAK_START/END | Peak-Fenster | dev | prod | prod | ja | nein |
+| APIFY_DATASET_REFRESH_PEAK_HOURS | Peak-Stunden | dev | prod | prod | ja | nein |
+| APIFY_DATASET_REFRESH_OFFPEAK_HOURS | Offpeak-Stunden | dev | prod | prod | ja | nein |
+| APIFY_DATASET_REFRESH_TIMEZONE | Zeitzone | dev | prod | prod | ja | nein |
+| JOB_SOURCE_ARBEITNOW_ENABLED | Schalter Arbeitnow | dev | prod | prod | ja | nein |
+| JOB_SOURCE_ARBEITSAGENTUR_ENABLED | Schalter Agentur für Arbeit | dev | prod | prod | ja | nein |
+| UPSTASH_REDIS_REST_URL | URL Upstash Redis | dev | prod | prod | ja | gering |
+| UPSTASH_REDIS_REST_TOKEN | Token Upstash Redis | dev | prod | prod | ja | gering |
+| RESEND_API_KEY | Schlüssel Resend (Digests) | dev | prod | prod | nein | gering |
+| DIGEST_FROM | Absender E-Mail-Digests | dev | prod | prod | nein | nein |
+| CRON_SECRET | Schutz der Cron-Endpunkte | dev | prod | prod | ja | nein |
+| USAGE_DIAGNOSTICS_TOKEN | Token Verbrauchs-Diagnose | dev | prod | prod | ja | nein |
+| MODEL_FALLBACK_MAX_ATTEMPTS | Fallback-Versuche | dev | prod | prod | ja | nein |
+| VERCEL_ENV | Vercel-Umgebung | dev | preview | production | – | nein |
+
+Hinweise: „Sandbox möglich" = Funktion ohne Live-/Kosten-Kontakt testbar. Nur Variable-NAMEN
+dokumentiert; keine Werte/Secrets.

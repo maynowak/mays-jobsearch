@@ -743,3 +743,16 @@ COMPLETE
 - Evidence: Kommando-Ausgaben.
 - Impact: Alle abgenommenen Verhaltensweisen (precise fallback, manueller Retry, kein Auto-Match bei Modellwahl, Dataset-Erhalt) bleiben grün (Regression).
 - Next step: Commit Step 7, dann TEIL 10 Env-Matrix, TEIL 11 Dev-Deployment.
+
+## 9. Vercel Dev-/Test-Deployment (TEIL 11)
+
+- Action: Sauberer Worktree des exakten Commits `d53c4c9` anlegen und Preview deployen.
+- Command: `git worktree add /tmp/opencode/deploy-step7 d53c4c9`; `npm install`; `VERCEL_ORG_ID=… VERCEL_PROJECT_ID=… npx vercel --yes` (workdir Worktree).
+- Result: Preview `https://mays-job-matcher-6d8yc2d76-maymilly.vercel.app`, Deployment `dpl_EFyj268VMJbbojtaEY9qPYn3dxNH`, READY.
+- Deployment-Identität: Vercel-API zeigt `meta.gitCommitSha = d53c4c92b7d7a451a41c6d8f8a4ee09569cb0ef6` (== HEAD `d53c4c9`). ✓
+- Smoke Tests: `/` 200, `/top` 200, `/api/model` 200 (`{"model":null}` → keine AI-Keys), `/api/models` 200, `/api/jobs` 200.
+- Neue Suchparameter live geprüft: baseline 40 Jobs (5 remote); `workMode=remote` → genau die 5 Remote-Jobs ✓; `employmentType=full_time` → 22; `employmentType=part_time` → 1; `radiusKm=25` → Passthrough ohne Filter (offener Punkt, dokumentiert). ✓
+- Live-UX/AI-Test: NICHT möglich — keine AI-Credentials konfiguriert (`configured:false`). UX-Abnahme erfolgt über die DOM-Tests (159/159). Browser-Flow: „nicht direkt verifiziert" (kein Browser-Tooling).
+- Evidence: Deployment-URL, Vercel-API-Ausgabe, curl-Ausgaben.
+- Impact: Funktionierende Abnahme-Instanz der Suchparameter; Server-Filter real bestätigt.
+- Next step: Merge nach main (TEIL 12) + Production-Deployment.
