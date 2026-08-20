@@ -474,3 +474,111 @@ COMPLETE
 - Evidence: `git log --oneline -1`.
 - Impact: Feature-Umsetzung inkl. Step-4a-Analyse dokumentiert und versioniert.
 - Next step: Push / Merge / Deployment nach Freigabe.
+
+---
+
+# STEP 5 — PREVIEW / ABNAHME
+
+## 1. Git-/Repository-Ist-Stand
+
+- Action: Stand feststellen.
+- Command: `git branch --show-current` / `git rev-parse HEAD` / `git rev-parse origin/feature/precise-model-fallback-feedback` / `git rev-parse main` / `git rev-parse origin/main` / `git status --short`.
+- Result: Branch `feature/precise-model-fallback-feedback`; HEAD `ddd6fc0`; origin/feature `ddd6fc0` (in Sync); main == origin/main `f5f5ee2`; Working Tree nur dauerhaft untracked (`ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`).
+- Evidence: Kommando-Ausgaben.
+- Impact: Feature HEAD == `ddd6fc0` bestätigt → gültige Deploy-Basis.
+- Next step: Preview-Deployment.
+
+## 2. Preview-Deployment
+
+- Action: Sauberes git-Worktree von `ddd6fc0` erzeugen, Vercel-Preview deployen, tatsächlichen Deployment-Commit auslesen.
+- Command: `git worktree add --detach /tmp/opencode/preview-s5 ddd6fc0`; `npx vercel --yes` (mit `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID`); Vercel-API `v6/deployments` mit Token aus `~/.local/share/com.vercel.cli/auth.json`.
+- Result: Preview-URL https://mays-job-matcher-3pxispsqv-maymilly.vercel.app; Deployment `dpl_F8pvmj8Pz661LhCVmRTwf6z4FyJe`; `meta.gitCommitSha` == `ddd6fc04b45fe5623522768173d141f469eefef9` == Feature HEAD. State READY.
+- Evidence: CLI-Ausgabe + API-JSON (uid/url/state/gitCommitSha).
+- Impact: Erwartung „Preview Commit == Feature HEAD" → PASS. KEIN Test auf falschem Build.
+- Next step: Feature-Identität.
+
+## 3. Feature-Identität
+
+- Action: Deployed Bundle `index-MWzvy0WI.js` (244.311 Bytes) laden; i18n-Strings scannen; mit lokalem Rebuild von `ddd6fc0` vergleichen.
+- Command: `curl -s …/assets/index-MWzvy0WI.js`; String-Grep (DE/EN retryHint + buttonRematch); lokaler Rebuild mit `VERCEL_ENV=preview VERCEL_GIT_COMMIT_SHA= VERCEL_GIT_COMMIT_REF= npm run build`; `sha256sum`-Vergleich.
+- Result: Alle Step-4b-i18n-Strings im Bundle vorhanden (DE+EN). Lokaler Rebuild erzeugt exakt `index-MWzvy0WI.js` — **byte-identisch** (SHA-256 `9ab9441cbf38d437b73fdd32003e3049f87b7954e4bb0c8a72721e4f88250c7e`). Verhalten (kein Auto-Start, `modelExhausted`, kontextabhängiger Submit, Dataset-Re-Match) durch DOM-Tests A–G belegt (minifizierte Namen nicht als Strings suchbar).
+- Evidence: String-Treffer, sha256sum-Ausgabe.
+- Impact: Preview enthält exakt den Step-4b-Code (PASS).
+- Next step: Technische Smoke Tests.
+
+## 4. Technische Smoke Tests
+
+- Action: HTTP-Status für `/`, `/top`, `/api/model`, `/api/models` prüfen; Konfigurationszustand prüfen.
+- Command: `curl -s -w "%{http_code}"` je Pfad; Body-Lesung für `/api/model`, `/api/models`.
+- Result: Alle vier Pfade HTTP 200. `/api/models`: Provider `configured:false` → KEINE AI-Keys im Preview.
+- Evidence: curl-Ausgaben.
+- Impact: KEIN AI-Live-Test, KEIN Apify, KEINE kostenpflichtigen Requests (Vorgabe). Console-/Runtime-/Network-Fehler im echten Browser: nicht direkt verifiziert (kein Browser-Tooling); keine jsdom-/Build-Fehler.
+- Next step: UX-Abnahme.
+
+## 5. UX-Abnahme
+
+- Action: Abnahmekriterien gegen automatische DOM-Level-Tests + statische Evidenz prüfen (kein Browser-Tooling verfügbar).
+- Command: Testauswahl (Step-4a-Tests A–G, App-Tests 6–9, 8b, Matching-Retry 3–5, Feature-Test 4); Bundle-/Deployment-Belege.
+- Result: Alle Kriterien PASS (siehe Feature-Report Step 5, Tabelle). „Modellwahl allein startet KEIN Matching" (Test A), Hinweis sichtbar (Test B), Highlight vorhanden/verschwindet (B/C), manueller Button (E), Dataset-Re-Match ohne `/api/jobs` (D), neue Suche manuell + Parameter-Invalidierung (F, Test 6/7), Sperrung während Suche/Matching (Test 8/8b/9, Test G).
+- Evidence: Testausführungen (144/144 grün).
+- Impact: UX-Verhalten auf DOM-Ebene vollständig abgenommen; echte Browser-Klicks nicht direkt verifiziert (kein Tooling) — explizit als solche markiert, NICHT als PASS für den Live-Browser behauptet.
+- Next step: Neue Suche.
+
+## 6. Neue Suche
+
+- Action: Dataset-Invalidierung + manuelle neue Suche prüfen.
+- Command: Test F + Test 6 + Test 7 (jsdom).
+- Result: Änderung an Skills/TargetRole/City invalidiert Dataset (kein Auto-Search); neue Suche nur manuell (Submit) → `/api/jobs` erlaubt; neues Dataset entsteht. Echter Browser-Livetest nicht möglich (keine Keys) → nicht erzwungen; durch Tests + statische Evidenz dokumentiert.
+- Evidence: Testausführungen.
+- Impact: Regel „neue Suche bleibt manuell" bestätigt.
+- Next step: Request-Sicherheit.
+
+## 7. Request-Sicherheit
+
+- Action: Request-Verhalten bei Modellwahl vs. manuellem Start prüfen.
+- Command: Step-4a-Tests A/D (fetchMatches/fetchJobs-Call-Zähler); String-/Bundle-Analyse.
+- Result: Modellauswahl allein löst KEINEN Request aus (Test A: Call-Zähler unverändert). Manueller Start → genau `/api/match` auf vorhandenem Dataset, kein `/api/jobs`, kein Apify (Test D, Matching-Retry-Tests 3–5).
+- Evidence: Testausführungen.
+- Impact: Request-Sicherheit auf Request-Ebene belegt; Live-Netzwerk-Nachweis im echten Browser **nicht direkt verifiziert** (kein Browser-Tooling) — explizit als solche markiert.
+- Next step: Regression.
+
+## 8. Regression
+
+- Action: Bestehende Features prüfen (keine Löschung/Deaktivierung).
+- Command: Volle Testsuite (16 Dateien, 144 Tests); Diff-Review Step 4b.
+- Result: Automatische Fallback-Kette, Dataset-Persistenz, Search/Match-Trennung, ModelSelector, Jobquellen, Apify/Cache, Timeout-/Network-Handling, CV-Flow, Footer erhalten; LetterModal-Code unverändert (kein Test, Build ok). `api/`-Code im Step-4b-Diff nicht angefasst.
+- Evidence: Testausführungen + `git diff` (nur additive Änderungen).
+- Impact: Keine sichtbaren Regressionen.
+- Next step: Test/Build/Audit.
+
+## 9. Test / Build / Audit
+
+- Action: Alle Gates ausführen.
+- Command: `npm test` / `npx tsc -b` / `npm run build` / `git diff --check` / Secret-Audit (`git diff` + untracked Scan nach api_key/secret/token/password/apify).
+- Result: Tests **144/144** (16 Dateien) PASS; `tsc -b` PASS; `vite build` PASS; `git diff --check` sauber; keine Secrets (0 Treffer). Keine Tests entfernt/abgeschwächt (nur erweiterte/angepasste an neues fachliches Verhalten).
+- Evidence: Kommando-Ausgaben.
+- Impact: Abnahmevoraussetzungen erfüllt.
+- Next step: Dokumentation.
+
+## 10. Dokumentation
+
+- Action: Feature-Report + Execution Log aktualisieren.
+- Command: Append Step-5-Abschnitte an `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK.md` und diesen Log.
+- Result: Beide Dokumente konsistent (Preview-Deployment, Commit `ddd6fc0`, UX-Abnahme, technische Tests, offene Punkte).
+- Evidence: Dateien.
+- Impact: Abnahme nachvollziehbar dokumentiert.
+- Next step: Git-Commit der Doku.
+
+## 11. Git
+
+- Action: Nur Doku-Änderungen committen und auf den Feature-Branch pushen.
+- Command: `git add` (2 Docs) → `git commit` → `git push`.
+- Result: Siehe Commit-Hash unten.
+- Evidence: `git log --oneline -1`, `git rev-parse origin/feature/...`.
+- Impact: Doku versioniert; kein Merge nach main, kein Production-Deployment, kein Branch-Löschen.
+
+## Abnahmeergebnis
+
+- **STEP 5 = COMPLETE** · **PREVIEW = ACCEPTED**
+- Nicht direkt verifiziert (kein Browser-Tooling): Live-Browser-Klicks, Live-Netzwerk-Request-Nachweis, Browser-Console/Network-Fehler — explizit als „nicht verifiziert" markiert, durch DOM-Tests und Bundle-Identität abgedeckt.
+- Nächster Step (Merge nach main, Production-Deployment) benötigt separate Freigabe.

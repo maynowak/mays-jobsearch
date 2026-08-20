@@ -244,3 +244,83 @@ Jobquellen, Apify/Cache, CV-Flow, LetterModal, bestehende Fallback-Logik).
 
 - Keine. Nächste Steps (Merge nach main, Deployment, Production-Test) sind PENDING
   und benötigen separate Freigabe.
+---
+
+# Step 5 — Preview / Abnahme
+
+## Status
+
+- **STEP 5 = COMPLETE** · **PREVIEW = ACCEPTED** (Feature Commit `ddd6fc0`)
+- Browser-Flow nicht direkt verifiziert (kein Browser-Tooling); jeder Punkt durch
+  automatische DOM-Level-Tests und Bundle-Belege abgedeckt (siehe unten).
+
+## Preview Deployment
+
+- URL: https://mays-job-matcher-3pxispsqv-maymilly.vercel.app
+- Deployment: `dpl_F8pvmj8Pz661LhCVmRTwf6z4FyJe`
+- Vercel-Deployment-Commit (`meta.gitCommitSha`): `ddd6fc04b45fe5623522768173d141f469eefef9`
+- Erwartung „Preview Commit == Feature HEAD" → **PASS** (Feature HEAD `ddd6fc0` zum Deploy-Zeitpunkt)
+- Deployment aus sauberem git-Worktree von `ddd6fc0` über Vercel CLI (Preview).
+
+## Feature-Identität (Step-4b-Code im Preview)
+
+- i18n-Strings im Bundle nachgewiesen (String-Scan im deployed Bundle `index-MWzvy0WI.js`):
+  - `model.retryHint`: „Bitte versuche, ein anderes Modell auszuwählen." ✓ / „Please try selecting a different model." ✓
+  - `search.buttonRematch`: „Mit diesem Modell erneut bewerten" ✓ / „Re-score with this model" ✓
+  - `model.fallbackExhausted` (erschöpfter Fallback) vorhanden ✓
+- **Bundle-Identität:** Lokaler Rebuild von `ddd6fc0` mit `VERCEL_ENV=preview`, `VERCEL_GIT_COMMIT_SHA=""`, `VERCEL_GIT_COMMIT_REF=""`
+  → deployed Bundle `index-MWzvy0WI.js` **byte-identisch** (SHA-256 `9ab9441c…`).
+- handleModelChange/manuelle Auswahl ohne Auto-Start, `modelExhausted`, kontextabhängiger Submit,
+  Dataset-Re-Match: durch die neuen DOM-Tests A–G (Step 4b) verifiziert; Variablennamen minifiziert,
+  daher nicht als Strings im Bundle, aber als Verhalten in jsdom-Tests belegt.
+
+## Technische Smoke Tests
+
+| Pfad | Status |
+|---|---|
+| `/` | 200 ✓ |
+| `/top` | 200 ✓ |
+| `/api/model` | 200 ✓ |
+| `/api/models` | 200 ✓ (Provider `configured:false` → KEINE AI-Keys im Preview) |
+
+- KEIN AI-Live-Test, KEIN Apify, KEINE kostenpflichtigen Requests (keine Keys; Vorgabe).
+- Console-/Runtime-/Network-Fehler im echten Browser: **nicht direkt verifiziert** (kein Browser-Tooling);
+  keine Fehler in jsdom-Tests, Build sauber.
+
+## UX-Abnahme
+
+Abnahme-Kriterien — Beleg durch automatische DOM-Level-Tests (jsdom + Testing Library, 144/144) und/oder statische Evidenz:
+
+| Kriterium | Status | Beleg |
+|---|---|---|
+| Preview enthält exakten Feature-Code | PASS | Deployment-Commit `ddd6fc0`, Bundle byte-identisch (SHA `9ab9441c…`) |
+| Suchmaske während Suche gesperrt | PASS | App-Test 8 + 8b (Skills/Zielrolle/Stadt/CV deaktiviert) |
+| ModelSelector während Suche gesperrt | PASS | App-Test 9 (`model-trigger` disabled) |
+| Fallback-Hinweis vorhanden | PASS | Step-4a-Test B („Bitte versuche, ein anderes Modell auszuwählen.") |
+| ModelSelector nach Fallback hervorgehoben | PASS | Step-4a-Test B (`.model-field--attention` vorhanden) |
+| Modellwahl allein startet KEIN Matching | PASS | Step-4a-Test A (kein zusätzlicher `fetchMatches`-Call) |
+| manueller Retry-Button vorhanden | PASS | Step-4a-Test E („Mit diesem Modell erneut bewerten") |
+| manueller Retry verwendet vorhandenes Dataset | PASS | Step-4a-Test D (exakte Jobs, `/api/match`, kein `/api/jobs`) |
+| neue Suche bleibt manuell | PASS | Step-4a-Test F + App-Test 7 |
+| Suchparameter invalidieren Dataset | PASS | App-Test 6 + Step-4a-Test F |
+| bestehende Features erhalten | PASS | 144 Tests (Fallback-Kette, Timeout/Network, Jobquellen, CV, Footer) |
+| Tests / Build / Audit sauber | PASS | `npm test` 144/144, `tsc -b`, `vite build`, `git diff --check`, Secret-Scan |
+| Request-Sicherheit auf Netzebene (echter Browser) | nicht direkt verifiziert | kein Browser-Tooling; auf Request-Ebene durch Tests belegt (Modellwahl = 0 Requests) |
+| Interaktive Browser-Klicks im Preview | nicht direkt verifiziert | kein Browser-Tooling; durch Tests + Bundle belegt |
+
+## Regression
+
+- Nichts gelöscht/deaktiviert: automatische Fallback-Kette, Dataset-Persistenz, Search/Match-Trennung,
+  ModelSelector, Apify, Jobquellen, Apify-Cache, Timeout-/Network-Handling, CV-Flow, LetterModal,
+  Fehlerbehandlung. Nur additive Änderungen in App/SearchForm/ModelSelector/i18n/styles.
+- Kein Eingriff in `api/`-Code (Fallback-Algorithmus, Request-Handling) im Step-4b-Diff.
+
+## Git
+
+- Branch `feature/precise-model-fallback-feedback`, HEAD/`origin` = `ddd6fc0` (+ Step-5-Docs-Commit nach dieser Dokumentation).
+- Push ausschließlich auf `origin/feature/precise-model-fallback-feedback`.
+- KEIN Merge nach main. KEIN Production-Deployment. KEIN Branch-Löschen.
+
+## Offene Punkte
+
+- Nächste Steps (Merge nach main, Production-Deployment) sind PENDING und benötigen separate Freigabe.
