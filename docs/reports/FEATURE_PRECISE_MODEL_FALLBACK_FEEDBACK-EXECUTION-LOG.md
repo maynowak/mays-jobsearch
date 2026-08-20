@@ -582,3 +582,87 @@ COMPLETE
 - **STEP 5 = COMPLETE** · **PREVIEW = ACCEPTED**
 - Nicht direkt verifiziert (kein Browser-Tooling): Live-Browser-Klicks, Live-Netzwerk-Request-Nachweis, Browser-Console/Network-Fehler — explizit als „nicht verifiziert" markiert, durch DOM-Tests und Bundle-Identität abgedeckt.
 - Nächster Step (Merge nach main, Production-Deployment) benötigt separate Freigabe.
+
+---
+
+# STEP 6 — MERGE-VORBEREITUNG + ZUKÜNFTIGER SUCHPARAMETER-SCOPE (PLANNED)
+
+## 1. Git-/Repository-Ist-Stand
+
+- Action: Ist-Stand zu Beginn feststellen.
+- Command: `git branch --show-current` / `git rev-parse HEAD` / `git rev-parse origin/feature/precise-model-fallback-feedback` / `git rev-parse main` / `git rev-parse origin/main` / `git status --short` / `git log --oneline main..feature`.
+- Result: Branch `feature/precise-model-fallback-feedback`; HEAD `cf8744a`; origin/feature `cf8744a` (in Sync); main == origin/main `f5f5ee2`; Working Tree nur dauerhaft untracked (`ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`). Feature-Commits über main: `14dd323` (feat), `e554c18` (docs), `72c7fed` (docs), `ddd6fc0` (feat), `cf8744a` (docs).
+- Evidence: Kommando-Ausgaben.
+- Impact: Vollständige, verifizierbare Ausgangslage dokumentiert.
+- Next step: Teil A — Merge-Gate.
+
+## 2. Teil A — Merge-Gate
+
+- Action: Alle 15 Merge-Gates prüfen.
+- Command: `git merge-base --is-ancestor main feature/...` / `git diff --stat main feature/...` / `git diff main feature/... -- src/api.ts` / `git diff main feature/... --numstat` / Deletions-Review / `npm test` / `npx tsc -b` / `npm run build` / `git diff --check` / Secret-Audit.
+- Result: Fast-forward möglich (merge-base `f5f5ee2` == main HEAD). Feature-Diff: 10 Dateien (App.tsx, api.ts, i18n.tsx, ModelSelector, SearchForm, styles.css, App.test.tsx, api.test.ts, 2 Doc-Dateien). `api.ts`-Diff = nur `FallbackAttempt`/`attempts`-Trace (kein Apify/Jobquellen/Timeout-Eingriff); `api/`-Verzeichnis (Serverless) unverändert. Gelöschte Zeilen ausschließlich Testtexte (`/momentan nicht verfügbar/` → präzise Meldung), eine Test-Erwartung (`usedFallback` → + `attempts`) und Kommentar-Zeilen. Tests **144/144** PASS; `tsc -b` PASS; `vite build` PASS; `git diff --check` sauber; Secret-Scan 0 Treffer.
+- Evidence: Kommando-Ausgaben (Diff, Test-/Build-Outputs).
+- Impact: **MERGE-READY** bestätigt; KEIN Merge durchgeführt (separate Freigabe).
+- Next step: Teil B–F — Suchparameter-Scope dokumentieren.
+
+## 3. Teil B — Wichtige neue Suchparameter (PLANNED)
+
+- Action: Anforderungen aus echtem UX-Test als verbindlichen Scope der nächsten Phase dokumentieren (NICHT implementiert).
+- Command: Append Feature-Report (Abschnitt „NEXT DEVELOPMENT SCOPE — NEUE SUCHPARAMETER").
+- Result: Umkreis (10/25/50/100 km, Dropdown), Arbeitsmodell (Remote/Hybrid/Vor Ort, Mehrfachauswahl), Arbeitszeit (Vollzeit default, Teilzeit zusätzlich) dokumentiert. Jede Änderung → Dataset-Invalidierung, keine Auto-Suche, manuelle neue Suche erlaubt `/api/jobs` + Jobquellen/Apify.
+- Evidence: Feature-Report-Abschnitt.
+- Impact: Klarer, verbindlicher Scope für die nächste Entwicklungsphase; als PLANNED gekennzeichnet.
+- Next step: Teil C/E — Trennung + Matrix.
+
+## 4. Teil C — Search Parameter vs. Model Retry (Trennung)
+
+- Action: Verbindliche Trennung dokumentieren.
+- Command: Append Feature-Report (Abschnitt „Suchparameter vs. Modell-Retry").
+- Result: SUCHPARAMETER → Dataset invalidieren, manuelle neue Suche, `/api/jobs`, neues Dataset, Matching. MODEL-WECHSEL → Dataset nicht invalidieren, kein `/api/jobs`, kein Apify, vorhandenes Dataset, nur `/api/match`, manueller Matching-Start.
+- Evidence: Feature-Report-Abschnitt.
+- Impact: Kein Scope-Spill zwischen Suche und Modellwahl.
+- Next step: Teil E — Matrix.
+
+## 5. Teil E — Search-Parameter-Matrix
+
+- Action: Matrix dokumentieren.
+- Command: Append Feature-Report (Matrix-Tabelle).
+- Result: Tabelle mit Zielrolle/Skills/Ort (bestehend) und Umkreis/Arbeitsmodell/Arbeitszeit (neu) inkl. Mehrfachauswahl/Invalidierung//api/jobs/AI-Matching. Offener Punkt vermerkt: abweichende technische Behandlung eines Parameters wird dokumentiert, nicht eigenmächtig geändert.
+- Evidence: Feature-Report-Abschnitt.
+- Impact: Konsistente Planungsbasis.
+- Next step: Teil F — Testplan.
+
+## 6. Teil F — Testplan für die spätere Phase
+
+- Action: Testplan (geplant, nicht implementiert) dokumentieren.
+- Command: Append Feature-Report (Testplan 1–15).
+- Result: 15 geplante Tests (Umkreis-Auswahl, Arbeitsmodell-Mehrfachauswahl, Vollzeit-Default, Teilzeit, Invalidierung je Parameter, manuelle neue Suche mit `/api/jobs`/Apify, Modellwechsel ohne `/api/jobs`/Apify, Dataset-Re-Match erhalten).
+- Evidence: Feature-Report-Abschnitt.
+- Impact: Abnahmekriterien der nächsten Phase vorbereitet.
+- Next step: Teil G — Abschlussbewertung.
+
+## 7. Teil G — Abschlussbewertung / Status
+
+- Action: Ergebnis bewerten.
+- Command: Konsolidierung der Gate-Ergebnisse.
+- Result: **MERGE-READY**. Nicht durchgeführt: Merge, Production-Deployment, Branch-Löschen, AI-Request, Apify, Implementierung der neuen Parameter.
+- Evidence: Abschnitte 1–6.
+- Impact: Klarer, freigabebereiter Stand; nächster Step benötigt separate Freigabe.
+- Next step: Dokumentation committen + pushen.
+
+## 8. Dokumentation & Git
+
+- Action: Feature-Report + Execution Log aktualisieren; nur Doku-Commits auf den Feature-Branch pushen.
+- Command: Append beider Docs; `git add` (2 Docs) → `git commit` → `git push`.
+- Result: Beide Dokumente konsistent (MERGE-READY + PLANNED-Scope); Commit-Hash siehe `git log`.
+- Evidence: `git log --oneline -1`, `git rev-parse origin/feature/...`.
+- Impact: Stand vollständig versioniert; keine Codeänderungen in diesem Step.
+- Next step: STOPP — auf separate Merge-Freigabe warten.
+
+## Nicht durchgeführt (explizit)
+
+- Merge nach main: NICHT durchgeführt (separate Freigabe).
+- Production-Deployment: NICHT durchgeführt.
+- Branch-Cleanup: NICHT durchgeführt.
+- AI-Requests / Apify: KEINE.
+- Implementierung der neuen Suchparameter: KEINE (nur PLANNED dokumentiert).

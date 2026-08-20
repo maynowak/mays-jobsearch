@@ -324,3 +324,107 @@ Abnahme-Kriterien — Beleg durch automatische DOM-Level-Tests (jsdom + Testing 
 ## Offene Punkte
 
 - Nächste Steps (Merge nach main, Production-Deployment) sind PENDING und benötigen separate Freigabe.
+
+---
+
+# Merge-Vorbereitung & geplante Suchparameter-Erweiterung
+
+## Status
+
+- **MERGE-READY** (fast-forward nach main möglich) — Feature-Branch `feature/precise-model-fallback-feedback`, HEAD `cf8744a`.
+- Der Merge selbst ist NICHT durchgeführt (separate Freigabe erforderlich).
+
+## Merge-Gate (geprüft, alle PASS)
+
+| Gate | Ergebnis |
+|---|---|
+| Feature HEAD | `cf8744a` (== origin/feature) |
+| main HEAD | `f5f5ee2` |
+| origin/main | `f5f5ee2` (== main) |
+| Merge Base | `f5f5ee2` (== main HEAD) |
+| Fast-forward möglich | JA (`main` ist Vorfahr des Feature-Branches) |
+| Feature-Diff gegen main | 10 Dateien: `src/App.tsx`, `src/api.ts`, `src/i18n.tsx`, `src/components/ModelSelector.tsx`, `src/components/SearchForm.tsx`, `src/styles.css`, `src/App.test.tsx`, `src/api.test.ts`, 2 Doc-Dateien |
+| Scope des Diffs | nur Precise-Fallback-Feedback + manueller Modell-Retry (UX-Korrektur) + Tests/Doku |
+| bestehende Features erhalten | PASS (keine gelöschten Feature-Codezeilen; `api/`-Verzeichnis unverändert) |
+| keine unerwünschten Änderungen | PASS (nur additive Änderungen; gelöschte Zeilen = Testtexte/Erwartungen) |
+| Working Tree | sauber (nur dauerhaft untracked `ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`) |
+| Tests | 144/144 PASS (16 Dateien) |
+| TypeScript | `tsc -b` PASS |
+| Build | `vite build` PASS |
+| `git diff --check` | PASS |
+| Secret Audit | 0 Treffer (keine Keys/Apify-Referenzen im Code-Diff) |
+
+Erhalten geblieben (keine Löschung/Deaktivierung): Jobquellen, Arbeitnow, Arbeitsagentur, Apify, Apify-Cache,
+Dataset-Persistenz, Search/Match-Trennung, `withModelFallback`, ModelSelector, Timeout-/Network-Handling,
+CV-Flow, LetterModal, bestehende Fallback-Logik, zukünftige Erweiterungsmöglichkeiten.
+
+---
+
+# NEXT DEVELOPMENT SCOPE — NEUE SUCHPARAMETER (PLANNED, NICHT IMPLEMENTIERT)
+
+> **PLANNED / NEXT DEVELOPMENT SCOPE** — Die folgenden Anforderungen wurden beim echten UX-Test
+> identifiziert. Sie gehören NICHT zum aktuellen Feature-Merge. Sie werden in einem späteren,
+> eigenen Feature-/Step analysiert und umgesetzt. Nichts davon ist implementiert.
+
+## Suchparameter vs. Modell-Retry (verbindliche Trennung)
+
+**SUCHPARAMETER** (Zielrolle, Skills, Ort, Umkreis, Arbeitsmodell, Arbeitszeit):
+Änderung → Dataset invalidieren → manuelle neue Suche → `/api/jobs` → neues Dataset → Matching.
+
+**MODEL-WECHSEL** (bestehendes Verhalten, unverändert):
+Dataset NICHT invalidieren → keine neue Jobsuche → kein `/api/jobs` → kein Apify → vorhandenes
+Dataset → nur `/api/match` → manueller Matching-Start.
+
+## 1. Umkreis (neu)
+
+- Neuer Suchparameter `Umkreis`, Auswahl 10 / 25 / 50 / 100 km, UI: Dropdown/Select.
+- Gehört zum Suchprofil und damit zur Job-Suche.
+- Änderung → aktuelles Job-Dataset invalidieren → keine automatische neue Suche → manuelle neue Suche erlaubt `/api/jobs`; Jobquellen/Apify dürfen erneut abgefragt werden.
+
+## 2. Arbeitsmodell (neu)
+
+- Checkbox-Gruppe `Arbeitsmodell`: Remote / Hybrid / Vor Ort, Mehrfachauswahl möglich (z. B. Remote+Hybrid, Hybrid+Vor Ort, nur Remote).
+- Gehört zum Suchprofil. Änderung invalidiert das Job-Dataset. Keine automatische neue Suche; neue Suche manuell.
+
+## 3. Arbeitszeit (neu)
+
+- Checkbox-Gruppe `Arbeitszeit`: Vollzeit (standardmäßig ausgewählt) + Teilzeit (zusätzlich aktivierbar).
+- Vollzeit allein → nur Vollzeit; Vollzeit+Teilzeit → beide Beschäftigungsarten.
+- Gehört zum Suchprofil. Änderung invalidiert das Job-Dataset. Keine automatische neue Suche; neue Suche manuell.
+
+## Search-Parameter-Matrix
+
+| Parameter | UI | Mehrfachauswahl | Dataset-Invalidierung | /api/jobs | AI-Matching |
+|---|---|---|---|---|---|
+| Zielrolle | bestehend | nein | ja | ja | ja |
+| Skills | bestehend | bestehend | ja | ja | ja |
+| Ort | bestehend | nein | ja | ja | ja |
+| Umkreis | neu | nein | ja | ja | ja |
+| Arbeitsmodell | neu | ja | ja | ja | ja |
+| Arbeitszeit | neu | ja | ja | ja | ja |
+
+Offener Punkt (keine eigenmächtige Änderung): Falls die spätere Analyse eine andere technische
+Behandlung eines Parameters zeigt, wird das als offener Punkt dokumentiert, nicht eigenmächtig geändert.
+
+## Testplan für die spätere Suchparameter-Phase (geplant, noch NICHT implementiert)
+
+1. Umkreis erscheint korrekt
+2. 10/25/50/100 km auswählbar
+3. Remote/Hybrid/Vor Ort vorhanden
+4. Arbeitsmodell-Mehrfachauswahl funktioniert
+5. Vollzeit standardmäßig aktiv
+6. Teilzeit zusätzlich auswählbar
+7. Änderung Umkreis invalidiert Dataset
+8. Änderung Arbeitsmodell invalidiert Dataset
+9. Änderung Arbeitszeit invalidiert Dataset
+10. neue Suche muss manuell gestartet werden
+11. neue Suche darf `/api/jobs` aufrufen
+12. neue Suche darf Apify verwenden
+13. Modellwechsel darf weiterhin NICHT `/api/jobs` auslösen
+14. Modellwechsel darf weiterhin NICHT Apify auslösen
+15. bestehende Dataset-Re-Match-Logik bleibt erhalten
+
+## In diesem Step NICHT durchgeführt
+
+- KEINE UI-Felder hinzugefügt, KEINE API-, Jobquellen-, Apify-, Dataset-, Matching-Änderungen.
+- KEIN Merge nach main. KEIN Production-Deployment. KEIN Branch-Löschen. KEIN AI-Request. KEIN Apify.
