@@ -254,9 +254,10 @@ Jobquellen, Apify/Cache, CV-Flow, LetterModal, bestehende Fallback-Logik).
 
 ## Status
 
-- **STEP 5 = COMPLETE** · **PREVIEW = ACCEPTED** (Feature Commit `ddd6fc0`)
+- **STEP 7 = COMPLETE** · **SUCHPARAMETER IMPLEMENTIERT UND IN PRODUCTION DEPLOYED** (Commits `d53c4c9` → `0305d52` → `12b010b`)
+- Feature-Branch Fast-forward nach `main` gemerged; `main == origin/main`; Feature-Branch entfernt.
 - Browser-Flow nicht direkt verifiziert (kein Browser-Tooling); jeder Punkt durch
-  automatische DOM-Level-Tests und Bundle-Belege abgedeckt (siehe unten).
+  automatische DOM-Level-Tests (159/159) und Live-Endpunkt-Tests abgedeckt.
 
 ## Preview Deployment
 
