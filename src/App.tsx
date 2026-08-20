@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Job, Match, Profile, StatusMessage } from "./types";
 import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "./api";
 import { useLang } from "./i18n";
+import { modelDisplayName } from "./lib/modelDisplayName";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -68,6 +69,11 @@ export default function App() {
   const profilesEqual = (a: Profile, b: Profile) =>
     a.skills === b.skills && a.targetRole === b.targetRole && a.city === b.city;
 
+  const modelLabel = (id: string | null | undefined): string => {
+    if (!id) return t("model.none");
+    return modelDisplayName(models.find((m) => m.id === id) ?? null) || id;
+  };
+
   const describeError = (err: unknown): string =>
     isFreeQuotaExceeded(err)
       ? t("model.quotaExceeded")
@@ -79,7 +85,7 @@ export default function App() {
     setStatus(null);
     setPhase("scoring");
     try {
-      const { data: matchResult, usedFallback } = await withModelFallback({
+      const { data: matchResult, usedFallback, attempts } = await withModelFallback({
         initialModel: model,
         availableModels: models.map((m) => m.id),
         recommendedModel,
@@ -97,10 +103,13 @@ export default function App() {
           count: nextDataset.jobs.length,
           evaluated: matchResult.meta?.evaluated ?? matchResult.matches.length,
         });
-        setStatus({
-          type: "info",
-          message: usedFallback ? `${found} ${t("model.fallbackNote")}` : found,
-        });
+        const message = usedFallback
+          ? `${found} ${t("model.fallbackSuccess", {
+              failed: modelLabel(attempts.filter((a) => !a.ok).at(-1)?.model ?? null),
+              used: modelLabel(attempts.find((a) => a.ok)?.model ?? null),
+            })}`
+          : found;
+        setStatus({ type: "info", message });
       } else {
         setStatus({
           type: "warn",
@@ -108,7 +117,11 @@ export default function App() {
         });
       }
     } catch (err) {
-      setStatus({ type: "error", message: describeError(err) });
+      if (isModelUnavailable(err)) {
+        setStatus({ type: "error", message: t("model.fallbackExhausted") });
+      } else {
+        setStatus({ type: "error", message: describeError(err) });
+      }
     } finally {
       setPhase("idle");
     }

@@ -122,7 +122,45 @@ describe("withModelFallback", () => {
       },
     });
 
-    expect(result).toEqual({ data: { data: 42 }, usedFallback: true });
+    expect(result).toEqual({
+      data: { data: 42 },
+      usedFallback: true,
+      attempts: [
+        { model: "a", ok: false },
+        { model: "b", ok: true },
+      ],
+    });
+  });
+
+  it("liefert einen Trace der tatsächlichen Versuche in Reihenfolge (model + ok)", async () => {
+    const result = await withModelFallback({
+      initialModel: "m-selected",
+      availableModels: ["m-cat-a", "m-cat-b"],
+      recommendedModel: "m-reco",
+      request: async (model) => {
+        if (model === "m-selected" || model === "m-reco") throw unavailable();
+        return { ok: true };
+      },
+    });
+
+    expect(result.attempts).toEqual([
+      { model: "m-selected", ok: false },
+      { model: "m-reco", ok: false },
+      { model: "m-cat-a", ok: true },
+    ]);
+    expect(result.usedFallback).toBe(true);
+  });
+
+  it("Trace hat bei Erfolg im ersten Versuch genau einen Eintrag (kein Fallback)", async () => {
+    const result = await withModelFallback({
+      initialModel: "a",
+      availableModels: ["b"],
+      recommendedModel: null,
+      request: async () => ({ ok: true }),
+    });
+
+    expect(result.attempts).toEqual([{ model: "a", ok: true }]);
+    expect(result.usedFallback).toBe(false);
   });
 
   it("lässt den selectedModel-State (initialModel) unverändert", async () => {

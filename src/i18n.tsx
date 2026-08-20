@@ -72,6 +72,10 @@ const en: Dict = {
     "Today's free AI request quota has been used up. Please try again later.",
   "model.fallbackNote":
     "The selected AI model is temporarily unavailable. We are using another free model for this request.",
+  "model.fallbackSuccess":
+    "The model {failed} is currently unavailable. We'll automatically try {used}. Your found jobs are kept.",
+  "model.fallbackExhausted":
+    "The selected AI model is currently unavailable. Your found jobs are kept. You can pick another model below without re-running the search.",
 
   "alerts.heading": "2. Daily job alerts",
   "alerts.hint": "Get an email every morning with new matches for your current search.",
@@ -222,6 +226,10 @@ const de: Dict = {
     "Die kostenlosen KI-Anfragen für heute sind aufgebraucht. Bitte versuche es später erneut.",
   "model.fallbackNote":
     "Das ausgewählte KI-Modell ist momentan nicht verfügbar. Wir verwenden vorübergehend ein anderes kostenloses Modell.",
+  "model.fallbackSuccess":
+    "Das Modell {failed} ist derzeit nicht verfügbar. Wir versuchen es automatisch mit {used}. Ihre bereits gefundenen Stellen bleiben erhalten.",
+  "model.fallbackExhausted":
+    "Das ausgewählte AI-Modell ist derzeit nicht verfügbar. Ihre bereits gefundenen Stellen bleiben erhalten. Sie können unten ein anderes verfügbares Modell auswählen, ohne die Jobs erneut zu laden.",
 
   "alerts.heading": "2. Tägliche Job-Benachrichtigungen",
   "alerts.hint":

@@ -69,9 +69,15 @@ export function isFreeQuotaExceeded(err: unknown): boolean {
   );
 }
 
+export interface FallbackAttempt {
+  model: string | null;
+  ok: boolean;
+}
+
 export interface FallbackResult<T> {
   data: T;
   usedFallback: boolean;
+  attempts: FallbackAttempt[];
 }
 
 function describeError(err: unknown): string {
@@ -132,20 +138,23 @@ export async function withModelFallback<T>({
   const order = fallbackOrder(initialModel, availableModels, recommendedModel);
   let lastError: unknown = null;
   let attempt = 0;
+  const attempts: FallbackAttempt[] = [];
 
   for (const model of order) {
     attempt += 1;
     try {
       const data = await request(model, attempt);
+      attempts.push({ model, ok: true });
       if (attempt > 1) {
         console.warn(
           `[model] attempt=${attempt} model=${model ?? "(none)"} succeeded (fallback used)`
         );
       }
-      return { data, usedFallback: attempt > 1 };
+      return { data, usedFallback: attempt > 1, attempts };
     } catch (err) {
       if (!isModelUnavailable(err)) throw err;
       lastError = err;
+      attempts.push({ model, ok: false });
       console.warn(
         `[model] attempt=${attempt} model=${model ?? "(none)"} unavailable (${describeError(err)}); ` +
           `${attempt < order.length ? `trying fallback attempt=${attempt + 1}` : "no more fallbacks left"}`
