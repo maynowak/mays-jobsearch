@@ -994,6 +994,20 @@ body {
   line-height: 1.45;
 }
 
+.model-field--attention .model-trigger {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.model-field--attention .model-label {
+  color: var(--accent);
+}
+
+.model-hint--attention {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* Alerts */
 
 .alerts-section {

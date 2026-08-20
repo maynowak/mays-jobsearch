@@ -36,6 +36,7 @@ export default function App() {
   const [profile, setProfile] = useState<Profile>({ skills: "", targetRole: "", city: "" });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
   const [dataset, setDataset] = useState<JobDataset | null>(null);
+  const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
 
   const {
@@ -97,6 +98,7 @@ export default function App() {
       // Only now do we replace them (even for the zero-evaluation case).
       setFoundJobs(nextDataset.jobs);
       setMatches(matchResult.matches);
+      setModelExhausted(false);
 
       if (matchResult.matches.length) {
         const found = t("status.found", {
@@ -118,8 +120,10 @@ export default function App() {
       }
     } catch (err) {
       if (isModelUnavailable(err)) {
+        setModelExhausted(true);
         setStatus({ type: "error", message: t("model.fallbackExhausted") });
       } else {
+        setModelExhausted(false);
         setStatus({ type: "error", message: describeError(err) });
       }
     } finally {
@@ -132,6 +136,7 @@ export default function App() {
     busyRef.current = true;
     setProfile(submitted);
     setStatus(null);
+    setModelExhausted(false);
 
     if (!submitted.skills && !submitted.targetRole) {
       setStatus({ type: "error", message: t("status.noSkills") });
@@ -169,21 +174,32 @@ export default function App() {
     setProfile(next);
     if (dataset && !profilesEqual(next, dataset.profile)) {
       setDataset(null);
+      setModelExhausted(false);
     }
   };
 
   const handleModelChange = (model: string) => {
-    setSelectedModel(model);
     if (busyRef.current) return;
-    if (dataset && profilesEqual(dataset.profile, profile)) {
+    setSelectedModel(model);
+    setModelExhausted(false);
+  };
+
+  const handleSubmit = (submitted: Profile) => {
+    if (busyRef.current) return;
+    if (dataset && profilesEqual(submitted, dataset.profile)) {
+      // Manual re-match on the existing dataset (no new job search, no /api/jobs).
       busyRef.current = true;
-      void performMatch(dataset, model).finally(() => {
+      setProfile(submitted);
+      void performMatch(dataset, effectiveModel).finally(() => {
         busyRef.current = false;
       });
+    } else {
+      void runSearch(submitted);
     }
   };
 
   const isSearching = phase === "searching" || phase === "scoring";
+  const canRematch = !!dataset && profilesEqual(dataset.profile, profile);
 
   if (route === "landing" && !isSearching) {
     return (
@@ -205,7 +221,9 @@ export default function App() {
         phase={phase}
         value={profile}
         onChange={handleProfileChange}
-        onSubmit={runSearch}
+        onSubmit={handleSubmit}
+        onCvSubmit={runSearch}
+        rematch={canRematch}
         model={effectiveModel}
         availableModels={models.map((model) => model.id)}
         recommendedModel={recommendedModel}
@@ -220,6 +238,7 @@ export default function App() {
         value={effectiveModel}
         onChange={handleModelChange}
         disabled={isSearching}
+        attention={modelExhausted}
       />
       <Status status={status} />
     </section>

@@ -697,8 +697,10 @@ describe("Matching Retry ohne Job-Re-Fetch (Feature)", () => {
     // Matching schlägt fehl (beide Modelle unavailable) -> Fehlermeldung
     await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
 
-    // Modellwechsel -> Match-only auf dem vorhandenen Dataset
+    // Modellwechsel -> nur Auswahl, KEIN Auto-Start
     selectModelOption("Modell B");
+    // Manueller Start -> Match-only auf dem vorhandenen Dataset
+    fireEvent.click(document.getElementById("find-btn") as HTMLButtonElement);
     await screen.findByText("AWS Engineer");
 
     expect(vi.mocked(fetchJobs)).toHaveBeenCalledTimes(1);
@@ -723,6 +725,7 @@ describe("Matching Retry ohne Job-Re-Fetch (Feature)", () => {
 
     const before = vi.mocked(fetchJobs).mock.calls.length;
     selectModelOption("Modell B");
+    fireEvent.click(document.getElementById("find-btn") as HTMLButtonElement);
     await screen.findByText("AWS Engineer");
     expect(vi.mocked(fetchJobs).mock.calls.length).toBe(before);
   });
@@ -742,6 +745,7 @@ describe("Matching Retry ohne Job-Re-Fetch (Feature)", () => {
     await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
 
     selectModelOption("Modell B");
+    fireEvent.click(document.getElementById("find-btn") as HTMLButtonElement);
     await screen.findByText("AWS Engineer");
 
     const calls = vi.mocked(fetchMatches).mock.calls;
@@ -984,6 +988,7 @@ describe("Präzises Model-Fallback-Feedback (Feature)", () => {
 
     fireEvent.click(modelTrigger());
     fireEvent.click(screen.getByRole("option", { name: "Modell B" }));
+    fireEvent.click(document.getElementById("find-btn") as HTMLButtonElement);
     await screen.findByText("AWS Engineer");
 
     expect(vi.mocked(fetchJobs)).toHaveBeenCalledTimes(1);
@@ -1014,5 +1019,177 @@ describe("Präzises Model-Fallback-Feedback (Feature)", () => {
         content.includes("automatically try Modell B") &&
         content.includes("Your found jobs are kept")
     );
+  });
+});
+
+describe("UX-Korrektur: Manueller Modell-Retry (Step 4a)", () => {
+  const twoModels: ModelsResponse = {
+    models: [
+      { id: "m-a", name: "Modell A" },
+      { id: "m-b", name: "Modell B" },
+    ],
+    defaultModel: "m-a",
+    fallbackModel: null,
+    recommendedModel: null,
+  };
+
+  const modelTrigger = () => document.querySelector(".model-trigger") as HTMLButtonElement;
+  const findBtn = () => document.getElementById("find-btn") as HTMLButtonElement;
+
+  async function waitForModelsReady() {
+    await waitFor(() => {
+      const trigger = modelTrigger();
+      expect(trigger && !trigger.disabled).toBe(true);
+    });
+  }
+
+  function startSearch() {
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+  }
+
+  function exhaustAll() {
+    vi.mocked(fetchMatches).mockRejectedValue(
+      new ApiError("unavailable", 502, "model_unavailable")
+    );
+  }
+
+  function exhaustThenOk() {
+    vi.mocked(fetchMatches)
+      .mockRejectedValueOnce(new ApiError("unavailable", 502, "model_unavailable"))
+      .mockRejectedValueOnce(new ApiError("unavailable", 502, "model_unavailable"))
+      .mockResolvedValueOnce({
+        matches: [{ score: 90, why: "gut", prepare: "Frage", job }],
+      } as MatchResponse);
+  }
+
+  it("A: Modellwahl startet nach erschöpftem Fallback KEIN automatisches Matching", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    exhaustAll();
+    renderApp();
+    await waitForModelsReady();
+
+    startSearch();
+    await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
+
+    const before = vi.mocked(fetchMatches).mock.calls.length;
+    fireEvent.click(modelTrigger());
+    fireEvent.click(screen.getByRole("option", { name: "Modell B" }));
+
+    await waitFor(() => expect(findBtn().disabled).toBe(false));
+    expect(vi.mocked(fetchMatches).mock.calls.length).toBe(before);
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(1);
+  });
+
+  it("B: Hinweis erscheint nach erschöpftem Fallback", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    exhaustAll();
+    renderApp();
+    await waitForModelsReady();
+
+    startSearch();
+    await screen.findByText("Bitte versuche, ein anderes Modell auszuwählen.");
+    expect(document.querySelector(".model-field--attention")).toBeTruthy();
+  });
+
+  it("C: Hinweis verschwindet nach Modellwahl", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    exhaustAll();
+    renderApp();
+    await waitForModelsReady();
+
+    startSearch();
+    await screen.findByText("Bitte versuche, ein anderes Modell auszuwählen.");
+
+    fireEvent.click(modelTrigger());
+    fireEvent.click(screen.getByRole("option", { name: "Modell B" }));
+
+    await waitFor(() => expect(document.querySelector(".model-field--attention")).toBeNull());
+  });
+
+  it("D: Manueller Start -> /api/match auf vorhandenem Dataset, kein /api/jobs", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    exhaustThenOk();
+    renderApp();
+    await waitForModelsReady();
+
+    startSearch();
+    await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
+
+    fireEvent.click(modelTrigger());
+    fireEvent.click(screen.getByRole("option", { name: "Modell B" }));
+    fireEvent.click(findBtn());
+
+    await screen.findByText("AWS Engineer");
+    expect(vi.mocked(fetchJobs)).toHaveBeenCalledTimes(1);
+    const calls = vi.mocked(fetchMatches).mock.calls;
+    expect(calls.length).toBe(3);
+    expect(calls[2][1]).toEqual([job]);
+    expect(calls[2][2]).toBe("m-b");
+  });
+
+  it("E: Rematch-Label erscheint bei gültigem Dataset", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    exhaustAll();
+    renderApp();
+    await waitForModelsReady();
+
+    startSearch();
+    await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
+
+    expect(screen.getByText("Mit diesem Modell erneut bewerten")).toBeTruthy();
+  });
+
+  it("F: Suchparameteränderung -> Submit startet neue Suche, kein Rematch-Label", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs)
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } })
+      .mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
+    exhaustAll();
+    renderApp();
+    await waitForModelsReady();
+
+    startSearch();
+    await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
+
+    fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
+    expect(screen.getByText("Meine Treffer finden")).toBeTruthy();
+
+    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
+    expect(vi.mocked(fetchJobs)).toHaveBeenCalledTimes(2);
+  });
+
+  it("G: UI ist während manuellen Matchings gesperrt", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(twoModels);
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    const pendingMatch = deferred<MatchResponse>();
+    vi.mocked(fetchMatches)
+      .mockRejectedValueOnce(new ApiError("unavailable", 502, "model_unavailable"))
+      .mockRejectedValueOnce(new ApiError("unavailable", 502, "model_unavailable"))
+      .mockReturnValueOnce(pendingMatch.promise);
+    renderApp();
+    await waitForModelsReady();
+
+    startSearch();
+    await screen.findByText(/Das ausgewählte AI-Modell ist derzeit nicht verfügbar/);
+
+    fireEvent.click(modelTrigger());
+    fireEvent.click(screen.getByRole("option", { name: "Modell B" }));
+    fireEvent.click(findBtn());
+
+    expect(screen.getByText("Bewerte deine Treffer mit KI…")).toBeTruthy();
+    expect(modelTrigger().disabled).toBe(true);
+    expect(findBtn().disabled).toBe(true);
+
+    pendingMatch.resolve({
+      matches: [{ score: 90, why: "gut", prepare: "Frage", job }],
+    } as MatchResponse);
+    await screen.findByText("AWS Engineer");
   });
 });

@@ -269,3 +269,208 @@ COMPLETE
 - Branch: feature/precise-model-fallback-feedback
 - HEAD (Abnahme-Basis): e554c1807c0db8b99b180bf55d6f87c52502df40
 - origin: e554c1807c0db8b99b180bf55d6f87c52502df40 (vor Step-3-Docs-Commit)
+
+---
+
+# STEP 4a — UX CORRECTION / MANUAL MODEL RETRY ANALYSIS
+
+> Hinweis Git: Dieser Step ist REINE Analyse. Doku-Update am Log (hier) ist erlaubt,
+> ABER laut Step-4a-Vorgabe wird in diesem Step NICHT committet / gepusht.
+> Das Log-Update bleibt vorerst uncommitted und wird mit dem nächsten freigegebenen
+> Implementierungs-Step committet.
+
+## 1. Git-/Repository-Ist-Stand
+
+- Action: Stand feststellen.
+- Command: `git branch --show-current` / `git rev-parse HEAD` / `git rev-parse origin/feature/precise-model-fallback-feedback` / `git rev-parse main` / `git status --short`.
+- Result: Branch `feature/precise-model-fallback-feedback`; HEAD `72c7fed`; origin/feature `72c7fed` (in Sync); main `f5f5ee2`; Working Tree nur dauerhaft untracked (`ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`).
+- Evidence: Kommando-Ausgaben.
+- Impact: Stabile Analyse-Basis nach PREVIEW ACCEPTED (Step 3).
+- Next step: Dokumentation sichten.
+
+## 2. Vorhandene relevante Dokumentation
+
+- Action: Execution Log geöffnet (kein zweiter Log); Feature-Report geprüft.
+- Command: Read `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK-EXECUTION-LOG.md`; Read `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK.md`.
+- Result: Step 2 + Step 3 vollständig dokumentiert; Status PREVIEW ACCEPTED; kein zweiter Log angelegt.
+- Evidence: Dateiinhalte.
+- Impact: Konsistenter Ausgangspunkt.
+- Next step: Flow-Analyse (Code lesen).
+
+## 3. Aktueller Search-/Match-Flow
+
+- Action: `src/App.tsx` lesen (`runSearch`, `performMatch`, `handleProfileChange`, `handleModelChange`).
+- Command: Read `src/App.tsx`.
+- Result: `runSearch` (App.tsx:117): busyRef-Guard → `fetchJobs` → Dataset setzen → `performMatch(nextDataset, effectiveModel)` (automatisch). `performMatch` (App.tsx:78): `withModelFallback` → je Modell ein `/api/match`; Erfolg → `setFoundJobs`/`setMatches` + Status; alle Fehlschläge → `model.fallbackExhausted` (error); `finally` → `phase=idle`, busyRef frei.
+- Evidence: App.tsx:78-153.
+- Impact: Suche koppelt aktuell Suche und Matching aneinander; nach Fehlschlag ist das Dataset vorhanden.
+- Next step: ModelSelector-Flow.
+
+## 4. Aktueller ModelSelector-Flow
+
+- Action: `src/components/ModelSelector.tsx` + App-Verdrahtung lesen.
+- Command: Read `src/components/ModelSelector.tsx`; Read `src/App.tsx` (Props 202-210).
+- Result: ModelSelector bekommt `value=effectiveModel`, `onChange=handleModelChange`, `disabled=isSearching`. Intern: Listbox mit allen Modellen (inkl. fehlgeschlagenem), Auswahl ruft `onChange(option.id)`.
+- Evidence: ModelSelector.tsx:62-331.
+- Impact: Selektion ist rein informativ; die Auslösung passiert im App-Handler.
+- Next step: Dataset-Lebensdauer.
+
+## 5. Aktuelle Dataset-Lebensdauer
+
+- Action: Dataset-Lebenszyklus verfolgen.
+- Command: Read `src/App.tsx` (dataset-State, handleProfileChange).
+- Result: `dataset` wird NACH erfolgreichem `fetchJobs` gesetzt; bleibt durch Match-Fehler erhalten; wird in `handleProfileChange` invalidiert, sobald Skills/TargetRole/City von `dataset.profile` abweichen (`profilesEqual`); Modellwechsel invalidiert NICHT.
+- Evidence: App.tsx:37, 144-160.
+- Impact: Dataset-Persistenz funktioniert wie geplant; Basis für manuelles Re-Matching.
+- Next step: automatische Fallback-Kette.
+
+## 6. Aktuelle automatische Fallback-Kette
+
+- Action: `src/api.ts` lesen.
+- Command: Read `src/api.ts` (`fallbackOrder`, `withModelFallback`, `isModelUnavailable`).
+- Result: Reihenfolge = selected → recommended → Katalog (`fallbackOrder`), max `fallbackMaxAttempts` (Standard 3); jeder Versuch ist ein eigener `/api/match`-Request; `attempts`-Trace wird seit Step 2 mitgegeben; bei vollständigem Fehlschlag wird der letzte `model_unavailable`-Fehler geworfen.
+- Evidence: api.ts:93-157.
+- Impact: Fallback-Algorithmus unverändert und funktionsfähig; Trace liefert die Basis für präzise Meldungen.
+- Next step: Ursache des automatischen Starts.
+
+## 7. Aktuelle Ursache des automatischen Starts
+
+- Action: `handleModelChange` analysieren.
+- Command: Read `src/App.tsx` (162-171).
+- Result: **Ursache:** `handleModelChange` ruft nach `setSelectedModel` direkt `performMatch(dataset, model)` auf, wenn `dataset` existiert, `profilesEqual(dataset.profile, profile)` UND nicht busy. Genau das startet nach einer Modelauswahl sofort Matching.
+- Evidence: App.tsx:162-171.
+- Impact: Kern der UX-Korrektur: Diese automatische Auslösung muss entfernt werden.
+- Next step: geeignete bestehende UI-Aktion für manuellen Start.
+
+## 8. Geeignete bestehende UI-Aktion für manuellen Matching-Start
+
+- Action: Bestehende UI-Aktionen katalogisieren.
+- Command: Read `src/components/SearchForm.tsx` (Submit-Button `#find-btn`, `onSubmit`), `src/components/ModelSelector.tsx`.
+- Result: Bestehende Aktionen: (a) Suchformular-Submit-Button („Meine Treffer finden" / „Find my matches") → `onSubmit` → aktuell immer `runSearch` (neue Jobsuche); (b) ModelSelector-Auswahl → aktuell Auto-Match (soll entfallen). Es gibt KEINE separate „nur Re-Match"-Aktion.
+- Analyse: Semantisch passend ist der **bestehende Primär-Button des Suchformulars**. Er wird kontextabhängig:
+  - Gültiges Dataset vorhanden (`dataset && profilesEqual(dataset.profile, profile)`), `phase===idle` → Submit ruft `performMatch(dataset, effectiveModel)` (Match-only, kein `fetchJobs`).
+  - Kein gültiges Dataset (frisch oder durch Parameteränderung invalidiert) → Submit ruft `runSearch` (neue Jobsuche).
+- Ergebnis: KEIN neuer Button nötig; die bestehende primäre CTA wird für „manueller Matching-Start" wiederverwendet. Optional neuer Button-Label für den Re-Match-Zustand (i18n), z. B. „Mit diesem Modell erneut bewerten".
+- Impact: Minimale, semantisch konsistente UX-Änderung.
+- Next step: Erkennung/Invalidierung von Suchparameteränderungen.
+
+## 9. Erkennung/Invalidierung von Suchparameteränderungen
+
+- Action: Prüfen, ob Skills/TargetRole/City-Änderungen das Dataset invalidieren.
+- Command: Read `src/App.tsx` (`handleProfileChange`, `profilesEqual`).
+- Result: Bereits implementiert: `handleProfileChange` setzt `dataset=null`, sobald eine der drei Eingaben von `dataset.profile` abweicht. KEINE automatische neue Suche bei Eingabeänderung (nur Invalidierung); neue Suche erfolgt manuell über den Submit-Button.
+- Evidence: App.tsx:155-160.
+- Impact: Regel 3 erfüllt; zusätzlich soll bei Invalidierung der „erschöpft"-Hervorhebung (neuer Zustand) zurückgesetzt werden.
+- Next step: notwendige UX-Änderungen definieren.
+
+## 10. Notwendige UX-Änderungen (Plan, noch NICHT implementiert)
+
+- `src/App.tsx`:
+  - `handleModelChange` → NUR `setSelectedModel` + Hervorhebung zurücksetzen. KEIN automatischer `performMatch`.
+  - Submit-Handler kontextabhängig: gültiges Dataset → `performMatch(dataset, effectiveModel)`; sonst `runSearch`.
+  - Neuer Zustand (z. B. `modelExhausted`) → wird im erschöpften Fallback-Fehlpfad gesetzt (`model.fallbackExhausted`-Status), zurückgesetzt bei Modellwahl, Parameteränderung, erfolgreichem Match, neuer Suche.
+  - `modelExhausted` an ModelSelector als optionales Prop (z. B. `attention`).
+- `src/components/ModelSelector.tsx`: optionales Prop `attention` → CSS-Highlight-Klasse + Hinweis-Text (`t("model.retryHint")`) unter dem Dropdown.
+- `src/components/SearchForm.tsx`: optionales Label für den Re-Match-Zustand (`search.buttonRematch`) — der Button bleibt das manuelle Start-Element.
+- `src/i18n.tsx`: neue Keys DE+EN: `model.retryHint` („Bitte versuche, ein anderes Modell auszuwählen." / „Please try selecting a different model."), optional `search.buttonRematch`.
+- `src/styles.css`: Highlight-Stil (z. B. `.model-field--attention` / Fokus-Ring auf `.model-trigger`).
+- Nicht geändert: Fallback-Algorithmus, Dataset-Architektur, Jobquellen, Apify, Timeout/Network, CV-/Letter-Flows, Error-Codes.
+- Evidence: Analyse (Abschnitte 3–9) + Code.
+- Impact: Gewünschter Ablauf: erschöpfter Fallback → Fehlermeldung → Highlight + Hinweis → Modellwahl (kein Start) → manueller Start (Submit) → `/api/match` auf Dataset → kein `/api/jobs`/Apify.
+- Next step: Testplan.
+
+## 11. Notwendige Tests (Plan, noch NICHT implementiert)
+
+1. automatische Fallback-Kette bleibt unverändert (Reihenfolge/Versuche).
+2. alle automatischen Modelle erschöpft → Fehlermeldung.
+3. ModelSelector wird hervorgehoben (`attention`-Klasse/Hinweis sichtbar).
+4. Hinweis „Bitte versuche, ein anderes Modell auszuwählen." erscheint (DE+EN).
+5. Modellwechsel allein startet KEIN Matching (kein zusätzlicher `fetchMatches`-Call).
+6. manuelles Matching (Submit) startet `/api/match`.
+7. manuelles Matching verwendet vorhandenes Dataset (exakte Jobs).
+8. manuelles Matching erzeugt KEIN `/api/jobs`.
+9. manuelles Matching erzeugt KEIN Apify (kein `fetchJobs`).
+10. Änderung von Skills invalidiert Dataset.
+11. Änderung von TargetRole invalidiert Dataset.
+12. Änderung von City invalidiert Dataset.
+13. nach Invalidierung: neue Suche muss manuell gestartet werden (kein Auto-Search).
+14. neue Suche darf danach `/api/jobs` auslösen.
+15. UI-Locking während Suche/Matching (Suchparameter/ModelSelector/CV/manueller Start gesperrt).
+16. Highlight verschwindet nach Modellwahl.
+17. bestehende CV-/Letter-Flows bleiben erhalten.
+- Evidence: Step-3-Abnahmekriterien + dieser Plan.
+- Impact: Abnahmesicherheit für die UX-Korrektur.
+- Next step: Regression-Risiken.
+
+## 12. Mögliche Regressionen
+
+- `handleModelChange` ohne Auto-Start bricht bestehende Tests, die Modellwahl → sofortigen Match erwarten: Matching-Retry-Tests 3/4/5 (`src/App.test.tsx`) und „Präzises Model-Fallback-Feedback"-Test 4. Diese müssen auf den MANUELLEN Start (Submit-Klick) umgestellt werden — Anpassung an das neue fachliche Verhalten, keine Abschwächung.
+- Kontextabhängiger Submit-Button: Audit der Tests zeigt, dass alle Submit-Aufrufe mit geänderten Suchparametern erfolgen (→ Invalidierung → `runSearch`); kein Test verlässt sich auf „unveränderte Parameter + Submit → neue `fetchJobs`". Kein Bruch erwartet, wird aber per Testlauf verifiziert.
+- Neues optionales Prop am ModelSelector (Default false) hält andere Nutzungen stabil.
+- Keine Änderung an Fallback-Algorithmus/Dataset-Architektur → keine Risiken für Request-Sicherheit (weiterhin nur `/api/match` bei Modellwechsel/Re-Match).
+- Kein Eingriff in CV-/Letter-/Jobquellen-/Apify-Flows.
+- Evidence: Testanalyse + Code-Reads.
+- Impact: Bekannte, gezielte Testanpassungen; sonst keine.
+- Next step: Abschlussbewertung.
+
+## 13. Abschlussbewertung
+
+- Action: Analyseergebnis bewerten.
+- Result: Ursache des unerwünschten automatischen Starts exakt identifiziert (`handleModelChange` Auto-Start, App.tsx:162-171). Geeignete bestehende Aktion für den manuellen Start gefunden (Suchformular-Submit-Button, kontextabhängig). Regel 1–5 durch minimale additive Änderungen umsetzbar. Kein Code geändert.
+- Evidence: Abschnitte 1–12.
+- Impact: Klarer Implementierungsplan für den nächsten freigegebenen Step.
+- Next step: Freigabe abwarten (Implementierung Step 4b).
+
+## 14. Nächster Step
+
+- Nächster Step: Implementierung der UX-Korrektur nach separater Freigabe (Step 4b).
+- Offene Punkte: Keine offenen Analysefragen. Kein Commit in diesem Step (Vorgabe Step 4a).
+---
+
+# STEP 4b — IMPLEMENTIERUNG UX-KORREKTUR (MANUELLER MODELL-RETRY)
+
+> Freigabe durch Benutzer für die Implementierung erteilt („Step 4b implementieren").
+> Inkludiert: der zuvor uncommittede Step-4a-Log-Eintrag (Analyse) wird mit diesem
+> Step zusammen committet.
+
+## 1. Git-/Repository-Ist-Stand
+
+- Action: Stand vor Implementierung feststellen.
+- Command: `git branch --show-current` / `git rev-parse HEAD` / `git status --short`.
+- Result: Branch `feature/precise-model-fallback-feedback`; HEAD `72c7fed`; Working Tree mit uncommittedem Step-4a-Log-Update + dauerhaft untracked (`ROOT_CAUSE_ASSESSMENT.md`, `tests/screenshotsdev/`).
+- Evidence: Kommando-Ausgaben.
+- Impact: Sauberer Ausgangspunkt für die Umsetzung des Step-4a-Plans.
+- Next step: Code implementieren.
+
+## 2. Implementierung (Dateien)
+
+- Action: UX-Korrektur gemäß Step-4a-Analyse umgesetzt.
+- Command: Edit `src/App.tsx`, `src/components/SearchForm.tsx`, `src/components/ModelSelector.tsx`, `src/i18n.tsx`, `src/styles.css`, `src/App.test.tsx`.
+- Result:
+  - `src/App.tsx`: `handleModelChange` ruft NUR noch `setSelectedModel` + Highlight-Reset auf (kein Auto-Start). Neuer `handleSubmit` (kontextabhängig): gültiges Dataset + `phase idle` → `performMatch(dataset, effectiveModel)` (Match-only, kein `/api/jobs`); sonst → `runSearch`. Neuer State `modelExhausted` (gesetzt im erschöpften Fallback-Fehlpfad, zurückgesetzt bei Erfolg, Modellwahl, Parameteränderung, neuer Suche). `onCvSubmit={runSearch}` hält den CV-Flow als neue Suche. `rematch={canRematch}` und `attention={modelExhausted}` verdrahtet.
+  - `src/components/SearchForm.tsx`: optionales `onCvSubmit`- und `rematch`-Prop; Button-Label wechselt bei gültigem Dataset zu `search.buttonRematch`.
+  - `src/components/ModelSelector.tsx`: optionales `attention`-Prop → `.model-field--attention` + Hinweis `model.retryHint` (role=status).
+  - `src/i18n.tsx`: neue Keys DE+EN `search.buttonRematch` („Mit diesem Modell erneut bewerten"/„Re-score with this model") und `model.retryHint` („Bitte versuche, ein anderes Modell auszuwählen."/"Please try selecting a different model.").
+  - `src/styles.css`: `.model-field--attention` (Akzent-Ring auf `.model-trigger`), `.model-hint--attention`.
+  - `src/App.test.tsx`: Retry-Tests 3/4/5 und Feature-Test 4 auf manuellen Start umgestellt; neuer Block „UX-Korrektur: Manueller Modell-Retry (Step 4a)" mit Tests A–G.
+- Evidence: `git diff` (alle Dateien geprüft).
+- Impact: Regeln 1–5 des Step-4a-Plans umgesetzt; Fallback-Algorithmus/Dataset-Architektur unverändert.
+- Next step: Validierung.
+
+## 3. Validierung (Tests, Build, Diff, Secrets)
+
+- Action: Alle Gates ausführen.
+- Command: `npm test` / `npx tsc -b` / `npm run build` / `git diff --check` / Secret-Audit (`git diff` nach api_key/secret/token/apify).
+- Result: Tests **144/144** (16 Dateien) PASS; `tsc -b` PASS; `vite build` PASS (dist/assets/index-A5XyqamC.js); `git diff --check` sauber; keine Secrets/Apify-/Key-Referenzen im Code-Diff (nur Doku-Erwähnungen im Log).
+- Evidence: Kommando-Ausgaben.
+- Impact: Implementierung ist technisch abnahmefähig.
+- Next step: Commit.
+
+## 4. Commit
+
+- Action: Änderungen committen.
+- Command: `git add` (5 Src-/Test-Dateien + Log) → `git commit`.
+- Result: Siehe Commit-Hash unten.
+- Evidence: `git log --oneline -1`.
+- Impact: Feature-Umsetzung inkl. Step-4a-Analyse dokumentiert und versioniert.
+- Next step: Push / Merge / Deployment nach Freigabe.

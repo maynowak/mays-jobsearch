@@ -33,6 +33,7 @@ const en: Dict = {
   "search.button": "Find my matches",
   "search.searching": "Searching the job board…",
   "search.scoring": "Scoring your matches with AI…",
+  "search.buttonRematch": "Re-score with this model",
 
   "cv.modeLabel": "How to create your profile",
   "cv.manual": "Enter manually",
@@ -76,6 +77,7 @@ const en: Dict = {
     "The model {failed} is currently unavailable. We'll automatically try {used}. Your found jobs are kept.",
   "model.fallbackExhausted":
     "The selected AI model is currently unavailable. Your found jobs are kept. You can pick another model below without re-running the search.",
+  "model.retryHint": "Please try selecting a different model.",
 
   "alerts.heading": "2. Daily job alerts",
   "alerts.hint": "Get an email every morning with new matches for your current search.",
@@ -187,6 +189,7 @@ const de: Dict = {
   "search.button": "Meine Treffer finden",
   "search.searching": "Suche auf der Jobbörse…",
   "search.scoring": "Bewerte deine Treffer mit KI…",
+  "search.buttonRematch": "Mit diesem Modell erneut bewerten",
 
   "cv.modeLabel": "So erstellst du dein Profil",
   "cv.manual": "Manuell eingeben",
@@ -230,6 +233,7 @@ const de: Dict = {
     "Das Modell {failed} ist derzeit nicht verfügbar. Wir versuchen es automatisch mit {used}. Ihre bereits gefundenen Stellen bleiben erhalten.",
   "model.fallbackExhausted":
     "Das ausgewählte AI-Modell ist derzeit nicht verfügbar. Ihre bereits gefundenen Stellen bleiben erhalten. Sie können unten ein anderes verfügbares Modell auswählen, ohne die Jobs erneut zu laden.",
+  "model.retryHint": "Bitte versuche, ein anderes Modell auszuwählen.",
 
   "alerts.heading": "2. Tägliche Job-Benachrichtigungen",
   "alerts.hint":

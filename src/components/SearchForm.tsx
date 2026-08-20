@@ -12,6 +12,8 @@ interface Props {
   value: Profile;
   onChange: (profile: Profile) => void;
   onSubmit: (profile: Profile) => void;
+  onCvSubmit?: (profile: Profile) => void;
+  rematch?: boolean;
   model: string | null;
   availableModels: string[];
   recommendedModel: string | null;
@@ -24,6 +26,8 @@ export default function SearchForm({
   value,
   onChange,
   onSubmit,
+  onCvSubmit,
+  rematch = false,
   model,
   availableModels,
   recommendedModel,
@@ -49,7 +53,9 @@ export default function SearchForm({
       ? t("search.searching")
       : phase === "scoring"
         ? t("search.scoring")
-        : t("search.button");
+        : rematch
+          ? t("search.buttonRematch")
+          : t("search.button");
   const loadingLabel = busy ? label : "";
 
   const handleSubmit = (event: FormEvent) => {
@@ -171,7 +177,7 @@ export default function SearchForm({
         <CvUpload
           busy={busy}
           loadingLabel={loadingLabel}
-          onSubmit={onSubmit}
+          onSubmit={onCvSubmit ?? onSubmit}
           onManual={() => setMode("manual")}
           model={model}
           availableModels={availableModels}

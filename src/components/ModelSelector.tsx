@@ -13,6 +13,7 @@ interface Props {
   value: string | null;
   onChange: (model: string) => void;
   disabled?: boolean;
+  attention?: boolean;
 }
 
 function Chevron() {
@@ -67,6 +68,7 @@ export default function ModelSelector({
   value,
   onChange,
   disabled = false,
+  attention = false,
 }: Props) {
   const { t } = useLang();
   const labelId = useId();
@@ -321,11 +323,16 @@ export default function ModelSelector({
   }
 
   return (
-    <div className="model-field" ref={rootRef}>
+    <div className={`model-field${attention ? " model-field--attention" : ""}`} ref={rootRef}>
       <span id={labelId} className="model-label">
         {t("model.label")}
       </span>
       {control}
+      {attention && (
+        <span className="model-hint model-hint--attention" role="status">
+          {t("model.retryHint")}
+        </span>
+      )}
     </div>
   );
 }
