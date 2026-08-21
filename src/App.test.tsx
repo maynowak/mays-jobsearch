@@ -366,7 +366,7 @@ describe("Old results stay visible while a new search is running", () => {
     expect(document.querySelector(".layout-split")).toBeTruthy();
   }
 
-  it("Test A: Ergebnisse A bleiben sichtbar, während Suche B läuft (kein leerer Bereich/Hero/Landing)", async () => {
+it("Test A: Neue Suche invalidiert alte Ergebnisse sofort", async () => {
     await runSearchA();
 
     const jobsB = deferred<JobsResponse>();
@@ -374,18 +374,15 @@ describe("Old results stay visible while a new search is running", () => {
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
     fireEvent.click(screen.getByText("Meine Treffer finden"));
 
-    // Neue Suche läuft, Ergebnisse A bleiben sichtbar, Layout bleibt die Ergebnisansicht
+    // Alte Ergebnisse wurden sofort entfernt.
+    // Während der neuen Suche ist der Suchbereich sichtbar (SearchForm),
+    // es darf aber kein Ergebnis-Alte-Treffer (AWS Engineer) mehr existieren.
     expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
-    expect(document.querySelector(".search-hero")).toBeNull();
-    expect(document.querySelector(".landing-hero")).toBeNull();
-    expect(document.querySelector(".landing")).toBeNull();
-    // Der kompakte Ergebnis-Hero (header.hero) gehört zur Ergebnisansicht und ist korrekt sichtbar
-    expect(document.querySelector(".hero")).toBeTruthy();
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    expect(screen.queryByText("Java Engineer")).toBeNull();
   });
 
-  it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
+it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
     await runSearchA();
 
     const jobsB = deferred<JobsResponse>();
@@ -396,15 +393,16 @@ describe("Old results stay visible while a new search is running", () => {
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
     fireEvent.click(screen.getByText("Meine Treffer finden"));
 
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    // Nach erfolgreicher Suche: alte Ergebnisse wurden entfernt,
+    // neue Ergebnisse (Java Engineer) erscheinen.
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
 
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Java Engineer");
     expect(screen.queryByText("AWS Engineer")).toBeNull();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
   });
 
-  it("Test C: Neue Suche schlägt fehl -> A bleibt sichtbar + Fehlermeldung", async () => {
+  it("Test C: Neue Suche schlägt fehl -> alte Ergebnisse werden entfernt", async () => {
     await runSearchA();
 
     const jobsB = deferred<JobsResponse>();

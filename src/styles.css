@@ -42,6 +42,65 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* Small hamburger button that appears when scrolled down */
+.navbar .hamburger-small {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  z-index: 45;
+}
+
+.navbar .hamburger-small::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 2px;
+  background: var(--text);
+}
+
+.navbar .hamburger-small:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Scrolled state (added via JS) – compact navbar vanishes, only small button remains */
+.navbar.scrolled {
+  position: fixed;
+  top: -60px;
+  transition: top 0.2s ease;
+}
+
+.navbar.scrolled .hamburger-small {
+  display: block;
+}
+
+.navbar.scrolled .nav-links,
+.navbar.scrolled .lang-toggle,
+.navbar.scrolled .navbar-title {
+  display: none;
+}
+
+/* Compact navbar visible at top (no .scrolled class) */
+.navbar:not(.scrolled) .nav-links {
+  display: flex;
+}
+
+.navbar:not(.scrolled) .lang-toggle {
+  display: inline-flex;
+}
+
 .nav-inner {
   max-width: 1100px;
   margin: 0 auto;
@@ -211,7 +270,7 @@ body {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .nav-links {
     display: none;
   }
@@ -289,7 +348,7 @@ body {
 
 .search-hero-inner {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1220px;
   margin: 0 auto;
   padding: 72px 20px;
 }
@@ -1295,6 +1354,7 @@ body {
   color: var(--muted);
   font-weight: 600;
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .remaining-meta {
@@ -1362,6 +1422,7 @@ body {
   line-height: 1.55;
   color: var(--text);
   white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .remaining-more {
@@ -1464,6 +1525,7 @@ body {
   font-size: 1.3rem;
   line-height: 1.35;
   letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
 }
 
 .company {
@@ -1472,6 +1534,7 @@ body {
   font-size: 0.95rem;
   flex-basis: 100%;
   margin-top: 2px;
+  overflow-wrap: anywhere;
 }
 
 .meta {
@@ -1534,6 +1597,7 @@ body {
   border-radius: 10px;
   color: var(--text);
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 .prepare {
@@ -1543,6 +1607,7 @@ body {
   border-left: 4px solid #c9a86b;
   border-radius: 0 10px 10px 0;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 .prepare strong {
@@ -1556,6 +1621,8 @@ body {
   font-weight: 700;
   color: #37506e;
   text-decoration: none;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .apply-link:hover {
@@ -1829,7 +1896,7 @@ body {
   .container.layout-split {
     max-width: 1220px;
     display: grid;
-    grid-template-columns: 360px minmax(0, 1fr);
+    grid-template-columns: 340px minmax(0, 1fr);
     gap: 32px;
     align-items: start;
   }

@@ -31,6 +31,7 @@ interface Props {
 export default function Navbar({ route }: Props) {
   const { t } = useLang();
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const close = useCallback(() => setIsOpen(false), []);
 
   useEffect(() => {
@@ -45,6 +46,43 @@ export default function Navbar({ route }: Props) {
       document.body.style.overflow = "";
     };
   }, [isOpen, close]);
+
+  // Mobile navbar scroll behavior
+  useEffect(() => {
+    let lastScroll = window.scrollY;
+    let ticking = false;
+    const threshold = 50;
+
+    const updateScroll = () => {
+      const currentScroll = window.scrollY;
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          if (currentScroll > lastScroll && currentScroll > threshold) {
+            // Scrolling down past threshold
+            setIsScrolled(true);
+          } else if (currentScroll < lastScroll && currentScroll < threshold) {
+            // Scrolling up past threshold
+            setIsScrolled(false);
+          }
+          lastScroll = currentScroll <= 0 ? 0 : currentScroll;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateScroll);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const isLanding = route === "landing";
   const links: Array<[string, string]> = isLanding
@@ -99,7 +137,7 @@ export default function Navbar({ route }: Props) {
 
         <button
           type="button"
-          className={`burger${isOpen ? " burger-open" : ""}`}
+          className={`burger${isOpen ? " burger-open" : ""} ${isScrolled ? "hamburger-small" : ""}`}
           onClick={() => setIsOpen((v) => !v)}
           aria-expanded={isOpen}
           aria-label={isOpen ? t("nav.menuClose") : t("nav.menuOpen")}
