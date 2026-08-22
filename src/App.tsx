@@ -153,6 +153,8 @@ export default function App() {
     setProfile(submitted);
     setStatus(null);
     setModelExhausted(false);
+    setDataset(null);
+    setFoundJobs([]);
 
     if (!submitted.skills && !submitted.targetRole) {
       setStatus({ type: "error", message: t("status.noSkills") });
