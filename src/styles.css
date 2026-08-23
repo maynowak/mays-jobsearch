@@ -1896,7 +1896,7 @@ body {
   .container.layout-split {
     max-width: 1220px;
     display: grid;
-    grid-template-columns: 340px minmax(0, 1fr);
+    grid-template-columns: 340px minmax(260px, 1fr);
     gap: 32px;
     align-items: start;
   }
