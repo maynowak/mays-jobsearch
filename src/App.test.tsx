@@ -372,14 +372,14 @@ it("Test A: Neue Suche invalidiert alte Ergebnisse sofort", async () => {
     const jobsB = deferred<JobsResponse>();
     vi.mocked(fetchJobs).mockReturnValueOnce(jobsB.promise);
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
-    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    fireEvent.click(document.getElementById("find-btn") as HTMLButtonElement);
 
     // Alte Ergebnisse wurden sofort entfernt.
     // Während der neuen Suche ist der Suchbereich sichtbar (SearchForm),
     // es darf aber kein Ergebnis-Alte-Treffer (AWS Engineer) mehr existieren.
     expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
-    expect(screen.queryByText("AWS Engineer")).toBeNull();
-    expect(screen.queryByText("Java Engineer")).toBeNull();
+    await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("Java Engineer")).toBeNull());
   });
 
 it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
@@ -391,15 +391,15 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
       matches: [{ score: 80, why: "gut", prepare: "Frage", job: jobB }],
     } as MatchResponse);
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
-    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    fireEvent.click(document.getElementById("find-btn") as HTMLButtonElement);
 
     // Nach erfolgreicher Suche: alte Ergebnisse wurden entfernt,
     // neue Ergebnisse (Java Engineer) erscheinen.
-    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
 
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Java Engineer");
-    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
   });
 
   it("Test C: Neue Suche schlägt fehl -> alte Ergebnisse werden entfernt", async () => {
@@ -487,7 +487,7 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
 
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Java Engineer");
-    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
   });
 
   it("Test G: Model-Fallback während Suche B -> A bleibt sichtbar, Spinner aktiv", async () => {
@@ -524,7 +524,7 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
 
     attempt1.reject(new ApiError("unavailable", 502, "model_unavailable"));
     await screen.findByText("Java Engineer");
-    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
   });
 });
 

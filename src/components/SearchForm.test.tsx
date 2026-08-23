@@ -85,7 +85,7 @@ describe("SearchForm is a controlled component", () => {
       onSubmit
     );
 
-    fireEvent.click(screen.getByText("Meine Treffer finden"));
+    fireEvent.click(screen.getByRole("button"));
     expect(onSubmit).toHaveBeenCalledWith(baseProfile({ skills: "aws", targetRole: "Frontend", city: "Berlin" }));
   });
 
