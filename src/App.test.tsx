@@ -413,8 +413,9 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
     jobsB.reject(new Error("boom"));
     await screen.findByText("boom");
 
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    expect(screen.queryByText("Java Engineer")).toBeNull();
+    expect(document.querySelector(".layout-split")).toBeFalsy();
     expect(document.querySelector(".landing")).toBeNull();
   });
 
@@ -430,8 +431,9 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
     fireEvent.click(screen.getByText("Meine Treffer finden"));
 
-    // Solange B läuft: A bleibt sichtbar
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    // Alte Ergebnisse werden sofort beim Start der neuen Suche entfernt.
+    // Während B läuft: Suchbereich ist sichtbar, aber AWS Engineer ist nicht mehr da.
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
 
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Java Engineer");
@@ -441,7 +443,7 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
     expect(document.querySelector(".layout-split")).toBeTruthy();
   });
 
-  it("Test E: SearchForm zeigt B, Results zeigt währenddessen A", async () => {
+it("Test E: SearchForm zeigt B, Results zeigt währenddessen A", async () => {
     await runSearchA();
 
     const jobsB = deferred<JobsResponse>();
@@ -450,7 +452,7 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
     fireEvent.click(screen.getByText("Meine Treffer finden"));
 
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("java");
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
     expect(screen.queryByText("Java Engineer")).toBeNull();
   });
 
@@ -481,16 +483,16 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
     fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
 
-    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    // Alte Ergebnisse werden sofort beim Start der neuen Suche entfernt.
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    expect(document.querySelector(".layout-split")).toBeFalsy();
 
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Java Engineer");
     expect(screen.queryByText("AWS Engineer")).toBeNull();
   });
 
-  it("Test G: Model-Fallback während Suche B -> A bleibt sichtbar, Spinner aktiv", async () => {
+it("Test G: Model-Fallback während Suche B -> A bleibt sichtbar, Spinner aktiv", async () => {
     vi.mocked(fetchModels).mockResolvedValue({
       models: [
         { id: "m-a", name: "Modell A" },
@@ -513,14 +515,16 @@ it("Test B: Neue Suche erfolgreich -> Ergebnisse B ersetzen A", async () => {
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "java" } });
     fireEvent.click(screen.getByText("Meine Treffer finden"));
 
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
+    // Alte Ergebnisse werden sofort beim Start der neuen Suche entfernt.
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
 
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Bewerte deine Treffer mit KI…");
 
-    // Während des (potenziell mehrstufigen) Model-Calls bleibt A sichtbar
-    expect(screen.getByText("AWS Engineer")).toBeTruthy();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    // Während des (potenziell mehrstufigen) Model-Calls bleibt A unsichtbar,
+    // da Ergebnisse beim Suchstart sofort entfernt werden.
+    expect(screen.queryByText("AWS Engineer")).toBeNull();
+    expect(document.querySelector(".layout-split")).toBeFalsy();
 
     attempt1.reject(new ApiError("unavailable", 502, "model_unavailable"));
     await screen.findByText("Java Engineer");
