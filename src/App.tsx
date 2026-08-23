@@ -155,6 +155,7 @@ export default function App() {
     setModelExhausted(false);
     setDataset(null);
     setFoundJobs([]);
+    setMatches([]);
 
     if (!submitted.skills && !submitted.targetRole) {
       setStatus({ type: "error", message: t("status.noSkills") });
