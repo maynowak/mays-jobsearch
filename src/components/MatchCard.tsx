@@ -3,11 +3,17 @@ import ScoreBadge from "./ScoreBadge";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
 import { formatGermanLocation } from "../lib/location";
+import { prepareHtmlForRender } from "../lib/safeHtml";
 
 interface Props {
   match: Match;
   index: number;
   onGenerateLetter: (job: Job, prepare: string) => void;
+}
+
+function renderHtmlContent(html: string) {
+  const sanitized = prepareHtmlForRender(html);
+  return <div className="html-content" dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 
 export default function MatchCard({ match, index, onGenerateLetter }: Props) {
@@ -46,13 +52,13 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
           </div>
         )}
 
-        {match.why && <p className="why">{match.why}</p>}
+        {match.why && renderHtmlContent(match.why)}
 
         {match.prepare && (
-          <p className="prepare">
+          <div className="prepare">
             <strong>{t("match.prepare")} </strong>
-            {match.prepare}
-          </p>
+            {renderHtmlContent(match.prepare)}
+          </div>
         )}
 
         {m.url && (

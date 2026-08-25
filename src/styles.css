@@ -1432,6 +1432,158 @@ body {
   overflow-wrap: anywhere;
 }
 
+.html-content {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.html-content p {
+  margin: 0.75em 0;
+}
+
+.html-content p:first-child {
+  margin-top: 0;
+}
+
+.html-content p:last-child {
+  margin-bottom: 0;
+}
+
+.html-content br {
+  display: block;
+  content: "";
+  margin: 0.5em 0;
+}
+
+.html-content ul,
+.html-content ol {
+  margin: 0.75em 0;
+  padding-left: 1.5em;
+}
+
+.html-content li {
+  margin: 0.25em 0;
+}
+
+.html-content a {
+  color: #37506e;
+  text-decoration: underline;
+  word-break: break-word;
+}
+
+.html-content a:hover {
+  text-decoration: none;
+}
+
+.html-content strong,
+.html-content b {
+  font-weight: 700;
+}
+
+.html-content em,
+.html-content i {
+  font-style: italic;
+}
+
+.html-content h1,
+.html-content h2,
+.html-content h3,
+.html-content h4,
+.html-content h5,
+.html-content h6 {
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.html-content h1 {
+  font-size: 1.4em;
+}
+
+.html-content h2 {
+  font-size: 1.3em;
+}
+
+.html-content h3 {
+  font-size: 1.2em;
+}
+
+.html-content h4,
+.html-content h5,
+.html-content h6 {
+  font-size: 1.1em;
+}
+
+.html-content blockquote {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid #c9b28a;
+  background: #faf6ec;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+}
+
+.html-content pre {
+  margin: 1em 0;
+  padding: 1em;
+  background: #f4eee2;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.html-content code {
+  font-family: inherit;
+  background: #f4eee2;
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.html-content pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+.html-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+
+.html-content th,
+.html-content td {
+  border: 1px solid var(--border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.html-content th {
+  background: #f6efe2;
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .html-content {
+    font-size: 0.88rem;
+  }
+  .html-content ul,
+  .html-content ol {
+    padding-left: 1.25em;
+  }
+  .html-content table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
 .remaining-more {
   margin-top: 8px;
   padding: 4px 0;

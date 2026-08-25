@@ -8,11 +8,16 @@ import {
   contractTypeLabelKey,
   isContractTypeNoData,
   prettifyCode,
-  descriptionPreview,
 } from "../lib/jobMeta";
 import { formatGermanLocation } from "../lib/location";
+import { prepareHtmlForRender } from "../lib/safeHtml";
 
 const DESCRIPTION_PREVIEW_LENGTH = 260;
+
+function renderHtmlContent(html: string) {
+  const sanitized = prepareHtmlForRender(html);
+  return <div className="html-content" dangerouslySetInnerHTML={{ __html: sanitized }} />;
+}
 
 export default function RemainingCard({ job }: { job: Job }) {
   const { t, lang } = useLang();
@@ -35,9 +40,26 @@ export default function RemainingCard({ job }: { job: Job }) {
     contractLabel = key ? t(key) : prettifyCode(job.contractType);
   }
 
-  const description = descriptionPreview(job.description, DESCRIPTION_PREVIEW_LENGTH, expanded);
-  const showDescriptionToggle =
-    (job.description ?? "").replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
+  const description = job.description ?? "";
+  const hasDescription = description.trim().length > 0;
+  const showDescriptionToggle = description.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
+
+  const descriptionPlain = hasDescription
+    ? description
+        .replace(/<[^>]*>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&/g, "&")
+        .replace(/"/g, '"')
+        .replace(/'/g, "'")
+        .replace(/</g, "<")
+        .replace(/>/g, ">")
+        .replace(/\s+/g, " ")
+        .trim()
+    : "";
+
+  const previewText = !expanded && showDescriptionToggle
+    ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
+    : descriptionPlain;
 
   return (
     <li className="remaining-card">
@@ -73,9 +95,13 @@ export default function RemainingCard({ job }: { job: Job }) {
         </div>
       )}
 
-      {description && (
+      {hasDescription && (
         <div className="remaining-description-wrap">
-          <p className="remaining-description">{description}</p>
+          {expanded || !showDescriptionToggle ? (
+            renderHtmlContent(description)
+          ) : (
+            <p className="remaining-description">{previewText}</p>
+          )}
           {showDescriptionToggle && (
             <button
               type="button"
