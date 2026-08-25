@@ -64,14 +64,30 @@ export function contractTypeLabelKey(value: string | undefined): string | null {
   return CONTRACT_TYPE_LABEL_KEYS[normalized] ?? null;
 }
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<\/?[a-zA-Z][^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&/g, "&")
+    .replace(/"/g, '"')
+    .replace(/'/g, "'")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/'/g, "'")
+    .replace(/&#x2F;/g, "/")
+    .replace(/&#x24;/g, "$")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function descriptionPreview(
   description: string | undefined,
   previewLength: number,
   expanded: boolean
 ): string | null {
   if (!description) return null;
-  const text = String(description).replace(/\s+/g, " ").trim();
-  if (!text) return null;
-  const long = text.length > previewLength;
-  return !expanded && long ? text.slice(0, previewLength).trimEnd() + "…" : text;
+  const plainText = stripHtml(description);
+  if (!plainText) return null;
+  const long = plainText.length > previewLength;
+  return !expanded && long ? plainText.slice(0, previewLength).trimEnd() + "…" : plainText;
 }
