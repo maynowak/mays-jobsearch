@@ -6,7 +6,7 @@ import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import CvUpload from "./CvUpload";
 
-type Phase = "idle" | "searching" | "scoring";
+type Phase = "idle" | "searching" | "scoring" | "matching";
 
 interface Props {
   phase: Phase;
@@ -14,6 +14,9 @@ interface Props {
   onChange: (profile: Profile) => void;
   onSubmit: (profile: Profile) => void;
   onCvSubmit?: (profile: Profile) => void;
+  onMatch?: () => void;
+  matching?: boolean;
+  hasJobs?: boolean;
   rematch?: boolean;
   model: string | null;
   availableModels: string[];
@@ -28,6 +31,9 @@ export default function SearchForm({
   onChange,
   onSubmit,
   onCvSubmit,
+  onMatch,
+  matching = false,
+  hasJobs = false,
   rematch = false,
   model,
   availableModels,
@@ -48,15 +54,18 @@ export default function SearchForm({
     select: selectCity,
   } = useCityAutocomplete(value.city, (city) => onChange({ ...value, city }));
 
-  const busy = phase !== "idle";
+  const busy = phase !== "idle" || matching;
+  const isMatching = matching;
   const label =
     phase === "searching"
       ? t("search.searching")
       : phase === "scoring"
         ? t("search.scoring")
-        : rematch
-          ? t("search.buttonRematch")
-          : t("search.button");
+        : isMatching
+          ? t("search.matching")
+          : rematch
+            ? t("search.buttonRematch")
+            : t("search.button");
   const loadingLabel = busy ? label : "";
 
   const toggleIn = (list: WorkMode[], mode: WorkMode): WorkMode[] =>
@@ -156,6 +165,7 @@ export default function SearchForm({
               aria-controls="city-suggestions"
               aria-activedescendant={active >= 0 ? `city-option-${active}` : undefined}
             />
+            <p className="field-hint">{t("search.cityHelp")}</p>
             {open && (
               <ul id="city-suggestions" className="city-suggestions" role="listbox">
                 {loading && <li className="city-suggestion-status">{t("search.citySearching")}</li>}
@@ -252,6 +262,30 @@ export default function SearchForm({
           <span className="btn-label">{label}</span>
           {busy && <span className="spinner" />}
         </button>
+        {hasJobs && !isMatching && onMatch && (
+          <button
+            id="match-btn"
+            type="button"
+            className="match-btn"
+            onClick={onMatch}
+            disabled={busy}
+          >
+            <span className="btn-label">{t("search.matchButton")}</span>
+            {matching && <span className="spinner" />}
+          </button>
+        )}
+        {hasJobs && isMatching && onMatch && (
+          <button
+            id="match-btn"
+            type="button"
+            className="match-btn"
+            onClick={onMatch}
+            disabled
+          >
+            <span className="btn-label">{t("search.matching")}</span>
+            <span className="spinner" />
+          </button>
+        )}
         </div>
       ) : (
         <CvUpload

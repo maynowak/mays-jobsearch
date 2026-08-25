@@ -2,6 +2,7 @@ import type { Job, Match } from "../types";
 import ScoreBadge from "./ScoreBadge";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
+import { formatGermanLocation } from "../lib/location";
 
 interface Props {
   match: Match;
@@ -15,7 +16,7 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
   const m = (job as Job) || {};
 
   const location =
-    (m.location ?? []).join(", ") || (m.remote ? t("match.remote") : t("match.locationNotStated"));
+    formatGermanLocation(m.location ?? []) || (m.remote ? t("match.remote") : t("match.locationNotStated"));
 
   return (
     <li className="match-card">

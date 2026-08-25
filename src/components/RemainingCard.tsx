@@ -10,6 +10,7 @@ import {
   prettifyCode,
   descriptionPreview,
 } from "../lib/jobMeta";
+import { formatGermanLocation } from "../lib/location";
 
 const DESCRIPTION_PREVIEW_LENGTH = 260;
 
@@ -18,7 +19,7 @@ export default function RemainingCard({ job }: { job: Job }) {
   const [expanded, setExpanded] = useState(false);
 
   const location =
-    (job.location ?? []).join(", ") ||
+    formatGermanLocation(job.location ?? []) ||
     (job.remote ? t("match.remote") : t("match.locationNotStated"));
 
   const date = formatJobDate(job.created_at, lang === "de" ? "de-DE" : "en-GB");

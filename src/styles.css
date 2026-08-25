@@ -502,15 +502,15 @@ body {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 4px;
+  margin-bottom: 14px;
   flex: 1;
   min-width: 0;
 }
 
 .field-row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
 }
 
 @media (max-width: 560px) {
@@ -529,15 +529,15 @@ body {
 
 .field label {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .field input {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  padding: 12px 14px;
-  font-size: 1rem;
+  padding: 10px 12px;
+  font-size: 0.95rem;
   border: 1px solid #e2d7c1;
   border-radius: 10px;
   background: #fffdf9;
@@ -559,9 +559,9 @@ body {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  padding: 12px 14px;
+  padding: 10px 12px;
   padding-right: 36px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   border: 1px solid #e2d7c1;
   border-radius: 10px;
   background: #fffdf9;
@@ -589,26 +589,33 @@ body {
 
 .field-label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+}
+
+.field-hint {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .check-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .check-item {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 6px 10px;
   border: 1px solid #e2d7c1;
   border-radius: 10px;
   background: #fffdf9;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text);
   cursor: pointer;
   user-select: none;

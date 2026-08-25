@@ -13,7 +13,14 @@ afterEach(() => {
   cleanup();
 });
 
-function renderForm(value: Profile, onChange: (p: Profile) => void, onSubmit: (p: Profile) => void) {
+function renderForm(
+  value: Profile,
+  onChange: (p: Profile) => void,
+  onSubmit: (p: Profile) => void,
+  onMatch?: () => void,
+  matching = false,
+  hasJobs = false
+) {
   return render(
     <LangProvider>
       <SearchForm
@@ -21,6 +28,9 @@ function renderForm(value: Profile, onChange: (p: Profile) => void, onSubmit: (p
         value={value}
         onChange={onChange}
         onSubmit={onSubmit}
+        onMatch={onMatch}
+        matching={matching}
+        hasJobs={hasJobs}
         model={null}
         availableModels={[]}
         recommendedModel={null}
@@ -45,7 +55,17 @@ function baseProfile(
 
 const empty: Profile = baseProfile();
 
-function StatefulForm({ initial = empty }: { initial?: Profile }) {
+function StatefulForm({
+  initial = empty,
+  onMatch,
+  matching = false,
+  hasJobs = false,
+}: {
+  initial?: Profile;
+  onMatch?: () => void;
+  matching?: boolean;
+  hasJobs?: boolean;
+}) {
   const [value, setValue] = useState<Profile>(initial);
   return (
     <LangProvider>
@@ -54,6 +74,9 @@ function StatefulForm({ initial = empty }: { initial?: Profile }) {
         value={value}
         onChange={setValue}
         onSubmit={() => undefined}
+        onMatch={onMatch}
+        matching={matching}
+        hasJobs={hasJobs}
         model={null}
         availableModels={[]}
         recommendedModel={null}
@@ -73,7 +96,7 @@ describe("SearchForm is a controlled component", () => {
     fireEvent.change(screen.getByLabelText("Zielrolle"), { target: { value: "Frontend" } });
     expect(onChange).toHaveBeenCalledWith(baseProfile({ targetRole: "Frontend" }));
 
-    fireEvent.change(screen.getByLabelText("Stadt"), { target: { value: "Berlin" } });
+    fireEvent.change(screen.getByLabelText("Stadt oder PLZ"), { target: { value: "Berlin" } });
     expect(onChange).toHaveBeenCalledWith(baseProfile({ city: "Berlin" }));
   });
 
@@ -99,7 +122,50 @@ describe("SearchForm is a controlled component", () => {
     renderForm(value, vi.fn(), vi.fn());
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
     expect((screen.getByLabelText("Zielrolle") as HTMLInputElement).value).toBe("Frontend");
-    expect((screen.getByLabelText("Stadt") as HTMLInputElement).value).toBe("Berlin");
+    expect((screen.getByLabelText("Stadt oder PLZ") as HTMLInputElement).value).toBe("Berlin");
+  });
+});
+
+describe("Explizites AI-Matching UI (Step 22)", () => {
+  it("zeigt 'Mit KI bewerten' Button wenn hasJobs=true", () => {
+    const onMatch = vi.fn();
+    renderForm(baseProfile({ skills: "aws" }), vi.fn(), vi.fn(), onMatch, false, true);
+
+    expect(screen.getByText("Mit KI bewerten")).toBeTruthy();
+  });
+
+  it("zeigt 'Mit KI bewerten' Button NICHT wenn hasJobs=false", () => {
+    const onMatch = vi.fn();
+    renderForm(empty, vi.fn(), vi.fn(), onMatch, false, false);
+
+    expect(screen.queryByText("Mit KI bewerten")).toBeNull();
+  });
+
+  it("zeigt 'Bewerte mit KI…' und deaktiviert Button während matching=true", () => {
+    const onMatch = vi.fn();
+    renderForm(baseProfile({ skills: "aws" }), vi.fn(), vi.fn(), onMatch, true, true);
+
+    const matchButtons = screen.getAllByRole("button", { name: "Bewerte mit KI…" });
+    expect(matchButtons.length).toBeGreaterThan(0);
+    matchButtons.forEach((btn) => expect((btn as HTMLButtonElement).disabled).toBe(true));
+  });
+
+  it("ruft onMatch auf beim Klick auf 'Mit KI bewerten'", () => {
+    const onMatch = vi.fn();
+    renderForm(baseProfile({ skills: "aws" }), vi.fn(), vi.fn(), onMatch, false, true);
+
+    const matchButtons = screen.getAllByRole("button", { name: "Mit KI bewerten" });
+    matchButtons.forEach((btn) => fireEvent.click(btn));
+    expect(onMatch).toHaveBeenCalledTimes(matchButtons.length);
+  });
+
+  it("ruft onMatch NICHT auf wenn Button deaktiviert (matching=true)", () => {
+    const onMatch = vi.fn();
+    renderForm(baseProfile({ skills: "aws" }), vi.fn(), vi.fn(), onMatch, true, true);
+
+    const matchButtons = screen.getAllByRole("button", { name: "Bewerte mit KI…" });
+    matchButtons.forEach((btn) => fireEvent.click(btn));
+    expect(onMatch).not.toHaveBeenCalled();
   });
 });
 

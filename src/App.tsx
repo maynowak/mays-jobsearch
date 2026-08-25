@@ -17,7 +17,7 @@ import Footer from "./components/Footer";
 import LetterModal from "./components/LetterModal";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
-type Phase = "idle" | "searching" | "scoring";
+type Phase = "idle" | "searching" | "scoring" | "matching";
 
 function arraysEqual<T>(a: T[], b: T[]): boolean {
   return a.length === b.length && a.every((value, index) => value === b[index]);
@@ -98,9 +98,13 @@ export default function App() {
         ? t("model.unavailable")
         : (err as Error).message || t("status.genericError");
 
-  const performMatch = async (nextDataset: JobDataset, model: string | null) => {
+  const performMatch = async (nextDataset: JobDataset, model: string | null, isExplicitMatch = false) => {
     setStatus(null);
-    setPhase("scoring");
+    if (!isExplicitMatch) {
+      setPhase("scoring");
+    } else if (phase !== "matching") {
+      setPhase("matching");
+    }
     try {
       const { data: matchResult, usedFallback, attempts } = await withModelFallback({
         initialModel: model,
@@ -180,9 +184,23 @@ export default function App() {
 
       const nextDataset: JobDataset = { jobs: board.jobs, profile: submitted };
       setDataset(nextDataset);
-      await performMatch(nextDataset, effectiveModel);
+      setFoundJobs(board.jobs);
     } catch (err) {
       setStatus({ type: "error", message: describeError(err) });
+    } finally {
+      busyRef.current = false;
+      setPhase("idle");
+    }
+  };
+
+  const handleMatchWithAI = async () => {
+    if (busyRef.current || !dataset) return;
+    busyRef.current = true;
+    setStatus(null);
+    setModelExhausted(false);
+    setPhase("matching");
+    try {
+      await performMatch(dataset, effectiveModel, true);
     } finally {
       busyRef.current = false;
       setPhase("idle");
@@ -206,19 +224,18 @@ export default function App() {
   const handleSubmit = (submitted: Profile) => {
     if (busyRef.current) return;
     if (dataset && profilesEqual(submitted, dataset.profile)) {
-      // Manual re-match on the existing dataset (no new job search, no /api/jobs).
-      busyRef.current = true;
-      setProfile(submitted);
-      void performMatch(dataset, effectiveModel).finally(() => {
-        busyRef.current = false;
-      });
+      // This case should not happen anymore since rematch is now explicit via "Mit KI bewerten"
+      // But keep for safety - treat as new search
+      void runSearch(submitted);
     } else {
       void runSearch(submitted);
     }
   };
 
   const isSearching = phase === "searching" || phase === "scoring";
+  const isMatching = phase === "matching";
   const canRematch = !!dataset && profilesEqual(dataset.profile, profile);
+  const hasFoundJobs = !!dataset && foundJobs.length > 0;
 
   if (route === "landing" && !isSearching) {
     return (
@@ -242,6 +259,9 @@ export default function App() {
         onChange={handleProfileChange}
         onSubmit={handleSubmit}
         onCvSubmit={runSearch}
+        onMatch={handleMatchWithAI}
+        matching={isMatching}
+        hasJobs={hasFoundJobs}
         rematch={canRematch}
         model={effectiveModel}
         availableModels={models.map((model) => model.id)}
@@ -256,7 +276,7 @@ export default function App() {
         recommendedModel={recommendedModel}
         value={effectiveModel}
         onChange={handleModelChange}
-        disabled={isSearching}
+        disabled={isSearching || isMatching}
         attention={modelExhausted}
       />
       <Status status={status} />
