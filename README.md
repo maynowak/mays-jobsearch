@@ -46,7 +46,7 @@ Project documentation lives in [`docs/`](docs/):
 - [CHANGELOG.md](docs/CHANGELOG.md) — version history
 - [AI_CONTEXT.md](docs/AI_CONTEXT.md) — context for AI assistants
 - [CERTIFICATION_SUBMISSION.md](docs/CERTIFICATION_SUBMISSION.md) — full project evidence for review/certification
-- Feature reports: [`docs/reports/`](docs/reports/) — step-by-step evidence per feature (e.g. `FEATURE_AI_MATCHING_TIMEOUT.md`)
+- Feature reports: [`docs/reports/`](docs/reports/) — step-by-step evidence per feature (e.g. `FEATURE_AI_MATCHING_TIMEOUT.md`, `STEP_23C_RECOVERY_EXECUTION_LOG.md`, `STEP_23D_F_HTML_DATAFLOW_FORENSIC_EXECUTION_LOG.md`, `STEP_23D_G_CANONICAL_HTML_RENDERING_EXECUTION_LOG.md`, `STEP_23D_H_RUNTIME_RENDERING_FORENSICS_EXECUTION_LOG.md`, `STEP_23D_I_CONCRETE_PRODUCTION_DATAFLOW_FORENSICS_EXECUTION_LOG.md`, `STEP_23D_J_PRODUCTION_DATAFLOW_FIX_EXECUTION_LOG.md`)
 
 ## Project structure
 

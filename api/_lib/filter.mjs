@@ -15,13 +15,32 @@ export function tokenize(input) {
     .filter((t) => t.length > 0);
 }
 
-export function stripHtml(html) {
+function decodeHtmlEntitiesOnce(html) {
   return String(html)
+    .replace(/&nbsp;/g, " ")
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#x2F;/g, "/")
+    .replace(/&#x24;/g, "$");
+}
+
+function decodeHtmlEntities(html) {
+  let current = String(html);
+  for (let i = 0; i < 4; i++) {
+    const next = decodeHtmlEntitiesOnce(current);
+    if (next === current) break;
+    current = next;
+  }
+  return current;
+}
+
+export function stripHtml(html) {
+  const decoded = decodeHtmlEntities(html);
+  return decoded
     .replace(/<[^>]*>/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -87,8 +106,6 @@ function jobEmploymentTokens(job) {
 export function employmentMatches(job, employmentTypes) {
   if (!employmentTypes.length) return true;
   const tokens = jobEmploymentTokens(job);
-  // Ohne Beschäftigungs-Information wird die Stelle nicht ausgeschlossen
-  // (dann wäre die Standard-Suche "Vollzeit" künstlich leer).
   if (tokens.size === 0) return true;
   return employmentTypes.some((type) => {
     const aliases = EMPLOYMENT_ALIASES[type];
@@ -99,8 +116,6 @@ export function employmentMatches(job, employmentTypes) {
 export function workModeMatches(job, workModes) {
   if (!workModes.length) return true;
   const requested = new Set(workModes);
-  // "remote" ist anhand der Daten bestimmbar (job.remote). "hybrid"/"onsite"
-  // sind aus den aktuellen Jobdaten nicht ableitbar -> offener Punkt, kein Filter.
   if (requested.has("remote") && !requested.has("hybrid") && !requested.has("onsite")) {
     if (job.remote === true) return true;
     if (job.remote === false) return false;
@@ -111,7 +126,6 @@ export function workModeMatches(job, workModes) {
 export function applySearchFilters(jobs, { radiusKm, workMode, employmentType }) {
   const employmentTypes = parseList(employmentType);
   const workModes = parseList(workMode);
-  // radiusKm (Umkreis) ist ohne Geocoding nicht filterbar -> offener Punkt.
   if (!employmentTypes.length && !workModes.length) return jobs;
   return jobs.filter(
     (job) => employmentMatches(job, employmentTypes) && workModeMatches(job, workModes)
