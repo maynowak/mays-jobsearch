@@ -354,11 +354,25 @@ interface LangContextValue {
 
 const LangContext = createContext<LangContextValue | null>(null);
 
+function detectBrowserLanguage(): Lang {
+  if (typeof navigator === "undefined") return "de";
+  const langs = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const lang of langs) {
+    if (!lang) continue;
+    const normalized = lang.toLowerCase();
+    if (normalized.startsWith("de")) return "de";
+    if (normalized.startsWith("en")) return "en";
+  }
+  return "de";
+}
+
 function readStoredLang(): Lang {
   try {
-    return localStorage.getItem("mj-lang") === "de" ? "de" : "en";
+    const stored = localStorage.getItem("mj-lang");
+    if (stored === "de" || stored === "en") return stored;
+    return detectBrowserLanguage();
   } catch {
-    return "en";
+    return detectBrowserLanguage();
   }
 }
 
