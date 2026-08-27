@@ -2,6 +2,7 @@ import {
   HttpError,
   tokenize,
   stripHtml,
+  htmlToPlainText,
   locationMatches,
   keywordHits,
 } from "../filter.mjs";
@@ -53,7 +54,8 @@ export async function fetchArbeitnow() {
 
 function compactJob(job) {
   const loc = job.location || [];
-  const description = stripHtml(job.description || "");
+  const descriptionHtml = job.description || "";
+  const descriptionPlain = htmlToPlainText(descriptionHtml);
   return {
     slug: job.slug,
     title: job.title,
@@ -64,7 +66,8 @@ function compactJob(job) {
     url: job.url,
     created_at: job.created_at,
     source: [SOURCE_ID],
-    description: description || undefined,
+    description: descriptionHtml || undefined,
+    descriptionPlain: descriptionPlain || undefined,
     jobTypes:
       Array.isArray(job.job_types) && job.job_types.length ? job.job_types : undefined,
   };

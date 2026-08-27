@@ -19,6 +19,7 @@ export interface Job {
   created_at?: number | string;
   source?: JobSource[];
   description?: string;
+  descriptionPlain?: string;
   jobTypes?: string[];
   contractType?: string;
   salary?: string;

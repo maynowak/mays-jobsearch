@@ -34,20 +34,7 @@ export function sanitizeHtml(html: string): string {
   });
 }
 
-export function decodeHtmlEntities(html: string): string {
-  return html
-    .replace(/&nbsp;/g, " ")
-    .replace(/&/g, "&")
-    .replace(/"/g, '"')
-    .replace(/'/g, "'")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/&#x2F;/g, "/")
-    .replace(/&#x24;/g, "$");
-}
-
 export function prepareHtmlForRender(html: string | undefined): string {
   if (!html) return "";
-  const decoded = decodeHtmlEntities(html);
-  return sanitizeHtml(decoded);
+  return sanitizeHtml(html);
 }

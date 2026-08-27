@@ -45,6 +45,14 @@ export function stripHtml(html) {
     .trim();
 }
 
+export function htmlToPlainText(html) {
+  const decoded = decodeHtmlEntities(html);
+  return decoded
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function jobLocations(job) {
   const loc = job.location || [];
   return (Array.isArray(loc) ? loc : [loc]).map((l) => String(l).toLowerCase());

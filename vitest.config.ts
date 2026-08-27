@@ -8,5 +8,6 @@ export default defineConfig({
   oxc: { define: buildInfo() },
   test: {
     environment: "jsdom",
+    setupFiles: ["./vitest.setup.ts"],
   },
 });

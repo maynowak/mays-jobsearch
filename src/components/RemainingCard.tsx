@@ -41,21 +41,9 @@ export default function RemainingCard({ job }: { job: Job }) {
   }
 
   const description = job.description ?? "";
+  const descriptionPlain = job.descriptionPlain ?? "";
   const hasDescription = description.trim().length > 0;
-  const showDescriptionToggle = description.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
-
-  const descriptionPlain = hasDescription
-    ? description
-        .replace(/<[^>]*>/g, "")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&/g, "&")
-        .replace(/"/g, '"')
-        .replace(/'/g, "'")
-        .replace(/</g, "<")
-        .replace(/>/g, ">")
-        .replace(/\s+/g, " ")
-        .trim()
-    : "";
+  const showDescriptionToggle = descriptionPlain.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
 
   const previewText = !expanded && showDescriptionToggle
     ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"

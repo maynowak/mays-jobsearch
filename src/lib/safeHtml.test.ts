@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prepareHtmlForRender, sanitizeHtml, decodeHtmlEntities } from "./safeHtml";
+import { prepareHtmlForRender, sanitizeHtml } from "./safeHtml";
 
 describe("safeHtml - sanitizeHtml", () => {
   it("A) keeps safe HTML tags", () => {
@@ -58,43 +58,37 @@ describe("safeHtml - sanitizeHtml", () => {
   });
 });
 
-describe("safeHtml - decodeHtmlEntities", () => {
-  it("B) decodes escaped HTML entities", () => {
-    const escaped = "<p>Text</p>";
-    const result = decodeHtmlEntities(escaped);
-    expect(result).toBe("<p>Text</p>");
-  });
-
-  it("decodes common entities", () => {
-    const escaped = "Hello&nbsp;World" + "'Test" + '"Quote&More<Less>Greater';
-    const result = decodeHtmlEntities(escaped);
-    expect(result).toBe("Hello World'Test\"Quote&More<Less>Greater");
-  });
-
-  it("decodes numeric entities", () => {
-    const escaped = "Price: &#x24;100&#x2F;hr";
-    const result = decodeHtmlEntities(escaped);
-    expect(result).toBe("Price: $100/hr");
-  });
-});
-
-describe("safeHtml - prepareHtmlForRender (integration)", () => {
-  it("decodes entities then sanitizes", () => {
+describe("safeHtml - prepareHtmlForRender", () => {
+  it("sanitizes HTML - removes script tags", () => {
     const input = "<script>alert(1)</script><p>Safe</p>";
     const result = prepareHtmlForRender(input);
     expect(result).not.toContain("<script>");
     expect(result).toContain("<p>Safe</p>");
   });
 
-  it("keeps safe HTML after entity decode", () => {
-    const input = "<p>Hello&nbsp;<strong>World</strong></p>";
+  it("keeps safe HTML tags", () => {
+    const input = "<p>Hello<strong>World</strong></p>";
     const result = prepareHtmlForRender(input);
-    expect(result).toContain("<p>Hello <strong>World</strong></p>");
+    expect(result).toContain("<p>Hello<strong>World</strong></p>");
   });
 
   it("returns empty string for undefined/null/empty", () => {
     expect(prepareHtmlForRender(undefined)).toBe("");
     expect(prepareHtmlForRender(null as any)).toBe("");
     expect(prepareHtmlForRender("")).toBe("");
+  });
+
+  it("removes event handlers", () => {
+    const input = '<img src="x" onerror="alert(1)"><p>Safe</p>';
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("onerror");
+    expect(result).toContain("<p>Safe</p>");
+  });
+
+  it("removes javascript: URLs", () => {
+    const input = '<a href="javascript:alert(1)">Bad</a><a href="https://example.com">Good</a>';
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("javascript:");
+    expect(result).toContain('href="https://example.com"');
   });
 });
