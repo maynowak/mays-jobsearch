@@ -18,13 +18,13 @@ export function tokenize(input) {
 function decodeHtmlEntitiesOnce(html) {
   return String(html)
     .replace(/&nbsp;/g, " ")
-    .replace(/&/g, "&")
     .replace(/</g, "<")
     .replace(/>/g, ">")
     .replace(/"/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&#x2F;/g, "/")
-    .replace(/&#x24;/g, "$");
+    .replace(/&#x24;/g, "$")
+    .replace(/&/g, "&");
 }
 
 function decodeHtmlEntities(html) {
