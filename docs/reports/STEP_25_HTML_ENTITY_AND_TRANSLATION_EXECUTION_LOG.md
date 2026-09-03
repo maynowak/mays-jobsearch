@@ -472,3 +472,74 @@ G. vitest.setup.ts / jest-dom verification
 ### F. Test baseline — COMMITTED (`1dc7ef8`), fresh checkout verified
 
 No deployment performed (test-infrastructure-only change; no product behavior change).
+
+==================================================
+STEP 27 — APIFY ARBEITSAGENTUR IST-ZUSTAND DIAGNOSE (read-only)
+==================================================
+
+## PLAN
+
+Diagnose ONLY why the Job-Matcher UI shows only Quelle=Arbeitnow and no
+Arbeitsagentur/Apify jobs. Inspection only, no code change, no Actor run,
+no includeDetails change, no proxy work.
+
+## GIT STATE
+
+- HEAD == origin/main == `07ffdb3` (working tree has only untracked debug/artifact files)
+
+## ACTION / RESULT — call + merge path traced
+
+1. Apify adapter IS called on a normal search: live `/api/jobs` returns
+   `meta.apify = {enabled:true, reason:null}`, `meta.sources = {arbeitnow:17, arbeitsagentur:40}`,
+   `sourceDetails` lists arbeitsagentur `provider:"apify" enabled:true`.
+2. Enable/disable: `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` (default true) +
+   `APIFY_API_TOKEN`. Both active in prod (source enabled, 40 rows fetched).
+3. No timeout / missing env / disabled source / empty result: 40 AA rows are
+   fetched and merged (`dedupJobs`), so the skip is NOT in the source/cache path.
+4. Source id set in `api/_lib/sources/apify/actors.mjs` → `SOURCE_ID = "arbeitsagentur"`,
+   `source: [SOURCE_ID]` in `normalizeArbeitsagentur`.
+5. THE FILTER that removes AA results: `fetchAllJobs` → `applySearchFilters`
+   (`api/_lib/filter.mjs`) with the API query `employmentType`.
+
+## ROOT CAUSE (proven by live API)
+
+The app default profile sets `employmentTypes: ["full_time"]`
+(`src/App.tsx` initial `profile`), so every default search sends
+`employmentType=full_time`.
+
+`employmentMatches(job, ["full_time"])`:
+- collects `job.jobTypes` + `job.contractType` into `jobEmploymentTokens`.
+- AA jobs have `jobTypes = null` (normalize does not set jobTypes) and
+  `contractType ∈ {KEINE_ANGABE (29), UNBEFRISTET (9), BEFRISTET (1)}`.
+- full_time aliases = {full_time, fulltime, full-time, full time, vollzeit, full-time position}.
+- German contract types (unbefristet/befristet/keine_angabe) are NOT in the alias
+  set → `employmentMatches` returns false → AA jobs dropped.
+
+Live proof:
+- `GET /api/jobs?...&employmentType=full_time` → jobs by source `{arbeitnow:11}` (0 AA).
+- `GET /api/jobs?...` (no employment filter) → jobs by source `{arbeitnow:16, arbeitsagentur:39}`.
+
+Contrast: Arbeitnow jobs carry `jobTypes` like "Full Time"/"Full time"/"fulltime
+permanent" which DO match the aliases, so they survive the filter.
+
+## SECONDARY OBSERVATION (not fixed)
+
+- `KEINE_ANGABE` ("not specified") is treated as a non-matching employment token
+  and thus filtered out, even though "no data" arguably should pass (the code
+  already passes jobs with a truly empty token set). This is a mapping gap.
+- The code conflates CONTRACT type (UNBEFRISTET/fixed-term) with EMPLOYMENT type
+  (full/part-time) in `jobEmploymentTokens`; the alias list only covers employment
+  terms. This conflation contributes to the misclassification.
+
+## SEPARATION (only existing evidence)
+
+- A) Why no AA jobs appear: default `employmentType=full_time` filter removes AA
+  jobs because their employment/contract tokens don't match. PROVEN.
+- B) What includeDetails:false yields: no description/tags (`descriptionPlain=""`,
+  `tags=[]`), so `language` is `undefined` and AI keyword matching relies on title only.
+- C) Whether includeDetails:true is desirable later: NOT evaluated (out of scope).
+- D) Cost of includeDetails:true: NOT evaluated (no pricing assumption made).
+
+## STATUS — no code change, awaiting review
+
+STEP 27 = DIAGNOSIS COMPLETE. STOP.
