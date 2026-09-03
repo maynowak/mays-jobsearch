@@ -3,7 +3,7 @@ import ScoreBadge from "./ScoreBadge";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
 import { formatGermanLocation } from "../lib/location";
-import { prepareHtmlForRender } from "../lib/safeHtml";
+import { renderSanitizedHtml } from "../lib/safeHtml";
 
 interface Props {
   match: Match;
@@ -12,8 +12,7 @@ interface Props {
 }
 
 function renderHtmlContent(html: string) {
-  const sanitized = prepareHtmlForRender(html);
-  return <div className="html-content" dangerouslySetInnerHTML={{ __html: sanitized }} />;
+  return renderSanitizedHtml(html);
 }
 
 export default function MatchCard({ match, index, onGenerateLetter }: Props) {

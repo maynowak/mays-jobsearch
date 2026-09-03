@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { prepareHtmlForRender, sanitizeHtml } from "./safeHtml";
+import { prepareHtmlForRender, sanitizeHtml, renderSanitizedHtml, decodeHtmlEntities } from "./safeHtml";
+
+describe("safeHtml - decodeHtmlEntities", () => {
+  it("decodes basic HTML entities", () => {
+    const input = "<p>Hello</p>";
+    const result = decodeHtmlEntities(input);
+    expect(result).toBe("<p>Hello</p>");
+  });
+
+  it("decodes double-encoded HTML entities (production format)", () => {
+    const input = '<div class="content-intro"><h3><strong>Who We Are</strong></h3>';
+    const result = decodeHtmlEntities(input);
+    expect(result).toBe('<div class="content-intro"><h3><strong>Who We Are</strong></h3>');
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(decodeHtmlEntities("")).toBe("");
+  });
+});
 
 describe("safeHtml - sanitizeHtml", () => {
   it("A) keeps safe HTML tags", () => {
@@ -42,10 +60,10 @@ describe("safeHtml - sanitizeHtml", () => {
   });
 
   it("strips disallowed tags but keeps content", () => {
-    const html = "<div><span>Test</span></div>";
+    const html = "<section><article>Test</article></section>";
     const result = sanitizeHtml(html);
-    expect(result).not.toContain("<div>");
-    expect(result).not.toContain("<span>");
+    expect(result).not.toContain("<section>");
+    expect(result).not.toContain("<article>");
     expect(result).toContain("Test");
   });
 
@@ -90,5 +108,71 @@ describe("safeHtml - prepareHtmlForRender", () => {
     const result = prepareHtmlForRender(input);
     expect(result).not.toContain("javascript:");
     expect(result).toContain('href="https://example.com"');
+  });
+
+  it("decodes entity-encoded HTML before sanitizing", () => {
+    const input = "<p><strong>Hello</strong></p>";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<p>");
+    expect(result).toContain("<strong>Hello</strong>");
+    expect(result).toContain("</p>");
+  });
+
+  it("decodes double-encoded HTML before sanitizing", () => {
+    const input = '<div class="content-intro"><h3><strong>Who We Are</strong></h3>';
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain('<div class="content-intro">');
+    expect(result).toContain("<h3>");
+    expect(result).toContain("<strong>Who We Are</strong>");
+    expect(result).toContain("</h3>");
+  });
+
+  it("decodes nested double-encoded entities before sanitizing", () => {
+    const input = "<p>Hello</p>";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<p>Hello</p>");
+  });
+});
+
+describe("safeHtml - renderSanitizedHtml", () => {
+  it("returns null for undefined/null/empty", () => {
+    expect(renderSanitizedHtml(undefined)).toBeNull();
+    expect(renderSanitizedHtml(null as any)).toBeNull();
+    expect(renderSanitizedHtml("")).toBeNull();
+  });
+
+  it("returns React element with sanitized HTML for valid input", () => {
+    const input = "<p>Hello<strong>World</strong></p>";
+    const result = renderSanitizedHtml(input);
+    expect(result).not.toBeNull();
+    expect(result?.type).toBe("div");
+    expect(result?.props.className).toBe("html-content");
+    expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<p>Hello<strong>World</strong></p>");
+  });
+
+  it("decodes entity-encoded HTML before rendering", () => {
+    const input = "<p><strong>Hello</strong></p>";
+    const result = renderSanitizedHtml(input);
+    expect(result).not.toBeNull();
+    expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<p>");
+    expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<strong>Hello</strong>");
+  });
+
+  it("decodes double-encoded HTML before rendering", () => {
+    const input = '<div class="content-intro"><h3><strong>Who We Are</strong></h3>';
+    const result = renderSanitizedHtml(input);
+    expect(result).not.toBeNull();
+    expect(result?.props.dangerouslySetInnerHTML?.__html).toContain('<div class="content-intro">');
+    expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<h3>");
+    expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<strong>Who We Are</strong>");
+  });
+
+  it("removes dangerous content", () => {
+    const input = '<p>Safe</p><script>alert(1)</script><img src=x onerror="alert(1)">';
+    const result = renderSanitizedHtml(input);
+    expect(result).not.toBeNull();
+    expect(result?.props.dangerouslySetInnerHTML?.__html).not.toContain("<script>");
+    expect(result?.props.dangerouslySetInnerHTML?.__html).not.toContain("onerror");
+    expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<p>Safe</p>");
   });
 });

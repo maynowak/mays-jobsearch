@@ -1,5 +1,5 @@
 import { getConfig } from "../../config.mjs";
-import { stripHtml, htmlToPlainText } from "../../filter.mjs";
+import { stripHtml, htmlToPlainText, detectLanguage } from "../../filter.mjs";
 
 export const SOURCE_ID = "arbeitsagentur";
 
@@ -24,6 +24,7 @@ function normalizeArbeitsagentur(record) {
     source: [SOURCE_ID],
     description: descriptionHtml || undefined,
     descriptionPlain: descriptionPlain || undefined,
+    language: detectLanguage(descriptionPlain),
     contractType: contractType || undefined,
     salary: salary || undefined,
     startDate: startDate || undefined,

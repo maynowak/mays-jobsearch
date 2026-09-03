@@ -18,13 +18,13 @@ export function tokenize(input) {
 function decodeHtmlEntitiesOnce(html) {
   return String(html)
     .replace(/&nbsp;/g, " ")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&#x2F;/g, "/")
     .replace(/&#x24;/g, "$")
-    .replace(/&/g, "&");
+    .replace(/&amp;/g, "&");
 }
 
 function decodeHtmlEntities(html) {
@@ -51,6 +51,52 @@ export function htmlToPlainText(html) {
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+const GERMAN_STOPWORDS = new Set([
+  "der", "die", "das", "und", "für", "mit", "den", "dem", "des",
+  "ein", "eine", "einen", "einer", "einem", "eines", "nicht", "ist",
+  "sind", "von", "zu", "zum", "zur", "auf", "bei", "als", "auch",
+  "sich", "über", "nach", "aus", "an", "am", "im", "um", "wird",
+  "werden", "wurde", "hat", "haben", "hatte", "sie", "er", "es",
+  "wir", "ich", "ihr", "sehr", "wie", "was", "wo", "wann", "warum",
+  "aber", "oder", "wenn", "dann", "denn", "dass", "dieser", "diese",
+  "dieses", "kein", "keine", "gegen", "ohne", "mehr", "noch",
+  "bereits", "wieder", "sowie", "durch", "hier", "dort",
+]);
+
+const ENGLISH_STOPWORDS = new Set([
+  "the", "and", "for", "with", "that", "this", "these", "those",
+  "you", "your", "yours", "we", "our", "ours", "they", "them",
+  "their", "theirs", "are", "were", "been", "being", "have", "has",
+  "had", "does", "did", "will", "would", "should", "could", "may",
+  "might", "must", "not", "but", "from", "into", "onto", "about",
+  "over", "after", "before", "through", "during", "between", "among",
+  "than", "more", "most", "some", "any", "all", "both", "each",
+  "few", "many", "such", "who", "whom", "whose", "when", "where",
+  "why", "how", "because", "although", "while", "whether", "which",
+  "its", "it", "to",
+]);
+
+export function detectLanguage(text) {
+  if (!text) return undefined;
+  const words = stripHtml(text)
+    .toLowerCase()
+    .split(/[^a-zäöüß]+/)
+    .filter((word) => word.length > 1);
+  if (!words.length) return undefined;
+
+  let german = 0;
+  let english = 0;
+  for (const word of words) {
+    if (GERMAN_STOPWORDS.has(word)) german += 1;
+    if (ENGLISH_STOPWORDS.has(word)) english += 1;
+  }
+
+  const max = Math.max(german, english);
+  if (max < 3) return undefined;
+  if (german === english) return undefined;
+  return german > english ? "de" : "en";
 }
 
 function jobLocations(job) {

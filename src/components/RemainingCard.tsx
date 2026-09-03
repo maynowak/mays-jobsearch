@@ -10,13 +10,12 @@ import {
   prettifyCode,
 } from "../lib/jobMeta";
 import { formatGermanLocation } from "../lib/location";
-import { prepareHtmlForRender } from "../lib/safeHtml";
+import { renderSanitizedHtml } from "../lib/safeHtml";
 
 const DESCRIPTION_PREVIEW_LENGTH = 260;
 
-function renderHtmlContent(html: string) {
-  const sanitized = prepareHtmlForRender(html);
-  return <div className="html-content" dangerouslySetInnerHTML={{ __html: sanitized }} />;
+function renderHtmlContent(html: string, lang?: string) {
+  return renderSanitizedHtml(html, lang);
 }
 
 export default function RemainingCard({ job }: { job: Job }) {
@@ -86,9 +85,9 @@ export default function RemainingCard({ job }: { job: Job }) {
       {hasDescription && (
         <div className="remaining-description-wrap">
           {expanded || !showDescriptionToggle ? (
-            renderHtmlContent(description)
+            renderHtmlContent(description, job.language)
           ) : (
-            <p className="remaining-description">{previewText}</p>
+            <p className="remaining-description" lang={job.language} translate={job.language === "en" ? "yes" : undefined}>{previewText}</p>
           )}
           {showDescriptionToggle && (
             <button

@@ -20,6 +20,7 @@ export interface Job {
   source?: JobSource[];
   description?: string;
   descriptionPlain?: string;
+  language?: string;
   jobTypes?: string[];
   contractType?: string;
   salary?: string;

@@ -5,6 +5,7 @@ import {
   htmlToPlainText,
   locationMatches,
   keywordHits,
+  detectLanguage,
 } from "../filter.mjs";
 import { getConfig } from "../config.mjs";
 
@@ -68,6 +69,7 @@ function compactJob(job) {
     source: [SOURCE_ID],
     description: descriptionHtml || undefined,
     descriptionPlain: descriptionPlain || undefined,
+    language: detectLanguage(descriptionPlain),
     jobTypes:
       Array.isArray(job.job_types) && job.job_types.length ? job.job_types : undefined,
   };
