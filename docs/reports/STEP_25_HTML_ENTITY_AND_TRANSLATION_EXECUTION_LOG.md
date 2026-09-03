@@ -217,3 +217,70 @@ push ONLY the verified TASK A + TASK B files plus the execution logs.
 ## RESULTS (to be filled)
 
 See final section below.
+
+==================================================
+STEP 25 — FINAL RESULT
+==================================================
+
+## COMMITTED FILES (13)
+
+1. `api/_lib/filter.mjs` (entity regex fix + detectLanguage)
+2. `api/_lib/sources/arbeitnow.mjs` (emit language)
+3. `api/_lib/sources/apify/actors.mjs` (emit language)
+4. `index.html` (default lang de)
+5. `src/components/MatchCard.tsx` (renderSanitizedHtml)
+6. `src/components/RemainingCard.tsx` (lang/translate + renderSanitizedHtml)
+7. `src/lib/safeHtml.test.ts` (decode/sanitize/render tests)
+8. `src/lib/safeHtml.ts` (deleted — renamed to .tsx)
+9. `src/lib/safeHtml.tsx` (new — renderSanitizedHtml with lang/translate)
+10. `src/types.ts` (language?: string)
+11. `tests/api/filter.test.js` (detectLanguage + stripHtml regression)
+12. `docs/reports/STEP_24_GERMAN_FIRST_LOCALE_LOCATION_EXECUTION_LOG.md`
+13. `docs/reports/STEP_25_HTML_ENTITY_AND_TRANSLATION_EXECUTION_LOG.md`
+
+## VALIDATION RESULTS
+
+- `npm test` → 238 passed (238)
+- `npx tsc -b` → exit 0
+- `npm run build` → built OK (386ms)
+
+## COMMIT
+
+- Hash: `2038085c77fff4587405c48eedcc2b792da9dd06`
+- Message: `feat: add job language detection and browser translation metadata`
+
+## PUSH
+
+- `0382051..2038085  main -> main`
+- Remote: `github.com:maynowak/mays-jobsearch.git`
+
+## FINAL GIT STATE
+
+- HEAD: `2038085c77fff4587405c48eedcc2b792da9dd06`
+- origin/main: `2038085c77fff4587405c48eedcc2b792da9dd06`
+- HEAD == origin/main
+
+## EXCLUDED (intentionally uncommitted)
+
+- `src/components/RemainingCard.test.tsx` (component test)
+- `vitest.setup.ts` (referenced by committed `vitest.config.ts`)
+- `package.json` / `package-lock.json` (`@testing-library/jest-dom`)
+- All `debug_*.ts`, `test_*.mjs`, `tests/api/debug*.test.js`, `tests/screenshotsdev/`,
+  `make_double_encoded.mjs`, `temp_write_filter.cjs`, `write_safeHtml.cjs`,
+  `ENVIRONMENT_MATRIX.md`, `ROOT_CAUSE_ASSESSMENT.md`, `commit_msg.txt`,
+  `docs/AI_AUDITLOG.md`, `src/App.landing.test.tsx`, and historical STEP_23/24
+  report files.
+
+## PRODUCTION STATUS
+
+- TASK A + TASK B were previously deployed manually to production. The footer
+  may still show the old commit `0382051` because the deployed working tree
+  differs from the commit made here. Do not use the footer alone as deployment
+  identity.
+- This commit brings the Git history in line with the deployed code (TASK B
+  included), but does NOT itself redeploy.
+
+## OUTSTANDING
+
+- Browser translation remains a BROWSER-BEHAVIOR verification item (no JS API;
+  `lang`/`translate` attributes are the supported mechanism).
