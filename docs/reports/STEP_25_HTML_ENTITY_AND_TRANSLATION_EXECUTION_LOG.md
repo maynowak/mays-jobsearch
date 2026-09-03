@@ -543,3 +543,95 @@ permanent" which DO match the aliases, so they survive the filter.
 ## STATUS — no code change, awaiting review
 
 STEP 27 = DIAGNOSIS COMPLETE. STOP.
+
+==================================================
+STEP 28 — EMPLOYMENT-/CONTRACT-TYPE SEMANTIK (read-only)
+==================================================
+
+## PLAN
+
+Analyze the employmentType filter logic fachlich + technisch after STEP 27
+proved Arbeitsagentur jobs are filtered out. NO code change. Produce Ist-Analyse
++ decision matrix.
+
+## GIT STATE
+
+- HEAD == origin/main == `14ccef6` (before this step's log commit)
+
+## IST-ANALYSE
+
+### 1. UI values for employmentType
+- `EMPLOYMENT_TYPES = ["full_time", "part_time"]` (`src/types.ts`).
+- UI checkbox group (`SearchForm.tsx`); labels EN "Full time"/"Part time",
+  DE "Vollzeit"/"Teilzeit".
+- Default profile: `employmentTypes: ["full_time"]` (`App.tsx`).
+
+### 2. Arbeitnow fields
+- Single field `job_types` (free-form tag array) → mapped to `job.jobTypes` in
+  `arbeitnow.mjs compactJob`. NO separate contract field (verified raw API: keys
+  are only company_name, created_at, description, job_types, location, remote,
+  slug, tags, title, url).
+- `job_types` is HETEROGENEOUS: mixes employment scope ("Full Time","Part time",
+  "fulltime permanent"), contract duration ("Permanent","Temporary","Full-time
+  fixed-term"), experience ("Experienced","Entry","Mid","Manager","berufserfahren")
+  and other ("Intern","Student","Freelance","Contract","Traineeship").
+
+### 3. Arbeitsagentur fields
+- Dedicated `contractType` field (UNBEFRISTET/BEFRISTET/KEINE_ANGABE) in
+  `normalizeArbeitsagentur` (`api/_lib/sources/apify/actors.mjs`) — PURELY
+  contract duration.
+- NO employment-scope field: `jobTypes` is not set (null).
+
+### 4. Employment scope (Vollzeit/Teilzeit/Minijob)
+- Arbeitnow: inside `job_types` ("Full Time", "Part time", …).
+- Arbeitsagentur: none available in compact output.
+
+### 5. Contract duration (befristet/unbefristet/keine Angabe)
+- Arbeitsagentur: `contractType` = UNBEFRISTET/BEFRISTET/KEINE_ANGABE (dedicated).
+- Arbeitnow: inside `job_types` ("Permanent"/"Temporary"/"Full-time fixed-term").
+
+### 6. Why contractType is in jobEmploymentTokens
+- `filter.mjs` `jobEmploymentTokens(job)` merges `job.jobTypes` + `job.contractType`
+  into ONE token set, then `employmentMatches` checks that set against
+  full_time/part_time aliases. Intent was to catch employment signals from both
+  sources, but this CONFLATES contract duration with employment scope.
+
+### 7. Existing separate modeling
+- YES on the frontend: `types.ts` already has separate `jobTypes?: string[]` and
+  `contractType?: string`; `jobMeta.ts` has separate `CONTRACT_TYPE_LABEL_KEYS`,
+  `CONTRACT_TYPE_NO_DATA`, `isContractTypeNoData`, `contractTypeLabelKey`; and
+  `RemainingCard` renders `contractType` as its own badge. So the FRONTEND models
+  them separately, but the API filter (`filter.mjs`) does NOT — that is the mismatch.
+
+### 8. How unknown values are handled
+- `employmentMatches`: any token not in the alias set → no match → job excluded
+  (so KEINE_ANGABE/UNBEFRISTET/BEFRISTET all exclude AA jobs under full_time).
+- Frontend `jobTypeLabelKey`/`contractTypeLabelKey` return null for unknown codes
+  (badge hidden / prettify fallback) — informational only.
+
+### 9. Fachliche options for KEINE_ANGABE
+- strict: "not specified" → matches nothing → EXCLUDE from employment filter.
+- inclusive: "not specified"/missing scope → treated as matching ALL employment
+  filters (keep the job).
+- separate: model "unspecified" as own state, shown separately, independent of
+  the employment filter.
+
+### 10. Cross-source consistent solution
+Employment scope (full_time/part_time) and contract duration (befristet/
+unbefristet) are DIFFERENT dimensions. The employment filter must consider ONLY
+employment-scope signals, never contractType. Arbeitsagentur exposes no scope →
+treat as "unspecified" (inclusive by default) rather than inventing a full/part
+classification from UNBEFRISTET/BEFRISTET.
+
+## DECISION MATRIX
+
+| Option | Behaviour | Vorteil | Nachteil | Empfehlung |
+|---|---|---|---|---|
+| 1. Strict (ist) | contractType im Employment-Token-Set; unbekannte Werte → ausgeschlossen | keine Änderung | AA wird bei full_time komplett entfernt; Vertragsdauer mit -umfang vermischt; KEINE_ANGABE wird fälschlich ausgeschlossen | NEIN |
+| 2. Nur „keine Daten" inklusiv | KEINE_ANGABE/leer → durchlassen, Rest unverändert | kleine Änderung; AA mit KEINE_ANGABE wieder drin | UNBEFRISTET/BEFRISTET weiterhin falsch als Scope gewertet (bleiben ausgeschlossen); Vermischung bleibt | TEILWEISE (nicht ausreichend) |
+| 3. Scope vs. Dauer trennen (empfohlen) | Employment-Filter nutzt NUR Beschäftigungsumfang-Signale; contractType separat/informativ; unbekannter Umfang → inklusiv | fachlich korrekt; quellenübergreifend konsistent; respektiert „UNBEFRISTET ≠ Vollzeit" | kleiner Code-Change (nicht in diesem Step); AA-Jobs haben „Umfang unbekannt" → full_time wirkt dort als „nicht Teilzeit" | JA (als Folge-Fix) |
+| 4. Expliziter dritter UI-Zustand „unbekannt" | zusätzliche Filteroption „nicht angegeben"; AA mappt dorthin | klare Trennung, explizite Nutzersteuerung | UI-Änderung + Default-Entscheidung (unbekannt standardmäßig rein?) | Optional (Ergänzung zu 3) |
+
+## STATUS — analyse only, no code change, awaiting review
+
+STEP 28 = EMPLOYMENT/CONTRACT SEMANTIK ANALYSIERT. STOP.
