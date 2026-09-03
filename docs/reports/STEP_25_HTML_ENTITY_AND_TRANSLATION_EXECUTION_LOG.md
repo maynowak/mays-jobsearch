@@ -284,3 +284,191 @@ STEP 25 — FINAL RESULT
 
 - Browser translation remains a BROWSER-BEHAVIOR verification item (no JS API;
   `lang`/`translate` attributes are the supported mechanism).
+
+==================================================
+STEP 26 — LANGUAGE TAG + PROXY PATH + TEST BASELINE AUDIT
+==================================================
+
+## PLAN
+
+- Objective: one controlled verification/fix step covering (A) Arbeitnow
+  language detection + DOM language metadata, (B) actual proxy/network path,
+  (C) fix vitest.setup.ts/jest-dom Git inconsistency, (D) browser-translation
+  prerequisites, (E) evidence-based next Apify/cost/proxy plan.
+- Current Git baseline: HEAD == origin/main == `6c04f3f`.
+- Files expected to inspect:
+  - `api/_lib/sources/arbeitnow.mjs`, `api/_lib/filter.mjs`, `api/_lib/sources/apify/*.mjs`,
+    `api/jobs.mjs` (api routes), `api/_lib/index` source dispatcher
+  - `src/components/RemainingCard.tsx`, `MatcchCard.tsx`, `src/lib/safeHtml.tsx`
+  - `vitest.config.ts`, `vitest.setup.ts`, `package.json`, `package-lock.json`
+  - `vercel.json`, `.env.example`
+- Files possibly requiring modification (test infra only): `vitest.setup.ts`,
+  `package.json`, `package-lock.json` (and `vitest.config.ts` only if strictly needed).
+- Explicit exclusions: no proxy config changes, no Actor changes, no Azure/Terraform
+  changes, no translation API, no application behavior changes, no deployment of
+  product changes, no cleanup of debug artifacts.
+- Planned sequence: baseline → API verification → live DOM verification → browser
+  prereq doc → proxy trace → Apify execution path → vitest.setup.ts fix → validation
+  → focused test-infra commit → push → next work package plan.
+
+## GIT STATE (baseline)
+
+- HEAD: `6c04f3f1fea2ccca015e6002ef2a6c4aeaba44a5`
+- origin/main: `6c04f3f1fea2ccca015e6002ef2a6c4aeaba44a5`
+- HEAD == origin/main
+- Uncommitted (tracked): `package.json`, `package-lock.json` (jest-dom)
+- Untracked: `vitest.setup.ts`, debug/test artifacts, historical reports (unchanged)
+
+## A. ARBEITNOW LANGUAGE VERIFICATION
+
+### A.1 API verification (live production)
+
+`GET https://mays-job-matcher.vercel.app/api/jobs?targetRole=engineer&city=Berlin`
+→ HTTP 200, 50 jobs. Sampled:
+
+- Arbeitnow EN jobs → `language: "en"` (e.g. "Full Stack Engineer - Javascript",
+  "Backend Engineer", "Data Scientist (f/m/d)")
+- Arbeitnow DE jobs → `language: "de"` (e.g. "Full Stack Product Engineer (m/w/d)",
+  "Senior Cloud Test & DevOps Engineer (m/w/d)")
+- Arbeitsagentur jobs → `language` MISSING (undefined) — see A.2
+
+### A.2 Why Arbeitsagentur jobs have no language
+
+All Arbeitsagentur jobs returned `descriptionPlain: ""` and `description: ""`.
+Cause: the Apify Actor is invoked with `includeDetails: false` + `compact: true`
+(`api/_lib/sources/apify/actors.mjs` buildInput), so no description text is
+fetched. `detectLanguage("")` therefore returns `undefined` (empty-input path).
+This is a DATA-AVAILABILITY limitation, NOT a detection defect.
+
+### A.3 Detection pipeline (verified, not assumed)
+
+Arbeitnow path (`api/_lib/sources/arbeitnow.mjs`):
+`compactJob()`:
+  `descriptionPlain = htmlToPlainText(descriptionHtml)`  → decode + strip HTML
+  `language: detectLanguage(descriptionPlain)`           → heuristics on plain text
+
+Confirmed detectLanguage IS invoked in the Arbeitnow path.
+
+Local deterministic check:
+- EN html → plain text → detectLanguage → `"en"` ✅
+- DE html → plain text → detectLanguage → `"de"` ✅
+
+### A.4 Classification
+
+CASE A — correct: English provider content → `language:"en"`. NOT a bug.
+
+B. DOM language metadata (source-verified)
+
+RemainingCard.tsx passes `job.language` →
+  expanded: `renderSanitizedHtml(html, lang)` → `<div class="html-content" lang=... translate=...>`
+  collapsed: `<p class="remaining-description" lang=... translate=...>`
+safeHtml.tsx `renderSanitizedHtml`: `lang={lang||undefined}`, `translate={lang==="en"?"yes":undefined}`
+
+- EN job → `lang="en" translate="yes"`
+- DE job → `lang="de"` (no translate)
+- unknown → no lang/translate (undefined)
+
+Language metadata is attached to the rendered content boundary, not to an
+unrelated text representation. MatchCard renders AI text (`why`/`prepare`), not
+job descriptions, so it correctly does NOT need `job.language`.
+
+C. Browser translation prerequisites
+
+- `<html lang="de">` default set (index.html) ✅
+- per-content `lang`/`translate` on description blocks ✅
+- LANGUAGE DETECTION = app; LANG/TRANSLATE attr = app; actual translation = browser
+- No translation API/engine added. Application-side handling = PASS; browser
+  auto-translation remains manual/behavioral.
+
+D. Proxy path trace (verified — NO application proxy exists)
+
+- Arbeitnow: `provider = "direct-api"`, direct `fetch()` to
+  `https://www.arbeitnow.com/api/job-board-api` (no proxy).
+- Apify: serverless fn calls `https://api.apify.com/v2/...` directly (no proxy).
+  Actor `blackfalcondata~arbeitsagentur-jobs-feed` runs on Apify infra; its
+  buildInput has NO `proxy` field, and client.mjs sets no proxy options.
+- `vercel.json` `rewrites` = only SPA route `/top` → `/index.html` (not a proxy).
+- Upstash Redis = data store (cache/alerts), not a proxy.
+- No `/api/proxy`, no forwarding handler, no CORS-rewriting proxy anywhere in
+  the repo (`grep -i proxy/forward/rewrite/cors` → only Upstash + vercel rewrite).
+
+Flow (actual):
+Browser → /api/jobs (Vercel fn) → source adapter → (direct fetch) → Arbeitnow API
+Browser → /api/jobs (Vercel fn) → source adapter → Apify REST → Actor (Apify infra) → target site
+
+The "proxy" the user remembered is the Vercel DEV runtime proxy
+(`vercel dev` → http://localhost:3000 → Vite dynamic port), documented in
+`docs/reports/TEST_SAFETY_PHASE1_CURRENT.md` — a DEVELOPMENT tooling proxy,
+not application code. STEP 25's "no proxy configured" referred specifically to
+Apify proxy configuration (PATH B), which is accurate.
+
+E. Apify execution model (verified)
+
+- Actor: `blackfalcondata~arbeitsagentur-jobs-feed`, `maxJobs: 40`, `maxResults: 40`,
+  `mode: "full"`, `includeDetails: false`, `compact: true`.
+- Sync execution: start run → poll `waitForRun` up to 50s → read dataset.
+- Cache: L1 records cache (TTL 600s) keyed by query+location; L2 dataset reuse
+  within `datasetRefreshMs()` (peak 6h / off-peak 12h) — repeated searches reuse
+  dataset, avoiding new runs.
+- Concurrency: ONE synchronous Actor run per cache-missing request (no parallel
+  Actor fan-out).
+- Limits: `APIFY_MONTHLY_MAX_RUNS = 30`, soft limit `$4.00` (advisory, via
+  `apifyRunLimitReached()` guard). Concurrency of runs ≠ proxy IP count.
+
+F. Apify proxy requirement (no change)
+
+- No 403/429/CAPTCHA/blocking evidence in code/logs.
+- Actor doc not inspected to require proxy; buildInput has no proxy field.
+- RECOMMENDATION: APIFY PROXY = NOT REQUIRED CURRENTLY. No config change made.
+
+G. vitest.setup.ts / jest-dom verification
+
+- `vitest.config.ts` (committed) has `test.environment = "jsdom"` and
+  `setupFiles = ["./vitest.setup.ts"]`.
+- `vitest.setup.ts` (UNtracked) imports `@testing-library/jest-dom` and sets
+  `globalThis.expect/vi`.
+- `package.json`/`lock` (UNcommitted) add `@testing-library/jest-dom@^7.0.1`.
+- No committed test uses any jest-dom matcher (grep = NONE) and none uses
+  `globalThis.vi`/`expect`. jest-dom is used only by the UNcommitted
+  `RemainingCard.test.tsx`.
+- Inconsistency: committed config references an untracked setup file whose
+  import depends on an uncommitted package → fresh checkout `npm test` fails.
+- DECISION: commit `vitest.setup.ts` + jest-dom dependency so the committed
+  config→setup→dependency chain is complete and self-consistent (matches the
+  requirement "do not depend on an untracked local file").
+
+## STEP 26 — FINAL RESULT
+
+### Test-infra commit
+- Hash: `1dc7ef8d1ad6ff58fbc867d49be748ebdac412ea`
+- Message: `test: commit shared Vitest DOM setup`
+- Files: `vitest.setup.ts` (new), `package.json`, `package-lock.json` (jest-dom)
+- Push: `6c04f3f..1dc7ef8  main -> main`
+- HEAD == origin/main == `1dc7ef8`
+
+### Validation (local working tree)
+- `npm test` → 238 passed (25 files)
+- `npx tsc -b` → exit 0
+- `npm run build` → built OK (367ms)
+- `git diff --check` → clean
+
+### Fresh-checkout reproducibility (verified via clean clone)
+- `git clone --depth 1 --branch main` → HEAD `1dc7ef8`
+- `npm install` → 123 packages, 0 vulnerabilities
+- `npm test` → 21 files, 230 passed (no missing-setup error)
+- Confirms the committed repo no longer depends on an untracked setup file.
+
+### A. Arbeitnow language — PASS
+- EN provider → `language:"en"` → `lang="en" translate="yes"` on DOM.
+- DE provider → `language:"de"` → `lang="de"`.
+- Arbeitsagentur jobs have empty descriptions (`includeDetails:false`) so
+  `language` is `undefined` — data-availability limitation, not a defect.
+
+### B. Browser translation — app prerequisites PASS; manual browser check still required
+### C. Project proxy — NONE (direct fetch; Vercel dev runtime proxy is tooling only)
+### D. Apify proxy — not configured, not required currently (no blocking evidence)
+### E. Apify cost/scaling — 1 sync Actor run per cache-miss, 600s L1 cache, L2 dataset
+   reuse (6h/12h), monthly max 30 runs / $4 soft limit
+### F. Test baseline — COMMITTED (`1dc7ef8`), fresh checkout verified
+
+No deployment performed (test-infrastructure-only change; no product behavior change).
