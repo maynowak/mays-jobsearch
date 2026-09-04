@@ -938,3 +938,63 @@ denkbar: Option A als „Direkt zur BA"-Link + Option B für In-Card-Beschreibun
 ## NEXT
 
 STOP — awaiting review of decision matrix + recommendation.
+
+==================================================
+STEP 31 — FOLLOW-UP: startUrls als gezielter Detail-Enrichment-Run (read-only)
+==================================================
+
+## PLAN
+
+Verify whether the Actor's `startUrls` input (one or more concrete BA job URLs)
+really works as a TARGETED detail-enrichment path, and how it interacts with
+`maxResults`, search params and `includeDetails`. Read-only (actor OpenAPI
+schema + README + repo buildInput). No run, no code change.
+
+## GIT STATE
+
+- HEAD == origin/main == `2aafb38`.
+
+## RESULT
+
+Verified against the actor's public OpenAPI input schema
+(`https://api.apify.com/v2/actors/1AplK7NbBBWHirQFr/builds/cHaZPhdTCleRHuhpQ/openapi.json`,
+HTTP 200) + README + repo `api/_lib/sources/apify/actors.mjs`.
+
+1. `startUrls` (array): "Paste specific arbeitsagentur.de job links to scrape
+   exactly those listings instead of running a search. Accepts portal and
+   job-detail URLs. When provided, the search term and filters are ignored."
+   → YES, startUrls is a TARGETED scrape of EXACTLY the listed jobs. Accepts both
+   the portal URL (`https://www.arbeitsagentur.de/jobsuche/suche?id=<refnr>`, which
+   we already have as `Job.url`) and job-detail URLs.
+2. Search params when startUrls is set: `query`, `location` and all filters
+   (contractType, jobType, workType, radius, bundesland, remoteOnly, …) are
+   IGNORED ("search term and filters are ignored").
+3. `maxResults` when startUrls is set: effectively bypassed. The schema defines
+   maxResults as "Maximum number of job listings to return" for SEARCH mode; the
+   "scrape exactly those listings" wording means the result set is driven by the
+   URLs, not by maxResults. (This interaction is documented only by implication,
+   not by an explicit startUrls∩maxResults rule → flagged below.)
+4. `includeDetails` when startUrls is set: STILL APPLIES. includeDetails is the
+   detail-enrichment TOGGLE (not a search param/filter), so
+   `startUrls=[…] + includeDetails:true` = targeted full-detail fetch
+   (description/descriptionHtml, employer meta, salary range) for those specific
+   jobs.
+5. Repo buildInput TODAY does NOT set startUrls: it sends query, location,
+   maxResults(40), mode:"full", includeDetails:false, compact:true,
+   excludeEmptyFields:false. Using startUrls would be a code change in buildInput.
+
+## IMPLICATIONS (as a potential NEW option "D")
+
+- A targeted startUrls run is server-side (Apify), one run per on-demand request,
+  NOT browser-triggered → same "serverseitige Detailabfrage / Apify-Umbau"
+  classification as Option B; it is NOT the forbidden "BA direct browser fetch"
+  but it IS "kein ein Detailrequest pro Job durch den Actor".
+- Cost (belastbar, README): run start $0.00005 + $0.00079/result → 1 job ≈
+  $0.00084; N jobs ≈ $0.00005 + N×$0.00079.
+- NOT belastbar without a real run: whether a `jobsuche/suche?id=` portal URL
+  yields EXACTLY 1 record (the Paste-mode bullet also lists "search-results URLs"
+  and "category SEO URLs", which could yield >1), and total run latency.
+
+## NEXT
+
+STOP — findings reported; no implementation, await review.
