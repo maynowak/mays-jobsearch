@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { stripHtml, htmlToPlainText, detectLanguage } from "../../api/_lib/filter.mjs";
+import {
+  stripHtml,
+  htmlToPlainText,
+  detectLanguage,
+  employmentMatches,
+  applySearchFilters,
+} from "../../api/_lib/filter.mjs";
 
 describe("API filter - stripHtml (plain text extraction for descriptionPlain)", () => {
   it("1) Raw HTML strips to plain text", () => {
@@ -139,5 +145,62 @@ describe("API filter - detectLanguage (de/en detection for descriptions)", () =>
 
   it("returns undefined for short/ambiguous text", () => {
     expect(detectLanguage("lorem ipsum dolor")).toBeUndefined();
+  });
+});
+
+describe("API filter - employmentMatches (scope vs contract duration separation)", () => {
+  it("1) Arbeitnow Full Time + full_time -> match", () => {
+    const job = { title: "X", tags: [], jobTypes: ["Full Time"] };
+    expect(employmentMatches(job, ["full_time"])).toBe(true);
+  });
+
+  it("2) Arbeitnow Part Time + full_time -> no match", () => {
+    const job = { title: "X", tags: [], jobTypes: ["Part time"] };
+    expect(employmentMatches(job, ["full_time"])).toBe(false);
+    expect(employmentMatches(job, ["part_time"])).toBe(true);
+  });
+
+  it("3) AA UNBEFRISTET + jobTypes null + full_time -> NOT treated as non-full (passes)", () => {
+    const job = { title: "X", tags: [], jobTypes: null, contractType: "UNBEFRISTET" };
+    expect(employmentMatches(job, ["full_time"])).toBe(true);
+  });
+
+  it("4) AA BEFRISTET + jobTypes null + full_time -> passes (contract duration is not scope)", () => {
+    const job = { title: "X", tags: [], jobTypes: null, contractType: "BEFRISTET" };
+    expect(employmentMatches(job, ["full_time"])).toBe(true);
+  });
+
+  it("5) AA KEINE_ANGABE + jobTypes null -> passes (explicit unspecified behaviour)", () => {
+    const job = { title: "X", tags: [], jobTypes: null, contractType: "KEINE_ANGABE" };
+    expect(employmentMatches(job, ["full_time"])).toBe(true);
+    expect(employmentMatches(job, ["part_time"])).toBe(true);
+  });
+
+  it("6) contractType alone never drives employment matching", () => {
+    const job = { title: "X", tags: [], jobTypes: null, contractType: "UNBEFRISTET" };
+    // part_time filter must also NOT exclude a job whose only signal is a contract duration
+    expect(employmentMatches(job, ["part_time"])).toBe(true);
+  });
+});
+
+describe("API filter - applySearchFilters keeps both sources without employmentType", () => {
+  it("returns all jobs unchanged when no employment/workmode filter is present", () => {
+    const jobs = [
+      { slug: "a", title: "A", source: ["arbeitnow"], jobTypes: ["Full Time"] },
+      { slug: "b", title: "B", source: ["arbeitsagentur"], jobTypes: null, contractType: "UNBEFRISTET" },
+    ];
+    const result = applySearchFilters(jobs, { employmentType: "" });
+    expect(result.map((j) => j.slug)).toEqual(["a", "b"]);
+  });
+
+  it("with employmentType=full_time keeps arbeitnow full-time AND arbeitsagentur unspecified-scope jobs", () => {
+    const jobs = [
+      { slug: "a", title: "A", source: ["arbeitnow"], jobTypes: ["Full Time"] },
+      { slug: "b", title: "B", source: ["arbeitnow"], jobTypes: ["Part time"] },
+      { slug: "c", title: "C", source: ["arbeitsagentur"], jobTypes: null, contractType: "UNBEFRISTET" },
+      { slug: "d", title: "D", source: ["arbeitsagentur"], jobTypes: null, contractType: "KEINE_ANGABE" },
+    ];
+    const result = applySearchFilters(jobs, { employmentType: "full_time" });
+    expect(result.map((j) => j.slug)).toEqual(["a", "c", "d"]);
   });
 });

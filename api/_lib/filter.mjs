@@ -153,7 +153,6 @@ const EMPLOYMENT_ALIASES = {
 function jobEmploymentTokens(job) {
   const raw = [];
   if (Array.isArray(job.jobTypes)) raw.push(...job.jobTypes);
-  if (job.contractType) raw.push(job.contractType);
   return new Set(raw.map((t) => String(t).toLowerCase().trim()).filter(Boolean));
 }
 

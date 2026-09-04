@@ -635,3 +635,96 @@ classification from UNBEFRISTET/BEFRISTET.
 ## STATUS — analyse only, no code change, awaiting review
 
 STEP 28 = EMPLOYMENT/CONTRACT SEMANTIK ANALYSIERT. STOP.
+
+==================================================
+STEP 29 — EMPLOYMENT-TYPE-FILTER KORRIGIEREN
+==================================================
+
+## PLAN
+
+Correct ONLY the employment-type filter logic so that `contractType` is NO
+longer used as an employment-scope signal (per STEP 28 decision Option 3).
+Minimal scope: `api/_lib/filter.mjs` + `tests/api/filter.test.js`. No model
+refactor, no Apify change, includeDetails stays false, no proxy, no deploy.
+
+Explicit rule for unknown employment scope: a job with NO employment-scope
+signal (empty `jobTypes`) is treated as "unspecified" and accordingly PASSES the
+employment filter (inclusive), never excluded as if it were the opposite of
+full_time/part_time. `contractType` remains an independent informational field
+and is NOT part of the employment decision.
+
+## GIT STATE (start)
+
+- HEAD == origin/main == `7756c7d`. Working tree: working fixes to be made.
+
+## ACTION
+
+- `api/_lib/filter.mjs`: `jobEmploymentTokens()` currently merges
+  `job.jobTypes` + `job.contractType`. Removed the `contractType` branch so only
+  `jobTypes` feeds employment matching. (`employmentMatches` already returns
+  `true` for an empty token set — so unknown scope = inclusive = pass.)
+- `tests/api/filter.test.js`: add regression tests (see TESTS section).
+
+## TESTS (regression)
+
+1. Arbeitnow Full Time + full_time → match
+2. Arbeitnow Part Time + full_time → no match
+3. AA UNBEFRISTET + jobTypes null + full_time → PASS (not treated as non-full)
+4. AA BEFRISTET + jobTypes null + full_time → PASS
+5. AA KEINE_ANGABE + jobTypes null → PASS (explicit)
+6. no employmentType → both sources visible
+
+(Results below after implementation)
+
+## RESULT
+
+- `api/_lib/filter.mjs`: removed the `job.contractType` branch in
+  `jobEmploymentTokens()`. Employment matching now uses ONLY `job.jobTypes`.
+  Empty/absent `jobTypes` → `employmentMatches` returns `true` (unspecified
+  scope = inclusive, never excluded as "opposite" of the filter).
+- `tests/api/filter.test.js`: added 6 employmentMatches regression tests +
+  2 applySearchFilters tests (8 new tests).
+
+### Validation
+- `npm test` → 246 passed (25 files) [was 238 → +8]
+- `npx tsc -b` → exit 0
+- `npm run build` → built OK (327ms)
+- `git diff --check` → clean
+
+### API probe (FIXED local filter, real live data)
+- no filter: `{arbeitnow:14, arbeitsagentur:39}` = 53 jobs
+- employmentType=full_time: `{arbeitnow:10, arbeitsagentur:39}` = 49 jobs
+  (before fix: arbeitsagentur was 0)
+- employmentType=part_time: `{arbeitnow:6, arbeitsagentur:39}` = 45 jobs
+
+Arbeitsagentur jobs are now retained under every employment filter (their
+scope is unknown → inclusive), while Arbeitnow full-/part-time scope signals
+still filter correctly.
+
+### Explicit rule (documented)
+Unknown employment scope (no `jobTypes`) = "unspecified" = PASSES the
+employment filter. `contractType` (UNBEFRISTET/BEFRISTET/KEINE_ANGABE) is never
+used as an employment signal. This is the documented, non-implicit behaviour.
+
+## GIT STATE
+
+- Working tree now has modified: `api/_lib/filter.mjs`,
+  `tests/api/filter.test.js`, and this execution log. NOT yet committed.
+
+## NEXT
+
+STOP — no deploy, no further work-package step. Await review of the filter fix.
+
+==================================================
+STEP 29 — COMMIT / PUSH (review granted)
+==================================================
+
+## COMMIT
+
+- Message: `fix: separate employment matching from contract type`
+- Files: `api/_lib/filter.mjs`, `tests/api/filter.test.js`, execution log.
+- Hash + push: see FINAL GIT STATE below.
+
+## FINAL GIT STATE
+
+- (filled after commit/push)
