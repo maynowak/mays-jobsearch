@@ -845,5 +845,96 @@ code change, no deploy.
 ## NEXT
 
 STOP — awaiting direction. Reported options do not include a working direct
-browser detail fetch; further work needs a product decision (external link vs.
+browser detail feed; further work needs a product decision (external link vs.
 relay vs. Apify detail enrichment).
+
+==================================================
+STEP 31 — BA DIRECT VS. APIFY DETAILVERSORGUNG (read-only)
+==================================================
+
+## PLAN
+
+Decide how full Arbeitsagentur job details should be provided for a
+„Mehr/Weniger anzeigen" UX. Compare Option A (BA Direct + external portalUrl),
+Option B (Apify includeDetails:true), Option C (other already-present legitimate
+mechanism). Read-only: verify Apify actor doc/code for includeDetails fields,
+cost, request model. No code change, no includeDetails enable, no Apify run, no
+proxy, no deploy, no commit.
+
+## GIT STATE
+
+- HEAD == origin/main == `1264cc1`.
+
+## RESULT — Apify includeDetails:true (verified from actor README + repo code)
+
+1. Additional fields (detail enrichment): `description`, `descriptionHtml`,
+   `descriptionMarkdown`, `employerContactInfo`, `extractedEmails`,
+   `extractedPhones`, `employerDescription`, `employerWebsite`, `employerSize`.
+   Standard (non-compact) fields also include `occupation`, `allOccupations`,
+   `postalCode`, `region`, `country`, `lat`/`lng`, `isFullTime`/`isPartTime…`/
+   `isMiniJob`, `salaryMin/Max/Currency/Type`, `startDate`, `publishedDate`,
+   `firstPublishedDate`, `modifiedDate`, `isCareerChange`,
+   `isTemporaryStaffing`, `isPrivateAgency`, `isDisabilityFriendly`,
+   `distanceKm`, `allianzPartnerName/Url`, `contentHash`, `scrapedAt`.
+2. Full description: YES (`description` + `descriptionHtml` + `descriptionMarkdown`).
+3. Anforderungen/Skills/Adresse/Metadaten: description text (contains
+   requirements) + employer contact/address-like fields (postalCode, location,
+   region, country, lat/lng, employerWebsite, employerSize). No dedicated
+   "skills" array in the actor output.
+4. portalUrl remains present: YES (listed even in compact output).
+5. Details loaded for every emitted job: YES (two-stage: list then enrich each).
+6. Detail request per job: README says "two-stage mode: list, then enrich each
+   job with the full description + detail-page fields" → effectively a
+   per-job detail fetch, executed by the actor (server-side), NOT by the user.
+7. Request/run structure for N jobs: ONE actor run per cache-missing search;
+   actor internally does list + ~N detail fetches. User triggers ONE backend
+   search, not N requests.
+8. Cost belastbar (from README): pay-per-event — run start $0.00005, per result
+   $0.00079/job. 40 jobs ≈ $0.00005 + 40×$0.00079 ≈ $0.032 per full run.
+9. Cost NOT belastbar without a real run: any includeDetails-specific surcharge
+   (not documented), actual run duration (risk vs 50s sync timeout), whether
+   per-result price changes with enrichment.
+10. UI diff includeDetails:false vs true: false = `description`/`descriptionPlain`
+   empty (current; no in-card text, `language` undefined). true = full
+   `description`/`descriptionHtml` → existing RemainingCard description block +
+   DOMPurify rendering + `language` detection become available for AA jobs.
+
+## REQUEST MODEL (not conflated)
+
+- BA Direct: requests originate from the user's browser on navigation; our app
+  makes 0 BA REST calls.
+- Apify: BA requests are executed by the Actor (server-side, on Apify infra);
+  the user does NOT trigger each per-job detail fetch.
+
+## DECISION MATRIX
+
+| Option | UX | BA Requests | Wer löst Requests aus? | Apify-Kosten | Engineering | Lock-in | Vorteil | Nachteil |
+|---|---|---|---|---|---|---|---|---|
+| A. BA Direct + externe portalUrl | Short in Karte; „Mehr anzeigen" öffnet BA-Seite (kein In-Card-Detail) | 0 aus unserer App (BA-SPA lädt im Nutzer-Browser) | Nutzer (Navigation) | unverändert (includeDetails:false) | minimal (externer Link auf `job.url`) | keines | kostenlos, legitim, kein Proxy/CORS | keine Details in der Karte; Nutzer verlässt App |
+| B. Apify includeDetails:true | Voll-Details IN der Karte; aber PRELOAD (nicht lazy) → „Mehr/Weniger" schaltet vorhandene Daten instant (kein Spinner) | ~N Detail-Fetches durch Actor (server-side) | unser Backend-Search (ein Run), nicht der Nutzer je Job | ~$0.00005 + $0.00079/Job (≈$0.032 bei 40 Jobs); Surplus nicht belastbar | gering (buildInput-Flag + RemainingCard-Desc-Block für AA freigeben; Sprache/Tags gewonnen) | höher (Details hängen am Actor) | In-Card-Details, Wiederverwendung DOMPurify, besseres AI-Matching | nicht „lazy"; Kosten skalieren mit N; Run ggf. > 50s-Timeout; pay-per-result |
+| C. andere vorhandene legitime Option | — | — | — | — | — | — | Keine gefunden (kein bestehender Detail-Endpoint/Relay im Projekt) | Keine gefunden |
+
+## EMPFEHLUNG (Technik)
+
+Option B (Apify includeDetails:true) ist der einzige heutige Weg, vollständige
+AA-Details IN der Karte anzuzeigen. Er liefert sie aber als PRELOAD, nicht als
+lazy Browser-Fetch → der „Loading/Spinner"-Schritt entfällt; „Mehr/Weniger"
+schaltet bereits geladene Daten (erfüllt damit die Anforderung „erneut ohne
+erneuten Request"). Option A ist der einzig erlaubte „BA Direct"-Weg und deckt
+nur externe Navigation ab.
+
+## PRODUKTENTSCHEIDUNG (Vorschlag)
+
+Priorität auf UX „Details in der Karte" → Option B. Priorität auf absolute
+Kostenfreiheit/kein Detail von Apify → Option A (externer BA-Link). Mischform
+denkbar: Option A als „Direkt zur BA"-Link + Option B für In-Card-Beschreibung.
+
+## OFFENE PUNKTE
+
+- Ob includeDetails:true einen Aufpreis pro Result hat (nicht dokumentiert).
+- Ob der enriched Run die 50s-Sync-Grenze überschreitet (nur per echtem Run messbar).
+- Ob das Feature „lazy/spinner" wirklich verlangt wird oder PRELOAD akzeptabel ist.
+
+## NEXT
+
+STOP — awaiting review of decision matrix + recommendation.
