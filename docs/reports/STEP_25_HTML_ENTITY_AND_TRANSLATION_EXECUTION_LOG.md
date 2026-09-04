@@ -727,4 +727,10 @@ STEP 29 — COMMIT / PUSH (review granted)
 
 ## FINAL GIT STATE
 
-- (filled after commit/push)
+- Commit hash: `b4589bd`
+- Push: `7756c7d..b4589bd  main -> main`
+- HEAD == origin/main == `b4589bd`
+- Working tree: clean (code/tests/log); only pre-existing untracked debug/artifact
+  files remain (unchanged, not touched).
+
+STATUS = STEP 29 COMMITTED + PUSHED. NO DEPLOY. STOP.
