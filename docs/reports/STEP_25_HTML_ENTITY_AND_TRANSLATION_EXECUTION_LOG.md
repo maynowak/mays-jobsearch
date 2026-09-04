@@ -734,3 +734,116 @@ STEP 29 — COMMIT / PUSH (review granted)
   files remain (unchanged, not touched).
 
 STATUS = STEP 29 COMMITTED + PUSHED. NO DEPLOY. STOP.
+
+==================================================
+STEP 30 — BA DIRECT: LAZY JOB DETAILS („Mehr/Weniger anzeigen")
+==================================================
+
+## PLAN
+
+Goal: for Arbeitsagentur jobs, the job card shows short details first and a
+„Mehr anzeigen" action that lazily fetches full details via
+`GET /pc/v4/jobdetails/{refnr}` FROM THE BROWSER, then „Weniger anzeigen".
+No server crawler, no server preload, no batch, no Apify change, no
+includeDetails:true, no proxy. Investigate existing adapter + card + whether
+refnr/details loading already exist + BA detail response before coding.
+
+## GIT STATE (start)
+
+- HEAD == origin/main == `a30f0cb`.
+
+## INVESTIGATION RESULT
+
+1. No existing detail endpoint / detail loading: grep for `/pc/`, `refnr`,
+   `jobdetails`, `referenceId`, `portalUrl` → only `referenceId` (slug) +
+   `portalUrl` in `api/_lib/sources/apify/actors.mjs`.
+2. Short details already on AA job: title, employer→company_name, location,
+   remote, contractType, salary, startDate, created_at(publishedDate),
+   `url` = `https://www.arbeitsagentur.de/jobsuche/suche?id=<refnr>`,
+   and `slug` = `aa-<referenceId>` where `referenceId` = `13644-290571-S` (the
+   BA refnr). The BA refnr IS available but currently only inside `slug`/`url`
+   (not stored as its own field).
+3. BA detail endpoint response: `GET https://rest.arbeitsagentur.de/jobboerse/
+   jobsuche-service/pc/v4/jobdetails/13644-290571-S` → HTTP 403, empty
+   `text/plain` body. Same 403 for `/pc/v6/jobs`, with and without a browser
+   User-Agent. No `Access-Control-Allow-Origin` header present.
+
+## BLOCKER (proven)
+
+The BA Jobsuche API now requires authentication (OAuth2 / API key) and returns
+no CORS headers. A DIRECT browser fetch
+(`fetch("https://rest.arbeitsagentur.de/.../pc/v4/jobdetails/{refnr}")`) will
+fail with 403 + CORS. The literal „browser→BA" architecture cannot work without
+a BA credential/relay, which conflicts with the stated „kein Proxy / keine
+serverseitige Detailabfrage" constraints.
+
+## NEXT
+
+STOP — report blocker + options to user, await direction before implementing.
+
+==================================================
+STEP 30A — BA BROWSERZUGRIFF PRÄZISIEREN (read-only)
+==================================================
+
+## PLAN
+
+Clarify the difference between BA BROWSER access (works) and BA REST access
+(403, no CORS). Read-only: identify the exact BA link URL, whether it is a
+public page or REST endpoint, what data is visible, whether the description can
+render in the browser, whether the link already exists in our dataset, and
+whether an official REST/API path exists for our app. Address explicitly whether
+„Mehr anzeigen in der Karte" is technically reachable via a legitimate direct
+browser access. No proxy/relay, no CORS workaround, no auth, no Apify run, no
+code change, no deploy.
+
+## GIT STATE
+
+- HEAD == origin/main == `a30f0cb`.
+
+## RESULT (verified)
+
+1. BA link URL (per AA job `url`/`portalUrl`):
+   `https://www.arbeitsagentur.de/jobsuche/suche?id=<refnr>`
+   → HTTP 302 → `/jobsuche/suche?id=<refnr>&suchbereich=jobs` (HTTP 200).
+   This is the EXACT link the user follows in the browser.
+2. It is a normal public job-search WEB page, NOT a REST endpoint. The served
+   HTML (368 KB) is an Angular SPA shell: `<title>Alle Jobs | Jobsuche der BA</title>`,
+   `ng-version` present, `config/config.js` + `main-*.js`. The `{refnr}` string
+   appears 0 times in the raw HTML → details are NOT server-rendered.
+3. Data visible: in the browser the FULL job (description, employer, salary, …)
+   IS eventually shown — but only AFTER the Angular app boots and the BA page's
+   own JS fetches details from the BA REST backend (same-origin on
+   arbeitsagentur.de, auth-protected).
+4. Full description can render in the BROWSER, but only inside BA's own origin
+   context. It is not present in the static HTML shell we can fetch.
+5. Link already present in our dataset: YES — `Job.url` =
+   `https://www.arbeitsagentur.de/jobsuche/suche?id=<refnr>` (mapped from
+   `record.portalUrl`).
+6. Official REST/API access for OUR app: NO. `rest.arbeitsagentur.de/jobboerse/
+   jobsuche-service/pc/v4/jobdetails/{refnr}` and `/pc/v6/jobs` → HTTP 403,
+   empty `text/plain`, no `Access-Control-Allow-Origin` (verified with and
+   without browser UA, with `clientId` param, with `X-API-Key` header).
+7. Cross-check (Apify Actor README): the only documented way to obtain the FULL
+   description programmatically is the Actor's `includeDetails:true` (list +
+   enrich detail pages) — which is OUT OF SCOPE here (`kein includeDetails:true`,
+   `kein Apify-Umbau`). The Actor itself accesses only "publicly available data
+   on arbeitsagentur.de"; there is no free public BA detail REST endpoint.
+
+## CONCLUSION (documented)
+
+- Navigation to BA page = POSSIBLE (open existing `url`/`portalUrl`).
+- Programmatic `fetch()` from our app to BA = NOT POSSIBLE (403 + no CORS; the
+  detail data is not in the served HTML shell).
+- These are NOT contradictory: the browser "sees" the job because BA's own SPA
+  runs on BA's origin with BA's auth; our app cannot replicate that cross-origin.
+- Therefore the UX goal „Mehr anzeigen → vollständige BA-Details INNERHALB
+  unserer Karte per direktem Browser-fetch" ist mit einem legitimen direkten
+  Browserzugriff NICHT erreichbar. Erreichbar wäre nur: (a) extern den
+  `portalUrl` öffnen (Navigation), oder (b) ein Relay/Apify `includeDetails`
+  (beides hier explizit ausgeschlossen).
+
+## NEXT
+
+STOP — awaiting direction. Reported options do not include a working direct
+browser detail fetch; further work needs a product decision (external link vs.
+relay vs. Apify detail enrichment).
