@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Job } from "../types";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
+import { fetchJobDetails } from "../api";
 import {
   formatJobDate,
   jobTypeLabelKey,
@@ -21,6 +22,33 @@ function renderHtmlContent(html: string, lang?: string) {
 export default function RemainingCard({ job }: { job: Job }) {
   const { t, lang } = useLang();
   const [expanded, setExpanded] = useState(false);
+  const [detailJob, setDetailJob] = useState<Job | null>(null);
+  const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const isAA = (job.source ?? []).includes("arbeitsagentur");
+
+  const loadDetails = async () => {
+    if (detailStatus === "loading") return;
+    if (detailJob) {
+      setDetailOpen(true);
+      return;
+    }
+    setDetailStatus("loading");
+    setDetailOpen(true);
+    try {
+      const res = await fetchJobDetails([job.slug]);
+      const enriched = res?.jobs?.[job.slug];
+      if (enriched && enriched.description) {
+        setDetailJob(enriched);
+        setDetailStatus("idle");
+      } else {
+        setDetailStatus("error");
+      }
+    } catch {
+      setDetailStatus("error");
+    }
+  };
 
   const location =
     formatGermanLocation(job.location ?? []) ||
@@ -39,14 +67,17 @@ export default function RemainingCard({ job }: { job: Job }) {
     contractLabel = key ? t(key) : prettifyCode(job.contractType);
   }
 
-  const description = job.description ?? "";
-  const descriptionPlain = job.descriptionPlain ?? "";
+  const description = (isAA ? detailJob?.description : job.description) ?? "";
+  const descriptionPlain = (isAA ? detailJob?.descriptionPlain : job.descriptionPlain) ?? "";
+  const descriptionLang = (isAA ? detailJob?.language : job.language) ?? job.language;
   const hasDescription = description.trim().length > 0;
-  const showDescriptionToggle = descriptionPlain.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
+  const showDescriptionToggle =
+    descriptionPlain.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
 
-  const previewText = !expanded && showDescriptionToggle
-    ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
-    : descriptionPlain;
+  const previewText =
+    !expanded && showDescriptionToggle
+      ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
+      : descriptionPlain;
 
   return (
     <li className="remaining-card">
@@ -82,24 +113,56 @@ export default function RemainingCard({ job }: { job: Job }) {
         </div>
       )}
 
-      {hasDescription && (
+      {isAA ? (
         <div className="remaining-description-wrap">
-          {expanded || !showDescriptionToggle ? (
-            renderHtmlContent(description, job.language)
-          ) : (
-            <p className="remaining-description" lang={job.language} translate={job.language === "en" ? "yes" : undefined}>{previewText}</p>
+          {detailOpen && detailStatus === "loading" && (
+            <span className="remaining-description remaining-detail-loading" role="status" aria-busy="true">
+              <span className="spinner" aria-hidden="true" /> {t("results.detailLoading")}
+            </span>
           )}
-          {showDescriptionToggle && (
-            <button
-              type="button"
-              className="remaining-more"
-              aria-expanded={expanded}
-              onClick={() => setExpanded((value) => !value)}
-            >
-              {expanded ? t("results.showLess") : t("results.showMore")}
-            </button>
+          {detailOpen && detailStatus === "error" && (
+            <p className="remaining-description remaining-detail-error">{t("results.detailError")}</p>
           )}
+          {detailOpen && detailStatus === "idle" && (hasDescription || !detailJob) && (
+            hasDescription
+              ? renderHtmlContent(description, descriptionLang)
+              : <p className="remaining-description">{t("results.detailError")}</p>
+          )}
+          <button
+            type="button"
+            className="remaining-more"
+            aria-expanded={detailOpen}
+            onClick={() => (detailOpen ? setDetailOpen(false) : loadDetails())}
+          >
+            {detailOpen ? t("results.showLess") : t("results.showMore")}
+          </button>
         </div>
+      ) : (
+        hasDescription && (
+          <div className="remaining-description-wrap">
+            {expanded || !showDescriptionToggle ? (
+              renderHtmlContent(description, descriptionLang)
+            ) : (
+              <p
+                className="remaining-description"
+                lang={descriptionLang}
+                translate={descriptionLang === "en" ? "yes" : undefined}
+              >
+                {previewText}
+              </p>
+            )}
+            {showDescriptionToggle && (
+              <button
+                type="button"
+                className="remaining-more"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((value) => !value)}
+              >
+                {expanded ? t("results.showLess") : t("results.showMore")}
+              </button>
+            )}
+          </div>
+        )
       )}
 
       {job.url && (

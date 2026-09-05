@@ -93,6 +93,10 @@ export function getConfig() {
       1000
     ),
     apifyMonthlyMaxRuns: parsePositiveInt(process.env.APIFY_MONTHLY_MAX_RUNS, 30),
+    apifyDetailMaxPerUserPerDay: parsePositiveInt(
+      process.env.APIFY_DETAIL_MAX_PER_USER_PER_DAY,
+      20
+    ),
     openRouterEnabled: parseBoolean(process.env.OPENROUTER_ENABLED, true),
     edenaiEnabled: parseBoolean(process.env.EDENAI_ENABLED, true),
     jobSourceArbeitnowEnabled: parseBoolean(

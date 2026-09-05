@@ -210,6 +210,19 @@ export async function fetchMatches(
   });
 }
 
+export async function fetchJobDetails(
+  slugs: string[]
+): Promise<{ jobs: Record<string, Job>; meta?: { enrichedCount?: number } }> {
+  return apiFetch<{ jobs: Record<string, Job>; meta?: { enrichedCount?: number } }>(
+    "/api/job-details",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobs: slugs }),
+    }
+  );
+}
+
 export async function fetchModels(): Promise<ModelsResponse> {
   return apiFetch<ModelsResponse>("/api/models");
 }

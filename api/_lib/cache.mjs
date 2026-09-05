@@ -71,3 +71,26 @@ export async function cacheHGetAll(key) {
   }
   return out;
 }
+
+// Atomic check-and-reserve: increment key by `n` only if current + n <= limit.
+// Returns the new value on success, -1 if it would exceed the limit, or null if
+// Redis is unavailable (caller must fail closed).
+export async function cacheReserveIncr(key, n, limit, ttlSec = 0) {
+  const script = [
+    "local current = tonumber(redis.call('GET', KEYS[1]) or '0')",
+    "local n = tonumber(ARGV[1])",
+    "local limit = tonumber(ARGV[2])",
+    "if (current + n) > limit then return -1 end",
+    "local next = redis.call('INCRBY', KEYS[1], n)",
+    "if current == 0 and tonumber(ARGV[3]) > 0 then redis.call('EXPIRE', KEYS[1], ARGV[3]) end",
+    "return next",
+  ].join("\n");
+  const result = await cacheCommand("EVAL", script, 1, key, n, limit, ttlSec || 0);
+  return typeof result === "number" ? result : null;
+}
+
+export async function cacheDecrBy(key, n) {
+  if (!n || n <= 0) return null;
+  const result = await cacheCommand("INCRBY", key, -n);
+  return typeof result === "number" ? result : null;
+}

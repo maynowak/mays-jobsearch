@@ -998,3 +998,92 @@ HTTP 200) + README + repo `api/_lib/sources/apify/actors.mjs`.
 ## NEXT
 
 STOP — findings reported; no implementation, await review.
+
+==================================================
+STEP 32B — BA → APIFY TARGETED DETAIL ENRICHMENT + USER QUOTA
+==================================================
+
+## PLAN
+
+Implement the decided hybrid strategy:
+- Normal search: BA short details stay; „Mehr anzeigen" → server-side Apify
+  targeted detail run (`startUrls:[portalUrl]`, `includeDetails:true`), cached.
+- AI path: after successful match, enrich ONLY the evaluated AA jobs in ONE
+  batch run (never the whole list); degrade on error.
+- Server-side per-user-per-day quota on ENRICHED jobs (cache-hits = 0), enforced
+  atomically via Redis; safe fail-closed on Redis outage; keyed by hashed client
+  IP (no auth exists). Validate slugs server-side (no arbitrary external URLs).
+- Keep global APIFY_MONTHLY_MAX_RUNS backstop.
+
+Files planned:
+- `api/_lib/config.mjs` (new limit), `api/_lib/cache.mjs` (atomic reserve+decr),
+  `api/_lib/sources/apify/actors.mjs` (buildTargetedDetailInput + export normalize),
+  `api/_lib/detailEnrich.mjs` (new), `api/job-details.mjs` (new POST route),
+  `api/match.mjs` (enrich evaluated AA jobs), `src/api.ts`, `src/components/RemainingCard.tsx`,
+  `src/i18n.tsx`, `src/types.ts` (if needed), tests.
+
+## GIT STATE (start)
+
+- HEAD == origin/main == `2709580`.
+
+## ARCHITECTURE DECISION
+
+Hybrid: normal search keeps BA short details (Apify `includeDetails:false`,
+`compact:true`). „Mehr anzeigen" → server-side Apify TARGETED detail run
+(`startUrls:[portalUrl]`, `includeDetails:true`, `compact:false`) via
+`api/_lib/detailEnrich.mjs`. AI path enriches only the evaluated AA jobs in ONE
+batched run (never the full list), and degrades on error. Details cached in
+Upstash Redis (7-day TTL) keyed by refnr; cache hits = 0 quota cost.
+
+## FILES / CHANGES
+
+- `api/_lib/config.mjs` — new `apifyDetailMaxPerUserPerDay` (default 20, env
+  `APIFY_DETAIL_MAX_PER_USER_PER_DAY`).
+- `api/_lib/cache.mjs` — `cacheReserveIncr` (atomic EVAL check+reserve),
+  `cacheDecrBy` (best-effort refund).
+- `api/_lib/sources/apify/actors.mjs` — `buildTargetedDetailInput(startUrls)`
+  (`includeDetails:true`, `compact:false`); normalize now prefers
+  `descriptionHtml`; exported `normalizeArbeitsagentur`.
+- `api/_lib/detailEnrich.mjs` (NEW) — slug validation, cache, quota, batch run.
+- `api/job-details.mjs` (NEW) — POST route `{ jobs: [slugs] }`.
+- `api/match.mjs` — `enrichEvaluatedJobs` (best-effort, degrade on error).
+- `src/api.ts` — `fetchJobDetails`.
+- `src/components/RemainingCard.tsx` — AA lazy „Mehr/Weniger anzeigen" + spinner + error/retry.
+- `src/i18n.tsx` — `results.detailLoading`, `results.detailError`.
+- Tests: `tests/api/detail-enrich.test.mjs`, `tests/api/job-details.test.mjs`,
+  `tests/api/match-enrich.test.mjs`.
+
+## QUOTA MODEL
+
+- Counts ENRICHED (new) jobs, not HTTP requests. Cache hits = 0.
+- Per-user-per-day, keyed by `mj-usage:detail:<sha256(ip).slice(0,24)>:<YYYY-MM-DD(UTC)>`.
+- Atomic reserve via Redis EVAL: returns -1 (exceeded) / number (reserved) / null (Redis down).
+- Fail-closed: Redis down → `quota_unavailable` → 503, NO Apify run.
+- Refund best-effort on run/partial failure (counts only truly enriched jobs).
+- Global `APIFY_MONTHLY_MAX_RUNS` backstop remains (checked before quota reserve).
+
+## SECURITY MODEL
+
+- No auth in app → identity = hashed client IP (from `x-forwarded-for` / `x-real-ip`).
+- Client supplies ONLY slugs; server validates slug shape `^aa-[A-Za-z0-9-]+$` and
+  builds portalUrl server-side (hard-coded BA host) — arbitrary external startUrls
+  are impossible.
+- No user-provided userId is read (route passes only `{ clientIp }`).
+- Limits documented as IP-based; NAT/CGNAT and IP-spoofing boundaries acknowledged.
+
+## TESTS
+
+- `npm test` → 266 passed (28 files) [was 246 → +20]
+- `npx tsc -b` → exit 0
+- `npm run build` → built OK (318ms)
+- `git diff --check` → clean
+- New: detail-enrich (13), job-details (5), match-enrich (2).
+
+## OPEN POINTS
+
+- IP-based quota is a coarse limit (shared NAT, spoofed `x-forwarded-for` assumed
+  trusted on Vercel). A real auth/user identity would strengthen it.
+- BA detail description renders as plain text/HTML depending on actor output;
+  `descriptionHtml` preferred, plain text fallback.
+- Targeted run latency (up to 50s sync) — surfaced via spinner/error, not measured.
+- includeDetails surcharge on pay-per-result not documented (real-run verification pending).

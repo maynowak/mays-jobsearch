@@ -7,8 +7,10 @@ function normalizeArbeitsagentur(record) {
   const published = record.publishedDate ? Date.parse(record.publishedDate) : NaN;
   const location = record.location ? [String(record.location).trim()].filter(Boolean) : [];
   const slugSource = record.referenceId || record.contentHash || record.title || "job";
-  const descriptionHtml = record.description || "";
-  const descriptionPlain = htmlToPlainText(descriptionHtml);
+  const descriptionHtml = record.descriptionHtml || record.description || "";
+  const descriptionPlain = htmlToPlainText(
+    record.description ? String(record.description).trim() : descriptionHtml
+  );
   const contractType = typeof record.contractType === "string" ? record.contractType.trim() : "";
   const salary = typeof record.salary === "string" ? record.salary.trim() : "";
   const startDate = typeof record.startDate === "string" ? record.startDate.trim() : "";
@@ -47,6 +49,14 @@ export const APIFY_ACTORS = [
       compact: true,
       excludeEmptyFields: false,
     }),
+    buildTargetedDetailInput: (startUrls) => ({
+      startUrls,
+      mode: "full",
+      includeDetails: true,
+      compact: false,
+      descriptionFormat: "all",
+      excludeEmptyFields: false,
+    }),
     normalize: normalizeArbeitsagentur,
   },
 ];
@@ -54,3 +64,5 @@ export const APIFY_ACTORS = [
 export function actorById(sourceId) {
   return APIFY_ACTORS.find((actor) => actor.sourceId === sourceId) || null;
 }
+
+export { normalizeArbeitsagentur };

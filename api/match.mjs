@@ -1,5 +1,6 @@
 import { HttpError, keywordHits, tokenize } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
+import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 
 const MATCH_EVAL_LIMIT = 10;
 
@@ -91,6 +92,40 @@ function parseMatches(content) {
     .sort((a, b) => b.score - a.score);
 }
 
+function clientIp(req) {
+  const fwd = req.headers["x-forwarded-for"];
+  if (typeof fwd === "string" && fwd.trim()) return fwd.split(",")[0].trim();
+  const real = req.headers["x-real-ip"];
+  if (typeof real === "string" && real.trim()) return real.trim();
+  return "";
+}
+
+async function enrichEvaluatedJobs(evalJobs, req) {
+  const slugs = evalJobs
+    .filter((job) => (job.source || []).includes("arbeitsagentur") && !job.description)
+    .map((job) => job.slug)
+    .filter((slug) => typeof slug === "string" && slug.startsWith("aa-"));
+
+  if (!slugs.length) return evalJobs;
+
+  try {
+    const result = await enrichArbeitsagenturDetails(slugs, { clientIp: clientIp(req) });
+    if (result.error || !result.jobs) return evalJobs;
+
+    for (const job of evalJobs) {
+      const enriched = result.jobs[job.slug];
+      if (enriched) {
+        job.description = enriched.description;
+        job.descriptionPlain = enriched.descriptionPlain;
+        job.language = enriched.language;
+      }
+    }
+  } catch {
+    // Detail enrichment is best-effort; the match itself must not fail.
+  }
+  return evalJobs;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -128,6 +163,8 @@ export default async function handler(req, res) {
         .slice(0, limit)
         .map((entry) => entry.job);
     }
+
+    evalJobs = await enrichEvaluatedJobs(evalJobs, req);
 
     const prompt = buildPrompt(profile, evalJobs, limit, detailCount);
     const content = await chat({

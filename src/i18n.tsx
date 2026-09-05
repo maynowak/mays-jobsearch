@@ -130,6 +130,8 @@ const en: Dict = {
     "These jobs were found but could not be AI-evaluated right now. You can still browse them below.",
   "results.showMore": "Show more",
   "results.showLess": "Show less",
+  "results.detailLoading": "Loading full details…",
+  "results.detailError": "The full details couldn't be loaded. Please try again.",
   "results.published": "Published {date}",
 
   "jobtype.fullTime": "Full-time",
@@ -300,6 +302,8 @@ const de: Dict = {
     "Diese Jobs wurden gefunden, konnten aber gerade nicht per KI bewertet werden. Du kannst sie unten trotzdem durchstöbern.",
   "results.showMore": "Mehr anzeigen",
   "results.showLess": "Weniger anzeigen",
+  "results.detailLoading": "Vollständige Details werden geladen…",
+  "results.detailError": "Die vollständigen Details konnten nicht geladen werden. Bitte versuche es erneut.",
   "results.published": "Veröffentlicht am {date}",
 
   "jobtype.fullTime": "Vollzeit",
