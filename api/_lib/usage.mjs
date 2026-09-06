@@ -1,5 +1,12 @@
 import { getConfig } from "./config.mjs";
-import { cacheGet, cacheHGetAll, cacheHIncrBy, cacheIncr } from "./cache.mjs";
+import {
+  cacheGet,
+  cacheHGetAll,
+  cacheHIncrBy,
+  cacheIncr,
+  cacheReserveIncr,
+  cacheDecrBy,
+} from "./cache.mjs";
 import { APIFY_ACTORS } from "./sources/apify/actors.mjs";
 import { SOURCE_ID as ARBEITNOW_SOURCE_ID } from "./sources/arbeitnow.mjs";
 
@@ -150,6 +157,28 @@ export async function apifyRunLimitReached() {
   const cfg = getConfig();
   const runs = await readCount(APIFY_RUN_KEY);
   return runs >= cfg.apifyMonthlyMaxRuns;
+}
+
+// Atomic reserve of one monthly Apify run slot. Race-safe: EVAL checks the
+// current count against the limit and increments in a single Redis command.
+// Returns { ok: true } on success, { error: "exceeded" } at the limit, or
+// { error: "unavailable" } when Redis is down (caller must fail closed).
+export async function reserveApifyRunSlot() {
+  const cfg = getConfig();
+  const reserved = await cacheReserveIncr(
+    monthScoped(APIFY_RUN_KEY),
+    1,
+    cfg.apifyMonthlyMaxRuns,
+    MONTH_TTL_SEC
+  );
+  if (reserved === null) return { error: "unavailable" };
+  if (reserved === -1) return { error: "exceeded" };
+  return { ok: true };
+}
+
+// Best-effort refund of a reserved run slot (e.g. when the run could not start).
+export async function refundApifyRunSlot() {
+  await cacheDecrBy(monthScoped(APIFY_RUN_KEY), 1);
 }
 
 export async function getUsageSnapshot() {

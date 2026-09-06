@@ -1,14 +1,14 @@
 export async function startApifyRun(apiToken, actorId, input) {
   let response;
   try {
-    response = await fetch(
-      `https://api.apify.com/v2/acts/${actorId}/runs?token=${encodeURIComponent(apiToken)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }
-    );
+    response = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    });
   } catch {
     return { error: "network" };
   }
@@ -35,10 +35,12 @@ export async function waitForRun(apiToken, runId, maxWaitMs) {
   while (Date.now() - started < maxWaitMs) {
     let response;
     try {
-      response = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${encodeURIComponent(apiToken)}`,
-        { headers: { "Accept": "application/json" } }
-      );
+      response = await fetch(`https://api.apify.com/v2/actor-runs/${runId}`, {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          Accept: "application/json",
+        },
+      });
     } catch {
       return { error: "network" };
     }
@@ -71,10 +73,12 @@ export async function waitForRun(apiToken, runId, maxWaitMs) {
 export async function readDataset(apiToken, datasetId) {
   let response;
   try {
-    response = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?token=${encodeURIComponent(apiToken)}`,
-      { headers: { "Accept": "application/json" } }
-    );
+    response = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items`, {
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        Accept: "application/json",
+      },
+    });
   } catch {
     return { error: "network" };
   }

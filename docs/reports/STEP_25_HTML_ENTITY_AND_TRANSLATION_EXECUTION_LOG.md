@@ -1087,3 +1087,79 @@ Upstash Redis (7-day TTL) keyed by refnr; cache hits = 0 quota cost.
   `descriptionHtml` preferred, plain text fallback.
 - Targeted run latency (up to 50s sync) — surfaced via spinner/error, not measured.
 - includeDetails surcharge on pay-per-result not documented (real-run verification pending).
+
+==================================================
+STEP 32C — RATE LIMIT / COST PROTECTION HARDENING
+==================================================
+
+## PLAN
+
+Harden STEP 32B without reimplementing it:
+A. default detail quota 20 → 30 (config + .env.example).
+B. anonymous identity: server-issued HttpOnly session cookie (primary) + IP
+   backstop (anti-abuse), both server-side, hashed in Redis, fail-closed.
+C. AI enrichment timing: move AFTER successful AI response; enrich only the
+   evaluated/returned BA jobs (not all search results); degrade on error; AI
+   failure → zero detail runs.
+D. Apify token via Authorization Bearer (remove ?token= from URLs).
+E. global monthly run guard made race-safe for the paid detail path (atomic
+   reserve/refund on the existing monthly key).
+F. preserve slug validation + server-built portal URL.
+G. tests + npm test/tsc/build/diff-check.
+
+## GIT STATE (start)
+
+- HEAD == origin/main == `48aa696`.
+
+## RESULT
+
+### A. Quota config
+- `apifyDetailMaxPerUserPerDay` default 20 → 30 (config + `.env.example`).
+- New `apifyDetailMaxPerIpPerDay` default 100 (IP backstop).
+
+### B. Anonymous identity + quota model
+- New `api/_lib/identity.mjs`: server-issued HttpOnly `mj_session` cookie
+  (crypto-random 32-hex), `clientIp`, `hashToken` (sha256, 24 hex in Redis keys).
+- Quota keys (UTC day, 24h TTL): `mj-detail:quota:s:<hash(session)>:<day>` (primary,
+  limit 30) and `mj-detail:quota:ip:<hash(ip)>:<day>` (backstop, limit 100).
+- Cookie is HttpOnly + SameSite=Lax (+Secure in prod). Raw IPs/session ids are
+  never stored (only hashes).
+- Trust boundary server-side only: body userId is never read.
+- Guarantee (documented): the IP backstop is the real anti-abuse layer; session
+  rotation / arbitrary cookie values alone do not grant more quota, but an actor
+  that also rotates IPs (VPN/proxy) is the documented residual limit. NAT users
+  share the looser 100/day IP bucket.
+
+### C. AI enrichment ordering
+- `api/match.mjs`: enrichment moved AFTER a successful usable AI response; only
+  the returned/evaluated BA jobs are enriched (one batch), best-effort; AI
+  failure → zero detail runs.
+
+### D. Apify Bearer token
+- `client.mjs`: startApifyRun/waitForRun/readDataset now use
+  `Authorization: Bearer <token>`; token removed from URLs.
+
+### E. Global monthly backstop race-safety
+- `usage.mjs` adds atomic `reserveApifyRunSlot()` / `refundApifyRunSlot()` on the
+  same monthly `mj-usage:apify:runs:<month>` key (EVAL check+increment).
+- `detailEnrich` reserves the run slot before the paid run and refunds it when
+  the run cannot start (start error / quota rejection).
+
+### F. Targeted run safety
+- Preserved: strict `aa-*` slug parse, server-built BA portal URL, one batch run,
+  includeDetails:true only on targeted runs, cache → quota → Apify order.
+
+### G. Tests
+- `npm test` → 272 passed (29 files) [was 266 → +6; refresh of existing + new]
+- `npx tsc -b` → exit 0
+- `npm run build` → OK (463ms)
+- `git diff --check` → clean
+- New/updated tests cover: default quota 30, cache-hit zero quota, batch one run,
+  per-session + IP-backstop quota, fail-closed on Redis down, atomic global
+  run-slot, AI failure → zero detail runs, only returned BA jobs batched,
+  Bearer token header + no token in URL, arbitrary URL rejected, anonymous
+  identity (session + IP, no userId).
+
+## COMMIT
+
+(see FINAL GIT STATE)

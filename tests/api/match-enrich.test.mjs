@@ -113,4 +113,22 @@ describe("/api/match BA detail enrichment", () => {
     expect(res.body.matches.length).toBe(2);
     expect(chat).toHaveBeenCalled();
   });
+
+  it("AI failure => ZERO detail-enrichment Apify runs", async () => {
+    vi.mocked(chat).mockRejectedValue(new Error("ai down"));
+
+    const res = makeRes();
+    await handler(
+      makeReq({
+        skills: "Data Engineer",
+        targetRole: "Data Engineer",
+        city: "Berlin",
+        jobs: [aaJob, arbeitnowJob],
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(500);
+    expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
+  });
 });

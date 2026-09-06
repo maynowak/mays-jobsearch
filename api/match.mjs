@@ -1,6 +1,7 @@
 import { HttpError, keywordHits, tokenize } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
+import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
 
 const MATCH_EVAL_LIMIT = 10;
 
@@ -92,38 +93,33 @@ function parseMatches(content) {
     .sort((a, b) => b.score - a.score);
 }
 
-function clientIp(req) {
-  const fwd = req.headers["x-forwarded-for"];
-  if (typeof fwd === "string" && fwd.trim()) return fwd.split(",")[0].trim();
-  const real = req.headers["x-real-ip"];
-  if (typeof real === "string" && real.trim()) return real.trim();
-  return "";
-}
+async function enrichMatchedBAJobs(matches, identity) {
+  const slugs = [...new Set(
+    matches
+      .map((m) => m.job)
+      .filter((job) => job && (job.source || []).includes("arbeitsagentur") && !job.description)
+      .map((job) => job.slug)
+      .filter((slug) => typeof slug === "string" && slug.startsWith("aa-"))
+  )];
 
-async function enrichEvaluatedJobs(evalJobs, req) {
-  const slugs = evalJobs
-    .filter((job) => (job.source || []).includes("arbeitsagentur") && !job.description)
-    .map((job) => job.slug)
-    .filter((slug) => typeof slug === "string" && slug.startsWith("aa-"));
-
-  if (!slugs.length) return evalJobs;
+  if (!slugs.length) return matches;
 
   try {
-    const result = await enrichArbeitsagenturDetails(slugs, { clientIp: clientIp(req) });
-    if (result.error || !result.jobs) return evalJobs;
+    const result = await enrichArbeitsagenturDetails(slugs, identity);
+    if (result.error || !result.jobs) return matches;
 
-    for (const job of evalJobs) {
-      const enriched = result.jobs[job.slug];
-      if (enriched) {
-        job.description = enriched.description;
-        job.descriptionPlain = enriched.descriptionPlain;
-        job.language = enriched.language;
+    for (const m of matches) {
+      const enriched = m.job ? result.jobs[m.job.slug] : null;
+      if (m.job && enriched) {
+        m.job.description = enriched.description;
+        m.job.descriptionPlain = enriched.descriptionPlain;
+        m.job.language = enriched.language;
       }
     }
   } catch {
     // Detail enrichment is best-effort; the match itself must not fail.
   }
-  return evalJobs;
+  return matches;
 }
 
 export default async function handler(req, res) {
@@ -164,8 +160,6 @@ export default async function handler(req, res) {
         .map((entry) => entry.job);
     }
 
-    evalJobs = await enrichEvaluatedJobs(evalJobs, req);
-
     const prompt = buildPrompt(profile, evalJobs, limit, detailCount);
     const content = await chat({
       system:
@@ -195,6 +189,10 @@ export default async function handler(req, res) {
       }))
       .filter((m) => m.job)
       .slice(0, limit);
+
+    const identity = anonymousIdentity(req);
+    res.setHeader("Set-Cookie", sessionCookieHeader(identity.sessionId));
+    await enrichMatchedBAJobs(matches, identity);
 
     return res.status(200).json({
       matches,

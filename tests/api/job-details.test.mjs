@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe("/api/job-details route", () => {
-  it("derives identity from the client IP, not from a client-supplied userId", async () => {
+  it("derives identity from server-side session + IP, not a client-supplied userId", async () => {
     const slug = "aa-13644-290571-S";
     vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({
       jobs: { [slug]: { slug, description: "<p>x</p>" } },
@@ -54,8 +54,9 @@ describe("/api/job-details route", () => {
     expect(res.body.jobs[slug]).toBeDefined();
     const args = vi.mocked(enrichArbeitsagenturDetails).mock.calls[0];
     expect(args[0]).toEqual([slug]);
-    // only the server-derived clientIp is forwarded, never a body userId
-    expect(args[1]).toEqual({ clientIp: "1.2.3.4" });
+    // identity is server-derived: clientIp from header + an issued session id
+    expect(args[1].clientIp).toBe("1.2.3.4");
+    expect(args[1].sessionId).toMatch(/^[a-f0-9]{32}$/);
     expect(args[1]).not.toHaveProperty("userId");
   });
 

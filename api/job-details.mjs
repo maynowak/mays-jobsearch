@@ -1,13 +1,6 @@
 import { HttpError } from "./_lib/filter.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
-
-function clientIp(req) {
-  const fwd = req.headers["x-forwarded-for"];
-  if (typeof fwd === "string" && fwd.trim()) return fwd.split(",")[0].trim();
-  const real = req.headers["x-real-ip"];
-  if (typeof real === "string" && real.trim()) return real.trim();
-  return "";
-}
+import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -42,7 +35,12 @@ export default async function handler(req, res) {
       });
     }
 
-    const result = await enrichArbeitsagenturDetails(slugs, { clientIp: clientIp(req) });
+    const identity = anonymousIdentity(req);
+    res.setHeader("Set-Cookie", sessionCookieHeader(identity.sessionId));
+    const result = await enrichArbeitsagenturDetails(slugs, {
+      clientIp: identity.ip,
+      sessionId: identity.sessionId,
+    });
 
     if (result.error) {
       const codes = {

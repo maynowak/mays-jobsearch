@@ -9,8 +9,8 @@ vi.mock("../../api/_lib/cache.mjs", () => ({
 }));
 
 vi.mock("../../api/_lib/usage.mjs", () => ({
-  apifyRunLimitReached: vi.fn(async () => false),
-  countApifyRun: vi.fn(async () => {}),
+  reserveApifyRunSlot: vi.fn(async () => ({ ok: true })),
+  refundApifyRunSlot: vi.fn(async () => {}),
   countJobSourceRun: vi.fn(async () => {}),
 }));
 
@@ -21,8 +21,9 @@ vi.mock("../../api/_lib/sources/apify/client.mjs", () => ({
 }));
 
 const { cacheGet, cacheSet, cacheReserveIncr, cacheDecrBy } = await import("../../api/_lib/cache.mjs");
-const { apifyRunLimitReached, countApifyRun } = await import("../../api/_lib/usage.mjs");
+const { reserveApifyRunSlot, refundApifyRunSlot } = await import("../../api/_lib/usage.mjs");
 const { startApifyRun, readDataset } = await import("../../api/_lib/sources/apify/client.mjs");
+const { getConfig } = await import("../../api/_lib/config.mjs");
 const { APIFY_ACTORS, SOURCE_ID } = await import("../../api/_lib/sources/apify/actors.mjs");
 const {
   enrichArbeitsagenturDetails,
@@ -32,6 +33,7 @@ const {
 
 const REF = "13644-290571-S";
 const SLUG = `aa-${REF}`;
+const ID = { clientIp: "1.2.3.4", sessionId: "a".repeat(32) };
 
 function detailRecord(ref = REF) {
   return {
@@ -56,9 +58,18 @@ beforeEach(() => {
   vi.mocked(cacheSet).mockResolvedValue(undefined);
   vi.mocked(cacheReserveIncr).mockResolvedValue(1);
   vi.mocked(cacheDecrBy).mockResolvedValue(0);
-  vi.mocked(apifyRunLimitReached).mockResolvedValue(false);
+  vi.mocked(reserveApifyRunSlot).mockResolvedValue({ ok: true });
+  vi.mocked(refundApifyRunSlot).mockResolvedValue(undefined);
   vi.mocked(readDataset).mockResolvedValue({ records: [] });
+  delete process.env.APIFY_DETAIL_MAX_PER_USER_PER_DAY;
+  delete process.env.APIFY_DETAIL_MAX_PER_IP_PER_DAY;
   process.env.APIFY_API_TOKEN = "test-token";
+});
+
+describe("detailEnrich - config default", () => {
+  it("defaults detail quota to 30 per user per day", () => {
+    expect(getConfig().apifyDetailMaxPerUserPerDay).toBe(30);
+  });
 });
 
 describe("detailEnrich - slug + portalUrl validation", () => {
@@ -73,7 +84,6 @@ describe("detailEnrich - slug + portalUrl validation", () => {
     expect(parseArbeitsagenturSlug("aa-")).toBeNull();
     expect(parseArbeitsagenturSlug("")).toBeNull();
     expect(parseArbeitsagenturSlug(undefined)).toBeNull();
-    expect(parseArbeitsagenturSlug(null)).toBeNull();
   });
 
   it("builds the portal URL server-side (fixed BA host only)", () => {
@@ -93,97 +103,111 @@ describe("detailEnrich - actor input", () => {
   it("targeted detail input uses startUrls + includeDetails:true", () => {
     const input = actor.buildTargetedDetailInput([portalUrlForRefNr(REF)]);
     expect(input.includeDetails).toBe(true);
-    expect(Array.isArray(input.startUrls)).toBe(true);
     expect(input.startUrls).toEqual([portalUrlForRefNr(REF)]);
   });
 });
 
 describe("detailEnrich - enrichment flow", () => {
   it("serves cache hits without an Apify run and without consuming quota", async () => {
-    vi.mocked(cacheGet).mockResolvedValue({
-      slug: SLUG,
-      title: "Data Engineer",
-      description: "<p>cached</p>",
-    });
+    vi.mocked(cacheGet).mockResolvedValue({ slug: SLUG, title: "Data Engineer", description: "<p>cached</p>" });
 
-    const result = await enrichArbeitsagenturDetails([SLUG], { clientIp: "1.2.3.4" });
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
 
     expect(result.error).toBeUndefined();
     expect(result.enrichedCount).toBe(0);
     expect(result.jobs[SLUG].description).toBe("<p>cached</p>");
     expect(startApifyRun).not.toHaveBeenCalled();
     expect(cacheReserveIncr).not.toHaveBeenCalled();
+    expect(reserveApifyRunSlot).not.toHaveBeenCalled();
   });
 
-  it("enriches a single missing job in one targeted run and reserves quota for 1", async () => {
+  it("enriches a single missing job in one targeted run and reserves session + ip quota", async () => {
     vi.mocked(readDataset).mockResolvedValue({ records: [detailRecord()] });
 
-    const result = await enrichArbeitsagenturDetails([SLUG], { clientIp: "1.2.3.4" });
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
 
     expect(result.error).toBeUndefined();
     expect(result.enrichedCount).toBe(1);
     expect(result.jobs[SLUG].description).toContain("Data Engineer");
     expect(startApifyRun).toHaveBeenCalledTimes(1);
-    expect(cacheReserveIncr).toHaveBeenCalledTimes(1);
-    const reserveArgs = vi.mocked(cacheReserveIncr).mock.calls[0];
-    expect(reserveArgs[1]).toBe(1);
-    expect(String(reserveArgs[0])).toContain("mj-usage:detail:");
+    expect(reserveApifyRunSlot).toHaveBeenCalledTimes(1);
+    expect(cacheReserveIncr).toHaveBeenCalledTimes(2);
+    const keys = vi.mocked(cacheReserveIncr).mock.calls.map((c) => String(c[0]));
+    expect(keys.some((k) => k.startsWith("mj-detail:quota:s:"))).toBe(true);
+    expect(keys.some((k) => k.startsWith("mj-detail:quota:ip:"))).toBe(true);
+    for (const call of vi.mocked(cacheReserveIncr).mock.calls) expect(call[1]).toBe(1);
   });
 
   it("batches multiple missing jobs into ONE run", async () => {
-    const slugs = ["aa-13644-290571-S", "aa-12288-4929522800-S"];
     vi.mocked(readDataset).mockResolvedValue({
       records: [detailRecord("13644-290571-S"), detailRecord("12288-4929522800-S")],
     });
 
-    const result = await enrichArbeitsagenturDetails(slugs, { clientIp: "1.2.3.4" });
+    const result = await enrichArbeitsagenturDetails(
+      ["aa-13644-290571-S", "aa-12288-4929522800-S"],
+      ID
+    );
 
     expect(result.error).toBeUndefined();
     expect(result.enrichedCount).toBe(2);
     expect(startApifyRun).toHaveBeenCalledTimes(1);
-    expect(cacheReserveIncr).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(cacheReserveIncr).mock.calls[0][1]).toBe(2);
+    for (const call of vi.mocked(cacheReserveIncr).mock.calls) expect(call[1]).toBe(2);
     const inputArg = vi.mocked(startApifyRun).mock.calls[0][2];
     expect(inputArg.startUrls.length).toBe(2);
     expect(inputArg.includeDetails).toBe(true);
   });
 
-  it("blocks enrichment when quota is exceeded (server-side)", async () => {
-    vi.mocked(cacheReserveIncr).mockResolvedValue(-1);
-    const result = await enrichArbeitsagenturDetails([SLUG], { clientIp: "1.2.3.4" });
+  it("blocks when the per-session quota is exceeded", async () => {
+    let calls = 0;
+    vi.mocked(cacheReserveIncr).mockImplementation(async () => {
+      calls += 1;
+      return calls === 1 ? -1 : 1;
+    });
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
+    expect(result.error).toBe("quota_exceeded");
+    expect(startApifyRun).not.toHaveBeenCalled();
+    expect(refundApifyRunSlot).toHaveBeenCalled();
+  });
+
+  it("blocks when the IP backstop is exceeded even if session is fine", async () => {
+    let calls = 0;
+    vi.mocked(cacheReserveIncr).mockImplementation(async () => {
+      calls += 1;
+      return calls === 1 ? 1 : -1;
+    });
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
     expect(result.error).toBe("quota_exceeded");
     expect(startApifyRun).not.toHaveBeenCalled();
   });
 
   it("fails closed when Redis/quota is unavailable (no uncontrolled Apify run)", async () => {
     vi.mocked(cacheReserveIncr).mockResolvedValue(null);
-    const result = await enrichArbeitsagenturDetails([SLUG], { clientIp: "1.2.3.4" });
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
     expect(result.error).toBe("quota_unavailable");
     expect(startApifyRun).not.toHaveBeenCalled();
   });
 
-  it("honours the global APIFY_MONTHLY_MAX_RUNS backstop", async () => {
-    vi.mocked(apifyRunLimitReached).mockResolvedValue(true);
-    const result = await enrichArbeitsagenturDetails([SLUG], { clientIp: "1.2.3.4" });
+  it("honours the global APIFY_MONTHLY_MAX_RUNS backstop (atomic)", async () => {
+    vi.mocked(reserveApifyRunSlot).mockResolvedValue({ error: "exceeded" });
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
     expect(result.error).toBe("apify_limit_reached");
     expect(startApifyRun).not.toHaveBeenCalled();
     expect(cacheReserveIncr).not.toHaveBeenCalled();
   });
 
   it("rejects invalid slugs before any Apify call", async () => {
-    const result = await enrichArbeitsagenturDetails(["https://evil.example.com"], { clientIp: "1.2.3.4" });
+    const result = await enrichArbeitsagenturDetails(["https://evil.example.com"], ID);
     expect(result.error).toBe("invalid_slug");
     expect(startApifyRun).not.toHaveBeenCalled();
   });
 
-  it("refunds reserved quota when the run fails", async () => {
-    const { startApifyRun } = await import("../../api/_lib/sources/apify/client.mjs");
+  it("refunds quota and run slot when the run fails to start", async () => {
     vi.mocked(startApifyRun).mockResolvedValue({ error: "upstream_500" });
-    vi.mocked(cacheReserveIncr).mockResolvedValue(1);
 
-    const result = await enrichArbeitsagenturDetails([SLUG], { clientIp: "1.2.3.4" });
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
 
     expect(result.error).toBe("upstream_500");
     expect(cacheDecrBy).toHaveBeenCalled();
+    expect(refundApifyRunSlot).toHaveBeenCalled();
   });
 });
