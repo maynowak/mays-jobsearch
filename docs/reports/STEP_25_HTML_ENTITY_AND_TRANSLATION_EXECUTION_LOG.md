@@ -1163,3 +1163,12 @@ G. tests + npm test/tsc/build/diff-check.
 ## COMMIT
 
 (see FINAL GIT STATE)
+
+## FINAL GIT STATE
+
+- Commit: `d6491256c6a6a3d1a1ecf608ef049aa847120720`
+- Push: `48aa696..d649125  main -> main`
+- HEAD == origin/main == `d649125`
+- Working tree clean (only pre-existing untracked debug/history files remain).
+
+STATUS = STEP 32C COMMITTED + PUSHED. NO DEPLOY. STOP.
