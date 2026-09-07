@@ -1282,3 +1282,78 @@ commit, push, redeploy, verify. NO paid Apify run.
 ## NEXT
 
 No paid Apify run performed. Next: fresh approval → single controlled paid test.
+
+==================================================
+STEP 34 — CONTROLLED REAL APIFY DETAIL TEST (explicit paid-run authorization)
+==================================================
+
+## PLAN
+
+One authorized end-to-end paid test on `aa-12811-2330139-S` (AI Engineer (m/w/d),
+Berlin) via the normal /api/job-details flow. Verify startUrls is `[{url}]`,
+one run, dataset, cache, quota, UI. NO retry, no second run, no batch.
+
+## GIT STATE / BASELINE (start)
+
+- HEAD == origin/main == `c72ca4c` (contains af9f451 startUrls fix).
+- Live production footer: commitSha `c72ca4c`, env `production`, branch `main`,
+  version `2.0.0`. (Git-integrated deploy of latest main supersedes the earlier
+  af9f451 CLI deploy; functional code identical.)
+
+## ACTION / RESULT — single authorized paid run
+
+- POST /api/job-details { jobs: ["aa-12811-2330139-S"] } → HTTP 200 in ~12s.
+- Response: `meta.enrichedCount = 1`.
+- Detail job: slug `aa-12811-2330139-S`, title "AI Engineer (m/w/d), Berlin",
+  company "DEMECAN", source ["arbeitsagentur"], contractType UNBEFRISTET,
+  language "de", description 5682 chars, descriptionPlain 5673 chars.
+- Session cookie `mj_session` issued (HttpOnly; Secure; SameSite=Lax).
+
+## APIFY RUN
+
+- Started: YES (exactly one; single slug, no batch, no retry).
+- Run ID: NOT exposed in the API response (server-internal, client-observable
+  only via enrichedCount=1 + delivered dataset).
+- Actor: blackfalcondata~arbeitsagentur-jobs-feed (via server-side startUrls).
+- Target URL built server-side from validated refnr: startUrls [{url:
+  "https://www.arbeitsagentur.de/jobsuche/suche?id=12811-2330139-S"}],
+  includeDetails=true, compact=false, descriptionFormat=all.
+- Run status: SUCCEEDED (implied — dataset read returned a mapped record).
+
+## DATASET
+
+- Read internally; 1 record matched referenceId 12811-2330139-S. Dataset ID not
+  observable from the client (server-internal).
+
+## CACHE
+
+- Written on success: detail cache key `mj-detail:arbeitsagentur:<refnr>` (7d TTL).
+- Re-read deliberately NOT performed (would risk a second run; single-run rule).
+
+## QUOTA
+
+- 1 newly enriched job consumed: session quota +1 and IP backstop +1 (each
+  reserved exactly 1). Cache hit would have cost 0.
+
+## USAGE / COST
+
+- Global run counter +1 (atomic reserveApifyRunSlot). Absolute counter value not
+  observable without USAGE_DIAGNOSTICS_TOKEN.
+- Advisory cost (actor pricing): ~$0.00005 run start + ~$0.00079/result ≈ $0.00084.
+
+## UI RESULT
+
+- Description renders via existing DOMPurify `renderSanitizedHtml` (sanitization
+  enforced; no script/event-handler execution). Live DOM/browser rendering is a
+  manual verification step (not exercised here). Data artifact `,,Made in Germany"`
+  is actor-provided German quote notation, not an app defect.
+
+## CLEANUP
+
+- Nothing deleted. Temporary: session cookie (1y Max-Age), quota keys (24h TTL),
+  detail cache (7d TTL). Persistent: Apify run + dataset (per Apify retention),
+  no further resources created by this test.
+
+## NEXT
+
+STOP. End-to-end detail enrichment verified; startUrls fix works in production.
