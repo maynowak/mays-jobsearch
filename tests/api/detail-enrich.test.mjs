@@ -103,7 +103,28 @@ describe("detailEnrich - actor input", () => {
   it("targeted detail input uses startUrls + includeDetails:true", () => {
     const input = actor.buildTargetedDetailInput([portalUrlForRefNr(REF)]);
     expect(input.includeDetails).toBe(true);
-    expect(input.startUrls).toEqual([portalUrlForRefNr(REF)]);
+    expect(Array.isArray(input.startUrls)).toBe(true);
+    expect(input.startUrls).toEqual([{ url: portalUrlForRefNr(REF) }]);
+  });
+
+  it("targeted detail input wraps each startUrl string as { url } without altering it", () => {
+    const urls = ["https://www.arbeitsagentur.de/jobsuche/suche?id=1", "https://www.arbeitsagentur.de/jobsuche/suche?id=2"];
+    const input = actor.buildTargetedDetailInput(urls);
+    expect(input.startUrls).toEqual([{ url: urls[0] }, { url: urls[1] }]);
+    // URL content is preserved verbatim (no encoding/splitting changes)
+    expect(input.startUrls.map((o) => o.url)).toEqual(urls);
+  });
+
+  it("targeted detail input keeps other target fields unchanged", () => {
+    const input = actor.buildTargetedDetailInput([portalUrlForRefNr(REF)]);
+    expect(input.mode).toBe("full");
+    expect(input.includeDetails).toBe(true);
+    expect(input.compact).toBe(false);
+    expect(input.descriptionFormat).toBe("all");
+    expect(input.excludeEmptyFields).toBe(false);
+    expect(input.query).toBeUndefined();
+    expect(input.location).toBeUndefined();
+    expect(input.maxResults).toBeUndefined();
   });
 });
 

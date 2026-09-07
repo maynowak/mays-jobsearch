@@ -50,7 +50,7 @@ export const APIFY_ACTORS = [
       excludeEmptyFields: false,
     }),
     buildTargetedDetailInput: (startUrls) => ({
-      startUrls,
+      startUrls: startUrls.map((url) => ({ url })),
       mode: "full",
       includeDetails: true,
       compact: false,

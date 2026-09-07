@@ -1240,3 +1240,18 @@ STEP 33 BLOCKED at Phase 5 (paid test failed; no further runs). STOP per rule.
 
 Apply the one-line startUrls fix, then (with fresh approval) re-run exactly ONE
 paid test. No further paid runs without explicit go.
+
+==================================================
+STEP 33A — FIX TARGETED BA STARTURL FORMAT
+==================================================
+
+## PLAN
+
+Fix ONLY the startUrls format bug: buildTargetedDetailInput must emit
+`startUrls: [{ url: "..." }]` instead of strings. Add a focused test. No changes
+to quota/identity/AI-timing/Bearer/global-guard/target-safety/frontend. Validate,
+commit, push, redeploy, verify. NO paid Apify run.
+
+## GIT STATE (start)
+
+- HEAD == origin/main == `5332d58`.
