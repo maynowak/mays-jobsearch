@@ -1172,3 +1172,71 @@ G. tests + npm test/tsc/build/diff-check.
 - Working tree clean (only pre-existing untracked debug/history files remain).
 
 STATUS = STEP 32C COMMITTED + PUSHED. NO DEPLOY. STOP.
+
+==================================================
+STEP 33 — PRODUCTION DEPLOYMENT + CONTROLLED APIFY TEST + STANDARD TEST ROUTINE
+==================================================
+
+## PLAN
+
+Controlled go/no-go: (0) baseline → (1) review 6c16140 vs STEP 32C report →
+(2) automated validation → (3) git + Vercel production deploy + verify SHA →
+(4) production smoke → (5) exactly ONE paid Apify detail test → (6) cleanup →
+(7/8) standard test routine + matrix → (9) log. No broad refactor, no extra
+paid runs, cost control first.
+
+## GIT STATE (start)
+
+- HEAD == origin/main == `6c161403c7d826acb13afa6fee516e618ac8ca85`
+- Working tree: clean (only known untracked debug/history files).
+
+## PHASE 1 — REVIEW (6c16140 vs STEP 32C report)
+
+A) Quota: config default user=30, ip=100, monthly=30 ✓; atomic EVAL ✓; no userId ✓
+B) Identity: HttpOnly/SameSite=Lax/Secure(prod)/crypto-random session; hashed keys; IP backstop ✓
+C) AI timing: chat → bad_ai_response early-return → matches → enrichMatchedBAJobs (AFTER success) ✓
+D) Bearer only; grep `token=` in api/ → NONE ✓
+E) Global run limit atomic via reserveApifyRunSlot (EVAL on mj-usage:apify:runs:<month>) ✓
+F) Target safety: parseArbeitsagenturSlug + server-built portal URL ✓
+→ REVIEW = GO.
+
+## PHASE 2 — AUTOMATED VALIDATION
+
+- npm test → 272 passed (29 files) PASS
+- npx tsc -b → exit 0 PASS
+- npm run build → OK PASS
+- git diff --check → clean PASS
+
+## PHASE 3 — DEPLOYMENT
+
+- `vercel --prod --yes` → Ready (Alias `https://mays-job-matcher.vercel.app`).
+- Verified deployed asset bakes in `6c16140` (commit SHA) + `2.0.0` (version).
+
+## PHASE 4 — PRODUCTION SMOKE
+
+- `/` → 200; `/api/jobs` → 200 (arbeitnow 7, arbeitsagentur 40 jobs).
+- `/api/job-details` GET → 405 method, POST empty → 400 bad_request (new endpoint live).
+→ SMOKE = PASS.
+
+## PHASE 5 — SINGLE CONTROLLED PAID APIFY TEST  →  FAIL
+
+- Request: POST /api/job-details {jobs:["aa-12811-2330139-S"]} (AI Engineer (m/w/d), Berlin).
+- Result: HTTP 502, code `upstream_400`. Session cookie `mj_session` correctly issued (HttpOnly;Secure;SameSite=Lax).
+- ROOT CAUSE (read-only, from actor OpenAPI): `startUrls` items are OBJECTS
+  `{ "url": "<uri>" }` (required `url`), NOT plain strings. STEP 32B
+  `buildTargetedDetailInput` emitted `startUrls: ["<string>"]` → actor rejected
+  input with 400 before starting a run.
+- Cost: NO run started (400 = pre-start rejection). Refund of quota + run slot
+  occurred per fail-closed code path (not directly observable without Apify token).
+- FIX (identified, NOT applied per STOP rule): in
+  `api/_lib/sources/apify/actors.mjs` `buildTargetedDetailInput`, wrap each URL
+  as `startUrls.map((url) => ({ url }))`.
+
+## STATUS
+
+STEP 33 BLOCKED at Phase 5 (paid test failed; no further runs). STOP per rule.
+
+## NEXT
+
+Apply the one-line startUrls fix, then (with fresh approval) re-run exactly ONE
+paid test. No further paid runs without explicit go.
