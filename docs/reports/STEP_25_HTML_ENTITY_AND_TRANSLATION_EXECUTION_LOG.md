@@ -1255,3 +1255,30 @@ commit, push, redeploy, verify. NO paid Apify run.
 ## GIT STATE (start)
 
 - HEAD == origin/main == `5332d58`.
+
+## ACTION
+
+- `api/_lib/sources/apify/actors.mjs`: `buildTargetedDetailInput` now emits
+  `startUrls: startUrls.map((url) => ({ url }))`.
+- `tests/api/detail-enrich.test.mjs`: added 3 focused tests (single wrap, multi
+  wrap w/ verbatim URL, other fields unchanged).
+
+## RESULT / TEST
+
+- npm test → 274 passed (29 files) PASS (+2)
+- npx tsc -b → exit 0 PASS
+- npm run build → OK PASS
+- git diff --check → clean PASS
+
+## GIT STATE (post-commit)
+
+- Commit `af9f451bb1a5b29328a3c317619d6cc8d223f397` (`fix: wrap BA targeted startUrls as { url } objects`), pushed.
+
+## DEPLOYMENT STATE
+
+- `vercel --prod --yes` → Ready, alias `https://mays-job-matcher.vercel.app`.
+- Verified: root 200, baked SHA `af9f451`, version `2.0.0`, `/api/jobs` 200.
+
+## NEXT
+
+No paid Apify run performed. Next: fresh approval → single controlled paid test.
