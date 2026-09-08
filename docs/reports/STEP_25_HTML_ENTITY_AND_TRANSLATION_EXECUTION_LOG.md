@@ -1357,3 +1357,18 @@ one run, dataset, cache, quota, UI. NO retry, no second run, no batch.
 ## NEXT
 
 STOP. End-to-end detail enrichment verified; startUrls fix works in production.
+
+==================================================
+STEP 35 — STANDARD TEST & DEPLOYMENT ROUTINE
+==================================================
+
+## PLAN
+
+Create a durable, reproducible standard test + deployment routine document
+(no code/architecture change, no paid Apify run). Inventory existing automated
+tests, produce a test matrix with cost/Apify classes, individual manual/paid test
+instructions, deployment routine, controlled-Apify routine, cleanup rules.
+
+## GIT STATE (start)
+
+- HEAD == origin/main == `776553f`. Production live (2.0.0, contains af9f451 fix).
