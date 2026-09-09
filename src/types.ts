@@ -112,3 +112,77 @@ export interface StatusMessage {
   type: StatusType;
   message: string;
 }
+
+export type AtsCategory =
+  | "keyword"
+  | "skill"
+  | "requirement"
+  | "experience"
+  | "education"
+  | "certification"
+  | "location"
+  | "workmode"
+  | "employment";
+
+export type AtsMatchStatus = "MATCHED" | "PARTIAL" | "GAP" | "UNKNOWN";
+
+export type AtsConfidence = "HIGH" | "MEDIUM" | "LOW";
+
+export type AtsImportance = "critical" | "high" | "medium" | "low";
+
+export type AtsSourceType = "title" | "tags" | "description" | "contractType" | "jobTypes" | "location" | "remote";
+
+export type AtsEvidenceType = "direct" | "indirect" | "none";
+
+export type AtsSourceKey = "skills" | "experience" | "education" | "certification" | "location" | "workmode";
+
+export interface AtsRequirement {
+  id: string;
+  text: string;
+  category: AtsCategory;
+  importance: AtsImportance;
+  source: AtsSourceType;
+  explicitness: "explicit" | "implicit";
+  normalized: string;
+}
+
+export interface AtsEvidence {
+  requirementId: string;
+  source: AtsSourceKey;
+  text: string;
+  normalized: string;
+  evidenceType: AtsEvidenceType;
+  confidence: AtsConfidence;
+}
+
+export interface AtsMatchResult {
+  requirementId: string;
+  status: AtsMatchStatus;
+  confidence: AtsConfidence;
+}
+
+export interface AtsAnalysisResult {
+  job: {
+    slug: string;
+    title: string;
+    company: string;
+  };
+  requirements: AtsRequirement[];
+  evidence: AtsEvidence[];
+  matches: AtsMatchResult[];
+  scores: {
+    keywordMatch: number;
+    skillMatch: number;
+    locationMatch: number;
+    workmodeMatch: number;
+    employmentMatch: number;
+    overall: number;
+  };
+  summary: {
+    matched: number;
+    partial: number;
+    gap: number;
+    unknown: number;
+  };
+  recommendations: string[];
+}
