@@ -509,3 +509,100 @@ export function analyzeJobForAts(job, profile) {
     recommendations,
   };
 }
+
+export function generateCVRecommendations(analysisResult, cvSkills = []) {
+  const recommendations = [];
+  const cvSkillsLower = (cvSkills || []).map((s) => s.toLowerCase());
+
+  const { requirements, matches, criticalGaps, recommendations: existingRecs } = analysisResult;
+
+  // Create a map of requirement IDs to their match status
+  const matchMap = new Map();
+  for (const match of matches) {
+    matchMap.set(match.requirementId, match);
+  }
+
+  // Create a map of requirement IDs to their requirements
+  const reqMap = new Map();
+  for (const req of requirements) {
+    reqMap.set(req.id, req);
+  }
+
+  // Import the importanceWeight from analyzeJobForAts
+  const importanceWeight = {
+    critical: 4,
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
+  for (const req of requirements) {
+    const match = matchMap.get(req.id);
+    if (!match) continue;
+
+    const hasDirectEvidence = cvSkillsLower.some((s) =>
+      s.includes(req.normalized) || req.normalized.includes(s)
+    );
+
+    if (match.status === "MATCHED") {
+      // A) MATCHED -> Keyword reinforcement
+      const keyword = req.normalized;
+      const cvEvidence = cvSkillsLower.find((s) =>
+        s.includes(keyword) || keyword.includes(s)
+      );
+
+      recommendations.push({
+        requirementId: req.id,
+        changeType: "KEYWORD_REINFORCEMENT",
+        priority: req.importance,
+        currentEvidence: hasDirectEvidence ? "present" : "none",
+        proposedChange: `"${req.text}" stärker hervorheben in Skills/Abschnitten`,
+        rationale: `Exakter Match für ${req.text} verbessert ATS-Bewertung`,
+        relatedCVEvidence: cvEvidence || null,
+        safetyStatus: "SAFE_EVIDENCE",
+      });
+    } else if (match.status === "PARTIAL") {
+      // B) PARTIAL -> Evidence clarification / rephrasing
+      const partialMatch = cvSkillsLower.find((s) =>
+        s.includes(req.normalized) || req.normalized.includes(s)
+      );
+
+      recommendations.push({
+        requirementId: req.id,
+        changeType: "EVIDENCE_CLARIFICATION",
+        priority: req.importance,
+        currentEvidence: hasDirectEvidence ? "partial" : "none",
+        proposedChange: `"${req.text}" klarer hervorheben (teilweise: ${partialMatch || "keine Evidenz"})`,
+        rationale: `Teilweise Erfüllung kann durch präzisere Formulierung verbessert werden`,
+        relatedCVEvidence: partialMatch || null,
+        safetyStatus: "SAFE_EVIDENCE",
+      });
+    } else if (criticalGaps.some((g) => g.id === req.id)) {
+      // C) GAP -> Only as Gap_flag, NEVER add skill
+      recommendations.push({
+        requirementId: req.id,
+        changeType: "GAP_FLAG",
+        priority: req.importance,
+        currentEvidence: "contradictory",
+        proposedChange: `Erforderlich: ${req.text}. Keine geeignete Evidenz in CV gefunden.`,
+        rationale: `Widersprüchliche oder fehlende Evidenz für kritisches Requirement`,
+        relatedCVEvidence: null,
+        safetyStatus: "CRITICAL_GAP",
+      });
+    } else if (match.status === "UNKNOWN") {
+      // D) UNKNOWN -> Review instead of claim
+      recommendations.push({
+        requirementId: req.id,
+        changeType: "UNKNOWN_REVIEW",
+        priority: req.importance,
+        currentEvidence: "none",
+        proposedChange: `CV-Evidenz prüfen/ergänzen für "${req.text}"`,
+        rationale: `Keine klare CV-Evidenz gefunden. Keine Behauptung über Fähigkeit.`,
+        relatedCVEvidence: null,
+        safetyStatus: "SAFE_REVIEW",
+      });
+    }
+  }
+
+  return recommendations;
+}
