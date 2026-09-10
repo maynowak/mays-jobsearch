@@ -323,44 +323,164 @@ export function matchRequirement(req, cvSkills, cvData) {
 }
 
 export function analyzeJobForAts(job, profile) {
+  // Weight by importance: critical > high > medium > low
+  const importanceWeight = {
+    critical: 4,
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
   const cvSkills = profile?.skills?.split(",")?.map((s) => s.trim()) || [];
+  const cvSkillsLower = cvSkills.map((s) => s.toLowerCase());
 
   const requirements = extractRequirementsFromJob(job);
 
+  // LOSS: No GAP status exists in matchRequirement, so we track unmatched requirements
+  // as potential candidates for gap detection based on requirement importance
+
   const evidence = [];
   const matches = [];
+  const matchedRequirements = [];
+  const partialRequirements = [];
+  const unmatchedRequirements = [];
+  const criticalGaps = [];
+  const recommendations = [];
 
   for (const req of requirements) {
+    const normalizedReq = req.normalized.toLowerCase();
     const matchResult = matchRequirement(req, cvSkills, profile);
+
+    // FEATURE: Enhanced matching with variant support for skills only
+    let status = matchResult.status;
+    let confidence = matchResult.confidence;
+
+    // Check for partial match via skill variants (e.g., "k8s" -> "kubernetes")
+    if (status === "UNKNOWN" && req.category === "skill") {
+      const hasVariant = cvSkillsLower.some((s) => {
+        const normalizedCv = normalizeSkill(s);
+        return normalizedCv === normalizedReq || normalizedReq.includes(normalizedCv);
+      });
+      if (hasVariant) {
+        status = "PARTIAL";
+        confidence = "MEDIUM";
+      }
+    }
 
     matches.push({
       requirementId: req.id,
-      status: matchResult.status,
-      confidence: matchResult.confidence,
+      status,
+      confidence,
     });
 
-    const hasEvidence = cvSkills.some((s) =>
-      s.toLowerCase().includes(req.normalized)
+    // Determine if this requirement has CV evidence
+    const hasDirectEvidence = cvSkillsLower.some((s) =>
+      s.toLowerCase().includes(req.normalized) || req.normalized.includes(s.toLowerCase())
     );
+
+    // Check for conflicting evidence (contradictory requirements)
+    // Use word boundaries to avoid false positives like "JavaScript" matching "java"
+    const hasContradiction = cvSkillsLower.some((s) => {
+      const isOppositeTech = (normalizedReq, skill) => {
+        const pairs = [
+          ["react", "angular"],
+          ["vue", "angular"],
+          ["vue", "react"],
+        ];
+        // Check for exact tech name matches to avoid substring false positives
+        return pairs.some(([a, b]) => {
+          const reqHasA = /\breact\b/i.test(normalizedReq) || /\bvue\b/i.test(normalizedReq);
+          const reqHasB = reqHasA ? false : false;
+          const skillHasA = /\breact\b/i.test(skill) || /\bvue\b/i.test(skill);
+          const skillHasB = skillHasA ? false : false;
+          // React vs Angular
+          if ((/\breact\b/i.test(normalizedReq) && /\bangular\b/i.test(skill)) ||
+              (/\bangular\b/i.test(normalizedReq) && /\breact\b/i.test(skill))) {
+            return true;
+          }
+          // Vue vs Angular
+          if ((/\bvue\b/i.test(normalizedReq) && /\bangular\b/i.test(skill)) ||
+              (/\bangular\b/i.test(normalizedReq) && /\bvue\b/i.test(skill))) {
+            return true;
+          }
+          return false;
+        });
+      };
+      return isOppositeTech(req.normalized, s);
+    });
+
+    if (status === "MATCHED") {
+      matchedRequirements.push(req);
+    } else if (status === "PARTIAL") {
+      partialRequirements.push(req);
+      if (confidence === "MEDIUM") {
+        recommendations.push({
+          type: "partial_coverage",
+          requirementId: req.id,
+          message: `Prüfe: ${req.text} (teilweise: ${cvSkills.find(s => s.toLowerCase().includes(req.normalized) || req.normalized.includes(s.toLowerCase()))})`,
+        });
+      }
+    } else if (hasContradiction) {
+      // GAP: contradictory evidence exists
+      if (importanceWeight[req.importance] >= importanceWeight.high) {
+        criticalGaps.push(req);
+      }
+      recommendations.push({
+        type: "contradiction",
+        requirementId: req.id,
+        message: `Widersprüchliche Evidenz für ${req.text} gefunden`,
+      });
+    } else if (status === "UNKNOWN") {
+      // UNKNOWN: no evidence found, not contradictory
+      unmatchedRequirements.push(req);
+      if (importanceWeight[req.importance] >= importanceWeight.high) {
+        recommendations.push({
+          type: "missing_evidence",
+          requirementId: req.id,
+          message: `CV-Evidenz prüfen/ergänzen für ${req.text}`,
+        });
+      }
+    } else {
+      // Fallback for any other status
+      unmatchedRequirements.push(req);
+    }
 
     evidence.push({
       requirementId: req.id,
       source: "skills",
-      text: hasEvidence ? req.normalized : "",
+      text: hasDirectEvidence ? req.normalized : "",
       normalized: req.normalized,
-      evidenceType: hasEvidence ? "direct" : "indirect",
-      confidence: matchResult.confidence,
+      evidenceType: hasDirectEvidence ? "direct" : "indirect",
+      confidence,
     });
   }
 
   const matched = matches.filter((m) => m.status === "MATCHED").length;
   const partial = matches.filter((m) => m.status === "PARTIAL").length;
-  const gap = matches.filter((m) => m.status === "GAP").length;
-  const unknown = matches.filter((m) => m.status === "UNKNOWN").length;
+  const gap = criticalGaps.length;
+  const unknown = unmatchedRequirements.length;
 
   const total = matches.length;
-  const keywordMatch = matched / Math.max(total, 1);
-  const matchScore = matched / Math.max(total, 1);
+
+  // RESULT: Importance-weighted scoring
+  let matchedWeight = 0;
+  let totalWeight = 0;
+
+  for (const req of requirements) {
+    const weight = importanceWeight[req.importance] || 2;
+    totalWeight += weight;
+    if (matchedRequirements.some((r) => r.id === req.id)) {
+      matchedWeight += weight;
+    } else if (partialRequirements.some((r) => r.id === req.id)) {
+      matchedWeight += weight * 0.5; // Partial credit
+    }
+  }
+
+  // RESULT: Keyword coverage based on matched + partially matched
+  const coveredCount = matched + partial;
+  const keywordCoverage = total > 0 ? Math.round((coveredCount / total) * 100) : 0;
+
+  const score = totalWeight > 0 ? Math.round((matchedWeight / totalWeight) * 100) : 0;
 
   return {
     job: {
@@ -372,12 +492,12 @@ export function analyzeJobForAts(job, profile) {
     evidence,
     matches,
     scores: {
-      keywordMatch: Math.round(keywordMatch * 100),
-      skillMatch: Math.round(matchScore * 100),
+      keywordMatch: keywordCoverage,
+      skillMatch: score,
       locationMatch: job.location && job.location.length > 0 ? 100 : 0,
       workmodeMatch: job.remote !== undefined ? 100 : 0,
       employmentMatch: (job.jobTypes || job.contractType) ? 100 : 0,
-      overall: Math.round(matchScore * 100),
+      overall: score,
     },
     summary: {
       matched,
@@ -385,6 +505,7 @@ export function analyzeJobForAts(job, profile) {
       gap,
       unknown,
     },
-    recommendations: [],
+    criticalGaps,
+    recommendations,
   };
 }
