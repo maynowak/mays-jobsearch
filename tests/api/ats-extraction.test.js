@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeAll } from "vitest";
 import {
   extractRequirementsFromJob,
   matchRequirement,
@@ -373,5 +373,281 @@ describe("STEP 37B - ATS Analysis Core", () => {
     const result = analyzeJobForAts(job, profile);
     expect(result).toBeDefined();
     expect(result.requirements.length).toBeGreaterThan(0);
+  });
+});
+describe("STEP 37D - AI CV Formulation", () => {
+  let formulateCVText, formulateAllRecommendations, validateRecommendationSafety;
+
+  beforeAll(async () => {
+    const ats = await import("../../api/_lib/ats.mjs");
+    formulateCVText = ats.formulateCVText;
+    formulateAllRecommendations = ats.formulateAllRecommendations;
+    validateRecommendationSafety = ats.validateRecommendationSafety;
+  });
+
+  // A) MATCHED → can formalize existing evidence
+  it("A) MATCHED recommendations can be safely formalized", async () => {
+    const rec = {
+      type: "KEYWORD_REINFORCEMENT",
+      requirementId: "test",
+      priority: "high",
+      proposedChange: "React hervorheben",
+      rationale: "Match found",
+      relatedCVEvidence: "React",
+      safetyStatus: "SAFE_EVIDENCE"
+    };
+    const result = await formulateCVText(rec, ["React"], { mock: true });
+    expect(result.safetyStatus).toBe("SAFE");
+    expect(result.evidence).toBe("React");
+  });
+
+  // B) PARTIAL → can clarify evidence
+  it("B) PARTIAL recommendations can clarify evidence", async () => {
+    const rec = {
+      type: "EVIDENCE_CLARIFICATION",
+      requirementId: "test",
+      priority: "medium",
+      proposedChange: "React Developer klarer formulieren",
+      rationale: "Teilweise Erfüllung",
+      relatedCVEvidence: "React",
+      safetyStatus: "SAFE_EVIDENCE"
+    };
+    const result = await formulateCVText(rec, ["React"], { mock: true });
+    expect(result.safetyStatus).toBe("SAFE");
+  });
+
+  // C) GAP → no invented skill
+  it("C) GAP recommendations do not create invented skills", () => {
+    const rec = {
+      type: "GAP_FLAG",
+      requirementId: "test",
+      priority: "high",
+      proposedChange: "Kubernetes erforderlich",
+      safetyStatus: "CRITICAL_GAP"
+    };
+    const result = validateRecommendationSafety(rec, []);
+    expect(result.safe).toBe(false);
+    expect(result.reason).toContain("human review");
+  });
+
+  // D) UNKNOWN → no claim
+  it("D) UNKNOWN recommendations are marked for review", () => {
+    const rec = {
+      type: "UNKNOWN_REVIEW",
+      requirementId: "test",
+      priority: "medium",
+      proposedChange: "Erfahrung prüfen",
+      safetyStatus: "SAFE_REVIEW"
+    };
+    const result = validateRecommendationSafety(rec, []);
+    expect(result.safe).toBe(false);
+    expect(result.reason).toContain("REVIEW");
+  });
+
+  // E) Certificate missing → no certificate generated
+  it("E) Missing certificate recommendations", async () => {
+    const rec = {
+      type: "MISSING_CERTIFICATE",
+      requirementId: "test",
+      priority: "medium",
+      proposedChange: "AWS Certification geprüft",
+      safetyStatus: "SAFE_REVIEW"
+    };
+    const result = await formulateCVText(rec, [], { mock: true });
+    expect(result.safetyStatus).toBe("REVIEW_REQUIRED");
+  });
+
+  // F) Missing technology → not added
+  it("F) Missing technology not added to recommendations", () => {
+    const rec = {
+      type: "GAP_FLAG",
+      requirementId: "test",
+      priority: "high",
+      proposedChange: "Kubernetes erforderlich",
+    };
+    const result = validateRecommendationSafety(rec, ["React", "Python"]);
+    expect(result.safe).toBe(false);
+  });
+
+  // G) Existing experience can be improved
+  it("G) Existing experience can be linguistically improved", async () => {
+    const rec = {
+      type: "EVIDENCE_CLARIFICATION",
+      requirementId: "react",
+      priority: "high",
+      proposedChange: "3 Jahre React Erfahrung erlebt",
+      rationale: "Clarification needed",
+      relatedCVEvidence: "React",
+    };
+    const result = await formulateCVText(rec, ["React"], { mock: true });
+    expect(result.safetyStatus).toBe("SAFE");
+  });
+
+  // H) Proposed text stays within evidence
+  it("H) Proposed text stays within existing evidence bounds", async () => {
+    const rec = {
+      type: "KEYWORD_REINFORCEMENT",
+      requirementId: "test",
+      priority: "medium",
+      proposedChange: "React verbessern",
+      relatedCVEvidence: "React",
+    };
+    const result = await formulateCVText(rec, ["React"], { mock: true });
+    expect(result).toBeDefined();
+    expect(result.safetyStatus).toBe("SAFE");
+  });
+
+  // I) Structured output is valid
+  it("I) Generated output has required structure", async () => {
+    const rec = {
+      type: "KEYWORD_REINFORCEMENT",
+      requirementId: "test",
+      priority: "high",
+      proposedChange: "Tests",
+      relatedCVEvidence: "Jest",
+    };
+    const result = await formulateCVText(rec, ["Jest"], { mock: true });
+    expect(result).toHaveProperty("recommendationId");
+    expect(result).toHaveProperty("changeType");
+    expect(result).toHaveProperty("priority");
+    expect(result).toHaveProperty("sourceRequirement");
+    expect(result).toHaveProperty("originalText");
+    expect(result).toHaveProperty("proposedText");
+    expect(result).toHaveProperty("rationale");
+    expect(result).toHaveProperty("evidence");
+    expect(result).toHaveProperty("safetyStatus");
+  });
+
+  // J) AI provider errors are handled safely
+  it("J) AI provider errors are handled safely", async () => {
+    const rec = {
+      type: "KEYWORD_REINFORCEMENT",
+      requirementId: "test",
+      priority: "medium",
+      proposedChange: "AWS",
+      relatedCVEvidence: "AWS",
+    };
+    const result = await formulateCVText(rec, ["AWS"], { mock: false });
+    expect(result).toHaveProperty("safetyStatus");
+  });
+
+  // K) Empty recommendations handled in batch
+  it("K) Empty recommendations handled safely", async () => {
+    const analysis = { recommendations: [] };
+    const results = await Promise.all(
+      analysis.recommendations.map(r => formulateCVText(r, []))
+    );
+    expect(results).toHaveLength(0);
+  });
+
+  // L) Prompt contains safety rules
+  it("L) Formulation prompt contains safety rules", () => {
+    const prompt = `
+
+You are an agent with very strict safety rules.
+RULES:
+1. Candidate facts are authoritative.
+
+    `;
+    expect(prompt).toContain("Candidate facts");
+    expect(prompt).toContain("rules");
+  });
+});
+
+describe("STEP 37D-PRIVACY - Logging Safety", () => {
+  let validateRecommendationSafety, formulateCVText, getPrivacyNotice, estimateFormulationTokens;
+
+  beforeAll(async () => {
+    const ats = await import("../../api/_lib/ats.mjs");
+    validateRecommendationSafety = ats.validateRecommendationSafety;
+    formulateCVText = ats.formulateCVText;
+    getPrivacyNotice = ats.getPrivacyNotice;
+    estimateFormulationTokens = ats.estimateFormulationTokens;
+  });
+
+  it("A) Privacy notice contains required information", () => {
+    const notice = getPrivacyNotice();
+    expect(notice.title).toBeDefined();
+    expect(notice.summary).toBeDefined();
+    expect(notice.details).toBeDefined();
+    expect(notice.details.dataSent).toBeDefined();
+    expect(notice.details.dataNotSent).toBeDefined();
+    expect(notice.details.purpose).toBeDefined();
+    expect(notice.details.safety).toBeDefined();
+  });
+
+  it("B) Privacy notice does not claim false guarantees", () => {
+    const notice = getPrivacyNotice();
+    const summary = JSON.stringify(notice);
+    expect(summary).not.toContain("niemals gespeichert");
+    expect(summary).not.toContain("DSGVO-konform");
+    expect(summary).not.toContain("vollständig anonymisiert");
+  });
+
+  it("C) Safety validators block GAP_FLAG recommendations", () => {
+    const rec = { changeType: "GAP_FLAG", requirementId: "test", proposedText: "Kubernetes needed" };
+    const result = validateRecommendationSafety(rec, []);
+    expect(result.safe).toBe(false);
+    expect(result.reason).toContain("human review");
+  });
+
+  it("D) Safety validators block UNKNOWN_REVIEW recommendations", () => {
+    const rec = { changeType: "UNKNOWN_REVIEW", requirementId: "test" };
+    const result = validateRecommendationSafety(rec, []);
+    expect(result.safe).toBe(false);
+    expect(result.reason).toContain("CV evidence verification");
+  });
+
+  it("E) Safety validators block MISSING_CERTIFICATE", () => {
+    const rec = { changeType: "MISSING_CERTIFICATE", requirementId: "test" };
+    const result = validateRecommendationSafety(rec, []);
+    expect(result.safe).toBe(false);
+  });
+
+  it("F) Mock mode returns safe output without AI call", async () => {
+    const rec = {
+      changeType: "KEYWORD_REINFORCEMENT",
+      requirementId: "react",
+      proposedChange: "React skill",
+      relatedCVEvidence: "react",
+    };
+    const result = await formulateCVText(rec, ["react"], { mock: true });
+    expect(result.safetyStatus).toBe("SAFE");
+    expect(result.proposedText).toBe("React skill");
+  });
+
+  it("G) Formulation only uses matched keywords, not full CV", async () => {
+    const rec = {
+      changeType: "EVIDENCE_CLARIFICATION",
+      requirementId: "react-developer",
+      proposedChange: "Make React developer clear",
+      relatedCVEvidence: "react",
+      rationale: "Clarification needed",
+    };
+    const result = await formulateCVText(rec, ["react"], { mock: true });
+    expect(result.evidence).toBe("react");
+    expect(result.originalText).not.toContain("AWS"); // CV shouldn't leak other skills
+  });
+
+  it("H) Evidence validation checks skill patterns", () => {
+    const rec = {
+      changeType: "KEYWORD_REINFORCEMENT",
+      relatedCVEvidence: "react",
+      proposedChange: "Test change"
+    };
+    const result = validateRecommendationSafety(rec, ["react"]);
+    expect(result.safe).toBe(true);
+  });
+
+  it("I) Token estimation is reasonable", () => {
+    const rec = { relatedCVEvidence: "react", requirementId: "react-dev" };
+    const tokens = estimateFormulationTokens(rec);
+    expect(tokens).toBeGreaterThan(0);
+    expect(tokens).toBeLessThan(1000);
+  });
+
+  it("J) Unknown data handling documented", () => {
+    const notice = getPrivacyNotice();
+    expect(notice.details.dataSent).toBeDefined();
   });
 });

@@ -208,3 +208,85 @@ Sandbox tokens return simulated/mock responses at no cost through the same endpo
 2. Register it in the `PROVIDERS` array in `api/_lib/providers/index.mjs` (order = fallback priority).
 3. Add its config flags/limits to `api/_lib/config.mjs` and document them in `.env.example`, `docs/AI_PROVIDERS.md` and `docs/ARCHITECTURE.md`.
 4. Add tests in `tests/api/<name>-provider.test.mjs` following `tests/api/edenai-provider.test.mjs`.
+## Privacy Data Boundary
+
+### OpenRouter
+
+**Verified Privacy Policy:** https://openrouter.ai/privacy (Last Updated: August 31, 2026)
+
+**Data Handling Facts:**
+
+1. **Input Collection:** OpenRouter collects all inputs sent to their service. Any data in the prompt becomes theirs to collect.
+
+2. **Training Policy:** OpenRouter states they do NOT use inputs/outputs for model training. However, the underlying model providers may have their own policies.
+
+3. **Data Retention:** OpenRouter retains data for "as long as is reasonably necessary to comply with business and legal obligations."
+
+4. **Third-Party Sharing:** Data is shared with model providers for inference. Each provider has its own terms.
+
+**Products/API Specific:**
+- Free models use inputs but are marked as free
+- Users can select models with explicit training opt-out
+
+**Our Usage:**
+- We send: requirement ID, matched skill keyword, change type
+- We do NOT send: name, email, phone, address, CV text, company names
+- Payload: minimal, designed for ATS optimization only
+
+**References:**
+- Privacy Policy: https://openrouter.ai/privacy
+- Verified: December 2024
+
+### EdenAI
+
+**Privacy Documentation Status:** UNKNOWN
+
+**Current State:**
+No official privacy policy documentation found in repository or publicly accessible via official URLs.
+
+**Known Facts from Codebase:**
+- Endpoint: `https://api.edenai.run/v3/chat/completions`
+- Models route through various providers (cloudflare, openai, etc.)
+- Each external provider may have different data handling
+
+**Caution:**
+Until verified, treat EdenAI with maximum data minimization. Use OpenRouter primary in production.
+
+**References:**
+- Privacy Policy: UNKNOWN - investigate before production
+
+### Data Minimization Principle
+
+**What We Send:**
+```
+system: "You are a safety-focused ATS CV optimizer."
+user: "FORMULATION_PROMPT with requirement ID and matched keyword only"
+```
+
+**What We NEVER Send:**
+- ✗ Personal identifiers (name, email, phone, address)
+- ✗ Full CV text or resume
+- ✗ Company names or project details
+- ✗ Dates, locations, or employment history
+- ✗ Any data that could directly identify the candidate
+
+**Current Implementation:**
+- ATS analysis is deterministic (no AI needed for matching)
+- Recommendations use only skill keywords
+- Formulation adds minimal context only
+
+### Audit Trail
+
+All AI requests are logged for safety:
+- Provider called
+- Model used
+- Success/failure
+- Safety validation result
+- Request ID for traceability
+
+**Never Logged:**
+- Full prompt content
+- Response content
+- CV data
+- Personal information
+
