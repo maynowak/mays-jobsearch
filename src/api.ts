@@ -282,3 +282,66 @@ export async function unsubscribeAlert(email: string): Promise<string> {
   });
   return data.message;
 }
+
+// ATS Analysis API
+export interface AtsAnalysisResponse {
+  analysis: {
+    score: number;
+    keywordCoverage: { overall: number };
+    criticalGaps: Array<{ id: string; text: string }>;
+    requirements: Array<{
+      id: string;
+      text: string;
+      category: string;
+      importance: string;
+    }>;
+    matches: Array<{
+      requirementId: string;
+      status: string;
+      confidence: string;
+    }>;
+  };
+  recommendations: Array<{
+    requirementId: string;
+    changeType: string;
+    priority: string;
+    proposedChange: string;
+    rationale: string;
+    relatedCVEvidence?: string | null;
+  }>;
+  ai: {
+    requested: boolean;
+    executed: boolean;
+    consentRequired: boolean;
+    consentGiven: boolean;
+    provider?: string;
+    model?: string;
+    externalProcessing: boolean;
+    dataMinimized: boolean;
+    privacyStatus?: string;
+    privacyPolicy?: string;
+    dataCategories?: string[];
+    formulations?: Array<{
+      recommendationId?: string;
+      changeType: string;
+      originalText?: string;
+      proposedText?: string;
+      rationale?: string;
+      evidence?: string;
+      safetyStatus?: string;
+    }>;
+  };
+}
+
+export async function analyzeATS(
+  job: { title?: string; tags?: string[]; slug?: string },
+  profile: { skills?: string; [key: string]: unknown },
+  ai?: { enabled?: boolean; consent?: boolean }
+): Promise<AtsAnalysisResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  return apiFetch<AtsAnalysisResponse>("/api/ats-analysis", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ job, profile, ai }),
+  });
+}

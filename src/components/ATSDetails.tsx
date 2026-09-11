@@ -1,4 +1,17 @@
-import type { AtsAnalysisResponse } from "../api";
+interface AtsResult {
+  analysis: {
+    score: number;
+    keywordCoverage: { overall: number };
+    criticalGaps: Array<{ id: string; text: string }>;
+  };
+  recommendations: Array<{
+    requirementId: string;
+    changeType: string;
+    priority: string;
+    proposedChange: string;
+    rationale: string;
+  }>;
+}
 
 const statusColors: Record<string, string> = {
   MATCHED: "text-green-600",
@@ -15,7 +28,7 @@ const changeTypeLabels: Record<string, string> = {
 };
 
 export interface ATSDetailsProps {
-  result: AtsAnalysisResponse;
+  result: AtsResult;
 }
 
 export function ATSDetails({ result }: ATSDetailsProps) {
