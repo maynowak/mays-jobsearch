@@ -2094,3 +2094,23 @@ body {
     font-size: 1.3rem;
   }
 }
+
+.sources-info {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  cursor: help;
+}
+
+.sources-info-icon {
+  font-size: 16px;
+  font-weight: bold;
+  color: #666;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.05);
+}
+
+.sources-info-icon:hover {
+  background: rgba(0,0,0,0.1);
+}

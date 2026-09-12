@@ -159,6 +159,12 @@ const en: Dict = {
   "sources.total": "Total",
   "sources.unit": "jobs",
 
+
+  "sources.info": "Data source info",
+  "sources.infoTooltip": "May's Job Matcher processes job listings from multiple data sources and prepares them for search and display. The source of each job is shown directly in the job listing.",
+
+  "sources_info.label": "Datenquellen-Info",
+
   "score.title": "{score}/100 match",
 
   "letter.heading": "Cover letter",
@@ -330,6 +336,9 @@ const de: Dict = {
   "sources.heading": "Jobquellen",
   "sources.total": "Insgesamt",
   "sources.unit": "Stellen",
+
+  "sources.info": "Datenquellen-Info",
+  "sources.infoTooltip": "May's Job Matcher verarbeitet Stellenangebote aus verschiedenen Datenquellen und bereitet sie für Suche und Darstellung auf. Die Quelle jedes Stellenangebots wird direkt im Stellenangebot angezeigt.",
 
   "score.title": "{score}/100 Übereinstimmung",
 
