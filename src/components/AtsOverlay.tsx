@@ -201,10 +201,10 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
             <div className="bg-white rounded-lg p-4 shadow-sm border">
               <h3 className="text-lg font-semibold mb-2">{t("ats.score")}</h3>
               <div className="text-3xl font-bold text-blue-600">
-                {Math.round(analysis.analysis.score)}/100
+                {Math.round(analysis.analysis?.score ?? 0)}/100
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                Keyword Coverage: {Math.round(analysis.analysis.keywordCoverage.overall * 100)}%
+                Keyword Coverage: {Math.round((analysis.analysis?.keywordCoverage?.overall ?? 0) * 100)}%
               </div>
             </div>
 

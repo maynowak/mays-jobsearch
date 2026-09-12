@@ -121,8 +121,8 @@ export default async function handler(req, res) {
     
     const response = {
       analysis: {
-        score: analysis.score,
-        keywordCoverage: analysis.keywordCoverage,
+        score: analysis.scores.overall,
+        keywordCoverage: { overall: analysis.scores.keywordMatch },
         criticalGaps: analysis.criticalGaps,
         requirements: analysis.requirements.map(r => ({
           id: r.id,
