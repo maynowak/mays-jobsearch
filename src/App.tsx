@@ -15,6 +15,7 @@ import Results from "./components/Results";
 import AlertCard from "./components/AlertCard";
 import Footer from "./components/Footer";
 import LetterModal from "./components/LetterModal";
+import ATSModal from "./components/AtsOverlay";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
@@ -46,6 +47,7 @@ export default function App() {
     employmentTypes: ["full_time"],
   });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
+  const [atsJob, setAtsJob] = useState<Job | null>(null);
   const [dataset, setDataset] = useState<JobDataset | null>(null);
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
@@ -313,6 +315,7 @@ export default function App() {
               matches={matches}
               foundJobs={foundJobs}
               onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
+              onAtsEvaluate={(job) => setAtsJob(job)}
             />
           </div>
         </main>
@@ -333,6 +336,14 @@ export default function App() {
           availableModels={models.map((model) => model.id)}
           recommendedModel={recommendedModel}
           onClose={() => setLetterJob(null)}
+        />
+      )}
+
+      {atsJob && profile && (
+        <ATSModal
+          job={atsJob}
+          profile={profile}
+          onClose={() => setAtsJob(null)}
         />
       )}
 

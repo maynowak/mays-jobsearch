@@ -19,7 +19,12 @@ function renderHtmlContent(html: string, lang?: string) {
   return renderSanitizedHtml(html, lang);
 }
 
-export default function RemainingCard({ job }: { job: Job }) {
+interface Props {
+  job: Job;
+  onAtsEvaluate?: (job: Job) => void;
+}
+
+export default function RemainingCard({ job, onAtsEvaluate }: Props) {
   const { t, lang } = useLang();
   const [expanded, setExpanded] = useState(false);
   const [detailJob, setDetailJob] = useState<Job | null>(null);
@@ -174,6 +179,17 @@ export default function RemainingCard({ job }: { job: Job }) {
         >
           {t("match.viewPosting")}
         </a>
+      )}
+
+      {onAtsEvaluate && (
+        <button
+          type="button"
+          className="ats-evaluate-btn"
+          onClick={() => onAtsEvaluate(job)}
+          aria-label={t("match.atsEvaluate")}
+        >
+          {t("match.atsEvaluate")}
+        </button>
       )}
     </li>
   );

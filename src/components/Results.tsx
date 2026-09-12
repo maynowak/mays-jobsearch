@@ -11,9 +11,10 @@ interface Props {
   matches: Match[];
   foundJobs: Job[];
   onGenerateLetter: (job: Job, prepare: string) => void;
+  onAtsEvaluate?: (job: Job) => void;
 }
 
-export default function Results({ matches, foundJobs, onGenerateLetter }: Props) {
+export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEvaluate }: Props) {
   const { t } = useLang();
   const [expanded, setExpanded] = useState(false);
   const [moreOpen, setMoreOpen] = useState<boolean>(() => matches.length === 0);
@@ -107,7 +108,7 @@ export default function Results({ matches, foundJobs, onGenerateLetter }: Props)
           {moreOpen && (
             <ol id="remaining-jobs" className="remaining-list">
               {remainingJobs.map((job) => (
-                <RemainingCard key={job.slug} job={job} />
+                <RemainingCard key={job.slug} job={job} onAtsEvaluate={onAtsEvaluate} />
               ))}
             </ol>
           )}

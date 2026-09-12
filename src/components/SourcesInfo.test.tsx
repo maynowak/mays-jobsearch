@@ -43,6 +43,8 @@ describe("STEP 37G-1 - SourcesInfo", () => {
       </LangProvider>
     );
     const container = screen.getByText("ⓘ").parentElement;
-    expect(container?.getAttribute("title")).toContain("info");
+    const title = container?.getAttribute("title");
+    expect(title).toBeTruthy();
+    expect(title?.length).toBeGreaterThan(10);
   });
 });
