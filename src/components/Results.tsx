@@ -72,6 +72,7 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
               match={match}
               index={index}
               onGenerateLetter={onGenerateLetter}
+              onAtsEvaluate={onAtsEvaluate}
             />
           ))}
         </ol>

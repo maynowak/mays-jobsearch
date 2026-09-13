@@ -9,13 +9,14 @@ interface Props {
   match: Match;
   index: number;
   onGenerateLetter: (job: Job, prepare: string) => void;
+  onAtsEvaluate?: (job: Job) => void;
 }
 
 function renderHtmlContent(html: string) {
   return renderSanitizedHtml(html);
 }
 
-export default function MatchCard({ match, index, onGenerateLetter }: Props) {
+export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluate }: Props) {
   const { t } = useLang();
   const job = match.job ?? ({} as Partial<Job>);
   const m = (job as Job) || {};
@@ -78,6 +79,17 @@ export default function MatchCard({ match, index, onGenerateLetter }: Props) {
         >
           {t("match.generateLetter")}
         </button>
+
+        {onAtsEvaluate && (
+          <button
+            type="button"
+            className="ats-evaluate-btn"
+            onClick={() => onAtsEvaluate(m as Job)}
+            aria-label={t("match.atsEvaluate")}
+          >
+            {t("match.atsEvaluate")}
+          </button>
+        )}
       </div>
     </li>
   );
