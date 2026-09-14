@@ -161,6 +161,15 @@ export interface AtsMatchResult {
   confidence: AtsConfidence;
 }
 
+export interface AtsRecommendation {
+  requirementId: string;
+  changeType: "KEYWORD_REINFORCEMENT" | "EVIDENCE_CLARIFICATION" | "GAP_FLAG" | "UNKNOWN_REVIEW" | "MISSING_CERTIFICATE";
+  priority: AtsImportance;
+  proposedChange: string;
+  rationale: string;
+  relatedCVEvidence?: string | null;
+}
+
 export interface AtsAnalysisResult {
   job: {
     slug: string;
@@ -184,5 +193,6 @@ export interface AtsAnalysisResult {
     gap: number;
     unknown: number;
   };
-  recommendations: string[];
+  criticalGaps: AtsRequirement[];
+  recommendations: AtsRecommendation[];
 }
