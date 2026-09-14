@@ -14,7 +14,7 @@ const en: Dict = {
   "lang.aria": "Language",
 
   "hero.tagline":
-    "Live jobs from Arbeitnow and the Arbeitsagentur, scored by AI against your profile.",
+    "Live jobs from multiple sources, scored by AI against your profile.",
 
   "landing.claim": "Find jobs that really fit you.",
   "landing.text":
@@ -211,7 +211,7 @@ const de: Dict = {
   "lang.aria": "Sprache",
 
   "hero.tagline":
-    "Live-Jobs von Arbeitnow und der Arbeitsagentur, per KI gegen dein Profil bewertet.",
+    "Live-Jobs aus verschiedenen Quellen, per KI gegen dein Profil bewertet.",
 
   "landing.claim": "Finde Jobs, die wirklich zu dir passen.",
   "landing.text":
