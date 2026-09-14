@@ -115,41 +115,210 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose, showAI]);
 
-  const statusColors: Record<string, string> = {
-    MATCHED: "text-green-600",
-    PARTIAL: "text-yellow-600",
-    GAP: "text-red-600",
-    UNKNOWN: "text-gray-600",
-  };
+  const renderOverview = () => {
+    if (!analysis) return null;
 
-  const changeTypeLabels: Record<string, string> = {
-    KEYWORD_REINFORCEMENT: "Keyword Reinforcement",
-    EVIDENCE_CLARIFICATION: "Evidence Clarification",
-    GAP_FLAG: "Gap Identified",
-    UNKNOWN_REVIEW: "Review Needed",
-    MISSING_CERTIFICATE: "Missing Certificate",
+    return (
+      <div className="ats-section">
+        <div className="ats-section-header">
+          <h3 className="ats-section-title">{t("ats.score")}</h3>
+        </div>
+        <div className="ats-section-content">
+          <div className="ats-score">
+            <div className="ats-score-value">
+              {Math.round(analysis.analysis?.score ?? 0)}/100
+            </div>
+            <div className="ats-score-label">
+              Keyword Coverage: 
+              {Math.round((analysis.analysis?.keywordCoverage?.overall ?? 0) * 100)}%
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderRequirements = () => {
     if (!analysis?.analysis.requirements) return null;
 
-    return analysis.analysis.requirements.map((req, idx) => {
-      const match = analysis?.analysis.matches?.find((m) => m.requirementId === req.id);
-      const status = match?.status || "UNKNOWN";
-      const confidence = match?.confidence || "LOW";
+    const matchedCount = analysis.analysis.matches?.filter(m => m.status === "MATCHED").length ?? 0;
+    const partialCount = analysis.analysis.matches?.filter(m => m.status === "PARTIAL").length ?? 0;
+    const gapCount = analysis.analysis.criticalGaps?.length ?? 0;
+    const total = analysis.analysis.requirements.length;
 
-      return (
-        <div key={req.id || idx} className="border-l-2 pl-4 mb-2">
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-sm">{req.text}</span>
-            <span className={`text-xs ${statusColors[status] || ""}`}>
-              {changeTypeLabels[status] || status}
-            </span>
-          </div>
-          <p className="text-sm text-gray-600 mt-1">Confidence: {confidence}</p>
+    return (
+      <div className="ats-section">
+        <div className="ats-section-header">
+          <h3 className="ats-section-title">{t("ats.requirements")}</h3>
         </div>
-      );
-    });
+        <div className="ats-section-content">
+          <div className="ats-criteria">
+            <div className="ats-criterion">
+              <span className="ats-criterion-label">Gesamt</span>
+              <span className="ats-criterion-value">{total} {total === 1 ? "Anforderung" : "Anforderungen"}</span>
+            </div>
+            <div className="ats-criterion">
+              <span className="ats-criterion-label">MATCHED</span>
+              <span className="ats-criterion-value">{matchedCount}</span>
+            </div>
+            <div className="ats-criterion">
+              <span className="ats-criterion-label">PARTIAL</span>
+              <span className="ats-criterion-value">{partialCount}</span>
+            </div>
+            <div className="ats-criterion">
+              <span className="ats-criterion-label">GAP</span>
+              <span className="ats-criterion-value">{gapCount}</span>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            {analysis.analysis.requirements.map((req, idx) => {
+              const match = analysis?.analysis.matches?.find(m => m.requirementId === req.id);
+              const status = match?.status || "UNKNOWN";
+
+              return (
+                <div 
+                  key={req.id || idx} 
+                  className={`ats-requirement ${status.toLowerCase()}`}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <span className="ats-requirement-text">{req.text}</span>
+                    <span className={`ats-requirement-status`}>
+                      {status === "MATCHED" && "✓ MATCHED"}
+                      {status === "PARTIAL" && "⊘ PARTIAL"}
+                      {status === "GAP" && "⚠ GAP"}
+                      {status === "UNKNOWN" && "? UNKNOWN"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderGaps = () => {
+    if (!analysis?.analysis.criticalGaps || analysis.analysis.criticalGaps.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="ats-section">
+        <div className="ats-section-header">
+          <h3 className="ats-section-title">{t("ats.criticalGaps")}</h3>
+        </div>
+        <div className="ats-section-content">
+          <div className="ats-gaps-list">
+            {analysis.analysis.criticalGaps.map((gap, idx) => (
+              <div key={gap.id || idx} className="ats-gap-item">
+                <span className="ats-gap-text">{gap.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRecommendations = () => {
+    if (!analysis?.recommendations || analysis.recommendations.length === 0) return null;
+
+    const labels: Record<string, string> = {
+      KEYWORD_REINFORCEMENT: t("match.keywordReinforcement"),
+      EVIDENCE_CLARIFICATION: t("match.evidenceClarification"),
+      GAP_FLAG: t("match.gapFlag"),
+      UNKNOWN_REVIEW: t("match.unknownReview"),
+      MISSING_CERTIFICATE: t("match.missingCertificate"),
+    };
+
+    return (
+      <div className="ats-section">
+        <div className="ats-section-header">
+          <h3 className="ats-section-title">{t("ats.recommendations")}</h3>
+        </div>
+        <div className="ats-section-content">
+          <div className="ats-recommendations-list">
+            {analysis.recommendations.map((rec, idx) => (
+              <div key={rec.requirementId || idx} className="ats-recommendation">
+                <div className="ats-recommendation-title">
+                  {labels[rec.changeType] || rec.changeType}
+                </div>
+                <div className="ats-recommendation-text">
+                  {rec.proposedChange}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAI = () => {
+    if (!analysis?.ai || !analysis.ai.requested) return null;
+
+    return (
+      <div className="ats-section">
+        <div className="ats-section-header">
+          <h3 className="ats-section-title">AI Analysis</h3>
+        </div>
+        <div className="ats-section-content">
+          {!consentGiven && analysis.ai && analysis.ai.requested && (
+            <PrivacyNotice
+              provider={analysis.ai?.provider}
+              privacyStatus={analysis.ai?.privacyStatus}
+            />
+          )}
+
+          {!consentGiven && (showAI || (!analysis.ai?.consentRequired && analysis.ai?.requested)) && (
+            <ConsentGate
+              onAccept={handleConsent}
+              provider={analysis.ai?.provider || "OpenRouter"}
+              privacyStatus={analysis.ai?.privacyStatus || "Unknown"}
+            />
+          )}
+
+          {models.length > 0 && consentGiven && analysis?.ai && analysis.ai?.consentRequired !== false && (
+            <div style={{ marginTop: '16px' }}>
+              <label className="block text-sm font-medium mb-2">
+                {t("model.label")}
+              </label>
+              <div className="space-y-2">
+                {models.map((model) => (
+                  <label key={model.id} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="ai-model"
+                      checked={selectedModel === model.id}
+                      onChange={() => setSelectedModel(model.id)}
+                      className="rounded border-gray-300"
+                    />
+                    <span>{model.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {aiLoading && (
+            <div className="ats-loading">
+              <div className="ats-spinner" />
+              <span>{t("ats.aiLoading")}</span>
+            </div>
+          )}
+
+          {aiError && (
+            <div className="ats-section" style={{ marginTop: '16px' }}>
+              <p style={{ color: 'var(--red)', fontSize: '0.9rem' }}>
+                {t("ats.aiError")}: {aiError}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -158,7 +327,12 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
         <div className="modal-box">
           <div className="modal-head">
             <h3>{t("ats.loading")}</h3>
-            <button type="button" className="modal-close" onClick={onClose} aria-label={t("modal.close")}>
+            <button 
+              type="button" 
+              className="modal-close" 
+              onClick={onClose} 
+              aria-label={t("modal.close")}
+            >
               &times;
             </button>
           </div>
@@ -173,11 +347,16 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
         <div className="modal-box">
           <div className="modal-head">
             <h3>{t("ats.error")}</h3>
-            <button type="button" className="modal-close" onClick={onClose} aria-label={t("modal.close")}>
+            <button 
+              type="button" 
+              className="modal-close" 
+              onClick={onClose} 
+              aria-label={t("modal.close")}
+            >
               &times;
             </button>
           </div>
-          <p className="modal-text">{error}</p>
+          <div className="modal-text">{error}</div>
         </div>
       </div>
     );
@@ -190,74 +369,27 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
           <div className="modal-head">
             <div>
               <h3>{t("ats.overlayTitle")}</h3>
-              <p className="modal-sub">{job.title}{job.company_name && ` @ ${job.company_name}`}</p>
+              <p className="modal-sub">
+                {job.title}
+                {job.company_name && ` @ ${job.company_name}`}
+              </p>
             </div>
-            <button type="button" className="modal-close" onClick={handleClose} aria-label={t("modal.close")}>
+            <button 
+              type="button" 
+              className="modal-close" 
+              onClick={handleClose} 
+              aria-label={t("modal.close")}
+            >
               &times;
             </button>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-white rounded-lg p-4 shadow-sm border">
-              <h3 className="text-lg font-semibold mb-2">{t("ats.score")}</h3>
-              <div className="text-3xl font-bold text-blue-600">
-                {Math.round(analysis.analysis?.score ?? 0)}/100
-              </div>
-              <div className="text-sm text-gray-600 mt-1">
-                Keyword Coverage: {Math.round((analysis.analysis?.keywordCoverage?.overall ?? 0) * 100)}%
-              </div>
-            </div>
-
-            {!consentGiven && analysis.ai && analysis.ai.requested && (
-              <PrivacyNotice
-                provider={analysis.ai?.provider}
-                privacyStatus={analysis.ai?.privacyStatus}
-              />
-            )}
-
-            {!consentGiven && (showAI || (!analysis.ai?.consentRequired && analysis.ai?.requested)) && (
-              <ConsentGate
-                onAccept={handleConsent}
-                provider={analysis.ai?.provider || "OpenRouter"}
-                privacyStatus={analysis.ai?.privacyStatus || "Unknown"}
-              />
-            )}
-
-            {models.length > 0 && consentGiven && analysis?.ai && analysis.ai?.consentRequired !== false && (
-              <div className="model-selection">
-                <label className="block text-sm font-medium mb-2">{t("model.label")}</label>
-                <div className="space-y-2">
-                  {models.map((model) => (
-                    <label key={model.id} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="ai-model"
-                        checked={selectedModel === model.id}
-                        onChange={() => setSelectedModel(model.id)}
-                        className="rounded border-gray-300"
-                      />
-                      <span>{model.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {aiLoading && (
-              <div className="ai-loading">
-                <span className="spinner" /> {t("ats.aiLoading")}
-              </div>
-            )}
-
-            {aiError && (
-              <div className="ai-error">
-                <p>{t("ats.aiError")}: {aiError}</p>
-              </div>
-            )}
-
-            <div className="ats-results">
-              {renderRequirements()}
-            </div>
+          <div className="ats-module">
+            {renderOverview()}
+            {renderRequirements()}
+            {renderGaps()}
+            {renderRecommendations()}
+            {renderAI()}
           </div>
         </div>
       </div>
