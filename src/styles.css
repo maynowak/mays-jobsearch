@@ -333,45 +333,57 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 120px;
-  width: 100%;
+  min-height: clamp(560px, 74vh, 760px);
   color: var(--text);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(246, 241, 231, 0.78) 0%,
+      rgba(246, 241, 231, 0.5) 40%,
+      rgba(246, 241, 231, 0.14) 65%,
+      rgba(246, 241, 231, 0.02) 100%
+    ),
+    url("assets/images/job-matcher-next-step-searchpage.png") center / cover no-repeat;
+  border-bottom: 1px solid rgba(190, 172, 140, 0.4);
 }
 
 .search-hero-inner {
   width: 100%;
   max-width: 1220px;
   margin: 0 auto;
-  padding: 32px 20px;
+  padding: 72px 20px;
 }
 
 .search-hero-text h1 {
   margin: 0;
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  letter-spacing: -0.02em;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.03em;
 }
 
 .search-hero-text .tagline {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 1rem;
+  margin: 10px 0 0;
 }
 
 .search-hero .search-card {
   max-width: 420px;
-  margin-top: 0;
+  margin-top: 30px;
 }
 
 @media (max-width: 560px) {
   .search-hero {
     min-height: 0;
-    align-items: flex-start;
-    background: var(--surface);
+    align-items: stretch;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(246, 241, 231, 0.85) 0%,
+        rgba(246, 241, 231, 0.62) 55%,
+        rgba(246, 241, 231, 0.3) 100%
+      ),
+      url("assets/images/job-matcher-next-step-searchpage.png") 75% center / cover no-repeat;
   }
   .search-hero-inner {
-    padding: 24px 20px;
+    padding: 48px 20px;
   }
   .search-hero .search-card {
     max-width: none;
@@ -462,12 +474,43 @@ body {
   padding: 24px 20px 60px;
 }
 
+/* Product header - compact */
+.product-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 48px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.product-header-inner {
+  max-width: 1220px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+}
+
 /* Persistent search workspace for matcher */
 .container.layout-search {
   max-width: 1220px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  gap: 32px;
+}
+
+.search-sidebar {
+  flex: 0 0 360px;
+  min-width: 0;
+}
+
+.results-workspace {
+  flex: 1;
+  min-width: 0;
 }
 
 .results-area {
@@ -475,42 +518,23 @@ body {
 }
 
 @media (min-width: 900px) {
-  /* Persistent search workspace on desktop: vertical stack, full-width hero */
-  .search-hero {
-    width: 100%;
-    min-height: clamp(560px, 74vh, 760px);
-  }
-
-  .search-hero-inner {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 32px;
-    max-width: 1220px;
-    width: 100%;
-    margin: 0 auto;
+  .product-header {
     padding: 72px 20px;
   }
 
-  .search-hero-text {
-    flex: 1 1 auto;
+  .product-header-text {
+    flex: 1;
     min-width: 0;
   }
 
-  .search-hero-text h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
+  .container.layout-search {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 32px;
   }
 
-  .search-hero .search-card {
-    flex: 0 1 420px;
-    width: 100%;
-    max-width: 420px;
-    min-width: 0;
-    margin-top: 0;
-  }
-
-  .search-hero .alert-card {
-    margin-top: 20px;
+  .search-sidebar .search-card {
+    max-width: 360px;
   }
 }
 

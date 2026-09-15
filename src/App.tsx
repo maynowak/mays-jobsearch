@@ -285,19 +285,22 @@ export default function App() {
     <>
       <Navbar route="matcher" />
 
-      <main className="container layout-search">
-        <section className="search-hero">
-          <div className="search-hero-inner">
-            <div className="search-hero-text">
-              <h1>May&rsquo;s Job Matcher</h1>
-              <p className="tagline">{t("hero.tagline")}</p>
-            </div>
-            {searchCard}
+      <header className="product-header">
+        <div className="product-header-inner">
+          <div className="product-header-text">
+            <h1>May&rsquo;s Job Matcher</h1>
+            <p className="tagline">{t("hero.tagline")}</p>
           </div>
-        </section>
+        </div>
+      </header>
+
+      <main className="container layout-search">
+        <aside className="search-sidebar">
+          {searchCard}
+        </aside>
 
         {hasResults ? (
-          <section className="results-area">
+          <section className="results-workspace">
             <Results
               matches={matches}
               foundJobs={foundJobs}
