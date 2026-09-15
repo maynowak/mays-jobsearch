@@ -102,10 +102,18 @@ Test Files  32 passed (32)
 **Commits created:**
 1. `3853abc` - fix: stabilize persistent search workspace
 2. `1fdd61d` - fix: correct persistent search workspace desktop layout
-3. `79eabe8` - docs: add execution log for STEP 37G-13
+3. `79eabe8` - docs: complete STEP 37G-14 execution log
 4. `d80363d` - feat: implement LEFT/RIGHT layout for product workspace
+5. `791015e` - docs: complete STEP 37G-14 execution log
 
-**Current HEAD**: `d80363d`
+**Git HEAD**: `791015e`
+**origin/main**: `791015e` (synced)
+**d80363d is ancestor of 791015e**: YES
+
+**Files changed in d80363d**:
+- `src/App.tsx` - Added product-header, restructured layout
+- `src/App.test.tsx` - Updated selectors for search-sidebar, results-workspace
+- `src/styles.css` - Added sidebar/workspace CSS with 360px/1fr grid
 
 ## PRODUCTION VERIFICATION
 
