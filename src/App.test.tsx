@@ -539,7 +539,7 @@ describe("No landing-page flash during a search", () => {
     expect(document.querySelector(".landing")).toBeNull();
     expect(document.querySelector(".landing-hero")).toBeNull();
     expect(document.querySelector(".search-hero")).toBeTruthy();
-    expect(document.querySelector(".layout-split")).toBeNull();
+    expect(document.querySelector(".results-area")).toBeNull();
   });
 
   it("Bug-Regression: runSearch -> phase=searching -> Landingpage NICHT gerendert", async () => {
@@ -560,7 +560,7 @@ describe("No landing-page flash during a search", () => {
     jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
     await screen.findByText("AWS Engineer");
     expect(document.querySelector(".landing")).toBeNull();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
   });
 
   it("Scoring (foundJobs gesetzt, Matches ausstehend): Suchansicht bleibt, kein Hero-/Ergebnis-Wechsel", async () => {
@@ -575,16 +575,14 @@ describe("No landing-page flash during a search", () => {
 
     jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
     // Explizites Matching wird durch "Mit KI bewerten" gestartet, nicht automatisch
-    // Nach Suche: Ergebnisse sofort sichtbar (layout-split), search-hero ausgeblendet
+    // Nach Suche: Ergebnisse sofort sichtbar in .results-area; search-hero bleibt sichtbar
     await screen.findByText("AWS Engineer");
     expect(screen.getByText("Mit KI bewerten")).toBeTruthy();
 
     expect(document.querySelector(".landing")).toBeNull();
     expect(document.querySelector(".landing-hero")).toBeNull();
-    expect(document.querySelector(".search-hero")).toBeNull();
-    // Der kompakte Ergebnis-Hero (header.hero) gehört zur Ergebnisansicht und ist korrekt sichtbar
-    expect(document.querySelector(".hero")).toBeTruthy();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".search-hero")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
 
     // Explizites Matching starten
@@ -594,8 +592,8 @@ describe("No landing-page flash during a search", () => {
       matches: [{ score: 90, why: "gut", prepare: "Bereite dich vor", job }],
     } as MatchResponse);
     await screen.findByText("AWS Engineer");
-    expect(document.querySelector(".layout-split")).toBeTruthy();
-    expect(document.querySelector(".search-hero")).toBeNull();
+    expect(document.querySelector(".results-area")).toBeTruthy();
+    expect(document.querySelector(".search-hero")).toBeTruthy();
   });
 
   it("Fehler: keine Landingpage, Werte bleiben erhalten", async () => {
@@ -630,7 +628,7 @@ describe("No landing-page flash during a search", () => {
 
     expect(document.querySelector(".landing")).toBeNull();
     expect(document.querySelector(".landing-hero")).toBeNull();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
     expect(screen.getByText("AWS Engineer")).toBeTruthy();
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
   });
@@ -677,7 +675,7 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
     fireEvent.click(screen.getByText("Meine Treffer finden"));
     await screen.findByText("AWS Engineer");
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
   }
 
   it("Test A: Neue Suche invalidiert alte Ergebnisse sofort", async () => {
@@ -724,7 +722,7 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
 
     await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
     await waitFor(() => expect(screen.queryByText("Java Engineer")).toBeNull());
-    expect(document.querySelector(".layout-split")).toBeFalsy();
+    expect(document.querySelector(".results-area")).toBeFalsy();
     expect(document.querySelector(".landing")).toBeNull();
   });
 
@@ -747,7 +745,7 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
 
     await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
     expect(screen.getByText(/konnten aber gerade nicht per KI bewertet werden/)).toBeTruthy();
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
   });
 
   it("Test E: SearchForm zeigt B, Results zeigt währenddessen nichts (altes A entfernt)", async () => {
@@ -791,7 +789,7 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
     fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
 
     await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
-    expect(document.querySelector(".layout-split")).toBeFalsy();
+    expect(document.querySelector(".results-area")).toBeFalsy();
 
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Java Engineer");
@@ -830,13 +828,13 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
 
     // Layout-split ist nach erfolgreicher Suche B sichtbar
     await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
 
     // Explizites Matching starten
     fireEvent.click(screen.getByText("Mit KI bewerten"));
 
     // Während des Matchings bleibt Layout sichtbar
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
 
     // Model-Fallback: erster Versuch schlägt fehl
     attempt1.reject(new ApiError("unavailable", 502, "model_unavailable"));
@@ -862,7 +860,7 @@ describe("UX-/Datenquellen-Runde: Tests E, F, G, K, L, M", () => {
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
     fireEvent.click(screen.getByText("Meine Treffer finden"));
     await screen.findByText("AWS Engineer");
-    expect(document.querySelector(".layout-split")).toBeTruthy();
+    expect(document.querySelector(".results-area")).toBeTruthy();
   }
 
   it("Test E: Modellauswahl ist während der Suche deaktiviert", async () => {

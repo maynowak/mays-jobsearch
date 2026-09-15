@@ -474,6 +474,39 @@ body {
   padding: 24px 20px 60px;
 }
 
+/* Persistent search workspace for matcher */
+.container.layout-search {
+  max-width: 1220px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.results-area {
+  padding: 0 20px;
+}
+
+@media (min-width: 900px) {
+  .container.layout-search {
+    display: grid;
+    grid-template-columns: 1fr minmax(260px, 1fr);
+    gap: 32px;
+  }
+
+  .search-hero-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 32px;
+  }
+
+  .search-hero .search-card,
+  .search-hero .alert-card {
+    flex: 0 0 auto;
+    margin-top: 0;
+  }
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

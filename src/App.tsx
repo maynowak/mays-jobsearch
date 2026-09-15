@@ -5,7 +5,6 @@ import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
-import Hero from "./components/Hero";
 import LandingHero from "./components/LandingHero";
 import SearchForm from "./components/SearchForm";
 import JobSources from "./components/JobSources";
@@ -239,6 +238,8 @@ export default function App() {
   const canRematch = !!dataset && profilesEqual(dataset.profile, profile);
   const hasFoundJobs = !!dataset && foundJobs.length > 0;
 
+  const hasResults = matches.length > 0 || foundJobs.length > 0;
+
   if (route === "landing" && !isSearching) {
     return (
       <div className="landing">
@@ -247,11 +248,6 @@ export default function App() {
       </div>
     );
   }
-
-  // matches/foundJobs are the DISPLAYED results. They are not cleared when a new
-  // search starts, so the previous results stay visible while the new search runs.
-  const hasResults = matches.length > 0 || foundJobs.length > 0;
-  const showResults = hasResults;
 
   const searchCard = (
     <section className="card search-card">
@@ -289,9 +285,7 @@ export default function App() {
     <>
       <Navbar route="matcher" />
 
-      {showResults ? (
-        <Hero />
-      ) : (
+      <main className="container layout-search">
         <section className="search-hero">
           <div className="search-hero-inner">
             <div className="search-hero-text">
@@ -301,31 +295,22 @@ export default function App() {
             {searchCard}
           </div>
         </section>
-      )}
 
-      {showResults && (
-        <main className="container layout-split">
-          <aside className="sidebar">
-            {searchCard}
-            <AlertCard profile={profile} />
-          </aside>
-
-          <div className="content">
+        {hasResults ? (
+          <section className="results-area">
             <Results
               matches={matches}
               foundJobs={foundJobs}
               onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
               onAtsEvaluate={(job) => setAtsJob(job)}
             />
-          </div>
-        </main>
-      )}
-
-      {!showResults && (
-        <section className="alerts-section">
-          <AlertCard profile={profile} />
-        </section>
-      )}
+          </section>
+        ) : (
+          <section className="alerts-section">
+            <AlertCard profile={profile} />
+          </section>
+        )}
+      </main>
 
       {letterJob && (
         <LetterModal
