@@ -94,19 +94,48 @@ Tests that required updates:
 **After:**
 ```jsx
 <search-hero> (always)
-  <search-card>
+  ├── .search-hero-inner
+  │   ├── .search-hero-text
+  │   └── .search-card
 {hasResults ? <results-area> : <alerts-section>}
 ```
 
 ### 2. CSS Changes
 
-Added `.container.layout-search` with:
-- `display: flex; flex-direction: column;` for mobile
-- `display: grid; grid-template-columns: 1fr minmax(260px, 1fr);` for desktop
+**Initial CSS (Incorrect):**
+- `.container.layout-search` used `display: grid` on desktop
+- This created two columns, squeezing search-hero into narrow sidebar
 
-Kept existing `.search-hero` styles with:
-- `min-height: clamp(560px, 74vh, 760px);`
-- Background gradient
+**Fixed CSS:**
+- `.container.layout-search` stays as `display: flex; flex-direction: column;` always
+- `.search-hero` is WIDE, not squeezed
+- `.search-hero-inner` uses flex to arrange text and card horizontally
+- `.search-card` has `flex: 0 1 420px` for stable desktop width
+- `.search-hero-text` has `flex: 1 1 auto` to fill remaining space
+- Results and alerts appear BELOW search-hero, not beside
+
+Key CSS rules for desktop (min-width: 900px):
+```css
+.container.layout-search {
+  display: flex;          /* No grid splitting */
+  flex-direction: column; /* Vertical stack */
+}
+
+.search-hero {
+  width: 100%;            /* Full width */
+  min-height: clamp(560px, 74vh, 760px);
+}
+
+.search-hero-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 72px 20px;
+}
+```
 
 ### 3. Test Changes
 
@@ -169,14 +198,21 @@ No changes to:
 - HEAD: `7a3a164` (style: global design system)
 
 **After commits:**
-- HEAD: `3853abc` (fix: stabilize persistent search workspace)
-- origin/main: `3853abc`
+- Commit 1: `3853abc` (fix: stabilize persistent search workspace)
+- Commit 2: `1fdd61d` (fix: correct persistent search workspace desktop layout)
+- origin/main: `68d2626`
 - **IDENTICAL: YES**
 
 **Files changed:**
 - `src/App.tsx` - Layout restructuring, removed Hero usage
-- `src/App.test.tsx` - Updated assertions for new contract
-- `src/styles.css` - Added layout-search container styles
+- `src/App.test.tsx` - Updated assertions for persistent-search contract
+- `src/styles.css` - Fixed desktop layout to use flex not grid
+
+### Corrected Desktop Layout
+
+The initial CSS used `grid-template-columns` which created two columns and
+squeezed the search-hero. Fixed to use `flex-direction: column` so search
+always spans full width.
 
 ## DEPLOYMENT
 
