@@ -575,7 +575,7 @@ describe("No landing-page flash during a search", () => {
 
     jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
     // Explizites Matching wird durch "Mit KI bewerten" gestartet, nicht automatisch
-    // Nach Suche: Ergebnisse sofort sichtbar in .results-area; search-hero bleibt sichtbar
+    // Nach Suche: Ergebnisse sofort sichtbar in .results-workspace; search-hero bleibt sichtbar
     await screen.findByText("AWS Engineer");
     expect(screen.getByText("Mit KI bewerten")).toBeTruthy();
 

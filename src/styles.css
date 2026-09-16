@@ -1,5 +1,5 @@
 :root {
-  --bg: #f8fafc;
+  --bg: #0EA5A6;
   --surface: #ffffff;
   --text: #1b2333;
   --muted: #6b6255;
@@ -333,18 +333,18 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: clamp(560px, 74vh, 760px);
+  min-height: clamp(400px, 70vh, 720px);
+  width: 100%;
   color: var(--text);
   background:
     linear-gradient(
-      90deg,
-      rgba(246, 241, 231, 0.78) 0%,
-      rgba(246, 241, 231, 0.5) 40%,
-      rgba(246, 241, 231, 0.14) 65%,
-      rgba(246, 241, 231, 0.02) 100%
+      180deg,
+      #f8fafc 0%,
+      #f1f5f9 40%,
+      #e8f2f0 70%,
+      #d9f0ee 100%
     ),
     url("assets/images/job-matcher-next-step-searchpage.png") center / cover no-repeat;
-  border-bottom: 1px solid rgba(190, 172, 140, 0.4);
 }
 
 .search-hero-inner {
@@ -474,26 +474,6 @@ body {
   padding: 24px 20px 60px;
 }
 
-/* Product header - compact */
-.product-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 48px 20px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-
-.product-header-inner {
-  max-width: 1220px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 32px;
-}
-
 /* Persistent search workspace for matcher */
 .container.layout-search {
   max-width: 1220px;
@@ -501,7 +481,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 40%, #e8f2f0 70%, #d9f0ee 100%);
 }
 
 .search-sidebar {
@@ -514,28 +493,11 @@ body {
   min-width: 0;
 }
 
-.results-area {
-  padding: 0 20px;
-}
-
 @media (min-width: 900px) {
-  .product-header {
-    padding: 72px 20px;
-  }
-
-  .product-header-text {
-    flex: 1;
-    min-width: 0;
-  }
-
   .container.layout-search {
     display: grid;
     grid-template-columns: 360px 1fr;
     gap: 32px;
-  }
-
-  .search-sidebar .search-card {
-    max-width: 360px;
   }
 }
 
@@ -552,7 +514,7 @@ body {
   position: relative;
   z-index: 2;
   container-type: inline-size;
-  background: linear-gradient(160deg, #ffffff 0%, #f0fdf9 55%, #e8f2f0 100%);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -677,9 +639,9 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid #e2d7c1;
   border-radius: 10px;
-  background: var(--surface);
+  background: #fffdf9;
   font-size: 0.85rem;
   color: var(--text);
   cursor: pointer;
@@ -688,13 +650,13 @@ body {
 }
 
 .check-item:has(input:checked) {
-  border-color: var(--brand);
-  background: var(--brand-light);
+  border-color: #c9b28a;
+  background: #f6efe2;
 }
 
 .check-item input {
   margin: 0;
-  accent-color: var(--brand);
+  accent-color: #c9b28a;
 }
 
 /* City autocomplete (OpenPLZ) */
@@ -715,7 +677,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 16px 40px rgba(92, 76, 50, 0.18);
   max-height: 320px;
   overflow-y: auto;
 }
@@ -737,15 +699,14 @@ body {
 
 .city-suggestion:hover,
 .city-suggestion.active {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #f6efdd;
 }
 
 .city-plz {
   flex-shrink: 0;
   min-width: 52px;
   font-weight: 700;
-  color: var(--brand);
+  color: #8a6f43;
 }
 
 .city-name {
@@ -1228,10 +1189,8 @@ body {
 .alert-card {
   margin-top: 24px;
   padding: 24px;
-  background: linear-gradient(160deg, #ffffff 0%, #f0fdf9 55%, #e8f2f0 100%);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: linear-gradient(180deg, #ffffff 0%, #fbf7ef 55%, #f5efe2 100%);
+  border-color: #e3d7bf;
 }
 
 .alert-card h2 {
@@ -1718,21 +1677,21 @@ body {
 }
 
 .score-high {
-  background: #eff6e9;
-  border-color: rgba(16, 185, 129, 0.28);
-  color: #047857;
+  background: #e9f1e4;
+  border-color: rgba(63, 107, 67, 0.28);
+  color: #3f6b43;
 }
 
 .score-mid {
-  background: #fffbeb;
-  border-color: rgba(245, 158, 11, 0.32);
-  color: #a1621f;
+  background: #f9eed6;
+  border-color: rgba(154, 106, 31, 0.32);
+  color: #96681f;
 }
 
 .score-low {
-  background: #fef2f2;
-  border-color: rgba(220, 38, 38, 0.3);
-  color: #991b1b;
+  background: #f9e9e4;
+  border-color: rgba(163, 92, 68, 0.3);
+  color: #a35c44;
 }
 
 .match-body {

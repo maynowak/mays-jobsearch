@@ -285,15 +285,6 @@ export default function App() {
     <>
       <Navbar route="matcher" />
 
-      <header className="product-header">
-        <div className="product-header-inner">
-          <div className="product-header-text">
-            <h1>May&rsquo;s Job Matcher</h1>
-            <p className="tagline">{t("hero.tagline")}</p>
-          </div>
-        </div>
-      </header>
-
       <main className="container layout-search">
         <aside className="search-sidebar">
           {searchCard}
