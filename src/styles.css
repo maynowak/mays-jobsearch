@@ -27,7 +27,7 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background: #f8fafc;
   line-height: 1.5;
 }
 
@@ -1767,12 +1767,12 @@ body {
 }
 
 .tag {
-  background: var(--bg);
+  background: #f0f9f9;
   border: 1px solid var(--border);
   color: #6b6255;
   font-size: 0.8rem;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: 12px;
 }
 
 .why {
