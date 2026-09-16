@@ -552,7 +552,7 @@ body {
   position: relative;
   z-index: 2;
   container-type: inline-size;
-  background: var(--surface);
+  background: linear-gradient(160deg, #ffffff 0%, #f0fdf9 55%, #e8f2f0 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -1228,7 +1228,7 @@ body {
 .alert-card {
   margin-top: 24px;
   padding: 24px;
-  background: var(--surface);
+  background: linear-gradient(160deg, #ffffff 0%, #f0fdf9 55%, #e8f2f0 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
