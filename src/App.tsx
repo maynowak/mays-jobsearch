@@ -6,6 +6,7 @@ import { modelDisplayName } from "./lib/modelDisplayName";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
 import LandingHero from "./components/LandingHero";
+import Hero from "./components/Hero";
 import SearchForm from "./components/SearchForm";
 import JobSources from "./components/JobSources";
 import ModelSelector from "./components/ModelSelector";
@@ -284,6 +285,7 @@ export default function App() {
   return (
     <>
       <Navbar route="matcher" />
+      <Hero />
 
       <main className="container layout-search">
         <aside className="search-sidebar">
