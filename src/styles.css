@@ -41,6 +41,21 @@
   --score-low-bg: #f9e9e4;
   --score-low-border: rgba(163, 92, 68, 0.3);
   --score-low-text: #a35c44;
+
+  /* Badges */
+  --badge-bg: #eeece3;
+  --badge-text: #5a5140;
+  --badge-remote-bg: #eaf1ea;
+  --badge-remote-text: #4f6b52;
+  --badge-source-bg: #e8ecf3;
+  --badge-source-text: #41526b;
+  --badge-evaluated-bg: #f0e6cf;
+  --badge-evaluated-border: rgba(154, 118, 53, 0.3);
+  --badge-evaluated-text: #7a6238;
+  --badge-jobtype-bg: #efe9db;
+  --badge-jobtype-text: #6f5f3f;
+  --badge-contract-bg: #ede7da;
+  --badge-contract-text: #5f5748;
 }
 
 * {
@@ -1445,13 +1460,13 @@ body {
 }
 
 .badge-jobtype {
-  background: #efe9db;
-  color: #6f5f3f;
+  background: var(--badge-jobtype-bg);
+  color: var(--badge-jobtype-text);
 }
 
 .badge-contract {
-  background: #ede7da;
-  color: #5f5748;
+  background: var(--badge-contract-bg);
+  color: var(--badge-contract-text);
 }
 
 .remaining-facts {
@@ -1761,24 +1776,24 @@ body {
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
-  background: #eeece3;
-  color: #5a5140;
+  background: var(--badge-bg);
+  color: var(--badge-text);
 }
 
 .badge-remote {
-  background: #eaf1ea;
-  color: #4f6b52;
+  background: var(--badge-remote-bg);
+  color: var(--badge-remote-text);
 }
 
 .badge-source {
-  background: #e8ecf3;
-  color: #41526b;
+  background: var(--badge-source-bg);
+  color: var(--badge-source-text);
 }
 
 .badge-evaluated {
-  background: #f0e6cf;
-  border: 1px solid rgba(154, 118, 53, 0.3);
-  color: #7a6238;
+  background: var(--badge-evaluated-bg);
+  border: 1px solid var(--badge-evaluated-border);
+  color: var(--badge-evaluated-text);
 }
 
 .tags {
