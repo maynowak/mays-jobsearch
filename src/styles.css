@@ -56,6 +56,12 @@
   --badge-jobtype-text: #6f5f3f;
   --badge-contract-bg: #ede7da;
   --badge-contract-text: #5f5748;
+
+  /* Tag */
+  --tag-bg: #f0f9f9;
+  --tag-text: #6b6255;
+  --tag-border: var(--border);
+  --tag-radius: var(--border-radius-primary);
 }
 
 * {
@@ -1804,12 +1810,12 @@ body {
 }
 
 .tag {
-  background: #f0f9f9;
-  border: 1px solid var(--border);
-  color: #6b6255;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--tag-text);
   font-size: 0.8rem;
   padding: 3px 10px;
-  border-radius: var(--border-radius-primary);
+  border-radius: var(--tag-radius);
 }
 
 .why {
