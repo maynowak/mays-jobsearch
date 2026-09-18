@@ -611,9 +611,9 @@ body {
     inset: -1px;
     border-radius: inherit;
     background:
-      radial-gradient(ellipse at 50% 0%, rgba(13, 148, 136, 0.08) 0%, transparent 60%),
-      radial-gradient(ellipse at 50% 100%, rgba(22, 163, 74, 0.04) 0%, transparent 50%),
-      linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.02) 100%);
+      radial-gradient(ellipse at 50% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 100%, rgba(22, 163, 74, 0.05) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.03) 100%);
     pointer-events: none;
     z-index: -1;
   }
@@ -625,7 +625,7 @@ body {
     left: 3px;
     right: 3px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
     border-radius: inherit;
     pointer-events: none;
   }
@@ -633,8 +633,15 @@ body {
   .search-card:hover {
     box-shadow:
       var(--shadow),
-      0 20px 40px rgba(13, 148, 136, 0.12),
-      0 0 0 1px rgba(13, 148, 136, 0.08);
+      0 24px 48px rgba(13, 148, 136, 0.14),
+      0 0 0 1px rgba(13, 148, 136, 0.1);
+  }
+
+  .search-card:focus-within {
+    box-shadow:
+      var(--shadow),
+      0 0 0 3px rgba(13, 148, 136, 0.15),
+      0 20px 40px rgba(13, 148, 136, 0.12);
   }
 
 .search-card .step-heading {
