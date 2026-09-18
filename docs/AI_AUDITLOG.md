@@ -1,6 +1,6 @@
-==================================================
+=================================================
 EXECUTION LOG / CRASH RECOVERY — MANDATORY
-==================================================
+=================================================
 
 Maintain a current execution log throughout the audit:
 
@@ -43,3 +43,6 @@ At the end, finalize the log with the complete audit summary.
 IMPORTANT:
 The execution log itself is part of the audit workflow and must be
 kept accurate even if the audit remains completely read-only.
+
+# BORDER COLOR UPDATE
+- Updated border-primary color to #5afff0 after CSS changes.

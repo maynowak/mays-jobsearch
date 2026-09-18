@@ -13,6 +13,9 @@
   --green: #16a34a;
   --amber: #d97706;
   --red: #dc2626;
+  --border-primary: #5afff0;
+  --border-radius-primary: 30px;
+  --main-gradient: linear-gradient(180deg, #fff 0%, #dbf5fd 55%, #dbf5fd 100%);
 }
 
 * {
@@ -452,7 +455,7 @@ body {
   font-weight: 700;
   color: var(--text);
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: var(--border-radius-primary);
 }
 
 @media (max-width: 560px) {
@@ -501,24 +504,24 @@ body {
   }
 }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
+  .card {
+    background: var(--main-gradient);
+    border: 3px solid var(--border-primary);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
 
-.search-card {
-  height: auto;
-  padding: 24px;
-  position: relative;
-  z-index: 2;
-  container-type: inline-size;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
+  .search-card {
+    height: auto;
+    padding: 24px;
+    position: relative;
+    z-index: 2;
+    container-type: inline-size;
+    background: var(--main-gradient);
+    border: 3px solid var(--border-primary);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
 
 .search-card .step-heading {
   margin: 0 0 16px;
@@ -676,7 +679,7 @@ body {
   list-style: none;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--border-radius-primary);
   box-shadow: 0 16px 40px rgba(92, 76, 50, 0.18);
   max-height: 320px;
   overflow-y: auto;
@@ -815,7 +818,7 @@ body {
   padding: 24px 16px;
   text-align: center;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: var(--border-radius-primary);
   border: 1.5px dashed rgba(110, 95, 78, 0.35);
   background: linear-gradient(180deg, rgba(255, 253, 248, 0.95), rgba(246, 241, 229, 0.8));
   box-shadow:
@@ -1077,7 +1080,7 @@ body {
   overflow-y: auto;
   background: #fffdf9;
   border: 1px solid #e2d7c1;
-  border-radius: 12px;
+  border-radius: var(--border-radius-primary);
   box-shadow: 0 12px 28px rgba(92, 76, 50, 0.16);
 }
 
@@ -1186,12 +1189,12 @@ body {
   margin-top: 0;
 }
 
-.alert-card {
-  margin-top: 24px;
-  padding: 24px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbf7ef 55%, #f5efe2 100%);
-  border-color: #e3d7bf;
-}
+  .alert-card {
+    margin-top: 24px;
+    padding: 24px;
+    background: var(--main-gradient);
+    border-color: var(--border-primary);
+  }
 
 .alert-card h2 {
   margin: 0 0 4px;
@@ -1369,12 +1372,12 @@ body {
   gap: 12px;
 }
 
-.remaining-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px 18px;
-}
+  .remaining-card {
+    background: var(--main-gradient);
+    border: 3px solid var(--border-primary);
+    border-radius: var(--border-radius-primary);
+    padding: 16px 18px;
+  }
 
 .remaining-card h4 {
   margin: 0;
@@ -1642,16 +1645,16 @@ body {
   gap: 20px;
 }
 
-.match-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 14px 34px rgba(92, 76, 50, 0.12);
-  padding: 24px;
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
+  .match-card {
+    background: var(--main-gradient);
+    border: 3px solid var(--border-primary);
+    border-radius: var(--radius);
+    box-shadow: 0 14px 34px rgba(92, 76, 50, 0.12);
+    padding: 24px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
 
 .rank {
   flex-shrink: 0;
@@ -1772,7 +1775,7 @@ body {
   color: #6b6255;
   font-size: 0.8rem;
   padding: 3px 10px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-primary);
 }
 
 .why {
@@ -1967,7 +1970,8 @@ body {
 
 .modal-box {
   background: var(--surface);
-  border-radius: var(--radius);
+  border: 3px solid var(--border-primary);
+  border-radius: var(--border-radius-primary);
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.35);
   width: 100%;
   max-width: 680px;
@@ -2151,7 +2155,8 @@ body {
 
 .ats-section {
   background: var(--surface);
-  border-radius: var(--radius);
+  border: 3px solid var(--border-primary);
+  border-radius: var(--border-radius-primary);
   border: 1px solid var(--border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
