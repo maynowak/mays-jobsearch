@@ -80,6 +80,10 @@
   --content-pre-radius: 8px;
   --content-code-radius: 4px;
   --content-table-header-bg: #f6efe2;
+
+  /* City suggestions */
+  --city-suggestion-hover-bg: #f6efdd;
+  --city-suggestion-radius: 8px;
 }
 
 * {
@@ -750,7 +754,7 @@ body {
   width: 100%;
   padding: 8px 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--city-suggestion-radius);
   background: none;
   text-align: left;
   font-size: 0.95rem;
@@ -760,7 +764,7 @@ body {
 
 .city-suggestion:hover,
 .city-suggestion.active {
-  background: #f6efdd;
+  background: var(--city-suggestion-hover-bg);
 }
 
 .city-plz {
