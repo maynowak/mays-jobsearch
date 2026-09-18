@@ -62,6 +62,15 @@
   --tag-text: #6b6255;
   --tag-border: var(--border);
   --tag-radius: var(--border-radius-primary);
+
+  /* Why/Prepare boxes */
+  --why-bg: #faf6ec;
+  --why-border: #ede3cf;
+  --why-radius: 10px;
+  --prepare-bg: #f6eddb;
+  --prepare-border: #c9a86b;
+  --prepare-radius: 10px;
+  --prepare-text: #8a6f43;
 }
 
 * {
@@ -1821,9 +1830,9 @@ body {
 .why {
   margin: 14px 0 0;
   padding: 12px 14px;
-  background: #faf6ec;
-  border: 1px solid #ede3cf;
-  border-radius: 10px;
+  background: var(--why-bg);
+  border: 1px solid var(--why-border);
+  border-radius: var(--why-radius);
   color: var(--text);
   font-size: 0.95rem;
   overflow-wrap: anywhere;
@@ -1832,15 +1841,15 @@ body {
 .prepare {
   margin: 12px 0 0;
   padding: 12px 14px;
-  background: #f6eddb;
-  border-left: 4px solid #c9a86b;
-  border-radius: 0 10px 10px 0;
+  background: var(--prepare-bg);
+  border-left: 4px solid var(--prepare-border);
+  border-radius: 0 var(--prepare-radius) var(--prepare-radius) 0;
   font-size: 0.95rem;
   overflow-wrap: anywhere;
 }
 
 .prepare strong {
-  color: #8a6f43;
+  color: var(--prepare-text);
 }
 
 .apply-link {
