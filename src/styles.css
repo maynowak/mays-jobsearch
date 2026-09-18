@@ -377,7 +377,10 @@ body {
       rgba(224, 234, 245, 0.4) 60%,
       rgba(209, 226, 240, 0.1) 100%
     ),
-    url("assets/images/job-matcher-next-step-searchpage.png") center 55% / cover no-repeat;
+    image-set(
+      url("/job-matcher-next-step-searchpage.webp") type("image/webp"),
+      url("assets/images/job-matcher-next-step-searchpage.png") type("image/png")
+    ) center 55% / cover no-repeat;
   border-bottom: 1px solid var(--border);
 }
 
@@ -416,7 +419,10 @@ body {
   color: var(--text);
   background:
     var(--workspace-gradient),
-    url("assets/images/job-matcher-next-step-searchpage.png") center / cover no-repeat;
+    image-set(
+      url("/job-matcher-next-step-searchpage.webp") type("image/webp"),
+      url("assets/images/job-matcher-next-step-searchpage.png") type("image/png")
+    ) center / cover no-repeat;
 }
 
 .search-hero-inner {
@@ -452,7 +458,10 @@ body {
         rgba(246, 241, 231, 0.62) 55%,
         rgba(246, 241, 231, 0.3) 100%
       ),
-      url("assets/images/job-matcher-next-step-searchpage.png") 75% center / cover no-repeat;
+      image-set(
+        url("/job-matcher-next-step-searchpage.webp") type("image/webp"),
+        url("assets/images/job-matcher-next-step-searchpage.png") type("image/png")
+      ) 75% center / cover no-repeat;
   }
   .search-hero-inner {
     padding: 48px 20px;
@@ -486,7 +495,10 @@ body {
       rgba(24, 19, 12, 0.22) 55%,
       rgba(24, 19, 12, 0.06) 100%
     ),
-    url("assets/images/job-matcher-next-step.png") 55% center / cover no-repeat;
+    image-set(
+      url("/job-matcher-next-step.webp") type("image/webp"),
+      url("assets/images/job-matcher-next-step.png") type("image/png")
+    ) 55% center / cover no-repeat;
 }
 
 .landing-hero-inner {
