@@ -71,6 +71,15 @@
   --prepare-border: #c9a86b;
   --prepare-radius: 10px;
   --prepare-text: #8a6f43;
+
+  /* HTML content rendering */
+  --content-blockquote-bg: #faf6ec;
+  --content-blockquote-border: #c9b28a;
+  --content-blockquote-radius: 8px;
+  --content-code-bg: #f4eee2;
+  --content-pre-radius: 8px;
+  --content-code-radius: 4px;
+  --content-table-header-bg: #f6efe2;
 }
 
 * {
@@ -1598,18 +1607,18 @@ body {
 .html-content blockquote {
   margin: 1em 0;
   padding: 0.5em 1em;
-  border-left: 4px solid #c9b28a;
-  background: #faf6ec;
-  border-radius: 0 8px 8px 0;
+  border-left: 4px solid var(--content-blockquote-border);
+  background: var(--content-blockquote-bg);
+  border-radius: 0 var(--content-blockquote-radius) var(--content-blockquote-radius) 0;
   font-style: italic;
 }
 
 .html-content pre {
   margin: 1em 0;
   padding: 1em;
-  background: #f4eee2;
+  background: var(--content-code-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--content-pre-radius);
   overflow-x: auto;
   font-size: 0.85em;
   line-height: 1.5;
@@ -1617,9 +1626,9 @@ body {
 
 .html-content code {
   font-family: inherit;
-  background: #f4eee2;
+  background: var(--content-code-bg);
   padding: 0.1em 0.3em;
-  border-radius: 4px;
+  border-radius: var(--content-code-radius);
   font-size: 0.9em;
 }
 
@@ -1644,7 +1653,7 @@ body {
 }
 
 .html-content th {
-  background: #f6efe2;
+  background: var(--content-table-header-bg);
   font-weight: 700;
 }
 
