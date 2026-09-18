@@ -8,16 +8,16 @@ export function PrivacyNotice({
   if (!provider) return null;
 
   return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-      <h4 className="font-semibold text-yellow-800 mb-2">AI Optimization Notice</h4>
-      <p className="text-sm text-yellow-700 mb-2">
+    <div className="privacy-notice">
+      <h4 className="privacy-notice__title">AI Optimization Notice</h4>
+      <p className="privacy-notice__description">
         We offer AI-powered suggestions for your CV. Only minimal data is sent:
       </p>
-      <ul className="text-sm text-yellow-700 mb-2 list-disc list-inside">
+      <ul className="privacy-notice__list">
         <li>Job requirement (public)</li>
         <li>Your matched skill keyword</li>
       </ul>
-      <p className="text-xs text-yellow-600">
+      <p className="privacy-notice__meta">
         Provider: {provider} | Status: {privacyStatus || "Unknown"}
       </p>
     </div>

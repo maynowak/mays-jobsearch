@@ -10,33 +10,33 @@ export function ConsentGate({ onAccept, provider, privacyStatus }: ConsentGatePr
   const [consent, setConsent] = useState(false);
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border mb-4">
-      <h4 className="font-semibold mb-2">Enable AI Optimization</h4>
-      <p className="text-sm text-gray-600 mb-3">
+    <div className="consent-gate">
+      <h4 className="consent-gate__title">Enable AI Optimization</h4>
+      <p className="consent-gate__description">
         The AI will receive:
       </p>
-      <ul className="text-sm text-gray-600 mb-3">
+      <ul className="consent-gate__list">
         <li>• Job requirement information</li>
         <li>• Your matched skill keywords</li>
       </ul>
-      <p className="text-xs text-gray-500 mb-3">
+      <p className="consent-gate__meta">
         Provider: {provider} | Status: {privacyStatus}
       </p>
       
-      <label className="flex items-center gap-2 mb-3">
+      <label className="consent-gate__consent">
         <input
           type="checkbox"
           checked={consent}
           onChange={(e) => setConsent(e.currentTarget.checked)}
-          className="rounded border-gray-300"
+          className="consent-gate__checkbox"
         />
-        <span className="text-sm">I consent to AI processing</span>
+        <span className="consent-gate__consent-text">I consent to AI processing</span>
       </label>
       
       <button
         onClick={onAccept}
         disabled={!consent}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="consent-gate__action"
       >
         Continue
       </button>

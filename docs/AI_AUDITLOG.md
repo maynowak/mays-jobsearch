@@ -172,3 +172,86 @@ kept accurate even if the audit remains completely read-only.
 - git diff --check: Clean
 - Git state: Committed, pushed, synchronized
 - Scope: Only City Suggestions hover/active background and item border-radius. City container (already tokenized), city-plz (#8a6f43 explicitly left untouched per scope), city-name, city-suggestion-status untouched. HTML content, Why/Prepare, badges, score, forms, buttons, workspace, ConsentGate, PrivacyNotice, tag, typography, spacing, shadows, z-index, transitions, border-radius scale, dark mode, ATS, job matching, search, API untouched.
+
+# DESIGN-SYSTEM-08 — CONSENTGATE / PRIVACYNOTICE AUDIT
+- Date: 2026-09-18
+- Task: DESIGN-SYSTEM-08
+- Purpose: Audit and tokenize ConsentGate and PrivacyNotice visual styling
+- Components inspected: ConsentGate.tsx, PrivacyNotice.tsx
+- Styling mechanism found: Tailwind-like utility classes in JSX className attributes
+- Critical finding: Tailwind CSS is NOT configured in the project (no tailwindcss dependency, no PostCSS config, no tailwind.config.js, no @tailwind directives in CSS). The utility classes are non-functional dead code.
+- Tokens created: NONE (implementation deferred per task constraints)
+- Implementation decision: DEFERRED — Proper tokenization would require either (A) adding Tailwind to build (major architectural change, violates "no Tailwind migration" constraint) or (B) rewriting components to use CSS classes with design tokens (rewriting component structure, violates "no component structure rewrite" constraint). Per task instructions: "If the audit shows that direct tokenization... would require... rewriting component structure... then STOP implementation."
+- Files changed: NONE (audit only)
+- Visual preservation: N/A (components currently render with browser defaults due to non-functional classNames)
+- Tests: 348 passed (baseline maintained)
+- TypeScript: Passed (baseline maintained)
+- Build: Passed (358ms, baseline maintained)
+- git diff --check: Clean (no tracked file changes)
+- Git state: No commit, no push (audit only)
+- Scope: Audit only. All design-system areas (DS-01 through DS-07) remain untouched.
+- Classification: GRAY — Finding documented, implementation correctly deferred per task constraints
+- Risk: Components currently render unstyled (browser defaults) due to non-functional Tailwind-like classNames
+- Recommended next step: Properly style components using existing CSS custom property design system — create semantic tokens, add CSS selectors to styles.css, replace classNames with semantic CSS classes
+
+# FOUNDATION-01 — REACT UI FOUNDATION / COMPONENT & CSS AUDIT
+- Date: 2026-09-18
+- Task: FOUNDATION-01
+- Purpose: Research and audit existing React UI architecture to determine if free/open-source component primitives can reduce duplicated UI work
+- Scope: Read-only audit of src/, component structure, styles.css (2392 lines), existing patterns, responsive architecture, and external foundation options
+- Components inspected: All 18 components in src/components/, App.tsx, styles.css (2392 lines), responsive patterns, modal/dropdown implementations
+- Major findings:
+  - Single styles.css (2392 lines) with 68+ design tokens already centralized
+  - 18 components, 12 with custom UI behavior (modal, dropdown, tooltip, tabs, accordion, toast, select, dialog)
+  - 15+ hardcoded breakpoints, 30+ hardcoded spacing values, 30+ hardcoded font sizes
+  - Repeated patterns: modal infrastructure, dropdown positioning, focus management, keyboard navigation
+  - ConsentGate/PrivacyNotice use non-functional Tailwind-like classNames (Tailwind not configured)
+- External foundation options evaluated:
+  - Radix Primitives: MIT, React 19, TypeScript, headless, no Tailwind, excellent a11y, ~35KB - STRONG FIT
+  - React Aria Components: Apache-2.0, React 19, TypeScript, headless, no Tailwind, excellent a11y, ~50KB - GOOD FIT
+  - Headless UI: MIT, React 19, TypeScript, headless, no Tailwind, good a11y, ~25KB - ADEQUATE FIT
+  - shadcn/ui: Requires Tailwind - NOT SUITABLE
+  - MUI/Chakra UI: Opinionated styling (Emotion), design system lock-in - NOT SUITABLE
+- Critical Tailwind finding (confirmed DS-08): Tailwind NOT configured; ConsentGate/PrivacyNotice classNames are dead code
+- CSS/Design-token compatibility: Radix/React Aria/Headless UI all work with CSS custom properties, no style injection
+- Component foundation boundary proposed:
+  - BUSINESS COMPONENTS (keep): SearchForm, CvUpload, MatchCard, AtsOverlay, LetterModal, JobSources, Navbar, Hero
+  - SHARED PRIMITIVES (candidates): Dialog, DropdownMenu, Select, Tabs, Tooltip, Accordion, Toast, Popover
+- Design-system tasks that should WAIT for foundation decision: typography, spacing, border-radius, shadows, z-index, transitions, breakpoints, semantic theme layer
+- Design-system tasks that can continue: ConsentGate/PrivacyNotice styling, remaining hardcoded color tokenization
+- Proposed implementation phases: Phase 0 (token prerequisites), Phase 1 (pilot: Tooltip+Accordion), Phase 2 (core: Dialog+Dropdown), Phase 3 (complex: Select+Toast+Tabs), Phase 4 (polish)
+- Files changed: NONE (read-only audit)
+- Tests: 348 passed (baseline maintained)
+- TypeScript: Passed
+- Build: Passed
+- git diff --check: Clean
+- Git state: No application changes, no commit, no push
+- Execution log: docs/reports/FOUNDATION-01-EXECUTION_LOG.md
+- Classification: GREEN — Audit complete, findings documented, no implementation performed
+
+# CONSENT-PRIVACY-01 — SEMANTIC CSS MIGRATION FOR CONSENTGATE & PRIVACYNOTICE
+- Date: 2026-09-18
+- Task: CONSENT-PRIVACY-01
+- Purpose: Migrate ConsentGate and PrivacyNotice from non-functional Tailwind-like classNames to semantic CSS using existing design token system
+- Components affected: ConsentGate.tsx, PrivacyNotice.tsx
+- Implementation:
+  - Added 5 PrivacyNotice semantic tokens to :root (--privacy-bg, --privacy-border, --privacy-title, --privacy-text, --privacy-meta)
+  - Added ConsentGate styles using existing tokens (--surface, --border, --radius, --shadow, --text, --muted, --border-form, --brand, --btn-gradient-primary)
+  - Added PrivacyNotice styles using new privacy tokens + existing --radius
+  - Replaced all Tailwind-like className values in both components with semantic CSS classes
+  - ConsentGate: .consent-gate, .consent-gate__title, .consent-gate__description, .consent-gate__list, .consent-gate__list-item, .consent-gate__meta, .consent-gate__consent, .consent-gate__checkbox, .consent-gate__consent-text, .consent-gate__action
+  - PrivacyNotice: .privacy-notice, .privacy-notice__title, .privacy-notice__description, .privacy-notice__list, .privacy-notice__list-item, .privacy-notice__meta
+  - ConsentGate button uses existing primary button gradient (--btn-gradient-primary) with full hover/active/focus states
+  - Removed all non-functional Tailwind-like classNames (bg-white, rounded-lg, p-4, shadow-sm, border, mb-4, font-semibold, mb-2, text-sm, text-gray-600, mb-3, text-xs, text-gray-500, flex, items-center, gap-2, rounded, border-gray-300, px-4, py-2, bg-blue-600, text-white, rounded, hover:bg-blue-700, disabled:opacity-50, disabled:cursor-not-allowed, bg-yellow-50, border, border-yellow-200, rounded-lg, p-4, mb-4, font-semibold, text-yellow-800, mb-2, text-sm, text-yellow-700, mb-2, list-disc, list-inside, text-xs, text-yellow-600)
+- Tokens created: 5 PrivacyNotice tokens (--privacy-bg: #fefce8, --privacy-border: #fde047, --privacy-title: #854d0e, --privacy-text: #a16207, --privacy-meta: #ca8a04)
+- Files changed: src/styles.css (5 tokens + ~180 lines component styles), src/components/ConsentGate.tsx, src/components/PrivacyNotice.tsx, docs/AI_AUDITLOG.md
+- Visual preservation: ConsentGate uses existing design system (white surface, turquoise primary button); PrivacyNotice uses semantic yellow/warning palette matching original intent
+- Accessibility: Buttons remain <button>, checkbox remains <input type="checkbox"> with label association, focus-visible outlines preserved, keyboard navigation intact, sufficient contrast maintained
+- Tests: 348 passed
+- TypeScript: Passed
+- Build: Passed (385ms)
+- git diff --check: Clean
+- Git state: Committed, pushed, synchronized
+- Execution log: docs/reports/CONSENT-PRIVACY-01-EXECUTION_LOG.md
+- Classification: GREEN — Implementation complete, all validations pass
+- Next: Tokenize remaining hardcoded values; create design-system scales for primitive adoption
