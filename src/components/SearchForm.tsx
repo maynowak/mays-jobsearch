@@ -5,6 +5,7 @@ import { EMPLOYMENT_TYPES, RADIUS_KM_OPTIONS, WORK_MODES } from "../types";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import CvUpload from "./CvUpload";
+import { parseSkills, formatSkills } from "../lib/skills";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
 
@@ -41,7 +42,8 @@ export default function SearchForm({
 }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
-  const { skills, targetRole } = value;
+  const { skills: rawSkills, targetRole } = value;
+  const [parsedSkills, setParsedSkills] = useState<string[]>(() => parseSkills(rawSkills));
   const {
     city,
     suggestions,
@@ -79,11 +81,17 @@ export default function SearchForm({
     return [...list, type];
   };
 
+  const handleSkillsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const parsed = parseSkills(e.target.value);
+    setParsedSkills(parsed);
+    onChange({ ...value, skills: formatSkills(parsed) });
+  };
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (mode === "cv") return;
     onSubmit({
-      skills: skills.trim(),
+      skills: formatSkills(parsedSkills),
       targetRole: targetRole.trim(),
       city: city.trim(),
       radiusKm: value.radiusKm,
@@ -129,8 +137,8 @@ export default function SearchForm({
             id="skills"
             type="text"
             placeholder={t("search.skillsPh")}
-            value={skills}
-            onChange={(e) => onChange({ ...value, skills: e.target.value })}
+            value={formatSkills(parsedSkills)}
+            onChange={handleSkillsChange}
             disabled={busy}
             autoComplete="off"
           />

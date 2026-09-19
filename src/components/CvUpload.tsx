@@ -4,6 +4,7 @@ import type { Profile, SuggestedProfile } from "../types";
 import { createProfile, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
+import { parseSkills, formatSkills } from "../lib/skills";
 
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
 const MIN_READABLE_CHARS = 20;
@@ -286,7 +287,7 @@ function EditableProfile({
   onManual: () => void;
 }) {
   const { t } = useLang();
-  const [skills, setSkills] = useState(suggested.skills.join(", "));
+  const [parsedSkills, setParsedSkills] = useState<string[]>(() => suggested.skills);
   const [experienceLevel, setExperienceLevel] = useState(suggested.experienceLevel);
   const [targetRoles, setTargetRoles] = useState(suggested.targetRoles.join(", "));
   const [cityValue, setCityValue] = useState(suggested.location);
@@ -304,8 +305,8 @@ function EditableProfile({
 
   const confirm = () => {
     onSubmit({
-      skills: skills.trim(),
-      targetRole: targetRoles.trim(),
+      skills: formatSkills(parsedSkills),
+      targetRole: suggested.targetRoles[0] || "",
       city: city.trim(),
       radiusKm: null,
       workModes: [],
@@ -322,8 +323,11 @@ function EditableProfile({
         <input
           id="cv-skills"
           type="text"
-          value={skills}
-          onChange={(e) => setSkills(e.target.value)}
+          value={formatSkills(parsedSkills)}
+          onChange={(e) => {
+            const parsed = parseSkills(e.target.value);
+            setParsedSkills(parsed);
+          }}
           disabled={busy}
           autoComplete="off"
         />

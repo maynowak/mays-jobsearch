@@ -196,3 +196,43 @@ export interface AtsAnalysisResult {
   criticalGaps: AtsRequirement[];
   recommendations: AtsRecommendation[];
 }
+
+export type CvProcessingStep =
+  | "reading"
+  | "target"
+  | "idle"
+  | "document-selected"
+  | "consent-required"
+  | "consent-given"
+  | "creating-profile"
+  | "anonymizing"
+  | "goal-selection"
+  | "ats-processing"
+  | "ai-searching"
+  | "success"
+  | "error";
+
+export interface CvDocument {
+  id: string;
+  name: string;
+  size: number;
+  selected: boolean;
+  file: File;
+}
+
+export type AnonymizationMode = "anonymized" | "not-anonymized";
+
+export type ProcessingGoal = "ats" | "ai-search";
+
+export interface CvProcessingState {
+  step: CvProcessingStep;
+  documents: CvDocument[];
+  selectedDocumentId: string | null;
+  consentGiven: boolean;
+  anonymizationMode: AnonymizationMode;
+  processingGoal: ProcessingGoal;
+  selectedModel: string | null;
+  error: string | null;
+  profile: Profile | null;
+  isProcessing: boolean;
+}
