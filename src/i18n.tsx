@@ -129,6 +129,11 @@ const en: Dict = {
   "cv.consentCancel": "Cancel",
   "cv.consentConfirm": "Allow processing",
 
+  "cv.backToEdit": "Back to edit",
+  "cv.savingProfile": "Saving profile…",
+  "cv.backToDocuments": "Back to documents",
+  "cv.profileReady": "Profile created",
+
   "model.label": "AI model",
   "model.loading": "Loading AI models …",
   "model.loadFailed": "Could not load model selection.",
@@ -382,6 +387,11 @@ const de: Dict = {
   "cv.consentCheckbox": "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
   "cv.consentCancel": "Abbrechen",
   "cv.consentConfirm": "Verarbeitung erlauben",
+
+  "cv.backToEdit": "Zurück zum Bearbeiten",
+  "cv.savingProfile": "Profil wird gespeichert…",
+  "cv.backToDocuments": "Zurück zu Dokumenten",
+  "cv.profileReady": "Profil erstellt",
 
   "model.label": "KI-Modell",
   "model.loading": "KI-Modelle werden geladen …",

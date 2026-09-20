@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal } from "./types";
-import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "./api";
+import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile } from "./api";
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
+import { extractPdfText } from "./lib/pdf";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
 import LandingHero from "./components/LandingHero";
@@ -23,6 +24,7 @@ import CvProcessingSteps from "./components/CvProcessingSteps";
 import CvGoalSelection from "./components/CvGoalSelection";
 import CvModelSelector from "./components/CvModelSelector";
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
+import CvProfileResult from "./components/CvProfileResult";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
@@ -59,7 +61,7 @@ export default function App() {
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
 
-  // CV Processing State (Phases 6.1/6.2)
+  // CV Processing State (Phases 6.1/6.2/6.3)
   const [cvState, setCvState] = useState<CvProcessingState>({
     step: "idle",
     documents: [],
@@ -70,6 +72,8 @@ export default function App() {
     selectedModel: null,
     error: null,
     profile: null,
+    suggestedProfile: null,
+    fallbackNote: false,
     isProcessing: false,
   });
 
@@ -247,6 +251,22 @@ export default function App() {
   // CV Processing Handlers (Phases 6.1/6.2)
   const generateDocumentId = () => `cv-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+  function normalizeText(text: string): string {
+    return text.replace(/\s+/g, " ").trim();
+  }
+
+  async function sha256Hex(text: string): Promise<string | null> {
+    try {
+      if (!crypto?.subtle) return null;
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+    } catch {
+      return null;
+    }
+  }
+
   const handleAddCvFiles = (files: FileList) => {
     const newDocuments: CvDocument[] = Array.from(files).map((file) => ({
       id: generateDocumentId(),
@@ -297,22 +317,81 @@ export default function App() {
       return;
     }
 
-    // Consent already given - proceed to next steps (6.3+)
-    // For now, just set step to profile creation (placeholder for 6.3+)
-    setCvState((prev) => ({
-      ...prev,
-      step: "creating-profile",
-      isProcessing: true,
-    }));
+    // Consent already given - proceed to profile creation (6.3)
+    createProfileFromPdf(selectedDoc);
   };
 
   const handleCvConsentAccept = () => {
+    const selectedDoc = cvState.documents.find((d) => d.selected);
+    if (!selectedDoc) return;
+
     setCvState((prev) => ({
       ...prev,
       consentGiven: true,
       step: "creating-profile",
       isProcessing: true,
     }));
+
+    // Start profile creation after consent
+    createProfileFromPdf(selectedDoc);
+  };
+
+  const createProfileFromPdf = async (doc: CvDocument) => {
+    const { t } = useLang();
+    setCvState((prev) => ({
+      ...prev,
+      step: "creating-profile",
+      isProcessing: true,
+      error: null,
+    }));
+
+    try {
+      // Extract text from PDF
+      const text = await extractPdfText(doc.file);
+      if (text.replace(/\s/g, "").length < 20) {
+        setCvState((prev) => ({
+          ...prev,
+          step: "error",
+          isProcessing: false,
+          error: t("cv.scannedError"),
+        }));
+        return;
+      }
+
+      const normalized = normalizeText(text);
+      const hash = await sha256Hex(normalized);
+
+      // Determine model to use
+      const modelToUse = cvState.selectedModel || effectiveModel;
+
+      // Create profile using existing API with model fallback
+      const { data: suggestedProfile, usedFallback } = await withModelFallback({
+        initialModel: modelToUse,
+        availableModels: models.map((m) => m.id),
+        recommendedModel,
+        request: (m, attempt) => createProfile(normalized, m, hash ?? undefined, attempt),
+      });
+
+      setCvState((prev) => ({
+        ...prev,
+        suggestedProfile,
+        step: "profile-ready",
+        isProcessing: false,
+        fallbackNote: usedFallback,
+      }));
+    } catch (err) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error:
+          isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : isModelUnavailable(err)
+            ? t("model.unavailable")
+            : t("cv.processError"),
+      }));
+    }
   };
 
   const handleCvConsentCancel = () => {
@@ -454,6 +533,41 @@ export default function App() {
             recommendedModel={recommendedModel}
           />
         </>
+      )}
+
+      {cvState.step === "profile-ready" && cvState.suggestedProfile && (
+        <CvProfileResult
+          suggested={cvState.suggestedProfile}
+          busy={cvState.isProcessing}
+          loadingLabel={t("cv.savingProfile")}
+          onConfirm={(profile) => {
+            setProfile(profile);
+            setCvState((prev) => ({
+              ...prev,
+              step: "success",
+              profile,
+              suggestedProfile: null,
+              fallbackNote: false,
+            }));
+          }}
+          onBack={() => {
+            setCvState((prev) => ({
+              ...prev,
+              step: "document-selected",
+              suggestedProfile: null,
+              fallbackNote: false,
+            }));
+          }}
+        />
+      )}
+
+      {cvState.step === "error" && cvState.error && (
+        <div className="cv-error-state" role="alert">
+          <p className="alert alert-error">{cvState.error}</p>
+          <button type="button" className="btn-ghost" onClick={() => setCvState((prev) => ({ ...prev, step: "document-selected", error: null }))}>
+            {t("cv.backToDocuments")}
+          </button>
+        </div>
       )}
     </section>
   );

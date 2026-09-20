@@ -210,7 +210,8 @@ export type CvProcessingStep =
   | "ats-processing"
   | "ai-searching"
   | "success"
-  | "error";
+  | "error"
+  | "profile-ready";
 
 export interface CvDocument {
   id: string;
@@ -234,5 +235,7 @@ export interface CvProcessingState {
   selectedModel: string | null;
   error: string | null;
   profile: Profile | null;
+  suggestedProfile: SuggestedProfile | null;
+  fallbackNote: boolean;
   isProcessing: boolean;
 }
