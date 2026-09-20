@@ -50,7 +50,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Initialize CodeQL"
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -86,25 +86,8 @@ jobs:
         run: npm test -- --run
 
       - name: "Perform CodeQL Analysis"
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
           upload: true
           sarif-category: ${{ matrix.language }}
-
-  codeql-scan-summary:
-    name: "CodeQL Scan Summary"
-    needs: analyze
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: "Check for CodeQL alerts"
-        uses: github/codeql-action/analyze@v3
-        with:
-          upload: false
-        continue-on-error: true
-
-      - name: "Summary"
-        run: |
-          echo "CodeQL analysis completed for TypeScript and JavaScript"
-          echo "Results available in Security tab > Code scanning alerts"
