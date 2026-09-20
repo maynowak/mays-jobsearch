@@ -500,6 +500,7 @@ export default function App() {
         isProcessing: false,
         aiSearchResult: { jobs: jobsResponse.jobs, meta: aiSearchMeta },
         matches: matchResult.matches,
+        foundJobs: jobsResponse.jobs,
       }));
     } catch (err) {
       setCvState((prev) => ({
@@ -800,12 +801,16 @@ export default function App() {
 
       {cvState.step === "ai-complete" && cvState.aiSearchResult && (
         <div className="cv-ai-complete">
-          <p className="cv-ai-complete__message">{t("cv.aiSearchComplete", { count: cvState.aiSearchResult.jobs.length })}</p>
+          {cvState.aiSearchResult.jobs.length > 0 ? (
+            <p className="cv-ai-complete__message">{t("cv.aiSearchComplete", { count: cvState.aiSearchResult.jobs.length })}</p>
+          ) : (
+            <p className="cv-ai-complete__message">{t("cv.aiSearchNoResults")}</p>
+          )}
           <div className="cv-ai-complete__actions">
             <button
               type="button"
               className="cv-continue-btn"
-              onClick={() => setCvState((prev) => ({ ...prev, step: "goal-selection", aiSearchResult: null }))}
+              onClick={() => setCvState((prev) => ({ ...prev, step: "goal-selection", aiSearchResult: null, matches: [], foundJobs: [] }))}
             >
               {t("cv.backToGoalSelection")}
             </button>
