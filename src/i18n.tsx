@@ -133,6 +133,10 @@ const en: Dict = {
   "cv.savingProfile": "Saving profile…",
   "cv.backToDocuments": "Back to documents",
   "cv.profileReady": "Profile created",
+  "cv.continue": "Continue",
+  "cv.continueProcessing": "Processing…",
+  "cv.anonymizingText": "Anonymizing CV text…",
+  "cv.preparingProfile": "Preparing profile…",
 
   "model.label": "AI model",
   "model.loading": "Loading AI models …",
@@ -392,6 +396,10 @@ const de: Dict = {
   "cv.savingProfile": "Profil wird gespeichert…",
   "cv.backToDocuments": "Zurück zu Dokumenten",
   "cv.profileReady": "Profil erstellt",
+  "cv.continue": "Weiter",
+  "cv.continueProcessing": "Wird verarbeitet…",
+  "cv.anonymizingText": "CV-Text wird anonymisiert…",
+  "cv.preparingProfile": "Profil wird vorbereitet…",
 
   "model.label": "KI-Modell",
   "model.loading": "KI-Modelle werden geladen …",

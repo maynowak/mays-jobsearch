@@ -4,6 +4,7 @@ import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withM
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
 import { extractPdfText } from "./lib/pdf";
+import { anonymizeText } from "./lib/anonymize";
 import Navbar from "./components/Navbar";
 import type { NavbarRoute } from "./components/Navbar";
 import LandingHero from "./components/LandingHero";
@@ -317,8 +318,12 @@ export default function App() {
       return;
     }
 
-    // Consent already given - proceed to profile creation (6.3)
-    createProfileFromPdf(selectedDoc);
+    // Consent already given - proceed to creating-profile step (user selects options)
+    setCvState((prev) => ({
+      ...prev,
+      step: "creating-profile",
+      isProcessing: false,
+    }));
   };
 
   const handleCvConsentAccept = () => {
@@ -329,18 +334,19 @@ export default function App() {
       ...prev,
       consentGiven: true,
       step: "creating-profile",
-      isProcessing: true,
+      isProcessing: false,
     }));
+  };
 
-    // Start profile creation after consent
-    createProfileFromPdf(selectedDoc);
+  const handleCvContinue = (doc: CvDocument) => {
+    createProfileFromPdf(doc);
   };
 
   const createProfileFromPdf = async (doc: CvDocument) => {
     const { t } = useLang();
     setCvState((prev) => ({
       ...prev,
-      step: "creating-profile",
+      step: "anonymizing",
       isProcessing: true,
       error: null,
     }));
@@ -358,7 +364,13 @@ export default function App() {
         return;
       }
 
-      const normalized = normalizeText(text);
+      // Apply anonymization if selected
+      let processedText = text;
+      if (cvState.anonymizationMode === "anonymized") {
+        processedText = anonymizeText(text);
+      }
+
+      const normalized = normalizeText(processedText);
       const hash = await sha256Hex(normalized);
 
       // Determine model to use
@@ -532,7 +544,28 @@ export default function App() {
             disabled={cvState.isProcessing}
             recommendedModel={recommendedModel}
           />
+          <div className="cv-continue-actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={() => {
+                const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentId);
+                if (selectedDoc) handleCvContinue(selectedDoc);
+              }}
+              disabled={cvState.isProcessing}
+            >
+              {cvState.isProcessing ? t("cv.continueProcessing") : t("cv.continue")}
+              {cvState.isProcessing && <span className="spinner" />}
+            </button>
+          </div>
         </>
+      )}
+
+      {cvState.step === "anonymizing" && (
+        <div className="cv-anonymizing" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <p>{cvState.anonymizationMode === "anonymized" ? t("cv.anonymizingText") : t("cv.preparingProfile")}</p>
+        </div>
       )}
 
       {cvState.step === "profile-ready" && cvState.suggestedProfile && (
