@@ -36,11 +36,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [typescript, javascript]
         include:
-          - language: typescript
-            build-mode: none
-          - language: javascript
+          - language: javascript-typescript
             build-mode: none
 
     steps:
@@ -66,13 +63,11 @@ jobs:
         run: npm ci
 
       - name: "Build TypeScript (frontend)"
-        if: matrix.language == 'typescript'
         run: npm run build
         env:
           NODE_ENV: production
 
       - name: "Validate API syntax (JavaScript)"
-        if: matrix.language == 'javascript'
         run: |
           for f in api/**/*.mjs api/**/**/*.mjs; do
             if [ -f "$f" ]; then
@@ -88,4 +83,3 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
           upload: true
-          sarif-category: ${{ matrix.language }}
