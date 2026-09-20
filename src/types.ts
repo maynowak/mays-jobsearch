@@ -213,7 +213,10 @@ export type CvProcessingStep =
   | "ai-complete"
   | "success"
   | "error"
-  | "profile-ready";
+  | "profile-ready"
+  | "improving"
+  | "improved"
+  | "improvement-selection";
 
 export interface CvDocument {
   id: string;
@@ -227,7 +230,7 @@ export type AnonymizationMode = "anonymized" | "not-anonymized";
 
 export type ProcessingGoal = "ats" | "ai-search";
 
-import type { AtsAnalysisResponse } from "./api";
+import type { AtsAnalysisResponse, CvImprovementRecommendation } from "./api";
 
 export interface CvProcessingState {
   step: CvProcessingStep;
@@ -244,4 +247,11 @@ export interface CvProcessingState {
   isProcessing: boolean;
   atsResult: AtsAnalysisResponse | null;
   aiSearchResult: JobsResponse | null;
+  improvementRecommendations: CvImprovementRecommendation[] | null;
+  selectedImprovementIds: string[];
+  improvementResult: {
+    improvedProfile: Profile;
+    appliedCount: number;
+    appliedRecommendations: string[];
+  } | null;
 }

@@ -124,6 +124,52 @@ export function getRecommendationSummary(recommendations) {
   };
 }
 
+export function applyRecommendations(profile, selectedRecommendationIds, allRecommendations) {
+  if (!selectedRecommendationIds || selectedRecommendationIds.length === 0) {
+    return {
+      improvedProfile: { ...profile },
+      appliedCount: 0,
+      appliedRecommendations: [],
+    };
+  }
+
+  const selectedRecommendations = allRecommendations.filter(rec =>
+    selectedRecommendationIds.includes(rec.requirementId)
+  );
+
+  if (selectedRecommendations.length === 0) {
+    return {
+      improvedProfile: { ...profile },
+      appliedCount: 0,
+      appliedRecommendations: [],
+    };
+  }
+
+  let improvedProfile = { ...profile };
+  const appliedRecommendations = [];
+
+  for (const rec of selectedRecommendations) {
+    if (rec.safetyStatus === "DO_NOT_GENERATE" || rec.safetyStatus === "REVIEW_REQUIRED") {
+      continue;
+    }
+
+    if (rec.changeType === "KEYWORD_REINFORCEMENT" && rec.relatedCVEvidence) {
+      const skill = rec.relatedCVEvidence.toLowerCase().trim();
+      const currentSkills = improvedProfile.skills.toLowerCase().split(",").map(s => s.trim());
+      if (!currentSkills.includes(skill.toLowerCase())) {
+        improvedProfile.skills = improvedProfile.skills ? `${improvedProfile.skills}, ${rec.relatedCVEvidence}` : rec.relatedCVEvidence;
+        appliedRecommendations.push(rec.requirementId);
+      }
+    }
+  }
+
+  return {
+    improvedProfile,
+    appliedCount: appliedRecommendations.length,
+    appliedRecommendations,
+  };
+}
+
 export {
   extractRequirementsFromJob,
   matchRequirement,

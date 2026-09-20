@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal } from "./types";
-import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS } from "./api";
+import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement } from "./api";
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
 import { extractPdfText } from "./lib/pdf";
@@ -62,7 +62,7 @@ export default function App() {
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
 
-  // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7)
+  // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8)
   const [cvState, setCvState] = useState<CvProcessingState>({
     step: "idle",
     documents: [],
@@ -78,6 +78,9 @@ export default function App() {
     isProcessing: false,
     atsResult: null,
     aiSearchResult: null,
+    improvementRecommendations: null,
+    selectedImprovementIds: [],
+    improvementResult: null,
   });
 
   const {
@@ -567,6 +570,91 @@ export default function App() {
     setCvState((prev) => ({ ...prev, selectedModel: model }));
   };
 
+  const handleImprovementSelectionChange = (ids: string[]) => {
+    setCvState((prev) => ({ ...prev, selectedImprovementIds: ids }));
+  };
+
+  const handleImprovementExecute = async () => {
+    const { t } = useLang();
+    const selectedIds = cvState.selectedImprovementIds;
+    if (selectedIds.length === 0) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error: t("cv.improvementNoSelectionError"),
+      }));
+      return;
+    }
+
+    if (!cvState.improvementRecommendations || cvState.improvementRecommendations.length === 0) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error: t("cv.improvementNoSelectionError"),
+      }));
+      return;
+    }
+
+    setCvState((prev) => ({
+      ...prev,
+      step: "improving",
+      isProcessing: true,
+    }));
+
+    try {
+      const result = await applyCvImprovement({
+        profile: cvState.profile!,
+        selectedRecommendationIds: cvState.selectedImprovementIds,
+        allRecommendations: cvState.improvementRecommendations!,
+      });
+
+      if (result.data.appliedCount === 0) {
+        setCvState((prev) => ({
+          ...prev,
+          step: "improved",
+          isProcessing: false,
+          improvementResult: {
+            improvedProfile: cvState.profile!,
+            appliedCount: 0,
+            appliedRecommendations: [],
+          },
+        }));
+      } else {
+        const improvedProfile = result.data.improvedProfile;
+        setCvState((prev) => ({
+          ...prev,
+          step: "improved",
+          isProcessing: false,
+          improvementResult: {
+            improvedProfile: improvedProfile,
+            appliedCount: result.data.appliedCount,
+            appliedRecommendations: result.data.appliedRecommendations,
+          },
+          profile: improvedProfile,
+        }));
+      }
+    } catch (err) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error: t("cv.improvementError"),
+      }));
+    }
+  };
+
+  const handleImprovementBack = () => {
+    setCvState((prev) => ({
+      ...prev,
+      step: "goal-selection",
+      improvementRecommendations: null,
+      selectedImprovementIds: [],
+      improvementResult: null,
+    }));
+  };
+
   const handleSubmit = (submitted: Profile) => {
     if (busyRef.current) return;
     if (dataset && profilesEqual(submitted, dataset.profile)) {
@@ -764,6 +852,62 @@ export default function App() {
               disabled={cvState.isProcessing}
             >
               {t("cv.backToProfile")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cvState.step === "improvement-selection" && cvState.improvementRecommendations && (
+        <div className="cv-improvement-execution" role="region" aria-labelledby="cv-improvement-title">
+          <h3 id="cv-improvement-title" className="cv-improvement__title">
+            {t("cv.improvementTitle")}
+          </h3>
+          <p className="cv-improvement__description">{t("cv.improvementDescription")}</p>
+          <p className="cv-improvement__select-label">{t("cv.improvementSelectLabel")}</p>
+          <div className="cv-improvement__options" role="listbox" aria-label={t("cv.improvementSelectLabel")}>
+            {cvState.improvementRecommendations.map((rec) => (
+              <label
+                key={rec.requirementId}
+                className={`cv-improvement__option${cvState.selectedImprovementIds.includes(rec.requirementId) ? " selected" : ""}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={cvState.selectedImprovementIds.includes(rec.requirementId)}
+                  onChange={() => {
+                    const newIds = cvState.selectedImprovementIds.includes(rec.requirementId)
+                      ? cvState.selectedImprovementIds.filter((id) => id !== rec.requirementId)
+                      : [...cvState.selectedImprovementIds, rec.requirementId];
+                    handleImprovementSelectionChange(newIds);
+                  }}
+                  disabled={cvState.isProcessing}
+                  className="cv-improvement__checkbox"
+                  aria-label={`${rec.changeTypeLabel}: ${rec.proposedChange}`}
+                />
+                <div className="cv-improvement__option-content">
+                  <span className="cv-improvement__label">{rec.changeTypeLabel}</span>
+                  <span className="cv-improvement__description">{rec.proposedChange}</span>
+                  <span className="cv-improvement__rationale">{rec.rationale}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+          <div className="cv-improvement__actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={handleImprovementExecute}
+              disabled={cvState.isProcessing || cvState.selectedImprovementIds.length === 0}
+            >
+              {cvState.isProcessing ? t("cv.applyingImprovement") : t("cv.applyImprovement")}
+              {cvState.isProcessing && <span className="spinner" />}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handleImprovementBack}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.backToGoalSelection")}
             </button>
           </div>
         </div>

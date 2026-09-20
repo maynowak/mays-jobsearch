@@ -1,9 +1,10 @@
 import { HttpError } from "./_lib/filter.mjs";
-import { 
-  analyzeJobForAts, 
+import {
+  analyzeJobForAts,
   generateCVRecommendations,
   generateImprovementPlan,
   getRecommendationSummary,
+  applyRecommendations,
 } from "../src/lib/cv-improvement.js";
 import { getConfig } from "./_lib/config.mjs";
 
@@ -26,15 +27,15 @@ function validateRequest(body) {
   if (!body || typeof body !== "object") {
     return { valid: false, error: "Request body must be an object", code: "bad_request" };
   }
-  
+
   if (!body.job || typeof body.job !== "object") {
     return { valid: false, error: "Job must be an object", code: "bad_request" };
   }
-  
+
   if (!body.profile || typeof body.profile !== "object") {
     return { valid: false, error: "Profile must be an object", code: "bad_request" };
   }
-  
+
   return { valid: true };
 }
 
@@ -52,7 +53,7 @@ function getProviderInfo() {
   const cfg = getConfig();
   const openRouterEnabled = cfg.openRouterEnabled;
   const edenaiEnabled = cfg.edenaiEnabled;
-  
+
   if (openRouterEnabled) {
     return {
       provider: "OpenRouter",
@@ -60,7 +61,7 @@ function getProviderInfo() {
       privacyPolicy: "https://openrouter.ai/privacy (Last Updated: August 31, 2026)",
     };
   }
-  
+
   if (edenaiEnabled) {
     return {
       provider: "EdenAI",
@@ -68,7 +69,7 @@ function getProviderInfo() {
       privacyPolicy: "Privacy policy to be investigated",
     };
   }
-  
+
   return {
     provider: "unavailable",
     privacyStatus: "NO_PROVIDER_CONFIGURED",
@@ -79,52 +80,97 @@ function getProviderInfo() {
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  
+
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
     return res.status(405).json({ error: "This endpoint accepts POST requests only.", code: "method" });
   }
-  
+
   try {
     const body = req.body || (await readBody(req));
-    
-    // Validate request
-    const validation = validateRequest(body);
-    if (!validation.valid) {
-      return res.status(400).json({ error: validation.error, code: validation.code });
+
+    // Determine which endpoint is being called
+    const isApplyEndpoint = req.url && req.url.endsWith("/apply");
+
+    if (isApplyEndpoint) {
+      // Handle apply improvements endpoint
+      const validation = validateRequest(body);
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error, code: validation.code });
+      }
+
+      const { profile, selectedRecommendationIds, allRecommendations } = body;
+
+      if (!selectedRecommendationIds || !Array.isArray(selectedRecommendationIds) || selectedRecommendationIds.length === 0) {
+        return res.status(400).json({ error: "No recommendations selected", code: "bad_request" });
+      }
+
+      if (!allRecommendations || !Array.isArray(allRecommendations)) {
+        return res.status(400).json({ error: "All recommendations required", code: "bad_request" });
+      }
+
+      if (!body.profile || typeof body.profile !== "object") {
+        return res.status(400).json({ error: "Profile must be an object", code: "bad_request" });
+      }
+
+      const cvSkills = parseSkills(body.profile?.skills);
+
+      // Apply selected recommendations
+      const result = applyRecommendations(body.profile, selectedRecommendationIds, body.allRecommendations);
+
+      return res.status(200).json({
+        data: {
+          improvedProfile: result.improvedProfile,
+          appliedCount: result.appliedCount,
+          appliedRecommendations: result.appliedRecommendations,
+        },
+        meta: {
+          version: "v1",
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } else {
+      // Original endpoint: generate improvement plan
+      const body2 = req.body || (await readBody(req));
+
+      // Validate request
+      const validation = validateRequest(body2);
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error, code: validation.code });
+      }
+
+      const { job, profile } = body2;
+      const cvSkills = parseSkills(profile?.skills);
+
+      // Step 1: ATS Analysis (deterministic)
+      const analysis = analyzeJobForAts(job, profile || {});
+
+      // Step 2: Generate CV Improvement Plan
+      const improvementPlan = generateImprovementPlan(analysis, parseSkills(profile?.skills));
+      const summary = getRecommendationSummary(improvementPlan.recommendations);
+
+      const response = {
+        improvement: {
+          plan: improvementPlan.recommendations,
+          summary,
+          totalRequirements: improvementPlan.recommendations.length,
+          generatedAt: new Date().toISOString(),
+        },
+        analysis: {
+          score: analysis.scores.overall,
+          keywordCoverage: { overall: analysis.scores.keywordMatch },
+          criticalGaps: analysis.criticalGaps.map(g => ({ id: g.id, text: g.text })),
+          summary: analysis.summary,
+        },
+        meta: {
+          version: "v1",
+          generatedAt: new Date().toISOString(),
+        },
+      };
+
+      return res.status(200).json(response);
     }
-    
-    const { job, profile } = body;
-    const cvSkills = parseSkills(profile?.skills);
-    
-    // Step 1: ATS Analysis (deterministic)
-    const analysis = analyzeJobForAts(job, profile || {});
-    
-    // Step 2: Generate CV Improvement Plan
-    const improvementPlan = generateImprovementPlan(analysis, parseSkills(profile?.skills));
-    const summary = getRecommendationSummary(improvementPlan.recommendations);
-    
-    const response = {
-      improvement: {
-        plan: improvementPlan.recommendations,
-        summary,
-        totalRequirements: improvementPlan.recommendations.length,
-        generatedAt: new Date().toISOString(),
-      },
-      analysis: {
-        score: analysis.scores.overall,
-        keywordCoverage: { overall: analysis.scores.keywordMatch },
-        criticalGaps: analysis.criticalGaps.map(g => ({ id: g.id, text: g.text })),
-        summary: analysis.summary,
-      },
-      meta: {
-        version: "1.0.0",
-        generatedAt: new Date().toISOString(),
-      },
-    };
-    
-    return res.status(200).json(response);
-    
   } catch (err) {
     if (err instanceof HttpError) {
       return res.status(err.status).json({ error: err.message, code: err.code });

@@ -413,9 +413,39 @@ export async function fetchCvImprovement(
   profile: { skills?: string; [key: string]: unknown }
 ): Promise<CvImprovementResponse> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  return apiFetch<CvImprovementResponse>("/api/cv-improvement", {
+  return apiFetch<CvImprovementResponse>("/api/v1/cv-improvement", {
     method: "POST",
     headers,
     body: JSON.stringify({ job, profile }),
+  });
+}
+
+export interface ApplyCvImprovementRequest {
+  profile: Profile;
+  selectedRecommendationIds: string[];
+  allRecommendations: CvImprovementRecommendation[];
+}
+
+export interface ApplyCvImprovementResponse {
+  data: {
+    improvedProfile: Profile;
+    appliedCount: number;
+    appliedRecommendations: string[];
+  };
+  meta: {
+    version: string;
+    requestId: string;
+    timestamp: string;
+  };
+}
+
+export async function applyCvImprovement(
+  request: ApplyCvImprovementRequest
+): Promise<ApplyCvImprovementResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  return apiFetch<ApplyCvImprovementResponse>("/api/v1/cv-improvement/apply", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(request),
   });
 }
