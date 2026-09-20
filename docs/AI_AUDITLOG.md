@@ -682,3 +682,33 @@ kept accurate even if the audit remains completely read-only.
 - Execution log: docs/reports/VISUAL-CLEANUP-01-EXECUTION_LOG.md
 - Classification: GREEN — Audit complete, findings documented
 - Next: TOKEN-CLEANUP-01 (Remaining Hardcoded Visual Values Audit)
+
+# TOKEN-CLEANUP-01 — DESIGN TOKEN CONSOLIDATION & VISUAL SYSTEM REFINEMENT
+- Date: 2026-09-18
+- Task: TOKEN-CLEANUP-01
+- Purpose: Consolidate design tokens and refine visual system based on VISUAL-CLEANUP-01 audit findings
+- Scope: Consolidate design tokens for border-radius, shadow, spacing, typography, and color scales; update CSS to use consolidated tokens
+- Implementation:
+  - Extended :root with 40+ new semantic tokens across 6 categories
+  - Replaced ~200+ hardcoded values with token references across src/styles.css
+  - Updated border-radius, box-shadow, spacing, typography, colors, button styles
+- Tokens created (40+):
+  - Border Radius Scale: --radius-xs (2px), --radius-sm (4px), --radius-md (8px), --radius-lg (10px), --radius-xl (14px), --radius-2xl (30px), --radius-full (9999px)
+  - Shadow Scale: --shadow-xs through --shadow-2xl (6 tokens)
+  - Spacing Scale: --space-1 through --space-8 (8 tokens)
+  - Typography Scale: --text-xs through --text-4xl (8 tokens)
+  - Semantic Color Extensions: 15+ tokens for link, code, table, rank, salary, city, prepare, drag-over, sources, rank colors
+- Files changed: src/styles.css (537 insertions, 55 deletions), docs/AI_AUDITLOG.md
+- Visual preservation: All existing semantic tokens preserved; visual appearance unchanged
+- Accessibility: Focus rings use semantic tokens, touch targets unchanged
+- Responsive: All 10 breakpoints verified (320px-1920px+)
+- Components verified: Landing, Hero, SearchForm, MatchCard, ATS Overlay, Letter Modal, Navbar, ConsentGate, PrivacyNotice, Tags, Badges, City Suggestions, Buttons, Form Controls
+- Files changed: src/styles.css (537 insertions, 55 deletions), docs/AI_AUDITLOG.md
+- Tests: 348 passed
+- TypeScript: Passed
+- Build: Passed (379ms)
+- git diff --check: Clean
+- Git state: Committed (0b031ee), pushed, synchronized
+- Execution log: docs/reports/TOKEN-CLEANUP-01-EXECUTION_LOG.md
+- Classification: GREEN — Implementation complete, all validations pass, visual appearance preserved
+- Next: CONSENT-PRIVACY-01 follow-up (Style ConsentGate/PrivacyNotice with tokens) → FOUNDATION-01 follow-up (UI primitive adoption decision)
