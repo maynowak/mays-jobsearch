@@ -421,6 +421,16 @@ export default function App() {
     setCvState((prev) => ({ ...prev, processingGoal: goal }));
   };
 
+  const handleGoalExecute = () => {
+    const goal = cvState.processingGoal;
+    const nextStep = goal === "ats" ? "ats-processing" : "ai-searching";
+    setCvState((prev) => ({
+      ...prev,
+      step: nextStep,
+      isProcessing: true,
+    }));
+  };
+
   const handleCvModelChange = (model: string) => {
     setCvState((prev) => ({ ...prev, selectedModel: model }));
   };
@@ -577,7 +587,7 @@ export default function App() {
             setProfile(profile);
             setCvState((prev) => ({
               ...prev,
-              step: "success",
+              step: "goal-selection",
               profile,
               suggestedProfile: null,
               fallbackNote: false,
@@ -592,6 +602,53 @@ export default function App() {
             }));
           }}
         />
+      )}
+
+      {cvState.step === "goal-selection" && (
+        <div className="cv-goal-execution" role="region" aria-labelledby="cv-goal-execution-title">
+          <h3 id="cv-goal-execution-title" className="cv-goal-execution__title">
+            {t("cv.goalExecutionTitle")}
+          </h3>
+          <p className="cv-goal-execution__description">{t("cv.goalExecutionDescription")}</p>
+          <CvGoalSelection
+            value={cvState.processingGoal}
+            onChange={handleGoalChange}
+            disabled={cvState.isProcessing}
+          />
+          <div className="cv-goal-execution__actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={handleGoalExecute}
+              disabled={cvState.isProcessing}
+            >
+              {cvState.isProcessing ? t("cv.executingGoal") : t("cv.executeGoal")}
+              {cvState.isProcessing && <span className="spinner" />}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "profile-ready" }))}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.backToProfile")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cvState.step === "ats-processing" && (
+        <div className="cv-ats-processing" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <p>{t("cv.atsNotImplemented")}</p>
+        </div>
+      )}
+
+      {cvState.step === "ai-searching" && (
+        <div className="cv-ai-searching" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <p>{t("cv.aiSearchNotImplemented")}</p>
+        </div>
       )}
 
       {cvState.step === "error" && cvState.error && (
