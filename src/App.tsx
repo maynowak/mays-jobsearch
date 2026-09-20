@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Job, Match, Profile, StatusMessage } from "./types";
+import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal } from "./types";
 import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "./api";
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
@@ -16,6 +16,13 @@ import AlertCard from "./components/AlertCard";
 import Footer from "./components/Footer";
 import LetterModal from "./components/LetterModal";
 import ATSModal from "./components/AtsOverlay";
+import CvDocumentList from "./components/CvDocumentList";
+import CvConsentGate from "./components/CvConsentGate";
+import CvProcessingStatus from "./components/CvProcessingStatus";
+import CvProcessingSteps from "./components/CvProcessingSteps";
+import CvGoalSelection from "./components/CvGoalSelection";
+import CvModelSelector from "./components/CvModelSelector";
+import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
@@ -51,6 +58,20 @@ export default function App() {
   const [dataset, setDataset] = useState<JobDataset | null>(null);
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
+
+  // CV Processing State (Phases 6.1/6.2)
+  const [cvState, setCvState] = useState<CvProcessingState>({
+    step: "idle",
+    documents: [],
+    selectedDocumentId: null,
+    consentGiven: false,
+    anonymizationMode: "anonymized",
+    processingGoal: "ats",
+    selectedModel: null,
+    error: null,
+    profile: null,
+    isProcessing: false,
+  });
 
   const {
     state: modelsState,
@@ -223,6 +244,96 @@ export default function App() {
     setModelExhausted(false);
   };
 
+  // CV Processing Handlers (Phases 6.1/6.2)
+  const generateDocumentId = () => `cv-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  const handleAddCvFiles = (files: FileList) => {
+    const newDocuments: CvDocument[] = Array.from(files).map((file) => ({
+      id: generateDocumentId(),
+      name: file.name,
+      size: file.size,
+      selected: false,
+      file,
+    }));
+    setCvState((prev) => ({
+      ...prev,
+      documents: [...prev.documents, ...newDocuments],
+      step: "document-selected",
+    }));
+  };
+
+  const handleSelectCvDocument = (id: string) => {
+    setCvState((prev) => ({
+      ...prev,
+      documents: prev.documents.map((doc) => ({ ...doc, selected: doc.id === id })),
+      selectedDocumentId: id,
+      step: "document-selected",
+    }));
+  };
+
+  const handleRemoveCvDocument = (id: string) => {
+    setCvState((prev) => {
+      const remaining = prev.documents.filter((doc) => doc.id !== id);
+      const wasSelected = prev.selectedDocumentId === id;
+      return {
+        ...prev,
+        documents: remaining,
+        selectedDocumentId: wasSelected ? (remaining[0]?.id ?? null) : prev.selectedDocumentId,
+        step: remaining.length > 0 ? "document-selected" : "idle",
+      };
+    });
+  };
+
+  const handleCvProcess = () => {
+    const selectedDoc = cvState.documents.find((d) => d.selected);
+    if (!selectedDoc) return;
+
+    // First-Use Recognition: Check if consent already given
+    if (!cvState.consentGiven) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "consent-required",
+      }));
+      return;
+    }
+
+    // Consent already given - proceed to next steps (6.3+)
+    // For now, just set step to profile creation (placeholder for 6.3+)
+    setCvState((prev) => ({
+      ...prev,
+      step: "creating-profile",
+      isProcessing: true,
+    }));
+  };
+
+  const handleCvConsentAccept = () => {
+    setCvState((prev) => ({
+      ...prev,
+      consentGiven: true,
+      step: "creating-profile",
+      isProcessing: true,
+    }));
+  };
+
+  const handleCvConsentCancel = () => {
+    setCvState((prev) => ({
+      ...prev,
+      step: "document-selected",
+    }));
+  };
+
+  const handleAnonymizationChange = (mode: string) => {
+    setCvState((prev) => ({ ...prev, anonymizationMode: mode as AnonymizationMode }));
+  };
+
+  const handleGoalChange = (goal: ProcessingGoal) => {
+    setCvState((prev) => ({ ...prev, processingGoal: goal }));
+  };
+
+  const handleCvModelChange = (model: string) => {
+    setCvState((prev) => ({ ...prev, selectedModel: model }));
+  };
+
   const handleSubmit = (submitted: Profile) => {
     if (busyRef.current) return;
     if (dataset && profilesEqual(submitted, dataset.profile)) {
@@ -282,6 +393,71 @@ export default function App() {
     </section>
   );
 
+  // CV Processing UI - rendered when CV flow is active
+  const cvProcessingUI = cvState.step !== "idle" && (
+    <section className="card cv-processing-card" aria-labelledby="cv-processing-title">
+      <h2 id="cv-processing-title" className="cv-processing-title">{t("cv.statusTitle")}</h2>
+
+      <CvProcessingStatus step={cvState.step} error={cvState.error} documentName={cvState.documents.find((d) => d.id === cvState.selectedDocumentId)?.name ?? null} />
+
+      <CvProcessingSteps currentStep={
+        cvState.step === "document-selected" ? "document" :
+        cvState.step === "consent-required" || cvState.step === "consent-given" ? "consent" :
+        cvState.step === "creating-profile" ? "profile" :
+        cvState.step === "anonymizing" ? "anonymization" :
+        cvState.step === "goal-selection" ? "goal" :
+        cvState.step === "ats-processing" ? "target" :
+        cvState.step === "ai-searching" ? "processing" :
+        cvState.step === "success" ? "complete" : "document"
+      } />
+
+      {cvState.step === "document-selected" && (
+        <CvDocumentList
+          documents={cvState.documents}
+          selectedId={cvState.selectedDocumentId}
+          onSelect={handleSelectCvDocument}
+          onRemove={handleRemoveCvDocument}
+          onAddFiles={handleAddCvFiles}
+          onProcess={handleCvProcess}
+          disabled={cvState.isProcessing}
+          processing={cvState.isProcessing}
+        />
+      )}
+
+      {cvState.step === "consent-required" && (
+        <CvConsentGate
+          fileName={cvState.documents.find((d) => d.id === cvState.selectedDocumentId)?.name ?? ""}
+          onAccept={handleCvConsentAccept}
+          onCancel={handleCvConsentCancel}
+          processingInfo={cvState.processingGoal === "ats" ? t("cv.goalATSLabel") : t("cv.goalAISearchLabel")}
+          externalAI={true}
+          disabled={cvState.isProcessing}
+        />
+      )}
+
+      {cvState.step === "creating-profile" && (
+        <>
+          <CvAnonymizationChoice
+            value={cvState.anonymizationMode}
+            onChange={handleAnonymizationChange}
+            disabled={cvState.isProcessing}
+          />
+          <CvGoalSelection
+            value={cvState.processingGoal}
+            onChange={handleGoalChange}
+            disabled={cvState.isProcessing}
+          />
+          <CvModelSelector
+            value={cvState.selectedModel}
+            onChange={handleCvModelChange}
+            disabled={cvState.isProcessing}
+            recommendedModel={recommendedModel}
+          />
+        </>
+      )}
+    </section>
+  );
+
   return (
     <>
       <Navbar route="matcher" />
@@ -290,6 +466,7 @@ export default function App() {
       <main className="container layout-search">
         <aside className="search-sidebar">
           {searchCard}
+          {cvProcessingUI}
         </aside>
 
         {hasResults ? (
