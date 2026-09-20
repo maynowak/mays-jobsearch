@@ -1,52 +1,49 @@
-# CV Improvement API Documentation
-
-## Overview
-
-The CV Improvement API provides automated recommendations to improve a candidate's CV for better ATS (Applicant Tracking System) compatibility. It analyzes a job posting against a candidate's CV profile and generates actionable recommendations to improve match scores.
-
-**Base URL**: `/api/cv-improvement`
-
-**Version**: 1.0.0
-
-## Authentication
-
-Currently, the API does not require authentication. It follows the same pattern as other public endpoints in the system.
+# CV Improvement API
 
 ## Endpoint
+```http
+POST /api/v1/cv-improvement
+```
 
-### POST `/api/cv-improvement`
+## Purpose
+Generate CV improvement recommendations based on a job posting and candidate profile to improve ATS (Applicant Tracking System) compatibility.
 
-Generate CV improvement recommendations based on a job posting and candidate profile.
+## Version
+`v1` (since 2026-09-20)
+
+## Authentication
+- **Required**: No
+- **Type**: None (public endpoint)
 
 ## Request
 
 ### Headers
-
-```
-Content-Type: application/json
-```
+| Header | Required | Description |
+|--------|----------|-------------|
+| Content-Type | Yes | application/json |
+| X-Request-ID | No | UUID for tracing |
 
 ### Body Parameters
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `job` | Object | Yes | Job posting data |
-| `job.title` | string | Yes | Job title |
-| `job.tags` | string[] | No | Job tags/keywords |
-| `job.slug` | string | No | Job identifier |
-| `job.descriptionPlain` | string | No | Plain text job description |
-| `job.location` | string[] | No | Job locations |
-| `job.remote` | boolean | No | Remote work option |
-| `job.jobTypes` | string[] | No | Job types (full-time, part-time, etc.) |
-| `job.contractType` | string | No | Contract type |
-| `job.language` | string | No | Job language |
-| `profile` | Object | Yes | Candidate profile |
-| `profile.skills` | string | Yes | Comma-separated skills |
-| `profile.targetRole` | string | No | Target job role |
-| `profile.city` | string | No | Preferred city |
-| `profile.radiusKm` | number | No | Search radius in km |
-| `profile.workModes` | string[] | No | Work modes (remote, hybrid, onsite) |
-| `profile.employmentTypes` | string[] | No | Employment types |
+| Field | Type | Required | Description | Validation |
+|-------|------|----------|-------------|------------|
+| `job` | Object | Yes | Job posting data | |
+| `job.title` | string | Yes | Job title | min: 1, max: 200 |
+| `job.tags` | string[] | No | Job tags/keywords | max: 50 items |
+| `job.slug` | string | No | Job identifier | max: 100 |
+| `job.descriptionPlain` | string | No | Plain text job description | max: 50000 |
+| `job.location` | string[] | No | Job locations | max: 20 items |
+| `job.remote` | boolean | No | Remote work option | |
+| `job.jobTypes` | string[] | No | Job types (full-time, part-time, etc.) | max: 10 items |
+| `job.contractType` | string | No | Contract type | max: 50 |
+| `job.language` | string | No | Job language | max: 50 |
+| `profile` | Object | Yes | Candidate profile | |
+| `profile.skills` | string | Yes | Comma-separated skills | min: 1, max: 5000 |
+| `profile.targetRole` | string | No | Target job role | max: 200 |
+| `profile.city` | string | No | Preferred city | max: 100 |
+| `profile.radiusKm` | number | No | Search radius in km | min: 0, max: 500 |
+| `profile.workModes` | string[] | No | Work modes (remote, hybrid, onsite) | max: 10 items |
+| `profile.employmentTypes` | string[] | No | Employment types | max: 10 items |
 
 ### Example Request
 
@@ -78,62 +75,65 @@ Content-Type: application/json
 
 ```json
 {
-  "improvement": {
-    "plan": [
-      {
-        "requirementId": "skill_0",
-        "changeType": "KEYWORD_REINFORCEMENT",
-        "changeTypeLabel": "Keyword Reinforcement",
-        "priority": "high",
-        "priorityLabel": "High",
-        "currentEvidence": "present",
-        "proposedChange": "\"react\" stärker hervorheben in Skills/Abschnitten",
-        "rationale": "Exakter Match für react verbessert ATS-Bewertung",
-        "relatedCVEvidence": "react",
-        "safetyStatus": "SAFE_EVIDENCE",
-        "safetyStatusLabel": "Safe - Evidence Based"
-      }
-    ],
-    "summary": {
-      "total": 5,
-      "byType": {
-        "KEYWORD_REINFORCEMENT": 2,
-        "EVIDENCE_CLARIFICATION": 1,
-        "GAP_FLAG": 1,
-        "UNKNOWN_REVIEW": 1
+  "data": {
+    "improvement": {
+      "plan": [
+        {
+          "requirementId": "skill_0",
+          "changeType": "KEYWORD_REINFORCEMENT",
+          "changeTypeLabel": "Keyword Reinforcement",
+          "priority": "high",
+          "priorityLabel": "High",
+          "currentEvidence": "present",
+          "proposedChange": "\"react\" stärker hervorheben in Skills/Abschnitten",
+          "rationale": "Exakter Match für react verbessert ATS-Bewertung",
+          "relatedCVEvidence": "react",
+          "safetyStatus": "SAFE_EVIDENCE",
+          "safetyStatusLabel": "Safe - Evidence Based"
+        }
+      ],
+      "summary": {
+        "total": 5,
+        "byType": {
+          "KEYWORD_REINFORCEMENT": 2,
+          "EVIDENCE_CLARIFICATION": 1,
+          "GAP_FLAG": 1,
+          "UNKNOWN_REVIEW": 1
+        },
+        "byPriority": {
+          "high": 2,
+          "medium": 2,
+          "low": 1
+        },
+        "bySafety": {
+          "SAFE_EVIDENCE": 3,
+          "SAFE_REVIEW": 1,
+          "CRITICAL_GAP": 1
+        },
+        "actionable": 4,
+        "requiresReview": 1
       },
-      "byPriority": {
-        "high": 2,
-        "medium": 2,
-        "low": 1
-      },
-      "bySafety": {
-        "SAFE_EVIDENCE": 3,
-        "SAFE_REVIEW": 1,
-        "CRITICAL_GAP": 1
-      },
-      "actionable": 4,
-      "requiresReview": 1
+      "totalRequirements": 12,
+      "generatedAt": "2024-01-15T10:30:00.000Z"
     },
-    "totalRequirements": 12,
-    "generatedAt": "2024-01-15T10:30:00.000Z"
-  },
-  "analysis": {
-    "score": 78,
-    "keywordCoverage": { "overall": 65 },
-    "criticalGaps": [
-      { "id": "skill_5", "text": "kubernetes" }
-    ],
-    "summary": {
-      "matched": 8,
-      "partial": 3,
-      "gap": 1,
-      "unknown": 2
+    "analysis": {
+      "score": 78,
+      "keywordCoverage": { "overall": 65 },
+      "criticalGaps": [
+        { "id": "skill_5", "text": "kubernetes" }
+      ],
+      "summary": {
+        "matched": 8,
+        "partial": 3,
+        "gap": 1,
+        "unknown": 2
+      }
     }
   },
   "meta": {
-    "version": "1.0.0",
-    "generatedAt": "2024-01-15T10:30:00.000Z"
+    "version": "v1",
+    "requestId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2024-01-15T10:30:00.000Z"
   }
 }
 ```
@@ -177,39 +177,50 @@ Content-Type: application/json
 | `criticalGaps` | array | Critical gaps found |
 | `summary` | object | Match summary counts |
 
-## Empty Response
+### Meta
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `version` | string | API version (e.g., `v1`) |
+| `requestId` | string | Echoed from request header |
+| `timestamp` | string | ISO 8601 UTC timestamp |
+
+### Empty Response
 
 When no recommendations can be generated:
 
 ```json
 {
-  "improvement": {
-    "plan": [],
-    "summary": {
-      "total": 0,
-      "byType": {},
-      "byPriority": {},
-      "bySafety": {},
-      "actionable": 0,
-      "requiresReview": 0
+  "data": {
+    "improvement": {
+      "plan": [],
+      "summary": {
+        "total": 0,
+        "byType": {},
+        "byPriority": {},
+        "bySafety": {},
+        "actionable": 0,
+        "requiresReview": 0
+      },
+      "totalRequirements": 0,
+      "generatedAt": "2024-01-15T10:30:00.000Z"
     },
-    "totalRequirements": 0,
-    "generatedAt": "2024-01-15T10:30:00.000Z"
-  },
-  "analysis": {
-    "score": 0,
-    "keywordCoverage": { "overall": 0 },
-    "criticalGaps": [],
-    "summary": {
-      "matched": 0,
-      "partial": 0,
-      "gap": 0,
-      "unknown": 0
+    "analysis": {
+      "score": 0,
+      "keywordCoverage": { "overall": 0 },
+      "criticalGaps": [],
+      "summary": {
+        "matched": 0,
+        "partial": 0,
+        "gap": 0,
+        "unknown": 0
+      }
     }
   },
   "meta": {
-    "version": "1.0.0",
-    "generatedAt": "2024-01-15T10:30:00.000Z"
+    "version": "v1",
+    "requestId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2024-01-15T10:30:00.000Z"
   }
 }
 ```
@@ -228,8 +239,16 @@ An empty plan means the CV already matches the job requirements well, or there a
 
 ```json
 {
-  "error": "Error message",
-  "code": "error_code"
+  "error": {
+    "code": "bad_request",
+    "message": "Request body must be an object",
+    "details": { "field": "job", "reason": "Job must be an object" }
+  },
+  "meta": {
+    "version": "v1",
+    "requestId": "uuid",
+    "timestamp": "2024-01-15T10:30:00.000Z"
+  }
 }
 ```
 
@@ -244,16 +263,16 @@ async function getCVImprovement(job, profile) {
   try {
     const response = await fetchCvImprovement(job, profile);
     
-    if (response.improvement.plan.length === 0) {
+    if (response.data.improvement.plan.length === 0) {
       console.log('No improvements needed');
       return [];
     }
     
     // Display recommendations grouped by type
-    const byType = response.improvement.summary.byType;
-    console.log('Recommendations:', response.improvement.plan);
+    const byType = response.data.improvement.summary.byType;
+    console.log('Recommendations:', response.data.improvement.plan);
     
-    return response.improvement.plan;
+    return response.data.improvement.plan;
   } catch (error) {
     console.error('Failed to fetch CV improvement:', error);
     throw error;
@@ -278,7 +297,7 @@ async function getCVImprovement(job, profile) {
    ↓
 7. User clicks "Get CV Improvements"
    ↓
-8. POST /api/cv-improvement
+8. POST /api/v1/cv-improvement
    ↓
 8. Display recommendations in UI
 ```
@@ -307,11 +326,29 @@ Recommendations with `DO_NOT_GENERATE` or `REVIEW_REQUIRED` status should not be
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | 2024-01-15 | Initial release |
+| v1 | 2026-09-20 | Standardized to API v1 format |
 
 ## Related Endpoints
 
-- `POST /api/ats-analysis` - Full ATS analysis with AI formulations
-- `POST /api/profile` - Create profile from CV text
-- `POST /api/jobs` - Search jobs by profile
-- `POST /api/match` - Match jobs against profile with AI
+- `POST /api/v1/ats-analysis` - Full ATS analysis with AI formulations
+- `POST /api/v1/profile` - Create profile from CV text
+- `POST /api/v1/jobs` - Search jobs by profile
+- `POST /api/v1/match` - Match jobs against profile with AI
+
+## Migration Notes
+
+**Legacy Endpoint**: `POST /api/cv-improvement` (unversioned)
+
+**Status**: Migration Pending
+
+**Target**: `POST /api/v1/cv-improvement`
+
+**Migration Status**: See [API Migration Plan](/docs/API_MIGRATION_PLAN.md)
+
+**Breaking Changes from Legacy**:
+- Response wrapped in `data` object
+- `meta.version` format: `1.0.0` → `v1`
+- Added `requestId` and `timestamp` to meta
+- Response wrapped in `data` object
+
+**Migration Guide**: See [API Migration Plan v1→v2](/docs/API_MIGRATION_PLAN.md#cv-improvement-api)
