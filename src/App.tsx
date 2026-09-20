@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal } from "./types";
-import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile } from "./api";
+import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS } from "./api";
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
 import { extractPdfText } from "./lib/pdf";
@@ -62,7 +62,7 @@ export default function App() {
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
 
-  // CV Processing State (Phases 6.1/6.2/6.3)
+  // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6)
   const [cvState, setCvState] = useState<CvProcessingState>({
     step: "idle",
     documents: [],
@@ -76,6 +76,7 @@ export default function App() {
     suggestedProfile: null,
     fallbackNote: false,
     isProcessing: false,
+    atsResult: null,
   });
 
   const {
@@ -422,6 +423,7 @@ export default function App() {
   };
 
   const handleGoalExecute = () => {
+    const { t } = useLang();
     const goal = cvState.processingGoal;
     const nextStep = goal === "ats" ? "ats-processing" : "ai-searching";
     setCvState((prev) => ({
@@ -429,6 +431,56 @@ export default function App() {
       step: nextStep,
       isProcessing: true,
     }));
+
+    if (goal === "ats") {
+      runAtsProcessing(t);
+    }
+  };
+
+  const runAtsProcessing = async (t: (key: string, vars?: Record<string, string | number>) => string) => {
+    const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentId);
+    const jobForAts = selectedDoc ? {
+      title: cvState.suggestedProfile?.targetRoles[0] || cvState.profile?.targetRole || "",
+      tags: cvState.suggestedProfile?.skills || cvState.profile?.skills?.split(",") || [],
+      slug: "cv-ats-" + Date.now(),
+    } : null;
+
+    if (!cvState.profile || !cvState.profile.skills) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error: t("cv.atsNoProfile"),
+      }));
+      return;
+    }
+
+    try {
+      const result = await analyzeATS(
+        jobForAts || { title: "", tags: [], slug: "" },
+        { skills: cvState.profile.skills },
+        { enabled: false }
+      );
+
+      setCvState((prev) => ({
+        ...prev,
+        step: "ats-complete",
+        isProcessing: false,
+        atsResult: result,
+      }));
+    } catch (err) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error:
+          isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : isModelUnavailable(err)
+            ? t("model.unavailable")
+            : t("cv.atsProcessError"),
+      }));
+    }
   };
 
   const handleCvModelChange = (model: string) => {
@@ -640,8 +692,24 @@ export default function App() {
       {cvState.step === "ats-processing" && (
         <div className="cv-ats-processing" role="status" aria-live="polite">
           <span className="spinner" aria-hidden="true" />
-          <p>{t("cv.atsNotImplemented")}</p>
+          <p>{t("cv.atsProcessing")}</p>
         </div>
+      )}
+
+      {cvState.step === "ats-complete" && cvState.atsResult && (
+        <ATSModal
+          job={{
+            title: "CV ATS Analysis",
+            company_name: "",
+            location: [],
+            remote: false,
+            tags: [],
+            url: "",
+            slug: "cv-ats-analysis",
+          }}
+          profile={cvState.profile!}
+          onClose={() => setCvState((prev) => ({ ...prev, step: "goal-selection", atsResult: null }))}
+        />
       )}
 
       {cvState.step === "ai-searching" && (

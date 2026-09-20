@@ -144,6 +144,9 @@ const en: Dict = {
   "cv.backToProfile": "Back to profile",
   "cv.atsNotImplemented": "ATS processing will be implemented in a future step.",
   "cv.aiSearchNotImplemented": "AI Job Search will be implemented in a future step.",
+  "cv.atsProcessing": "Running ATS analysis…",
+  "cv.atsProcessError": "ATS analysis failed. Please try again.",
+  "cv.atsNoProfile": "No profile available for ATS analysis.",
 
   "model.label": "AI model",
   "model.loading": "Loading AI models …",
@@ -414,6 +417,9 @@ const de: Dict = {
   "cv.backToProfile": "Zurück zum Profil",
   "cv.atsNotImplemented": "ATS-Verarbeitung wird in einem späteren Schritt implementiert.",
   "cv.aiSearchNotImplemented": "KI-Jobsuche wird in einem späteren Schritt implementiert.",
+  "cv.atsProcessing": "ATS-Analyse läuft…",
+  "cv.atsProcessError": "ATS-Analyse fehlgeschlagen. Bitte versuchen Sie es erneut.",
+  "cv.atsNoProfile": "Kein Profil für ATS-Analyse verfügbar.",
 
   "model.label": "KI-Modell",
   "model.loading": "KI-Modelle werden geladen …",

@@ -208,6 +208,7 @@ export type CvProcessingStep =
   | "anonymizing"
   | "goal-selection"
   | "ats-processing"
+  | "ats-complete"
   | "ai-searching"
   | "success"
   | "error"
@@ -225,6 +226,8 @@ export type AnonymizationMode = "anonymized" | "not-anonymized";
 
 export type ProcessingGoal = "ats" | "ai-search";
 
+import type { AtsAnalysisResponse } from "./api";
+
 export interface CvProcessingState {
   step: CvProcessingStep;
   documents: CvDocument[];
@@ -238,4 +241,5 @@ export interface CvProcessingState {
   suggestedProfile: SuggestedProfile | null;
   fallbackNote: boolean;
   isProcessing: boolean;
+  atsResult: AtsAnalysisResponse | null;
 }
