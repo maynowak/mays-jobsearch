@@ -146,6 +146,16 @@
   --color-sources-icon: #666;
   --bg-sources-icon: rgba(0,0,0,0.05);
   --color-rank: #b39a72;
+
+  /* TOKEN-CLEANUP-02: New semantic color tokens */
+  --text-teal: #4f8282;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --blue-bg: #eff6ff;
+  --blue-border: #bfdbfe;
+  --blue-text: #1d4ed8;
+  --amber-bg: #fffbeb;
+  --amber-border: #fde68a;
 }
 
 * {
@@ -294,7 +304,7 @@ body {
 
 .lang-toggle button.active {
   background: var(--brand);
-  color: #fff;
+  color: var(--surface);
 }
 
 .burger {
@@ -830,7 +840,7 @@ body {
 
 .check-item:has(input:checked) {
   border-color: var(--border-focus);
-  background: #f6efe2;
+  background: var(--why-bg);
 }
 
 .check-item input {
@@ -1054,7 +1064,7 @@ body {
 }
 
 .cv-dropzone-over .cv-dropzone-icon {
-  color: #4f8282;
+  color: var(--text-teal);
 }
 
 .cv-dropzone-over .cv-dropzone-main {
@@ -1433,20 +1443,20 @@ body {
 }
 
 .alert-error {
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: var(--red-bg);
+  border-color: var(--red-border);
   color: var(--red);
 }
 
 .alert-info {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
+  background: var(--blue-bg);
+  border-color: var(--blue-border);
+  color: var(--blue-text);
 }
 
 .alert-warn {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--amber-bg);
+  border-color: var(--amber-border);
   color: var(--amber);
 }
 
@@ -2628,7 +2638,7 @@ body {
   font-weight: 700;
   font-size: var(--text-sm);
   color: var(--text-link);
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   cursor: pointer;
