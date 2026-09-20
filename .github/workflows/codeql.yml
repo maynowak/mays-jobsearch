@@ -1,0 +1,110 @@
+name: "CodeQL Security Analysis"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "api/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+      - ".github/workflows/codeql.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "api/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+      - ".github/workflows/codeql.yml"
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: "CodeQL Analysis"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [typescript, javascript]
+        include:
+          - language: typescript
+            build-mode: none
+          - language: javascript
+            build-mode: none
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Initialize CodeQL"
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: +security-and-quality
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: "Install dependencies"
+        run: npm ci
+        env:
+          NODE_ENV: production
+
+      - name: "Build TypeScript (frontend)"
+        if: matrix.language == 'typescript'
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: "Validate API syntax (JavaScript)"
+        if: matrix.language == 'javascript'
+        run: |
+          for f in api/**/*.mjs api/**/**/*.mjs; do
+            if [ -f "$f" ]; then
+              node --check "$f" || exit 1
+            fi
+          done
+
+      - name: "Run tests"
+        run: npm test -- --run
+
+      - name: "Perform CodeQL Analysis"
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+          upload: true
+          sarif-category: ${{ matrix.language }}
+
+  codeql-scan-summary:
+    name: "CodeQL Scan Summary"
+    needs: analyze
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: "Check for CodeQL alerts"
+        uses: github/codeql-action/analyze@v3
+        with:
+          upload: false
+        continue-on-error: true
+
+      - name: "Summary"
+        run: |
+          echo "CodeQL analysis completed for TypeScript and JavaScript"
+          echo "Results available in Security tab > Code scanning alerts"
