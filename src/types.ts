@@ -210,6 +210,7 @@ export type CvProcessingStep =
   | "ats-processing"
   | "ats-complete"
   | "ai-searching"
+  | "ai-complete"
   | "success"
   | "error"
   | "profile-ready";
@@ -242,4 +243,5 @@ export interface CvProcessingState {
   fallbackNote: boolean;
   isProcessing: boolean;
   atsResult: AtsAnalysisResponse | null;
+  aiSearchResult: JobsResponse | null;
 }

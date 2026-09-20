@@ -147,6 +147,11 @@ const en: Dict = {
   "cv.atsProcessing": "Running ATS analysis…",
   "cv.atsProcessError": "ATS analysis failed. Please try again.",
   "cv.atsNoProfile": "No profile available for ATS analysis.",
+  "cv.aiSearching": "Searching for matching jobs with AI…",
+  "cv.aiSearchComplete": "Found {count} matching jobs.",
+  "cv.aiSearchError": "AI job search failed. Please try again.",
+  "cv.aiSearchNoProfile": "No profile available for AI job search.",
+  "cv.backToGoalSelection": "Back to goal selection",
 
   "model.label": "AI model",
   "model.loading": "Loading AI models …",
@@ -420,6 +425,11 @@ const de: Dict = {
   "cv.atsProcessing": "ATS-Analyse läuft…",
   "cv.atsProcessError": "ATS-Analyse fehlgeschlagen. Bitte versuchen Sie es erneut.",
   "cv.atsNoProfile": "Kein Profil für ATS-Analyse verfügbar.",
+  "cv.aiSearching": "Suche passende Jobs mit KI…",
+  "cv.aiSearchComplete": "{count} passende Jobs gefunden.",
+  "cv.aiSearchError": "KI-Jobsuche fehlgeschlagen. Bitte versuchen Sie es erneut.",
+  "cv.aiSearchNoProfile": "Kein Profil für KI-Jobsuche verfügbar.",
+  "cv.backToGoalSelection": "Zurück zur Zielauswahl",
 
   "model.label": "KI-Modell",
   "model.loading": "KI-Modelle werden geladen …",

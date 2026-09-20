@@ -62,7 +62,7 @@ export default function App() {
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
 
-  // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6)
+  // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7)
   const [cvState, setCvState] = useState<CvProcessingState>({
     step: "idle",
     documents: [],
@@ -77,6 +77,7 @@ export default function App() {
     fallbackNote: false,
     isProcessing: false,
     atsResult: null,
+    aiSearchResult: null,
   });
 
   const {
@@ -434,6 +435,84 @@ export default function App() {
 
     if (goal === "ats") {
       runAtsProcessing(t);
+    } else if (goal === "ai-search") {
+      runAiSearch(t);
+    }
+  };
+
+  const runAiSearch = async (t: (key: string, vars?: Record<string, string | number>) => string) => {
+    if (!cvState.profile || !cvState.profile.skills) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error: t("cv.aiSearchNoProfile"),
+      }));
+      return;
+    }
+
+    try {
+      // Use the existing profile for job search
+      const searchProfile = cvState.profile;
+
+      // First, search for jobs using the existing job search API
+      const jobsResponse = await fetchJobs(searchProfile);
+
+      if (!jobsResponse.jobs.length) {
+        setCvState((prev) => ({
+          ...prev,
+          step: "ai-complete",
+          isProcessing: false,
+          aiSearchResult: { jobs: [], meta: { totalScanned: 0, totalFiltered: 0 } },
+        }));
+        return;
+      }
+
+      // Then, use AI to match/score the jobs
+      const { data: matchResult } = await withModelFallback({
+        initialModel: cvState.selectedModel || effectiveModel,
+        availableModels: models.map((m) => m.id),
+        recommendedModel,
+        request: (m, attempt) => fetchMatches(searchProfile, jobsResponse.jobs, m, attempt),
+      });
+
+      // Create a compatible JobsResponse meta from matchResult
+      const aiSearchMeta = {
+        totalScanned: jobsResponse.meta?.totalScanned,
+        totalFiltered: jobsResponse.meta?.totalFiltered,
+        city: jobsResponse.meta?.city,
+        keywords: jobsResponse.meta?.keywords,
+        sources: jobsResponse.meta?.sources,
+        sourceCounts: jobsResponse.meta?.sourceCounts,
+        disabledSources: jobsResponse.meta?.disabledSources,
+        sourceDetails: jobsResponse.meta?.sourceDetails,
+        jobsCombined: jobsResponse.meta?.jobsCombined,
+        apify: jobsResponse.meta?.apify,
+        evaluated: matchResult.meta?.evaluated,
+        note: matchResult.meta?.note,
+        totalFound: matchResult.meta?.totalFound,
+        displayedInitially: matchResult.meta?.displayedInitially,
+      };
+
+      setCvState((prev) => ({
+        ...prev,
+        step: "ai-complete",
+        isProcessing: false,
+        aiSearchResult: { jobs: jobsResponse.jobs, meta: aiSearchMeta },
+        matches: matchResult.matches,
+      }));
+    } catch (err) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error:
+          isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : isModelUnavailable(err)
+            ? t("model.unavailable")
+            : t("cv.aiSearchError"),
+      }));
     }
   };
 
@@ -715,7 +794,22 @@ export default function App() {
       {cvState.step === "ai-searching" && (
         <div className="cv-ai-searching" role="status" aria-live="polite">
           <span className="spinner" aria-hidden="true" />
-          <p>{t("cv.aiSearchNotImplemented")}</p>
+          <p>{t("cv.aiSearching")}</p>
+        </div>
+      )}
+
+      {cvState.step === "ai-complete" && cvState.aiSearchResult && (
+        <div className="cv-ai-complete">
+          <p className="cv-ai-complete__message">{t("cv.aiSearchComplete", { count: cvState.aiSearchResult.jobs.length })}</p>
+          <div className="cv-ai-complete__actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "goal-selection", aiSearchResult: null }))}
+            >
+              {t("cv.backToGoalSelection")}
+            </button>
+          </div>
         </div>
       )}
 

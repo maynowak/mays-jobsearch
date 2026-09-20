@@ -2575,6 +2575,26 @@ body {
   font-size: var(--text-base);
 }
 
+/* AI Search Complete */
+
+.cv-ai-complete {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-form);
+}
+
+.cv-ai-complete__message {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-base);
+  color: var(--text);
+}
+
+.cv-ai-complete__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* Results */
 
 .results {
