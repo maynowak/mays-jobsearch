@@ -345,3 +345,77 @@ export async function analyzeATS(
     body: JSON.stringify({ job, profile, ai }),
   });
 }
+
+// CV Improvement Types
+export interface CvImprovementRecommendation {
+  requirementId: string;
+  changeType: string;
+  changeTypeLabel: string;
+  priority: string;
+  priorityLabel: string;
+  currentEvidence: string;
+  proposedChange: string;
+  rationale: string;
+  relatedCVEvidence: string | null;
+  safetyStatus: string;
+  safetyStatusLabel: string;
+}
+
+export interface CvImprovementPlan {
+  recommendations: CvImprovementRecommendation[];
+  summary: {
+    total: number;
+    byType: Record<string, number>;
+    byPriority: Record<string, number>;
+    bySafety: Record<string, number>;
+  };
+}
+
+export interface CvImprovementSummary {
+  total: number;
+  byType: Record<string, number>;
+  byPriority: Record<string, number>;
+  bySafety: Record<string, number>;
+  actionable: number;
+  requiresReview: number;
+}
+
+export interface CvImprovementAnalysis {
+  score: number;
+  keywordCoverage: { overall: number };
+  criticalGaps: Array<{ id: string; text: string }>;
+  summary: {
+    matched: number;
+    partial: number;
+    gap: number;
+    unknown: number;
+  };
+}
+
+export interface CvImprovementMeta {
+  version: string;
+  generatedAt: string;
+}
+
+export interface CvImprovementResponse {
+  improvement: {
+    plan: CvImprovementRecommendation[];
+    summary: CvImprovementSummary;
+    totalRequirements: number;
+    generatedAt: string;
+  };
+  analysis: CvImprovementAnalysis;
+  meta: CvImprovementMeta;
+}
+
+export async function fetchCvImprovement(
+  job: { title?: string; tags?: string[]; slug?: string },
+  profile: { skills?: string; [key: string]: unknown }
+): Promise<CvImprovementResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  return apiFetch<CvImprovementResponse>("/api/cv-improvement", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ job, profile }),
+  });
+}

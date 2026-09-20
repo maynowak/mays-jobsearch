@@ -1,0 +1,138 @@
+import { HttpError } from "./_lib/filter.mjs";
+import { 
+  analyzeJobForAts, 
+  generateCVRecommendations,
+  generateImprovementPlan,
+  getRecommendationSummary,
+} from "../src/lib/cv-improvement.js";
+import { getConfig } from "./_lib/config.mjs";
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => (data += chunk));
+    req.on("end", () => {
+      try {
+        resolve(data ? JSON.parse(data) : {});
+      } catch {
+        reject(new HttpError(400, "The request body wasn't valid JSON.", "bad_request"));
+      }
+    });
+    req.on("error", () => reject(new HttpError(400, "Couldn't read the request.", "bad_request")));
+  });
+}
+
+function validateRequest(body) {
+  if (!body || typeof body !== "object") {
+    return { valid: false, error: "Request body must be an object", code: "bad_request" };
+  }
+  
+  if (!body.job || typeof body.job !== "object") {
+    return { valid: false, error: "Job must be an object", code: "bad_request" };
+  }
+  
+  if (!body.profile || typeof body.profile !== "object") {
+    return { valid: false, error: "Profile must be an object", code: "bad_request" };
+  }
+  
+  return { valid: true };
+}
+
+function parseSkills(skills) {
+  if (typeof skills === "string") {
+    return skills.split(",").map(s => s.trim()).filter(s => s);
+  }
+  if (Array.isArray(skills)) {
+    return skills;
+  }
+  return [];
+}
+
+function getProviderInfo() {
+  const cfg = getConfig();
+  const openRouterEnabled = cfg.openRouterEnabled;
+  const edenaiEnabled = cfg.edenaiEnabled;
+  
+  if (openRouterEnabled) {
+    return {
+      provider: "OpenRouter",
+      privacyStatus: "VERIFIED",
+      privacyPolicy: "https://openrouter.ai/privacy (Last Updated: August 31, 2026)",
+    };
+  }
+  
+  if (edenaiEnabled) {
+    return {
+      provider: "EdenAI",
+      privacyStatus: "UNKNOWN",
+      privacyPolicy: "Privacy policy to be investigated",
+    };
+  }
+  
+  return {
+    provider: "unavailable",
+    privacyStatus: "NO_PROVIDER_CONFIGURED",
+    privacyPolicy: "No AI provider available"
+  };
+}
+
+export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  
+  if (req.method === "OPTIONS") return res.status(204).end();
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "This endpoint accepts POST requests only.", code: "method" });
+  }
+  
+  try {
+    const body = req.body || (await readBody(req));
+    
+    // Validate request
+    const validation = validateRequest(body);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error, code: validation.code });
+    }
+    
+    const { job, profile } = body;
+    const cvSkills = parseSkills(profile?.skills);
+    
+    // Step 1: ATS Analysis (deterministic)
+    const analysis = analyzeJobForAts(job, profile || {});
+    
+    // Step 2: Generate CV Improvement Plan
+    const improvementPlan = generateImprovementPlan(analysis, parseSkills(profile?.skills));
+    const summary = getRecommendationSummary(improvementPlan.recommendations);
+    
+    const response = {
+      improvement: {
+        plan: improvementPlan.recommendations,
+        summary,
+        totalRequirements: improvementPlan.recommendations.length,
+        generatedAt: new Date().toISOString(),
+      },
+      analysis: {
+        score: analysis.scores.overall,
+        keywordCoverage: { overall: analysis.scores.keywordMatch },
+        criticalGaps: analysis.criticalGaps.map(g => ({ id: g.id, text: g.text })),
+        summary: analysis.summary,
+      },
+      meta: {
+        version: "1.0.0",
+        generatedAt: new Date().toISOString(),
+      },
+    };
+    
+    return res.status(200).json(response);
+    
+  } catch (err) {
+    if (err instanceof HttpError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
+    console.error("[/api/cv-improvement] unexpected:", err);
+    return res.status(500).json({
+      error: "Something went wrong on our end. Please try again in a moment.",
+      code: "internal",
+    });
+  }
+}

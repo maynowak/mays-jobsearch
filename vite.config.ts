@@ -9,4 +9,15 @@ export default defineConfig({
   server: {
     port: process.env.PORT ? Number(process.env.PORT) : 5173,
   },
+  resolve: {
+    extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
+  },
+  optimizeDeps: {
+    exclude: ["api/**"],
+  },
+  build: {
+    rollupOptions: {
+      external: ["api/**"],
+    },
+  },
 });
