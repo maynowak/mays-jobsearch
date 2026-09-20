@@ -5,6 +5,7 @@ import {
   generateImprovementPlan,
   getRecommendationSummary,
   applyRecommendations,
+  computeImprovementDelta,
 } from "../src/lib/cv-improvement.js";
 import { getConfig } from "./_lib/config.mjs";
 
@@ -91,6 +92,7 @@ export default async function handler(req, res) {
 
     // Determine which endpoint is being called
     const isApplyEndpoint = req.url && req.url.endsWith("/apply");
+    const isReanalyzeEndpoint = req.url && req.url.endsWith("/reanalyze");
 
     if (isApplyEndpoint) {
       // Handle apply improvements endpoint
@@ -130,6 +132,52 @@ export default async function handler(req, res) {
           timestamp: new Date().toISOString(),
         },
       });
+    } else if (isReanalyzeEndpoint) {
+      // Handle re-analysis endpoint
+      const validation = validateRequest(body);
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error, code: validation.code });
+      }
+
+      const { job, originalProfile, improvedProfile } = body;
+
+      if (!job || typeof job !== "object") {
+        return res.status(400).json({ error: "Job must be an object", code: "bad_request" });
+      }
+
+      if (!originalProfile || typeof originalProfile !== "object") {
+        return res.status(400).json({ error: "Original profile must be an object", code: "bad_request" });
+      }
+
+      if (!improvedProfile || typeof improvedProfile !== "object") {
+        return res.status(400).json({ error: "Improved profile must be an object", code: "bad_request" });
+      }
+
+      const cvSkills = parseSkills(originalProfile?.skills);
+
+      // Run ATS analysis on original profile
+      const beforeAnalysis = analyzeJobForAts(job, { skills: originalProfile.skills });
+
+      // Run ATS analysis on improved profile
+      const afterAnalysis = analyzeJobForAts(job, { skills: improvedProfile.skills });
+
+      // Compute delta
+      const delta = computeImprovementDelta(beforeAnalysis, afterAnalysis);
+
+      const response = {
+        data: {
+          before: beforeAnalysis,
+          after: afterAnalysis,
+          delta: delta,
+        },
+        meta: {
+          version: "v1",
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+        },
+      };
+
+      return res.status(200).json(response);
     } else {
       // Original endpoint: generate improvement plan
       const body2 = req.body || (await readBody(req));

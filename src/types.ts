@@ -197,6 +197,38 @@ export interface AtsAnalysisResult {
   recommendations: AtsRecommendation[];
 }
 
+export interface RequirementDelta {
+  requirementId: string;
+  requirementText: string;
+  beforeStatus: "MATCHED" | "PARTIAL" | "GAP" | "UNKNOWN";
+  afterStatus: "MATCHED" | "PARTIAL" | "GAP" | "UNKNOWN";
+  beforeConfidence: string;
+  afterConfidence: string;
+  category: "improved" | "unchanged" | "regressed";
+}
+
+export interface ImprovementDelta {
+  scoreDelta: number;
+  coverageDelta: number;
+  matchedDelta: number;
+  partialDelta: number;
+  gapDelta: number;
+  unknownDelta: number;
+  requirementsImproved: number;
+  requirementsUnchanged: number;
+  requirementsRegressed: number;
+  requirementsImprovedDetails: string[];
+  requirementsUnchangedDetails: string[];
+  requirementsRegressedDetails: string[];
+  requirementDeltas: RequirementDelta[];
+}
+
+export interface AtsReanalysisResult {
+  before: AtsAnalysisResult;
+  after: AtsAnalysisResult;
+  delta: ImprovementDelta;
+}
+
 export type CvProcessingStep =
   | "reading"
   | "target"
@@ -216,7 +248,9 @@ export type CvProcessingStep =
   | "profile-ready"
   | "improving"
   | "improved"
-  | "improvement-selection";
+  | "improvement-selection"
+  | "reanalysis"
+  | "comparison";
 
 export interface CvDocument {
   id: string;
@@ -254,4 +288,7 @@ export interface CvProcessingState {
     appliedCount: number;
     appliedRecommendations: string[];
   } | null;
+  beforeAtsResult: AtsAnalysisResult | null;
+  afterAtsResult: AtsAnalysisResult | null;
+  reanalysisResult: AtsReanalysisResult | null;
 }

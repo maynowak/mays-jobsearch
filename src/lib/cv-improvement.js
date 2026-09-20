@@ -170,6 +170,219 @@ export function applyRecommendations(profile, selectedRecommendationIds, allReco
   };
 }
 
+function compareAtsResults(before, after) {
+  const beforeSummary = before.summary;
+  const afterSummary = after.summary;
+
+  const scoreDelta = after.scores.overall - before.scores.overall;
+  const coverageDelta = after.scores.keywordMatch - before.scores.keywordMatch;
+  const matchedDelta = after.summary.matched - before.summary.matched;
+  const partialDelta = after.summary.partial - before.summary.partial;
+  const gapDelta = after.summary.gap - before.summary.gap;
+  const unknownDelta = after.summary.unknown - before.summary.unknown;
+
+  // Compare requirements
+  const beforeMatches = new Map(before.matches.map(m => [m.requirementId, m]));
+  const afterMatches = new Map(after.matches.map(m => [m.requirementId, m]));
+  const beforeReqMap = new Map(before.requirements.map(r => [r.id, r]));
+  const afterReqMap = new Map(after.requirements.map(r => [r.id, r]));
+
+  // Use all requirement IDs from both analyses
+  const allReqIds = new Set([...before.requirements.map(r => r.id), ...after.requirements.map(r => r.id)]);
+
+  let requirementsImproved = 0;
+  let requirementsUnchanged = 0;
+  let requirementsRegressed = 0;
+  const requirementsImprovedDetails = [];
+  const requirementsUnchangedDetails = [];
+  const requirementsRegressedDetails = [];
+  const requirementDeltas = [];
+
+  for (const reqId of allReqIds) {
+    const beforeMatch = beforeMatches.get(reqId);
+    const afterMatch = afterMatches.get(reqId);
+    const beforeReq = beforeReqMap.get(reqId);
+    const afterReq = afterReqMap.get(reqId);
+
+    const req = beforeReq || afterReq;
+    if (!req) continue;
+
+    const beforeStatus = beforeMatch?.status || "UNKNOWN";
+    const afterStatus = afterMatch?.status || "UNKNOWN";
+    const beforeConfidence = beforeMatch?.confidence || "LOW";
+    const afterConfidence = afterMatch?.confidence || "LOW";
+
+    let category = "unchanged";
+    if (beforeStatus !== afterStatus) {
+      const statusOrder = { MATCHED: 3, PARTIAL: 2, GAP: 1, UNKNOWN: 0 };
+      const beforeOrder = statusOrder[beforeStatus] || 0;
+      const afterOrder = statusOrder[afterStatus] || 0;
+
+      if (afterOrder > beforeOrder) {
+        category = "improved";
+      } else if (afterOrder < beforeOrder) {
+        category = "regressed";
+      } else {
+        category = "unchanged";
+      }
+    }
+
+    const delta = {
+      requirementId: req.id,
+      requirementText: req.text,
+      beforeStatus: beforeStatus,
+      afterStatus: afterStatus,
+      beforeConfidence,
+      afterConfidence: afterConfidence,
+      category,
+    };
+
+    if (category === "improved") {
+      requirementsImproved++;
+      requirementsImprovedDetails.push(req.text);
+    } else if (category === "regressed") {
+      requirementsRegressed++;
+      requirementsRegressedDetails.push(req.text);
+    } else {
+      requirementsUnchanged++;
+      requirementsUnchangedDetails.push(req.text);
+    }
+
+    requirementDeltas.push(delta);
+  }
+
+  return {
+    scoreDelta: after.scores.overall - before.scores.overall,
+    coverageDelta: after.scores.keywordMatch - before.scores.keywordMatch,
+    matchedDelta: after.summary.matched - before.summary.matched,
+    partialDelta: after.summary.partial - before.summary.partial,
+    gapDelta: after.summary.gap - before.summary.gap,
+    unknownDelta: after.summary.unknown - before.summary.unknown,
+    requirementsImproved,
+    requirementsUnchanged,
+    requirementsRegressed,
+    requirementsImprovedDetails,
+    requirementsUnchangedDetails,
+    requirementsRegressedDetails,
+    requirementDeltas: Object.values(requirementDeltas),
+  };
+}
+
+export function computeImprovementDelta(before, after) {
+  // Compare scores
+  const scoreDelta = after.scores.overall - before.scores.overall;
+  const coverageDelta = after.scores.keywordMatch - before.scores.keywordMatch;
+  const matchedDelta = after.summary.matched - before.summary.matched;
+  const partialDelta = after.summary.partial - before.summary.partial;
+  const gapDelta = after.summary.gap - before.summary.gap;
+  const unknownDelta = after.summary.unknown - before.summary.unknown;
+
+  // Compare requirements
+  const beforeMatches = new Map(before.matches.map(m => [m.requirementId, m]));
+  const afterMatches = new Map(after.matches.map(m => [m.requirementId, m]));
+  const beforeReqMap = new Map(before.requirements.map(r => [r.id, r]));
+  const afterReqMap = new Map(after.requirements.map(r => [r.id, r]));
+
+  const allReqIds = new Set([...before.requirements.map(r => r.id), ...after.requirements.map(r => r.id)]);
+
+  let requirementsImproved = 0;
+  let requirementsUnchanged = 0;
+  let requirementsRegressed = 0;
+  const requirementsImprovedDetails = [];
+  const requirementsUnchangedDetails = [];
+  const requirementsRegressedDetails = [];
+  const requirementDeltas = [];
+
+  const statusOrder = { MATCHED: 3, PARTIAL: 2, GAP: 1, UNKNOWN: 0 };
+
+  for (const reqId of allReqIds) {
+    const beforeMatch = beforeMatches.get(reqId);
+    const afterMatch = afterMatches.get(reqId);
+    const beforeReq = before.requirements.find(r => r.id === reqId);
+    const afterReq = after.requirements.find(r => r.id === reqId);
+
+    const req = beforeReq || afterReq;
+    if (!req) continue;
+
+    const beforeStatus = beforeMatch?.status || "UNKNOWN";
+    const afterStatus = afterMatch?.status || "UNKNOWN";
+    const beforeConfidence = beforeMatch?.confidence || "LOW";
+    const afterConfidence = afterMatch?.confidence || "LOW";
+
+    let category = "unchanged";
+    if (beforeStatus !== afterStatus) {
+      const beforeOrder = statusOrder[beforeStatus] || 0;
+      const afterOrder = statusOrder[afterStatus] || 0;
+
+      if (afterOrder > beforeOrder) {
+        category = "improved";
+      } else if (afterOrder < beforeOrder) {
+        category = "regressed";
+      } else {
+        category = "unchanged";
+      }
+    }
+
+    const delta = {
+      requirementId: req.id,
+      requirementText: req.text,
+      beforeStatus,
+      afterStatus,
+      beforeConfidence,
+      afterConfidence: afterConfidence,
+      category,
+    };
+
+    if (category === "improved") {
+      requirementsImproved++;
+    } else if (category === "regressed") {
+      requirementsRegressed++;
+    } else {
+      requirementsUnchanged++;
+    }
+
+    // Add to details
+    if (category === "improved") {
+      requirementsImprovedDetails.push(req.text);
+    } else if (category === "regressed") {
+      requirementsRegressedDetails.push(req.text);
+    } else {
+      requirementsUnchangedDetails.push(req.text);
+    }
+
+    requirementDeltas.push({
+      requirementId: req.id,
+      requirementText: req.text,
+      beforeStatus,
+      afterStatus,
+      beforeConfidence,
+      afterConfidence,
+      category,
+    });
+  }
+
+  return {
+    scoreDelta: after.scores.overall - before.scores.overall,
+    coverageDelta: after.scores.keywordMatch - before.scores.keywordMatch,
+    matchedDelta: after.summary.matched - before.summary.matched,
+    partialDelta: after.summary.partial - before.summary.partial,
+    gapDelta: after.summary.gap - before.summary.gap,
+    unknownDelta: after.summary.unknown - before.summary.unknown,
+    requirementsImproved,
+    requirementsUnchanged,
+    requirementsRegressed,
+    requirementsImprovedDetails,
+    requirementsUnchangedDetails,
+    requirementsRegressedDetails,
+    requirementDeltas,
+  };
+}
+
+export const CV_IMPROVEMENT_VERSION = "1.0.0";
+export const SUPPORTED_CHANGE_TYPES = Object.keys(CHANGE_TYPE_LABELS);
+export const SUPPORTED_PRIORITIES = Object.keys(PRIORITY_LABELS);
+export const SUPPORTED_SAFETY_STATUSES = Object.keys(SAFETY_STATUS_LABELS);
+
 export {
   extractRequirementsFromJob,
   matchRequirement,
@@ -181,8 +394,3 @@ export {
   getPrivacyNotice,
   formatRecommendation,
 };
-
-export const CV_IMPROVEMENT_VERSION = "1.0.0";
-export const SUPPORTED_CHANGE_TYPES = Object.keys(CHANGE_TYPE_LABELS);
-export const SUPPORTED_PRIORITIES = Object.keys(PRIORITY_LABELS);
-export const SUPPORTED_SAFETY_STATUSES = Object.keys(SAFETY_STATUS_LABELS);

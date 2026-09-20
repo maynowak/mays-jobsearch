@@ -62,7 +62,7 @@ export default function App() {
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
 
-  // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8)
+  // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
   const [cvState, setCvState] = useState<CvProcessingState>({
     step: "idle",
     documents: [],
@@ -81,6 +81,9 @@ export default function App() {
     improvementRecommendations: null,
     selectedImprovementIds: [],
     improvementResult: null,
+    beforeAtsResult: null,
+    afterAtsResult: null,
+    reanalysisResult: null,
   });
 
   const {
