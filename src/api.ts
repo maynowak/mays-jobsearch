@@ -449,3 +449,139 @@ export async function applyCvImprovement(
     body: JSON.stringify(request),
   });
 }
+
+export interface CvReanalysisRequest {
+  job: { title?: string; tags?: string[]; slug?: string };
+  originalProfile: { skills?: string; [key: string]: unknown };
+  improvedProfile: { skills?: string; [key: string]: unknown };
+}
+
+export interface AtsAnalysisResult {
+  scores: {
+    overall: number;
+    keywordMatch: number;
+    semanticMatch: number;
+    structure: number;
+  };
+  summary: {
+    matched: number;
+    partial: number;
+    gap: number;
+    unknown: number;
+  };
+  requirements: Array<{
+    id: string;
+    text: string;
+    category: string;
+    importance: string;
+  }>;
+  matches: Array<{
+    requirementId: string;
+    status: string;
+    confidence: string;
+  }>;
+  criticalGaps: Array<{ id: string; text: string }>;
+}
+
+export interface ImprovementDelta {
+  scoreDelta: number;
+  coverageDelta: number;
+  matchedDelta: number;
+  partialDelta: number;
+  gapDelta: number;
+  unknownDelta: number;
+  requirementsImproved: number;
+  requirementsUnchanged: number;
+  requirementsRegressed: number;
+  requirementsImprovedDetails: string[];
+  requirementsUnchangedDetails: string[];
+  requirementsRegressedDetails: string[];
+  requirementDeltas: Array<{
+    requirementId: string;
+    requirementText: string;
+    beforeStatus: string;
+    afterStatus: string;
+    beforeConfidence: string;
+    afterConfidence: string;
+    category: string;
+  }>;
+}
+
+export interface CvReanalysisResponse {
+  data: {
+    before: AtsAnalysisResult;
+    after: AtsAnalysisResult;
+    delta: ImprovementDelta;
+  };
+  meta: {
+    version: string;
+    requestId: string;
+    timestamp: string;
+  };
+}
+
+export async function reanalyzeCv(
+  request: CvReanalysisRequest
+): Promise<CvReanalysisResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  return apiFetch<CvReanalysisResponse>("/api/v1/cv-improvement/reanalyze", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(request),
+  });
+}
+
+// Match Impact Analysis Types
+export interface MatchImpactBefore {
+  score: number;
+  coverage: number;
+}
+
+export interface MatchImpactAfter {
+  score: number;
+  coverage: number;
+}
+
+export interface MatchImpactDelta {
+  score: number;
+  coverage: number;
+}
+
+export interface MatchImpactChanges {
+  improved: string[];
+  unchanged: string[];
+  regressed: string[];
+}
+
+export interface MatchImpactResponseData {
+  before: MatchImpactBefore;
+  after: MatchImpactAfter;
+  delta: MatchImpactDelta;
+  changes: MatchImpactChanges;
+}
+
+export interface MatchImpactRequest {
+  job: { title?: string; tags?: string[]; slug?: string };
+  originalProfile: { skills?: string; [key: string]: unknown };
+  improvedProfile: { skills?: string; [key: string]: unknown };
+}
+
+export interface MatchImpactResponse {
+  data: MatchImpactResponseData;
+  meta: {
+    version: string;
+    requestId: string;
+    timestamp: string;
+  };
+}
+
+export async function computeMatchImpact(
+  request: MatchImpactRequest
+): Promise<MatchImpactResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  return apiFetch<MatchImpactResponse>("/api/v1/cv-improvement/match-impact", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(request),
+  });
+}

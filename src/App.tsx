@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal } from "./types";
-import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement } from "./api";
+import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement, computeMatchImpact } from "./api";
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
 import { extractPdfText } from "./lib/pdf";
@@ -23,7 +23,7 @@ import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
 import CvGoalSelection from "./components/CvGoalSelection";
-import CvModelSelector from "./components/CvModelSelector";
+
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
 import { useAvailableModels } from "./hooks/useAvailableModels";
@@ -70,7 +70,6 @@ export default function App() {
     consentGiven: false,
     anonymizationMode: "anonymized",
     processingGoal: "ats",
-    selectedModel: null,
     error: null,
     profile: null,
     suggestedProfile: null,
@@ -81,9 +80,15 @@ export default function App() {
     improvementRecommendations: null,
     selectedImprovementIds: [],
     improvementResult: null,
+    originalProfile: null,
     beforeAtsResult: null,
     afterAtsResult: null,
     reanalysisResult: null,
+    matchImpactBefore: null,
+    matchImpactAfter: null,
+    matchImpactDelta: null,
+    matchImpactChanges: null,
+    matchImpactJob: null,
   });
 
   const {
@@ -341,7 +346,7 @@ export default function App() {
     setCvState((prev) => ({
       ...prev,
       consentGiven: true,
-      step: "creating-profile",
+      step: "model-selection",
       isProcessing: false,
     }));
   };
@@ -382,7 +387,7 @@ export default function App() {
       const hash = await sha256Hex(normalized);
 
       // Determine model to use
-      const modelToUse = cvState.selectedModel || effectiveModel;
+      const modelToUse = effectiveModel;
 
       // Create profile using existing API with model fallback
       const { data: suggestedProfile, usedFallback } = await withModelFallback({
@@ -476,7 +481,7 @@ export default function App() {
 
       // Then, use AI to match/score the jobs
       const { data: matchResult } = await withModelFallback({
-        initialModel: cvState.selectedModel || effectiveModel,
+        initialModel: effectiveModel,
         availableModels: models.map((m) => m.id),
         recommendedModel,
         request: (m, attempt) => fetchMatches(searchProfile, jobsResponse.jobs, m, attempt),
@@ -569,10 +574,6 @@ export default function App() {
     }
   };
 
-  const handleCvModelChange = (model: string) => {
-    setCvState((prev) => ({ ...prev, selectedModel: model }));
-  };
-
   const handleImprovementSelectionChange = (ids: string[]) => {
     setCvState((prev) => ({ ...prev, selectedImprovementIds: ids }));
   };
@@ -600,6 +601,9 @@ export default function App() {
       return;
     }
 
+    // Store original profile before improvements
+    const originalProfile = cvState.profile ? { ...cvState.profile } : null;
+
     setCvState((prev) => ({
       ...prev,
       step: "improving",
@@ -623,9 +627,11 @@ export default function App() {
             appliedCount: 0,
             appliedRecommendations: [],
           },
+          originalProfile: originalProfile,
         }));
       } else {
         const improvedProfile = result.data.improvedProfile;
+        // Store original profile and transition to improved step (not reanalysis yet)
         setCvState((prev) => ({
           ...prev,
           step: "improved",
@@ -635,8 +641,13 @@ export default function App() {
             appliedCount: result.data.appliedCount,
             appliedRecommendations: result.data.appliedRecommendations,
           },
-          profile: improvedProfile,
+          originalProfile: originalProfile,
+          beforeAtsResult: null,
+          afterAtsResult: null,
+          reanalysisResult: null,
         }));
+        // Update the main profile to the improved version
+        setProfile(improvedProfile);
       }
     } catch (err) {
       setCvState((prev) => ({
@@ -655,6 +666,155 @@ export default function App() {
       improvementRecommendations: null,
       selectedImprovementIds: [],
       improvementResult: null,
+      originalProfile: null,
+    }));
+  };
+
+  const handleReanalysisExecute = async () => {
+    const { t } = useLang();
+    if (!cvState.originalProfile || !cvState.profile) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error: t("cv.reanalysisError"),
+      }));
+      return;
+    }
+
+    // Create a job object for ATS analysis from the current profile
+    const jobForAts = {
+      title: cvState.suggestedProfile?.targetRoles[0] || cvState.profile?.targetRole || "",
+      tags: cvState.suggestedProfile?.skills || cvState.profile?.skills?.split(",") || [],
+      slug: "cv-ats-reanalysis-" + Date.now(),
+    };
+
+    setCvState((prev) => ({
+      ...prev,
+      step: "reanalysis",
+      isProcessing: true,
+    }));
+
+    try {
+      // Run ATS analysis on original profile
+      const beforeResponse = await analyzeATS(
+        jobForAts,
+        { skills: cvState.originalProfile.skills },
+        { enabled: false }
+      );
+
+      // Run ATS analysis on improved profile
+      const afterResponse = await analyzeATS(
+        jobForAts,
+        { skills: cvState.profile!.skills },
+        { enabled: false }
+      );
+
+      const beforeAnalysis = beforeResponse.analysis;
+      const afterAnalysis = afterResponse.analysis;
+
+      // Compute delta
+      const delta = {
+        scoreDelta: afterAnalysis.score - beforeAnalysis.score,
+        coverageDelta: afterAnalysis.keywordCoverage.overall - beforeAnalysis.keywordCoverage.overall,
+      };
+
+      setCvState((prev) => ({
+        ...prev,
+        step: "comparison",
+        isProcessing: false,
+        beforeAtsResult: beforeAnalysis,
+        afterAtsResult: afterAnalysis,
+        reanalysisResult: {
+          before: beforeAnalysis,
+          after: afterAnalysis,
+          delta,
+        },
+      }));
+    } catch (err) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error:
+          isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : isModelUnavailable(err)
+            ? t("model.unavailable")
+            : t("cv.reanalysisError"),
+      }));
+    }
+  };
+
+  const handleReanalysisBack = () => {
+    setCvState((prev) => ({
+      ...prev,
+      step: "improved",
+      reanalysisResult: null,
+      beforeAtsResult: null,
+      afterAtsResult: null,
+    }));
+  };
+
+  const handleMatchImpactExecute = async (job: Job) => {
+    const { t } = useLang();
+    if (!cvState.originalProfile || !cvState.profile) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error: t("cv.matchImpactError"),
+      }));
+      return;
+    }
+
+    setCvState((prev) => ({
+      ...prev,
+      step: "comparison",
+      isProcessing: true,
+      matchImpactJob: job,
+    }));
+
+    try {
+      const result = await computeMatchImpact({
+        job: { title: job.title, tags: job.tags, slug: job.slug },
+        originalProfile: { skills: cvState.originalProfile.skills, targetRole: cvState.originalProfile.targetRole, city: cvState.originalProfile.city },
+        improvedProfile: { skills: cvState.profile!.skills, targetRole: cvState.profile!.targetRole, city: cvState.profile!.city },
+      });
+
+      setCvState((prev) => ({
+        ...prev,
+        step: "comparison",
+        isProcessing: false,
+        matchImpactBefore: result.data.before,
+        matchImpactAfter: result.data.after,
+        matchImpactDelta: result.data.delta,
+        matchImpactChanges: result.data.changes,
+        matchImpactJob: job,
+      }));
+    } catch (err) {
+      setCvState((prev) => ({
+        ...prev,
+        step: "error",
+        isProcessing: false,
+        error:
+          isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : isModelUnavailable(err)
+            ? t("model.unavailable")
+            : t("cv.matchImpactError"),
+      }));
+    }
+  };
+
+  const handleMatchImpactBack = () => {
+    setCvState((prev) => ({
+      ...prev,
+      step: "comparison",
+      matchImpactBefore: null,
+      matchImpactAfter: null,
+      matchImpactDelta: null,
+      matchImpactJob: null,
     }));
   };
 
@@ -710,7 +870,7 @@ export default function App() {
         recommendedModel={recommendedModel}
         value={effectiveModel}
         onChange={handleModelChange}
-        disabled={isSearching || isMatching}
+        disabled={isSearching || isMatching || cvState.isProcessing}
         attention={modelExhausted}
       />
       <Status status={status} />
@@ -727,11 +887,18 @@ export default function App() {
       <CvProcessingSteps currentStep={
         cvState.step === "document-selected" ? "document" :
         cvState.step === "consent-required" || cvState.step === "consent-given" ? "consent" :
+        cvState.step === "model-selection" ? "model" :
         cvState.step === "creating-profile" ? "profile" :
         cvState.step === "anonymizing" ? "anonymization" :
         cvState.step === "goal-selection" ? "goal" :
         cvState.step === "ats-processing" ? "target" :
         cvState.step === "ai-searching" ? "processing" :
+        cvState.step === "improvement-selection" ? "target" :
+        cvState.step === "improving" ? "processing" :
+        cvState.step === "improved" ? "complete" :
+        cvState.step === "reanalysis" ? "processing" :
+        cvState.step === "comparison" ? "complete" :
+        cvState.step === "match-impact-select" ? "target" :
         cvState.step === "success" ? "complete" : "document"
       } />
 
@@ -759,6 +926,38 @@ export default function App() {
         />
       )}
 
+      {cvState.step === "model-selection" && (
+        <div className="cv-model-selection" role="region" aria-labelledby="cv-model-selection-title">
+          <h3 id="cv-model-selection-title" className="cv-model-selection__title">
+            {t("cv.modelSelect")}
+          </h3>
+          <p className="cv-model-selection__description">{t("cv.modelSelectDescription")}</p>
+          <ModelSelector
+            state={modelsState}
+            models={models}
+            defaultModel={defaultModel}
+            recommendedModel={recommendedModel}
+            value={effectiveModel}
+            onChange={handleModelChange}
+            disabled={cvState.isProcessing}
+            attention={modelExhausted}
+          />
+          {cvState.isProcessing && (
+            <p className="cv-model-selection__locked">{t("cv.modelSelectionLocked")}</p>
+          )}
+          <div className="cv-model-selection__actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "creating-profile" }))}
+              disabled={cvState.isProcessing || modelsState !== "ready" || !effectiveModel}
+            >
+              {t("cv.continue")}
+            </button>
+          </div>
+        </div>
+      )}
+
       {cvState.step === "creating-profile" && (
         <>
           <CvAnonymizationChoice
@@ -770,12 +969,6 @@ export default function App() {
             value={cvState.processingGoal}
             onChange={handleGoalChange}
             disabled={cvState.isProcessing}
-          />
-          <CvModelSelector
-            value={cvState.selectedModel}
-            onChange={handleCvModelChange}
-            disabled={cvState.isProcessing}
-            recommendedModel={recommendedModel}
           />
           <div className="cv-continue-actions">
             <button
@@ -916,6 +1109,41 @@ export default function App() {
         </div>
       )}
 
+      {cvState.step === "improved" && cvState.improvementResult && (
+        <div className="cv-improved" role="region" aria-labelledby="cv-improved-title">
+          <h3 id="cv-improved-title" className="cv-improved__title">
+            {t("cv.improvementApplied")}
+          </h3>
+          <p className="cv-improved__message">
+            {t("cv.improvementAppliedCountMsg", { count: cvState.improvementResult.appliedCount })}
+          </p>
+          {cvState.improvementResult.appliedRecommendations.length > 0 && (
+            <div className="cv-improved__applied">
+              <h4>{t("cv.improvementAppliedSkills", { skills: cvState.improvementResult.appliedRecommendations.join(", ") })}</h4>
+            </div>
+          )}
+          <div className="cv-improved__actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={handleReanalysisExecute}
+              disabled={cvState.isProcessing}
+            >
+              {cvState.isProcessing ? t("cv.reanalysisRunning") : t("cv.reanalysisTitle")}
+              {cvState.isProcessing && <span className="spinner" />}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handleImprovementBack}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.backToGoalSelection")}
+            </button>
+          </div>
+        </div>
+      )}
+
       {cvState.step === "ats-processing" && (
         <div className="cv-ats-processing" role="status" aria-live="polite">
           <span className="spinner" aria-hidden="true" />
@@ -960,6 +1188,224 @@ export default function App() {
               onClick={() => setCvState((prev) => ({ ...prev, step: "goal-selection", aiSearchResult: null, matches: [], foundJobs: [] }))}
             >
               {t("cv.backToGoalSelection")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cvState.step === "reanalysis" && (
+        <div className="cv-reanalysis" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <p>{cvState.isProcessing ? t("cv.reanalysisRunning") : t("cv.reanalysisDescription")}</p>
+        </div>
+      )}
+
+      {cvState.step === "comparison" && cvState.reanalysisResult && (
+        <div className="cv-comparison" role="region" aria-labelledby="cv-comparison-title">
+          <h3 id="cv-comparison-title" className="cv-comparison__title">
+            {t("cv.comparisonTitle")}
+          </h3>
+          <p className="cv-comparison__description">{t("cv.comparisonDescription")}</p>
+
+          <div className="cv-comparison__scores">
+            <div className="cv-comparison__score-card">
+              <span className="cv-comparison__label">{t("cv.comparisonScoreLabel")}</span>
+              <div className="cv-comparison__values">
+                <span className="cv-comparison__before">{t("cv.comparisonBefore", { score: cvState.reanalysisResult.before.score })}</span>
+                <span className="cv-comparison__arrow">→</span>
+                <span className="cv-comparison__after">{t("cv.comparisonAfter", { score: cvState.reanalysisResult.after.score })}</span>
+              </div>
+              <span className={`cv-comparison__delta ${cvState.reanalysisResult.delta.scoreDelta >= 0 ? "positive" : "negative"}`}>
+                {cvState.reanalysisResult.delta.scoreDelta >= 0 ? "+" : ""}{cvState.reanalysisResult.delta.scoreDelta}
+              </span>
+            </div>
+            <div className="cv-comparison__score-card">
+              <span className="cv-comparison__label">{t("cv.comparisonCoverageLabel")}</span>
+              <div className="cv-comparison__values">
+                <span className="cv-comparison__before">{cvState.reanalysisResult.before.keywordCoverage.overall}%</span>
+                <span className="cv-comparison__arrow">→</span>
+                <span className="cv-comparison__after">{cvState.reanalysisResult.after.keywordCoverage.overall}%</span>
+              </div>
+              <span className={`cv-comparison__delta ${cvState.reanalysisResult.delta.coverageDelta >= 0 ? "positive" : "negative"}`}>
+                {cvState.reanalysisResult.delta.coverageDelta >= 0 ? "+" : ""}{cvState.reanalysisResult.delta.coverageDelta}%
+              </span>
+            </div>
+          </div>
+
+          <div className="cv-comparison__requirements">
+            <h4>{t("cv.comparisonRequirementsLabel")}</h4>
+            <div className="cv-comparison__requirements-list">
+              {cvState.reanalysisResult.delta.requirementsImproved && cvState.reanalysisResult.delta.requirementsImproved > 0 && (
+                <div className="cv-comparison__category improved">
+                  <span className="cv-comparison__category-label">{t("cv.comparisonImproved")} ({cvState.reanalysisResult.delta.requirementsImproved})</span>
+                  <ul>
+                    {cvState.reanalysisResult.delta.requirementsImprovedDetails?.map((req, i) => (
+                      <li key={i}>{req}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {cvState.reanalysisResult.delta.requirementsUnchanged && cvState.reanalysisResult.delta.requirementsUnchanged > 0 && (
+                <div className="cv-comparison__category unchanged">
+                  <span className="cv-comparison__category-label">{t("cv.comparisonUnchanged")} ({cvState.reanalysisResult.delta.requirementsUnchanged})</span>
+                  <ul>
+                    {cvState.reanalysisResult.delta.requirementsUnchangedDetails?.map((req, i) => (
+                      <li key={i}>{req}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {cvState.reanalysisResult.delta.requirementsRegressed && cvState.reanalysisResult.delta.requirementsRegressed > 0 && (
+                <div className="cv-comparison__category regressed">
+                  <span className="cv-comparison__category-label">{t("cv.comparisonRegressed")} ({cvState.reanalysisResult.delta.requirementsRegressed})</span>
+                  <ul>
+                    {cvState.reanalysisResult.delta.requirementsRegressedDetails?.map((req, i) => (
+                      <li key={i}>{req}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {!cvState.reanalysisResult.delta.requirementsImproved &&
+               !cvState.reanalysisResult.delta.requirementsUnchanged &&
+               !cvState.reanalysisResult.delta.requirementsRegressed && (
+                <p className="cv-comparison__no-changes">{t("cv.comparisonNoChanges")}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="cv-comparison__actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={handleReanalysisBack}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.comparisonBack")}
+            </button>
+            {foundJobs.length > 0 && (
+              <button
+                type="button"
+                className="cv-continue-btn"
+                onClick={() => setCvState((prev) => ({ ...prev, step: "match-impact-select" }))}
+                disabled={cvState.isProcessing}
+              >
+                {t("cv.matchImpactRunAnalysis")}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {cvState.step === "match-impact-select" && foundJobs.length > 0 && (
+        <div className="cv-match-impact-select" role="region" aria-labelledby="cv-match-impact-select-title">
+          <h3 id="cv-match-impact-select-title" className="cv-match-impact__title">
+            {t("cv.matchImpactTitle")}
+          </h3>
+          <p className="cv-match-impact__description">{t("cv.matchImpactDescription")}</p>
+          <p>Select a job to compare match scores:</p>
+          <div className="cv-match-impact__job-list">
+            {foundJobs.slice(0, 10).map((job) => (
+              <button
+                key={job.slug}
+                type="button"
+                className="cv-match-impact__job-item"
+                onClick={() => handleMatchImpactExecute(job)}
+                disabled={cvState.isProcessing}
+              >
+                <span className="cv-match-impact__job-title">{job.title}</span>
+                <span className="cv-match-impact__job-company">{job.company_name}</span>
+                <span className="cv-match-impact__job-location">{(job.location || []).join(", ") || (job.remote ? t("match.remote") : t("match.locationNotStated"))}</span>
+              </button>
+            ))}
+          </div>
+          <div className="cv-match-impact__actions">
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "comparison" }))}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.matchImpactBack")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cvState.step === "comparison" && cvState.matchImpactDelta && cvState.matchImpactJob && (
+        <div className="cv-match-impact" role="region" aria-labelledby="cv-match-impact-title">
+          <h3 id="cv-match-impact-title" className="cv-match-impact__title">
+            {t("cv.matchImpactTitle")}
+          </h3>
+          <p className="cv-match-impact__job-info">
+            {cvState.matchImpactJob.title} — {cvState.matchImpactJob.company_name}
+          </p>
+
+          <div className="cv-match-impact__scores">
+            <div className="cv-match-impact__score-card">
+              <span className="cv-match-impact__label">{t("cv.matchImpactBeforeLabel")}</span>
+              <span className="cv-match-impact__score">{cvState.matchImpactBefore?.score ?? 0}</span>
+            </div>
+            <div className="cv-match-impact__score-card">
+              <span className="cv-match-impact__label">{t("cv.matchImpactAfterLabel")}</span>
+              <span className="cv-match-impact__score">{cvState.matchImpactAfter?.score ?? 0}</span>
+            </div>
+            <div className="cv-match-impact__score-card delta">
+              <span className="cv-match-impact__label">{t("cv.matchImpactDeltaLabel")}</span>
+              <span className={`cv-match-impact__delta ${cvState.matchImpactDelta.score >= 0 ? "positive" : "negative"}`}>
+                {cvState.matchImpactDelta.score >= 0 ? "+" : ""}{cvState.matchImpactDelta.score}
+              </span>
+            </div>
+          </div>
+
+          <div className="cv-match-impact__changes">
+            <h4>{t("cv.comparisonRequirementsLabel")}</h4>
+            <div className="cv-match-impact__changes-list">
+              {cvState.matchImpactChanges && cvState.matchImpactChanges.improved.length > 0 && (
+                <div className="cv-match-impact__category improved">
+                  <span className="cv-match-impact__category-label">{t("cv.matchImpactImproved")}</span>
+                  <ul>
+                    {cvState.matchImpactChanges.improved.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {cvState.matchImpactChanges && cvState.matchImpactChanges.unchanged.length > 0 && (
+                <div className="cv-match-impact__category unchanged">
+                  <span className="cv-match-impact__category-label">{t("cv.matchImpactUnchanged")}</span>
+                  <ul>
+                    {cvState.matchImpactChanges.unchanged.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {cvState.matchImpactChanges && cvState.matchImpactChanges.regressed.length > 0 && (
+                <div className="cv-match-impact__category regressed">
+                  <span className="cv-match-impact__category-label">{t("cv.matchImpactRegressed")}</span>
+                  <ul>
+                    {cvState.matchImpactChanges.regressed.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {!cvState.matchImpactChanges || (cvState.matchImpactChanges.improved.length === 0 &&
+               cvState.matchImpactChanges.unchanged.length === 0 &&
+               cvState.matchImpactChanges.regressed.length === 0) && (
+                <p className="cv-match-impact__no-changes">{t("cv.matchImpactNoChanges")}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="cv-match-impact__actions">
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={handleMatchImpactBack}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.matchImpactBack")}
             </button>
           </div>
         </div>

@@ -176,18 +176,16 @@ function compareAtsResults(before, after) {
 
   const scoreDelta = after.scores.overall - before.scores.overall;
   const coverageDelta = after.scores.keywordMatch - before.scores.keywordMatch;
-  const matchedDelta = after.summary.matched - before.summary.matched;
-  const partialDelta = after.summary.partial - before.summary.partial;
-  const gapDelta = after.summary.gap - before.summary.gap;
-  const unknownDelta = after.summary.unknown - before.summary.unknown;
+  const matchedDelta = after.summary.matched - beforeSummary.matched;
+  const partialDelta = afterSummary.partial - beforeSummary.partial;
+  const gapDelta = afterSummary.gap - beforeSummary.gap;
+  const unknownDelta = afterSummary.unknown - beforeSummary.unknown;
 
-  // Compare requirements
   const beforeMatches = new Map(before.matches.map(m => [m.requirementId, m]));
   const afterMatches = new Map(after.matches.map(m => [m.requirementId, m]));
   const beforeReqMap = new Map(before.requirements.map(r => [r.id, r]));
   const afterReqMap = new Map(after.requirements.map(r => [r.id, r]));
 
-  // Use all requirement IDs from both analyses
   const allReqIds = new Set([...before.requirements.map(r => r.id), ...after.requirements.map(r => r.id)]);
 
   let requirementsImproved = 0;
@@ -254,10 +252,10 @@ function compareAtsResults(before, after) {
   return {
     scoreDelta: after.scores.overall - before.scores.overall,
     coverageDelta: after.scores.keywordMatch - before.scores.keywordMatch,
-    matchedDelta: after.summary.matched - before.summary.matched,
-    partialDelta: after.summary.partial - before.summary.partial,
-    gapDelta: after.summary.gap - before.summary.gap,
-    unknownDelta: after.summary.unknown - before.summary.unknown,
+    matchedDelta: after.summary.matched - beforeSummary.matched,
+    partialDelta: afterSummary.partial - beforeSummary.partial,
+    gapDelta: afterSummary.gap - beforeSummary.gap,
+    unknownDelta: afterSummary.unknown - beforeSummary.unknown,
     requirementsImproved,
     requirementsUnchanged,
     requirementsRegressed,
@@ -268,113 +266,33 @@ function compareAtsResults(before, after) {
   };
 }
 
-export function computeImprovementDelta(before, after) {
-  // Compare scores
-  const scoreDelta = after.scores.overall - before.scores.overall;
-  const coverageDelta = after.scores.keywordMatch - before.scores.keywordMatch;
-  const matchedDelta = after.summary.matched - before.summary.matched;
-  const partialDelta = after.summary.partial - before.summary.partial;
-  const gapDelta = after.summary.gap - before.summary.gap;
-  const unknownDelta = after.summary.unknown - before.summary.unknown;
+export function computeMatchImpact(before, after) {
+  const beforeScore = before.score || 0;
+  const afterScore = after.score || 0;
+  const beforeCoverage = before.coverage || 0;
+  const afterCoverage = after.coverage || 0;
 
-  // Compare requirements
-  const beforeMatches = new Map(before.matches.map(m => [m.requirementId, m]));
-  const afterMatches = new Map(after.matches.map(m => [m.requirementId, m]));
-  const beforeReqMap = new Map(before.requirements.map(r => [r.id, r]));
-  const afterReqMap = new Map(after.requirements.map(r => [r.id, r]));
-
-  const allReqIds = new Set([...before.requirements.map(r => r.id), ...after.requirements.map(r => r.id)]);
-
-  let requirementsImproved = 0;
-  let requirementsUnchanged = 0;
-  let requirementsRegressed = 0;
-  const requirementsImprovedDetails = [];
-  const requirementsUnchangedDetails = [];
-  const requirementsRegressedDetails = [];
-  const requirementDeltas = [];
-
-  const statusOrder = { MATCHED: 3, PARTIAL: 2, GAP: 1, UNKNOWN: 0 };
-
-  for (const reqId of allReqIds) {
-    const beforeMatch = beforeMatches.get(reqId);
-    const afterMatch = afterMatches.get(reqId);
-    const beforeReq = before.requirements.find(r => r.id === reqId);
-    const afterReq = after.requirements.find(r => r.id === reqId);
-
-    const req = beforeReq || afterReq;
-    if (!req) continue;
-
-    const beforeStatus = beforeMatch?.status || "UNKNOWN";
-    const afterStatus = afterMatch?.status || "UNKNOWN";
-    const beforeConfidence = beforeMatch?.confidence || "LOW";
-    const afterConfidence = afterMatch?.confidence || "LOW";
-
-    let category = "unchanged";
-    if (beforeStatus !== afterStatus) {
-      const beforeOrder = statusOrder[beforeStatus] || 0;
-      const afterOrder = statusOrder[afterStatus] || 0;
-
-      if (afterOrder > beforeOrder) {
-        category = "improved";
-      } else if (afterOrder < beforeOrder) {
-        category = "regressed";
-      } else {
-        category = "unchanged";
-      }
-    }
-
-    const delta = {
-      requirementId: req.id,
-      requirementText: req.text,
-      beforeStatus,
-      afterStatus,
-      beforeConfidence,
-      afterConfidence: afterConfidence,
-      category,
-    };
-
-    if (category === "improved") {
-      requirementsImproved++;
-    } else if (category === "regressed") {
-      requirementsRegressed++;
-    } else {
-      requirementsUnchanged++;
-    }
-
-    // Add to details
-    if (category === "improved") {
-      requirementsImprovedDetails.push(req.text);
-    } else if (category === "regressed") {
-      requirementsRegressedDetails.push(req.text);
-    } else {
-      requirementsUnchangedDetails.push(req.text);
-    }
-
-    requirementDeltas.push({
-      requirementId: req.id,
-      requirementText: req.text,
-      beforeStatus,
-      afterStatus,
-      beforeConfidence,
-      afterConfidence,
-      category,
-    });
-  }
+  const scoreDelta = afterScore - beforeScore;
+  const coverageDelta = after.coverage - before.coverage;
 
   return {
-    scoreDelta: after.scores.overall - before.scores.overall,
-    coverageDelta: after.scores.keywordMatch - before.scores.keywordMatch,
-    matchedDelta: after.summary.matched - before.summary.matched,
-    partialDelta: after.summary.partial - before.summary.partial,
-    gapDelta: after.summary.gap - before.summary.gap,
-    unknownDelta: after.summary.unknown - before.summary.unknown,
-    requirementsImproved,
-    requirementsUnchanged,
-    requirementsRegressed,
-    requirementsImprovedDetails,
-    requirementsUnchangedDetails,
-    requirementsRegressedDetails,
-    requirementDeltas,
+    before: {
+      score: beforeScore,
+      coverage: beforeCoverage,
+    },
+    after: {
+      score: afterScore,
+      coverage: afterCoverage,
+    },
+    delta: {
+      score: scoreDelta,
+      coverage: coverageDelta,
+    },
+    changes: {
+      improved: scoreDelta > 0 ? ["Match score improved"] : [],
+      unchanged: scoreDelta === 0 ? ["Match score unchanged"] : [],
+      regressed: scoreDelta < 0 ? ["Match score regressed"] : [],
+    },
   };
 }
 

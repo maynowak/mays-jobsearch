@@ -210,22 +210,39 @@ export interface RequirementDelta {
 export interface ImprovementDelta {
   scoreDelta: number;
   coverageDelta: number;
-  matchedDelta: number;
-  partialDelta: number;
-  gapDelta: number;
-  unknownDelta: number;
-  requirementsImproved: number;
-  requirementsUnchanged: number;
-  requirementsRegressed: number;
-  requirementsImprovedDetails: string[];
-  requirementsUnchangedDetails: string[];
-  requirementsRegressedDetails: string[];
-  requirementDeltas: RequirementDelta[];
+  matchedDelta?: number;
+  partialDelta?: number;
+  gapDelta?: number;
+  unknownDelta?: number;
+  requirementsImproved?: number;
+  requirementsUnchanged?: number;
+  requirementsRegressed?: number;
+  requirementsImprovedDetails?: string[];
+  requirementsUnchangedDetails?: string[];
+  requirementsRegressedDetails?: string[];
+  requirementDeltas?: RequirementDelta[];
+}
+
+export interface AtsAnalysisSummary {
+  score: number;
+  keywordCoverage: { overall: number };
+  criticalGaps: Array<{ id: string; text: string }>;
+  requirements: Array<{
+    id: string;
+    text: string;
+    category: string;
+    importance: string;
+  }>;
+  matches: Array<{
+    requirementId: string;
+    status: string;
+    confidence: string;
+  }>;
 }
 
 export interface AtsReanalysisResult {
-  before: AtsAnalysisResult;
-  after: AtsAnalysisResult;
+  before: AtsAnalysisSummary;
+  after: AtsAnalysisSummary;
   delta: ImprovementDelta;
 }
 
@@ -236,6 +253,7 @@ export type CvProcessingStep =
   | "document-selected"
   | "consent-required"
   | "consent-given"
+  | "model-selection"
   | "creating-profile"
   | "anonymizing"
   | "goal-selection"
@@ -250,7 +268,8 @@ export type CvProcessingStep =
   | "improved"
   | "improvement-selection"
   | "reanalysis"
-  | "comparison";
+  | "comparison"
+  | "match-impact-select";
 
 export interface CvDocument {
   id: string;
@@ -266,6 +285,41 @@ export type ProcessingGoal = "ats" | "ai-search";
 
 import type { AtsAnalysisResponse, CvImprovementRecommendation } from "./api";
 
+export interface Match {
+  score: number;
+  why: string;
+  prepare: string;
+  job: Job | null;
+}
+
+export interface MatchImpactBefore {
+  score: number;
+  coverage: number;
+}
+
+export interface MatchImpactAfter {
+  score: number;
+  coverage: number;
+}
+
+export interface MatchImpactDelta {
+  score: number;
+  coverage: number;
+}
+
+export interface MatchImpactChanges {
+  improved: string[];
+  unchanged: string[];
+  regressed: string[];
+}
+
+export interface MatchImpactResult {
+  before: MatchImpactBefore;
+  after: MatchImpactAfter;
+  delta: MatchImpactDelta;
+  changes: MatchImpactChanges;
+}
+
 export interface CvProcessingState {
   step: CvProcessingStep;
   documents: CvDocument[];
@@ -273,7 +327,6 @@ export interface CvProcessingState {
   consentGiven: boolean;
   anonymizationMode: AnonymizationMode;
   processingGoal: ProcessingGoal;
-  selectedModel: string | null;
   error: string | null;
   profile: Profile | null;
   suggestedProfile: SuggestedProfile | null;
@@ -288,7 +341,13 @@ export interface CvProcessingState {
     appliedCount: number;
     appliedRecommendations: string[];
   } | null;
-  beforeAtsResult: AtsAnalysisResult | null;
-  afterAtsResult: AtsAnalysisResult | null;
+  originalProfile: Profile | null;
+  beforeAtsResult: AtsAnalysisSummary | null;
+  afterAtsResult: AtsAnalysisSummary | null;
   reanalysisResult: AtsReanalysisResult | null;
+  matchImpactBefore: MatchImpactBefore | null;
+  matchImpactAfter: MatchImpactAfter | null;
+  matchImpactDelta: MatchImpactDelta | null;
+  matchImpactChanges: MatchImpactChanges | null;
+  matchImpactJob: Job | null;
 }

@@ -12,6 +12,7 @@ const STEP_MESSAGES: Record<string, string> = {
   "document-selected": "cv.statusDocumentSelected",
   "consent-required": "cv.statusConsentRequired",
   "consent-given": "cv.statusConsentGiven",
+  "model-selection": "cv.statusModelSelection",
   "creating-profile": "cv.statusProfileCreating",
   "anonymizing": "cv.statusAnonymizing",
   "goal-selection": "cv.statusGoalSelection",
@@ -32,7 +33,7 @@ export default function CvProcessingStatus({ step, error, documentName }: Props)
   const message = t(messageKey, { document: documentName || "" });
 
   const isError = step === "error";
-  const isProcessing = ["creating-profile", "anonymizing", "ats-processing", "ai-searching"].includes(step);
+  const isProcessing = ["model-selection", "creating-profile", "anonymizing", "ats-processing", "ai-searching"].includes(step);
 
   return (
     <div className={`cv-processing-status ${isError ? "error" : ""} ${isProcessing ? "processing" : ""}`} role="status" aria-live="polite">

@@ -1,45 +1,15 @@
-import { useEffect, useState } from "react";
 import { useLang } from "../i18n";
-import { fetchModels } from "../api";
 
 interface Props {
   value: string | null;
   onChange: (value: string) => void;
   disabled: boolean;
   recommendedModel: string | null;
+  models: { id: string; name: string }[];
 }
 
-export default function CvModelSelector({ value, onChange, disabled, recommendedModel }: Props) {
+export default function CvModelSelector({ value, onChange, disabled, recommendedModel, models }: Props) {
   const { t } = useLang();
-  const [models, setModels] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    const loadModels = async () => {
-      try {
-        const data = await fetchModels();
-        if (mounted) {
-          setModels(data.models || []);
-        }
-      } catch {
-        // ignore
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    loadModels();
-    return () => { mounted = false; };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="cv-model-selector__loading">
-        <span className="spinner" aria-hidden="true" />
-        <span>{t("model.loading")}</span>
-      </div>
-    );
-  }
 
   if (models.length === 0) {
     return (

@@ -6,7 +6,9 @@ import {
   getRecommendationSummary,
   applyRecommendations,
   computeImprovementDelta,
+  computeMatchImpact,
 } from "../src/lib/cv-improvement.js";
+import { computeMatchForJob } from "./_lib/matching.mjs";
 import { getConfig } from "./_lib/config.mjs";
 
 function readBody(req) {
@@ -93,8 +95,74 @@ export default async function handler(req, res) {
     // Determine which endpoint is being called
     const isApplyEndpoint = req.url && req.url.endsWith("/apply");
     const isReanalyzeEndpoint = req.url && req.url.endsWith("/reanalyze");
+    const isMatchImpactEndpoint = req.url && req.url.endsWith("/match-impact");
 
-    if (isApplyEndpoint) {
+    if (isMatchImpactEndpoint) {
+      // Handle match impact analysis endpoint
+      const validation = validateRequest(body);
+      if (!validation.valid) {
+        return res.status(400).json({ error: validation.error, code: validation.code });
+      }
+
+      const { job, originalProfile, improvedProfile } = body;
+
+      if (!job || typeof job !== "object") {
+        return res.status(400).json({ error: "Job must be an object", code: "bad_request" });
+      }
+
+      if (!originalProfile || typeof originalProfile !== "object") {
+        return res.status(400).json({ error: "Original profile must be an object", code: "bad_request" });
+      }
+
+      if (!improvedProfile || typeof improvedProfile !== "object") {
+        return res.status(400).json({ error: "Improved profile must be an object", code: "bad_request" });
+      }
+
+      // Run MATCHING on original profile using the existing matching infrastructure
+      const beforeMatch = await computeMatchForJob({
+        profile: { skills: originalProfile.skills || "", targetRole: originalProfile.targetRole || "", city: originalProfile.city || "" },
+        job,
+      });
+
+      // Run MATCHING on improved profile using the existing matching infrastructure
+      const afterMatch = await computeMatchForJob({
+        profile: { skills: improvedProfile.skills || "", targetRole: improvedProfile.targetRole || "", city: improvedProfile.city || "" },
+        job,
+      });
+
+      // Compute match impact delta from actual match scores
+      const beforeScore = beforeMatch?.score || 0;
+      const afterScore = afterMatch?.score || 0;
+      const matchImpact = computeMatchImpact(
+        { score: beforeScore, coverage: 0 }, // Match scores don't have coverage; use 0 or compute separately
+        { score: afterScore, coverage: 0 }
+      );
+
+      const response = {
+        data: {
+          before: {
+            score: matchImpact.before.score,
+            coverage: matchImpact.before.coverage,
+          },
+          after: {
+            score: matchImpact.after.score,
+            coverage: matchImpact.after.coverage,
+          },
+          delta: {
+            score: matchImpact.delta.score,
+            coverage: matchImpact.delta.coverage,
+          },
+          changes: matchImpact.changes,
+        },
+        meta: {
+          version: "v1",
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+        },
+      };
+
+      return res.status(200).json(response);
+    } else if (isApplyEndpoint) {
       // Handle apply improvements endpoint
       const validation = validateRequest(body);
       if (!validation.valid) {

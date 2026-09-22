@@ -3,22 +3,30 @@ import { useLang } from "../i18n";
 type StepId = 
   | "document" 
   | "consent" 
+  | "model"
   | "profile" 
   | "anonymization" 
   | "goal" 
   | "target" 
   | "processing" 
-  | "complete";
+  | "complete"
+  | "improvement"
+  | "reanalysis"
+  | "match-impact";
 
 const STEPS: readonly { id: StepId; labelKey: string }[] = [
   { id: "document", labelKey: "cv.processingStep1" },
   { id: "consent", labelKey: "cv.processingStep2" },
-  { id: "profile", labelKey: "cv.processingStep3" },
-  { id: "anonymization", labelKey: "cv.processingStep4" },
-  { id: "goal", labelKey: "cv.processingStep5" },
-  { id: "target", labelKey: "cv.processingStep6" },
-  { id: "processing", labelKey: "cv.processingStep7" },
-  { id: "complete", labelKey: "cv.processingStep8" },
+  { id: "model", labelKey: "cv.processingStep3" },
+  { id: "profile", labelKey: "cv.processingStep4" },
+  { id: "anonymization", labelKey: "cv.processingStep5" },
+  { id: "goal", labelKey: "cv.processingStep6" },
+  { id: "target", labelKey: "cv.processingStep7" },
+  { id: "processing", labelKey: "cv.processingStep8" },
+  { id: "complete", labelKey: "cv.processingStep9" },
+  { id: "improvement", labelKey: "cv.processingStepImprovement" },
+  { id: "reanalysis", labelKey: "cv.processingStepReanalysis" },
+  { id: "match-impact", labelKey: "cv.processingStepMatchImpact" },
 ] as const;
 
 interface Props {
