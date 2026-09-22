@@ -257,6 +257,7 @@ export type CvProcessingStep =
   | "creating-profile"
   | "anonymizing"
   | "goal-selection"
+  | "skill-selection"
   | "ats-processing"
   | "ats-complete"
   | "ai-searching"
@@ -350,4 +351,5 @@ export interface CvProcessingState {
   matchImpactDelta: MatchImpactDelta | null;
   matchImpactChanges: MatchImpactChanges | null;
   matchImpactJob: Job | null;
+  selectedSkills: string[];
 }

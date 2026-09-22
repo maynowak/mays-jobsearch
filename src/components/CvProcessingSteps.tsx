@@ -7,6 +7,7 @@ type StepId =
   | "profile" 
   | "anonymization" 
   | "goal" 
+  | "skill"
   | "target" 
   | "processing" 
   | "complete"
@@ -21,6 +22,7 @@ const STEPS: readonly { id: StepId; labelKey: string }[] = [
   { id: "profile", labelKey: "cv.processingStep4" },
   { id: "anonymization", labelKey: "cv.processingStep5" },
   { id: "goal", labelKey: "cv.processingStep6" },
+  { id: "skill", labelKey: "cv.processingStepSkill" },
   { id: "target", labelKey: "cv.processingStep7" },
   { id: "processing", labelKey: "cv.processingStep8" },
   { id: "complete", labelKey: "cv.processingStep9" },

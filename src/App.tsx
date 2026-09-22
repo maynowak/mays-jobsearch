@@ -89,6 +89,7 @@ export default function App() {
     matchImpactDelta: null,
     matchImpactChanges: null,
     matchImpactJob: null,
+    selectedSkills: [],
   });
 
   const {
@@ -437,7 +438,7 @@ export default function App() {
   const handleGoalExecute = () => {
     const { t } = useLang();
     const goal = cvState.processingGoal;
-    const nextStep = goal === "ats" ? "ats-processing" : "ai-searching";
+    const nextStep = goal === "ats" ? "ats-processing" : "skill-selection";
     setCvState((prev) => ({
       ...prev,
       step: nextStep,
@@ -446,13 +447,31 @@ export default function App() {
 
     if (goal === "ats") {
       runAtsProcessing(t);
-    } else if (goal === "ai-search") {
-      runAiSearch(t);
     }
+    // For ai-search, we go to skill-selection first, then runAiSearch from skill selection confirm
   };
 
-  const runAiSearch = async (t: (key: string, vars?: Record<string, string | number>) => string) => {
-    if (!cvState.profile || !cvState.profile.skills) {
+  const handleSkillSelectionChange = (skills: string[]) => {
+    setCvState((prev) => ({ ...prev, selectedSkills: skills }));
+  };
+
+  const handleSkillSelectionConfirm = () => {
+    const { t } = useLang();
+    if (cvState.selectedSkills.length === 0) {
+      return;
+    }
+    setCvState((prev) => ({ ...prev, isProcessing: true }));
+    // Use selected skills for the search profile
+    const baseProfile = cvState.profile || { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] };
+    const searchProfile = { ...baseProfile, skills: cvState.selectedSkills.join(" ") };
+    runAiSearchWithProfile(searchProfile, t);
+  };
+
+  const runAiSearchWithProfile = async (
+    searchProfile: Profile,
+    t: (key: string, vars?: Record<string, string | number>) => string
+  ) => {
+    if (!searchProfile || !searchProfile.skills) {
       setCvState((prev) => ({
         ...prev,
         step: "error",
@@ -463,9 +482,6 @@ export default function App() {
     }
 
     try {
-      // Use the existing profile for job search
-      const searchProfile = cvState.profile;
-
       // First, search for jobs using the existing job search API
       const jobsResponse = await fetchJobs(searchProfile);
 
@@ -891,6 +907,7 @@ export default function App() {
         cvState.step === "creating-profile" ? "profile" :
         cvState.step === "anonymizing" ? "anonymization" :
         cvState.step === "goal-selection" ? "goal" :
+        cvState.step === "skill-selection" ? "skill" :
         cvState.step === "ats-processing" ? "target" :
         cvState.step === "ai-searching" ? "processing" :
         cvState.step === "improvement-selection" ? "target" :
@@ -1045,6 +1062,76 @@ export default function App() {
               type="button"
               className="btn-ghost"
               onClick={() => setCvState((prev) => ({ ...prev, step: "profile-ready" }))}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.backToProfile")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cvState.step === "skill-selection" && cvState.processingGoal === "ai-search" && cvState.suggestedProfile && (
+        <div className="cv-skill-selection" role="region" aria-labelledby="cv-skill-selection-title">
+          <h3 id="cv-skill-selection-title" className="cv-skill-selection__title">
+            {t("cv.skillSelectTitle")}
+          </h3>
+          <p className="cv-skill-selection__description">{t("cv.skillSelectDescription")}</p>
+          <div className="cv-skill-selection__list" role="listbox" aria-label={t("cv.skillSelectTitle")}>
+            {cvState.suggestedProfile.skills.map((skill, index) => (
+              <label key={index} className={`cv-skill-selection__item${cvState.selectedSkills.includes(skill) ? " selected" : ""}`}>
+                <input
+                  type="checkbox"
+                  checked={cvState.selectedSkills.includes(skill)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      handleSkillSelectionChange([...cvState.selectedSkills, skill]);
+                    } else {
+                      handleSkillSelectionChange(cvState.selectedSkills.filter(s => s !== skill));
+                    }
+                  }}
+                  disabled={cvState.isProcessing}
+                  className="cv-skill-selection__checkbox"
+                  aria-label={skill}
+                />
+                <span className="cv-skill-selection__label">{skill}</span>
+              </label>
+            ))}
+          </div>
+          <div className="cv-skill-selection__add">
+            <input
+              type="text"
+              placeholder={t("cv.skillSelectPlaceholder")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                  const newSkill = e.currentTarget.value.trim();
+                  if (!cvState.selectedSkills.includes(newSkill)) {
+                    handleSkillSelectionChange([...cvState.selectedSkills, newSkill]);
+                  }
+                  e.currentTarget.value = "";
+                }
+              }}
+              disabled={cvState.isProcessing}
+              className="cv-skill-selection__input"
+              aria-label={t("cv.skillSelectAdd")}
+            />
+          </div>
+          {cvState.selectedSkills.length === 0 && (
+            <p className="cv-skill-selection__error">{t("cv.skillSelectNoSkills")}</p>
+          )}
+          <div className="cv-skill-selection__actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={handleSkillSelectionConfirm}
+              disabled={cvState.isProcessing || cvState.selectedSkills.length === 0}
+            >
+              {cvState.isProcessing ? t("cv.executingGoal") : t("cv.skillSelectContinue")}
+              {cvState.isProcessing && <span className="spinner" />}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "goal-selection", selectedSkills: [] }))}
               disabled={cvState.isProcessing}
             >
               {t("cv.backToProfile")}
