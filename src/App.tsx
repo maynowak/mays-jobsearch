@@ -461,9 +461,9 @@ export default function App() {
       return;
     }
     setCvState((prev) => ({ ...prev, isProcessing: true }));
-    // Use selected skills for the search profile
+    // Use selected skills for the search profile - JSON encode to preserve multi-word skill boundaries
     const baseProfile = cvState.profile || { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] };
-    const searchProfile = { ...baseProfile, skills: cvState.selectedSkills.join(" ") };
+    const searchProfile = { ...baseProfile, skills: JSON.stringify(cvState.selectedSkills) };
     runAiSearchWithProfile(searchProfile, t);
   };
 

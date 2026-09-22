@@ -9,7 +9,24 @@ export default async function handler(req, res) {
   try {
     const { skills = "", targetRole = "", city = "", radiusKm, workMode, employmentType } =
       req.query || {};
-    const result = await fetchAllJobs({ skills, targetRole, city, radiusKm, workMode, employmentType });
+
+    // Parse skills - support both JSON array and legacy string format
+    let skillsArray = [];
+    if (skills) {
+      try {
+        const parsed = JSON.parse(skills);
+        if (Array.isArray(parsed)) {
+          skillsArray = parsed;
+        } else if (typeof parsed === "string") {
+          skillsArray = parsed.split(/[;,]+/).map(s => s.trim()).filter(Boolean);
+        }
+      } catch {
+        // Legacy format: split on semicolon, comma, whitespace
+        skillsArray = skills.split(/[;,]+/).map(s => s.trim()).filter(Boolean);
+      }
+    }
+
+    const result = await fetchAllJobs({ skills: skillsArray, targetRole, city, radiusKm, workMode, employmentType });
 
     return res.status(200).json(result);
   } catch (err) {
