@@ -49,7 +49,13 @@ function extractSkillsFromText(text, source = "description") {
     }
   }
 
-  return [...new Set(skills.map((s) => s.normalized))];
+  // Deduplicate by normalized form, preserve first occurrence
+  const seen = new Set();
+  return skills.filter(s => {
+    if (seen.has(s.normalized)) return false;
+    seen.add(s.normalized);
+    return true;
+  });
 }
 
 function extractExperience(text) {
@@ -434,6 +440,14 @@ export function analyzeJobForAts(job, profile) {
       // UNKNOWN: no evidence found, not contradictory
       unmatchedRequirements.push(req);
       if (importanceWeight[req.importance] >= importanceWeight.high) {
+        recommendations.push({
+          type: "missing_evidence",
+          requirementId: req.id,
+          message: `CV-Evidenz prüfen/ergänzen für ${req.text}`,
+        });
+      } else if (req.category === "skill" && importanceWeight[req.importance] >= importanceWeight.medium) {
+        // Generate recommendation for skill gaps even at medium importance
+        // when no partial matches exist (will be filtered later if partials exist)
         recommendations.push({
           type: "missing_evidence",
           requirementId: req.id,

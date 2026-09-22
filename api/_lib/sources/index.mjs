@@ -3,6 +3,7 @@ import { APIFY_ACTORS } from "./apify/actors.mjs";
 import { createApifySource } from "./apify/index.mjs";
 import { countJobSourceRequest } from "../usage.mjs";
 import { applySearchFilters } from "../filter.mjs";
+import { applySearchStrategy, applySearchStrategyWithTargetRole } from "../searchStrategy.mjs";
 
 export const SOURCES = [arbeitnow, ...APIFY_ACTORS.map(createApifySource)];
 
@@ -70,11 +71,16 @@ export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMod
   const combined = dedupJobs(results.flatMap((result) => result.jobs));
   const filtered = applySearchFilters(combined, { radiusKm, workMode, employmentType });
 
+  const searchStrategyResult = applySearchStrategyWithTargetRole(skills, targetRole, filtered, {
+    id: "combined",
+    provider: "search-strategy"
+  });
+
   const sourcesMeta = {};
   for (const result of results) sourcesMeta[result.sourceId] = result.jobs.length;
 
   const sourceCounts = {};
-  for (const job of filtered) {
+  for (const job of searchStrategyResult.jobs) {
     for (const source of job.source || []) sourceCounts[source] = (sourceCounts[source] || 0) + 1;
   }
 
@@ -82,10 +88,10 @@ export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMod
   const apifyResult = results.find((result) => result.sourceId === "arbeitsagentur");
 
   return {
-    jobs: filtered,
+    jobs: searchStrategyResult.jobs,
     meta: {
       totalScanned: results.reduce((sum, result) => sum + (result.meta?.totalScanned ?? 0), 0),
-      totalFiltered: filtered.length,
+      totalFiltered: searchStrategyResult.jobs.length,
       city: arbeitnowResult?.meta?.city ?? results[0]?.meta?.city ?? [],
       keywords: arbeitnowResult?.meta?.keywords ?? results[0]?.meta?.keywords ?? [],
       sources: sourcesMeta,
@@ -93,6 +99,7 @@ export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMod
       disabledSources: disabledSources(),
       sourceDetails: sourceDetails(),
       jobsCombined: combined.length,
+      searchStrategy: searchStrategyResult.meta,
       apify: apifyResult
         ? { enabled: apifyResult.meta?.enabled === true, reason: apifyResult.meta?.reason ?? null }
         : { enabled: false, reason: "disabled" },

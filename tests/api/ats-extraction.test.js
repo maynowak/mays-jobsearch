@@ -227,9 +227,13 @@ describe("STEP 37B - ATS Analysis Core", () => {
     };
     const profile = { skills: "React, TypeScript" };
     const result = analyzeJobForAts(job, profile);
-    expect(result.summary.matched).toBeGreaterThan(0);
-    expect(result.summary.partial).toBeGreaterThan(0);
-    expect(result.recommendations.length).toBeGreaterThan(0);
+    // With fixed tokenize: "React Developer" -> ["react", "developer"]
+    // Exact matches: "react" (title + tag) and "typescript" (tag) = 2 MATCHED from tags + 1 from title = 3
+    expect(result.summary.matched).toBe(3);
+    // No partials with exact tokenization
+    expect(result.summary.partial).toBe(0);
+    // One recommendation for missing "nodejs" skill
+    expect(result.recommendations.length).toBe(1);
   });
 
   // D) UNKNOWN without CV evidence

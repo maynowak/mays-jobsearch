@@ -10,7 +10,7 @@ export function tokenize(input) {
   if (!input) return [];
   return String(input)
     .toLowerCase()
-    .split(/[\n,;]+/)
+    .split(/[\s\n,;]+/)
     .map((t) => t.trim())
     .filter((t) => t.length > 0);
 }
