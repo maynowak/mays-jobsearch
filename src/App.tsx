@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal } from "./types";
+import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal, EmploymentType } from "./types";
 import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement, computeMatchImpact } from "./api";
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
@@ -66,7 +66,7 @@ export default function App() {
   const [cvState, setCvState] = useState<CvProcessingState>({
     step: "idle",
     documents: [],
-    selectedDocumentId: null,
+    selectedDocumentIds: [],
     consentGiven: false,
     anonymizationMode: "anonymized",
     processingGoal: "ats",
@@ -297,11 +297,15 @@ export default function App() {
     }));
   };
 
-  const handleSelectCvDocument = (id: string) => {
+  const handleSelectCvDocument = (id: string, selected: boolean) => {
     setCvState((prev) => ({
       ...prev,
-      documents: prev.documents.map((doc) => ({ ...doc, selected: doc.id === id })),
-      selectedDocumentId: id,
+      documents: prev.documents.map((doc) =>
+        doc.id === id ? { ...doc, selected } : doc
+      ),
+      selectedDocumentIds: selected
+        ? [...prev.selectedDocumentIds, id]
+        : prev.selectedDocumentIds.filter((docId) => docId !== id),
       step: "document-selected",
     }));
   };
@@ -309,19 +313,21 @@ export default function App() {
   const handleRemoveCvDocument = (id: string) => {
     setCvState((prev) => {
       const remaining = prev.documents.filter((doc) => doc.id !== id);
-      const wasSelected = prev.selectedDocumentId === id;
+      const wasSelected = prev.selectedDocumentIds.includes(id);
       return {
         ...prev,
         documents: remaining,
-        selectedDocumentId: wasSelected ? (remaining[0]?.id ?? null) : prev.selectedDocumentId,
+        selectedDocumentIds: wasSelected
+          ? prev.selectedDocumentIds.filter((docId) => docId !== id)
+          : prev.selectedDocumentIds,
         step: remaining.length > 0 ? "document-selected" : "idle",
       };
     });
   };
 
   const handleCvProcess = () => {
-    const selectedDoc = cvState.documents.find((d) => d.selected);
-    if (!selectedDoc) return;
+    const selectedDocs = cvState.documents.filter((d) => d.selected);
+    if (!selectedDocs.length) return;
 
     // First-Use Recognition: Check if consent already given
     if (!cvState.consentGiven) {
@@ -340,8 +346,32 @@ export default function App() {
     }));
   };
 
+  const handleSearchWithSelectedCvs = () => {
+    const selectedDocs = cvState.documents.filter((d) => d.selected);
+    if (!selectedDocs.length) return;
+
+    // Use the first selected document for profile creation, but merge skills from all selected
+    const allSkills = selectedDocs
+      .flatMap((doc) => doc.skills || [])
+      .filter((skill, index, arr) => arr.indexOf(skill) === index);
+
+    // Create a merged profile with skills from all selected CVs
+    const baseProfile = cvState.profile || { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] as EmploymentType[] };
+    const mergedProfile = {
+      ...baseProfile,
+      skills: [...new Set([...(cvState.profile?.skills?.split(",") || []), ...allSkills])].join(", "),
+    };
+
+    setProfile(mergedProfile);
+    setCvState((prev) => ({
+      ...prev,
+      step: "goal-selection",
+    }));
+    void runSearch(mergedProfile);
+  };
+
   const handleCvConsentAccept = () => {
-    const selectedDoc = cvState.documents.find((d) => d.selected);
+    const selectedDoc = cvState.documents.find((d) => cvState.selectedDocumentIds.includes(d.id));
     if (!selectedDoc) return;
 
     setCvState((prev) => ({
@@ -545,7 +575,7 @@ export default function App() {
   };
 
   const runAtsProcessing = async (t: (key: string, vars?: Record<string, string | number>) => string) => {
-    const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentId);
+    const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
     const jobForAts = selectedDoc ? {
       title: cvState.suggestedProfile?.targetRoles[0] || cvState.profile?.targetRole || "",
       tags: cvState.suggestedProfile?.skills || cvState.profile?.skills?.split(",") || [],
@@ -898,7 +928,7 @@ export default function App() {
     <section className="card cv-processing-card" aria-labelledby="cv-processing-title">
       <h2 id="cv-processing-title" className="cv-processing-title">{t("cv.statusTitle")}</h2>
 
-      <CvProcessingStatus step={cvState.step} error={cvState.error} documentName={cvState.documents.find((d) => d.id === cvState.selectedDocumentId)?.name ?? null} />
+      <CvProcessingStatus step={cvState.step} error={cvState.error} documentName={cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0])?.name ?? null} />
 
       <CvProcessingSteps currentStep={
         cvState.step === "document-selected" ? "document" :
@@ -922,11 +952,11 @@ export default function App() {
       {cvState.step === "document-selected" && (
         <CvDocumentList
           documents={cvState.documents}
-          selectedId={cvState.selectedDocumentId}
           onSelect={handleSelectCvDocument}
           onRemove={handleRemoveCvDocument}
           onAddFiles={handleAddCvFiles}
           onProcess={handleCvProcess}
+          onSearch={handleSearchWithSelectedCvs}
           disabled={cvState.isProcessing}
           processing={cvState.isProcessing}
         />
@@ -934,7 +964,7 @@ export default function App() {
 
       {cvState.step === "consent-required" && (
         <CvConsentGate
-          fileName={cvState.documents.find((d) => d.id === cvState.selectedDocumentId)?.name ?? ""}
+          fileName={cvState.documents.find((d) => cvState.selectedDocumentIds.includes(d.id))?.name ?? cvState.documents[0]?.name ?? ""}
           onAccept={handleCvConsentAccept}
           onCancel={handleCvConsentCancel}
           processingInfo={cvState.processingGoal === "ats" ? t("cv.goalATSLabel") : t("cv.goalAISearchLabel")}
@@ -992,7 +1022,7 @@ export default function App() {
               type="button"
               className="cv-continue-btn"
               onClick={() => {
-                const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentId);
+                const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
                 if (selectedDoc) handleCvContinue(selectedDoc);
               }}
               disabled={cvState.isProcessing}

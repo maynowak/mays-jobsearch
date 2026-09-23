@@ -278,6 +278,7 @@ export interface CvDocument {
   size: number;
   selected: boolean;
   file: File;
+  skills?: string[];
 }
 
 export type AnonymizationMode = "anonymized" | "not-anonymized";
@@ -324,7 +325,7 @@ export interface MatchImpactResult {
 export interface CvProcessingState {
   step: CvProcessingStep;
   documents: CvDocument[];
-  selectedDocumentId: string | null;
+  selectedDocumentIds: string[];
   consentGiven: boolean;
   anonymizationMode: AnonymizationMode;
   processingGoal: ProcessingGoal;

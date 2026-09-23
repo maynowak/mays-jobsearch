@@ -4,11 +4,11 @@ import type { CvDocument } from "../types";
 
 interface Props {
   documents: CvDocument[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, selected: boolean) => void;
   onRemove: (id: string) => void;
   onAddFiles: (files: FileList) => void;
   onProcess: () => void;
+  onSearch: () => void;
   disabled: boolean;
   processing: boolean;
 }
@@ -19,11 +19,15 @@ export default function CvDocumentList({
   onRemove,
   onAddFiles,
   onProcess,
+  onSearch,
   disabled,
   processing,
 }: Props): React.ReactElement {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const hasSelection = documents.some((d) => d.selected);
+  const allSelected = documents.length > 0 && documents.every((d) => d.selected);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -35,9 +39,30 @@ export default function CvDocumentList({
     }
   };
 
+  const handleSelectAll = () => {
+    if (allSelected) {
+      documents.forEach((doc) => onSelect(doc.id, false));
+    } else {
+      documents.forEach((doc) => onSelect(doc.id, true));
+    }
+  };
+
   return (
     <div className="cv-document-list">
-      <h3 className="cv-document-list__title">{t("cv.documentListTitle")}</h3>
+      <div className="cv-document-list__header">
+        <h3 className="cv-document-list__title">{t("cv.documentListTitle")}</h3>
+        {documents.length > 0 && (
+          <button
+            type="button"
+            className="cv-document-list__select-all"
+            onClick={handleSelectAll}
+            disabled={disabled}
+            aria-label={allSelected ? t("cv.deselectAll") : t("cv.selectAll")}
+          >
+            {allSelected ? t("cv.deselectAll") : t("cv.selectAll")}
+          </button>
+        )}
+      </div>
 
       {documents.length === 0 ? (
         <div className="cv-document-list__empty">
@@ -45,7 +70,6 @@ export default function CvDocumentList({
           <label className="cv-file-input-label" htmlFor="cv-file-input">
             <span className="cv-file-input-label__text">{t("cv.documentSelect")}</span>
             <input
-              ref={inputRef}
               id="cv-file-input"
               type="file"
               accept="application/pdf,.pdf"
@@ -69,7 +93,7 @@ export default function CvDocumentList({
                   <input
                     type="checkbox"
                     checked={doc.selected}
-                    onChange={() => onSelect(doc.id)}
+                    onChange={(e) => onSelect(doc.id, e.target.checked)}
                     disabled={disabled}
                     className="cv-document-list__checkbox"
                     aria-label={t("cv.documentSelect")}
@@ -82,9 +106,6 @@ export default function CvDocumentList({
                   </div>
                 </div>
                 <div className="cv-document-list__actions">
-                  {doc.selected && (
-                    <span className="cv-document-list__badge">{t("cv.documentSelected")}</span>
-                  )}
                   <button
                     type="button"
                     className="cv-document-list__remove"
@@ -121,9 +142,17 @@ export default function CvDocumentList({
               type="button"
               className="cv-process-btn"
               onClick={onProcess}
-              disabled={disabled || processing || !documents.some((d) => d.selected)}
+              disabled={disabled || processing || !hasSelection}
             >
               {t("cv.processFiles")}
+            </button>
+            <button
+              type="button"
+              className="cv-search-btn"
+              onClick={onSearch}
+              disabled={disabled || processing || !hasSelection}
+            >
+              {t("cv.searchWithSelected")}
             </button>
           </div>
         </>
@@ -131,4 +160,3 @@ export default function CvDocumentList({
     </div>
   );
 }
-
