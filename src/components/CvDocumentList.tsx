@@ -28,6 +28,7 @@ export default function CvDocumentList({
 
   const hasSelection = documents.some((d) => d.selected);
   const allSelected = documents.length > 0 && documents.every((d) => d.selected);
+  const selectedCount = documents.filter((d) => d.selected).length;
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -63,6 +64,12 @@ export default function CvDocumentList({
           </button>
         )}
       </div>
+
+      {documents.length > 0 && (
+        <div className="cv-document-list__selection-info">
+          {selectedCount > 0 ? t("cv.selectedCount", { count: selectedCount }) : t("cv.noneSelected")}
+        </div>
+      )}
 
       {documents.length === 0 ? (
         <div className="cv-document-list__empty">

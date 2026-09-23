@@ -290,11 +290,23 @@ export default function App() {
       selected: false,
       file,
     }));
-    setCvState((prev) => ({
-      ...prev,
-      documents: [...prev.documents, ...newDocuments],
-      step: "document-selected",
-    }));
+    setCvState((prev) => {
+      // Enforce max 10 CVs limit
+      const combined = [...prev.documents, ...newDocuments];
+      if (combined.length > 10) {
+        // Keep only first 10
+        return {
+          ...prev,
+          documents: combined.slice(0, 10),
+          step: "document-selected",
+        };
+      }
+      return {
+        ...prev,
+        documents: combined,
+        step: "document-selected",
+      };
+    });
   };
 
   const handleSelectCvDocument = (id: string, selected: boolean) => {
