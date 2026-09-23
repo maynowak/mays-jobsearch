@@ -8,6 +8,15 @@ export class HttpError extends Error {
 
 export function tokenize(input) {
   if (!input) return [];
+
+  // Handle array input (skills array) - preserve multi-word skills as single tokens
+  if (Array.isArray(input)) {
+    return input
+      .map((skill) => String(skill).toLowerCase().trim())
+      .filter((t) => t.length > 0);
+  }
+
+  // Handle string input (legacy format)
   return String(input)
     .toLowerCase()
     .split(/[\s\n,;]+/)
