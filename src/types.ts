@@ -353,4 +353,5 @@ export interface CvProcessingState {
   matchImpactChanges: MatchImpactChanges | null;
   matchImpactJob: Job | null;
   selectedSkills: string[];
+  cvProfile: Profile | null;
 }

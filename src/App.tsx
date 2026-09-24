@@ -90,6 +90,7 @@ export default function App() {
     matchImpactChanges: null,
     matchImpactJob: null,
     selectedSkills: [],
+    cvProfile: null,
   });
 
   const {
@@ -208,6 +209,49 @@ export default function App() {
       busyRef.current = false;
       return;
     }
+
+    setPhase("searching");
+    try {
+      const board = await fetchJobs(submitted);
+
+      if (!board.jobs.length) {
+        const query = submitted.skills || submitted.targetRole;
+        setStatus({
+          type: "warn",
+          message: submitted.city
+            ? t("status.noJobsCity", { q: query, city: submitted.city })
+            : t("status.noJobs", { q: query }),
+        });
+        return;
+      }
+
+      const nextDataset: JobDataset = { jobs: board.jobs, profile: submitted };
+      setDataset(nextDataset);
+      setFoundJobs(board.jobs);
+    } catch (err) {
+      setStatus({ type: "error", message: describeError(err) });
+    } finally {
+      busyRef.current = false;
+      setPhase("idle");
+    }
+  };
+
+  const runCvSearch = async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    // Use cvProfile state instead of taking a parameter
+    const submitted = cvState.cvProfile;
+    if (!submitted || (!submitted.skills && !submitted.targetRole)) {
+      setStatus({ type: "error", message: t("status.noSkills") });
+      busyRef.current = false;
+      return;
+    }
+
+    setStatus(null);
+    setModelExhausted(false);
+    setDataset(null);
+    setFoundJobs([]);
+    setMatches([]);
 
     setPhase("searching");
     try {
@@ -374,12 +418,13 @@ export default function App() {
       skills: [...new Set([...(cvState.profile?.skills?.split(",") || []), ...allSkills])].join(", "),
     };
 
-    setProfile(mergedProfile);
+    // Store in cvProfile (separate from manual search profile)
     setCvState((prev) => ({
       ...prev,
+      cvProfile: mergedProfile,
       step: "goal-selection",
     }));
-    void runSearch(mergedProfile);
+    void runCvSearch();
   };
 
   const handleCvConsentAccept = () => {
@@ -1059,11 +1104,10 @@ export default function App() {
           busy={cvState.isProcessing}
           loadingLabel={t("cv.savingProfile")}
           onConfirm={(profile) => {
-            setProfile(profile);
             setCvState((prev) => ({
               ...prev,
+              cvProfile: profile,
               step: "goal-selection",
-              profile,
               suggestedProfile: null,
               fallbackNote: false,
             }));

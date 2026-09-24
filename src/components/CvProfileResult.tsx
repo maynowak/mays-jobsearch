@@ -3,6 +3,7 @@ import type { Profile, SuggestedProfile } from "../types";
 import { parseSkills, formatSkills } from "../lib/skills";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
+import { RADIUS_KM_OPTIONS } from "../types";
 
 interface Props {
   suggested: SuggestedProfile;
@@ -24,6 +25,7 @@ export default function CvProfileResult({
   const [experienceLevel, setExperienceLevel] = useState(suggested.experienceLevel);
   const [targetRoles, setTargetRoles] = useState(suggested.targetRoles.join(", "));
   const [cityValue, setCityValue] = useState(suggested.location);
+  const [radiusKm, setRadiusKm] = useState<number | null>(null);
   const {
     city,
     suggestions,
@@ -41,7 +43,7 @@ export default function CvProfileResult({
       skills: formatSkills(parsedSkills),
       targetRole: suggested.targetRoles[0] || "",
       city: city.trim(),
-      radiusKm: null,
+      radiusKm,
       workModes: [],
       employmentTypes: ["full_time"],
     });
@@ -133,6 +135,25 @@ export default function CvProfileResult({
             )}
           </ul>
         )}
+      </div>
+
+      <div className="field">
+        <label htmlFor="cv-radius">{t("search.radius")}</label>
+        <select
+          id="cv-radius"
+          value={radiusKm ?? ""}
+          onChange={(e) =>
+            setRadiusKm(e.target.value === "" ? null : Number(e.target.value))
+          }
+          disabled={busy}
+        >
+          <option value="">{t("search.radiusNone")}</option>
+          {RADIUS_KM_OPTIONS.map((km) => (
+            <option key={km} value={km}>
+              {t("search.radiusOption", { km })}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="cv-result-actions">
