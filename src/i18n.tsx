@@ -65,6 +65,8 @@ const en: Dict = {
     "This CV does not appear to contain readable text. Please use a text-based PDF or enter your profile manually.",
   "cv.processError":
     "We couldn't process your CV right now. You can still enter your profile manually.",
+  "cv.noAiConfigured":
+    "No AI provider is configured. Please add an API key in the project settings to enable CV evaluation.",
   "cv.resultHeading": "Your suggested search profile",
   "cv.skills": "Skills",
   "cv.experienceLevel": "Experience level",
@@ -415,6 +417,8 @@ const de: Dict = {
     "Dieser Lebenslauf enthält offenbar keinen auslesbaren Text. Bitte verwende eine textbasierte PDF oder nutze die manuelle Eingabe.",
   "cv.processError":
     "Dein Lebenslauf konnte gerade nicht ausgewertet werden. Du kannst dein Profil weiterhin manuell eingeben.",
+  "cv.noAiConfigured":
+    "Kein KI-Anbieter konfiguriert. Bitte API-Key in den Projekteinstellungen hinterlegen, um CV-Auswertung zu aktivieren.",
   "cv.resultHeading": "Dein vorgeschlagenes Suchprofil",
   "cv.skills": "Skills",
   "cv.experienceLevel": "Erfahrungslevel",

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import type { Profile, SuggestedProfile } from "../types";
-import { createProfile, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
+import { createProfile, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, ApiError } from "../api";
 import { useLang } from "../i18n";
 import CvProfileResult from "./CvProfileResult";
 
@@ -136,11 +136,13 @@ export default function CvUpload({
     } catch (err) {
       setPhase("idle");
       setError(
-        isFreeQuotaExceeded(err)
-          ? t("model.quotaExceeded")
-          : isModelUnavailable(err)
-            ? t("model.unavailable")
-            : t("cv.processError")
+        err instanceof ApiError && err.code === "missing_key"
+          ? t("cv.noAiConfigured")
+          : isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : isModelUnavailable(err)
+              ? t("model.unavailable")
+              : t("cv.processError")
       );
     }
   };
