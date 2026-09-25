@@ -330,6 +330,9 @@ export interface CvProcessingState {
   anonymizationMode: AnonymizationMode;
   processingGoal: ProcessingGoal;
   error: string | null;
+  // BUG-21B: Rücksprungziel des Error-Steps. "model-selection" nur wenn ein
+  // Modell-Verfügbarkeitsfehler vorlag; sonst bleibt "document-selected".
+  errorBackStep?: "model-selection" | "document-selected" | null;
   profile: Profile | null;
   suggestedProfile: SuggestedProfile | null;
   fallbackNote: boolean;

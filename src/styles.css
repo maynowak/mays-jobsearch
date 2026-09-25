@@ -2222,6 +2222,13 @@ body {
   color: var(--muted);
 }
 
+/* BROWSER-BUG-21A: dezenter Readiness-Status je CV */
+.cv-document-list__status {
+  font-size: var(--text-xs);
+  color: var(--brand);
+  font-weight: 600;
+}
+
 .cv-document-list__actions {
   display: flex;
   align-items: center;

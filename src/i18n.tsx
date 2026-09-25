@@ -76,6 +76,7 @@ const en: Dict = {
 
   "cv.documentListTitle": "Your CVs",
   "cv.noDocuments": "No CVs uploaded yet",
+  "cv.readyForProcessing": "Ready for processing",
   "cv.documentSelect": "Select PDF",
   "cv.documentSelected": "Selected",
   "cv.removeFile": "Remove file",
@@ -435,6 +436,7 @@ const de: Dict = {
 
   "cv.documentListTitle": "Deine Lebensläufe",
   "cv.noDocuments": "Noch keine Lebensläufe hochgeladen",
+  "cv.readyForProcessing": "Bereit zur Verarbeitung",
   "cv.documentSelect": "PDF auswählen",
   "cv.documentSelected": "Ausgewählt",
   "cv.removeFile": "Datei entfernen",

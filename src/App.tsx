@@ -526,6 +526,7 @@ export default function App() {
             : isModelUnavailable(err)
             ? t("model.unavailable")
             : t("cv.processError"),
+        errorBackStep: isModelUnavailable(err) ? "model-selection" : null,
       }));
     }
   };
@@ -651,6 +652,7 @@ export default function App() {
             : isModelUnavailable(err)
             ? t("model.unavailable")
             : t("cv.aiSearchError"),
+        errorBackStep: isModelUnavailable(err) ? "model-selection" : null,
       }));
     }
   };
@@ -703,6 +705,7 @@ export default function App() {
             : isModelUnavailable(err)
             ? t("model.unavailable")
             : t("cv.atsProcessError"),
+        errorBackStep: isModelUnavailable(err) ? "model-selection" : null,
       }));
     }
   };
@@ -873,6 +876,7 @@ export default function App() {
             : isModelUnavailable(err)
             ? t("model.unavailable")
             : t("cv.reanalysisError"),
+        errorBackStep: isModelUnavailable(err) ? "model-selection" : null,
       }));
     }
   };
@@ -933,6 +937,7 @@ export default function App() {
             : isModelUnavailable(err)
             ? t("model.unavailable")
             : t("cv.matchImpactError"),
+        errorBackStep: isModelUnavailable(err) ? "model-selection" : null,
       }));
     }
   };
@@ -1669,9 +1674,23 @@ export default function App() {
       {cvState.step === "error" && cvState.error && (
         <div className="cv-error-state" role="alert">
           <p className="alert alert-error">{cvState.error}</p>
-          <button type="button" className="btn-ghost" onClick={() => setCvState((prev) => ({ ...prev, step: "document-selected", error: null }))}>
-            {t("cv.backToDocuments")}
-          </button>
+          {cvState.errorBackStep === "model-selection" ? (
+            // BUG-21B: Modell-Verfügbarkeitsfehler -> direkt zurück zur
+            // Modellauswahl (Dokumente/Profil bleiben erhalten)
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() =>
+                setCvState((prev) => ({ ...prev, step: "model-selection", error: null, errorBackStep: null }))
+              }
+            >
+              {t("cv.backToModelSelection")}
+            </button>
+          ) : (
+            <button type="button" className="btn-ghost" onClick={() => setCvState((prev) => ({ ...prev, step: "document-selected", error: null, errorBackStep: null }))}>
+              {t("cv.backToDocuments")}
+            </button>
+          )}
         </div>
       )}
     </section>

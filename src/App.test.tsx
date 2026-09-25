@@ -733,6 +733,42 @@ describe("CV workflow", () => {
     expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
   });
 
+  it("BROWSER-BUG-21B: Model-unavailable -> 'Zurück zur Modellauswahl' -> anderes Modell -> Recovery", async () => {
+    await uploadCvAndOpenList("recovery.pdf");
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+
+    // Modell nicht verfügbar: createProfile schlägt einmal mit transientem Fehler fehl
+    vi.mocked(createProfile).mockRejectedValueOnce(new ApiError("overloaded", 429, "rate_limited"));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> createProfileFromPdf schlägt fehl
+
+    // Fehler erscheint; Rücksprung zielt auf Modellauswahl
+    await waitFor(() => expect(document.querySelector(".cv-error-state")).toBeTruthy());
+    const backToModel = screen.getByRole("button", { name: "Zurück zur Modellauswahl" });
+    fireEvent.click(backToModel);
+
+    // Model Selection wieder da, Dokument noch vorhanden
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+
+    // Recovery: nächster Durchlauf erfolgreich (kein neuer Upload nötig)
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> erfolgreich
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    // zurück zur Liste zeigt das erhaltene Dokument
+    const card = document.querySelector(".cv-processing-card") as HTMLElement;
+    fireEvent.click(
+      Array.from(card.querySelectorAll("button")).find((b) => b.textContent?.includes("Profil übernehmen und Jobs finden")) as HTMLButtonElement
+    );
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+  });
+
   it("BROWSER-BUG-20: ATS-Pfad erhält das bestätigte CV-Profil (kein atsNoProfile)", async () => {
     vi.mocked(analyzeATS).mockResolvedValue({
       analysis: { score: 80, keywordCoverage: { overall: 75 }, criticalGaps: [], requirements: [], matches: [] },

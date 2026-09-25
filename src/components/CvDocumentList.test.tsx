@@ -48,6 +48,14 @@ describe("BROWSER-BUG-08: Weitere CVs hochladen", () => {
   });
 });
 
+describe("BROWSER-BUG-21A: CV Readiness im document-selected State", () => {
+  it("zeigt je Dokument einen 'Bereit zur Verarbeitung'-Status", () => {
+    renderList([makeDoc("cv-1"), makeDoc("cv-2")]);
+    const statuses = screen.getAllByText("Bereit zur Verarbeitung");
+    expect(statuses.length).toBe(2);
+  });
+});
+
 describe("BROWSER-BUG-09: vollständiger Dateiname", () => {
   it("setzt den vollständigen Dateinamen als title-Attribut (Hover-Tooltip)", () => {
     renderList([makeDoc("cv-1", "Gregor_Nowak_2026-08-14_EN.pdf")]);

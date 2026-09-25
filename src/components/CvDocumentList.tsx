@@ -111,6 +111,8 @@ export default function CvDocumentList({
                     <span className="cv-document-list__size">
                       {(doc.size / 1024 / 1024).toFixed(1)} MB
                     </span>
+                    {/* BROWSER-BUG-21A: Readiness-Status je Dokument */}
+                    <span className="cv-document-list__status">{t("cv.readyForProcessing")}</span>
                   </div>
                 </div>
                 <div className="cv-document-list__actions">
