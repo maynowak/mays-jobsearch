@@ -1661,8 +1661,8 @@ body {
   box-shadow: var(--shadow);
 }
 
-/* BUG-07: Consent als Overlay im Vordergrund auf Desktop/Tablet.
-   Auf kleinen Viewports bleibt die bestehende Bereichsdarstellung. */
+/* BUG-07/14-19: Consent "ausstehend"-Hinweis, wenn das Overlay geschlossen
+   wurde ohne zuzustimmen. */
 .cv-consent-pending {
   display: flex;
   flex-direction: column;
@@ -1696,23 +1696,29 @@ body {
   margin-top: 0;
 }
 
+/* BUG-14..19: EIN gemeinsames Overlay für den gesamten CV-Processing-
+   Workflow auf Desktop/Tablet. Der Dialog-Inhalt wechselt mit cvState.step;
+   auf Mobile bleibt die bestehende Inline-Darstellung. */
 @media (min-width: 768px) {
-  .cv-consent-overlay {
+  .cv-workflow-overlay {
     position: fixed;
     inset: 0;
     z-index: 70;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 8vh 24px 24px;
+    padding: 6vh 24px 24px;
     background: rgba(15, 23, 42, 0.5);
     overflow-y: auto;
   }
 
-  .cv-consent-overlay .cv-consent-gate {
+  .cv-workflow-overlay .cv-processing-card {
     width: 100%;
-    max-width: 620px;
+    max-width: 680px;
+    max-height: 88vh;
+    margin-top: 0;
     margin-bottom: 0;
+    overflow-y: auto;
     box-shadow: 0 24px 64px rgba(15, 23, 42, 0.35);
   }
 }

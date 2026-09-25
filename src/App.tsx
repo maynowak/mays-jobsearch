@@ -63,6 +63,8 @@ export default function App() {
   // Zustimmung zu erteilen. Der Consent bleibt dann ausstehend und kann über
   // "Einwilligung anzeigen" erneut geöffnet werden.
   const [consentDismissed, setConsentDismissed] = useState(false);
+  // BUG-19: aktiven CV-Step fokussieren (Scroll-Handling siehe Effekt unten)
+  const cvWorkflowRef = useRef<HTMLElement | null>(null);
   const [dataset, setDataset] = useState<JobDataset | null>(null);
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
@@ -125,6 +127,21 @@ export default function App() {
     history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
   }, []);
+
+  // BUG-19: Kein manueller Scroll zwischen CV-Steps. Auf Desktop/Tablet liegt
+  // der Workflow in einem fixed Overlay (Fokus genügt); mobil wird die
+  // Inline-Card automatisch in den sichtbaren Bereich gescrollt.
+  useEffect(() => {
+    if (cvState.step === "idle") return;
+    const el = cvWorkflowRef.current;
+    if (!el) return;
+    if (window.matchMedia?.("(min-width: 768px)").matches) {
+      el.focus({ preventScroll: true });
+    } else {
+      el.scrollIntoView?.({ block: "start" });
+      el.focus({ preventScroll: true });
+    }
+  }, [cvState.step]);
 
   const profilesEqual = (a: Profile, b: Profile) =>
     a.skills === b.skills &&
@@ -532,10 +549,12 @@ export default function App() {
   const handleGoalExecute = () => {
     const goal = cvState.processingGoal;
     const nextStep = goal === "ats" ? "ats-processing" : "skill-selection";
+    // isProcessing nur für den ATS-Pfad: skill-selection benötigt bedienbare
+    // Checkboxen (BUG-16); die eigentliche Suche startet erst beim Confirm.
     setCvState((prev) => ({
       ...prev,
       step: nextStep,
-      isProcessing: true,
+      isProcessing: goal === "ats",
     }));
 
     if (goal === "ats") {
@@ -984,8 +1003,26 @@ export default function App() {
   );
 
   // CV Processing UI - rendered when CV flow is active
-  const cvProcessingUI = cvState.step !== "idle" && (
-    <section className="card cv-processing-card" aria-labelledby="cv-processing-title">
+  // BUG-14..19: EIN gemeinsames Overlay für den CV-Verarbeitungs-Workflow auf
+  // Desktop/Tablet (Inhalt wechselt je nach cvState.step), ab der Einwilligung.
+  // Inline bleiben:
+  // - document-selected (CV-Liste): sie ist der Einstiegspunkt und bleibt ohne
+  //   Backdrop sichtbar, damit der bestehende Upload-/Schnellsuch-Pfad
+  //   (CvUpload -> "Profil übernehmen und Jobs finden") ungestört funktioniert.
+  // - consent-required im geschlossenen Zustand (ausstehend + "Einwilligung anzeigen").
+  // - ats-complete (ATSModal ist selbst ein Overlay — kein verschachtelter Modal-Stack).
+  const cvOverlayActive =
+    cvState.step !== "document-selected" &&
+    !(cvState.step === "consent-required" && consentDismissed) &&
+    cvState.step !== "ats-complete";
+
+  const cvProcessingCard = (
+    <section
+      ref={cvWorkflowRef}
+      tabIndex={-1}
+      className="card cv-processing-card"
+      aria-labelledby="cv-processing-title"
+    >
       <h2 id="cv-processing-title" className="cv-processing-title">{t("cv.statusTitle")}</h2>
 
       <CvProcessingStatus step={cvState.step} error={cvState.error} documentName={cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0])?.name ?? null} />
@@ -1039,16 +1076,14 @@ export default function App() {
             </button>
           </div>
         ) : (
-          <div className="cv-consent-overlay">
-            <CvConsentGate
-              fileName={cvState.documents.find((d) => cvState.selectedDocumentIds.includes(d.id))?.name ?? cvState.documents[0]?.name ?? ""}
-              onAccept={handleCvConsentAccept}
-              onCancel={handleCvConsentCancel}
-              processingInfo={cvState.processingGoal === "ats" ? t("cv.goalATSLabel") : t("cv.goalAISearchLabel")}
-              externalAI={true}
-              disabled={cvState.isProcessing}
-            />
-          </div>
+          <CvConsentGate
+            fileName={cvState.documents.find((d) => cvState.selectedDocumentIds.includes(d.id))?.name ?? cvState.documents[0]?.name ?? ""}
+            onAccept={handleCvConsentAccept}
+            onCancel={handleCvConsentCancel}
+            processingInfo={cvState.processingGoal === "ats" ? t("cv.goalATSLabel") : t("cv.goalAISearchLabel")}
+            externalAI={true}
+            disabled={cvState.isProcessing}
+          />
         )
       )}
 
@@ -1148,7 +1183,8 @@ export default function App() {
               ...prev,
               cvProfile: profile,
               step: "goal-selection",
-              suggestedProfile: null,
+              // suggestedProfile bleibt erhalten: der Skill-Auswahl-Step
+              // (ai-search) benötigt die extrahierten Skills (BUG-16).
               fallbackNote: false,
             }));
           }}
@@ -1633,6 +1669,15 @@ export default function App() {
         </div>
       )}
     </section>
+  );
+
+  // BUG-14..19: gemeinsames Overlay (Desktop/Tablet) bzw. Inline (Mobile/Fälle oben)
+  const cvProcessingUI = cvState.step !== "idle" && (
+    cvOverlayActive ? (
+      <div className="cv-workflow-overlay">{cvProcessingCard}</div>
+    ) : (
+      cvProcessingCard
+    )
   );
 
   return (

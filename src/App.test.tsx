@@ -11,6 +11,7 @@ vi.mock("./api", async () => {
     fetchModels: vi.fn(),
     fetchModel: vi.fn(),
     createProfile: vi.fn(),
+    analyzeATS: vi.fn(),
   };
 });
 
@@ -20,6 +21,7 @@ vi.mock("./lib/pdf", () => ({
 
 import {
   ApiError,
+  analyzeATS,
   createProfile,
   fetchJobs,
   fetchMatches,
@@ -609,7 +611,7 @@ describe("CV workflow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
 
     // BUG-07: Consent erscheint als Overlay im Vordergrund
-    expect(document.querySelector(".cv-consent-overlay")).toBeTruthy();
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
     expect(screen.getByText("CV-Verarbeitung erlauben?")).toBeTruthy();
 
     // BUG-06: Checkbox unchecked -> Confirm disabled, keine Verarbeitung
@@ -632,7 +634,7 @@ describe("CV workflow", () => {
 
     // BUG-07: erneut öffnen
     fireEvent.click(screen.getByRole("button", { name: "Einwilligung anzeigen" }));
-    expect(document.querySelector(".cv-consent-overlay")).toBeTruthy();
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
     // Checkbox bleibt nach dem erneuten Öffnen unchecked (kein Auto-Consent)
     const reopenedCheckbox = screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
@@ -645,6 +647,90 @@ describe("CV workflow", () => {
     expect(enabledConfirm.disabled).toBe(false);
     fireEvent.click(enabledConfirm);
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+
+    // BUG-14/15: nach der Zustimmung bleibt der Workflow im gemeinsamen
+    // Overlay (Model-Step im Vordergrund)
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+    expect(document.querySelector(".cv-workflow-overlay #cv-model-selection-title")).toBeTruthy();
+  });
+
+  it("BROWSER-BUG-14..19: Workflow bleibt im gemeinsamen Overlay; Fehler bleibt im Overlay-Kontext", async () => {
+    // BUG-17: ATS-Fehlschlag soll einen kontrollierten Fehler-Step erzeugen
+    vi.mocked(analyzeATS).mockRejectedValue(new Error("kaputt"));
+
+    await uploadCvAndOpenList();
+    // Die Dokumentenliste ist der Inline-Einstieg (kein Overlay-Backdrop dort)
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+
+    // Consent erteilen
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+    fireEvent.click(screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+
+    // BUG-15: Model-Step im Overlay
+    await waitFor(() => {
+      expect(document.querySelector(".cv-workflow-overlay #cv-model-selection-title")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+
+    // BUG-16: Profil-Step (creating-profile) im selben Overlay
+    await waitFor(() => {
+      expect(document.querySelector(".cv-workflow-overlay #cv-processing-title")).toBeTruthy();
+    });
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+
+    // Weiter -> anonymizing -> profile-ready (alles im Overlay) -> confirm -> goal-selection
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => {
+      expect(document.querySelector(".cv-workflow-overlay .cv-result")).toBeTruthy();
+    });
+    const card = document.querySelector(".cv-processing-card") as HTMLElement;
+    fireEvent.click(
+      Array.from(card.querySelectorAll("button")).find(
+        (b) => b.textContent?.includes("Profil übernehmen und Jobs finden")
+      ) as HTMLButtonElement
+    );
+
+    // goal-selection im Overlay
+    await waitFor(() => {
+      expect(document.querySelector(".cv-workflow-overlay #cv-goal-execution-title")).toBeTruthy();
+    });
+
+    // BUG-17: ATS ausführen schlägt fehl -> Fehler erscheint im Overlay, nicht im Seitenfluss
+    fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+    await waitFor(() => {
+      const overlay = document.querySelector(".cv-workflow-overlay");
+      expect(overlay).toBeTruthy();
+      expect(overlay!.querySelector('[role="alert"]')).toBeTruthy();
+    });
+
+    // UI bleibt bedienbar: Zurück zu Dokumenten funktioniert (Liste ist Inline-Einstieg)
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
+    await screen.findByText("Deine Lebensläufe");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+  });
+
+  it("BROWSER-BUG-07 (regression): geschlossener Consent -> KEIN Overlay, Hinweis inline", async () => {
+    await uploadCvAndOpenList();
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+
+    await screen.findByText(/Zustimmung ausstehend/);
+    // Kein Overlay im dismissed-Zustand
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+    // Liste bleibt inline sichtbar
+    expect(screen.getByText("cv.pdf")).toBeTruthy();
+    // Reopen funktioniert
+    fireEvent.click(screen.getByRole("button", { name: "Einwilligung anzeigen" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
   });
 
   it("BROWSER-BUG-11: Zurück-Navigation im CV-Flow ohne State-Verlust", async () => {
