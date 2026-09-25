@@ -1,267 +1,212 @@
-# API Inventory — Mays Job Search System
+# API Inventory
 
-## Overview
-Complete inventory of all existing API endpoints in the Mays Job Search system as of 2026-09-20.
+**Stand**: 2026-09-25 — vollständig gegen den Code validiert (HEAD `0abbd59`, Branch `main`).
 
----
+## Source of Truth
 
-## API Endpoints Inventory
-
-| # | API | Method | Path | Auth | Version | Request | Response | Errors | Documentation | Status |
-|---|-----|--------|------|------|---------|---------|----------|--------|---------------|--------|
-| 1 | **Jobs Search** | GET | `/api/jobs` | None | unversioned | Query params: skills, targetRole, city, radiusKm, workMode, employmentType | JobsResponse | 400, 500 | Inline (code) | unversioned/legacy |
-| 2 | **AI Match/Scoring** | POST | `/api/match` | Session cookie | unversioned | { profile, jobs[], model?, attempt? } | { matches[], meta } | 400, 405, 500, 502 | Inline (code) | unversioned/legacy |
-| 3 | **Job Details** | POST | `/api/job-details` | None | unversioned | { jobs: string[] } | { jobs: Record<string, Job>, meta } | 400, 500 | Inline (code) | unversioned/legacy |
-| 4 | **AI Match/Scoring** | POST | `/api/match` | Session cookie | unversioned | { profile, jobs[], model?, attempt? } | { matches[], meta } | 400, 405, 500, 502 | Inline (code) | unversioned/legacy |
-| 5 | **Profile Creation** | POST | `/api/profile` | None | unversioned | { text, hash?, model?, attempt? } | SuggestedProfile | 400, 405, 500, 502 | Inline (code) | unversioned/legacy |
-| 6 | **Cover Letter** | POST | `/api/cover-letter` | None | unversioned | { profile, job, language?, prepareQuestion?, model?, attempt? } | { letter, meta } | 400, 405, 500 | Inline (code) | unversioned/legacy |
-| 7 | **Models List** | GET | `/api/models` | None | unversioned | None | { models[], providers[], defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts } | 405, 502 | Inline (code) | unversioned/legacy |
-| 6 | **ATS Analysis** | POST | `/api/ats-analysis` | None | unversioned | { job, profile, ai?: { enabled, consent } } | AtsAnalysisResponse | 400, 405, 500, 502 | Inline (code) + docs/API_CV_IMPROVEMENT.md | unversioned/legacy |
-| 8 | **CV Improvement** | POST | `/api/cv-improvement` | None | unversioned | { job, profile } | CvImprovementResponse | 400, 405, 500 | docs/API_CV_IMPROVEMENT.md | unversioned/legacy |
-| 9 | **Model Info** | GET | `/api/model` | None | unversioned | None | { model: string } | 405, 500 | Inline (code) | unversioned/legacy |
-| 10 | **Job Details** | POST | `/api/job-details` | None | unversioned | { jobs: string[] } | { jobs: Record<string, Job>, meta } | 400, 500 | Inline (code) | unversioned/legacy |
-| 11 | **Alerts** | POST/DELETE | `/api/alerts` | None | unversioned | POST: { email, profile } / DELETE: { email } | { message } | 400, 405, 500 | Inline (code) | unversioned/legacy |
-| 12 | **Usage** | GET | `/api/usage` | None | unversioned | None | { ... } | 405, 500 | Inline (code) | unversioned/legacy |
-| 13 | **Cron Digest** | POST | `/api/cron/digest` | None | unversioned | None | { ... } | 405, 500 | Inline (code) | unversioned/legacy |
+Der Code ist die Quelle der Wahrheit. Dokumentation wird gegen den Code validiert.
+Diese Inventur wurde ausschließlich aus den tatsächlichen Handlern in `api/`,
+`vercel.json` und `src/api.ts` abgeleitet — nicht aus bestehender Dokumentation.
 
 ---
 
-## Frontend API Client Functions (src/api.ts)
+## Implemented Interfaces
 
-| Function | Endpoint | Method | TypeScript Types |
-|----------|----------|--------|------------------|
-| `fetchJobs` | `/api/jobs` | GET | Profile → JobsResponse |
-| `fetchMatches` | `/api/match` | POST | Profile, Job[], model?, attempt? → MatchResponse |
-| `fetchJobDetails` | `/api/job-details` | POST | string[] → { jobs, meta } |
-| `fetchModels` | `/api/models` | GET | () → ModelsResponse |
-| `fetchModel` | `/api/model` | GET | () → string |
-| `createProfile` | `/api/profile` | POST | text, model?, hash?, attempt? → SuggestedProfile |
-| `generateCoverLetter` | `/api/cover-letter` | POST | Profile, Job, prepareQuestion, language?, model?, attempt? → string |
-| `subscribeAlert` | `/api/alerts` | POST | email, Profile → string |
-| `unsubscribeAlert` | `/api/alerts` | DELETE | email → string |
-| `analyzeATS` | `/api/ats-analysis` | POST | Job, Profile, ai? → AtsAnalysisResponse |
-| `fetchCvImprovement` | `/api/cv-improvement` | POST | Job, Profile → CvImprovementResponse |
+| Method | Endpoint | Auth | Version | Implementation | Tests |
+|---|---|---|---|---|---|
+| GET | `/api/jobs` | none | keine (`/api/*`) | `api/jobs.mjs` → `api/_lib/sources/index.mjs: fetchAllJobs` | `tests/api/sources-registry.test.mjs`, `tests/api/apify-actor.test.mjs`, `tests/integration/20-skills-regression.test.mjs`, `tests/integration/cv-to-jobs-e2e.test.mjs` |
+| POST | `/api/match` | Anonyme Session (`Set-Cookie: mj-session`) | keine | `api/match.mjs` → `api/_lib/matching.mjs: computeMatch` | `tests/api/match-cache.test.mjs`, `tests/api/match-enrich.test.mjs`, `src/App.test.tsx` |
+| POST | `/api/job-details` | Anonyme Session (`Set-Cookie: mj-session`) | keine | `api/job-details.mjs` → `api/_lib/detailEnrich.mjs` | `tests/api/job-details.test.mjs`, `tests/api/detail-enrich.test.mjs` |
+| POST | `/api/profile` | none | keine | `api/profile.mjs` → `api/_lib/ai.mjs: chat` | `tests/api/profile-cache.test.mjs`, `src/App.test.tsx` |
+| POST | `/api/cover-letter` | none | keine | `api/cover-letter.mjs` → `api/_lib/ai.mjs: chat` | indirekt via `src/api.test.ts`/Komponententests |
+| GET | `/api/models` | none | keine | `api/models.mjs` → `api/_lib/models.mjs` | `tests/api/providers.test.mjs` (Provider-Ebene) |
+| GET | `/api/model` | none | keine | `api/model.mjs` | — |
+| POST / DELETE / GET | `/api/alerts` | none | keine | `api/alerts.mjs` → `api/_lib/alerts.mjs` (Upstash) | — |
+| POST | `/api/ats-analysis` | none | keine | `api/ats-analysis.mjs` → `api/_lib/ats.mjs` | `tests/api/ats-analysis.test.js`, `tests/api/ats-extraction.test.js`, `tests/api/ats-model-selection.test.mjs` |
+| POST | `/api/cv-improvement` (und interne Sub-Dispatcher `/apply`, `/reanalyze`, `/match-impact` via `req.url`) | none | Antwort-`meta.version = "v1"` (nicht URL) | `api/cv-improvement.mjs` | `tests/api/cv-improvement-api.test.mjs`, `tests/api/cv-improvement-module.test.mjs` |
+| GET | `/api/usage` | **Token**: Header `x-usage-token` oder `Authorization: Bearer` (gegen `USAGE_DIAGNOSTICS_TOKEN`) | keine | `api/usage.mjs` → `api/_lib/usage.mjs` | — |
+| POST | `/api/cron/digest` | Vercel-Cron-Header `x-vercel-cron` oder `Authorization: Bearer $CRON_SECRET`; **offen, wenn `CRON_SECRET` nicht gesetzt ist** | keine | `api/cron/digest.mjs` (Vercel Cron täglich 07:00) | — |
 
----
-
-## Error Handling Patterns
-
-### Current Error Response Format
-```json
-{
-  "error": "Error message",
-  "code": "error_code"
-}
-```
-
-### Common Error Codes
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `bad_request` | 400 | Invalid request body or missing required fields |
-| `method` | 405 | HTTP method not allowed |
-| `unauthorized` | 401 | Authentication required |
-| `forbidden` | 403 | Access denied |
-| `not_found` | 404 | Resource not found |
-| `bad_ai_response` | 502 | AI service returned invalid response |
-| `model_unavailable` | 503 | AI model temporarily unavailable |
-| `free_quota_exceeded` | 429 | Free AI quota exhausted |
-| `models_unavailable` | 503 | No AI models available |
-| `text_too_long` | 400 | Input text exceeds maximum length |
-| `missing_text` | 400 | Required text field missing |
-| `missing_text` | 400 | Required text field missing |
-| `internal` | 500 | Internal server error |
-
-### HTTP Status Codes Used
-| Status | Usage |
-|--------|-------|
-| 200 | Success |
-| 204 | OPTIONS preflight |
-| 400 | Bad Request (validation errors) |
-| 405 | Method Not Allowed |
-| 500 | Internal Server Error |
-| 502 | Bad Gateway (AI service failure) |
-| 502 | Model unavailable |
-| 503 | Service Unavailable (quota exceeded) |
+Hinweis: `GET /api/alerts` liefert nur `{ count }` und wird vom Frontend nicht verwendet.
 
 ---
 
-## API Client Patterns (src/api.ts)
+## Detail: Requests / Responses / Errors (aus dem Code)
 
-### Base Fetch Wrapper
-```typescript
-apiFetch<T>(url: string, options?: RequestInit): Promise<T>
-```
+### `GET /api/jobs`
+- Query: `skills` (String; JSON-Array oder Legacy `;`/,` Liste), `targetRole`, `city`, `radiusKm`, `workMode` (CSV), `employmentType` (CSV) — alle optional.
+- 200 → `{ jobs: Job[], meta: { totalScanned, totalFiltered, city[], keywords[], sources, sourceCounts, disabledSources, sourceDetails, jobsCombined, searchStrategy, apify } }`
+- Errors: `HttpError`-kodiert (`network` 502, `rate_limited` 429, `upstream` 502 aus Arbeitnow-Quelle), sonst 500 `{ error, code: "internal" }`.
+- Geo-Semantik (seit BROWSER-BUG-04): `city` wird nur an die Quellen gereicht, wenn `radiusKm` numerisch > 0 ist („Entfernung egal" = kein Ortsfilter).
 
-### Error Class
-```typescript
-class ApiError extends Error {
-  readonly code?: string;
-  readonly status?: number;
-}
-```
+### `POST /api/match`
+- Body: `{ skills, targetRole, city, jobs[] (Pflicht, non-empty), model?, }`; Header `x-mj-attempt` optional.
+- 200 → `{ matches: Match[], meta }`; setzt `Set-Cookie` (anonyme Session für Detail-Enrichment der Arbeitsagentur-Jobs).
+- Errors: 400 `bad_request` (jobs fehlt/leer), 405 `method`, 4xx/5xx der AI-Provider-Ebene (401 `key_invalid`, 402 `insufficient_credits`, 429 `free_quota_exceeded` u. a. via `api/_lib/ai.mjs`), 500 `internal`.
 
-### Error Classification
-- `isModelUnavailable(err)` - Checks for model availability issues
-- `isFreeQuotaExceeded(err)` - Checks for quota exhaustion
+### `POST /api/job-details`
+- Body: `{ jobs: string[] }` (Slugs, Pflicht non-empty).
+- 200 → `{ jobs: Record<string, Job>, meta: { enrichedCount } }`; setzt Session-Cookie.
+- Errors: 400 `bad_request`/`invalid_slug`, 429 `quota_exceeded`/`apify_limit_reached`, 503 `quota_unavailable`/`missing_config`, 404 `source_not_found`, 502 Fallback, 500 `internal`.
 
-### Model Fallback
-```typescript
-withModelFallback<T>({
-  initialModel,
-  availableModels,
-  recommendedModel,
-  request: (model, attempt) => Promise<T>
-}): Promise<FallbackResult<T>>
-```
+### `POST /api/profile`
+- Body: `{ text (Pflicht, ≤ 30000 Zeichen), hash?, model? }`; Header `x-mj-attempt` optional.
+- 200 → `SuggestedProfile` flach: `{ skills[], experienceLevel, targetRoles[], location }`. Bei `hash`: Upstash-Cache (TTL 30 Tage).
+- Errors: 400 `missing_text` / `text_too_long`, 502 `bad_ai_response`, AI-Provider-Codes, 500 `internal`.
 
----
+### `POST /api/cover-letter`
+- Body: `{ skills, targetRole, city, job{title, company_name, ...} (Pflicht), language?, prepareQuestion?, model? }`; Header `x-mj-attempt` optional.
+- 200 → `{ letter: string, meta: { job, language } }`.
+- Errors: 400 `bad_request`, AI-Provider-Codes, 500 `internal`.
 
-## Request/Response Patterns
+### `GET /api/models`
+- 200 → `{ models: [{id,name,provider}], providers: [{id,name,enabled,configured}], defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`.
+- Errors: 405 `method`, 502 `models_unavailable` (oder Provider-Status).
 
-### Common Request Patterns
-- **GET with query params**: `/api/jobs?skills=...&city=...`
-- **POST with JSON body**: `/api/match`, `/api/profile`, etc.
-- **OPTIONS preflight**: All endpoints support CORS preflight
+### `GET /api/model`
+- 200 → `{ model: string | null }`. Kein Method-Guard im Fehlerfall (405 nur via OPTIONS); Errors: keine expliziten.
 
-### Common Response Patterns
-- **Success**: Direct JSON response (200)
-- **Error**: `{ error: string, code: string }` with appropriate HTTP status
-- **CORS**: `Access-Control-Allow-Origin: *` on all responses
-- **Session cookies**: Some endpoints set session cookies
+### `POST /api/alerts`
+- Body: `{ email (Pflicht, E-Mail-Regex), skills|targetRole (mind. eins), city? }` → 200 `{ ok: true, message }`.
+- `DELETE`: Body `{ email }` → 200 `{ ok: true, message }`.
+- `GET`: → 200 `{ count }` (nur Server-Seite; Frontend nutzt GET nicht).
+- Errors: 400 `bad_request`, 405 `method`, 503 `missing_config` (Upstash), 500 `internal`.
 
-### Common Request Validation
-- Body must be valid JSON
-- Required fields validated (job, profile, skills, etc.)
-- Maximum text length limits (e.g., 30,000 chars for profile)
-- Skills parsed as comma-separated strings
+### `POST /api/ats-analysis`
+- Body: `{ job (Pflicht), profile { skills }, ai?: { enabled?, consent?, model? } }`.
+  - `ai.model` ist seit BROWSER-BUG-22 optional und wird bis `formulateCVText` → `chat({ model })` durchgereicht; ohne Feld bleibt das Server-Default aktiv.
+- 200 → `{ analysis { score, keywordCoverage, criticalGaps, requirements, matches }, recommendations[], ai { requested, executed, consentRequired, consentGiven, provider, model, externalProcessing, dataMinimized, privacyStatus, dataCategories, privacyPolicy, formulations[] } }`.
+- Errors: 400 `bad_request`, 405 `method`, 500 `internal`.
 
----
+### `POST /api/cv-improvement*` (Sub-Dispatch über `req.url`-Suffix)
+- Standard (kein Suffix): Body `{ job, profile }` → 200 **flach**: `{ improvement { plan, summary, totalRequirements, generatedAt }, analysis { score, keywordCoverage, criticalGaps, summary }, meta: { version: "v1", generatedAt } }`.
+- `/apply`: Body `{ profile, selectedRecommendationIds (Pflicht non-empty), allRecommendations (Pflicht) }` → 200 **Envelope**: `{ data: { improvedProfile, appliedCount, appliedRecommendations }, meta: { version: "v1", requestId, timestamp } }`.
+- `/reanalyze`: Body `{ job, originalProfile, improvedProfile }` → 200 Envelope `{ data: { before, after, delta }, meta: {...} }`.
+- `/match-impact`: gleiche Body-Struktur → 200 Envelope `{ data: { before, after, delta, changes }, meta: {...} }`.
+- Errors überall: 400 `bad_request`, 405 `method`, 500 `internal` (flach `{ error, code }`).
 
-## Authentication & Authorization
+### `GET /api/usage`
+- Auth: `x-usage-token` Header oder `Authorization: Bearer` vs. `USAGE_DIAGNOSTICS_TOKEN` (Constant-Time-Compare).
+- 200 → Usage-Snapshot (Zähler). Errors: 401 `unauthorized`, 403 `forbidden` (Endpoint deaktiviert ohne Token-Env), 405 `method`, 500 `internal`.
 
-### Current State
-- **No authentication required** for any public endpoints
-- **Session cookies** used for `/api/match` (anonymous identity)
-- **No JWT/OAuth** implemented
-- **No role-based access control**
-- **No API keys** required
-
-### Session Handling
-- `/api/match` sets session cookie via `sessionCookieHeader`
-- Identity created via `anonymousIdentity(req)`
-- Session used for BArbeitsagentur detail enrichment
+### `POST /api/cron/digest`
+- Auth: automatisch bei Vercel-Cron (`x-vercel-cron`-Header), sonst optional `Bearer $CRON_SECRET`; **ohne gesetztes `CRON_SECRET` ist der Endpoint öffentlich aufrufbar** (Befund, siehe Mismatches).
+- 200 → `{ ok: true, checked, sent, skipped, errors[] }`. Errors: 401 `unauthorized`, 405 `method`, 500 `missing_config`/`internal`.
 
 ---
 
-## Documentation Status
+## Frontend Client (`src/api.ts`) — tatsächliche Aufrufe
 
-| Endpoint | Documentation | Location |
-|----------|---------------|----------|
-| `/api/jobs` | Inline code comments | `api/jobs.mjs` |
-| `/api/match` | Inline code comments | `api/match.mjs` |
-| `/api/job-details` | Inline code comments | `api/job-details.mjs` |
-| `/api/profile` | Inline code comments | `api/profile.mjs` |
-| `/api/cover-letter` | Inline code comments | `api/cover-letter.mjs` |
-| `/api/models` | Inline code comments | `api/models.mjs` |
-| `/api/ats-analysis` | Inline + docs/API_CV_IMPROVEMENT.md | `api/ats-analysis.mjs`, `docs/API_CV_IMPROVEMENT.md` |
-| `/api/cv-improvement` | `docs/API_CV_IMPROVEMENT.md` | `docs/API_CV_IMPROVEMENT.md` |
-| `/api/models` | Inline code comments | `api/models.mjs` |
-| `/api/model` | Inline code comments | `api/model.mjs` |
-| `/api/job-details` | Inline code comments | `api/job-details.mjs` |
-| `/api/alerts` | Inline code comments | `api/alerts.mjs` |
-| `/api/usage` | Inline code comments | `api/usage.mjs` |
-| `/api/cron/digest` | Inline code comments | `api/cron/digest.mjs` |
-| `/api/cv-improvement` | `docs/API_CV_IMPROVEMENT.md` | `docs/API_CV_IMPROVEMENT.md` |
+| Funktion | URL im Client | Methode |
+|---|---|---|
+| `fetchJobs` | `/api/jobs` | GET |
+| `fetchMatches` | `/api/match` | POST (+ `x-mj-attempt`) |
+| `fetchJobDetails` | `/api/job-details` | POST |
+| `fetchModels` | `/api/models` | GET |
+| `fetchModel` | `/api/model` | GET |
+| `createProfile` | `/api/profile` | POST (+ `x-mj-attempt`) |
+| `generateCoverLetter` | `/api/cover-letter` | POST (+ `x-mj-attempt`) |
+| `subscribeAlert` / `unsubscribeAlert` | `/api/alerts` | POST / DELETE |
+| `analyzeATS` | `/api/ats-analysis` | POST (`ai.model` optional seit BUG-22) |
+| `fetchCvImprovement` | **`/api/v1/cv-improvement`** | POST |
+| `applyCvImprovement` | **`/api/v1/cv-improvement/apply`** | POST |
+| `reanalyzeCv` | **`/api/v1/cv-improvement/reanalyze`** | POST |
+| `computeMatchImpact` | **`/api/v1/cv-improvement/match-impact`** | POST |
 
----
-
-## Test Coverage
-
-| Endpoint | Test File | Test Count |
-|----------|-----------|------------|
-| `/api/jobs` | `src/api.test.ts` | Multiple |
-| `/api/match` | `src/App.test.tsx` | Multiple |
-| `/api/profile` | `src/App.test.tsx` | Multiple |
-| `/api/ats-analysis` | `tests/api/ats-analysis.test.js` | 10 tests |
-| `/api/cv-improvement` | `tests/api/cv-improvement-api.test.mjs`, `tests/api/cv-improvement-module.test.mjs` | 18 tests |
-| `/api/models` | - | - |
-| `/api/profile` | `src/App.test.tsx` | Multiple |
-| `/api/cover-letter` | - | - |
-| `/api/models` | - | - |
+Client-Fehlerhandling: `ApiError { message, status?, code? }`, Retries nur via `withModelFallback` (Model-Verfügbarkeit), `isModelUnavailable`, `isFreeQuotaExceeded`.
 
 ---
 
-## CV Improvement API (Latest Addition)
+## Documentation Mismatches
 
-### Endpoint
-```
-POST /api/cv-improvement
-```
-
-### Request
-```json
-{
-  "job": { "title": "...", "tags": [...], "slug": "..." },
-  "profile": { "skills": "react, typescript", "targetRole": "...", "city": "..." }
-}
-```
-
-### Response
-```json
-{
-  "improvement": {
-    "plan": [...],
-    "summary": { "total": 5, "byType": {...}, "byPriority": {...}, "bySafety": {...}, "actionable": 4, "requiresReview": 1 },
-    "totalRequirements": 12,
-    "generatedAt": "2024-01-15T10:30:00.000Z"
-  },
-  "analysis": { "score": 78, "keywordCoverage": { "overall": 65 }, "criticalGaps": [...], "summary": {...} },
-  "meta": { "version": "1.0.0", "generatedAt": "2024-01-15T10:30:00.000Z" }
-}
-```
-
-### Frontend Integration
-```typescript
-import { fetchCvImprovement } from './api';
-const response = await fetchCvImprovement(job, profile);
-```
+| Endpoint / Thema | Dokumentiert | Tatsächlicher Code | Klassifikation | Evidence |
+|---|---|---|---|---|
+| Anzahl Endpunkte | alte `API_INVENTORY.md` (2026-09-20): „13", mit Duplikaten (`/api/match`, `/api/job-details` doppelt) | 12 Function-Dateien, 12+2 konkrete Schnittstellen | DOCUMENTATION-MISMATCH | `api/*.mjs`, `api/cron/*.mjs` |
+| Version-Prefix | Alter Bestand: „alle unversioned" | Frontend ruft `/api/v1/cv-improvement*` auf; **kein `api/v1/`-Verzeichnis und kein Rewrite in `vercel.json`** existiert | DOCUMENTATION-MISMATCH + Vertragsrisiko | `src/api.ts:416,446,527,582`; `vercel.json`; `ls api/` |
+| CV-Improvement Response | `docs/API_CV_IMPROVEMENT.md`: `{ data, meta: { version, requestId } }`-Envelope | Standard-Endpoint liefert **flach** (`{ improvement, analysis, meta }` ohne `requestId`); nur Sub-Pfade nutzen die Envelope | DOCUMENTATION-MISMATCH | `api/cv-improvement.mjs` (269–286 vs 191–202 etc.) |
+| CV-Improvement Pfad | `docs/API_CV_IMPROVEMENT.md`: `POST /api/v1/cv-improvement` | Repo-Route ist `api/cv-improvement.mjs` (ohne `v1`), Sub-Dispatch via `req.url.endsWith` | DOCUMENTATION-MISMATCH | `api/cv-improvement.mjs:96–98` |
+| Auth pauschal „none" | alte Inventory: „No authentication required for any public endpoints" | `/api/usage` verlangt `x-usage-token`/Bearer; `/api/cron/digest` verlangt Cron-Header/Secret (offen ohne `CRON_SECRET`); `/api/match` & `/api/job-details` setzen Session-Cookies | DOCUMENTATION-MISMATCH | `api/usage.mjs:15–41`, `api/cron/digest.mjs:59–77`, `api/match.mjs:77–78` |
+| Alerts-Methoden | alte Inventory: „POST/DELETE /api/alerts" | Handler unterstützt zusätzlich GET (`{ count }`) | DOCUMENTATION-MISMATCH (klein) | `api/alerts.mjs:58–61` |
+| Error-Format | `API_DOCUMENTATION_STANDARD.md`: `{ error: { code, message, details }, meta: { requestId } }` | Tatsächlich flach: `{ error: string, code: string }`, kein `error.details`, kein `meta.requestId` | STANDARD ≠ IST | alle Handler |
+| Response-Envelope | Standard: `{ data, meta: { version, requestId, timestamp? } }` | Überwiegend flache Responses; Envelope nur in cv-improvement-Subpfaden | STANDARD ≠ IST | alle Handler |
+| `X-Request-ID` | Standard: Pflicht-Empfehlung (Client sendet, Server echot) | im Code nicht implementiert | DOCUMENTED-BUT-NOT-IMPLEMENTED | Suche in `api/` |
+| `GET /api/versions` Discovery | `API_VERSIONING_STANDARD.md` §6.1 | nicht implementiert | DOCUMENTED-BUT-NOT-IMPLEMENTED | kein Handler |
+| Header `X-API-Version` | Standard: Pflicht in allen Responses | nirgends gesetzt | DOCUMENTED-BUT-NOT-IMPLEMENTED | Suche in `api/` |
+| API Key `X-API-Key` | Standard §?: API-Key für service-to-service | nicht implementiert (einzige Auth: usage-token/cron-secret/session-cookie) | DOCUMENTED-BUT-NOT-IMPLEMENTED | Suche in `api/` |
+| OpenAPI / `request_schema.json` | im Auftrag als Prüfpunkt genannt | **keine OpenAPI-Datei und keine `request_schema.json` im Repo** — „OpenAPI SearchRequest vs request_schema.json" kann nicht verglichen werden | UNCERTAIN (nicht verifikationsfähig) | Repo-weite Suche |
+| Base-URL `localhost:8000` | im Auftrag als Prüfpunkt genannt | nirgends im aktiven Code/Doku; tatsächliche URLs: Vercel-Demo `mays-job-matcher.vercel.app` (README), Vite-Dev 5173 | DOCUMENTED-BUT-NOT-IMPLEMENTED (bzw. veraltet) | README.md:6 |
+| `/api/cv-improvement` in alter Inventory | als einzelner unversioned Endpoint gelistet | Handler enthält 4 Sub-Modi über URL-Suffix — die Suffix-Routen haben **keine eigenen Function-Dateien** | DOCUMENTATION-MISMATCH | `api/cv-improvement.mjs` |
 
 ---
 
-## Summary Statistics
+## Implemented but not documented
 
-- **Total Endpoints**: 13
-- **Versioned**: 0 (all unversioned/legacy)
-- **Documented**: 2 fully documented (CV Improvement, ATS Analysis), rest inline only
-- **Tests**: 366 total tests (including 18 new CV Improvement tests)
-- **Error Codes**: 15 distinct error codes
-- **HTTP Statuses**: 7 distinct status codes used
-- **Frontend Client Functions**: 11 typed functions in `src/api.ts`
+- `GET /api/alerts` (`{ count }` — nur Server-seitig; alte Doku nannte nur POST/DELETE).
+- `ai.model` am ATS-Endpunkt (seit BROWSER-BUG-22) — bislang nicht in `docs/API_CV_IMPROVEMENT.md`/alter Inventory.
+- Session-Cookie (`Set-Cookie: mj-session`) auf `/api/match` und `/api/job-details` (Anonyme Identität für Arbeitsagentur-Detail-Enrichment + Quota).
+- `x-mj-attempt`-Request-Header (Modell-Fallback-Attempt-Propagierung) auf `/api/match`, `/api/profile`, `/api/cover-letter`.
+- Job-Quellen-Metadaten (`meta.sources`, `meta.sourceCounts`, `meta.sourceDetails`) in `/api/jobs`.
+
+## Documented but not implemented
+
+- `X-API-Key`-Auth (nur Standard-Dokument).
+- `GET /api/versions` (Version Discovery).
+- `X-API-Version`-Response-Header und `X-API-Deprecated`-/`X-API-Sunset-*`-Header.
+- Deprecation-`meta` in Responses.
+- Einheitliche Fehler-Struktur `{ error: { code, message, details }, meta }`.
+- OpenAPI-Spezifikation / `request_schema.json` (nicht im Repo auffindbar).
+- `localhost:8000` als Basis-URL (im aktiven Code nicht vorhanden).
+
+## Unresolved / Requires Decision
+
+1. **`/api/v1/cv-improvement*` vs. tatsächlichem Routing:** Der Client ruft `v1`-URLs, der Server legt keine `api/v1/`-Dateien an und `vercel.json` enthält keine Rewrites. Aus dem Repo ist nicht herleitbar, dass diese Routen in Production bedient werden (Vercel würde ohne `api/v1/`-Datei 404 liefern). Die cv-improvement-Unit-Tests rufen den Handler direkt, ohne URL-Routing. → **Entscheidung nötig** (Routing ergänzen oder Client auf unversioned umstellen) — NICHT in diesem Task beheben.
+2. **`/api/cron/digest` ohne `CRON_SECRET` ist öffentlich** aufrufbar (`isAuthorized` gibt `true`, wenn kein Secret gesetzt ist). Sicherheitsrelevante Entscheidung nötig — NICHT in diesem Task beheben.
+3. **Zwei Response-Formate koexistieren** (flach vs. `{data, meta}`-Envelope nur in cv-improvement-Subpfaden) — welche Variante der Standard werden soll, ist offen (Versioning-Standard sagt Envelope; IST sagt überwiegend flach).
+4. `api/model.mjs` hat keinen Method-Guard-Fehlerpfad (jetzt dokumentiert; bewusste Entscheidung offen).
+5. Standard-vs-IST-Überführung (Migration Plan) bleibt Draft — keine Umsetzung in diesem Task.
 
 ---
 
-## Migration Priority
+## STANDARD vs. IST (Versioning, §8 des Auftrags)
 
-| Priority | Endpoint | Reason |
-|----------|----------|--------|
-| HIGH | `/api/cv-improvement` | Newest, needs versioning for contract stability |
-| HIGH | `/api/ats-analysis` | Complex response, breaking changes likely |
-| MEDIUM | `/api/match` | Core feature, stable but unversioned |
-| MEDIUM | `/api/jobs` | Core feature, simple GET |
-| LOW | `/api/profile`, `/api/cover-letter`, `/api/models` | Stable, simple contracts |
-| LOW | `/api/job-details`, `/api/alerts`, `/api/usage`, `/api/cron/digest` | Low change frequency |
+**STANDARD (docs/API_VERSIONING_STANDARD.md v1.0.0):**
+- URL-basierte Major-Versionierung Pflicht: `/api/v1/...`
+- Response-Envelope mit `meta.version`, `meta.requestId`
+- Header `X-API-Version`, Deprecation-Header/-Meta
+- Version Discovery `GET /api/versions`
+
+**IST (Code):**
+- Alle produktiv erreichbaren Routen ohne Version-Prefix (`/api/*`).
+- Einziges Versionierungssignal: `meta.version = "v1"` in cv-improvement-Antworten (nicht URL-basiert).
+- Keine der Standard-Header/-Discovery-Mechanismen implementiert.
+- Der Client referenziert `/api/v1/*` nur für cv-improvement — ohne entsprechende Server-Routen.
+
+**DIFFERENZ:**
+Der Standard ist nicht eingeführt. Die Dokumente beschreiben einen Zielzustand, der mit dem Code nicht übereinstimmt. Widersprüche innerhalb der Doku selbst: `API_CV_IMPROVEMENT.md` dokumentiert eine Envelope für den Standard-Endpoint, die der Code dort nicht liefert, und einen v1-Pfad, den es im Repo-Routing nicht gibt.
 
 ---
 
-## Notes
+## Git / History Nachweis
 
-1. **All endpoints currently unversioned** - no `/v1/` prefix
-2. **No authentication** on any public endpoints
-3. **Error format consistent** across all endpoints
-4. **CORS headers** on all endpoints
-5. **Session cookies** only on `/api/match`
-6. **No rate limiting** implemented
-7. **No request ID/correlation ID** in responses
-8. **No pagination** on list endpoints (returns all results)
-9. **No versioning** in URL paths
-10. **Frontend client** (`src/api.ts`) provides typed access to all endpoints
+- Branch: `main`, HEAD = `origin/main` = `0abbd59` (2026-09-25)
+- Der im früheren Befund genannte Commit **`dc03af8` existiert nicht** in diesem Repository (`git show dc03af8` → „unbekannter Commit"), auf keinem Branch (`git log --all`). Damit können die dort behaupteten Checkpoint-Vorfahren in diesem Repo nicht verifiziert werden.
+- Hinweis „Remote-main sei leer": in keinem Dokument des Repos auffindbar (inkl. `docs/AI_AUDITLOG.md`). Tatsächlicher Stand: `origin/main` existiert und ist identisch mit HEAD (292 Commits Gesamthistorie) — siehe auch Follow-up-Notiz in `docs/AI_AUDITLOG.md`.
+
+---
+
+## Test Coverage (aktuell, code-basiert)
+
+| Bereich | Dateien |
+|---|---|
+| Jobs/Sources/Strategie | `tests/api/sources-registry.test.mjs`, `tests/api/apify-actor.test.mjs`, `tests/api/apify-client.test.mjs`, `tests/api/filter.test.js`, `tests/api/search-strategy.test.mjs`, `tests/integration/20-skills-regression.test.mjs`, `tests/integration/cv-to-jobs-e2e.test.mjs` |
+| Match | `tests/api/match-cache.test.mjs`, `tests/api/match-enrich.test.mjs`, `src/App.test.tsx` |
+| Profile | `tests/api/profile-cache.test.mjs`, `src/App.test.tsx` |
+| ATS | `tests/api/ats-analysis.test.js`, `tests/api/ats-extraction.test.js`, `tests/api/ats-model-selection.test.mjs` |
+| CV Improvement | `tests/api/cv-improvement-api.test.mjs`, `tests/api/cv-improvement-module.test.mjs` |
+| Provider/Quota | `tests/api/providers.test.mjs`, `tests/api/openrouter-provider.test.mjs`, `tests/api/edenai-provider.test.mjs`, `tests/api/quota-429.test.mjs` |
+| Details/Enrichment | `tests/api/job-details.test.mjs`, `tests/api/detail-enrich.test.mjs` |
+| Safety | `tests/api/safety-observer.test.mjs` |
+| Client/Frontend | `src/api.test.ts`, Komponententests unter `src/components/*.test.tsx` |
+| Keinen eigenen API-Test | `/api/model`, `/api/alerts`, `/api/usage`, `/api/cron/digest`, `/api/cover-letter` (direkt) |
+
+Gesamtsuite zum Stand der Inventur: 486 Tests (426 Unit-/API-Tests in `tests/` + `src/` + Integration).
