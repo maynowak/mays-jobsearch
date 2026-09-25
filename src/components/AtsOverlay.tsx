@@ -75,7 +75,8 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
       const refreshed = await analyzeATS(
         { title: job.title, tags: job.tags, slug: job.slug },
         profileForAts,
-        { enabled: true, consent: true }
+        // BUG-22: die bestehende Modellauswahl wird jetzt tatsächlich genutzt
+        { enabled: true, consent: true, ...(selectedModel ? { model: selectedModel } : {}) }
       );
       if (refreshed.analysis) {
         setAnalysis(refreshed);

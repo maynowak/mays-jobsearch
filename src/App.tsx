@@ -685,7 +685,8 @@ export default function App() {
       const result = await analyzeATS(
         jobForAts || { title: "", tags: [], slug: "" },
         { skills: atsProfile.skills },
-        { enabled: false }
+        // BUG-22: aktuell gewähltes Modell an den ATS-Request durchreichen
+        { enabled: false, ...(effectiveModel ? { model: effectiveModel } : {}) }
       );
 
       setCvState((prev) => ({
@@ -695,6 +696,18 @@ export default function App() {
         atsResult: result,
       }));
     } catch (err) {
+      if (isModelUnavailable(err)) {
+        // BUG-22: Bei Modellfehler am ATS-Punkt bleiben: dokumente, consent,
+        // cvProfile und ATS-Eingaben bleiben erhalten; nur das Modell wird
+        // neu gewählt und ausschließlich ATS erneut gestartet.
+        setCvState((prev) => ({
+          ...prev,
+          step: "ats-model-recovery",
+          isProcessing: false,
+          error: t("cv.atsModelUnavailable"),
+        }));
+        return;
+      }
       setCvState((prev) => ({
         ...prev,
         step: "error",
@@ -702,10 +715,8 @@ export default function App() {
         error:
           isFreeQuotaExceeded(err)
             ? t("model.quotaExceeded")
-            : isModelUnavailable(err)
-            ? t("model.unavailable")
             : t("cv.atsProcessError"),
-        errorBackStep: isModelUnavailable(err) ? "model-selection" : null,
+        errorBackStep: null,
       }));
     }
   };
@@ -1046,7 +1057,7 @@ export default function App() {
         cvState.step === "anonymizing" ? "anonymization" :
         cvState.step === "goal-selection" ? "goal" :
         cvState.step === "skill-selection" ? "skill" :
-        cvState.step === "ats-processing" ? "target" :
+        cvState.step === "ats-processing" || cvState.step === "ats-model-recovery" ? "target" :
         cvState.step === "ai-searching" ? "processing" :
         cvState.step === "improvement-selection" ? "target" :
         cvState.step === "improving" ? "processing" :
@@ -1408,6 +1419,50 @@ export default function App() {
         <div className="cv-ats-processing" role="status" aria-live="polite">
           <span className="spinner" aria-hidden="true" />
           <p>{t("cv.atsProcessing")}</p>
+        </div>
+      )}
+
+      {/* BUG-22: ATS-Recovery am ATS-Punkt — Modell wechseln, nur ATS erneut starten. */}
+      {cvState.step === "ats-model-recovery" && (
+        <div className="cv-ats-recovery" role="alert">
+          <p className="alert alert-error">{cvState.error}</p>
+          <div className="cv-model-selection" role="region" aria-labelledby="cv-ats-model-recovery-title">
+            <h3 id="cv-ats-model-recovery-title" className="cv-model-selection__title">
+              {t("cv.modelSelect")}
+            </h3>
+            <ModelSelector
+              state={modelsState}
+              models={models}
+              defaultModel={defaultModel}
+              recommendedModel={recommendedModel}
+              value={effectiveModel}
+              onChange={handleModelChange}
+              disabled={cvState.isProcessing}
+              attention={true}
+            />
+          </div>
+          <div className="cv-continue-actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={() => {
+                setCvState((prev) => ({ ...prev, step: "ats-processing", isProcessing: true, error: null }));
+                void runAtsProcessing(t);
+              }}
+              disabled={cvState.isProcessing}
+            >
+              {cvState.isProcessing ? t("cv.atsProcessing") : t("cv.atsRetry")}
+              {cvState.isProcessing && <span className="spinner" />}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "goal-selection", error: null }))}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.backToGoalSelection")}
+            </button>
+          </div>
         </div>
       )}
 

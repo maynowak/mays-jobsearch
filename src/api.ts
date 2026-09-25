@@ -336,7 +336,7 @@ export interface AtsAnalysisResponse {
 export async function analyzeATS(
   job: { title?: string; tags?: string[]; slug?: string },
   profile: { skills?: string; [key: string]: unknown },
-  ai?: { enabled?: boolean; consent?: boolean }
+  ai?: { enabled?: boolean; consent?: boolean; model?: string }
 ): Promise<AtsAnalysisResponse> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   return apiFetch<AtsAnalysisResponse>("/api/ats-analysis", {

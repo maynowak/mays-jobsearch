@@ -111,7 +111,13 @@ export default async function handler(req, res) {
     const aiOptions = body.ai || {};
     const aiEnabled = aiOptions.enabled === true;
     const consentGiven = aiOptions.consent === true;
-    
+    // BROWSER-BUG-22: optionales Modell für die KI-Formulierung.
+    // Ohne Angabe bleibt das bisherige Server-Default-Verhalten unverändert.
+    const requestedModel =
+      typeof aiOptions.model === "string" && aiOptions.model.trim()
+        ? aiOptions.model.trim()
+        : undefined;
+
     // Parse skills properly
     const cvSkills = parseSkills(profile?.skills);
     
@@ -171,7 +177,7 @@ export default async function handler(req, res) {
         consentRequired: true,
         consentGiven,
         provider: providerInfo.provider,
-        model: modelInfo.model,
+        model: requestedModel ?? modelInfo.model,
         externalProcessing: providerInfo.provider !== "unavailable",
         dataMinimized: true,
         privacyStatus: providerInfo.privacyStatus,
@@ -197,8 +203,8 @@ export default async function handler(req, res) {
             };
           }
           
-          // Generate formulation
-          return await formulateCVText(rec, cvSkills, {});
+          // Generate formulation (BUG-22: ausgewähltes Modell durchreichen)
+          return await formulateCVText(rec, cvSkills, requestedModel ? { model: requestedModel } : {});
         })
       );
       

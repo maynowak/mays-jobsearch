@@ -260,6 +260,9 @@ export type CvProcessingStep =
   | "skill-selection"
   | "ats-processing"
   | "ats-complete"
+  // BUG-22: ATS-spezifischer Recovery-Punkt bei Modell-Verfügbarkeitsfehlern
+  // (bleibt am ATS-Schritt; kein Rücksprung zum CV-Anfang)
+  | "ats-model-recovery"
   | "ai-searching"
   | "ai-complete"
   | "success"

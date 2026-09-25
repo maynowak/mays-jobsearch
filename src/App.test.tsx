@@ -112,6 +112,7 @@ beforeEach(() => {
   vi.mocked(fetchMatches).mockReset();
   vi.mocked(fetchModels).mockReset();
   vi.mocked(createProfile).mockReset();
+  vi.mocked(analyzeATS).mockReset();
   vi.mocked(fetchModels).mockResolvedValue(singleModel);
   vi.mocked(fetchMatches).mockResolvedValue(matchOk);
   Object.defineProperty(window, "scrollTo", { value: vi.fn(), configurable: true });
@@ -767,6 +768,67 @@ describe("CV workflow", () => {
       Array.from(card.querySelectorAll("button")).find((b) => b.textContent?.includes("Profil übernehmen und Jobs finden")) as HTMLButtonElement
     );
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+  });
+
+  it("BROWSER-BUG-22: ATS Model-unavailable -> Recovery am ATS-Punkt -> anderes Modell -> nur ATS erneut", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(multiModels);
+    vi.mocked(analyzeATS).mockResolvedValue({
+      analysis: { score: 80, keywordCoverage: { overall: 75 }, criticalGaps: [], requirements: [], matches: [] },
+      recommendations: [],
+      ai: { requested: false, executed: false, consentRequired: true, consentGiven: false, externalProcessing: false, dataMinimized: true },
+    } as never);
+
+    await uploadCvAndOpenList("ats-recovery.pdf");
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    const card = document.querySelector(".cv-processing-card") as HTMLElement;
+    fireEvent.click(
+      Array.from(card.querySelectorAll("button")).find(
+        (b) => b.textContent?.includes("Profil übernehmen und Jobs finden")
+      ) as HTMLButtonElement
+    );
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+
+    // Modell A nicht verfügbar (transient), nur EIN Mal
+    vi.mocked(analyzeATS).mockRejectedValueOnce(new ApiError("overloaded", 429, "rate_limited"));
+    fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+
+    // ATS-spezifischer Recovery-Punkt statt CV-Anfang
+    await waitFor(() => expect(document.querySelector(".cv-ats-recovery")).toBeTruthy());
+    expect(document.querySelector(".cv-ats-recovery .alert-error")!.textContent).toContain("für diese Analyse momentan nicht verfügbar");
+    expect(document.getElementById("cv-model-selection-title")).toBeNull(); // KEIN Rücksprung in den Model-Step des Profil-Workflows
+    expect(document.querySelector(".cv-error-state")).toBeNull(); // kein generischer Error-State
+    // Modellauswahl am ATS-Punkt sichtbar
+    const recoveryModelTrigger = document.querySelector(".cv-ats-recovery .model-trigger") as HTMLButtonElement;
+    expect(recoveryModelTrigger).toBeTruthy();
+
+    // anderes Modell wählen (Modell B)
+    fireEvent.click(recoveryModelTrigger);
+    fireEvent.click(await screen.findByRole("option", { name: /Modell B/ }));
+    await waitFor(() => {
+      expect((document.querySelector(".cv-ats-recovery .model-trigger") as HTMLButtonElement).textContent).toContain("Modell B");
+    });
+
+    // Nur ATS erneut starten
+    const callsBeforeRetry = vi.mocked(analyzeATS).mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "ATS-Analyse erneut starten" }));
+    await waitFor(() => {
+      expect(vi.mocked(analyzeATS).mock.calls.length).toBeGreaterThan(callsBeforeRetry);
+    });
+    const retryCall = vi.mocked(analyzeATS).mock.calls[callsBeforeRetry];
+    expect(retryCall[2]).toEqual({ enabled: false, model: "m-b" });
+    // Erfolg -> ats-complete (kein Fehler-State)
+    expect(document.querySelector(".cv-error-state")).toBeNull();
+    expect(document.querySelector(".cv-ats-recovery")).toBeNull();
   });
 
   it("BROWSER-BUG-20: ATS-Pfad erhält das bestätigte CV-Profil (kein atsNoProfile)", async () => {
