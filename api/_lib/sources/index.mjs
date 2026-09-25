@@ -50,8 +50,15 @@ export function dedupJobs(jobs) {
 
 export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMode, employmentType }) {
   const sources = enabledSources();
+  // Geo-Semantik: "Entfernung egal" (kein numerischer Radius) bedeutet keine
+  // geografische Einschränkung. Die Stadt wird nur dann als Ortsfilter an die
+  // Quellen weitergereicht, wenn ein konkreter Radius gewählt wurde. Sonst wirkt
+  // ein exakter Ortsname (z. B. "Michelstadt") als unbeabsichtigter harter
+  // Substring-Filter und engt die Suche stärker ein als eine Suche ohne Stadt.
+  const radiusValue = Number(radiusKm);
+  const geoCity = Number.isFinite(radiusValue) && radiusValue > 0 ? city : "";
   const settled = await Promise.allSettled(
-    sources.map((source) => source.fetchJobs({ skills, targetRole, city }))
+    sources.map((source) => source.fetchJobs({ skills, targetRole, city: geoCity }))
   );
 
   const results = [];

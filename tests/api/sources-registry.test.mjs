@@ -154,6 +154,34 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
     expect(job.source).toEqual(expect.arrayContaining(["arbeitnow", "arbeitsagentur"]));
   });
 
+  describe("BROWSER-BUG-04: Stadt + 'Entfernung egal' (kein numerischer Radius)", () => {
+    const geoJobs = [
+      { ...baseArbeitnowJob, slug: "ffm", title: "Frontend Developer", location: ["Frankfurt"], remote: false, tags: ["react"] },
+      { ...baseArbeitnowJob, slug: "da", title: "Frontend Developer", location: ["Darmstadt"], remote: false, tags: ["react"] },
+      { ...baseArbeitnowJob, slug: "remote", title: "Frontend Developer", location: ["Deutschlandweit"], remote: true, tags: ["react"] },
+    ];
+
+    beforeEach(() => {
+      process.env.JOB_SOURCE_ARBEITSAGENTUR_ENABLED = "false";
+    });
+
+    it("Fall A: city ohne radiusKm -> kein Geo-Filter (identisch zu Fall B ohne Stadt)", async () => {
+      setupFetchMock({ arbeitnowJobs: geoJobs });
+      const withCity = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "Michelstadt" });
+      const withoutCity = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "" });
+      expect(withCity.jobs.length).toBeGreaterThan(0);
+      expect(withCity.jobs.length).toBe(withoutCity.jobs.length);
+    });
+
+    it("Fall C: city mit konkretem radiusKm -> bisheriger Ortsfilter bleibt aktiv", async () => {
+      setupFetchMock({ arbeitnowJobs: geoJobs });
+      const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "Michelstadt", radiusKm: "50" });
+      // Bestehende Semantik: exakter Orts-Substring; nur der Remote-Job bleibt
+      expect(result.jobs.length).toBe(1);
+      expect(result.jobs[0].remote).toBe(true);
+    });
+  });
+
   it("L) neue Source kann registriert werden ohne jobs.mjs umzubauen", async () => {
     const { createApifySource } = await import("../../api/_lib/sources/apify/index.mjs");
     const fakeActor = {

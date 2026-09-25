@@ -6,7 +6,7 @@ interface Props {
   documents: CvDocument[];
   onSelect: (id: string, selected: boolean) => void;
   onRemove: (id: string) => void;
-  onAddFiles: (files: FileList) => void;
+  onAddFiles: (files: FileList | File[]) => void;
   onProcess: () => void;
   onSearch: () => void;
   disabled: boolean;

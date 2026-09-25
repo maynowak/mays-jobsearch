@@ -61,6 +61,7 @@ interface Props {
   model: string | null;
   availableModels: string[];
   recommendedModel: string | null;
+  onAddFiles?: (files: File[], skills?: string[]) => void;
 }
 
 type Phase = "idle" | "reading" | "creating" | "ready";
@@ -73,6 +74,7 @@ export default function CvUpload({
   model,
   availableModels,
   recommendedModel,
+  onAddFiles,
 }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -120,6 +122,8 @@ export default function CvUpload({
         if (cachedProfile) {
           setSuggested(cachedProfile);
           setPhase("ready");
+          // Dokument in die CV-Liste (SEARCH-CV-01) übernehmen
+          onAddFiles?.([file], cachedProfile.skills);
           return;
         }
       }
@@ -133,6 +137,9 @@ export default function CvUpload({
       setSuggested(profile);
       setFallbackNote(usedFallback);
       setPhase("ready");
+      // Dokument in die CV-Liste (SEARCH-CV-01) übernehmen, damit sie im
+      // Browser sichtbar ist (Checkboxen, Auswahlzähler, Select All, …)
+      onAddFiles?.([file], profile.skills);
     } catch (err) {
       setPhase("idle");
       setError(

@@ -326,13 +326,14 @@ export default function App() {
     }
   }
 
-  const handleAddCvFiles = (files: FileList) => {
+  const handleAddCvFiles = (files: FileList | File[], skills?: string[]) => {
     const newDocuments: CvDocument[] = Array.from(files).map((file) => ({
       id: generateDocumentId(),
       name: file.name,
       size: file.size,
       selected: false,
       file,
+      ...(skills && skills.length > 0 ? { skills } : {}),
     }));
     setCvState((prev) => {
       // Enforce max 10 CVs limit
@@ -963,6 +964,7 @@ export default function App() {
         model={effectiveModel}
         availableModels={models.map((model) => model.id)}
         recommendedModel={recommendedModel}
+        onAddFiles={handleAddCvFiles}
       />
       <JobSources jobs={foundJobs} />
       <div className="model-divider" aria-hidden="true" />

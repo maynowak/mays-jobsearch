@@ -60,11 +60,13 @@ function StatefulForm({
   onMatch,
   matching = false,
   hasJobs = false,
+  onSubmit,
 }: {
   initial?: Profile;
   onMatch?: () => void;
   matching?: boolean;
   hasJobs?: boolean;
+  onSubmit?: (p: Profile) => void;
 }) {
   const [value, setValue] = useState<Profile>(initial);
   return (
@@ -73,7 +75,7 @@ function StatefulForm({
         phase="idle"
         value={value}
         onChange={setValue}
-        onSubmit={() => undefined}
+        onSubmit={onSubmit ?? (() => undefined)}
         onMatch={onMatch}
         matching={matching}
         hasJobs={hasJobs}
@@ -166,6 +168,46 @@ describe("Explizites AI-Matching UI (Step 22)", () => {
     const matchButtons = screen.getAllByRole("button", { name: "Bewerte mit KI…" });
     matchButtons.forEach((btn) => fireEvent.click(btn));
     expect(onMatch).not.toHaveBeenCalled();
+  });
+});
+
+describe("BROWSER-BUG-03: Leerzeichen im manuellen Skill-Input", () => {
+  it("ein normales Leerzeichen bleibt beim Tippen stehen und wird nicht entfernt", () => {
+    const onChange = vi.fn();
+    renderForm(empty, onChange, vi.fn());
+    const input = screen.getByLabelText("Skills") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: "Spring " } });
+    expect(input.value).toBe("Spring ");
+    expect(onChange).toHaveBeenLastCalledWith(baseProfile({ skills: "Spring " }));
+
+    fireEvent.change(input, { target: { value: "Spring Boot" } });
+    expect(input.value).toBe("Spring Boot");
+    expect(onChange).toHaveBeenLastCalledWith(baseProfile({ skills: "Spring Boot" }));
+  });
+
+  it("Multi-Word-Skills wie 'Machine Learning' / 'Amazon Web Services' sind tippbar", () => {
+    render(<StatefulForm />);
+    const input = screen.getByLabelText("Skills") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: "Machine Learning" } });
+    expect(input.value).toBe("Machine Learning");
+
+    fireEvent.change(input, { target: { value: "Amazon Web Services" } });
+    expect(input.value).toBe("Amazon Web Services");
+  });
+
+  it("Leerzeichen löst keinen Submit aus und zerlegt den Text beim Absenden nicht", () => {
+    const onSubmit = vi.fn();
+    render(<StatefulForm onSubmit={onSubmit} />);
+    const input = screen.getByLabelText("Skills") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: "Spring Boot" } });
+    // Zwischen dem Tippen darf nichts abgesendet worden sein
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Meine Treffer finden" }));
+    expect(onSubmit).toHaveBeenCalledWith(baseProfile({ skills: "Spring Boot" }));
   });
 });
 

@@ -22,6 +22,7 @@ interface Props {
   model: string | null;
   availableModels: string[];
   recommendedModel: string | null;
+  onAddFiles?: (files: File[], skills?: string[]) => void;
 }
 
 type Mode = "manual" | "cv";
@@ -39,11 +40,17 @@ export default function SearchForm({
   model,
   availableModels,
   recommendedModel,
+  onAddFiles,
 }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
   const { skills: rawSkills, targetRole } = value;
-  const [parsedSkills, setParsedSkills] = useState<string[]>(() => parseSkills(rawSkills));
+  // Rohtext-State: Der angezeigte Text wird nicht bei jedem Tastenschlag
+  // normalisiert, damit Leerzeichen in Multi-Word-Skills (z. B. "Spring Boot")
+  // normal eingegeben werden können. Tokenisierung passiert erst beim Lesen /
+  // Absenden über parseSkills.
+  const [skillsText, setSkillsText] = useState<string>(() => formatSkills(parseSkills(rawSkills)));
+  const parsedSkills = parseSkills(skillsText);
   const {
     city,
     suggestions,
@@ -81,10 +88,21 @@ export default function SearchForm({
     return [...list, type];
   };
 
+  // Externe Profil-Änderungen (z. B. aus dem CV-Flow) in das Textfeld
+  // übernehmen. Eigene Eingaben sind daran erkennbar, dass der Parent-Wert
+  // dem lokalen Text entspricht — dann darf nichts zurückgeschrieben werden,
+  // sonst würden getippte Leerzeichen wieder entfernt.
+  const [prevRawSkills, setPrevRawSkills] = useState(rawSkills);
+  if (rawSkills !== prevRawSkills) {
+    setPrevRawSkills(rawSkills);
+    if (rawSkills !== skillsText) {
+      setSkillsText(rawSkills);
+    }
+  }
+
   const handleSkillsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseSkills(e.target.value);
-    setParsedSkills(parsed);
-    onChange({ ...value, skills: formatSkills(parsed) });
+    setSkillsText(e.target.value);
+    onChange({ ...value, skills: e.target.value });
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -137,7 +155,7 @@ export default function SearchForm({
             id="skills"
             type="text"
             placeholder={t("search.skillsPh")}
-            value={formatSkills(parsedSkills)}
+            value={skillsText}
             onChange={handleSkillsChange}
             disabled={busy}
             autoComplete="off"
@@ -304,6 +322,7 @@ export default function SearchForm({
           model={model}
           availableModels={availableModels}
           recommendedModel={recommendedModel}
+          onAddFiles={onAddFiles}
         />
       )}
     </form>

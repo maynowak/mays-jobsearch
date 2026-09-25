@@ -531,6 +531,53 @@ describe("CV workflow", () => {
     expect((screen.getByLabelText("Zielrolle") as HTMLInputElement).value).toBe("Frontend");
     expect((screen.getByLabelText("Stadt oder PLZ") as HTMLInputElement).value).toBe("Berlin");
   });
+
+  it("BROWSER-BUG-02: nach CV-Upload ist die Dokumentliste sichtbar und Checkboxen funktionieren", async () => {
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      "cv.pdf",
+      { type: "application/pdf" }
+    );
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+
+    // Die CV-Dokumentliste ist sichtbar (SEARCH-CV-01)
+    expect(await screen.findByText("Deine Lebensläufe")).toBeTruthy();
+    expect(screen.getByText("cv.pdf")).toBeTruthy();
+    // Auswahlzähler: zunächst nichts ausgewählt
+    expect(screen.getByText("Keine ausgewählt")).toBeTruthy();
+
+    // Einzelnes Dokument auswählen/abwählen
+    const checkbox = document.querySelector(".cv-document-list__checkbox") as HTMLInputElement;
+    expect(checkbox).toBeTruthy();
+    expect(checkbox.checked).toBe(false);
+    fireEvent.click(checkbox);
+    expect(checkbox.checked).toBe(true);
+    expect(screen.getByText("1 ausgewählt")).toBeTruthy();
+
+    // Select All / Deselect All
+    fireEvent.click(screen.getByRole("button", { name: "Alle abwählen" }));
+    expect(checkbox.checked).toBe(false);
+    expect(screen.getByText("Keine ausgewählt")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Alle auswählen" }));
+    expect(checkbox.checked).toBe(true);
+    expect(screen.getByText("1 ausgewählt")).toBeTruthy();
+
+    // Aktionen sind mit Auswahl aktiviert
+    expect((screen.getByRole("button", { name: "Mit ausgewählten suchen" }) as HTMLButtonElement).disabled).toBe(false);
+  });
 });
 
 describe("No landing-page flash during a search", () => {
