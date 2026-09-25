@@ -733,6 +733,48 @@ describe("CV workflow", () => {
     expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
   });
 
+  it("BROWSER-BUG-20: ATS-Pfad erhält das bestätigte CV-Profil (kein atsNoProfile)", async () => {
+    vi.mocked(analyzeATS).mockResolvedValue({
+      analysis: { score: 80, keywordCoverage: { overall: 75 }, criticalGaps: [], requirements: [], matches: [] },
+      recommendations: [],
+      ai: { requested: false, executed: false, consentRequired: true, consentGiven: false, externalProcessing: false, dataMinimized: true },
+    } as never);
+    await uploadCvAndOpenList("ats-flow.pdf");
+
+    // Consent + Model + Profil-Erstellung
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+
+    // profile-ready -> bestätigen (legt cvState.cvProfile an)
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    const card = document.querySelector(".cv-processing-card") as HTMLElement;
+    fireEvent.click(
+      Array.from(card.querySelectorAll("button")).find(
+        (b) => b.textContent?.includes("Profil übernehmen und Jobs finden")
+      ) as HTMLButtonElement
+    );
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+
+    // ATS ausführen
+    fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+
+    // ATS wurde mit dem bestätigten CV-Profil aufgerufen, KEIN atsNoProfile-Fehler
+    await waitFor(() => {
+      expect(vi.mocked(analyzeATS)).toHaveBeenCalled();
+    });
+    const atsCall = vi.mocked(analyzeATS).mock.calls[0];
+    expect(atsCall[1]).toEqual({ skills: "React" });
+    expect(document.querySelector(".cv-error-state")).toBeNull();
+  });
+
   it("BROWSER-BUG-11: Zurück-Navigation im CV-Flow ohne State-Verlust", async () => {
     await uploadCvAndOpenList();
     fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);

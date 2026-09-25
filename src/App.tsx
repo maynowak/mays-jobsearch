@@ -656,14 +656,20 @@ export default function App() {
   };
 
   const runAtsProcessing = async (t: (key: string, vars?: Record<string, string | number>) => string) => {
+    // BUG-20: Quelle der Wahrheit für den ATS-Pfad im CV-Workflow ist das
+    // bestätigte CV-Profil (cvState.cvProfile). cvState.profile ist ein
+    // verwaister Legacy-State, der im CV-Flow nie befüllt wird (dadurch
+    // bisher immer cv.atsNoProfile). Das App-weite Such-Profile (manuelle
+    // Suche) wird bewusst NICHT verwendet — Tab-Isolation bleibt erhalten.
+    const atsProfile = cvState.cvProfile ?? cvState.profile;
     const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
     const jobForAts = selectedDoc ? {
-      title: cvState.suggestedProfile?.targetRoles[0] || cvState.profile?.targetRole || "",
-      tags: cvState.suggestedProfile?.skills || cvState.profile?.skills?.split(",") || [],
+      title: cvState.suggestedProfile?.targetRoles[0] || atsProfile?.targetRole || "",
+      tags: cvState.suggestedProfile?.skills || atsProfile?.skills?.split(",") || [],
       slug: "cv-ats-" + Date.now(),
     } : null;
 
-    if (!cvState.profile || !cvState.profile.skills) {
+    if (!atsProfile || !atsProfile.skills) {
       setCvState((prev) => ({
         ...prev,
         step: "error",
@@ -676,7 +682,7 @@ export default function App() {
     try {
       const result = await analyzeATS(
         jobForAts || { title: "", tags: [], slug: "" },
-        { skills: cvState.profile.skills },
+        { skills: atsProfile.skills },
         { enabled: false }
       );
 
@@ -1400,7 +1406,7 @@ export default function App() {
         </div>
       )}
 
-      {cvState.step === "ats-complete" && cvState.atsResult && (
+      {cvState.step === "ats-complete" && cvState.atsResult && (cvState.cvProfile ?? cvState.profile) && (
         <ATSModal
           job={{
             title: "CV ATS Analysis",
@@ -1411,7 +1417,7 @@ export default function App() {
             url: "",
             slug: "cv-ats-analysis",
           }}
-          profile={cvState.profile!}
+          profile={(cvState.cvProfile ?? cvState.profile)!}
           onClose={() => setCvState((prev) => ({ ...prev, step: "goal-selection", atsResult: null }))}
         />
       )}
