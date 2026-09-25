@@ -89,6 +89,7 @@ src/                          React frontend
     Hero.tsx       SearchForm.tsx   ModelInfo.tsx
     AlertCard.tsx  Status.tsx       Results.tsx
     MatchCard.tsx  ScoreBadge.tsx   LetterModal.tsx
+    ErrorBoundary.tsx               (faengt Render-Fehler, haelt UI bedienbar)
 
 index.html
 vite.config.ts

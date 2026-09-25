@@ -578,6 +578,140 @@ describe("CV workflow", () => {
     // Aktionen sind mit Auswahl aktiviert
     expect((screen.getByRole("button", { name: "Mit ausgewählten suchen" }) as HTMLButtonElement).disabled).toBe(false);
   });
+
+  // Gemeinsamer Upload-Helper für die CV-Flow-Tests
+  async function uploadCvAndOpenList(fileName = "cv.pdf") {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      fileName,
+      { type: "application/pdf" }
+    );
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+    await screen.findByText("Deine Lebensläufe");
+  }
+
+  it("BROWSER-BUG-06/07: Consent-Overlay ist verpflichtend, schließbar und erneut öffnenbar", async () => {
+    await uploadCvAndOpenList();
+
+    // Dokument auswählen und Verarbeitung anstoßen
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+
+    // BUG-07: Consent erscheint als Overlay im Vordergrund
+    expect(document.querySelector(".cv-consent-overlay")).toBeTruthy();
+    expect(screen.getByText("CV-Verarbeitung erlauben?")).toBeTruthy();
+
+    // BUG-06: Checkbox unchecked -> Confirm disabled, keine Verarbeitung
+    const confirm = screen.getByRole("button", { name: "Verarbeitung erlauben" }) as HTMLButtonElement;
+    const checkbox = screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }) as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+    expect(confirm.disabled).toBe(true);
+    const createCallsBefore = vi.mocked(createProfile).mock.calls.length;
+    fireEvent.click(confirm);
+    // kein zusätzlicher Verarbeitungs-Call durch den disabled-Button
+    expect(vi.mocked(createProfile)).toHaveBeenCalledTimes(createCallsBefore);
+
+    // BUG-07: Schließen -> Hinweis + Trigger, Verarbeitung startet nicht
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await screen.findByText(/Zustimmung ausstehend/);
+    expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
+    expect(screen.getByText("cv.pdf")).toBeTruthy(); // CV bleibt erhalten
+
+    // BUG-07: erneut öffnen
+    fireEvent.click(screen.getByRole("button", { name: "Einwilligung anzeigen" }));
+    expect(document.querySelector(".cv-consent-overlay")).toBeTruthy();
+    // Checkbox bleibt nach dem erneuten Öffnen unchecked (kein Auto-Consent)
+    const reopenedCheckbox = screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }) as HTMLInputElement;
+    expect(reopenedCheckbox.checked).toBe(false);
+
+    // BUG-06: Checkbox checked -> Confirm enabled -> Verarbeitung startet
+    fireEvent.click(reopenedCheckbox);
+    const enabledConfirm = screen.getByRole("button", { name: "Verarbeitung erlauben" }) as HTMLButtonElement;
+    expect(enabledConfirm.disabled).toBe(false);
+    fireEvent.click(enabledConfirm);
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+  });
+
+  it("BROWSER-BUG-11: Zurück-Navigation im CV-Flow ohne State-Verlust", async () => {
+    await uploadCvAndOpenList();
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    // Consent erteilen
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+
+    // model-selection -> Zurück zur Liste
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
+    await screen.findByText("Deine Lebensläufe");
+    expect(screen.getByText("cv.pdf")).toBeTruthy();
+
+    // Wieder vor -> Consent bleibt erteilt, creating-profile direkt
+    // (die Dokument-Auswahl ist nach "Zurück" erhalten geblieben)
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await waitFor(() => {
+      expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
+    });
+    // creating-profile: Zurück zur Modellauswahl
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zur Modellauswahl" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    // State erhalten: Checkbox-Auswahl/Dokument weiterhin vorhanden
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
+    await screen.findByText("cv.pdf");
+  });
+
+  it("BROWSER-BUG-10: 'Weiter' in creating-profile löst keinen React-Fehler aus und startet die Profil-Erstellung", async () => {
+    await uploadCvAndOpenList();
+    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(screen.getByRole("checkbox", {
+      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+    }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+
+    // creating-profile -> Weiter startet createProfileFromPdf (früher React #321 via useLang im Handler)
+    const createProfileCallsBefore = vi.mocked(createProfile).mock.calls.length;
+    await screen.findByRole("button", { name: "Weiter" });
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => {
+      expect(vi.mocked(createProfile).mock.calls.length).toBeGreaterThan(createProfileCallsBefore);
+    });
+  });
+
+  it("BROWSER-BUG-08: zweiter CV lässt sich über die Liste hochladen", async () => {
+    await uploadCvAndOpenList();
+    expect(screen.getByText("Weitere CVs hochladen")).toBeTruthy();
+
+    const second = new File(["zweiter lebenslauf"], "lebenslauf-2.pdf", { type: "application/pdf" });
+    const listFileInput = document.querySelector(".cv-document-list__actions input[type='file']") as HTMLInputElement;
+    fireEvent.change(listFileInput, { target: { files: [second] } });
+
+    await screen.findByText("lebenslauf-2.pdf");
+    expect(screen.getByText("cv.pdf")).toBeTruthy();
+    // beide Dokumente haben Checkboxen
+    expect(document.querySelectorAll(".cv-document-list__checkbox").length).toBe(2);
+  });
 });
 
 describe("No landing-page flash during a search", () => {

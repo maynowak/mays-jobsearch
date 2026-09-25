@@ -26,6 +26,7 @@ import CvGoalSelection from "./components/CvGoalSelection";
 
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
@@ -58,6 +59,10 @@ export default function App() {
   });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
   const [atsJob, setAtsJob] = useState<Job | null>(null);
+  // Consent-Overlay (BUG-07): Benutzer kann das Overlay schließen, ohne die
+  // Zustimmung zu erteilen. Der Consent bleibt dann ausstehend und kann über
+  // "Einwilligung anzeigen" erneut geöffnet werden.
+  const [consentDismissed, setConsentDismissed] = useState(false);
   const [dataset, setDataset] = useState<JobDataset | null>(null);
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
@@ -388,6 +393,7 @@ export default function App() {
 
     // First-Use Recognition: Check if consent already given
     if (!cvState.consentGiven) {
+      setConsentDismissed(false);
       setCvState((prev) => ({
         ...prev,
         step: "consent-required",
@@ -445,7 +451,6 @@ export default function App() {
   };
 
   const createProfileFromPdf = async (doc: CvDocument) => {
-    const { t } = useLang();
     setCvState((prev) => ({
       ...prev,
       step: "anonymizing",
@@ -508,11 +513,12 @@ export default function App() {
     }
   };
 
+  // BUG-07: Abbrechen schließt das Consent-Overlay, ohne die Zustimmung zu
+  // erteilen. Der Schritt bleibt "consent-required" (Consent ausstehend), das
+  // Dokument bleibt erhalten und die Verarbeitung startet nicht. Über
+  // "Einwilligung anzeigen" kann das Overlay erneut geöffnet werden.
   const handleCvConsentCancel = () => {
-    setCvState((prev) => ({
-      ...prev,
-      step: "document-selected",
-    }));
+    setConsentDismissed(true);
   };
 
   const handleAnonymizationChange = (mode: string) => {
@@ -524,7 +530,6 @@ export default function App() {
   };
 
   const handleGoalExecute = () => {
-    const { t } = useLang();
     const goal = cvState.processingGoal;
     const nextStep = goal === "ats" ? "ats-processing" : "skill-selection";
     setCvState((prev) => ({
@@ -544,7 +549,6 @@ export default function App() {
   };
 
   const handleSkillSelectionConfirm = () => {
-    const { t } = useLang();
     if (cvState.selectedSkills.length === 0) {
       return;
     }
@@ -683,7 +687,6 @@ export default function App() {
   };
 
   const handleImprovementExecute = async () => {
-    const { t } = useLang();
     const selectedIds = cvState.selectedImprovementIds;
     if (selectedIds.length === 0) {
       setCvState((prev) => ({
@@ -775,7 +778,6 @@ export default function App() {
   };
 
   const handleReanalysisExecute = async () => {
-    const { t } = useLang();
     if (!cvState.originalProfile || !cvState.profile) {
       setCvState((prev) => ({
         ...prev,
@@ -861,7 +863,6 @@ export default function App() {
   };
 
   const handleMatchImpactExecute = async (job: Job) => {
-    const { t } = useLang();
     if (!cvState.originalProfile || !cvState.profile) {
       setCvState((prev) => ({
         ...prev,
@@ -1008,7 +1009,10 @@ export default function App() {
         cvState.step === "success" ? "complete" : "document"
       } />
 
-      {cvState.step === "document-selected" && (
+      {/* BUG-07: Die Liste bleibt auch im Consent-Schritt sichtbar (disabled),
+          damit das hochgeladene Dokument nach dem Schließen des Overlays
+          erhalten und sichtbar bleibt. */}
+      {(cvState.step === "document-selected" || cvState.step === "consent-required") && (
         <CvDocumentList
           documents={cvState.documents}
           onSelect={handleSelectCvDocument}
@@ -1016,20 +1020,36 @@ export default function App() {
           onAddFiles={handleAddCvFiles}
           onProcess={handleCvProcess}
           onSearch={handleSearchWithSelectedCvs}
-          disabled={cvState.isProcessing}
+          disabled={cvState.isProcessing || cvState.step !== "document-selected"}
           processing={cvState.isProcessing}
         />
       )}
 
       {cvState.step === "consent-required" && (
-        <CvConsentGate
-          fileName={cvState.documents.find((d) => cvState.selectedDocumentIds.includes(d.id))?.name ?? cvState.documents[0]?.name ?? ""}
-          onAccept={handleCvConsentAccept}
-          onCancel={handleCvConsentCancel}
-          processingInfo={cvState.processingGoal === "ats" ? t("cv.goalATSLabel") : t("cv.goalAISearchLabel")}
-          externalAI={true}
-          disabled={cvState.isProcessing}
-        />
+        consentDismissed ? (
+          <div className="cv-consent-pending" role="status">
+            <p>{t("cv.consentPending")}</p>
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={() => setConsentDismissed(false)}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.showConsent")}
+            </button>
+          </div>
+        ) : (
+          <div className="cv-consent-overlay">
+            <CvConsentGate
+              fileName={cvState.documents.find((d) => cvState.selectedDocumentIds.includes(d.id))?.name ?? cvState.documents[0]?.name ?? ""}
+              onAccept={handleCvConsentAccept}
+              onCancel={handleCvConsentCancel}
+              processingInfo={cvState.processingGoal === "ats" ? t("cv.goalATSLabel") : t("cv.goalAISearchLabel")}
+              externalAI={true}
+              disabled={cvState.isProcessing}
+            />
+          </div>
+        )
       )}
 
       {cvState.step === "model-selection" && (
@@ -1060,6 +1080,15 @@ export default function App() {
             >
               {t("cv.continue")}
             </button>
+            {/* BUG-11: klarer Zurückweg, CV-State bleibt erhalten */}
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "document-selected" }))}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.backToDocuments")}
+            </button>
           </div>
         </div>
       )}
@@ -1088,6 +1117,15 @@ export default function App() {
             >
               {cvState.isProcessing ? t("cv.continueProcessing") : t("cv.continue")}
               {cvState.isProcessing && <span className="spinner" />}
+            </button>
+            {/* BUG-11: klarer Zurückweg, CV-State bleibt erhalten */}
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setCvState((prev) => ({ ...prev, step: "model-selection" }))}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.backToModelSelection")}
             </button>
           </div>
         </>
@@ -1598,7 +1636,11 @@ export default function App() {
   );
 
   return (
-    <>
+    <ErrorBoundary
+      title={t("error.boundaryTitle")}
+      message={t("error.boundaryMessage")}
+      reloadLabel={t("error.boundaryReload")}
+    >
       <Navbar route="matcher" />
       <Hero />
 
@@ -1645,6 +1687,6 @@ export default function App() {
       )}
 
       <Footer />
-    </>
+    </ErrorBoundary>
   );
 }

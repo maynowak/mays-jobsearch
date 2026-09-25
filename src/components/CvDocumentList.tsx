@@ -106,7 +106,8 @@ export default function CvDocumentList({
                     aria-label={t("cv.documentSelect")}
                   />
                   <div className="cv-document-list__info">
-                    <span className="cv-document-list__name">{doc.name}</span>
+                    {/* BUG-09: vollständiger Dateiname bei Hover über den Namen */}
+                    <span className="cv-document-list__name" title={doc.name}>{doc.name}</span>
                     <span className="cv-document-list__size">
                       {(doc.size / 1024 / 1024).toFixed(1)} MB
                     </span>
@@ -129,22 +130,25 @@ export default function CvDocumentList({
             ))}
           </ul>
           <div className="cv-document-list__actions">
-            <button
-              type="button"
-              className="cv-file-input-label"
-              onClick={() => inputRef.current?.click()}
-              disabled={disabled}
-            >
-              <span className="cv-file-input-label__text">{t("cv.documentSelect")}</span>
-              <input
-                type="file"
-                accept="application/pdf,.pdf"
-                multiple
-                onChange={(e) => handleFileSelect(e as React.ChangeEvent<HTMLInputElement>)}
+            {/* BUG-08: "Weitere CVs hochladen" nur solange das Limit (10) nicht erreicht ist */}
+            {documents.length < 10 && (
+              <button
+                type="button"
+                className="cv-file-input-label"
+                onClick={() => inputRef.current?.click()}
                 disabled={disabled}
-                className="visually-hidden"
-              />
-            </button>
+              >
+                <span className="cv-file-input-label__text">{t("cv.addMore")}</span>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  multiple
+                  onChange={(e) => handleFileSelect(e as React.ChangeEvent<HTMLInputElement>)}
+                  disabled={disabled}
+                  className="visually-hidden"
+                />
+              </button>
+            )}
             <button
               type="button"
               className="cv-process-btn"

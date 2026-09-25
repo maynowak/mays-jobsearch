@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLang } from "../i18n";
 
 interface Props {
@@ -18,6 +19,9 @@ export default function CvConsentGate({
   disabled,
 }: Props) {
   const { t } = useLang();
+  // Die Zustimmung ist eine echte Voraussetzung (BROWSER-BUG-06):
+  // ohne aktivierte Checkbox darf keine Verarbeitung gestartet werden.
+  const [consented, setConsented] = useState(false);
 
   return (
     <div className="cv-consent-gate" role="dialog" aria-modal="true" aria-labelledby="cv-consent-title">
@@ -62,8 +66,8 @@ export default function CvConsentGate({
       <label className="cv-consent-gate__consent">
         <input
           type="checkbox"
-          checked={false}
-          onChange={() => {}} // controlled by parent via onAccept
+          checked={consented}
+          onChange={(e) => setConsented(e.target.checked)}
           className="cv-consent-gate__checkbox"
           disabled={disabled}
         />
@@ -83,7 +87,7 @@ export default function CvConsentGate({
           type="button"
           className="cv-consent-gate__confirm"
           onClick={onAccept}
-          disabled={disabled}
+          disabled={disabled || !consented}
         >
           {t("cv.consentConfirm")}
         </button>
