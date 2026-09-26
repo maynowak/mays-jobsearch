@@ -1006,6 +1006,10 @@ export default function App() {
         model={effectiveModel}
         availableModels={models.map((model) => model.id)}
         recommendedModel={recommendedModel}
+        defaultModel={defaultModel}
+        modelsState={modelsState}
+        models={models}
+        onModelChange={handleModelChange}
         onAddFiles={handleAddCvFiles}
       />
       <JobSources jobs={foundJobs} />

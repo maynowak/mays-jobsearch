@@ -22,6 +22,10 @@ interface Props {
   model: string | null;
   availableModels: string[];
   recommendedModel: string | null;
+  defaultModel?: string | null;
+  modelsState?: "loading" | "ready" | "error" | "empty";
+  models?: Array<{ id: string; name: string }>;
+  onModelChange?: (model: string) => void;
   onAddFiles?: (files: File[], skills?: string[]) => void;
 }
 
@@ -40,6 +44,10 @@ export default function SearchForm({
   model,
   availableModels,
   recommendedModel,
+  defaultModel,
+  modelsState = "loading",
+  models = [],
+  onModelChange,
   onAddFiles,
 }: Props) {
   const { t } = useLang();
@@ -322,6 +330,10 @@ export default function SearchForm({
           model={model}
           availableModels={availableModels}
           recommendedModel={recommendedModel}
+          defaultModel={defaultModel}
+          modelsState={modelsState}
+          models={models}
+          onModelChange={onModelChange ?? (() => undefined)}
           onAddFiles={onAddFiles}
         />
       )}

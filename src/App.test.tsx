@@ -107,6 +107,11 @@ const matchOk = {
 
 beforeEach(() => {
   localStorage.setItem("mj-lang", "de");
+  // CV-Profil-Cache-Treffer ueber Testgrenzen hinweg unterbinden, damit der
+  // Quick-Upload-Pfad deterministisch durch Consent + AI-Call laeuft
+  Object.keys(localStorage)
+    .filter((k) => k.startsWith("mj-cv-profile:"))
+    .forEach((k) => localStorage.removeItem(k));
   window.history.pushState({}, "", "/top");
   __resetModelsCacheForTests();
   setFallbackMaxAttempts(3);
@@ -124,6 +129,17 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
 });
+
+  // Quick-Upload: Consent-Gate (Privacy-Grenze vor dem AI-Call)
+  async function acceptUploadConsent() {
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+  }
 
 const modelTrigger = () => document.querySelector(".model-trigger") as HTMLButtonElement;
 const matchBtn = () => document.getElementById("match-btn") as HTMLButtonElement | null;
@@ -522,6 +538,7 @@ describe("CV workflow", () => {
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
 
+    await acceptUploadConsent();
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
     fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
 
@@ -556,6 +573,7 @@ describe("CV workflow", () => {
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
 
+    await acceptUploadConsent();
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
 
     // Die CV-Dokumentliste ist sichtbar (SEARCH-CV-01)
@@ -602,6 +620,7 @@ describe("CV workflow", () => {
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
       target: { files: [file] },
     });
+    await acceptUploadConsent();
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
     await screen.findByText("Deine Lebensläufe");
   }
@@ -740,6 +759,8 @@ describe("CV workflow", () => {
     await uploadCvAndOpenList("recovery.pdf");
     fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
+    // und gilt nicht fuer den CV-Workflow
     await screen.findByText("CV-Verarbeitung erlauben?");
     fireEvent.click(screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
@@ -772,25 +793,44 @@ describe("CV workflow", () => {
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
   });
 
-  it("CV-Upload: model_not_free zeigt Modell-Fehlermeldung statt generischem Verarbeitungsfehler", async () => {
-    // lokale CV-Profil-Cache-Treffer aus früheren Tests unterbinden
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith("mj-cv-profile:"))
-      .forEach((k) => localStorage.removeItem(k));
-    vi.mocked(createProfile).mockRejectedValueOnce(
-      new ApiError("The selected model isn't currently available as a free compatible model.", 400, "model_not_free")
-    );
+  it("CV-Upload: Modell-Ausfall -> Modellauswahl + erneut versuchen (kein Neustart)", async () => {
+    vi.mocked(fetchModels).mockResolvedValue(multiModels);
+    vi.mocked(createProfile)
+      .mockRejectedValueOnce(new ApiError("The selected model isn't currently available as a free compatible model.", 400, "model_not_free"))
+      .mockResolvedValue({
+        skills: ["React"],
+        experienceLevel: "Senior",
+        targetRoles: ["Frontend"],
+        location: "Berlin",
+      } as SuggestedProfile);
     renderApp();
     fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
     const file = new File(["React Developer"], "cv.pdf", { type: "application/pdf" });
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
 
-    // Erwartung: Modell-Fehler, NICHT "konnte nicht ausgewertet werden"
-    await screen.findByText(/KI-Modell ist momentan nicht verfügbar/);
+    // Consent zuerst, dann AI-Call
+    await acceptUploadConsent();
+
+    // Modell-Recovery statt generischem Fehler + Neustart
+    await waitFor(() => expect(document.querySelector(".cv-model-recovery")).toBeTruthy());
+    expect(screen.getByText(/KI-Modell ist momentan nicht verfügbar/)).toBeTruthy();
     expect(screen.queryByText(/konnte gerade nicht ausgewertet werden/)).toBeNull();
+    // Dropzone/Neuer-Upload ist nicht der sichtbare Pfad
+    expect(document.querySelector(".cv-dropzone")).toBeNull();
+
+    // anderes Modell waehlen und direkt erneut starten
+    fireEvent.click(document.querySelector(".cv-model-recovery .model-trigger") as HTMLButtonElement);
+    fireEvent.click(await screen.findByRole("option", { name: /Modell B/ }));
+    const callsBefore = vi.mocked(createProfile).mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Mit gewähltem Modell erneut versuchen" }));
+
+    // erneuter Call mit dem neuen Modell — ohne erneuten Upload
+    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+    expect(vi.mocked(createProfile).mock.calls.length).toBe(callsBefore + 1);
+    expect(vi.mocked(createProfile).mock.calls[callsBefore][1]).toBe("m-b");
   });
 
-  it("Privacy Boundary: kein externer AI-Call mit rohem CV-Text (PII wird vorher anonymisiert)", async () => {
+  it("Privacy Boundary: Consent-Pflicht vor AI-Call; PII wird vorher anonymisiert", async () => {
     vi.mocked(extractPdfText).mockResolvedValueOnce(
       "Max Mustermann, max.mustermann@example.com, +49 170 1234567. React Developer in Berlin."
     );
@@ -808,6 +848,11 @@ describe("CV workflow", () => {
       target: { files: [file] },
     });
 
+    // Consent-Gate erscheint; noch kein AI-Call
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    expect(vi.mocked(createProfile)).not.toHaveBeenCalled();
+
+    await acceptUploadConsent();
     await waitFor(() => expect(vi.mocked(createProfile)).toHaveBeenCalled());
     const sentText = vi.mocked(createProfile).mock.calls[0][0] as string;
     // Keine PII im Text, der an die AI geht
@@ -829,6 +874,8 @@ describe("CV workflow", () => {
     await uploadCvAndOpenList("ats-recovery.pdf");
     fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
+    // und gilt nicht fuer den CV-Workflow
     await screen.findByText("CV-Verarbeitung erlauben?");
     fireEvent.click(screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
@@ -890,6 +937,8 @@ describe("CV workflow", () => {
     // Consent + Model + Profil-Erstellung
     fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
+    // und gilt nicht fuer den CV-Workflow
     await screen.findByText("CV-Verarbeitung erlauben?");
     fireEvent.click(screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
@@ -926,6 +975,8 @@ describe("CV workflow", () => {
     fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
     // Consent erteilen
+    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
+    // und gilt nicht fuer den CV-Workflow
     await screen.findByText("CV-Verarbeitung erlauben?");
     fireEvent.click(screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
@@ -956,6 +1007,8 @@ describe("CV workflow", () => {
     await uploadCvAndOpenList();
     fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
+    // und gilt nicht fuer den CV-Workflow
     await screen.findByText("CV-Verarbeitung erlauben?");
     fireEvent.click(screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
@@ -1108,6 +1161,7 @@ describe("No landing-page flash during a search", () => {
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
 
+    await acceptUploadConsent();
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
     fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
 
@@ -1240,6 +1294,7 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [file] } });
 
+    await acceptUploadConsent();
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
     fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
 

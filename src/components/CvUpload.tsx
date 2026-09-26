@@ -4,7 +4,9 @@ import type { Profile, SuggestedProfile } from "../types";
 import { createProfile, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, ApiError } from "../api";
 import { useLang } from "../i18n";
 import { anonymizeText } from "../lib/anonymize";
+import CvConsentGate from "./CvConsentGate";
 import CvProfileResult from "./CvProfileResult";
+import ModelSelector from "./ModelSelector";
 
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
 const MIN_READABLE_CHARS = 20;
@@ -62,10 +64,16 @@ interface Props {
   model: string | null;
   availableModels: string[];
   recommendedModel: string | null;
+  defaultModel?: string | null;
+  // Model-Recovery: bei Modell-Ausfall kann der Benutzer direkt hier ein
+  // anderes Modell waehlen und erneut starten — ohne erneuten Upload.
+  modelsState: "loading" | "ready" | "error" | "empty";
+  models: Array<{ id: string; name: string }>;
+  onModelChange: (model: string) => void;
   onAddFiles?: (files: File[], skills?: string[]) => void;
 }
 
-type Phase = "idle" | "reading" | "creating" | "ready";
+type Phase = "idle" | "reading" | "consent" | "creating" | "model-error" | "ready";
 
 export default function CvUpload({
   busy,
@@ -75,6 +83,10 @@ export default function CvUpload({
   model,
   availableModels,
   recommendedModel,
+  defaultModel,
+  modelsState,
+  models,
+  onModelChange,
   onAddFiles,
 }: Props) {
   const { t } = useLang();
@@ -86,8 +98,59 @@ export default function CvUpload({
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fallbackNote, setFallbackNote] = useState(false);
+  // Consent fuer den Quick-Upload (Pfad A): Pflicht vor dem ersten externen
+  // AI-Call. Lokal gehalten — der Workflow (Pfad B) hat seine eigene,
+  // unveraenderte Consent-Logik (cvState.consentGiven).
+  const [uploadConsentGiven, setUploadConsentGiven] = useState(false);
+  // Extrahierter + anonymisierter Text (Privacy Boundary bereits passiert) —
+  // bleibt fuer Consent- und Modell-Retry erhalten, kein erneutes Auslesen.
+  const pendingRef = useRef<{ text: string; hash: string | null; file: File } | null>(null);
 
   const processing = phase === "reading" || phase === "creating";
+
+  // Startet ausschliesslich den AI-Aufruf fuer den bereits anonymisierten Text.
+  const startCreateProfile = async () => {
+    const pending = pendingRef.current;
+    if (!pending) return;
+    setPhase("creating");
+    setError(null);
+    try {
+      const { data: profile, usedFallback } = await withModelFallback({
+        initialModel: model,
+        availableModels,
+        recommendedModel,
+        request: (m, attempt) => createProfile(pending.text, m, pending.hash ?? undefined, attempt),
+      });
+      if (pending.hash) writeLocalProfile(pending.hash, profile);
+      setSuggested(profile);
+      setFallbackNote(usedFallback);
+      setPhase("ready");
+      // Dokument in die CV-Liste (SEARCH-CV-01) übernehmen, damit sie im
+      // Browser sichtbar ist (Checkboxen, Auswahlzähler, Select All, …)
+      onAddFiles?.([pending.file], profile.skills);
+      pendingRef.current = null;
+    } catch (err) {
+      // Modell-Ausfall -> Modell-Recovery am Ort (kein Sprung an den Anfang,
+      // kein erneuter Upload): Text bleibt lokal bestehen.
+      if (
+        isModelUnavailable(err) ||
+        (err instanceof ApiError && (err.code === "model_not_free" || err.code === "model_invalid"))
+      ) {
+        setError(t("model.unavailable"));
+        setPhase("model-error");
+        return;
+      }
+      pendingRef.current = null;
+      setPhase("idle");
+      setError(
+        err instanceof ApiError && err.code === "missing_key"
+          ? t("cv.noAiConfigured")
+          : isFreeQuotaExceeded(err)
+            ? t("model.quotaExceeded")
+            : t("cv.processError")
+      );
+    }
+  };
 
   const handleFile = async (file: File) => {
     if (processing || busy) return;
@@ -124,6 +187,7 @@ export default function CvUpload({
       if (hash) {
         const cachedProfile = readLocalProfile(hash);
         if (cachedProfile) {
+          // Cache-Treffer: kein externer AI-Call -> kein Consent noetig
           setSuggested(cachedProfile);
           setPhase("ready");
           // Dokument in die CV-Liste (SEARCH-CV-01) übernehmen
@@ -131,32 +195,18 @@ export default function CvUpload({
           return;
         }
       }
-      const { data: profile, usedFallback } = await withModelFallback({
-        initialModel: model,
-        availableModels,
-        recommendedModel,
-        request: (m, attempt) => createProfile(normalized, m, hash ?? undefined, attempt),
-      });
-      if (hash) writeLocalProfile(hash, profile);
-      setSuggested(profile);
-      setFallbackNote(usedFallback);
-      setPhase("ready");
-      // Dokument in die CV-Liste (SEARCH-CV-01) übernehmen, damit sie im
-      // Browser sichtbar ist (Checkboxen, Auswahlzähler, Select All, …)
-      onAddFiles?.([file], profile.skills);
+      pendingRef.current = { text: normalized, hash, file };
+      // Consent-Grenze (wie Pfad B, Schritt Einwilligung): erst nach
+      // Anonymisierung, vor dem ersten externen Modell-Call.
+      if (!uploadConsentGiven) {
+        setPhase("consent");
+        return;
+      }
+      await startCreateProfile();
     } catch (err) {
+      pendingRef.current = null;
       setPhase("idle");
-      setError(
-        err instanceof ApiError && err.code === "missing_key"
-          ? t("cv.noAiConfigured")
-          : isFreeQuotaExceeded(err)
-            ? t("model.quotaExceeded")
-            : isModelUnavailable(err) ||
-                (err instanceof ApiError &&
-                  (err.code === "model_not_free" || err.code === "model_invalid"))
-              ? t("model.unavailable")
-              : t("cv.processError")
-      );
+      setError(t("cv.processError"));
     }
   };
 
@@ -199,6 +249,71 @@ export default function CvUpload({
     const file = event.dataTransfer.files?.[0];
     if (file) void handleFile(file);
   };
+
+  if (phase === "consent") {
+    return (
+      <div id="cv-panel" className="cv-panel">
+        <CvConsentGate
+          fileName={fileName ?? ""}
+          onAccept={() => {
+            setUploadConsentGiven(true);
+            void startCreateProfile();
+          }}
+          onCancel={() => {
+            pendingRef.current = null;
+            setPhase("idle");
+          }}
+          processingInfo={t("cv.consentPurposeProfile")}
+          externalAI={true}
+          disabled={busy}
+        />
+      </div>
+    );
+  }
+
+  if (phase === "model-error") {
+    return (
+      <div id="cv-panel" className="cv-panel">
+        <div className="cv-model-recovery" role="alert">
+          <p className="alert alert-error">{error}</p>
+          {modelsState === "ready" && (
+            <ModelSelector
+              state={modelsState}
+              models={models}
+              defaultModel={defaultModel ?? null}
+              recommendedModel={recommendedModel}
+              value={model}
+              onChange={onModelChange}
+              disabled={busy}
+              attention={true}
+            />
+          )}
+          <div className="cv-continue-actions">
+            <button
+              type="button"
+              className="cv-continue-btn"
+              onClick={() => void startCreateProfile()}
+              disabled={busy}
+            >
+              {t("cv.retryWithModel")}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                pendingRef.current = null;
+                setError(null);
+                setPhase("idle");
+              }}
+              disabled={busy}
+            >
+              {t("cv.consentCancel")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (phase === "ready" && suggested) {
     return (
