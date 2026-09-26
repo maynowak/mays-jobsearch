@@ -3,6 +3,7 @@ import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import type { Profile, SuggestedProfile } from "../types";
 import { createProfile, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, ApiError } from "../api";
 import { useLang } from "../i18n";
+import { anonymizeText } from "../lib/anonymize";
 import CvProfileResult from "./CvProfileResult";
 
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
@@ -115,7 +116,10 @@ export default function CvUpload({
         return;
       }
       setPhase("creating");
-      const normalized = normalizeText(text);
+      // Privacy Boundary: PII wird lokal anonymisiert, BEVOR irgendein
+      // externer AI-/Modell-Aufruf erfolgt (kein Modell-Call mit Rohtext).
+      const anonymized = anonymizeText(text);
+      const normalized = normalizeText(anonymized);
       const hash = await sha256Hex(normalized);
       if (hash) {
         const cachedProfile = readLocalProfile(hash);
@@ -131,7 +135,7 @@ export default function CvUpload({
         initialModel: model,
         availableModels,
         recommendedModel,
-        request: (m, attempt) => createProfile(text, m, hash ?? undefined, attempt),
+        request: (m, attempt) => createProfile(normalized, m, hash ?? undefined, attempt),
       });
       if (hash) writeLocalProfile(hash, profile);
       setSuggested(profile);

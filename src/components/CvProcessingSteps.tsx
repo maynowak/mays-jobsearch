@@ -18,9 +18,11 @@ type StepId =
 const STEPS: readonly { id: StepId; labelKey: string }[] = [
   { id: "document", labelKey: "cv.processingStep1" },
   { id: "consent", labelKey: "cv.processingStep2" },
+  // Reihenfolge = tatsaechliche Verarbeitung: Anonymisierung erfolgt immer
+  // VOR dem externen Modell-Aufruf (Privacy Boundary, siehe AI_AUDITLOG).
   { id: "model", labelKey: "cv.processingStep3" },
-  { id: "profile", labelKey: "cv.processingStep4" },
   { id: "anonymization", labelKey: "cv.processingStep5" },
+  { id: "profile", labelKey: "cv.processingStep4" },
   { id: "goal", labelKey: "cv.processingStep6" },
   { id: "skill", labelKey: "cv.processingStepSkill" },
   { id: "target", labelKey: "cv.processingStep7" },

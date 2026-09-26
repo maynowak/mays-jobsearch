@@ -19,6 +19,8 @@ vi.mock("./lib/pdf", () => ({
   extractPdfText: vi.fn(async () => "React Developer with five years of experience in Berlin"),
 }));
 
+import { extractPdfText } from "./lib/pdf";
+
 import {
   ApiError,
   analyzeATS,
@@ -768,6 +770,34 @@ describe("CV workflow", () => {
       Array.from(card.querySelectorAll("button")).find((b) => b.textContent?.includes("Profil übernehmen und Jobs finden")) as HTMLButtonElement
     );
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+  });
+
+  it("Privacy Boundary: kein externer AI-Call mit rohem CV-Text (PII wird vorher anonymisiert)", async () => {
+    vi.mocked(extractPdfText).mockResolvedValueOnce(
+      "Max Mustermann, max.mustermann@example.com, +49 170 1234567. React Developer in Berlin."
+    );
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(["irrelevant"], "privacy.pdf", { type: "application/pdf" });
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => expect(vi.mocked(createProfile)).toHaveBeenCalled());
+    const sentText = vi.mocked(createProfile).mock.calls[0][0] as string;
+    // Keine PII im Text, der an die AI geht
+    expect(sentText).not.toContain("max.mustermann@example.com");
+    expect(sentText).not.toContain("Max Mustermann");
+    expect(sentText).not.toContain("+49 170 1234567");
+    expect(sentText).toContain("[E-MAIL]");
+    expect(sentText).toContain("[NAME]");
   });
 
   it("BROWSER-BUG-22: ATS Model-unavailable -> Recovery am ATS-Punkt -> anderes Modell -> nur ATS erneut", async () => {

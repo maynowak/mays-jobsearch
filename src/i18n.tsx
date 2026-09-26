@@ -56,7 +56,7 @@ const en: Dict = {
   "cv.dropZoneAlt": "or choose a PDF",
   "cv.dropZoneOver": "Drop PDF here",
   "cv.privacyNote":
-    "Private: Your PDF stays on your device. Only the extracted text is sent to the AI to create your profile.",
+    "Private: Your PDF stays on your device. Only the extracted, anonymized text is sent to the AI to create your profile.",
   "cv.reading": "Reading CV locally…",
   "cv.creating": "Creating profile…",
   "cv.notPdf": "Please select a PDF file.",
@@ -418,7 +418,7 @@ const de: Dict = {
   "cv.dropZoneAlt": "oder PDF auswählen",
   "cv.dropZoneOver": "PDF hier ablegen",
   "cv.privacyNote":
-    "Privat: Die PDF bleibt auf deinem Gerät. Nur der gelesene Text wird zur Profilerstellung an die KI gesendet.",
+    "Privat: Die PDF bleibt auf deinem Gerät. Nur der gelesene, anonymisierte Text wird zur Profilerstellung an die KI gesendet.",
   "cv.reading": "Lebenslauf wird lokal gelesen …",
   "cv.creating": "Profil wird erstellt …",
   "cv.notPdf": "Bitte wähle eine PDF-Datei aus.",
