@@ -18,10 +18,12 @@ type StepId =
 const STEPS: readonly { id: StepId; labelKey: string }[] = [
   { id: "document", labelKey: "cv.processingStep1" },
   { id: "consent", labelKey: "cv.processingStep2" },
-  // Reihenfolge = tatsaechliche Verarbeitung: Anonymisierung erfolgt immer
-  // VOR dem externen Modell-Aufruf (Privacy Boundary, siehe AI_AUDITLOG).
-  { id: "model", labelKey: "cv.processingStep3" },
+  // Reihenfolge = tatsaechliche Verarbeitung (Privacy Boundary, siehe
+  // AI_AUDITLOG CV-UPLOAD-UX-03): Der Anonymisierungs-Modus wird VOR der
+  // Modellwahl festgelegt; der erste externe Modell-Call erfolgt erst im
+  // Profil-Schritt — die Anonymisierung liegt damit immer davor.
   { id: "anonymization", labelKey: "cv.processingStep5" },
+  { id: "model", labelKey: "cv.processingStep3" },
   { id: "profile", labelKey: "cv.processingStep4" },
   { id: "goal", labelKey: "cv.processingStep6" },
   { id: "skill", labelKey: "cv.processingStepSkill" },

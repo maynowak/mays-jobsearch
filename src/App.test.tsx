@@ -147,11 +147,16 @@ afterEach(() => {
     expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
   }
 
-  // Workflow im Overlay: model-selection -> creating-profile -> profile-ready
-  async function proceedModelToProfileReady() {
+  // Workflow im Overlay (CV-UPLOAD-UX-03): creating-profile (Optionen inkl.
+  // Anonymisierung) -> model-selection -> anonymizing -> profile-ready.
+  // Die Anonymisierung wird damit vor dem ersten Modell-Call festgelegt.
+  async function proceedToProfileReady() {
+    await waitFor(() =>
+      expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing
     await waitFor(() =>
       expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy()
     );
@@ -560,7 +565,7 @@ describe("CV workflow", () => {
     expect(vi.mocked(createProfile)).not.toHaveBeenCalled();
 
     await acceptUploadConsent();
-    await proceedModelToProfileReady();
+    await proceedToProfileReady();
     const overlayCvSkills = document.querySelector(".cv-workflow-overlay #cv-skills") as HTMLInputElement;
     expect(overlayCvSkills.value).toBe("React");
 
@@ -581,9 +586,10 @@ describe("CV workflow", () => {
 
     await uploadCvToConsent();
     await acceptUploadConsent();
-    // Modell-Step erreicht -> zurueck zur Listen-Ansicht (Workflow verlassen);
-    // das Menue liegt dann inline UNTER der Suchmaske (CV-UPLOAD-UX-01)
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    // CV-UPLOAD-UX-03: Optionen-Step (Anonymisierung) erreicht -> zurueck zur
+    // Listen-Ansicht (Workflow verlassen); das Menue liegt dann inline UNTER
+    // der Suchmaske (CV-UPLOAD-UX-01)
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
     expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
 
@@ -630,7 +636,9 @@ describe("CV workflow", () => {
     renderApp();
     await uploadCvToConsent(fileName);
     await acceptUploadConsent();
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    // CV-UPLOAD-UX-03: Nach der Einwilligung kommt zuerst der Optionen-Step
+    // (Anonymisierungs-Modus) — von dort zurueck zur Liste.
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
     await screen.findByText("Deine Lebensläufe");
     expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
@@ -684,12 +692,14 @@ describe("CV workflow", () => {
     const enabledConfirm = screen.getByRole("button", { name: "Verarbeitung erlauben" }) as HTMLButtonElement;
     expect(enabledConfirm.disabled).toBe(false);
     fireEvent.click(enabledConfirm);
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    // CV-UPLOAD-UX-03: nach der Zustimmung kommt zuerst der Optionen-Step
+    // (Anonymisierungs-Modus) — vor der Modellwahl
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
 
     // BUG-14/15: nach der Zustimmung bleibt der Workflow im gemeinsamen
-    // Overlay (Model-Step im Vordergrund)
+    // Overlay (Optionen-Step im Vordergrund)
     expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
-    expect(document.querySelector(".cv-workflow-overlay #cv-model-selection-title")).toBeTruthy();
+    expect(document.querySelector(".cv-workflow-overlay .cv-anonymization-choice")).toBeTruthy();
   });
 
   it("BROWSER-BUG-14..19: Workflow bleibt im gemeinsamen Overlay; Fehler bleibt im Overlay-Kontext", async () => {
@@ -711,19 +721,19 @@ describe("CV workflow", () => {
     }));
     fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
 
+    // CV-UPLOAD-UX-03: nach der Zustimmung zuerst Optionen-Step
+    // (Anonymisierung vor Modellwahl) im Overlay
+    await waitFor(() => {
+      expect(document.querySelector(".cv-workflow-overlay .cv-anonymization-choice")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+
     // BUG-15: Model-Step im Overlay
     await waitFor(() => {
       expect(document.querySelector(".cv-workflow-overlay #cv-model-selection-title")).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
 
-    // BUG-16: Profil-Step (creating-profile) im selben Overlay
-    await waitFor(() => {
-      expect(document.querySelector(".cv-workflow-overlay #cv-processing-title")).toBeTruthy();
-    });
-    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
-
-    // Weiter -> anonymizing -> profile-ready (alles im Overlay) -> confirm -> goal-selection
+    // BUG-16: Weiter -> anonymizing -> profile-ready (alles im Overlay)
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => {
       expect(document.querySelector(".cv-workflow-overlay .cv-result")).toBeTruthy();
@@ -794,11 +804,13 @@ describe("CV workflow", () => {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
     }));
     fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    // CV-UPLOAD-UX-03: Optionen-Step (Anonymisierung) vor der Modellwahl
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
 
     // Modell nicht verfügbar: createProfile schlägt einmal mit transientem Fehler fehl
     vi.mocked(createProfile).mockRejectedValueOnce(new ApiError("overloaded", 429, "rate_limited"));
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> createProfileFromPdf schlägt fehl
 
     // Fehler erscheint; Rücksprung zielt auf Modellauswahl
@@ -810,7 +822,6 @@ describe("CV workflow", () => {
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
 
     // Recovery: nächster Durchlauf erfolgreich (kein neuer Upload nötig)
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> erfolgreich
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
     // zurück zur Liste zeigt das erhaltene Dokument
@@ -837,10 +848,12 @@ describe("CV workflow", () => {
     await uploadCvToConsent();
     expect(vi.mocked(createProfile)).not.toHaveBeenCalled();
     await acceptUploadConsent();
+    // CV-UPLOAD-UX-03: Optionen-Step (Anonymisierung) vor der Modellwahl
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
 
     // Modell-Ausfall (model_not_free, nicht transient) bei der Profil-Erstellung
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> schlaegt fehl
 
     // Modell-Recovery im Overlay statt generischem Fehler + Neustart
@@ -855,8 +868,7 @@ describe("CV workflow", () => {
     fireEvent.click(document.querySelector(".cv-model-selection .model-trigger") as HTMLButtonElement);
     fireEvent.click(await screen.findByRole("option", { name: /Modell B/ }));
     const callsBefore = vi.mocked(createProfile).mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> erfolgreich (mit m-b)
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> erfolgreich (mit m-b)
 
     // erneuter Call mit dem neuen Modell — ohne erneuten Upload
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
@@ -881,9 +893,11 @@ describe("CV workflow", () => {
     expect(vi.mocked(createProfile)).not.toHaveBeenCalled();
 
     await acceptUploadConsent();
-    // Modell-Step -> Optionen -> erst jetzt Extraction + lokale Anonymisierung + AI-Call
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> erst jetzt
+    // Extraction + lokale Anonymisierung + erster AI-Call
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(vi.mocked(createProfile)).toHaveBeenCalled());
     const sentText = vi.mocked(createProfile).mock.calls[0][0] as string;
@@ -907,7 +921,10 @@ describe("CV workflow", () => {
     // CV-UPLOAD-UX-01: Einwilligung wurde bereits beim Upload im Overlay erteilt;
     // das hochgeladene Dokument bleibt ausgewaehlt -> direkt zu den Optionen
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> anonymizing
+    // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> Verarbeitung
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> model-selection
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
     confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
@@ -956,7 +973,10 @@ describe("CV workflow", () => {
     // CV-UPLOAD-UX-01: Consent wurde beim Upload im Overlay erteilt; Dokument
     // bleibt ausgewaehlt -> Verarbeiten geht direkt zu den Optionen
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> anonymizing
+    // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> Verarbeitung
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> model-selection
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing
 
     // profile-ready -> bestätigen (legt cvState.cvProfile an)
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
@@ -978,42 +998,45 @@ describe("CV workflow", () => {
   it("BROWSER-BUG-11: Zurück-Navigation im CV-Flow ohne State-Verlust", async () => {
     await uploadCvAndOpenList();
     // CV-UPLOAD-UX-01: Dokument blieb nach dem Upload ausgewaehlt; Consent
-    // wurde beim Upload im Overlay erteilt -> Verarbeiten -> creating-profile
+    // wurde beim Upload im Overlay erteilt -> Verarbeiten -> Optionen-Step
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
     await waitFor(() => {
       expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
     });
 
-    // creating-profile: Zurück zur Modellauswahl
-    fireEvent.click(screen.getByRole("button", { name: "Zurück zur Modellauswahl" }));
+    // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> zurueck
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    // State erhalten: Dokument weiterhin vorhanden
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zu den Optionen" }));
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    // State erhalten: Dokument weiterhin vorhanden, zurueck zur Liste
     fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
     await screen.findByText("cv.pdf");
     expect(screen.getByText("Deine Lebensläufe")).toBeTruthy();
 
-    // Wieder vor -> Consent bleibt erteilt, creating-profile direkt
+    // Wieder vor -> Consent bleibt erteilt, Optionen-Step direkt
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
     await waitFor(() => {
       expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Zurück zur Modellauswahl" }));
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
     await screen.findByText("cv.pdf");
   });
 
-  it("BROWSER-BUG-10: 'Weiter' in creating-profile löst keinen React-Fehler aus und startet die Profil-Erstellung", async () => {
+  it("BROWSER-BUG-10: 'Weiter' in model-selection startet die Profil-Erstellung ohne React-Fehler", async () => {
     await uploadCvAndOpenList();
     // CV-UPLOAD-UX-01: Consent bereits beim Upload erteilt, Dokument ausgewaehlt
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    // Consent erteilt -> direkt creating-profile
+    // Consent erteilt -> direkt creating-profile (Optionen, CV-UPLOAD-UX-03)
     await waitFor(() => {
       expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
     });
 
-    // creating-profile -> Weiter startet createProfileFromPdf (früher React #321 via useLang im Handler)
+    // Optionen -> model-selection -> Weiter startet createProfileFromPdf
+    // (früher React #321 via useLang im Handler)
     const createProfileCallsBefore = vi.mocked(createProfile).mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await screen.findByRole("button", { name: "Weiter" });
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => {
@@ -1156,7 +1179,7 @@ describe("No landing-page flash during a search", () => {
     expect(window.location.pathname).toBe("/top");
 
     await acceptUploadConsent();
-    await proceedModelToProfileReady();
+    await proceedToProfileReady();
     await screen.findByText("Dein vorgeschlagenes Suchprofil");
     expect(document.querySelector(".landing")).toBeNull();
     expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
@@ -1279,7 +1302,7 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
     // ausgewählten suchen" loest die CV-Suche aus (runCvSearch)
     await uploadCvToConsent();
     await acceptUploadConsent();
-    await proceedModelToProfileReady();
+    await proceedToProfileReady();
     confirmProfileInOverlay(); // -> goal-selection, cvProfile ist gesetzt
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
     // Zurueck: goal-selection -> profile-ready -> document-selected (Liste)

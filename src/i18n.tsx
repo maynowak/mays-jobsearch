@@ -153,6 +153,7 @@ const en: Dict = {
 
   "cv.backToEdit": "Back to edit",
   "cv.backToModelSelection": "Back to model selection",
+  "cv.backToOptions": "Back to options",
   "cv.savingProfile": "Saving profile…",
   "cv.backToDocuments": "Back to documents",
   "cv.profileReady": "Profile created",
@@ -511,6 +512,7 @@ const de: Dict = {
 
   "cv.backToEdit": "Zurück zum Bearbeiten",
   "cv.backToModelSelection": "Zurück zur Modellauswahl",
+  "cv.backToOptions": "Zurück zu den Optionen",
   "cv.savingProfile": "Profil wird gespeichert…",
   "cv.backToDocuments": "Zurück zu Dokumenten",
   "cv.profileReady": "Profil erstellt",

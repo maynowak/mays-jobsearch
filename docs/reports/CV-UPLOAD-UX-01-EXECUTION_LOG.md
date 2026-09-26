@@ -1,13 +1,17 @@
 # CV-UPLOAD-UX-01 — EXECUTION LOG
 
 ## Current status
-FINALIZED (CV-UPLOAD-UX-01) + FOLLOW-UP CV-UPLOAD-UX-02 abgeschlossen —
-alle Validierungen gruen. Commit steht aus (erfolgt auf Nutzerfreigabe).
+FINALIZED (CV-UPLOAD-UX-01) + FOLLOW-UPS CV-UPLOAD-UX-02 (Overlay auf allen
+Viewports; committet in 06e1ace + gepusht) und CV-UPLOAD-UX-03
+(Schritt-Reihenfolge) abgeschlossen — alle Validierungen gruen.
+Commit von UX-03 steht aus (erfolgt auf Nutzerfreigabe).
 
 ## Audit date/time
 - Start: 2026-09-26 12:34 CEST
 - Final: 2026-09-26 13:25 CEST
-- Follow-up CV-UPLOAD-UX-02: 2026-09-26 (nach User-Befund Mobile-Inline)
+- Follow-up CV-UPLOAD-UX-02: 2026-09-26 (nach User-Befund Mobile-Inline),
+  committet als 06e1ace und gepusht
+- Follow-up CV-UPLOAD-UX-03: 2026-09-26 (Schritt-Reihenfolge)
 
 ## Git state
 - Start: Branch main, HEAD 813f0bb (CV-UPLOAD PFAD A), 4 uncommittete
@@ -56,6 +60,21 @@ cv-panel der Suchmaske). Gewuenscht und umgesetzt:
 6. Lokaler Profil-Cache (localStorage mj-cv-profile:*) der Quick-Upload-
    Strecke entfaellt; Server-Cache via Text-Hash bleibt im createProfile-
    Pfad bestehen.
+
+## Follow-up CV-UPLOAD-UX-03 (Schritt-Reihenfolge)
+- User-Befund: Anzeige "Modell vor Anonymisierung" widersprach der Privacy
+  Boundary (Anonymisierung vor dem ersten Modell-Call).
+- Befund: Verarbeitung war bereits korrekt (anonymizing vor createProfile);
+  Anzeige/Mapping falsch (creating-profile→profile, profile-ready→document-
+  Fallback, Listenreihenfolge Modell vor Anonymisierung).
+- Fix: Ablauf getauscht — Optionen inkl. Anonymisierungs-Modus
+  (creating-profile) VOR Modellwahl; erste Ausfuehrung mit Modell-Call
+  erst im anonymizing-Step. Anzeige: Dokument → Einwilligung →
+  Anonymisierung → Modell → Profil → …; neuer Zurueck-Weg
+  model-selection→creating-profile (neuer Key cv.backToOptions).
+- Files: src/App.tsx, src/components/CvProcessingSteps.tsx, src/i18n.tsx,
+  src/App.test.tsx, docs/AI_AUDITLOG.md (UX-03-Eintrag).
+- Checks: 490/490 Tests PASS, TSC PASS, Build PASS, diff --check CLEAN.
 
 ## Follow-up CV-UPLOAD-UX-02 (nachtraeglich, gleicher Branch-Stand)
 - User-Befund: Nach der Einwilligung erschien die Inline-Maske

@@ -482,10 +482,14 @@ export default function App() {
     const selectedDoc = cvState.documents.find((d) => cvState.selectedDocumentIds.includes(d.id));
     if (!selectedDoc) return;
 
+    // CV-UPLOAD-UX-03: Reihenfolge der Privacy Boundary folgen — nach der
+    // Einwilligung kommen zuerst die Optionen inkl. ANONYMISIERUNGS-Modus
+    // (creating-profile), danach erst die Modellwahl. Erster Modell-Call
+    // erfolgt im anonymizing-Step — also nach Festlegung der Anonymisierung.
     setCvState((prev) => ({
       ...prev,
       consentGiven: true,
-      step: "model-selection",
+      step: "creating-profile",
       isProcessing: false,
     }));
   };
@@ -1081,12 +1085,17 @@ export default function App() {
 
       <CvProcessingStatus step={cvState.step} error={cvState.error} documentName={cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0])?.name ?? null} />
 
+      {/* CV-UPLOAD-UX-03: Anzeige = tatsaechliche Reihenfolge: Optionen
+          (Anonymisierung) VOR Modellwahl VOR Profil-Erstellung (erster
+          Modell-Call); profile-ready zeigt ERSTMALS "Profil" als abgeschlossen
+          bzw. aktuell (zuvor Fallback auf "document"). */}
       <CvProcessingSteps currentStep={
         cvState.step === "document-selected" ? "document" :
         cvState.step === "consent-required" || cvState.step === "consent-given" ? "consent" :
+        cvState.step === "creating-profile" ? "anonymization" :
         cvState.step === "model-selection" ? "model" :
-        cvState.step === "creating-profile" ? "profile" :
-        cvState.step === "anonymizing" ? "anonymization" :
+        cvState.step === "anonymizing" ? "profile" :
+        cvState.step === "profile-ready" ? "profile" :
         cvState.step === "goal-selection" ? "goal" :
         cvState.step === "skill-selection" ? "skill" :
         cvState.step === "ats-processing" || cvState.step === "ats-model-recovery" ? "target" :
@@ -1161,22 +1170,30 @@ export default function App() {
             <p className="cv-model-selection__locked">{t("cv.modelSelectionLocked")}</p>
           )}
           <div className="cv-model-selection__actions">
+            {/* CV-UPLOAD-UX-03: Weiter startet jetzt direkt die Verarbeitung
+                (anonymizing): Anonymisierungs-Modus wurde im Schritt davor
+                (creating-profile) festgelegt — Anonymisierung erfolgt vor dem
+                ersten Modell-Call. */}
             <button
               type="button"
               className="cv-continue-btn"
-              onClick={() => setCvState((prev) => ({ ...prev, step: "creating-profile" }))}
+              onClick={() => {
+                const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
+                if (selectedDoc) handleCvContinue(selectedDoc);
+              }}
               disabled={cvState.isProcessing || modelsState !== "ready" || !effectiveModel}
             >
-              {t("cv.continue")}
+              {cvState.isProcessing ? t("cv.continueProcessing") : t("cv.continue")}
+              {cvState.isProcessing && <span className="spinner" />}
             </button>
             {/* BUG-11: klarer Zurückweg, CV-State bleibt erhalten */}
             <button
               type="button"
               className="btn-ghost"
-              onClick={() => setCvState((prev) => ({ ...prev, step: "document-selected" }))}
+              onClick={() => setCvState((prev) => ({ ...prev, step: "creating-profile" }))}
               disabled={cvState.isProcessing}
             >
-              {t("cv.backToDocuments")}
+              {t("cv.backToOptions")}
             </button>
           </div>
         </div>
@@ -1184,6 +1201,9 @@ export default function App() {
 
       {cvState.step === "creating-profile" && (
         <>
+          {/* CV-UPLOAD-UX-03: Optionen inkl. Anonymisierungs-Modus kommen VOR
+              der Modellwahl — die Anonymisierung wird damit festgelegt, bevor
+              irgendein Modell-Call erfolgen kann (Privacy Boundary). */}
           <CvAnonymizationChoice
             value={cvState.anonymizationMode}
             onChange={handleAnonymizationChange}
@@ -1198,23 +1218,19 @@ export default function App() {
             <button
               type="button"
               className="cv-continue-btn"
-              onClick={() => {
-                const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
-                if (selectedDoc) handleCvContinue(selectedDoc);
-              }}
+              onClick={() => setCvState((prev) => ({ ...prev, step: "model-selection" }))}
               disabled={cvState.isProcessing}
             >
-              {cvState.isProcessing ? t("cv.continueProcessing") : t("cv.continue")}
-              {cvState.isProcessing && <span className="spinner" />}
+              {t("cv.continue")}
             </button>
             {/* BUG-11: klarer Zurückweg, CV-State bleibt erhalten */}
             <button
               type="button"
               className="btn-ghost"
-              onClick={() => setCvState((prev) => ({ ...prev, step: "model-selection" }))}
+              onClick={() => setCvState((prev) => ({ ...prev, step: "document-selected" }))}
               disabled={cvState.isProcessing}
             >
-              {t("cv.backToModelSelection")}
+              {t("cv.backToDocuments")}
             </button>
           </div>
         </>
