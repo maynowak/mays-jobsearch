@@ -2,16 +2,18 @@
 
 ## Current status
 FINALIZED (CV-UPLOAD-UX-01) + FOLLOW-UPS CV-UPLOAD-UX-02 (Overlay auf allen
-Viewports; committet in 06e1ace + gepusht) und CV-UPLOAD-UX-03
-(Schritt-Reihenfolge) abgeschlossen — alle Validierungen gruen.
-Commit von UX-03 steht aus (erfolgt auf Nutzerfreigabe).
+Viewports; committet in 06e1ace), CV-UPLOAD-UX-03 (Schritt-Reihenfolge;
+committet in 3c6d468) und CV-UPLOAD-UX-04 (Skills vor ATS-Analyse) —
+alle Validierungen gruen. Commit von UX-04 steht aus (Nutzerfreigabe).
 
 ## Audit date/time
 - Start: 2026-09-26 12:34 CEST
 - Final: 2026-09-26 13:25 CEST
 - Follow-up CV-UPLOAD-UX-02: 2026-09-26 (nach User-Befund Mobile-Inline),
   committet als 06e1ace und gepusht
-- Follow-up CV-UPLOAD-UX-03: 2026-09-26 (Schritt-Reihenfolge)
+- Follow-up CV-UPLOAD-UX-03: 2026-09-26 (Schritt-Reihenfolge),
+  committet als 3c6d468 und gepusht
+- Follow-up CV-UPLOAD-UX-04: 2026-09-26 (Skills vor ATS-Analyse)
 
 ## Git state
 - Start: Branch main, HEAD 813f0bb (CV-UPLOAD PFAD A), 4 uncommittete
@@ -60,6 +62,17 @@ cv-panel der Suchmaske). Gewuenscht und umgesetzt:
 6. Lokaler Profil-Cache (localStorage mj-cv-profile:*) der Quick-Upload-
    Strecke entfaellt; Server-Cache via Text-Hash bleibt im createProfile-
    Pfad bestehen.
+
+## Follow-up CV-UPLOAD-UX-04 (Skills vor ATS-Analyse)
+- User-Befund: ATS-Analyse direkt nach dem Upload ohne erkennbare Basis;
+  faktisch pruefte sie den CV gegen ein synthetisches Job-Objekt aus den
+  eigenen CV-Skills.
+- Fix: Zielwahl -> Skills-Bestaetigung -> Ausfuehrung (fuer BEIDE Ziele);
+  ATS nutzt cvState.selectedSkills als Anforderungsbasis; zielabhaengige
+  Beschriftung der Skills-Auswahl (Neue Keys cv.skillSelectTitleAts /
+  cv.skillSelectDescriptionAts). Kein API-/Consent-Unterschied.
+- Files: src/App.tsx, src/i18n.tsx, src/App.test.tsx, docs/AI_AUDITLOG.md.
+- Checks: 490/490 Tests PASS, TSC PASS, Build PASS, diff --check CLEAN.
 
 ## Follow-up CV-UPLOAD-UX-03 (Schritt-Reihenfolge)
 - User-Befund: Anzeige "Modell vor Anonymisierung" widersprach der Privacy

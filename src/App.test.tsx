@@ -750,8 +750,15 @@ describe("CV workflow", () => {
       expect(document.querySelector(".cv-workflow-overlay #cv-goal-execution-title")).toBeTruthy();
     });
 
-    // BUG-17: ATS ausführen schlägt fehl -> Fehler erscheint im Overlay, nicht im Seitenfluss
+    // CV-UPLOAD-UX-04: Skills-Bestaetigung kommt vor der ATS-Ausfuehrung
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+    await waitFor(() => {
+      expect(document.getElementById("cv-skill-selection-title")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
+
+    // BUG-17: ATS schlägt fehl -> Fehler erscheint im Overlay, nicht im Seitenfluss
     await waitFor(() => {
       const overlay = document.querySelector(".cv-workflow-overlay");
       expect(overlay).toBeTruthy();
@@ -929,9 +936,13 @@ describe("CV workflow", () => {
     confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
 
-    // Modell A nicht verfügbar (transient), nur EIN Mal
+    // Modell A nicht verfügbar (transient), nur EIN Mal — der Aufruf erfolgt
+    // erst nach der Skills-Bestaetigung (CV-UPLOAD-UX-04)
     vi.mocked(analyzeATS).mockRejectedValueOnce(new ApiError("overloaded", 429, "rate_limited"));
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+    await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
     // ATS-spezifischer Recovery-Punkt statt CV-Anfang
     await waitFor(() => expect(document.querySelector(".cv-ats-recovery")).toBeTruthy());
@@ -983,8 +994,11 @@ describe("CV workflow", () => {
     confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
 
-    // ATS ausführen
+    // ATS ausführen — CV-UPLOAD-UX-04: erst nach der Skills-Bestaetigung
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+    await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
     // ATS wurde mit dem bestätigten CV-Profil aufgerufen, KEIN atsNoProfile-Fehler
     await waitFor(() => {
@@ -992,6 +1006,8 @@ describe("CV workflow", () => {
     });
     const atsCall = vi.mocked(analyzeATS).mock.calls[0];
     expect(atsCall[1]).toEqual({ skills: "React" });
+    // Anforderungsbasis des synthetischen Jobs = die bestaetigten Skills
+    expect((atsCall[0] as { tags: string[] }).tags).toEqual(["React"]);
     expect(document.querySelector(".cv-error-state")).toBeNull();
   });
 

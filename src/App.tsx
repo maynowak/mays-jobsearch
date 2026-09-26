@@ -585,20 +585,18 @@ export default function App() {
   };
 
   const handleGoalExecute = () => {
-    const goal = cvState.processingGoal;
-    const nextStep = goal === "ats" ? "ats-processing" : "skill-selection";
-    // isProcessing nur für den ATS-Pfad: skill-selection benötigt bedienbare
-    // Checkboxen (BUG-16); die eigentliche Suche startet erst beim Confirm.
+    // CV-UPLOAD-UX-04: Skills-Bestaetigung kommt VOR der Ausfuehrung — fuer
+    // BEIDE Ziele (ATS-Analyse + KI-Jobsuche). Ohne bestaetigte Skills wuerde
+    // die ATS-Analyse den CV still gegen seine eigenen (vorgeschlagenen)
+    // Skills pruefen — faktisch bedeutungslos. Erst nach dem Skill-Confirm
+    // startet die jeweilige Verarbeitung (siehe handleSkillSelectionConfirm).
+    // isProcessing bleibt false: skill-selection benoetigt bedienbare
+    // Checkboxen (BUG-16).
     setCvState((prev) => ({
       ...prev,
-      step: nextStep,
-      isProcessing: goal === "ats",
+      step: "skill-selection",
+      isProcessing: false,
     }));
-
-    if (goal === "ats") {
-      runAtsProcessing(t);
-    }
-    // For ai-search, we go to skill-selection first, then runAiSearch from skill selection confirm
   };
 
   const handleSkillSelectionChange = (skills: string[]) => {
@@ -607,6 +605,13 @@ export default function App() {
 
   const handleSkillSelectionConfirm = () => {
     if (cvState.selectedSkills.length === 0) {
+      return;
+    }
+    // CV-UPLOAD-UX-04: ATS-Ziel — erst nach der Skills-Bestaetigung startet
+    // die Analyse (mit den bestaetigten Skills als Anforderungsbasis).
+    if (cvState.processingGoal === "ats") {
+      setCvState((prev) => ({ ...prev, step: "ats-processing", isProcessing: true, error: null }));
+      runAtsProcessing(t);
       return;
     }
     setCvState((prev) => ({ ...prev, isProcessing: true }));
@@ -706,7 +711,12 @@ export default function App() {
     const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
     const jobForAts = selectedDoc ? {
       title: cvState.suggestedProfile?.targetRoles[0] || atsProfile?.targetRole || "",
-      tags: cvState.suggestedProfile?.skills || atsProfile?.skills?.split(",") || [],
+      // CV-UPLOAD-UX-04: Primaere Basis sind die vom Benutzer bestaetigten
+      // Skills (Skills-Auswahl laeuft vor der ATS-Analyse); Fallback: die vom
+      // CV vorgeschlagenen Skills.
+      tags: cvState.selectedSkills.length > 0
+        ? cvState.selectedSkills
+        : cvState.suggestedProfile?.skills || atsProfile?.skills?.split(",") || [],
       slug: "cv-ats-" + Date.now(),
     } : null;
 
@@ -1302,12 +1312,17 @@ export default function App() {
         </div>
       )}
 
-      {cvState.step === "skill-selection" && cvState.processingGoal === "ai-search" && cvState.suggestedProfile && (
+      {/* CV-UPLOAD-UX-04: Skills-Auswahl gilt fuer BEIDE Ziele (ATS +
+          KI-Jobsuche) — die Ausfuehrung startet erst nach der Bestaetigung
+          der Skills. */}
+      {cvState.step === "skill-selection" && cvState.suggestedProfile && (
         <div className="cv-skill-selection" role="region" aria-labelledby="cv-skill-selection-title">
           <h3 id="cv-skill-selection-title" className="cv-skill-selection__title">
-            {t("cv.skillSelectTitle")}
+            {cvState.processingGoal === "ats" ? t("cv.skillSelectTitleAts") : t("cv.skillSelectTitle")}
           </h3>
-          <p className="cv-skill-selection__description">{t("cv.skillSelectDescription")}</p>
+          <p className="cv-skill-selection__description">
+            {cvState.processingGoal === "ats" ? t("cv.skillSelectDescriptionAts") : t("cv.skillSelectDescription")}
+          </p>
           <div className="cv-skill-selection__list" role="listbox" aria-label={t("cv.skillSelectTitle")}>
             {cvState.suggestedProfile.skills.map((skill, index) => (
               <label key={index} className={`cv-skill-selection__item${cvState.selectedSkills.includes(skill) ? " selected" : ""}`}>
