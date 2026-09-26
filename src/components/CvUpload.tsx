@@ -151,7 +151,9 @@ export default function CvUpload({
           ? t("cv.noAiConfigured")
           : isFreeQuotaExceeded(err)
             ? t("model.quotaExceeded")
-            : isModelUnavailable(err)
+            : isModelUnavailable(err) ||
+                (err instanceof ApiError &&
+                  (err.code === "model_not_free" || err.code === "model_invalid"))
               ? t("model.unavailable")
               : t("cv.processError")
       );

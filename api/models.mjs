@@ -13,6 +13,11 @@ export default async function handler(req, res) {
   try {
     const models = await getFreeModels();
     const configured = getOpenRouterModel();
+    // Wenn das konfigurierte Modell nicht in der freien Modelliste ist
+    // (z. B. veraltete/kostenpflichtige Env-Konfiguration), darf es nicht als
+    // defaultModel ausgespielt werden — sonst würde jeder Default-Aufruf mit
+    // model_not_free scheitern (Befund: Production, API-DOC/Repro).
+    const compatible = await getCompatibleFallback(configured);
     return res.status(200).json({
       models: models.map(({ id, name, provider }) => ({ id, name, provider })),
       providers: allProvidersInfo().map(({ id, name, enabled, configured: providerConfigured }) => ({
@@ -21,7 +26,7 @@ export default async function handler(req, res) {
         enabled,
         configured: providerConfigured,
       })),
-      defaultModel: configured,
+      defaultModel: compatible ?? configured,
       fallbackModel: await getCompatibleFallback(configured),
       recommendedModel: await resolveDefaultModel(),
       fallbackMaxAttempts: getConfig().modelFallbackMaxAttempts,

@@ -772,6 +772,24 @@ describe("CV workflow", () => {
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
   });
 
+  it("CV-Upload: model_not_free zeigt Modell-Fehlermeldung statt generischem Verarbeitungsfehler", async () => {
+    // lokale CV-Profil-Cache-Treffer aus früheren Tests unterbinden
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("mj-cv-profile:"))
+      .forEach((k) => localStorage.removeItem(k));
+    vi.mocked(createProfile).mockRejectedValueOnce(
+      new ApiError("The selected model isn't currently available as a free compatible model.", 400, "model_not_free")
+    );
+    renderApp();
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(["React Developer"], "cv.pdf", { type: "application/pdf" });
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
+
+    // Erwartung: Modell-Fehler, NICHT "konnte nicht ausgewertet werden"
+    await screen.findByText(/KI-Modell ist momentan nicht verfügbar/);
+    expect(screen.queryByText(/konnte gerade nicht ausgewertet werden/)).toBeNull();
+  });
+
   it("Privacy Boundary: kein externer AI-Call mit rohem CV-Text (PII wird vorher anonymisiert)", async () => {
     vi.mocked(extractPdfText).mockResolvedValueOnce(
       "Max Mustermann, max.mustermann@example.com, +49 170 1234567. React Developer in Berlin."
