@@ -869,6 +869,84 @@ kept accurate even if the audit remains completely read-only.
 - Classification: GREEN — Produktionsbefund reproduziert, Root Cause
   behoben; ausstehende Deployment-Empfehlung dokumentiert.
 
+# CV-UPLOAD-UX-02 — WORKFLOW-OVERLAY AUF ALLEN VIEWPORTS (MOBILE-FIX)
+- Date: 2026-09-26
+- Task: CV-UPLOAD-UX-02 (Follow-up-Befund zu CV-UPLOAD-UX-01)
+- User-Befund: Nach der Einwilligung erschien bei Pfad A erst die Inline-
+  Maske "Verarbeitungsstatus" unter der Suchmaske — nicht das Overlay.
+- Root Cause (verifiziert, src/styles.css): .cv-workflow-overlay war per
+  Design-Entscheidung aus BUG-14..19 nur ab @media (min-width: 768px) als
+  fixed Overlay gestaltet; auf Mobile renderte der Workflow bewusst inline.
+  -> Kein Logikfehler im Overlay-State (cvOverlayActive), sondern reine
+  CSS-Viewport-Regel.
+- Umsetzung:
+  - .cv-workflow-overlay gilt jetzt auf ALLEN Viewports: Mobile-First als
+    Vollbild-Sheet (fixed, inset 0, Karte ohne Radius, min-height 100dvh),
+    ab 768px weiterhin zentrierter Dialog (max-width 680px, max-height 88vh).
+  - App.tsx: Step-Fokus-Effekt vereinfacht — Fokus genuegt auf allen
+    Viewports (Mobile-scrollIntoView entfaellt, da kein Inline-Workflow).
+  - Inline bleibt weiterhin (unveraendert): document-selected (CV-Liste unter
+    der Suchmaske), consent-required im dismissed-Zustand, ats-complete
+    (ATSModal ist selbst Overlay).
+- Consent-/Privacy-/Contract-Bezug: keine Aenderung (reines Darstellungs-CSS
+  + Kommentar-/Effekt-Bereinigung).
+- Files changed: src/styles.css, src/App.tsx, docs/AI_AUDITLOG.md,
+  docs/reports/CV-UPLOAD-UX-01-EXECUTION_LOG.md (aktualisiert)
+- Tests: 490/490 PASS; TypeScript PASS; Build PASS; git diff --check CLEAN
+- Classification: GREEN — Overlay-Verhalten entspricht jetzt der Anforderung
+  (Prozess B sichtbar im Overlay; Menue nach dem Schliessen unter der
+  Suchmaske). Manuelle Browser-Verifikation (Mobile-Viewport) empfohlen.
+
+# CV-UPLOAD-UX-01 — UPLOAD STARTET PFAD B IM OVERLAY (CONSENT-OVERLAP-FIX)
+- Date: 2026-09-26
+- Task: CV-UPLOAD-UX-01 (User-Befund + UX-Umstellung nach Verbindungsabbruch)
+- User-Befund: Die Dateinamen-Anzeige des Quick-Uploads (Pfad A, inline in
+  der Suchmaske) ueberlappte den Rahmen des Consent-Menues
+  "CV-Verarbeitung erlauben". Gewuenscht: Prozess B nach dem Upload im
+  Overlay zeigen; nach dem Schliessen liegt das Menue unter der Suchmaske.
+- Umsetzung (Pfad-Vereinheitlichung):
+  - CvUpload ist jetzt reiner Upload-Einstieg: lokale Validierung
+    (PDF-Typ, max. 10 MB) + Drag&Drop/Tastatur, danach Uebergabe der Datei
+    an den CV-Workflow. Kein Inline-Consent, keine Inline-Profil-Vorschau,
+    kein eigener Modell-Recovery und kein lokaler Profil-Cache mehr
+    in CvUpload (Overlap-Ursache entfernt).
+  - App: neuer Handler handleCvUploadStart(file) — legt das Dokument an
+    (ausgewaehlt, max. 10) und oeffnet das Workflow-Overlay direkt:
+    consent-required (kein Consent in Sitzung) bzw. creating-profile
+    (Consent bereits erteilt). Pfad B uebernimmt Einwilligung, Modellwahl,
+    lokale Anonymisierung (anonymizing) und Profil-Erstellung einheitlich.
+  - Overlay-Close-Pfade landen auf document-selected bzw. consentDismissed;
+    die CV-Dokumentliste rendert dann inline UNTER der Suchmaske
+    (cvProcessingUI in .search-sidebar, bestehende Struktur).
+  - Pfad-B-Recovery erweitert: model_not_free/model_invalid (nicht
+    transient, von withModelFallback nicht intern weitergereicht) fuehren
+    jetzt ebenfalls zur Modellauswahl-Recovery (errorBackStep
+    "model-selection" + model.unavailable-Hinweis; konsistent zu 573266d).
+  - "Mit ausgewaehlten suchen" nutzt als Basis jetzt cvState.cvProfile
+    (bestaetigtes Workflow-Profil) vor Legacy cvState.profile — Uploads ohne
+    Inline-Profil liefern ihre Skills ueber den Workflow.
+  - Beibehalten aus der abgebrochenen Vorarbeit: runCvSearch akzeptiert
+    submittedOverride (Stale-Closure-Fix), baseProfile-Fallback
+    cvProfile ?? profile in der Skill-Bestaetigung.
+- Consent-Bezug: Es gibt nur noch EINEN Consent (Pfad B), der vor dem ersten
+  externen Modell-Call liegt. Die 813f0bb dokumentierte Trennung
+  (lokaler Upload-Consent vs. Workflow-Consent) entfaellt — historischer
+  Eintrag bleibt unveraendert.
+- Anonymization status: unveraendert erzwungen — Pfad B anonymisiert lokal
+  (createProfileFromPdf, Step anonymizing) vor jedem externen Modell-Call.
+- Files changed: src/components/CvUpload.tsx, src/App.tsx,
+  src/components/SearchForm.tsx, src/App.test.tsx,
+  src/components/SearchForm.test.tsx, src/i18n.tsx (5 ungenutzte Keys
+  entfernt: cv.reading, cv.creating, cv.noAiConfigured,
+  cv.consentPurposeProfile, cv.retryWithModel), docs/AI_AUDITLOG.md
+- Tests: 490/490 PASS (15 Upload-/Workflow-Tests auf den Overlay-Fluss
+  umgestellt; Consent-Pflicht, Recovery ohne Neustart, Privacy Boundary,
+  Search-Clearing und Overlay-Kontext weiter abgedeckt)
+- TypeScript: PASS; Build: PASS; git diff --check: CLEAN
+- Execution log: docs/reports/CV-UPLOAD-UX-01-EXECUTION_LOG.md
+- Classification: GREEN — Overlap-Ursache beseitigt, Upload startet Pfad B
+  im Overlay, Menue nach dem Schliessen inline unter der Suchmaske.
+
 # CV-UPLOAD PFAD A — CONSENT VOR AI-CALL + MODELL-RECOVERY
 - Date: 2026-09-26
 - Task: CV-Upload Pfad-A-Privacy + Fehler-Recovery (User-Befund)

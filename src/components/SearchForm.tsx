@@ -14,19 +14,14 @@ interface Props {
   value: Profile;
   onChange: (profile: Profile) => void;
   onSubmit: (profile: Profile) => void;
-  onCvSubmit?: (profile: Profile) => void;
   onMatch?: () => void;
   matching?: boolean;
   hasJobs?: boolean;
   rematch?: boolean;
-  model: string | null;
-  availableModels: string[];
-  recommendedModel: string | null;
-  defaultModel?: string | null;
-  modelsState?: "loading" | "ready" | "error" | "empty";
-  models?: Array<{ id: string; name: string }>;
-  onModelChange?: (model: string) => void;
-  onAddFiles?: (files: File[], skills?: string[]) => void;
+  // CV-UPLOAD-UX-01: Quick-Upload gibt die validierte Datei nur noch an den
+  // CV-Workflow (Pfad B, Overlay) weiter — Modellwahl/Consent/Profil-Erstellung
+  // laufen dort; die Suchmaske braucht keine Modell- und CV-Listen-Props mehr.
+  onWorkflowStart: (file: File) => void;
 }
 
 type Mode = "manual" | "cv";
@@ -36,19 +31,11 @@ export default function SearchForm({
   value,
   onChange,
   onSubmit,
-  onCvSubmit,
   onMatch,
   matching = false,
   hasJobs = false,
-  rematch = false,
-  model,
-  availableModels,
-  recommendedModel,
-  defaultModel,
-  modelsState = "loading",
-  models = [],
-  onModelChange,
-  onAddFiles,
+  rematch,
+  onWorkflowStart,
 }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
@@ -80,10 +67,9 @@ export default function SearchForm({
         ? t("search.scoring")
         : isMatching
           ? t("search.matching")
-          : rematch
+            : rematch
             ? t("search.buttonRematch")
             : t("search.button");
-  const loadingLabel = busy ? label : "";
 
   const toggleIn = (list: WorkMode[], mode: WorkMode): WorkMode[] =>
     list.includes(mode) ? list.filter((m) => m !== mode) : [...list, mode];
@@ -323,18 +309,8 @@ export default function SearchForm({
         </div>
       ) : (
         <CvUpload
-          busy={busy}
-          loadingLabel={loadingLabel}
-          onSubmit={onCvSubmit ?? onSubmit}
           onManual={() => setMode("manual")}
-          model={model}
-          availableModels={availableModels}
-          recommendedModel={recommendedModel}
-          defaultModel={defaultModel}
-          modelsState={modelsState}
-          models={models}
-          onModelChange={onModelChange ?? (() => undefined)}
-          onAddFiles={onAddFiles}
+          onWorkflowStart={onWorkflowStart}
         />
       )}
     </form>

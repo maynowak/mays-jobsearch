@@ -57,16 +57,12 @@ const en: Dict = {
   "cv.dropZoneOver": "Drop PDF here",
   "cv.privacyNote":
     "Private: Your PDF stays on your device. Only the extracted, anonymized text is sent to the AI to create your profile.",
-  "cv.reading": "Reading CV locally…",
-  "cv.creating": "Creating profile…",
   "cv.notPdf": "Please select a PDF file.",
   "cv.tooLarge": "The PDF is too large. Please use a file up to 10 MB.",
   "cv.scannedError":
     "This CV does not appear to contain readable text. Please use a text-based PDF or enter your profile manually.",
   "cv.processError":
     "We couldn't process your CV right now. You can still enter your profile manually.",
-  "cv.noAiConfigured":
-    "No AI provider is configured. Please add an API key in the project settings to enable CV evaluation.",
   "cv.resultHeading": "Your suggested search profile",
   "cv.skills": "Skills",
   "cv.experienceLevel": "Experience level",
@@ -151,8 +147,6 @@ const en: Dict = {
   "cv.consentCheckbox": "I agree to the processing of my CV data as described.",
   "cv.consentCancel": "Cancel",
   "cv.consentConfirm": "Allow processing",
-  "cv.consentPurposeProfile": "AI profile creation from your CV",
-  "cv.retryWithModel": "Retry with the selected model",
   "cv.consentPending": "Consent pending — processing has not started.",
   "cv.showConsent": "Show consent",
   "cv.addMore": "Upload more CVs",
@@ -421,16 +415,12 @@ const de: Dict = {
   "cv.dropZoneOver": "PDF hier ablegen",
   "cv.privacyNote":
     "Privat: Die PDF bleibt auf deinem Gerät. Nur der gelesene, anonymisierte Text wird zur Profilerstellung an die KI gesendet.",
-  "cv.reading": "Lebenslauf wird lokal gelesen …",
-  "cv.creating": "Profil wird erstellt …",
   "cv.notPdf": "Bitte wähle eine PDF-Datei aus.",
   "cv.tooLarge": "Die PDF ist zu groß. Bitte verwende eine Datei mit maximal 10 MB.",
   "cv.scannedError":
     "Dieser Lebenslauf enthält offenbar keinen auslesbaren Text. Bitte verwende eine textbasierte PDF oder nutze die manuelle Eingabe.",
   "cv.processError":
     "Dein Lebenslauf konnte gerade nicht ausgewertet werden. Du kannst dein Profil weiterhin manuell eingeben.",
-  "cv.noAiConfigured":
-    "Kein KI-Anbieter konfiguriert. Bitte API-Key in den Projekteinstellungen hinterlegen, um CV-Auswertung zu aktivieren.",
   "cv.resultHeading": "Dein vorgeschlagenes Suchprofil",
   "cv.skills": "Skills",
   "cv.experienceLevel": "Erfahrungslevel",
@@ -515,8 +505,6 @@ const de: Dict = {
   "cv.consentCheckbox": "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
   "cv.consentCancel": "Abbrechen",
   "cv.consentConfirm": "Verarbeitung erlauben",
-  "cv.consentPurposeProfile": "KI-Profil-Erstellung aus deinem Lebenslauf",
-  "cv.retryWithModel": "Mit gewähltem Modell erneut versuchen",
   "cv.consentPending": "Zustimmung ausstehend — die Verarbeitung wurde nicht gestartet.",
   "cv.showConsent": "Einwilligung anzeigen",
   "cv.addMore": "Weitere CVs hochladen",

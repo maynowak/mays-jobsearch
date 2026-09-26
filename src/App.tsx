@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal, EmploymentType } from "./types";
-import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement, computeMatchImpact } from "./api";
+import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement, computeMatchImpact, ApiError } from "./api";
 import { useLang } from "./i18n";
 import { modelDisplayName } from "./lib/modelDisplayName";
 import { extractPdfText } from "./lib/pdf";
@@ -131,16 +131,12 @@ export default function App() {
   // BUG-19: Kein manueller Scroll zwischen CV-Steps. Auf Desktop/Tablet liegt
   // der Workflow in einem fixed Overlay (Fokus genügt); mobil wird die
   // Inline-Card automatisch in den sichtbaren Bereich gescrollt.
+  // CV-UPLOAD-UX-02: Overlay gilt jetzt auf allen Viewports — Fokus genügt.
   useEffect(() => {
     if (cvState.step === "idle") return;
     const el = cvWorkflowRef.current;
     if (!el) return;
-    if (window.matchMedia?.("(min-width: 768px)").matches) {
-      el.focus({ preventScroll: true });
-    } else {
-      el.scrollIntoView?.({ block: "start" });
-      el.focus({ preventScroll: true });
-    }
+    el.focus({ preventScroll: true });
   }, [cvState.step]);
 
   const profilesEqual = (a: Profile, b: Profile) =>
@@ -258,11 +254,12 @@ export default function App() {
     }
   };
 
-  const runCvSearch = async () => {
+  const runCvSearch = async (submittedOverride?: Profile) => {
     if (busyRef.current) return;
     busyRef.current = true;
-    // Use cvProfile state instead of taking a parameter
-    const submitted = cvState.cvProfile;
+    // cvProfile aus dem State — oder direkt uebergeben (Listener-Aufrufe duerfen
+    // nicht auf einen veralteten State-Closure zeigen)
+    const submitted = submittedOverride ?? cvState.cvProfile;
     if (!submitted || (!submitted.skills && !submitted.targetRole)) {
       setStatus({ type: "error", message: t("status.noSkills") });
       busyRef.current = false;
@@ -347,6 +344,33 @@ export default function App() {
       return null;
     }
   }
+
+  // CV-UPLOAD-UX-01: Quick-Upload (Pfad A) startet direkt den CV-Workflow
+  // (Pfad B) im Overlay — Einwilligung, Modellwahl, Anonymisierung und
+  // Profil-Erstellung laufen dort einheitlich (kein Inline-Consent in der
+  // Suchmaske mehr; der Dateiname ueberlappte den Consent-Rahmen).
+  // Beim Schliessen/Abbrechen des Consents bleibt das Dokument in der Liste
+  // unter der Suchmaske erhalten (consentDismissed -> Inline-Karte).
+  const handleCvUploadStart = (file: File) => {
+    const doc: CvDocument = {
+      id: generateDocumentId(),
+      name: file.name,
+      size: file.size,
+      selected: true,
+      file,
+    };
+    setConsentDismissed(false);
+    setCvState((prev) => ({
+      ...prev,
+      documents: [...prev.documents, doc].slice(0, 10),
+      selectedDocumentIds: [...prev.selectedDocumentIds, doc.id],
+      // Consent bereits erteilt (Sitzung): direkt zu den Optionen; sonst
+      // zuerst die Einwilligung im Overlay (Consent vor jedem AI-Call).
+      step: prev.consentGiven ? "creating-profile" : "consent-required",
+      error: null,
+      errorBackStep: null,
+    }));
+  };
 
   const handleAddCvFiles = (files: FileList | File[], skills?: string[]) => {
     const newDocuments: CvDocument[] = Array.from(files).map((file) => ({
@@ -435,11 +459,13 @@ export default function App() {
       .flatMap((doc) => doc.skills || [])
       .filter((skill, index, arr) => arr.indexOf(skill) === index);
 
-    // Create a merged profile with skills from all selected CVs
-    const baseProfile = cvState.profile || { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] as EmploymentType[] };
+    // Create a merged profile with skills from all selected CVs.
+    // Quelle: bestaetigtes CV-Profil zuerst (cvProfile) — CV-UPLOAD-UX-01 legt
+    // Uploads ohne Inline-Profil an, die Skills kommen dann aus dem Workflow.
+    const baseProfile = cvState.cvProfile ?? cvState.profile ?? { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] as EmploymentType[] };
     const mergedProfile = {
       ...baseProfile,
-      skills: [...new Set([...(cvState.profile?.skills?.split(",") || []), ...allSkills])].join(", "),
+      skills: [...new Set([...(baseProfile.skills?.split(", ") || []), ...allSkills])].filter(Boolean).join(", "),
     };
 
     // Store in cvProfile (separate from manual search profile)
@@ -448,7 +474,8 @@ export default function App() {
       cvProfile: mergedProfile,
       step: "goal-selection",
     }));
-    void runCvSearch();
+    // mergedProfile direkt uebergeben: der State ist in dieser Closure noch alt
+    void runCvSearch(mergedProfile);
   };
 
   const handleCvConsentAccept = () => {
@@ -516,6 +543,12 @@ export default function App() {
         fallbackNote: usedFallback,
       }));
     } catch (err) {
+      // CV-UPLOAD-UX-01: model_not_free/model_invalid (nicht transient, werden
+      // von withModelFallback nicht intern weitergereicht) fuehren ebenfalls
+      // zur Modellauswahl-Recovery am Ort — kein Ruecksprung zum Dokument.
+      const modelError =
+        isModelUnavailable(err) ||
+        (err instanceof ApiError && (err.code === "model_not_free" || err.code === "model_invalid"));
       setCvState((prev) => ({
         ...prev,
         step: "error",
@@ -523,10 +556,10 @@ export default function App() {
         error:
           isFreeQuotaExceeded(err)
             ? t("model.quotaExceeded")
-            : isModelUnavailable(err)
+            : modelError
             ? t("model.unavailable")
             : t("cv.processError"),
-        errorBackStep: isModelUnavailable(err) ? "model-selection" : null,
+        errorBackStep: modelError ? "model-selection" : null,
       }));
     }
   };
@@ -573,8 +606,10 @@ export default function App() {
       return;
     }
     setCvState((prev) => ({ ...prev, isProcessing: true }));
-    // Use selected skills for the search profile - JSON encode to preserve multi-word skill boundaries
-    const baseProfile = cvState.profile || { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] };
+    // Use selected skills for the search profile - JSON encode to preserve
+    // multi-word skill boundaries. Quelle: bestaetigtes CV-Profil zuerst
+    // (cvProfile), Legacy-Fallback cvState.profile.
+    const baseProfile = cvState.cvProfile ?? cvState.profile ?? { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] };
     const searchProfile = { ...baseProfile, skills: JSON.stringify(cvState.selectedSkills) };
     runAiSearchWithProfile(searchProfile, t);
   };
@@ -998,19 +1033,11 @@ export default function App() {
         value={profile}
         onChange={handleProfileChange}
         onSubmit={handleSubmit}
-        onCvSubmit={runSearch}
         onMatch={handleMatchWithAI}
         matching={isMatching}
         hasJobs={hasFoundJobs}
         rematch={canRematch}
-        model={effectiveModel}
-        availableModels={models.map((model) => model.id)}
-        recommendedModel={recommendedModel}
-        defaultModel={defaultModel}
-        modelsState={modelsState}
-        models={models}
-        onModelChange={handleModelChange}
-        onAddFiles={handleAddCvFiles}
+        onWorkflowStart={handleCvUploadStart}
       />
       <JobSources jobs={foundJobs} />
       <div className="model-divider" aria-hidden="true" />
@@ -1029,8 +1056,9 @@ export default function App() {
   );
 
   // CV Processing UI - rendered when CV flow is active
-  // BUG-14..19: EIN gemeinsames Overlay für den CV-Verarbeitungs-Workflow auf
-  // Desktop/Tablet (Inhalt wechselt je nach cvState.step), ab der Einwilligung.
+  // BUG-14..19 + CV-UPLOAD-UX-02: EIN gemeinsames Overlay für den
+  // CV-Verarbeitungs-Workflow auf ALLEN Viewports (Inhalt wechselt je nach
+  // cvState.step), ab der Einwilligung.
   // Inline bleiben:
   // - document-selected (CV-Liste): sie ist der Einstiegspunkt und bleibt ohne
   //   Backdrop sichtbar, damit der bestehende Upload-/Schnellsuch-Pfad
@@ -1755,7 +1783,8 @@ export default function App() {
     </section>
   );
 
-  // BUG-14..19: gemeinsames Overlay (Desktop/Tablet) bzw. Inline (Mobile/Fälle oben)
+  // BUG-14..19 + CV-UPLOAD-UX-02: gemeinsames Overlay auf allen Viewports
+  // (bzw. Inline fuer document-selected/consent-dismissed/ats-complete oben)
   const cvProcessingUI = cvState.step !== "idle" && (
     cvOverlayActive ? (
       <div className="cv-workflow-overlay">{cvProcessingCard}</div>

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { Job, MatchResponse, ModelsResponse, JobsResponse, SuggestedProfile, Profile } from "./types";
+import type { Job, MatchResponse, ModelsResponse, JobsResponse, SuggestedProfile } from "./types";
 
 vi.mock("./api", async () => {
   const actual = await vi.importActual<typeof import("./api")>("./api");
@@ -33,18 +33,6 @@ import {
 import App from "./App";
 import { LangProvider } from "./i18n";
 import { __resetModelsCacheForTests } from "./hooks/useAvailableModels";
-
-function baseProfile(overrides: Partial<Pick<Profile, "skills" | "targetRole" | "city" | "radiusKm" | "workModes" | "employmentTypes">> = {}): Profile {
-  return {
-    skills: "",
-    targetRole: "",
-    city: "",
-    radiusKm: null,
-    workModes: [],
-    employmentTypes: ["full_time"],
-    ...overrides,
-  };
-}
 
 const job: Job = {
   slug: "aws-job",
@@ -131,6 +119,8 @@ afterEach(() => {
 });
 
   // Quick-Upload: Consent-Gate (Privacy-Grenze vor dem AI-Call)
+  // CV-UPLOAD-UX-01: Die Einwilligung erscheint seit der UX-Korrektur direkt
+  // im CV-Workflow-Overlay (Pfad B) — nicht mehr inline in der Suchmaske.
   async function acceptUploadConsent() {
     await screen.findByText("CV-Verarbeitung erlauben?");
     fireEvent.click(
@@ -139,6 +129,41 @@ afterEach(() => {
       })
     );
     fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+  }
+
+  // CV-UPLOAD-UX-01: Quick-Upload -> Workflow-Overlay öffnet direkt mit der
+  // Einwilligung (kein Inline-Consent, kein Overlap des Dateinamens mehr).
+  async function uploadCvToConsent(fileName = "cv.pdf") {
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      fileName,
+      { type: "application/pdf" }
+    );
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+  }
+
+  // Workflow im Overlay: model-selection -> creating-profile -> profile-ready
+  async function proceedModelToProfileReady() {
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() =>
+      expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy()
+    );
+  }
+
+  function confirmProfileInOverlay() {
+    const card = document.querySelector(".cv-processing-card") as HTMLElement;
+    fireEvent.click(
+      Array.from(card.querySelectorAll("button")).find((b) =>
+        b.textContent?.includes("Profil übernehmen und Jobs finden")
+      ) as HTMLButtonElement
+    );
   }
 
 const modelTrigger = () => document.querySelector(".model-trigger") as HTMLButtonElement;
@@ -518,7 +543,7 @@ describe("Footer im App-Layout (Regression)", () => {
 });
 
 describe("CV workflow", () => {
-  it("CV Upload -> Profil -> anschließende Jobsuche", async () => {
+  it("CV Upload -> Workflow im Overlay -> Profil -> anschließende Jobsuche", async () => {
     const jobs = deferred<JobsResponse>();
     vi.mocked(fetchJobs).mockReturnValue(jobs.promise);
     vi.mocked(createProfile).mockResolvedValue({
@@ -529,29 +554,19 @@ describe("CV workflow", () => {
     } as SuggestedProfile);
     renderApp();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
-    const file = new File(
-      ["React Developer with five years of experience in Berlin"],
-      "cv.pdf",
-      { type: "application/pdf" }
-    );
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    // CV-UPLOAD-UX-01: Der Upload oeffnet direkt das Workflow-Overlay (Pfad B)
+    // mit der Einwilligung — kein Inline-Consent in der Suchmaske.
+    await uploadCvToConsent();
+    expect(vi.mocked(createProfile)).not.toHaveBeenCalled();
 
     await acceptUploadConsent();
-    await screen.findByText("Dein vorgeschlagenes Suchprofil");
-    fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
+    await proceedModelToProfileReady();
+    const overlayCvSkills = document.querySelector(".cv-workflow-overlay #cv-skills") as HTMLInputElement;
+    expect(overlayCvSkills.value).toBe("React");
 
-    expect(vi.mocked(fetchJobs)).toHaveBeenCalledWith(
-      baseProfile({ skills: "React", targetRole: "Frontend", city: "Berlin" })
-    );
-
-    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
-    await screen.findByText("AWS Engineer");
-
-    expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("React");
-    expect((screen.getByLabelText("Zielrolle") as HTMLInputElement).value).toBe("Frontend");
-    expect((screen.getByLabelText("Stadt oder PLZ") as HTMLInputElement).value).toBe("Berlin");
+    // Bestaetigen -> goal-selection im Overlay
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.querySelector(".cv-workflow-overlay #cv-goal-execution-title")).toBeTruthy());
   });
 
   it("BROWSER-BUG-02: nach CV-Upload ist die Dokumentliste sichtbar und Checkboxen funktionieren", async () => {
@@ -564,28 +579,27 @@ describe("CV workflow", () => {
     } as SuggestedProfile);
     renderApp();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
-    const file = new File(
-      ["React Developer with five years of experience in Berlin"],
-      "cv.pdf",
-      { type: "application/pdf" }
-    );
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    await uploadCvToConsent();
     await acceptUploadConsent();
-    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+    // Modell-Step erreicht -> zurueck zur Listen-Ansicht (Workflow verlassen);
+    // das Menue liegt dann inline UNTER der Suchmaske (CV-UPLOAD-UX-01)
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
 
     // Die CV-Dokumentliste ist sichtbar (SEARCH-CV-01)
     expect(await screen.findByText("Deine Lebensläufe")).toBeTruthy();
     expect(screen.getByText("cv.pdf")).toBeTruthy();
-    // Auswahlzähler: zunächst nichts ausgewählt
-    expect(screen.getByText("Keine ausgewählt")).toBeTruthy();
-
-    // Einzelnes Dokument auswählen/abwählen
+    // CV-UPLOAD-UX-01: das frisch hochgeladene Dokument ist automatisch ausgewählt
     const checkbox = document.querySelector(".cv-document-list__checkbox") as HTMLInputElement;
     expect(checkbox).toBeTruthy();
+    expect(checkbox.checked).toBe(true);
+    expect(screen.getByText("1 ausgewählt")).toBeTruthy();
+
+    // Einzelnes Dokument abwählen/auswählen
+    fireEvent.click(checkbox);
     expect(checkbox.checked).toBe(false);
+    expect(screen.getByText("Keine ausgewählt")).toBeTruthy();
     fireEvent.click(checkbox);
     expect(checkbox.checked).toBe(true);
     expect(screen.getByText("1 ausgewählt")).toBeTruthy();
@@ -602,7 +616,10 @@ describe("CV workflow", () => {
     expect((screen.getByRole("button", { name: "Mit ausgewählten suchen" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  // Gemeinsamer Upload-Helper für die CV-Flow-Tests
+  // Gemeinsamer Upload-Helper für die CV-Flow-Tests.
+  // CV-UPLOAD-UX-01: Upload -> Consent im Overlay (Pfad B) -> Modell-Step ->
+  // zurueck zur Dokumentliste (inline unter der Suchmaske; Dokument bleibt
+  // ausgewaehlt, Einwilligung ist fuer die Sitzung erteilt).
   async function uploadCvAndOpenList(fileName = "cv.pdf") {
     vi.mocked(createProfile).mockResolvedValue({
       skills: ["React"],
@@ -611,30 +628,27 @@ describe("CV workflow", () => {
       location: "Berlin",
     } as SuggestedProfile);
     renderApp();
-    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
-    const file = new File(
-      ["React Developer with five years of experience in Berlin"],
-      fileName,
-      { type: "application/pdf" }
-    );
-    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
-      target: { files: [file] },
-    });
+    await uploadCvToConsent(fileName);
     await acceptUploadConsent();
-    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
     await screen.findByText("Deine Lebensläufe");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
   }
 
   it("BROWSER-BUG-06/07: Consent-Overlay ist verpflichtend, schließbar und erneut öffnenbar", async () => {
-    await uploadCvAndOpenList();
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
 
-    // Dokument auswählen und Verarbeitung anstoßen
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-
-    // BUG-07: Consent erscheint als Overlay im Vordergrund
+    // CV-UPLOAD-UX-01: Die Einwilligung erscheint direkt nach dem Upload als
+    // Overlay im Vordergrund (Pfad B) — nicht inline in der Suchmaske.
+    await uploadCvToConsent();
     expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
-    expect(screen.getByText("CV-Verarbeitung erlauben?")).toBeTruthy();
 
     // BUG-06: Checkbox unchecked -> Confirm disabled, keine Verarbeitung
     const confirm = screen.getByRole("button", { name: "Verarbeitung erlauben" }) as HTMLButtonElement;
@@ -648,9 +662,11 @@ describe("CV workflow", () => {
     // kein zusätzlicher Verarbeitungs-Call durch den disabled-Button
     expect(vi.mocked(createProfile)).toHaveBeenCalledTimes(createCallsBefore);
 
-    // BUG-07: Schließen -> Hinweis + Trigger, Verarbeitung startet nicht
+    // BUG-07: Schließen -> Hinweis + Trigger, Verarbeitung startet nicht;
+    // das Menue (CV-Liste) liegt dann inline unter der Suchmaske (CV-UPLOAD-UX-01)
     fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     await screen.findByText(/Zustimmung ausstehend/);
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
     expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
     expect(screen.getByText("cv.pdf")).toBeTruthy(); // CV bleibt erhalten
 
@@ -679,15 +695,16 @@ describe("CV workflow", () => {
   it("BROWSER-BUG-14..19: Workflow bleibt im gemeinsamen Overlay; Fehler bleibt im Overlay-Kontext", async () => {
     // BUG-17: ATS-Fehlschlag soll einen kontrollierten Fehler-Step erzeugen
     vi.mocked(analyzeATS).mockRejectedValue(new Error("kaputt"));
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
 
-    await uploadCvAndOpenList();
-    // Die Dokumentenliste ist der Inline-Einstieg (kein Overlay-Backdrop dort)
-    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
-
-    // Consent erteilen
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    await screen.findByText("CV-Verarbeitung erlauben?");
+    // CV-UPLOAD-UX-01: Upload -> Einwilligung direkt im Overlay (Pfad B)
+    await uploadCvToConsent();
     expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
     fireEvent.click(screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
@@ -738,14 +755,20 @@ describe("CV workflow", () => {
   });
 
   it("BROWSER-BUG-07 (regression): geschlossener Consent -> KEIN Overlay, Hinweis inline", async () => {
-    await uploadCvAndOpenList();
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    await screen.findByText("CV-Verarbeitung erlauben?");
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+
+    // CV-UPLOAD-UX-01: Upload oeffnet das Consent-Overlay direkt
+    await uploadCvToConsent();
     fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
 
     await screen.findByText(/Zustimmung ausstehend/);
-    // Kein Overlay im dismissed-Zustand
+    // Kein Overlay im dismissed-Zustand — Menue inline unter der Suchmaske
     expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
     // Liste bleibt inline sichtbar
     expect(screen.getByText("cv.pdf")).toBeTruthy();
@@ -756,12 +779,17 @@ describe("CV workflow", () => {
   });
 
   it("BROWSER-BUG-21B: Model-unavailable -> 'Zurück zur Modellauswahl' -> anderes Modell -> Recovery", async () => {
-    await uploadCvAndOpenList("recovery.pdf");
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
-    // und gilt nicht fuer den CV-Workflow
-    await screen.findByText("CV-Verarbeitung erlauben?");
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+
+    // CV-UPLOAD-UX-01: Upload -> Einwilligung direkt im Overlay, erst danach
+    // darf ein AI-Call starten
+    await uploadCvToConsent("recovery.pdf");
     fireEvent.click(screen.getByRole("checkbox", {
       name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
     }));
@@ -793,7 +821,7 @@ describe("CV workflow", () => {
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
   });
 
-  it("CV-Upload: Modell-Ausfall -> Modellauswahl + erneut versuchen (kein Neustart)", async () => {
+  it("CV-Upload: Modell-Ausfall -> Modellauswahl-Recovery im Overlay (kein Neustart)", async () => {
     vi.mocked(fetchModels).mockResolvedValue(multiModels);
     vi.mocked(createProfile)
       .mockRejectedValueOnce(new ApiError("The selected model isn't currently available as a free compatible model.", 400, "model_not_free"))
@@ -804,28 +832,34 @@ describe("CV workflow", () => {
         location: "Berlin",
       } as SuggestedProfile);
     renderApp();
-    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
-    const file = new File(["React Developer"], "cv.pdf", { type: "application/pdf" });
-    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
 
-    // Consent zuerst, dann AI-Call
+    // Consent zuerst (im Overlay), dann erst AI-Call
+    await uploadCvToConsent();
+    expect(vi.mocked(createProfile)).not.toHaveBeenCalled();
     await acceptUploadConsent();
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
 
-    // Modell-Recovery statt generischem Fehler + Neustart
-    await waitFor(() => expect(document.querySelector(".cv-model-recovery")).toBeTruthy());
-    expect(screen.getByText(/KI-Modell ist momentan nicht verfügbar/)).toBeTruthy();
+    // Modell-Ausfall (model_not_free, nicht transient) bei der Profil-Erstellung
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> schlaegt fehl
+
+    // Modell-Recovery im Overlay statt generischem Fehler + Neustart
+    // (CV-UPLOAD-UX-01: model_not_free fuehrt zurueck zur Modellauswahl)
+    await waitFor(() => expect(document.querySelector(".cv-error-state")).toBeTruthy());
+    expect(screen.getAllByText(/KI-Modell ist momentan nicht verfügbar/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/konnte gerade nicht ausgewertet werden/)).toBeNull();
-    // Dropzone/Neuer-Upload ist nicht der sichtbare Pfad
-    expect(document.querySelector(".cv-dropzone")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zur Modellauswahl" }));
 
-    // anderes Modell waehlen und direkt erneut starten
-    fireEvent.click(document.querySelector(".cv-model-recovery .model-trigger") as HTMLButtonElement);
+    // anderes Modell waehlen und direkt erneut starten — ohne erneuten Upload
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(document.querySelector(".cv-model-selection .model-trigger") as HTMLButtonElement);
     fireEvent.click(await screen.findByRole("option", { name: /Modell B/ }));
     const callsBefore = vi.mocked(createProfile).mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Mit gewähltem Modell erneut versuchen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> creating-profile
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> erfolgreich (mit m-b)
 
     // erneuter Call mit dem neuen Modell — ohne erneuten Upload
-    await screen.findByText("Dein vorgeschlagenes Suchprofil");
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
     expect(vi.mocked(createProfile).mock.calls.length).toBe(callsBefore + 1);
     expect(vi.mocked(createProfile).mock.calls[callsBefore][1]).toBe("m-b");
   });
@@ -842,17 +876,15 @@ describe("CV workflow", () => {
     } as SuggestedProfile);
     renderApp();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
-    const file = new File(["irrelevant"], "privacy.pdf", { type: "application/pdf" });
-    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
-      target: { files: [file] },
-    });
-
-    // Consent-Gate erscheint; noch kein AI-Call
-    await screen.findByText("CV-Verarbeitung erlauben?");
+    // CV-UPLOAD-UX-01: Consent-Gate erscheint im Workflow-Overlay; noch kein AI-Call
+    await uploadCvToConsent("privacy.pdf");
     expect(vi.mocked(createProfile)).not.toHaveBeenCalled();
 
     await acceptUploadConsent();
+    // Modell-Step -> Optionen -> erst jetzt Extraction + lokale Anonymisierung + AI-Call
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(vi.mocked(createProfile)).toHaveBeenCalled());
     const sentText = vi.mocked(createProfile).mock.calls[0][0] as string;
     // Keine PII im Text, der an die AI geht
@@ -872,25 +904,12 @@ describe("CV workflow", () => {
     } as never);
 
     await uploadCvAndOpenList("ats-recovery.pdf");
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    // CV-UPLOAD-UX-01: Einwilligung wurde bereits beim Upload im Overlay erteilt;
+    // das hochgeladene Dokument bleibt ausgewaehlt -> direkt zu den Optionen
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
-    // und gilt nicht fuer den CV-Workflow
-    await screen.findByText("CV-Verarbeitung erlauben?");
-    fireEvent.click(screen.getByRole("checkbox", {
-      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
-    }));
-    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> anonymizing
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
-    const card = document.querySelector(".cv-processing-card") as HTMLElement;
-    fireEvent.click(
-      Array.from(card.querySelectorAll("button")).find(
-        (b) => b.textContent?.includes("Profil übernehmen und Jobs finden")
-      ) as HTMLButtonElement
-    );
+    confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
 
     // Modell A nicht verfügbar (transient), nur EIN Mal
@@ -934,28 +953,14 @@ describe("CV workflow", () => {
     } as never);
     await uploadCvAndOpenList("ats-flow.pdf");
 
-    // Consent + Model + Profil-Erstellung
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    // CV-UPLOAD-UX-01: Consent wurde beim Upload im Overlay erteilt; Dokument
+    // bleibt ausgewaehlt -> Verarbeiten geht direkt zu den Optionen
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
-    // und gilt nicht fuer den CV-Workflow
-    await screen.findByText("CV-Verarbeitung erlauben?");
-    fireEvent.click(screen.getByRole("checkbox", {
-      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
-    }));
-    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> anonymizing
 
     // profile-ready -> bestätigen (legt cvState.cvProfile an)
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
-    const card = document.querySelector(".cv-processing-card") as HTMLElement;
-    fireEvent.click(
-      Array.from(card.querySelectorAll("button")).find(
-        (b) => b.textContent?.includes("Profil übernehmen und Jobs finden")
-      ) as HTMLButtonElement
-    );
+    confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
 
     // ATS ausführen
@@ -972,50 +977,40 @@ describe("CV workflow", () => {
 
   it("BROWSER-BUG-11: Zurück-Navigation im CV-Flow ohne State-Verlust", async () => {
     await uploadCvAndOpenList();
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    // Consent erteilen
-    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
-    // und gilt nicht fuer den CV-Workflow
-    await screen.findByText("CV-Verarbeitung erlauben?");
-    fireEvent.click(screen.getByRole("checkbox", {
-      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
-    }));
-    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
-
-    // model-selection -> Zurück zur Liste
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
-    await screen.findByText("Deine Lebensläufe");
-    expect(screen.getByText("cv.pdf")).toBeTruthy();
-
-    // Wieder vor -> Consent bleibt erteilt, creating-profile direkt
-    // (die Dokument-Auswahl ist nach "Zurück" erhalten geblieben)
+    // CV-UPLOAD-UX-01: Dokument blieb nach dem Upload ausgewaehlt; Consent
+    // wurde beim Upload im Overlay erteilt -> Verarbeiten -> creating-profile
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
     await waitFor(() => {
       expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
     });
+
     // creating-profile: Zurück zur Modellauswahl
     fireEvent.click(screen.getByRole("button", { name: "Zurück zur Modellauswahl" }));
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    // State erhalten: Checkbox-Auswahl/Dokument weiterhin vorhanden
+    // State erhalten: Dokument weiterhin vorhanden
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
+    await screen.findByText("cv.pdf");
+    expect(screen.getByText("Deine Lebensläufe")).toBeTruthy();
+
+    // Wieder vor -> Consent bleibt erteilt, creating-profile direkt
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await waitFor(() => {
+      expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zur Modellauswahl" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
     await screen.findByText("cv.pdf");
   });
 
   it("BROWSER-BUG-10: 'Weiter' in creating-profile löst keinen React-Fehler aus und startet die Profil-Erstellung", async () => {
     await uploadCvAndOpenList();
-    fireEvent.click(document.querySelector(".cv-document-list__checkbox") as HTMLInputElement);
+    // CV-UPLOAD-UX-01: Consent bereits beim Upload erteilt, Dokument ausgewaehlt
     fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
-    // Workflow-Consent (Pfad B, unveraendert): Quick-Upload-Consent ist lokal
-    // und gilt nicht fuer den CV-Workflow
-    await screen.findByText("CV-Verarbeitung erlauben?");
-    fireEvent.click(screen.getByRole("checkbox", {
-      name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
-    }));
-    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    // Consent erteilt -> direkt creating-profile
+    await waitFor(() => {
+      expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
+    });
 
     // creating-profile -> Weiter startet createProfileFromPdf (früher React #321 via useLang im Handler)
     const createProfileCallsBefore = vi.mocked(createProfile).mock.calls.length;
@@ -1152,31 +1147,25 @@ describe("No landing-page flash during a search", () => {
     } as SuggestedProfile);
     renderApp();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
-    const file = new File(
-      ["React Developer with five years of experience in Berlin"],
-      "cv.pdf",
-      { type: "application/pdf" }
-    );
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    await acceptUploadConsent();
-    await screen.findByText("Dein vorgeschlagenes Suchprofil");
-    fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
-
-    expect(screen.getByText("Suche auf der Jobbörse…")).toBeTruthy();
+    // CV-UPLOAD-UX-01: Auto-Start des Workflows im Overlay direkt nach dem
+    // Upload — keine Landingpage, kein Flicker
+    await uploadCvToConsent();
     expect(document.querySelector(".landing")).toBeNull();
     expect(document.querySelector(".landing-hero")).toBeNull();
     expect(document.querySelector(".search-sidebar")).toBeTruthy();
     expect(window.location.pathname).toBe("/top");
 
-    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
-    await screen.findByText("AWS Engineer");
+    await acceptUploadConsent();
+    await proceedModelToProfileReady();
+    await screen.findByText("Dein vorgeschlagenes Suchprofil");
     expect(document.querySelector(".landing")).toBeNull();
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+
+    // Der Workflow-Overlay-Start verhindert ein Landing-Aufblitzen; im
+    // Hintergrund laufende Suche bleibt davon unberuehrt (jobs resolve ok).
+    jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
   });
 });
-
 describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren beim Suchstart)", () => {
   async function runSearchA() {
     vi.mocked(fetchJobs).mockResolvedValueOnce({ jobs: [job], meta: { totalFiltered: 1 } });
@@ -1285,18 +1274,22 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
       location: "Frankfurt",
     } as SuggestedProfile);
 
-    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
-    const file = new File(
-      ["React Developer with five years of experience in Berlin"],
-      "cv.pdf",
-      { type: "application/pdf" }
-    );
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    // CV-UPLOAD-UX-01: Upload startet den Workflow im Overlay; Profil anlegen
+    // (cvProfile) und bestaetigen, dann zurueck zur Liste und "Mit
+    // ausgewählten suchen" loest die CV-Suche aus (runCvSearch)
+    await uploadCvToConsent();
     await acceptUploadConsent();
-    await screen.findByText("Dein vorgeschlagenes Suchprofil");
-    fireEvent.click(screen.getByText("Profil übernehmen und Jobs finden"));
+    await proceedModelToProfileReady();
+    confirmProfileInOverlay(); // -> goal-selection, cvProfile ist gesetzt
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    // Zurueck: goal-selection -> profile-ready -> document-selected (Liste)
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zum Profil" }));
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zum Bearbeiten" }));
+    await screen.findByText("Deine Lebensläufe");
+    // Dokument blieb ausgewaehlt
+    expect(screen.getByText("1 ausgewählt")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten suchen" }));
 
     await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
     expect(document.querySelector(".results-workspace")).toBeFalsy();

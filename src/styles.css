@@ -1696,29 +1696,44 @@ body {
   margin-top: 0;
 }
 
-/* BUG-14..19: EIN gemeinsames Overlay für den gesamten CV-Processing-
-   Workflow auf Desktop/Tablet. Der Dialog-Inhalt wechselt mit cvState.step;
-   auf Mobile bleibt die bestehende Inline-Darstellung. */
+/* BUG-14..19 + CV-UPLOAD-UX-02: EIN gemeinsames Overlay für den gesamten
+   CV-Processing-Workflow auf ALLEN Viewports. Der Dialog-Inhalt wechselt mit
+   cvState.step. Mobile-First: Vollbild-Sheet; ab 768px zentrierter Dialog.
+   (Vorher Inline auf Mobile — User-Befund: nach der Einwilligung erschien
+   dort die Inline-Karte "Verarbeitungsstatus" statt des Overlays.) */
+.cv-workflow-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.5);
+  overflow-y: auto;
+}
+
+.cv-workflow-overlay .cv-processing-card {
+  width: 100%;
+  min-height: 100dvh;
+  max-height: none;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-radius: 0;
+  overflow-y: auto;
+}
+
 @media (min-width: 768px) {
   .cv-workflow-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 70;
-    display: flex;
     align-items: flex-start;
-    justify-content: center;
     padding: 6vh 24px 24px;
-    background: rgba(15, 23, 42, 0.5);
-    overflow-y: auto;
   }
 
   .cv-workflow-overlay .cv-processing-card {
-    width: 100%;
+    min-height: 0;
     max-width: 680px;
     max-height: 88vh;
-    margin-top: 0;
-    margin-bottom: 0;
-    overflow-y: auto;
+    border-radius: var(--radius-xl);
     box-shadow: 0 24px 64px rgba(15, 23, 42, 0.35);
   }
 }

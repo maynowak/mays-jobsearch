@@ -31,9 +31,7 @@ function renderForm(
         onMatch={onMatch}
         matching={matching}
         hasJobs={hasJobs}
-        model={null}
-        availableModels={[]}
-        recommendedModel={null}
+        onWorkflowStart={() => undefined}
       />
     </LangProvider>
   );
@@ -79,9 +77,7 @@ function StatefulForm({
         onMatch={onMatch}
         matching={matching}
         hasJobs={hasJobs}
-        model={null}
-        availableModels={[]}
-        recommendedModel={null}
+        onWorkflowStart={() => undefined}
       />
     </LangProvider>
   );

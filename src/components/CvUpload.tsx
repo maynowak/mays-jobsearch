@@ -1,163 +1,28 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
-import type { Profile, SuggestedProfile } from "../types";
-import { createProfile, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, ApiError } from "../api";
 import { useLang } from "../i18n";
-import { anonymizeText } from "../lib/anonymize";
-import CvConsentGate from "./CvConsentGate";
-import CvProfileResult from "./CvProfileResult";
-import ModelSelector from "./ModelSelector";
 
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
-const MIN_READABLE_CHARS = 20;
-const CV_PROFILE_LOCAL_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const CV_PROFILE_STORE_PREFIX = "mj-cv-profile:";
-
-function normalizeText(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-async function sha256Hex(text: string): Promise<string | null> {
-  try {
-    if (!crypto?.subtle) return null;
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(digest))
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
-  } catch {
-    return null;
-  }
-}
-
-function readLocalProfile(hash: string): SuggestedProfile | null {
-  try {
-    const raw = localStorage.getItem(`${CV_PROFILE_STORE_PREFIX}${hash}`);
-    if (!raw) return null;
-    const stored = JSON.parse(raw) as { profile?: SuggestedProfile; savedAt?: number };
-    if (!stored?.profile || typeof stored.savedAt !== "number") return null;
-    if (Date.now() - stored.savedAt > CV_PROFILE_LOCAL_TTL_MS) {
-      localStorage.removeItem(`${CV_PROFILE_STORE_PREFIX}${hash}`);
-      return null;
-    }
-    return stored.profile;
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalProfile(hash: string, profile: SuggestedProfile): void {
-  try {
-    localStorage.setItem(
-      `${CV_PROFILE_STORE_PREFIX}${hash}`,
-      JSON.stringify({ profile, savedAt: Date.now() })
-    );
-  } catch {
-    /* noop */
-  }
-}
 
 interface Props {
-  busy: boolean;
-  loadingLabel: string;
-  onSubmit: (profile: Profile) => void;
   onManual: () => void;
-  model: string | null;
-  availableModels: string[];
-  recommendedModel: string | null;
-  defaultModel?: string | null;
-  // Model-Recovery: bei Modell-Ausfall kann der Benutzer direkt hier ein
-  // anderes Modell waehlen und erneut starten — ohne erneuten Upload.
-  modelsState: "loading" | "ready" | "error" | "empty";
-  models: Array<{ id: string; name: string }>;
-  onModelChange: (model: string) => void;
-  onAddFiles?: (files: File[], skills?: string[]) => void;
+  // CV-UPLOAD-UX-01: Nach der lokalen Validierung startet die App direkt den
+  // CV-Workflow (Pfad B) im Overlay — Einwilligung, Modellwahl, Anonymisierung
+  // und Profil-Erstellung laufen dort einheitlich. Kein Inline-Consent und
+  // keine Inline-Profil-Vorschau mehr in der Suchmaske (Overlap-Hotfix: die
+  // Dateinamen-Anzeige ueberlappte den Consent-Rahmen).
+  onWorkflowStart: (file: File) => void;
 }
 
-type Phase = "idle" | "reading" | "consent" | "creating" | "model-error" | "ready";
-
-export default function CvUpload({
-  busy,
-  loadingLabel,
-  onSubmit,
-  onManual,
-  model,
-  availableModels,
-  recommendedModel,
-  defaultModel,
-  modelsState,
-  models,
-  onModelChange,
-  onAddFiles,
-}: Props) {
+export default function CvUpload({ onManual, onWorkflowStart }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
-  const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [suggested, setSuggested] = useState<SuggestedProfile | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [fallbackNote, setFallbackNote] = useState(false);
-  // Consent fuer den Quick-Upload (Pfad A): Pflicht vor dem ersten externen
-  // AI-Call. Lokal gehalten — der Workflow (Pfad B) hat seine eigene,
-  // unveraenderte Consent-Logik (cvState.consentGiven).
-  const [uploadConsentGiven, setUploadConsentGiven] = useState(false);
-  // Extrahierter + anonymisierter Text (Privacy Boundary bereits passiert) —
-  // bleibt fuer Consent- und Modell-Retry erhalten, kein erneutes Auslesen.
-  const pendingRef = useRef<{ text: string; hash: string | null; file: File } | null>(null);
 
-  const processing = phase === "reading" || phase === "creating";
-
-  // Startet ausschliesslich den AI-Aufruf fuer den bereits anonymisierten Text.
-  const startCreateProfile = async () => {
-    const pending = pendingRef.current;
-    if (!pending) return;
-    setPhase("creating");
+  const handleFile = (file: File) => {
     setError(null);
-    try {
-      const { data: profile, usedFallback } = await withModelFallback({
-        initialModel: model,
-        availableModels,
-        recommendedModel,
-        request: (m, attempt) => createProfile(pending.text, m, pending.hash ?? undefined, attempt),
-      });
-      if (pending.hash) writeLocalProfile(pending.hash, profile);
-      setSuggested(profile);
-      setFallbackNote(usedFallback);
-      setPhase("ready");
-      // Dokument in die CV-Liste (SEARCH-CV-01) übernehmen, damit sie im
-      // Browser sichtbar ist (Checkboxen, Auswahlzähler, Select All, …)
-      onAddFiles?.([pending.file], profile.skills);
-      pendingRef.current = null;
-    } catch (err) {
-      // Modell-Ausfall -> Modell-Recovery am Ort (kein Sprung an den Anfang,
-      // kein erneuter Upload): Text bleibt lokal bestehen.
-      if (
-        isModelUnavailable(err) ||
-        (err instanceof ApiError && (err.code === "model_not_free" || err.code === "model_invalid"))
-      ) {
-        setError(t("model.unavailable"));
-        setPhase("model-error");
-        return;
-      }
-      pendingRef.current = null;
-      setPhase("idle");
-      setError(
-        err instanceof ApiError && err.code === "missing_key"
-          ? t("cv.noAiConfigured")
-          : isFreeQuotaExceeded(err)
-            ? t("model.quotaExceeded")
-            : t("cv.processError")
-      );
-    }
-  };
-
-  const handleFile = async (file: File) => {
-    if (processing || busy) return;
-    setError(null);
-    setFallbackNote(false);
-    setFileName(file.name);
-
     const mimeOk = file.type === "application/pdf" || file.type === "";
     const extOk = file.name.toLowerCase().endsWith(".pdf");
     if (!mimeOk || !extOk) {
@@ -168,52 +33,16 @@ export default function CvUpload({
       setError(t("cv.tooLarge"));
       return;
     }
-
-    setPhase("reading");
-    try {
-      const { extractPdfText } = await import("../lib/pdf");
-      const text = await extractPdfText(file);
-      if (text.replace(/\s/g, "").length < MIN_READABLE_CHARS) {
-        setPhase("idle");
-        setError(t("cv.scannedError"));
-        return;
-      }
-      setPhase("creating");
-      // Privacy Boundary: PII wird lokal anonymisiert, BEVOR irgendein
-      // externer AI-/Modell-Aufruf erfolgt (kein Modell-Call mit Rohtext).
-      const anonymized = anonymizeText(text);
-      const normalized = normalizeText(anonymized);
-      const hash = await sha256Hex(normalized);
-      if (hash) {
-        const cachedProfile = readLocalProfile(hash);
-        if (cachedProfile) {
-          // Cache-Treffer: kein externer AI-Call -> kein Consent noetig
-          setSuggested(cachedProfile);
-          setPhase("ready");
-          // Dokument in die CV-Liste (SEARCH-CV-01) übernehmen
-          onAddFiles?.([file], cachedProfile.skills);
-          return;
-        }
-      }
-      pendingRef.current = { text: normalized, hash, file };
-      // Consent-Grenze (wie Pfad B, Schritt Einwilligung): erst nach
-      // Anonymisierung, vor dem ersten externen Modell-Call.
-      if (!uploadConsentGiven) {
-        setPhase("consent");
-        return;
-      }
-      await startCreateProfile();
-    } catch (err) {
-      pendingRef.current = null;
-      setPhase("idle");
-      setError(t("cv.processError"));
-    }
+    // Uebergabe an Pfad B: App legt das Dokument an, waehlt es aus und
+    // oeffnet das Workflow-Overlay (Consent-Step zuerst). Text-Extraktion,
+    // lokale Anonymisierung und Profil-Erstellung erfolgen dort.
+    onWorkflowStart(file);
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (file) void handleFile(file);
+    if (file) handleFile(file);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLLabelElement>) => {
@@ -247,99 +76,8 @@ export default function CvUpload({
     dragDepth.current = 0;
     setDragOver(false);
     const file = event.dataTransfer.files?.[0];
-    if (file) void handleFile(file);
+    if (file) handleFile(file);
   };
-
-  if (phase === "consent") {
-    return (
-      <div id="cv-panel" className="cv-panel">
-        <CvConsentGate
-          fileName={fileName ?? ""}
-          onAccept={() => {
-            setUploadConsentGiven(true);
-            void startCreateProfile();
-          }}
-          onCancel={() => {
-            pendingRef.current = null;
-            setPhase("idle");
-          }}
-          processingInfo={t("cv.consentPurposeProfile")}
-          externalAI={true}
-          disabled={busy}
-        />
-      </div>
-    );
-  }
-
-  if (phase === "model-error") {
-    return (
-      <div id="cv-panel" className="cv-panel">
-        <div className="cv-model-recovery" role="alert">
-          <p className="alert alert-error">{error}</p>
-          {modelsState === "ready" && (
-            <ModelSelector
-              state={modelsState}
-              models={models}
-              defaultModel={defaultModel ?? null}
-              recommendedModel={recommendedModel}
-              value={model}
-              onChange={onModelChange}
-              disabled={busy}
-              attention={true}
-            />
-          )}
-          <div className="cv-continue-actions">
-            <button
-              type="button"
-              className="cv-continue-btn"
-              onClick={() => void startCreateProfile()}
-              disabled={busy}
-            >
-              {t("cv.retryWithModel")}
-            </button>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => {
-                pendingRef.current = null;
-                setError(null);
-                setPhase("idle");
-              }}
-              disabled={busy}
-            >
-              {t("cv.consentCancel")}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (phase === "ready" && suggested) {
-    return (
-      <>
-        {fallbackNote && <p className="fallback-note">{t("model.fallbackNote")}</p>}
-        <CvProfileResult
-          suggested={suggested}
-          busy={busy}
-          loadingLabel={loadingLabel}
-          onConfirm={onSubmit}
-          onBack={onManual}
-        />
-      </>
-    );
-  }
-
-  const mainText = processing
-    ? fileName ?? ""
-    : dragOver
-      ? t("cv.dropZoneOver")
-      : t("cv.dropZone");
-  const altText = processing
-    ? phase === "reading"
-      ? t("cv.reading")
-      : t("cv.creating")
-    : t("cv.dropZoneAlt");
 
   return (
     <div id="cv-panel" className="cv-panel">
@@ -373,11 +111,10 @@ export default function CvUpload({
             <path d="M9 15l3-3 3 3" />
           </svg>
         </span>
-        <span className="cv-dropzone-main">{mainText}</span>
-        <span className="cv-dropzone-status" role={processing ? "status" : undefined}>
-          {processing && <span className="spinner" aria-hidden="true" />}
-          <span>{altText}</span>
+        <span className="cv-dropzone-main">
+          {dragOver ? t("cv.dropZoneOver") : t("cv.dropZone")}
         </span>
+        <span className="cv-dropzone-status">{t("cv.dropZoneAlt")}</span>
         <input
           ref={inputRef}
           type="file"
@@ -393,11 +130,9 @@ export default function CvUpload({
         </p>
       )}
 
-      {phase === "idle" && (
-        <button type="button" className="btn-ghost cv-manual" onClick={onManual}>
-          {t("cv.manual")}
-        </button>
-      )}
+      <button type="button" className="btn-ghost cv-manual" onClick={onManual}>
+        {t("cv.manual")}
+      </button>
     </div>
   );
 }
