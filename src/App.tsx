@@ -658,10 +658,13 @@ export default function App() {
     }
     // isProcessing bleibt false: skill-selection benoetigt bedienbare
     // Checkboxen (BUG-16).
+    // CV-UPLOAD-UX-06: Default = ALLE erkannten Skills vorausgewaehlt
+    // (Schritt dient der Bestaetigung/Abwahl, nicht der Leer-Auswahl).
     setCvState((prev) => ({
       ...prev,
       step: "skill-selection",
       isProcessing: false,
+      selectedSkills: [...(prev.suggestedProfile?.skills ?? [])],
     }));
   };
 
@@ -1438,6 +1441,26 @@ export default function App() {
               />
             </div>
           )}
+          {/* CV-UPLOAD-UX-06: Bulk-Auswahl — alle Skills selektieren bzw.
+              abwaehlen (Default beim Betreten: alle selektiert). */}
+          <div className="cv-skill-selection__bulk-actions">
+            <button
+              type="button"
+              className="btn-ghost cv-skill-selection__bulk-btn"
+              onClick={() => handleSkillSelectionChange([...(cvState.suggestedProfile?.skills ?? [])])}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.selectAll")}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost cv-skill-selection__bulk-btn"
+              onClick={() => handleSkillSelectionChange([])}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.deselectAll")}
+            </button>
+          </div>
           <div className="cv-skill-selection__list" role="listbox" aria-label={t("cv.skillSelectTitle")}>
             {cvState.suggestedProfile.skills.map((skill, index) => (
               <label key={index} className={`cv-skill-selection__item${cvState.selectedSkills.includes(skill) ? " selected" : ""}`}>

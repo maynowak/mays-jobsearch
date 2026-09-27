@@ -759,7 +759,6 @@ describe("CV workflow", () => {
     await waitFor(() => {
       expect(document.getElementById("cv-skill-selection-title")).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
     // BUG-17: ATS schlägt fehl -> Fehler erscheint im Overlay, nicht im Seitenfluss
@@ -945,7 +944,6 @@ describe("CV workflow", () => {
     vi.mocked(analyzeATS).mockRejectedValueOnce(new ApiError("overloaded", 429, "rate_limited"));
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
     await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
     // ATS-spezifischer Recovery-Punkt statt CV-Anfang
@@ -1001,7 +999,6 @@ describe("CV workflow", () => {
     // ATS ausführen — CV-UPLOAD-UX-04: erst nach der Skills-Bestaetigung
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
     await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
     // ATS wurde mit dem bestätigten CV-Profil aufgerufen, KEIN atsNoProfile-Fehler
@@ -1162,7 +1159,6 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     // Ziel ATS (Default) -> Ziel ausfuehren -> Skills-Step (CV-UPLOAD-UX-04)
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
     await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
 
     // CV-PROFILE-LISTS-01/03/05: Name fuer den ATS-Profil-Eintrag — Vorschlag
     // "<Zielrolle> - ATS1"; Klick markiert den ganzen Text; Feld steht oben
@@ -1255,6 +1251,54 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(screen.queryByRole("button", { name: "Profile anzeigen" })).toBeNull();
     // Dropzone ist wieder der sichtbare Einstieg (erneutes Hochladen)
     expect(document.querySelector(".cv-dropzone")).toBeTruthy();
+  });
+
+  it("CV-UPLOAD-UX-06: Skills-Step — Default alle selektiert + Alle auswaehlen/abwaehlen", async () => {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React", "TypeScript", "Node.js"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    vi.mocked(analyzeATS).mockResolvedValue({
+      analysis: { score: 80, keywordCoverage: { overall: 75 }, criticalGaps: [], requirements: [], matches: [] },
+      recommendations: [],
+      ai: { requested: false, executed: false, consentRequired: true, consentGiven: false, externalProcessing: false, dataMinimized: true },
+    } as never);
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+
+    // Default: ALLE erkannten Skills sind selektiert
+    await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
+    const boxes = ["React", "TypeScript", "Node.js"].map(
+      (s) => screen.getByRole("checkbox", { name: s }) as HTMLInputElement
+    );
+    boxes.forEach((b) => expect(b.checked).toBe(true));
+
+    // "Alle abwählen" -> alle weg, Fehlerhinweis, Confirm gesperrt
+    fireEvent.click(screen.getByRole("button", { name: "Alle abwählen" }));
+    boxes.forEach((b) => expect(b.checked).toBe(false));
+    expect(screen.getByText(/Keine Skills ausgewählt/)).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }) as HTMLButtonElement).disabled
+    ).toBe(true);
+
+    // "Alle auswählen" -> alle wieder drin
+    fireEvent.click(screen.getByRole("button", { name: "Alle auswählen" }));
+    boxes.forEach((b) => expect(b.checked).toBe(true));
+
+    // Einzelabwahl wirkt: ATS laeuft nur mit den gewaehlten Skills
+    fireEvent.click(boxes[2]); // Node.js abwaehlen
+    fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
+    await waitFor(() => expect(vi.mocked(analyzeATS)).toHaveBeenCalled());
+    const atsCall = vi.mocked(analyzeATS).mock.calls[0];
+    expect((atsCall[0] as { tags: string[] }).tags).toEqual(["React", "TypeScript"]);
   });
 });
 
