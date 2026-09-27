@@ -2405,6 +2405,12 @@ body {
   width: 100%;
 }
 
+.cv-saved-profiles__hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
 /* CV-UPLOAD-UX-06: Bulk-Auswahl im Skills-Step */
 .cv-skill-selection__bulk-actions {
   display: flex;

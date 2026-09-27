@@ -1406,6 +1406,42 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(names).toEqual(["Frontend - Profil1"]);
   });
 
+  it("CV-UPLOAD-UX-10: Suche startet erst mit gewaehltem Profil (Auswahl bleibt Pflicht)", async () => {
+    mockProfile();
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+
+    const startBtn = screen.getByRole("button", { name: "Job-Suche starten" }) as HTMLButtonElement;
+    const searchSelect = document.getElementById("cv-saved-search-profile") as HTMLSelectElement;
+
+    // Nach dem Speichern ist das Profil auto-selektiert -> Start aktiv
+    expect(searchSelect.value).not.toBe("");
+    expect(startBtn.disabled).toBe(false);
+
+    // Auswahl zurueck auf Placeholder -> Start gesperrt + Hinweis sichtbar
+    fireEvent.change(searchSelect, { target: { value: "" } });
+    expect(startBtn.disabled).toBe(true);
+    expect(screen.getByText(/Wähle zuerst ein CV-Profil/)).toBeTruthy();
+    const callsBefore = vi.mocked(fetchJobs).mock.calls.length;
+    fireEvent.click(startBtn); // gesperrt, kein Call
+    expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore);
+
+    // wieder auswaehlen -> Start aktiv
+    fireEvent.change(searchSelect, {
+      target: { value: (searchSelect.querySelector("option:not([value=''])") as HTMLOptionElement).value },
+    });
+    expect(startBtn.disabled).toBe(false);
+    fireEvent.click(startBtn);
+    await waitFor(() => expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore + 1));
+  });
+
   it("CV-UPLOAD-UX-08: 'Job-Suche starten' nutzt das gewaehlte gespeicherte Suchprofil", async () => {
     mockProfile();
     vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });

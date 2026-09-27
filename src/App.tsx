@@ -452,6 +452,9 @@ export default function App() {
     purgeLegacyCvListsFromLocalStorage();
     setProfilesDocId(null);
     setAtsProfileName("");
+    // CV-UPLOAD-UX-10: Auswahl-IDs zuruecksetzen (Listen sind entfernt)
+    setSelectedSavedSearchId(null);
+    setActiveAtsEntryId(null);
     setConsentDismissed(false);
     setCvState({
       step: "idle",
@@ -542,14 +545,15 @@ export default function App() {
     }));
   };
 
-  // CV-UPLOAD-UX-08: Jobsuche mit dem gewaehlten gespeicherten Suchprofil
-  // starten (Fallback: aktuelle Suchmaske).
+  // CV-UPLOAD-UX-08/10: Jobsuche startet nur mit einem gewaehlten
+  // gespeicherten Suchprofil (kein Start mit leerer Auswahl).
   const startSearchWithSavedProfile = () => {
     const doc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0];
     const lists = readCvProfileLists(doc?.hash ?? null);
     const entry = lists.searchProfiles.find((e) => e.id === selectedSavedSearchId);
-    if (entry) handleProfileChange(entry.profile);
-    handleSubmit(entry?.profile ?? profile);
+    if (!entry) return; // Schutz: ohne gewaehltes Profil kein Start
+    handleProfileChange(entry.profile);
+    handleSubmit(entry.profile);
   };
 
   const handleCvProcess = () => {
@@ -1207,6 +1211,13 @@ export default function App() {
   const listSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
   const activeAtsEntry =
     listSourceLists.atsProfiles.find((e) => e.id === activeAtsEntryId) ?? null;
+  const listSourceDocId = listSourceDoc?.id ?? null;
+  // ATS-PROFILE-INVESTIGATION-01 (Befund a): beim Wechsel des Quelldokuments
+  // zeigen bestehende Auswahl-IDs auf fremde Listen -> Auswahl zuruecksetzen.
+  useEffect(() => {
+    setSelectedSavedSearchId(null);
+    setActiveAtsEntryId(null);
+  }, [listSourceDocId]);
 
   const searchCard = (
     <section className="card search-card">
@@ -1285,14 +1296,23 @@ export default function App() {
                 </div>
               </div>
             )}
-            <button
-              type="button"
-              className="cv-continue-btn cv-saved-profiles__start"
-              onClick={startSearchWithSavedProfile}
-              disabled={cvState.isProcessing}
-            >
-              {t("cv.startSearch")}
-            </button>
+            {/* CV-UPLOAD-UX-10: Start erst mit gewaehltem Suchprofil;
+                Hinweis, solange nichts ausgewaehlt ist */}
+            {listSourceLists.searchProfiles.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  className="cv-continue-btn cv-saved-profiles__start"
+                  onClick={startSearchWithSavedProfile}
+                  disabled={cvState.isProcessing || !selectedSavedSearchId}
+                >
+                  {t("cv.startSearch")}
+                </button>
+                {!selectedSavedSearchId && (
+                  <p className="cv-saved-profiles__hint">{t("cv.startSearchHint")}</p>
+                )}
+              </>
+            )}
           </div>
         )}
       <JobSources jobs={foundJobs} />
