@@ -286,3 +286,34 @@ git push origin main
 ---
 
 **NEXT STEP**: Run git add, commit, and push to complete CONSENT-PRIVACY-01.
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### CONSENT-PRIVACY-01 — SEMANTIC CSS MIGRATION FOR CONSENTGATE & PRIVACYNOTICE
+- Date: 2026-09-18
+- Task: CONSENT-PRIVACY-01
+- Purpose: Migrate ConsentGate and PrivacyNotice from non-functional Tailwind-like classNames to semantic CSS using existing design token system
+- Components affected: ConsentGate.tsx, PrivacyNotice.tsx
+- Implementation:
+  - Added 5 PrivacyNotice semantic tokens to :root (--privacy-bg, --privacy-border, --privacy-title, --privacy-text, --privacy-meta)
+  - Added ConsentGate styles using existing tokens (--surface, --border, --radius, --shadow, --text, --muted, --border-form, --brand, --btn-gradient-primary)
+  - Added PrivacyNotice styles using new privacy tokens + existing --radius
+  - Replaced all Tailwind-like className values in both components with semantic CSS classes
+  - ConsentGate: .consent-gate, .consent-gate__title, .consent-gate__description, .consent-gate__list, .consent-gate__list-item, .consent-gate__meta, .consent-gate__consent, .consent-gate__checkbox, .consent-gate__consent-text, .consent-gate__action
+  - PrivacyNotice: .privacy-notice, .privacy-notice__title, .privacy-notice__description, .privacy-notice__list, .privacy-notice__list-item, .privacy-notice__meta
+  - ConsentGate button uses existing primary button gradient (--btn-gradient-primary) with full hover/active/focus states
+  - Removed all non-functional Tailwind-like classNames (bg-white, rounded-lg, p-4, shadow-sm, border, mb-4, font-semibold, mb-2, text-sm, text-gray-600, mb-3, text-xs, text-gray-500, flex, items-center, gap-2, rounded, border-gray-300, px-4, py-2, bg-blue-600, text-white, rounded, hover:bg-blue-700, disabled:opacity-50, disabled:cursor-not-allowed, bg-yellow-50, border, border-yellow-200, rounded-lg, p-4, mb-4, font-semibold, text-yellow-800, mb-2, text-sm, text-yellow-700, mb-2, list-disc, list-inside, text-xs, text-yellow-600)
+- Tokens created: 5 PrivacyNotice tokens (--privacy-bg: #fefce8, --privacy-border: #fde047, --privacy-title: #854d0e, --privacy-text: #a16207, --privacy-meta: #ca8a04)
+- Files changed: src/styles.css (5 tokens + ~180 lines component styles), src/components/ConsentGate.tsx, src/components/PrivacyNotice.tsx, docs/AI_AUDITLOG.md
+- Visual preservation: ConsentGate uses existing design system (white surface, turquoise primary button); PrivacyNotice uses semantic yellow/warning palette matching original intent
+- Accessibility: Buttons remain <button>, checkbox remains <input type="checkbox"> with label association, focus-visible outlines preserved, keyboard navigation intact, sufficient contrast maintained
+- Tests: 348 passed
+- TypeScript: Passed
+- Build: Passed (385ms)
+- git diff --check: Clean
+- Git state: Committed, pushed, synchronized
+- Execution log: docs/reports/CONSENT-PRIVACY-01-EXECUTION_LOG.md
+- Classification: GREEN — Implementation complete, all validations pass
+- Next: Tokenize remaining hardcoded values; create design-system scales for primitive adoption

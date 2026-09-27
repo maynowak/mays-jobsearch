@@ -150,3 +150,37 @@ image-set(
 
 **Date**: 2026-09-18
 **Status**: COMPLETED
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### HERO-IMAGE-02 — HERO IMAGE OPTIMIZATION
+- Date: 2026-09-18
+- Task: HERO-IMAGE-02
+- Purpose: Optimize hero images with PNG compression and WebP generation
+- Scope: Minimal architecture change — compress PNG, generate WebP, integrate via CSS image-set()
+- Tools: sharp (Node.js) for PNG compression + WebP generation at 85% quality
+- Assets optimized:
+  - job-matcher-next-step.png: 1.96 MB → 1.71 MB (8.4% PNG savings) + 114 KB WebP (94.1% savings)
+  - job-matcher-next-step-searchpage.png: 1.81 MB → 1.62 MB (10.6% PNG savings) + 96 KB WebP (95.0% savings)
+- Total payload reduction: 3.86 MB → 0.21 MB WebP (94.5% reduction)
+- CSS integration: Updated 4 background-image declarations to use image-set() with WebP primary + PNG fallback
+  - .hero, .search-hero (desktop + mobile), .landing-hero
+- Build pipeline: Added sharp dev dependency; WebP files served from public/ via Vite
+- CSS integration method: image-set() with WebP primary + PNG fallback
+  ```css
+  image-set(
+    url("/job-matcher-next-step.webp") type("image/webp"),
+    url("assets/images/job-matcher-next-step.png") type("image/png")
+  )
+  ```
+- Files changed: src/assets/images/ (2 PNG + 2 WebP), public/ (2 WebP), src/styles.css (4 image-set updates), package.json, package-lock.json
+- Tests: 348 passed
+- TypeScript: Passed
+- Build: Passed (332ms)
+- git diff --check: Clean
+- Git state: Committed (63a3412, 9c1c0e5), pushed, synchronized
+- Execution log: docs/reports/HERO-IMAGE-02-EXECUTION_LOG.md
+- Classification: GREEN — Implementation complete, all validations pass
+- Next: HERO-IMAGE-03 (integration verification) → SEARCH-VISUAL-01

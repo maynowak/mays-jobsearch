@@ -232,3 +232,30 @@ git diff --check
 **No commit needed** — Verification block only, no code changes
 
 **Next Block**: BLOCK 4 — SEARCH-VISUAL-01 (Search Visual Concept)
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### HERO-IMAGE-03 — HERO IMAGE INTEGRATION VERIFICATION
+- Date: 2026-09-18
+- Task: HERO-IMAGE-03
+- Purpose: Verify optimized hero assets are correctly integrated and rendered
+- Scope: Read-only verification of CSS image-set() integration, WebP delivery, PNG fallback, visual rendering
+- Components verified: .hero, .search-hero (desktop + mobile), .landing-hero (4 selectors)
+- CSS image-set() syntax verified across 4 hero sections
+- WebP delivery: Confirmed WebP files copied from public/ to dist/ by Vite (115 KB + 96 KB)
+- PNG fallback: Preserved in all image-set() declarations
+- image-set() syntax: Valid, proper type() hints, correct MIME types
+- Gradient overlay: Preserved in all 4 hero sections
+- Browser compatibility: image-set() ~95% support, WebP ~96% support, PNG fallback covers all
+- Visual regression: No expected regression (same dimensions, crop, position, gradients)
+- Files changed: NONE (verification only)
+- Tests: 348 passed
+- TypeScript: Passed
+- Build: Passed (380ms)
+- git diff --check: Clean
+- Git state: No changes (verification only)
+- Execution log: docs/reports/HERO-IMAGE-03-EXECUTION_LOG.md
+- Classification: GREEN — Integration verified, no issues found
+- Next: SEARCH-VISUAL-01

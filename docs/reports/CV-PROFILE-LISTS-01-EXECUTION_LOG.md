@@ -85,3 +85,48 @@ PENDING
 
 ## Resume point
 Implementierung laeuft; naechster Schritt: cvProfileStore.ts + Typen.
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### CV-PROFILE-LISTS-01 — BENANNTE PROFIL-LISTEN PRO CV (SUCHPROFILE + ATS-PROFILE)
+- Date: 2026-09-26
+- Task: CV-PROFILE-LISTS-01 (User-Feature-Request)
+- Purpose: Suchprofile und ATS-Matching-Profile (bestaetigte Skills) sollen
+  benennbar an das jeweilige CV gehaengt und in Listen gespeichert werden;
+  pro CV aufrufbar als Overlay (Titel = CV-Name, "Profil anzeigen"-Button,
+  zwei Tabellen nebeneinander mit Auswahl, Detailansicht darunter).
+- Umsetzung:
+  - Neuer Store src/lib/cvProfileStore.ts (localStorage, Key mj-cv-lists:<hash>;
+    Hash = SHA-256 des anonymisierten/normalisierten CV-Textes — stabile
+    Zuordnung je CV-Inhalt ueber Sessions). Typen CvSearchProfileEntry
+    (Name, Profil, savedAt) / CvAtsProfileEntry (Name, Skills, Zielrolle,
+    savedAt); max. 50 Eintraege je Liste; korrupte Daten -> leere Liste.
+  - CvDocument.hash: wird bei der Profil-Erstellung (createProfileFromPdf)
+    gesetzt; vorher keine Listen moeglich.
+  - Speicherpunkt Suchprofil: profile-ready -> neuer Name-Input
+    (Default: Zielrolle) -> "Profil übernehmen und Jobs finden" speichert
+    den benannten Eintrag.
+  - Speicherpunkt ATS-Profil: skill-selection bei Ziel ATS -> neuer
+    Name-Input (Default: erster Skill) -> Confirm speichert Eintrag mit den
+    bestaetigten Skills, danach startet die Analyse (CV-UPLOAD-UX-04).
+  - Neues Overlay src/components/CvProfilesOverlay.tsx (Muster .modal):
+    Titel = Dateiname; Button "Profil anzeigen" (neustes Suchprofil);
+    zwei Tabellen (Suchprofile | ATS-Profile, mobil gestapelt) mit
+    Auswahl pro Zeile; Detailbereich darunter wechselt je nach Thema.
+  - Einstieg: CvDocumentList pro Zeile "Profile anzeigen" (reine
+    Lese-Ansicht, bewusst nicht an Workflow-Status gekoppelt).
+- Consent-/Privacy-/Contract-Bezug: keine Aenderung — Speicher lokal, nur
+  anonymisierte/bestaetigte Profildaten, keine CV-Datei, kein externer Call.
+- Files changed: src/lib/cvProfileStore.ts (neu), src/lib/cvProfileStore.test.ts
+  (neu), src/components/CvProfilesOverlay.tsx (neu),
+  src/components/CvProfileResult.tsx, src/components/CvDocumentList.tsx,
+  src/App.tsx, src/types.ts, src/i18n.tsx (16 neue Keys de/en),
+  src/styles.css, src/App.test.tsx (3 neue Flow-Tests + Store-Isolation im
+  beforeEach), src/components/CvDocumentList.test.tsx (Prop),
+  docs/AI_AUDITLOG.md, docs/reports/CV-PROFILE-LISTS-01-EXECUTION_LOG.md
+- Tests: 499/499 PASS; TypeScript PASS; Build PASS; git diff --check CLEAN
+- Classification: GREEN — Feature vollstaendig umgesetzt und getestet.
+- Offene Folgearbeit (notiert): Eintraege umbenennen/loeschen; Listen im
+  Overlay verlinken auf Suche/Analyse (Ausfuehrung direkt aus Eintrag).

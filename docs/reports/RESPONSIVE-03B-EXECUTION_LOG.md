@@ -195,3 +195,38 @@ git diff --check
 ## NEXT BLOCK
 
 **RESPONSIVE-04** (Cross-Device Visual Verification)
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### RESPONSIVE-03B — MOBILE UX EDGE CASES AUDIT
+- Date: 2026-09-18
+- Task: RESPONSIVE-03B
+- Purpose: Audit mobile UX edge cases at very small screens and specific interaction scenarios
+- Scope: Read-only audit of mobile edge cases at 320px and below, keyboard interactions, modals, touch gestures, orientation, safe areas
+- Components inspected: Navigation, Hero, SearchForm, Job Cards, Buttons, Typography, Inputs, Modals, Touch gestures, Safe areas
+- Key findings:
+  - 320px and below: Layout works, typography readable, no horizontal overflow
+  - Long content: overflow-wrap/word-break handles long titles/names, tables scroll horizontally
+  - Keyboard: Input font-sizes < 16px (.field input/select 0.95rem/15.2px, .model-trigger 0.88rem/14px) trigger iOS zoom on focus
+  - Modals: Full-screen, scrollable, appropriate sizing (LetterModal, ATSModal, mobile menu, city suggestions)
+  - Touch gestures: Scroll works, tap works, no swipe/pull-to-refresh
+  - Orientation: clamp() handles fluid scaling, no explicit safe-area handling
+  - Safe areas: iPhone notch/home indicator not handled, viewport-fit not set
+  - Form validation: Button disabled until valid, inline errors readable
+  - Loading states: Spinners on buttons, inline text
+  - Long lists: Standard scroll, city/model selectors max-height 240px with scroll
+- Issues identified:
+  - HIGH: Input font-sizes < 16px (.field input/select 0.95rem/15.2px, .model-trigger 0.88rem/14px) - iOS zoom risk
+  - MEDIUM: Touch targets < 44px (.tag 3×10px, .check-item 6×10px, .btn-ghost ~40px, .mobile-link)
+  - LOW: Safe area insets not handled, no viewport-fit, no explicit orientation handling
+- Files changed: NONE (audit only)
+- Tests: 348 passed
+- TypeScript: Passed
+- Build: Passed (385ms)
+- git diff --check: Clean
+- Git state: No changes (audit only)
+- Execution log: docs/reports/RESPONSIVE-03B-EXECUTION_LOG.md
+- Classification: YELLOW — Audit complete, issues identified requiring future fixes
+- Next: RESPONSIVE-04 (Cross-Device Visual Verification)

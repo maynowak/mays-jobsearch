@@ -272,3 +272,42 @@ git diff --check
 **BLOCK 2 — SEARCH-VISUAL-01** (can start after HERO-IMAGE-02 optimization is complete, or in parallel if desired)
 
 The search page visual enhancement should be implemented after hero images are optimized to avoid compounding performance issues.
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### HERO-IMAGE-01 — HERO IMAGE PERFORMANCE AUDIT
+- Date: 2026-09-18
+- Task: HERO-IMAGE-01
+- Purpose: Audit the hero image performance on the landing and search pages
+- Scope: Read-only audit of hero image assets, CSS references, build pipeline, and delivery
+- Assets inspected: job-matcher-next-step.png, job-matcher-next-step-searchpage.png in src/assets/images/
+- CSS references: .landing-hero, .hero, .search-hero in src/styles.css
+- Build pipeline: Vite (no image optimization configured)
+- Findings:
+  - Two hero images: job-matcher-next-step.png (landing) and job-matcher-next-step-searchpage.png (search)
+  - Both are 1536×1024 PNG, 8-bit RGB, non-interlaced
+  - File sizes: ~1.96 MB and ~1.90 MB each (~3.86 MB total hero payload)
+  - No compression, no format conversion, no responsive variants in build pipeline
+  - Images copied as-is to dist/ (same file sizes)
+  - CSS background-image usage prevents native responsive images (srcset, picture, format selection)
+  - Search hero .hero uses max-width: 640px container but serves 1536px image
+  - No modern formats (WebP/AVIF) generated
+  - No responsive variants for different viewports
+- Root cause: PNG format for photographic content, no build-time optimization, CSS background-image prevents native responsive images
+- Optimization options documented:
+  - Option A: Lossless PNG compression (quick win, ~30-50% reduction)
+  - Option B: WebP conversion at 85% quality (recommended, ~70-80% reduction)
+  - Option C: Responsive WebP + <picture> fallback (best practice, requires architecture change)
+  - Option D: AVIF + WebP + JPEG (maximum compression, complex pipeline)
+- Recommended immediate: Option A + B (compress PNG + generate WebP) with CSS fallback
+- Future: Option C (responsive <picture> + srcset) requires architecture change
+- Files changed: NONE (audit only)
+- Tests: 348 passed (baseline maintained)
+- TypeScript: Passed
+- Build: Passed (347ms)
+- git diff --check: Clean
+- Git state: No changes (audit only)
+- Execution log: docs/reports/HERO-IMAGE-01-EXECUTION_LOG.md
+- Classification: YELLOW — Audit complete, optimization needed, implementation in next block

@@ -266,3 +266,28 @@ Option 1 is most consistent with the current codebase architecture and design-sy
 - Baseline maintained (348 tests passing, TypeScript clean, build passing)
 - Execution log created: docs/reports/DESIGN-SYSTEM-08-EXECUTION_LOG.md
 - AI_AUDITLOG.md updated with DESIGN-SYSTEM-08 entry
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### DESIGN-SYSTEM-08 — CONSENTGATE / PRIVACYNOTICE AUDIT
+- Date: 2026-09-18
+- Task: DESIGN-SYSTEM-08
+- Purpose: Audit and tokenize ConsentGate and PrivacyNotice visual styling
+- Components inspected: ConsentGate.tsx, PrivacyNotice.tsx
+- Styling mechanism found: Tailwind-like utility classes in JSX className attributes
+- Critical finding: Tailwind CSS is NOT configured in the project (no tailwindcss dependency, no PostCSS config, no tailwind.config.js, no @tailwind directives in CSS). The utility classes are non-functional dead code.
+- Tokens created: NONE (implementation deferred per task constraints)
+- Implementation decision: DEFERRED — Proper tokenization would require either (A) adding Tailwind to build (major architectural change, violates "no Tailwind migration" constraint) or (B) rewriting components to use CSS classes with design tokens (rewriting component structure, violates "no component structure rewrite" constraint). Per task instructions: "If the audit shows that direct tokenization... would require... rewriting component structure... then STOP implementation."
+- Files changed: NONE (audit only)
+- Visual preservation: N/A (components currently render with browser defaults due to non-functional classNames)
+- Tests: 348 passed (baseline maintained)
+- TypeScript: Passed (baseline maintained)
+- Build: Passed (358ms, baseline maintained)
+- git diff --check: Clean (no tracked file changes)
+- Git state: No commit, no push (audit only)
+- Scope: Audit only. All design-system areas (DS-01 through DS-07) remain untouched.
+- Classification: GRAY — Finding documented, implementation correctly deferred per task constraints
+- Risk: Components currently render unstyled (browser defaults) due to non-functional Tailwind-like classNames
+- Recommended next step: Properly style components using existing CSS custom property design system — create semantic tokens, add CSS selectors to styles.css, replace classNames with semantic CSS classes

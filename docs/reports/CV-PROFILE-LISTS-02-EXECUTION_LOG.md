@@ -50,3 +50,32 @@ PENDING
 
 ## Classification
 PENDING
+
+---
+
+## AI_AUDITLOG.md-Eintrag (AUDITLOG-CLEANUP-01, verschoben aus docs/AI_AUDITLOG.md)
+
+### CV-PROFILE-LISTS-02 — LISTEN NUR SESSION-SPEICHER + 12H-AUTO-LOESCHUNG (PRIVACY)
+- Date: 2026-09-26
+- Task: CV-PROFILE-LISTS-02 (User-Request, Datenschutz)
+- Purpose: Die Profil-Listen duerfen einen Reload NICHT ueberleben (nur
+  Fehler-/Fremdnutzer-Fall) und sollen 12 Stunden nach Verarbeitung eines
+  CVs von selbst geleert werden — auch bei offenem Browser.
+- Umsetzung:
+  - cvProfileStore.ts von localStorage auf MEMORY (module-level Map)
+    umgestellt -> Reload entfernt alles automatisch.
+  - TTL: Bucket je CV-Hash mit festem expiresAt (= erste Verarbeitung + 12h;
+    weitere Saves verlaengern NICHT). Lazy-Purge bei jedem Zugriff.
+  - Neue API: resetCvProfileLists() (sofort leeren; Grundlage fuer UX-04),
+    purgeLegacyCvListsFromLocalStorage() (entfernt mj-cv-lists:*-Altlasten
+    aus v1; laeuft einmalig beim App-Start).
+  - Overlay: Transparenz-Hinweis (cv.profilesPrivacyNote, de/en).
+- Consent-/Contract-Bezug: keine Aenderung; datenschutzfreundlicher als v1
+  (weniger Persistenz).
+- Files changed: src/lib/cvProfileStore.ts (Memory+TTL), src/App.tsx,
+  src/components/CvProfilesOverlay.tsx, src/i18n.tsx,
+  src/lib/cvProfileStore.test.ts (TTL-/Purge-/Reset-Tests),
+  src/App.test.tsx (Test-Isolation via resetCvProfileLists()),
+  docs/AI_AUDITLOG.md, docs/reports/CV-PROFILE-LISTS-02-EXECUTION_LOG.md
+- Tests: 503/503 PASS; TypeScript PASS; Build PASS; diff --check CLEAN
+- Classification: GREEN — Listen nur noch sessionbasiert + 12h-Auto-Leerung.
