@@ -50,7 +50,9 @@ export default function CvProfileResult({
     onConfirm(
       {
         skills: formatSkills(parsedSkills),
-        targetRole: suggested.targetRoles[0] || "",
+        // CV-UPLOAD-UX-11: das BEARBEITETE Feld gilt (vorher: immer der
+        // vorgeschlagene Wert — Zielrolle war faktisch nicht entfernbar)
+        targetRole: targetRoles.split(",")[0]?.trim() ?? "",
         city: city.trim(),
         radiusKm,
         workModes: [],

@@ -1406,6 +1406,33 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(names).toEqual(["Frontend - Profil1"]);
   });
 
+  it("CV-UPLOAD-UX-11: Zielrolle im Suchprofil ist editier-/entfernbar", async () => {
+    mockProfile();
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+
+    // Zielrolle komplett leeren und speichern
+    const roleInput = document.getElementById("cv-targetRole") as HTMLInputElement;
+    expect(roleInput.value).toBe("Frontend");
+    fireEvent.change(roleInput, { target: { value: "" } });
+    expect(roleInput.value).toBe("");
+    confirmProfileInOverlay();
+
+    // Gespeicherter Eintrag traegt die geleerte Zielrolle (kein Fallback)
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    const searchSection = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
+    fireEvent.click(searchSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
+    const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
+    expect(details.textContent).toContain("- Profil1"); // Default-Name hat Rolle noch enthalten
+    expect(details.textContent).toContain("Zielrolle—"); // gespeicherte Zielrolle leer
+  });
+
   it("CV-UPLOAD-UX-10: Suche startet erst mit gewaehltem Profil (Auswahl bleibt Pflicht)", async () => {
     mockProfile();
     vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
