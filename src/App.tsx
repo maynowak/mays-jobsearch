@@ -65,6 +65,9 @@ export default function App() {
   const [profilesDocId, setProfilesDocId] = useState<string | null>(null);
   // Name fuer den ATS-Profil-Eintrag (Skills-Step bei Ziel ATS)
   const [atsProfileName, setAtsProfileName] = useState("");
+  // CV-UPLOAD-UX-07: aktiv gewaehltes ATS-Profil (Liste des CVs) — wird bei
+  // der per-Job-ATS-Analyse (AtsOverlay) als Profil verwendet.
+  const [activeAtsEntryId, setActiveAtsEntryId] = useState<string | null>(null);
   // Consent-Overlay (BUG-07): Benutzer kann das Overlay schließen, ohne die
   // Zustimmung zu erteilen. Der Consent bleibt dann ausstehend und kann über
   // "Einwilligung anzeigen" erneut geöffnet werden.
@@ -676,22 +679,29 @@ export default function App() {
     if (cvState.selectedSkills.length === 0) {
       return;
     }
-    // CV-UPLOAD-UX-04: ATS-Ziel — erst nach der Skills-Bestaetigung startet
-    // die Analyse (mit den bestaetigten Skills als Anforderungsbasis).
+    // CV-UPLOAD-UX-04/07: ATS-Ziel — die bestaetigten Skills werden als
+    // benanntes ATS-Profil gespeichert (CV-PROFILE-LISTS-01) und der Workflow
+    // SCHLIESST danach zum CV-Bereich; keine automatische Analyse mehr an
+    // dieser Stelle (ATS-Analyse laeuft pro Treffer-Job, s. AtsOverlay).
     if (cvState.processingGoal === "ats") {
-      // CV-PROFILE-LISTS-01: ATS-Profil (bestaetigte Skills) unter seinem
-      // Namen an das CV haengen.
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
+      let savedName: string | null = null;
       if (doc?.hash) {
-        saveCvAtsProfile(
-          doc.hash,
-          atsProfileName,
-          cvState.selectedSkills,
-          cvState.cvProfile?.targetRole ?? cvState.suggestedProfile?.targetRoles[0] ?? ""
-        );
+        savedName =
+          saveCvAtsProfile(
+            doc.hash,
+            atsProfileName,
+            cvState.selectedSkills,
+            cvState.cvProfile?.targetRole ?? cvState.suggestedProfile?.targetRoles[0] ?? ""
+          )?.name ?? null;
       }
-      setCvState((prev) => ({ ...prev, step: "ats-processing", isProcessing: true, error: null }));
-      runAtsProcessing(t);
+      setCvState((prev) => ({
+        ...prev,
+        step: "document-selected",
+        isProcessing: false,
+        error: null,
+      }));
+      setStatus({ type: "info", message: t("cv.atsProfileSaved", { name: savedName ?? "" }) });
       return;
     }
     setCvState((prev) => ({ ...prev, isProcessing: true }));
@@ -1149,6 +1159,13 @@ export default function App() {
     </section>
   );
 
+  // CV-UPLOAD-UX-07: Quelle der gespeicherten Listen = erstes ausgewaehltes
+  // Dokument (Fallback: erstes Dokument); Zuordnung ueber Inhalts-Hash.
+  const listSourceDoc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0] ?? null;
+  const listSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
+  const activeAtsEntry =
+    listSourceLists.atsProfiles.find((e) => e.id === activeAtsEntryId) ?? null;
+
   // CV Processing UI - rendered when CV flow is active
   // BUG-14..19 + CV-UPLOAD-UX-02: EIN gemeinsames Overlay für den
   // CV-Verarbeitungs-Workflow auf ALLEN Viewports (Inhalt wechselt je nach
@@ -1204,6 +1221,57 @@ export default function App() {
       {/* BUG-07: Die Liste bleibt auch im Consent-Schritt sichtbar (disabled),
           damit das hochgeladene Dokument nach dem Schließen des Overlays
           erhalten und sichtbar bleibt. */}
+      {/* CV-UPLOAD-UX-07: gespeicherte Profile des CVs auswaehlbar machen —
+          Suchprofil (uebernimmt Werte in die Suchmaske) + ATS-Profil (aktiv
+          fuer per-Job-ATS-Analysen). Oberhalb der Dokumentliste. */}
+      {cvState.step === "document-selected" &&
+        listSourceDoc?.hash &&
+        (listSourceLists.searchProfiles.length > 0 || listSourceLists.atsProfiles.length > 0) && (
+          <div className="cv-saved-profiles" role="region" aria-label={t("cv.profilesRegionAria")}>
+            {listSourceLists.searchProfiles.length > 0 && (
+              <div className="field cv-saved-profiles__field">
+                <label htmlFor="cv-saved-search-profile">{t("cv.chooseSearchProfile")}</label>
+                <select
+                  id="cv-saved-search-profile"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const entry = listSourceLists.searchProfiles.find(
+                      (en) => en.id === e.target.value
+                    );
+                    if (entry) setProfile(entry.profile);
+                  }}
+                  disabled={cvState.isProcessing}
+                >
+                  <option value="">{t("cv.choosePlaceholder")}</option>
+                  {listSourceLists.searchProfiles.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {listSourceLists.atsProfiles.length > 0 && (
+              <div className="field cv-saved-profiles__field">
+                <label htmlFor="cv-saved-ats-profile">{t("cv.chooseAtsProfile")}</label>
+                <select
+                  id="cv-saved-ats-profile"
+                  value={activeAtsEntryId ?? ""}
+                  onChange={(e) => setActiveAtsEntryId(e.target.value || null)}
+                  disabled={cvState.isProcessing}
+                >
+                  <option value="">{t("cv.choosePlaceholder")}</option>
+                  {listSourceLists.atsProfiles.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+
       {(cvState.step === "document-selected" || cvState.step === "consent-required") && (
         <CvDocumentList
           documents={cvState.documents}
@@ -2010,10 +2078,23 @@ export default function App() {
         />
       )}
 
-      {atsJob && profile && (
+      {atsJob && (activeAtsEntry || profile) && (
         <ATSModal
           job={atsJob}
-          profile={profile}
+          // CV-UPLOAD-UX-07: gewaehltes ATS-Profil (im CV-Bereich) hat Vorrang
+          // vor dem allgemeinen Suchprofil
+          profile={
+            activeAtsEntry
+              ? {
+                  skills: activeAtsEntry.skills.join(", "),
+                  targetRole: activeAtsEntry.targetRole,
+                  city: "",
+                  radiusKm: null,
+                  workModes: [],
+                  employmentTypes: ["full_time"],
+                }
+              : profile
+          }
           onClose={() => setAtsJob(null)}
         />
       )}
