@@ -9,6 +9,9 @@ interface Props {
   onAddFiles: (files: FileList | File[]) => void;
   onProcess: () => void;
   onSearch: () => void;
+  // CV-PROFILE-LISTS-01: Oeffnet das Profil-Overlay (Suchprofile/ATS-Profile)
+  // fuer das jeweilige CV-Dokument.
+  onShowProfiles: (id: string) => void;
   disabled: boolean;
   processing: boolean;
 }
@@ -20,6 +23,7 @@ export default function CvDocumentList({
   onAddFiles,
   onProcess,
   onSearch,
+  onShowProfiles,
   disabled,
   processing,
 }: Props): React.ReactElement {
@@ -116,6 +120,17 @@ export default function CvDocumentList({
                   </div>
                 </div>
                 <div className="cv-document-list__actions">
+                  {/* CV-PROFILE-LISTS-01: Profil-Listen (Suchprofile/ATS-Profile)
+                      dieses CVs im Overlay anzeigen. Reine Lese-Ansicht —
+                      bewusst NICHT an den Workflow-Status gekoppelt
+                      (auch bei ausstehender Einwilligung verfuegbar). */}
+                  <button
+                    type="button"
+                    className="btn-ghost cv-document-list__profiles"
+                    onClick={() => onShowProfiles(doc.id)}
+                  >
+                    {t("cv.profilesOpen")}
+                  </button>
                   <button
                     type="button"
                     className="cv-document-list__remove"

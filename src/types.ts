@@ -282,6 +282,11 @@ export interface CvDocument {
   selected: boolean;
   file: File;
   skills?: string[];
+  // CV-PROFILE-LISTS-01: SHA-256-Hash des anonymisierten/normalisierten
+  // Textes — stabiler Schluessel fuer die benannten Profil-Listen
+  // (Suchprofile / ATS-Profile) je CV-Inhalt. Wird bei der Profil-Erstellung
+  // gesetzt (solange null/undefined, gibt es keine gespeicherten Listen).
+  hash?: string | null;
 }
 
 export type AnonymizationMode = "anonymized" | "not-anonymized";

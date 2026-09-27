@@ -25,6 +25,7 @@ function renderList(documents: CvDocument[]) {
     onAddFiles: vi.fn(),
     onProcess: vi.fn(),
     onSearch: vi.fn(),
+    onShowProfiles: vi.fn(),
     disabled: false,
     processing: false,
   };

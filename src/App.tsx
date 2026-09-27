@@ -26,6 +26,8 @@ import CvGoalSelection from "./components/CvGoalSelection";
 
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
+import CvProfilesOverlay from "./components/CvProfilesOverlay";
+import { saveCvAtsProfile, saveCvSearchProfile } from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
@@ -59,6 +61,10 @@ export default function App() {
   });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
   const [atsJob, setAtsJob] = useState<Job | null>(null);
+  // CV-PROFILE-LISTS-01: Profil-Overlay pro CV (benannte Such-/ATS-Profile)
+  const [profilesDocId, setProfilesDocId] = useState<string | null>(null);
+  // Name fuer den ATS-Profil-Eintrag (Skills-Step bei Ziel ATS)
+  const [atsProfileName, setAtsProfileName] = useState("");
   // Consent-Overlay (BUG-07): Benutzer kann das Overlay schließen, ohne die
   // Zustimmung zu erteilen. Der Consent bleibt dann ausstehend und kann über
   // "Einwilligung anzeigen" erneut geöffnet werden.
@@ -528,6 +534,13 @@ export default function App() {
       const normalized = normalizeText(processedText);
       const hash = await sha256Hex(normalized);
 
+      // CV-PROFILE-LISTS-01: Hash am Dokument merken — Schluessel fuer die
+      // benannten Profil-Listen (Suchprofile/ATS-Profile) dieses CVs.
+      setCvState((prev) => ({
+        ...prev,
+        documents: prev.documents.map((d) => (d.id === doc.id ? { ...d, hash } : d)),
+      }));
+
       // Determine model to use
       const modelToUse = effectiveModel;
 
@@ -610,6 +623,17 @@ export default function App() {
     // CV-UPLOAD-UX-04: ATS-Ziel — erst nach der Skills-Bestaetigung startet
     // die Analyse (mit den bestaetigten Skills als Anforderungsbasis).
     if (cvState.processingGoal === "ats") {
+      // CV-PROFILE-LISTS-01: ATS-Profil (bestaetigte Skills) unter seinem
+      // Namen an das CV haengen.
+      const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
+      if (doc?.hash) {
+        saveCvAtsProfile(
+          doc.hash,
+          atsProfileName,
+          cvState.selectedSkills,
+          cvState.cvProfile?.targetRole ?? cvState.suggestedProfile?.targetRoles[0] ?? ""
+        );
+      }
       setCvState((prev) => ({ ...prev, step: "ats-processing", isProcessing: true, error: null }));
       runAtsProcessing(t);
       return;
@@ -1132,6 +1156,7 @@ export default function App() {
           onAddFiles={handleAddCvFiles}
           onProcess={handleCvProcess}
           onSearch={handleSearchWithSelectedCvs}
+          onShowProfiles={setProfilesDocId}
           disabled={cvState.isProcessing || cvState.step !== "document-selected"}
           processing={cvState.isProcessing}
         />
@@ -1260,13 +1285,19 @@ export default function App() {
           suggested={cvState.suggestedProfile}
           busy={cvState.isProcessing}
           loadingLabel={t("cv.savingProfile")}
-          onConfirm={(profile) => {
+          onConfirm={(profile, profileName) => {
+            // CV-PROFILE-LISTS-01: Suchprofil unter seinem Namen an das CV
+            // haengen (Schluessel: Inhalts-Hash des anonymisierten Textes).
+            const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
+            if (doc?.hash) {
+              saveCvSearchProfile(doc.hash, profileName, profile);
+            }
             setCvState((prev) => ({
               ...prev,
               cvProfile: profile,
               step: "goal-selection",
               // suggestedProfile bleibt erhalten: der Skill-Auswahl-Step
-              // (ai-search) benötigt die extrahierten Skills (BUG-16).
+              // benötigt die extrahierten Skills (BUG-16).
               fallbackNote: false,
             }));
           }}
@@ -1366,6 +1397,21 @@ export default function App() {
           </div>
           {cvState.selectedSkills.length === 0 && (
             <p className="cv-skill-selection__error">{t("cv.skillSelectNoSkills")}</p>
+          )}
+          {/* CV-PROFILE-LISTS-01: Name fuer den ATS-Profil-Eintrag (Liste des CVs) */}
+          {cvState.processingGoal === "ats" && (
+            <div className="field">
+              <label htmlFor="cv-ats-profile-name">{t("cv.atsProfileNameLabel")}</label>
+              <input
+                id="cv-ats-profile-name"
+                type="text"
+                value={atsProfileName}
+                onChange={(e) => setAtsProfileName(e.target.value)}
+                disabled={cvState.isProcessing}
+                autoComplete="off"
+                placeholder={t("cv.atsProfileNamePlaceholder")}
+              />
+            </div>
           )}
           <div className="cv-skill-selection__actions">
             <button
@@ -1826,6 +1872,11 @@ export default function App() {
     )
   );
 
+  // CV-PROFILE-LISTS-01: Zum Profil-Overlay gehoeriges Dokument aufloesen
+  const profilesDoc = profilesDocId
+    ? (cvState.documents.find((d) => d.id === profilesDocId) ?? null)
+    : null;
+
   return (
     <ErrorBoundary
       title={t("error.boundaryTitle")}
@@ -1874,6 +1925,16 @@ export default function App() {
           job={atsJob}
           profile={profile}
           onClose={() => setAtsJob(null)}
+        />
+      )}
+
+      {/* CV-PROFILE-LISTS-01: Profil-Overlay pro CV (benannte Listen:
+          Suchprofile + ATS-Profile) */}
+      {profilesDoc && (
+        <CvProfilesOverlay
+          docName={profilesDoc.name}
+          docHash={profilesDoc.hash ?? null}
+          onClose={() => setProfilesDocId(null)}
         />
       )}
 

@@ -97,8 +97,10 @@ beforeEach(() => {
   localStorage.setItem("mj-lang", "de");
   // CV-Profil-Cache-Treffer ueber Testgrenzen hinweg unterbinden, damit der
   // Quick-Upload-Pfad deterministisch durch Consent + AI-Call laeuft
+  // CV-PROFILE-LISTS-01: benannte Profil-Listen (mj-cv-lists:*) ebenfalls
+  // isolieren — der Inhalts-Hash ist testuebergreifend gleich.
   Object.keys(localStorage)
-    .filter((k) => k.startsWith("mj-cv-profile:"))
+    .filter((k) => k.startsWith("mj-cv-profile:") || k.startsWith("mj-cv-lists:"))
     .forEach((k) => localStorage.removeItem(k));
   window.history.pushState({}, "", "/top");
   __resetModelsCacheForTests();
@@ -1072,6 +1074,131 @@ describe("CV workflow", () => {
     expect(screen.getByText("cv.pdf")).toBeTruthy();
     // beide Dokumente haben Checkboxen
     expect(document.querySelectorAll(".cv-document-list__checkbox").length).toBe(2);
+  });
+});
+
+describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
+  function mockProfile() {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+  }
+
+  async function backToDocumentList() {
+    // goal-selection -> profile-ready -> document-selected (Liste inline)
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zum Profil" }));
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zum Bearbeiten" }));
+    await screen.findByText("Deine Lebensläufe");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+  }
+
+  it("Suchprofil wird benannt gespeichert und im Overlay des CVs angezeigt", async () => {
+    mockProfile();
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+
+    // CV-PROFILE-LISTS-01: Name fuer den Listen-Eintrag vergeben
+    const nameInput = document.getElementById("cv-profile-name") as HTMLInputElement;
+    expect(nameInput.value).toBe("Frontend"); // Vorschlag: Zielrolle
+    fireEvent.change(nameInput, { target: { value: "Frontend Berlin" } });
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+
+    await backToDocumentList();
+
+    // Overlay des CVs oeffnen: Titel = Dateiname
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
+
+    // Suchprofile-Tabelle enthaelt den benannten Eintrag
+    expect(screen.getByText("Suchprofile")).toBeTruthy();
+    expect(screen.getByText("Frontend Berlin")).toBeTruthy();
+    expect(screen.getByText("ATS-Matching-Profile")).toBeTruthy();
+
+    // "Profil anzeigen" blendet das neueste Suchprofil ein/aus
+    const toggle = screen.getByRole("button", { name: "Profil anzeigen" });
+    fireEvent.click(toggle);
+    expect(screen.getByText("Frontend")).toBeTruthy();
+
+    // Auswahl des Eintrags -> Detailbereich (Thema Suchprofil)
+    fireEvent.click(screen.getByRole("button", { name: "Anzeigen" }));
+    const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
+    expect(details.textContent).toContain("Suchprofil: Frontend Berlin");
+    expect(details.textContent).toContain("React");
+    expect(details.textContent).toContain("Berlin");
+  });
+
+  it("ATS-Profil (bestaetigte Skills) wird benannt gespeichert und im Overlay angezeigt", async () => {
+    mockProfile();
+    vi.mocked(analyzeATS).mockResolvedValue({
+      analysis: { score: 80, keywordCoverage: { overall: 75 }, criticalGaps: [], requirements: [], matches: [] },
+      recommendations: [],
+      ai: { requested: false, executed: false, consentRequired: true, consentGiven: false, externalProcessing: false, dataMinimized: true },
+    } as never);
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+
+    // Ziel ATS (Default) -> Ziel ausfuehren -> Skills-Step (CV-UPLOAD-UX-04)
+    fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+    await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
+
+    // CV-PROFILE-LISTS-01: Name fuer den ATS-Profil-Eintrag vergeben
+    fireEvent.change(document.getElementById("cv-ats-profile-name") as HTMLInputElement, {
+      target: { value: "React ATS" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
+
+    // ATS laeuft an -> ats-complete -> ATS-Overlay schliessen -> zur Liste
+    await waitFor(() => expect(vi.mocked(analyzeATS)).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.getByRole("dialog", { name: /ATS/ })).toBeTruthy()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+
+    // Overlay: ATS-Tabelle enthaelt den benannten Eintrag
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
+    expect(screen.getByText("React ATS")).toBeTruthy();
+
+    // Auswahl (ATS-Tabelle) -> Detailbereich (Thema ATS-Profil) zeigt die Skills
+    const atsSection = document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement;
+    fireEvent.click(atsSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
+    const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
+    expect(details.textContent).toContain("ATS-Matching-Profil: React ATS");
+    expect(details.querySelector(".tag")?.textContent).toBe("React");
+  });
+
+  it("Overlay ohne gespeicherte Listen zeigt leere Zustaende", async () => {
+    mockProfile();
+    renderApp();
+
+    // Upload, aber Workflow nicht durchlaufen (kein Hash/Profil gespeichert)
+    await uploadCvToConsent();
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await screen.findByText(/Zustimmung ausstehend/);
+
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    const dialog = await screen.findByRole("dialog", { name: /cv\.pdf/ });
+    expect(dialog.textContent).toContain("Noch keine Einträge gespeichert.");
+    expect(screen.getByText("Profil anzeigen")).toBeTruthy();
+    // Schliessen per X
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    expect(screen.queryByRole("dialog", { name: /cv\.pdf/ })).toBeNull();
   });
 });
 

@@ -9,7 +9,9 @@ interface Props {
   suggested: SuggestedProfile;
   busy: boolean;
   loadingLabel: string;
-  onConfirm: (profile: Profile) => void;
+  // CV-PROFILE-LISTS-01: Beim Uebernehmen wird das Suchprofil unter diesem
+  // Namen in der Liste des CVs gespeichert.
+  onConfirm: (profile: Profile, profileName: string) => void;
   onBack: () => void;
 }
 
@@ -26,6 +28,8 @@ export default function CvProfileResult({
   const [targetRoles, setTargetRoles] = useState(suggested.targetRoles.join(", "));
   const [cityValue, setCityValue] = useState(suggested.location);
   const [radiusKm, setRadiusKm] = useState<number | null>(null);
+  // CV-PROFILE-LISTS-01: Name fuer den Listen-Eintrag des Suchprofils
+  const [profileName, setProfileName] = useState(() => suggested.targetRoles[0] ?? "");
   const {
     city,
     suggestions,
@@ -39,14 +43,17 @@ export default function CvProfileResult({
   } = useCityAutocomplete(cityValue, setCityValue);
 
   const confirm = () => {
-    onConfirm({
-      skills: formatSkills(parsedSkills),
-      targetRole: suggested.targetRoles[0] || "",
-      city: city.trim(),
-      radiusKm,
-      workModes: [],
-      employmentTypes: ["full_time"],
-    });
+    onConfirm(
+      {
+        skills: formatSkills(parsedSkills),
+        targetRole: suggested.targetRoles[0] || "",
+        city: city.trim(),
+        radiusKm,
+        workModes: [],
+        employmentTypes: ["full_time"],
+      },
+      profileName
+    );
   };
 
   return (
@@ -154,6 +161,19 @@ export default function CvProfileResult({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="field">
+        <label htmlFor="cv-profile-name">{t("cv.profileNameLabel")}</label>
+        <input
+          id="cv-profile-name"
+          type="text"
+          value={profileName}
+          onChange={(e) => setProfileName(e.target.value)}
+          disabled={busy}
+          autoComplete="off"
+          placeholder={t("cv.profileNamePlaceholder")}
+        />
       </div>
 
       <div className="cv-result-actions">
