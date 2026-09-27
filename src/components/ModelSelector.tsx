@@ -76,6 +76,10 @@ export default function ModelSelector({
   const [open, setOpen] = useState(false);
   const [openUp, setOpenUp] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  // MODEL-SELECT-01: fixed-Position aus dem Trigger-Rect, damit die Liste
+  // ueberlaufend ueber dem umgebenden Frame liegt (statt von Overflow-
+  // Vorfahren abgeschnitten zu werden).
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -98,23 +102,31 @@ export default function ModelSelector({
   const selected = state === "ready" ? (models.find((m) => m.id === value) ?? null) : null;
   const count = options.length;
 
+  // MODEL-SELECT-01: Trigger-Position messen und Popover-Koordinaten setzen
+  // (position: fixed ueberlagert jeden Overflow-Container).
+  const measurePopover = () => {
+    const trigger = buttonRef.current;
+    if (!trigger) return;
+    const rowHeight = 37;
+    const maxHeight = 240;
+    const gap = 6;
+    const estHeight = Math.min(maxHeight, count * rowHeight + 12);
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const up = spaceBelow < estHeight + gap && rect.top >= estHeight + gap;
+    setOpenUp(up);
+    setPopoverPos({
+      top: up ? Math.max(8, rect.top - estHeight - gap) : rect.bottom + gap,
+      left: rect.left,
+      width: rect.width,
+    });
+  };
+
   const openList = () => {
     if (disabled) return;
     const start = value ? options.findIndex((m) => m.id === value) : 0;
     setActiveIndex(start >= 0 ? start : 0);
-
-    let up = false;
-    const trigger = buttonRef.current;
-    if (trigger) {
-      const rowHeight = 37;
-      const maxHeight = 240;
-      const gap = 6;
-      const estHeight = Math.min(maxHeight, count * rowHeight + 12);
-      const rect = trigger.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      up = spaceBelow < estHeight + gap && rect.top >= estHeight + gap;
-    }
-    setOpenUp(up);
+    measurePopover();
     setOpen(true);
   };
 
@@ -139,6 +151,19 @@ export default function ModelSelector({
     };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [open]);
+
+  // MODEL-SELECT-01: Position haelt am Trigger — bei Scroll/Resize neu messen.
+  useEffect(() => {
+    if (!open) return;
+    const remeasure = () => measurePopover();
+    window.addEventListener("resize", remeasure);
+    window.addEventListener("scroll", remeasure, true);
+    return () => {
+      window.removeEventListener("resize", remeasure);
+      window.removeEventListener("scroll", remeasure, true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -269,7 +294,14 @@ export default function ModelSelector({
           ref={listRef}
           role="listbox"
           aria-labelledby={labelId}
-          className={`model-popover${openUp ? " model-popover--up" : ""}`}
+          className={`model-popover${openUp ? " model-popover--up" : ""}${
+            popoverPos ? " model-popover--fixed" : ""
+          }`}
+          style={
+            popoverPos
+              ? { top: popoverPos.top, left: popoverPos.left, width: popoverPos.width, right: "auto" }
+              : undefined
+          }
           hidden={!open}
         >
           {recommended ? (

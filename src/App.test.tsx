@@ -754,24 +754,20 @@ describe("CV workflow", () => {
       expect(document.querySelector(".cv-workflow-overlay #cv-goal-execution-title")).toBeTruthy();
     });
 
-    // CV-UPLOAD-UX-04: Skills-Bestaetigung kommt vor der ATS-Ausfuehrung
+    // CV-UPLOAD-UX-06: Alle Skills sind vorausgewaehlt; CV-UPLOAD-UX-07:
+    // Confirm speichert das ATS-Profil und SCHLIESST den Workflow (keine
+    // in-Workflow-Analyse mehr; ATS laeuft pro Treffer-Job)
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
     await waitFor(() => {
       expect(document.getElementById("cv-skill-selection-title")).toBeTruthy();
+      expect(document.querySelector(".cv-workflow-overlay #cv-skill-selection-title")).toBeTruthy();
     });
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
-    // BUG-17: ATS schlägt fehl -> Fehler erscheint im Overlay, nicht im Seitenfluss
-    await waitFor(() => {
-      const overlay = document.querySelector(".cv-workflow-overlay");
-      expect(overlay).toBeTruthy();
-      expect(overlay!.querySelector('[role="alert"]')).toBeTruthy();
-    });
-
-    // UI bleibt bedienbar: Zurück zu Dokumenten funktioniert (Liste ist Inline-Einstieg)
-    fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
+    // Geschlossen: Liste inline sichtbar, Status-Hinweis "gespeichert"
     await screen.findByText("Deine Lebensläufe");
     expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+    expect(screen.getByText(/gespeichert/)).toBeTruthy();
   });
 
   it("BROWSER-BUG-07 (regression): geschlossener Consent -> KEIN Overlay, Hinweis inline", async () => {
@@ -876,6 +872,8 @@ describe("CV workflow", () => {
     // anderes Modell waehlen und direkt erneut starten — ohne erneuten Upload
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
     fireEvent.click(document.querySelector(".cv-model-selection .model-trigger") as HTMLButtonElement);
+    // MODEL-SELECT-01: die geoeffnete Liste liegt ueberlaufend (position: fixed)
+    expect(document.querySelector(".model-popover--fixed")).toBeTruthy();
     fireEvent.click(await screen.findByRole("option", { name: /Modell B/ }));
     const callsBefore = vi.mocked(createProfile).mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> erfolgreich (mit m-b)
@@ -939,40 +937,22 @@ describe("CV workflow", () => {
     confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
 
-    // Modell A nicht verfügbar (transient), nur EIN Mal — der Aufruf erfolgt
-    // erst nach der Skills-Bestaetigung (CV-UPLOAD-UX-04)
-    vi.mocked(analyzeATS).mockRejectedValueOnce(new ApiError("overloaded", 429, "rate_limited"));
+    // CV-UPLOAD-UX-07: ATS-Ziel speichert das ATS-Profil und schliesst den
+    // Workflow — keine Sofort-Analyse mehr (die in-Workflow-Recovery des
+    // ATS-Punkts ist damit ruhend; Modellwahl/Recovery laeuft pro Treffer-Job
+    // im ATS-Overlay, siehe AtsOverlay)
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
     await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
+    expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
-    // ATS-spezifischer Recovery-Punkt statt CV-Anfang
-    await waitFor(() => expect(document.querySelector(".cv-ats-recovery")).toBeTruthy());
-    expect(document.querySelector(".cv-ats-recovery .alert-error")!.textContent).toContain("für diese Analyse momentan nicht verfügbar");
-    expect(document.getElementById("cv-model-selection-title")).toBeNull(); // KEIN Rücksprung in den Model-Step des Profil-Workflows
-    expect(document.querySelector(".cv-error-state")).toBeNull(); // kein generischer Error-State
-    // Modellauswahl am ATS-Punkt sichtbar
-    const recoveryModelTrigger = document.querySelector(".cv-ats-recovery .model-trigger") as HTMLButtonElement;
-    expect(recoveryModelTrigger).toBeTruthy();
-
-    // anderes Modell wählen (Modell B)
-    fireEvent.click(recoveryModelTrigger);
-    fireEvent.click(await screen.findByRole("option", { name: /Modell B/ }));
-    await waitFor(() => {
-      expect((document.querySelector(".cv-ats-recovery .model-trigger") as HTMLButtonElement).textContent).toContain("Modell B");
-    });
-
-    // Nur ATS erneut starten
-    const callsBeforeRetry = vi.mocked(analyzeATS).mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "ATS-Analyse erneut starten" }));
-    await waitFor(() => {
-      expect(vi.mocked(analyzeATS).mock.calls.length).toBeGreaterThan(callsBeforeRetry);
-    });
-    const retryCall = vi.mocked(analyzeATS).mock.calls[callsBeforeRetry];
-    expect(retryCall[2]).toEqual({ enabled: false, model: "m-b" });
-    // Erfolg -> ats-complete (kein Fehler-State)
-    expect(document.querySelector(".cv-error-state")).toBeNull();
-    expect(document.querySelector(".cv-ats-recovery")).toBeNull();
+    // Geschlossen + gespeichert; ATS-Profil im CV-Bereich waehlbar
+    await screen.findByText("Deine Lebensläufe");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+    expect(screen.getByText(/gespeichert/)).toBeTruthy();
+    expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
+    const atsSelect = document.getElementById("cv-saved-ats-profile") as HTMLSelectElement;
+    expect(Array.from(atsSelect.options).map((o) => o.text)).toContain("Frontend - ATS1");
   });
 
   it("BROWSER-BUG-20: ATS-Pfad erhält das bestätigte CV-Profil (kein atsNoProfile)", async () => {
@@ -996,19 +976,25 @@ describe("CV workflow", () => {
     confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
 
-    // ATS ausführen — CV-UPLOAD-UX-04: erst nach der Skills-Bestaetigung
+    // ATS-Ziel -> Skills — CV-UPLOAD-UX-04/07: bestaetigte Skills werden
+    // gespeichert (kein Datenverlust, kein atsNoProfile-Risiko mehr) und der
+    // Workflow schliesst; keine Sofort-Analyse
     fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
     await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
-    // ATS wurde mit dem bestätigten CV-Profil aufgerufen, KEIN atsNoProfile-Fehler
-    await waitFor(() => {
-      expect(vi.mocked(analyzeATS)).toHaveBeenCalled();
-    });
-    const atsCall = vi.mocked(analyzeATS).mock.calls[0];
-    expect(atsCall[1]).toEqual({ skills: "React" });
-    // Anforderungsbasis des synthetischen Jobs = die bestaetigten Skills
-    expect((atsCall[0] as { tags: string[] }).tags).toEqual(["React"]);
+    await screen.findByText("Deine Lebensläufe");
+    expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
+
+    // Das ATS-Profil traegt die bestaetigten Skills + Zielrolle des CV-Profils
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    const atsSection = await screen.findByRole("dialog", { name: /ats-flow\.pdf/ }).then(() =>
+      document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement
+    );
+    fireEvent.click(atsSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
+    const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
+    expect(details.textContent).toContain("React");
+    expect(details.textContent).toContain("Frontend");
     expect(document.querySelector(".cv-error-state")).toBeNull();
   });
 
@@ -1123,9 +1109,11 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
 
-    // Suchprofile-Tabelle enthaelt den benannten Eintrag
+    // Suchprofile-Tabelle enthaelt den benannten Eintrag (gescoped: der
+    // CV-Bereich hat zusaetzlich ein Select mit dem selben Namen)
     expect(screen.getByText("Suchprofile")).toBeTruthy();
-    expect(screen.getByText("Frontend Berlin")).toBeTruthy();
+    const searchSection = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
+    expect(searchSection.textContent).toContain("Frontend Berlin");
     expect(screen.getByText("ATS-Matching-Profile")).toBeTruthy();
 
     // "Profil anzeigen" blendet das neueste Suchprofil ein/aus
@@ -1173,19 +1161,20 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     fireEvent.change(atsNameInput, { target: { value: "React ATS" } });
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
-    // ATS laeuft an -> ats-complete -> ATS-Overlay schliessen -> zur Liste
-    await waitFor(() => expect(vi.mocked(analyzeATS)).toHaveBeenCalled());
-    await waitFor(() =>
-      expect(screen.getByRole("dialog", { name: /ATS/ })).toBeTruthy()
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
-    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
-    await backToDocumentList();
+    // CV-UPLOAD-UX-07: Speichern + Schliessen — KEINE Sofort-Analyse mehr;
+    // das ATS-Profil ist direkt im CV-Bereich auswaehlbar
+    expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
+    await screen.findByText("Deine Lebensläufe");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+    expect(screen.getByText(/gespeichert/)).toBeTruthy();
+    const atsSelect = document.getElementById("cv-saved-ats-profile") as HTMLSelectElement;
+    expect(Array.from(atsSelect.options).map((o) => o.text)).toContain("React ATS");
 
-    // Overlay: ATS-Tabelle enthaelt den benannten Eintrag
+    // Overlay: ATS-Tabelle enthaelt den benannten Eintrag (gescoped)
     fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
-    expect(screen.getByText("React ATS")).toBeTruthy();
+    const atsTable = document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement;
+    expect(atsTable.textContent).toContain("React ATS");
 
     // Auswahl (ATS-Tabelle) -> Detailbereich (Thema ATS-Profil) zeigt die Skills
     const atsSection = document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement;
@@ -1228,7 +1217,9 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     // Liste vorhanden
     fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
-    expect(screen.getByText("Frontend - Profil1")).toBeTruthy();
+    // gescoped auf die Suchprofile-Tabelle (CV-Bereich hat Select mit gleichem Namen)
+    const searchTable = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
+    expect(searchTable.textContent).toContain("Frontend - Profil1");
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
 
     // Entfernen-Button -> Bestaetigung mit Hinweis auf erneutes Hochladen
@@ -1241,7 +1232,8 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(screen.getByText("cv.pdf")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
-    expect(screen.getByText("Frontend - Profil1")).toBeTruthy();
+    const searchTable2 = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
+    expect(searchTable2.textContent).toContain("Frontend - Profil1");
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
 
     // Endgueltig entfernen: Dokumente + Listen weg, CV-Menue schliesst sich
@@ -1293,12 +1285,20 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     fireEvent.click(screen.getByRole("button", { name: "Alle auswählen" }));
     boxes.forEach((b) => expect(b.checked).toBe(true));
 
-    // Einzelabwahl wirkt: ATS laeuft nur mit den gewaehlten Skills
+    // Einzelabwahl wirkt: gespeichertes ATS-Profil traegt nur die gewaehlten
+    // Skills (CV-UPLOAD-UX-07: speichern + schliessen, keine Sofort-Analyse)
     fireEvent.click(boxes[2]); // Node.js abwaehlen
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
-    await waitFor(() => expect(vi.mocked(analyzeATS)).toHaveBeenCalled());
-    const atsCall = vi.mocked(analyzeATS).mock.calls[0];
-    expect((atsCall[0] as { tags: string[] }).tags).toEqual(["React", "TypeScript"]);
+    await screen.findByText("Deine Lebensläufe");
+    expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    const atsSection = document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement;
+    fireEvent.click(atsSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
+    const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
+    expect(details.textContent).toContain("React");
+    expect(details.textContent).toContain("TypeScript");
+    expect(details.textContent).not.toContain("Node.js");
   });
 });
 
