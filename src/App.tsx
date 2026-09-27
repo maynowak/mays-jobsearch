@@ -27,7 +27,7 @@ import CvGoalSelection from "./components/CvGoalSelection";
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
 import CvProfilesOverlay from "./components/CvProfilesOverlay";
-import { saveCvAtsProfile, saveCvSearchProfile } from "./lib/cvProfileStore";
+import { saveCvAtsProfile, saveCvSearchProfile, purgeLegacyCvListsFromLocalStorage, readCvProfileLists, resetCvProfileLists } from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
@@ -132,6 +132,9 @@ export default function App() {
     }
     history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
+    // CV-PROFILE-LISTS-02 (Privacy): Altlasten der v1-Listen im localStorage
+    // einmalig entfernen — die Listen leben jetzt nur im Session-Speicher.
+    purgeLegacyCvListsFromLocalStorage();
   }, []);
 
   // BUG-19: Kein manueller Scroll zwischen CV-Steps. Auf Desktop/Tablet liegt
@@ -434,6 +437,47 @@ export default function App() {
     });
   };
 
+  // CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — Session-Listen
+  // + Legacy-localStorage + Dokumente/Workflow-States. Danach ist ein
+  // erneutes Hochladen noetig (Hinweis im Bestaetigungsdialog).
+  const handleCvRemoveData = () => {
+    resetCvProfileLists();
+    purgeLegacyCvListsFromLocalStorage();
+    setProfilesDocId(null);
+    setAtsProfileName("");
+    setConsentDismissed(false);
+    setCvState({
+      step: "idle",
+      documents: [],
+      selectedDocumentIds: [],
+      consentGiven: false,
+      anonymizationMode: "anonymized",
+      processingGoal: "ats",
+      error: null,
+      errorBackStep: null,
+      profile: null,
+      suggestedProfile: null,
+      fallbackNote: false,
+      isProcessing: false,
+      atsResult: null,
+      aiSearchResult: null,
+      improvementRecommendations: null,
+      selectedImprovementIds: [],
+      improvementResult: null,
+      originalProfile: null,
+      beforeAtsResult: null,
+      afterAtsResult: null,
+      reanalysisResult: null,
+      matchImpactBefore: null,
+      matchImpactAfter: null,
+      matchImpactDelta: null,
+      matchImpactChanges: null,
+      matchImpactJob: null,
+      selectedSkills: [],
+      cvProfile: null,
+    });
+  };
+
   const handleCvProcess = () => {
     const selectedDocs = cvState.documents.filter((d) => d.selected);
     if (!selectedDocs.length) return;
@@ -603,6 +647,15 @@ export default function App() {
     // die ATS-Analyse den CV still gegen seine eigenen (vorgeschlagenen)
     // Skills pruefen — faktisch bedeutungslos. Erst nach dem Skill-Confirm
     // startet die jeweilige Verarbeitung (siehe handleSkillSelectionConfirm).
+    // CV-PROFILE-LISTS-03/05: Namensvorschlag fuer das ATS-Profil —
+    // "<Zielrolle> - ATS1", "<Zielrolle> - ATS2", … (Zaehler aus der ATS-
+    // Liste dieses CVs).
+    if (cvState.processingGoal === "ats") {
+      const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
+      const count = readCvProfileLists(doc?.hash ?? null).atsProfiles.length + 1;
+      const base = cvState.cvProfile?.targetRole || cvState.suggestedProfile?.targetRoles[0] || "ATS";
+      setAtsProfileName(`${base} - ATS${count}`);
+    }
     // isProcessing bleibt false: skill-selection benoetigt bedienbare
     // Checkboxen (BUG-16).
     setCvState((prev) => ({
@@ -1157,6 +1210,7 @@ export default function App() {
           onProcess={handleCvProcess}
           onSearch={handleSearchWithSelectedCvs}
           onShowProfiles={setProfilesDocId}
+          onRemoveData={handleCvRemoveData}
           disabled={cvState.isProcessing || cvState.step !== "document-selected"}
           processing={cvState.isProcessing}
         />
@@ -1285,6 +1339,16 @@ export default function App() {
           suggested={cvState.suggestedProfile}
           busy={cvState.isProcessing}
           loadingLabel={t("cv.savingProfile")}
+          // CV-PROFILE-LISTS-03/05: Namensvorschlag "<Zielrolle> - Profil1",
+          // "<Zielrolle> - Profil2", … (Zaehler aus der Suchprofil-Liste
+          // dieses CVs)
+          defaultName={`${
+            cvState.suggestedProfile.targetRoles[0] || "Profil"
+          } - Profil${
+            readCvProfileLists(
+              cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0])?.hash ?? null
+            ).searchProfiles.length + 1
+          }`}
           onConfirm={(profile, profileName) => {
             // CV-PROFILE-LISTS-01: Suchprofil unter seinem Namen an das CV
             // haengen (Schluessel: Inhalts-Hash des anonymisierten Textes).
@@ -1356,6 +1420,24 @@ export default function App() {
           <p className="cv-skill-selection__description">
             {cvState.processingGoal === "ats" ? t("cv.skillSelectDescriptionAts") : t("cv.skillSelectDescription")}
           </p>
+          {/* CV-PROFILE-LISTS-01/05: Name fuer den ATS-Profil-Eintrag (Liste
+              des CVs) — ganz oben in der Eingabereihenfolge des Steps */}
+          {cvState.processingGoal === "ats" && (
+            <div className="field">
+              <label htmlFor="cv-ats-profile-name">{t("cv.atsProfileNameLabel")}</label>
+              <input
+                id="cv-ats-profile-name"
+                type="text"
+                value={atsProfileName}
+                onChange={(e) => setAtsProfileName(e.target.value)}
+                disabled={cvState.isProcessing}
+                autoComplete="off"
+                placeholder={t("cv.atsProfileNamePlaceholder")}
+                // CV-PROFILE-LISTS-03: Klick markiert den ganzen Vorschlag
+                onFocus={(e) => e.currentTarget.select()}
+              />
+            </div>
+          )}
           <div className="cv-skill-selection__list" role="listbox" aria-label={t("cv.skillSelectTitle")}>
             {cvState.suggestedProfile.skills.map((skill, index) => (
               <label key={index} className={`cv-skill-selection__item${cvState.selectedSkills.includes(skill) ? " selected" : ""}`}>
@@ -1397,21 +1479,6 @@ export default function App() {
           </div>
           {cvState.selectedSkills.length === 0 && (
             <p className="cv-skill-selection__error">{t("cv.skillSelectNoSkills")}</p>
-          )}
-          {/* CV-PROFILE-LISTS-01: Name fuer den ATS-Profil-Eintrag (Liste des CVs) */}
-          {cvState.processingGoal === "ats" && (
-            <div className="field">
-              <label htmlFor="cv-ats-profile-name">{t("cv.atsProfileNameLabel")}</label>
-              <input
-                id="cv-ats-profile-name"
-                type="text"
-                value={atsProfileName}
-                onChange={(e) => setAtsProfileName(e.target.value)}
-                disabled={cvState.isProcessing}
-                autoComplete="off"
-                placeholder={t("cv.atsProfileNamePlaceholder")}
-              />
-            </div>
           )}
           <div className="cv-skill-selection__actions">
             <button

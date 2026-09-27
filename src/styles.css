@@ -2335,6 +2335,43 @@ body {
   margin: var(--space-2) 0 0;
 }
 
+/* CV-PROFILE-LISTS-04 (Privacy): "CV-Daten entfernen" + Bestaetigungsbox */
+.cv-document-list__remove-data {
+  margin-top: var(--space-4);
+}
+
+.cv-document-list__remove-data-confirm {
+  border: 1px solid var(--score-low-border);
+  background: var(--score-low-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.cv-document-list__remove-data-text {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.cv-document-list__remove-data-hint {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.cv-document-list__remove-data-confirm-btn {
+  background: var(--score-low-text);
+  color: var(--surface);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cv-document-list__remove-data-confirm-btn:hover {
+  filter: brightness(0.95);
+}
+
 @media (min-width: 768px) {
   .cv-profiles-overlay__tables {
     grid-template-columns: 1fr 1fr;

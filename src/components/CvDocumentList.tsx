@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type { CvDocument } from "../types";
 
@@ -12,6 +12,10 @@ interface Props {
   // CV-PROFILE-LISTS-01: Oeffnet das Profil-Overlay (Suchprofile/ATS-Profile)
   // fuer das jeweilige CV-Dokument.
   onShowProfiles: (id: string) => void;
+  // CV-PROFILE-LISTS-04 (Privacy): Entfernt ALLE CV-Daten (Dokumente +
+  // gespeicherte Profil-Listen) — mit Bestaetigung und Hinweis auf erneutes
+  // Hochladen.
+  onRemoveData: () => void;
   disabled: boolean;
   processing: boolean;
 }
@@ -24,11 +28,14 @@ export default function CvDocumentList({
   onProcess,
   onSearch,
   onShowProfiles,
+  onRemoveData,
   disabled,
   processing,
 }: Props): React.ReactElement {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // CV-PROFILE-LISTS-04: lokale Bestaetigungs-Anzeige fuer "CV-Daten entfernen"
+  const [removeDataConfirmOpen, setRemoveDataConfirmOpen] = useState(false);
 
   const hasSelection = documents.some((d) => d.selected);
   const allSelected = documents.length > 0 && documents.every((d) => d.selected);
@@ -182,6 +189,48 @@ export default function CvDocumentList({
             >
               {t("cv.searchWithSelected")}
             </button>
+          </div>
+          {/* CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — mit
+              Bestaetigung und Hinweis auf erneutes Hochladen. */}
+          <div className="cv-document-list__remove-data">
+            {!removeDataConfirmOpen ? (
+              <button
+                type="button"
+                className="btn-ghost cv-document-list__remove-data-btn"
+                onClick={() => setRemoveDataConfirmOpen(true)}
+                disabled={disabled || processing}
+              >
+                {t("cv.removeData")}
+              </button>
+            ) : (
+              <div
+                className="cv-document-list__remove-data-confirm"
+                role="alertdialog"
+                aria-label={t("cv.removeData")}
+              >
+                <p className="cv-document-list__remove-data-text">{t("cv.removeDataConfirm")}</p>
+                <p className="cv-document-list__remove-data-hint">{t("cv.removeDataHint")}</p>
+                <div className="cv-continue-actions">
+                  <button
+                    type="button"
+                    className="cv-document-list__remove-data-confirm-btn"
+                    onClick={() => {
+                      onRemoveData();
+                      setRemoveDataConfirmOpen(false);
+                    }}
+                  >
+                    {t("cv.removeDataConfirmButton")}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => setRemoveDataConfirmOpen(false)}
+                  >
+                    {t("cv.consentCancel")}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

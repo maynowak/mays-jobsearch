@@ -26,6 +26,7 @@ function renderList(documents: CvDocument[]) {
     onProcess: vi.fn(),
     onSearch: vi.fn(),
     onShowProfiles: vi.fn(),
+    onRemoveData: vi.fn(),
     disabled: false,
     processing: false,
   };

@@ -33,6 +33,7 @@ import {
 import App from "./App";
 import { LangProvider } from "./i18n";
 import { __resetModelsCacheForTests } from "./hooks/useAvailableModels";
+import { resetCvProfileLists } from "./lib/cvProfileStore";
 
 const job: Job = {
   slug: "aws-job",
@@ -97,11 +98,12 @@ beforeEach(() => {
   localStorage.setItem("mj-lang", "de");
   // CV-Profil-Cache-Treffer ueber Testgrenzen hinweg unterbinden, damit der
   // Quick-Upload-Pfad deterministisch durch Consent + AI-Call laeuft
-  // CV-PROFILE-LISTS-01: benannte Profil-Listen (mj-cv-lists:*) ebenfalls
-  // isolieren — der Inhalts-Hash ist testuebergreifend gleich.
   Object.keys(localStorage)
     .filter((k) => k.startsWith("mj-cv-profile:") || k.startsWith("mj-cv-lists:"))
     .forEach((k) => localStorage.removeItem(k));
+  // CV-PROFILE-LISTS-02: Listen leben im Session-Speicher — pro Test leeren
+  // (der Inhalts-Hash ist testuebergreifend gleich).
+  resetCvProfileLists();
   window.history.pushState({}, "", "/top");
   __resetModelsCacheForTests();
   setFallbackMaxAttempts(3);
@@ -1104,9 +1106,16 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await acceptUploadConsent();
     await proceedToProfileReady();
 
-    // CV-PROFILE-LISTS-01: Name fuer den Listen-Eintrag vergeben
+    // CV-PROFILE-LISTS-01/03/05: Name fuer den Listen-Eintrag — Vorschlag
+    // "<Zielrolle> - Profil1" (Zaehler aus der Liste dieses CVs); das Feld
+    // steht an erster Stelle der Eingabereihenfolge; Klick markiert alles
     const nameInput = document.getElementById("cv-profile-name") as HTMLInputElement;
-    expect(nameInput.value).toBe("Frontend"); // Vorschlag: Zielrolle
+    expect(nameInput.value).toBe("Frontend - Profil1");
+    const firstFieldInput = document.querySelector(".cv-result .field input") as HTMLInputElement;
+    expect(firstFieldInput.id).toBe("cv-profile-name");
+    fireEvent.focus(nameInput);
+    expect(nameInput.selectionStart).toBe(0);
+    expect(nameInput.selectionEnd).toBe("Frontend - Profil1".length);
     fireEvent.change(nameInput, { target: { value: "Frontend Berlin" } });
     confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
@@ -1155,10 +1164,17 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
     fireEvent.click(screen.getByRole("checkbox", { name: "React" }));
 
-    // CV-PROFILE-LISTS-01: Name fuer den ATS-Profil-Eintrag vergeben
-    fireEvent.change(document.getElementById("cv-ats-profile-name") as HTMLInputElement, {
-      target: { value: "React ATS" },
-    });
+    // CV-PROFILE-LISTS-01/03/05: Name fuer den ATS-Profil-Eintrag — Vorschlag
+    // "<Zielrolle> - ATS1"; Klick markiert den ganzen Text; Feld steht oben
+    // vor der Skills-Liste
+    const atsNameInput = document.getElementById("cv-ats-profile-name") as HTMLInputElement;
+    expect(atsNameInput.value).toBe("Frontend - ATS1");
+    const skillSection = document.querySelector(".cv-skill-selection") as HTMLElement;
+    expect(skillSection.querySelector("input")!.id).toBe("cv-ats-profile-name");
+    fireEvent.focus(atsNameInput);
+    expect(atsNameInput.selectionStart).toBe(0);
+    expect(atsNameInput.selectionEnd).toBe("Frontend - ATS1".length);
+    fireEvent.change(atsNameInput, { target: { value: "React ATS" } });
     fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten Skills fortfahren" }));
 
     // ATS laeuft an -> ats-complete -> ATS-Overlay schliessen -> zur Liste
@@ -1199,6 +1215,46 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     // Schliessen per X
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
     expect(screen.queryByRole("dialog", { name: /cv\.pdf/ })).toBeNull();
+  });
+
+  it("CV-PROFILE-LISTS-04 (Privacy): 'CV-Daten entfernen' mit Bestaetigung leert Dokumente + Listen", async () => {
+    mockProfile();
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    // Suchprofil wird als "Frontend - Profil1" gespeichert
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+
+    // Liste vorhanden
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
+    expect(screen.getByText("Frontend - Profil1")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+
+    // Entfernen-Button -> Bestaetigung mit Hinweis auf erneutes Hochladen
+    fireEvent.click(screen.getByRole("button", { name: "CV-Daten entfernen" }));
+    const confirmBox = await screen.findByRole("alertdialog", { name: "CV-Daten entfernen" });
+    expect(confirmBox.textContent).toContain("erneut hochgeladen");
+
+    // Abbrechen: nichts wird entfernt
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(screen.getByText("cv.pdf")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
+    expect(screen.getByText("Frontend - Profil1")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+
+    // Endgueltig entfernen: Dokumente + Listen weg, CV-Menue schliesst sich
+    fireEvent.click(screen.getByRole("button", { name: "CV-Daten entfernen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Endgültig entfernen" }));
+    await waitFor(() => expect(screen.queryByText("Deine Lebensläufe")).toBeNull());
+    expect(screen.queryByRole("button", { name: "Profile anzeigen" })).toBeNull();
+    // Dropzone ist wieder der sichtbare Einstieg (erneutes Hochladen)
+    expect(document.querySelector(".cv-dropzone")).toBeTruthy();
   });
 });
 

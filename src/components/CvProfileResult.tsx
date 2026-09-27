@@ -13,6 +13,8 @@ interface Props {
   // Namen in der Liste des CVs gespeichert.
   onConfirm: (profile: Profile, profileName: string) => void;
   onBack: () => void;
+  // CV-PROFILE-LISTS-03: Vorschlagsname (z. B. "Profil1", "Profil2", ...)
+  defaultName?: string;
 }
 
 export default function CvProfileResult({
@@ -21,6 +23,7 @@ export default function CvProfileResult({
   loadingLabel,
   onConfirm,
   onBack,
+  defaultName,
 }: Props) {
   const { t } = useLang();
   const [parsedSkills, setParsedSkills] = useState<string[]>(() => suggested.skills);
@@ -28,8 +31,9 @@ export default function CvProfileResult({
   const [targetRoles, setTargetRoles] = useState(suggested.targetRoles.join(", "));
   const [cityValue, setCityValue] = useState(suggested.location);
   const [radiusKm, setRadiusKm] = useState<number | null>(null);
-  // CV-PROFILE-LISTS-01: Name fuer den Listen-Eintrag des Suchprofils
-  const [profileName, setProfileName] = useState(() => suggested.targetRoles[0] ?? "");
+  // CV-PROFILE-LISTS-01/03: Name fuer den Listen-Eintrag des Suchprofils —
+  // Vorschlag (defaultName, z. B. "Profil1") vor Zielrolle als Fallback.
+  const [profileName, setProfileName] = useState(() => defaultName || suggested.targetRoles[0] || "");
   const {
     city,
     suggestions,
@@ -59,6 +63,22 @@ export default function CvProfileResult({
   return (
     <div id="cv-panel" className="cv-result">
       <h3 className="cv-result-heading">{t("cv.resultHeading")}</h3>
+
+      {/* CV-PROFILE-LISTS-05: Namensfeld an den Anfang der Eingabereihenfolge
+          (Vorschlag "<Zielrolle> - Profil1/2/3…"; Klick markiert alles) */}
+      <div className="field">
+        <label htmlFor="cv-profile-name">{t("cv.profileNameLabel")}</label>
+        <input
+          id="cv-profile-name"
+          type="text"
+          value={profileName}
+          onChange={(e) => setProfileName(e.target.value)}
+          disabled={busy}
+          autoComplete="off"
+          placeholder={t("cv.profileNamePlaceholder")}
+          onFocus={(e) => e.currentTarget.select()}
+        />
+      </div>
 
       <div className="field">
         <label htmlFor="cv-skills">{t("cv.skills")}</label>
@@ -161,19 +181,6 @@ export default function CvProfileResult({
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="field">
-        <label htmlFor="cv-profile-name">{t("cv.profileNameLabel")}</label>
-        <input
-          id="cv-profile-name"
-          type="text"
-          value={profileName}
-          onChange={(e) => setProfileName(e.target.value)}
-          disabled={busy}
-          autoComplete="off"
-          placeholder={t("cv.profileNamePlaceholder")}
-        />
       </div>
 
       <div className="cv-result-actions">

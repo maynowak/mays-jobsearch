@@ -869,6 +869,99 @@ kept accurate even if the audit remains completely read-only.
 - Classification: GREEN — Produktionsbefund reproduziert, Root Cause
   behoben; ausstehende Deployment-Empfehlung dokumentiert.
 
+# CV-PROFILE-LISTS-05 — NAMENSFELD OBEN + VORSCHLAG "<BASIS> - PROFIL<N>"
+- Date: 2026-09-26
+- Task: CV-PROFILE-LISTS-05 (User-Request)
+- Purpose:
+  1. Namensfelder ("Name für dieses Suchprofil" / "Name für dieses
+     ATS-Profil") ganz nach oben in die Eingabereihenfolge ihrer Steps.
+  2. Vorschlagsnamen im Format "<Zielrolle> - Profil1", spaeter
+     "<Zielrolle> - Profil2"/"Profil3", …; ATS analog
+     "<Zielrolle> - ATS1", "<Zielrolle> - ATS2", …
+  3. Klick ins Feld markiert weiterhin den ganzen Text (aus 03).
+- Umsetzung:
+  - CvProfileResult: Namensfeld jetzt erstes Eingabefeld des Steps;
+    defaultName = "<suggestedProfile.targetRoles[0]> - Profil<Zaehler>"
+    (Zaehler = Anzahl vorhandener Suchprofile dieses CVs + 1).
+  - Skills-Step (ATS): Namensfeld steht oberhalb der Skills-Liste;
+    Vorschlag = "<cvProfile.targetRole|targetRoles[0]> - ATS<Zaehler>"
+    (Zaehler = Anzahl vorhandener ATS-Profile dieses CVs + 1), beim
+    "Ziel ausführen" vorbefuellt.
+  - Beide Felder behalten onFocus select-all (Text beim Draufklicken
+    komplett markiert).
+- Files changed: src/components/CvProfileResult.tsx, src/App.tsx,
+  src/App.test.tsx, docs/AI_AUDITLOG.md,
+  docs/reports/CV-PROFILE-LISTS-02-EXECUTION_LOG.md
+- Tests: 503/503 PASS (Assertions: Default-Werte, Feld-Position oben,
+  select-all bei Fokus); TypeScript PASS; Build PASS; diff --check CLEAN
+- Classification: GREEN
+
+# CV-PROFILE-LISTS-04 — "CV-DATEN ENTFERNEN"-BUTTON (PRIVACY)
+- Date: 2026-09-26
+- Task: CV-PROFILE-LISTS-04 (User-Request, Datenschutz)
+- Purpose: Ein Button im CV-Bereich, der gespeicherte Daten entfernt — mit
+  Bestaetigung und Hinweis, dass die Lebenslaeufe erneut hochgeladen werden
+  muessen.
+- Umsetzung:
+  - CvDocumentList: neuer Button "CV-Daten entfernen" oeffnet eine
+    Bestaetigungsbox (role="alertdialog") mit Hinweistext; "Endgültig
+    entfernen" / "Abbrechen".
+  - App.handleCvRemoveData: resetCvProfileLists() (Session-Speicher) +
+    purgeLegacyCvListsFromLocalStorage() + kompletter Reset des CV-Workflow-
+    States (Step "idle", Dokumente/Profile/Consent geleert).
+  - Nach dem Entfernen ist wieder die Dropzone der sichtbare Einstieg
+    (erneutes Hochladen) — Consent wird erneut abgefragt.
+- Files changed: src/components/CvDocumentList.tsx, src/App.tsx,
+  src/i18n.tsx (3 neue Keys de/en), src/styles.css,
+  src/components/CvDocumentList.test.tsx, src/App.test.tsx,
+  docs/AI_AUDITLOG.md, docs/reports/CV-PROFILE-LISTS-02-EXECUTION_LOG.md
+- Tests: 503/503 PASS (neuer Flow-Test: Bestaetigen/Abbrechen/Entfernen);
+  TypeScript PASS; Build PASS; git diff --check CLEAN
+- Classification: GREEN — Datenschutz-Anforderung umgesetzt.
+
+# CV-PROFILE-LISTS-03 — NAMENSVORSCHLAEGE + KLICK MARKIERT ALLES
+- Date: 2026-09-26
+- Task: CV-PROFILE-LISTS-03 (User-Request)
+- Purpose: Das vorgeschlagene Suchprofil (und ATS-Profil) soll einen Namen
+  vorgeschlagen bekommen ("Profil1", "Profil2", …; ATS analog
+  "ATS-Profil1", …); Klick in das Feld markiert den ganzen Text.
+- Umsetzung:
+  - Vorschlag = Anzahl bestehender Eintraege in der Liste DIESES CVs + 1
+    (Suchprofile: readCvProfileLists(hash).searchProfiles; ATS: bei
+    "Ziel ausführen" vorbefuellt via atsProfileName-State).
+  - CvProfileResult: neue Prop defaultName; ATS-Namensfeld im Skills-Step.
+  - Beide Namensfelder: onFocus markiert den kompletten Text
+    (ueberschreiben ohne manuelles Loeschen).
+- Files changed: src/components/CvProfileResult.tsx, src/App.tsx,
+  src/App.test.tsx (Assertions Profil1/ATS-Profil1 + Fokus-Markierung)
+- Tests: 503/503 PASS; TypeScript PASS; Build PASS; diff --check CLEAN
+- Classification: GREEN
+
+# CV-PROFILE-LISTS-02 — LISTEN NUR SESSION-SPEICHER + 12H-AUTO-LOESCHUNG (PRIVACY)
+- Date: 2026-09-26
+- Task: CV-PROFILE-LISTS-02 (User-Request, Datenschutz)
+- Purpose: Die Profil-Listen duerfen einen Reload NICHT ueberleben (nur
+  Fehler-/Fremdnutzer-Fall) und sollen 12 Stunden nach Verarbeitung eines
+  CVs von selbst geleert werden — auch bei offenem Browser.
+- Umsetzung:
+  - cvProfileStore.ts von localStorage auf MEMORY (module-level Map)
+    umgestellt -> Reload entfernt alles automatisch.
+  - TTL: Bucket je CV-Hash mit festem expiresAt (= erste Verarbeitung + 12h;
+    weitere Saves verlaengern NICHT). Lazy-Purge bei jedem Zugriff.
+  - Neue API: resetCvProfileLists() (sofort leeren; Grundlage fuer UX-04),
+    purgeLegacyCvListsFromLocalStorage() (entfernt mj-cv-lists:*-Altlasten
+    aus v1; laeuft einmalig beim App-Start).
+  - Overlay: Transparenz-Hinweis (cv.profilesPrivacyNote, de/en).
+- Consent-/Contract-Bezug: keine Aenderung; datenschutzfreundlicher als v1
+  (weniger Persistenz).
+- Files changed: src/lib/cvProfileStore.ts (Memory+TTL), src/App.tsx,
+  src/components/CvProfilesOverlay.tsx, src/i18n.tsx,
+  src/lib/cvProfileStore.test.ts (TTL-/Purge-/Reset-Tests),
+  src/App.test.tsx (Test-Isolation via resetCvProfileLists()),
+  docs/AI_AUDITLOG.md, docs/reports/CV-PROFILE-LISTS-02-EXECUTION_LOG.md
+- Tests: 503/503 PASS; TypeScript PASS; Build PASS; diff --check CLEAN
+- Classification: GREEN — Listen nur noch sessionbasiert + 12h-Auto-Leerung.
+
 # CV-PROFILE-LISTS-01 — BENANNTE PROFIL-LISTEN PRO CV (SUCHPROFILE + ATS-PROFILE)
 - Date: 2026-09-26
 - Task: CV-PROFILE-LISTS-01 (User-Feature-Request)
