@@ -1980,8 +1980,33 @@ body {
     0 4px 14px rgba(92, 76, 50, 0.08);
 }
 
+/* CV-UPLOAD-UX-09: Karten-Kopf mit Schliessen-X */
+.cv-processing-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.cv-processing-card__close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.cv-processing-card__close:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
 .cv-processing-title {
-  margin: 0 0 var(--space-5);
+  margin: 0;
   font-size: var(--text-xl);
   font-weight: 700;
   color: var(--text);

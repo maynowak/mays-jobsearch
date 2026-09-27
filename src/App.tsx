@@ -1326,6 +1326,24 @@ export default function App() {
     !(cvState.step === "consent-required" && consentDismissed) &&
     cvState.step !== "ats-complete";
 
+  // CV-UPLOAD-UX-09: Overlay in JEDEM Step schliessen (X im Karten-Kopf).
+  // Zustand + Dokumente bleiben erhalten; Ziel = Dokumentliste inline unter
+  // der Suchmaske (bzw. idle, wenn keine Dokumente). Im Consent-Step zaehlt
+  // Schliessen als "ausstehend" (wieder oeffnbar, wie Abbrechen).
+  const handleCvWorkflowClose = () => {
+    setEditingSearchName(null);
+    if (cvState.step === "consent-required") {
+      // Im Consent-Step zaehlt Schliessen als "ausstehend" (wieder oeffnbar
+      // ueber "Einwilligung anzeigen") — kein Step-Wechsel.
+      setConsentDismissed(true);
+      return;
+    }
+    setCvState((prev) => ({
+      ...prev,
+      step: prev.documents.length > 0 ? "document-selected" : "idle",
+    }));
+  };
+
   const cvProcessingCard = (
     <section
       ref={cvWorkflowRef}
@@ -1333,7 +1351,20 @@ export default function App() {
       className="card cv-processing-card"
       aria-labelledby="cv-processing-title"
     >
-      <h2 id="cv-processing-title" className="cv-processing-title">{t("cv.statusTitle")}</h2>
+      <div className="cv-processing-card__head">
+        <h2 id="cv-processing-title" className="cv-processing-title">{t("cv.statusTitle")}</h2>
+        {/* CV-UPLOAD-UX-09: Schliessen in jedem Overlay-Step */}
+        {cvOverlayActive && (
+          <button
+            type="button"
+            className="cv-processing-card__close"
+            aria-label={t("cv.workflowClose")}
+            onClick={handleCvWorkflowClose}
+          >
+            ×
+          </button>
+        )}
+      </div>
 
       <CvProcessingStatus step={cvState.step} error={cvState.error} documentName={cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0])?.name ?? null} />
 

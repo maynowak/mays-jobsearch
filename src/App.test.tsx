@@ -770,6 +770,57 @@ describe("CV workflow", () => {
     expect(screen.getByText(/gespeichert/)).toBeTruthy();
   });
 
+  it("CV-UPLOAD-UX-09: Overlay laesst sich in jedem Step schliessen (Zustand bleibt erhalten)", async () => {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+
+    // Kein X im Inline-Ruhezustand (document-selected zeigt keine Karte)
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+
+    // Optionen-Step: X schliesst -> Liste inline, Dokument bleibt erhalten
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Workflow schließen" }));
+    await screen.findByText("Deine Lebensläufe");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+    expect(screen.getByText("cv.pdf")).toBeTruthy();
+
+    // Wieder rein: Consent erteilt -> Optionen -> Modell -> X schliesst auch da
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Workflow schließen" }));
+    await screen.findByText("Deine Lebensläufe");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+  });
+
+  it("CV-UPLOAD-UX-09: Schliessen im Consent-Step zaehlt als ausstehend (wieder oeffnbar)", async () => {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+
+    await uploadCvToConsent();
+    // X statt Abbrechen: Overlay weg, Hinweis "Zustimmung ausstehend"
+    fireEvent.click(screen.getByRole("button", { name: "Workflow schließen" }));
+    await screen.findByText(/Zustimmung ausstehend/);
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+    // wieder oeffnbar
+    fireEvent.click(screen.getByRole("button", { name: "Einwilligung anzeigen" }));
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+  });
+
   it("BROWSER-BUG-07 (regression): geschlossener Consent -> KEIN Overlay, Hinweis inline", async () => {
     vi.mocked(createProfile).mockResolvedValue({
       skills: ["React"],
