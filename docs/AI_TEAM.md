@@ -52,6 +52,19 @@ Nemotron may review existing decisions and flag problems. Nemotron must **not** 
 
 The role integrates into the existing team structure; no existing role is renamed.
 
+**Kimi K3 (opencode) — UX-Umsetzung / CV-Workflow / Recovery & Audit-Doku**
+
+- Crash-/Verbindungsabbruch-Recovery: Rekonstruktion des Arbeitsstands aus AI_AUDITLOG.md + Git-Status
+- CV-Upload-Prozessanalyse (Pfad A/B, Schritt-Tabellen der Workflow-Zustände)
+- CV-UPLOAD-UX-01: Workflow-Overlay (Pfad B) direkt nach dem Upload (Consent-Overlap-Fix; Menü nach dem Schließen unter der Suchmaske)
+- CV-UPLOAD-UX-02: Workflow-Overlay auf allen Viewports (Mobile-Vollbild-Sheet statt Inline)
+- CV-UPLOAD-UX-03: Schritt-Reihenfolge — Anonymisierung vor Modellwahl (Privacy Boundary in Ablauf + Anzeige)
+- CV-UPLOAD-UX-04: Skills-Bestätigung vor ATS-Analyse (Analysebasis = bestätigte Skills)
+- Testanpassung (vitest) und Validierung (Tests / TypeScript / Build / git diff --check)
+- Audit-Logging nach Template (docs/AI_AUDITLOG.md + docs/reports/…-EXECUTION_LOG.md)
+
+Kimi K3 arbeitet nach dem Working Agreement: Commits/Pushes nur nach ausdrücklicher Freigabe; Audit-Einträge nach Muster in AI_AUDITLOG.md. Stand der Beiträge: 2026-09-26.
+
 ## Working Agreement
 
 - AI contributions are proposals.

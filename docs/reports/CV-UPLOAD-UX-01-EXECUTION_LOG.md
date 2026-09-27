@@ -1,19 +1,19 @@
 # CV-UPLOAD-UX-01 — EXECUTION LOG
 
 ## Current status
-FINALIZED (CV-UPLOAD-UX-01) + FOLLOW-UPS CV-UPLOAD-UX-02 (Overlay auf allen
-Viewports; committet in 06e1ace), CV-UPLOAD-UX-03 (Schritt-Reihenfolge;
-committet in 3c6d468) und CV-UPLOAD-UX-04 (Skills vor ATS-Analyse) —
-alle Validierungen gruen. Commit von UX-04 steht aus (Nutzerfreigabe).
+FINALIZED (CV-UPLOAD-UX-01) + FOLLOW-UPS CV-UPLOAD-UX-02 (committet
+06e1ace), CV-UPLOAD-UX-03 (committet 3c6d468), CV-UPLOAD-UX-04 (committet
+271e10d) und CV-UPLOAD-UX-05 (Schritt-Labels DE/EN) — alle Validierungen
+gruen. Offen (uncommitted): UX-05 + docs/AI_TEAM.md (Team-Eintrag Kimi K3);
+Commit erfolgt auf Nutzerfreigabe.
 
 ## Audit date/time
 - Start: 2026-09-26 12:34 CEST
 - Final: 2026-09-26 13:25 CEST
-- Follow-up CV-UPLOAD-UX-02: 2026-09-26 (nach User-Befund Mobile-Inline),
-  committet als 06e1ace und gepusht
-- Follow-up CV-UPLOAD-UX-03: 2026-09-26 (Schritt-Reihenfolge),
-  committet als 3c6d468 und gepusht
-- Follow-up CV-UPLOAD-UX-04: 2026-09-26 (Skills vor ATS-Analyse)
+- Follow-up CV-UPLOAD-UX-02: 2026-09-26 (Mobile-Overlay), Commit 06e1ace, gepusht
+- Follow-up CV-UPLOAD-UX-03: 2026-09-26 (Schritt-Reihenfolge), Commit 3c6d468, gepusht
+- Follow-up CV-UPLOAD-UX-04: 2026-09-26 (Skills vor ATS), Commit 271e10d, gepusht
+- Follow-up CV-UPLOAD-UX-05: 2026-09-26 (Schritt-Labels DE/EN)
 
 ## Git state
 - Start: Branch main, HEAD 813f0bb (CV-UPLOAD PFAD A), 4 uncommittete
@@ -62,6 +62,18 @@ cv-panel der Suchmaske). Gewuenscht und umgesetzt:
 6. Lokaler Profil-Cache (localStorage mj-cv-profile:*) der Quick-Upload-
    Strecke entfaellt; Server-Cache via Text-Hash bleibt im createProfile-
    Pfad bestehen.
+
+## Follow-up CV-UPLOAD-UX-05 (Schritt-Labels DE/EN)
+- User-Befund: Schritt-Anzeige verwirrend (u. a. doppeltes "Abgeschlossen").
+- Befund: DE-Labels um einen Schritt verschoben (step6 "Zielrolle"/"Goal",
+  step7 falsch "Verarbeitung", step8 falsch "Abgeschlossen" statt
+  "Verarbeitung"); cv.processingStep10 ungenutzt; Mapping schickte
+  improvement/reanalysis/match-impact pauschal auf "target".
+- Fix: Labels entzerrt (DE: Ziel / Analyse / Verarbeitung / Abgeschlossen;
+  EN step7 "Analysis"), toten Key entfernt, Mapping auf dedizierte Steps
+  (improvement/reanalysis/match-impact).
+- Files: src/i18n.tsx, src/App.tsx, docs/AI_AUDITLOG.md (UX-05-Eintrag).
+- Checks: 490/490 Tests PASS, TSC PASS, Build PASS, diff --check CLEAN.
 
 ## Follow-up CV-UPLOAD-UX-04 (Skills vor ATS-Analyse)
 - User-Befund: ATS-Analyse direkt nach dem Upload ohne erkennbare Basis;

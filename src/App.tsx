@@ -1108,14 +1108,16 @@ export default function App() {
         cvState.step === "profile-ready" ? "profile" :
         cvState.step === "goal-selection" ? "goal" :
         cvState.step === "skill-selection" ? "skill" :
+        // CV-UPLOAD-UX-05: Verbesserung/Re-Analyse/Match-Impact mappen auf
+        // ihre eigenen Schritte (statt alle auf "target")
         cvState.step === "ats-processing" || cvState.step === "ats-model-recovery" ? "target" :
         cvState.step === "ai-searching" ? "processing" :
-        cvState.step === "improvement-selection" ? "target" :
+        cvState.step === "improvement-selection" ? "improvement" :
         cvState.step === "improving" ? "processing" :
         cvState.step === "improved" ? "complete" :
-        cvState.step === "reanalysis" ? "processing" :
+        cvState.step === "reanalysis" ? "reanalysis" :
         cvState.step === "comparison" ? "complete" :
-        cvState.step === "match-impact-select" ? "target" :
+        cvState.step === "match-impact-select" ? "match-impact" :
         cvState.step === "success" ? "complete" : "document"
       } />
 
