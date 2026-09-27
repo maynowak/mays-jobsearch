@@ -68,6 +68,10 @@ export default function App() {
   // CV-UPLOAD-UX-07: aktiv gewaehltes ATS-Profil (Liste des CVs) — wird bei
   // der per-Job-ATS-Analyse (AtsOverlay) als Profil verwendet.
   const [activeAtsEntryId, setActiveAtsEntryId] = useState<string | null>(null);
+  // CV-UPLOAD-UX-08: gewaehltes gespeichertes Suchprofil + Edit-Kontext
+  // (prefill Name beim Edit-Sprung; gleicher Name ueberschreibt beim Speichern)
+  const [selectedSavedSearchId, setSelectedSavedSearchId] = useState<string | null>(null);
+  const [editingSearchName, setEditingSearchName] = useState<string | null>(null);
   // Consent-Overlay (BUG-07): Benutzer kann das Overlay schließen, ohne die
   // Zustimmung zu erteilen. Der Consent bleibt dann ausstehend und kann über
   // "Einwilligung anzeigen" erneut geöffnet werden.
@@ -479,6 +483,73 @@ export default function App() {
       selectedSkills: [],
       cvProfile: null,
     });
+  };
+
+  // CV-UPLOAD-UX-08: gespeichertes Suchprofil im Profil-Step vorbefuellt
+  // bearbeiten (Speichern mit gleichem Namen ueberschreibt den Eintrag).
+  const editSavedSearchProfile = () => {
+    const doc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0];
+    if (!doc) return;
+    const entry = readCvProfileLists(doc.hash ?? null).searchProfiles.find(
+      (e) => e.id === selectedSavedSearchId
+    );
+    if (!entry) return;
+    setEditingSearchName(entry.name);
+    setCvState((prev) => ({
+      ...prev,
+      suggestedProfile: {
+        skills: entry.profile.skills.split(",").map((s) => s.trim()).filter(Boolean),
+        experienceLevel: "",
+        targetRoles: entry.profile.targetRole ? [entry.profile.targetRole] : [],
+        location: entry.profile.city,
+      },
+      cvProfile: entry.profile,
+      selectedDocumentIds: prev.selectedDocumentIds.includes(doc.id)
+        ? prev.selectedDocumentIds
+        : [doc.id],
+      step: "profile-ready",
+      error: null,
+      errorBackStep: null,
+      fallbackNote: false,
+      isProcessing: false,
+    }));
+  };
+
+  // CV-UPLOAD-UX-08: gespeichertes ATS-Profil im Skills-Step vorbefuellt
+  // bearbeiten (Name + Skills vorausgewaehlt; gleicher Name ueberschreibt).
+  const editSavedAtsProfile = () => {
+    const doc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0];
+    if (!doc) return;
+    const entry = readCvProfileLists(doc.hash ?? null).atsProfiles.find(
+      (e) => e.id === activeAtsEntryId
+    );
+    if (!entry) return;
+    setAtsProfileName(entry.name);
+    setCvState((prev) => ({
+      ...prev,
+      processingGoal: "ats",
+      suggestedProfile: {
+        skills: [...entry.skills],
+        experienceLevel: "",
+        targetRoles: entry.targetRole ? [entry.targetRole] : [],
+        location: "",
+      },
+      selectedSkills: [...entry.skills],
+      step: "skill-selection",
+      error: null,
+      errorBackStep: null,
+      isProcessing: false,
+    }));
+  };
+
+  // CV-UPLOAD-UX-08: Jobsuche mit dem gewaehlten gespeicherten Suchprofil
+  // starten (Fallback: aktuelle Suchmaske).
+  const startSearchWithSavedProfile = () => {
+    const doc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0];
+    const lists = readCvProfileLists(doc?.hash ?? null);
+    const entry = lists.searchProfiles.find((e) => e.id === selectedSavedSearchId);
+    if (entry) handleProfileChange(entry.profile);
+    handleSubmit(entry?.profile ?? profile);
   };
 
   const handleCvProcess = () => {
@@ -1130,6 +1201,13 @@ export default function App() {
     );
   }
 
+  // CV-UPLOAD-UX-07/08: Quelle der gespeicherten Listen = erstes ausgewaehltes
+  // Dokument (Fallback: erstes Dokument); Zuordnung ueber Inhalts-Hash.
+  const listSourceDoc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0] ?? null;
+  const listSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
+  const activeAtsEntry =
+    listSourceLists.atsProfiles.find((e) => e.id === activeAtsEntryId) ?? null;
+
   const searchCard = (
     <section className="card search-card">
       <SearchForm
@@ -1143,6 +1221,80 @@ export default function App() {
         rematch={canRematch}
         onWorkflowStart={handleCvUploadStart}
       />
+      {/* CV-UPLOAD-UX-08: Box fuer gespeicherte Profile UNTER dem
+          CV-Upload-Bereich (Suchmaske): Suchprofil + ATS-Profil waehlen,
+          jeweils per kleinem Button direkt zum vorbefuellten Bearbeitungs-
+          Step springen; darunter der Job-Search-Startbutton. */}
+      {cvState.step === "document-selected" &&
+        listSourceDoc?.hash &&
+        (listSourceLists.searchProfiles.length > 0 || listSourceLists.atsProfiles.length > 0) && (
+          <div className="cv-saved-profiles" role="region" aria-label={t("cv.profilesRegionAria")}>
+            {listSourceLists.searchProfiles.length > 0 && (
+              <div className="field cv-saved-profiles__field">
+                <label htmlFor="cv-saved-search-profile">{t("cv.chooseSearchProfile")}</label>
+                <div className="cv-saved-profiles__row">
+                  <select
+                    id="cv-saved-search-profile"
+                    value={selectedSavedSearchId ?? ""}
+                    onChange={(e) => setSelectedSavedSearchId(e.target.value || null)}
+                    disabled={cvState.isProcessing}
+                  >
+                    <option value="">{t("cv.choosePlaceholder")}</option>
+                    {listSourceLists.searchProfiles.map((entry) => (
+                      <option key={entry.id} value={entry.id}>
+                        {entry.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn-ghost cv-saved-profiles__edit"
+                    disabled={!selectedSavedSearchId || cvState.isProcessing}
+                    onClick={editSavedSearchProfile}
+                  >
+                    {t("cv.editShort")}
+                  </button>
+                </div>
+              </div>
+            )}
+            {listSourceLists.atsProfiles.length > 0 && (
+              <div className="field cv-saved-profiles__field">
+                <label htmlFor="cv-saved-ats-profile">{t("cv.chooseAtsProfile")}</label>
+                <div className="cv-saved-profiles__row">
+                  <select
+                    id="cv-saved-ats-profile"
+                    value={activeAtsEntryId ?? ""}
+                    onChange={(e) => setActiveAtsEntryId(e.target.value || null)}
+                    disabled={cvState.isProcessing}
+                  >
+                    <option value="">{t("cv.choosePlaceholder")}</option>
+                    {listSourceLists.atsProfiles.map((entry) => (
+                      <option key={entry.id} value={entry.id}>
+                        {entry.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn-ghost cv-saved-profiles__edit"
+                    disabled={!activeAtsEntryId || cvState.isProcessing}
+                    onClick={editSavedAtsProfile}
+                  >
+                    {t("cv.editShort")}
+                  </button>
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              className="cv-continue-btn cv-saved-profiles__start"
+              onClick={startSearchWithSavedProfile}
+              disabled={cvState.isProcessing}
+            >
+              {t("cv.startSearch")}
+            </button>
+          </div>
+        )}
       <JobSources jobs={foundJobs} />
       <div className="model-divider" aria-hidden="true" />
       <ModelSelector
@@ -1158,13 +1310,6 @@ export default function App() {
       <Status status={status} />
     </section>
   );
-
-  // CV-UPLOAD-UX-07: Quelle der gespeicherten Listen = erstes ausgewaehltes
-  // Dokument (Fallback: erstes Dokument); Zuordnung ueber Inhalts-Hash.
-  const listSourceDoc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0] ?? null;
-  const listSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
-  const activeAtsEntry =
-    listSourceLists.atsProfiles.find((e) => e.id === activeAtsEntryId) ?? null;
 
   // CV Processing UI - rendered when CV flow is active
   // BUG-14..19 + CV-UPLOAD-UX-02: EIN gemeinsames Overlay für den
@@ -1221,56 +1366,6 @@ export default function App() {
       {/* BUG-07: Die Liste bleibt auch im Consent-Schritt sichtbar (disabled),
           damit das hochgeladene Dokument nach dem Schließen des Overlays
           erhalten und sichtbar bleibt. */}
-      {/* CV-UPLOAD-UX-07: gespeicherte Profile des CVs auswaehlbar machen —
-          Suchprofil (uebernimmt Werte in die Suchmaske) + ATS-Profil (aktiv
-          fuer per-Job-ATS-Analysen). Oberhalb der Dokumentliste. */}
-      {cvState.step === "document-selected" &&
-        listSourceDoc?.hash &&
-        (listSourceLists.searchProfiles.length > 0 || listSourceLists.atsProfiles.length > 0) && (
-          <div className="cv-saved-profiles" role="region" aria-label={t("cv.profilesRegionAria")}>
-            {listSourceLists.searchProfiles.length > 0 && (
-              <div className="field cv-saved-profiles__field">
-                <label htmlFor="cv-saved-search-profile">{t("cv.chooseSearchProfile")}</label>
-                <select
-                  id="cv-saved-search-profile"
-                  defaultValue=""
-                  onChange={(e) => {
-                    const entry = listSourceLists.searchProfiles.find(
-                      (en) => en.id === e.target.value
-                    );
-                    if (entry) setProfile(entry.profile);
-                  }}
-                  disabled={cvState.isProcessing}
-                >
-                  <option value="">{t("cv.choosePlaceholder")}</option>
-                  {listSourceLists.searchProfiles.map((entry) => (
-                    <option key={entry.id} value={entry.id}>
-                      {entry.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {listSourceLists.atsProfiles.length > 0 && (
-              <div className="field cv-saved-profiles__field">
-                <label htmlFor="cv-saved-ats-profile">{t("cv.chooseAtsProfile")}</label>
-                <select
-                  id="cv-saved-ats-profile"
-                  value={activeAtsEntryId ?? ""}
-                  onChange={(e) => setActiveAtsEntryId(e.target.value || null)}
-                  disabled={cvState.isProcessing}
-                >
-                  <option value="">{t("cv.choosePlaceholder")}</option>
-                  {listSourceLists.atsProfiles.map((entry) => (
-                    <option key={entry.id} value={entry.id}>
-                      {entry.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        )}
 
       {(cvState.step === "document-selected" || cvState.step === "consent-required") && (
         <CvDocumentList
@@ -1410,23 +1505,27 @@ export default function App() {
           suggested={cvState.suggestedProfile}
           busy={cvState.isProcessing}
           loadingLabel={t("cv.savingProfile")}
-          // CV-PROFILE-LISTS-03/05: Namensvorschlag "<Zielrolle> - Profil1",
-          // "<Zielrolle> - Profil2", … (Zaehler aus der Suchprofil-Liste
-          // dieses CVs)
-          defaultName={`${
-            cvState.suggestedProfile.targetRoles[0] || "Profil"
-          } - Profil${
-            readCvProfileLists(
-              cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0])?.hash ?? null
-            ).searchProfiles.length + 1
-          }`}
+          // CV-PROFILE-LISTS-03/05 + CV-UPLOAD-UX-08: im Edit-Modus der
+          // bestehende Name; sonst Vorschlag "<Zielrolle> - Profil<n>"
+          defaultName={
+            editingSearchName ??
+            `${
+              cvState.suggestedProfile.targetRoles[0] || "Profil"
+            } - Profil${
+              readCvProfileLists(
+                cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0])?.hash ?? null
+              ).searchProfiles.length + 1
+            }`
+          }
           onConfirm={(profile, profileName) => {
-            // CV-PROFILE-LISTS-01: Suchprofil unter seinem Namen an das CV
-            // haengen (Schluessel: Inhalts-Hash des anonymisierten Textes).
+            // CV-PROFILE-LISTS-01/08: Suchprofil unter seinem Namen an das CV
+            // haengen (gleicher Name ueberschreibt den Eintrag).
             const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
             if (doc?.hash) {
-              saveCvSearchProfile(doc.hash, profileName, profile);
+              const saved = saveCvSearchProfile(doc.hash, profileName, profile);
+              if (saved) setSelectedSavedSearchId(saved.id);
             }
+            setEditingSearchName(null);
             setCvState((prev) => ({
               ...prev,
               cvProfile: profile,
@@ -1437,6 +1536,7 @@ export default function App() {
             }));
           }}
           onBack={() => {
+            setEditingSearchName(null);
             setCvState((prev) => ({
               ...prev,
               step: "document-selected",

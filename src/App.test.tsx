@@ -1300,6 +1300,88 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(details.textContent).toContain("TypeScript");
     expect(details.textContent).not.toContain("Node.js");
   });
+
+  it("CV-UPLOAD-UX-08: Auswahl-Box unter dem Upload-Bereich + Edit-Sprung + Ueberschreiben", async () => {
+    mockProfile();
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    // Suchprofil speichern (Default-Name "Frontend - Profil1")
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+
+    // Box unter dem CV-Upload-Bereich — das gespeicherte Profil ist direkt
+    // vorausgewaehlt (Auto-Select beim Speichern)
+    expect(document.getElementById("cv-saved-search-profile")).toBeTruthy();
+    const editBtn = screen.getAllByRole("button", { name: "Bearbeiten" })[0] as HTMLButtonElement;
+    expect(editBtn.disabled).toBe(false);
+
+    // Placeholder ("— auswählen —") bleibt moeglich: dann ist Edit gesperrt
+    fireEvent.change(document.getElementById("cv-saved-search-profile") as HTMLSelectElement, {
+      target: { value: "" },
+    });
+    expect(editBtn.disabled).toBe(true);
+    fireEvent.change(document.getElementById("cv-saved-search-profile") as HTMLSelectElement, {
+      target: {
+        value: (document.querySelector("#cv-saved-search-profile option:not([value=''])") as HTMLOptionElement).value,
+      },
+    });
+    expect(editBtn.disabled).toBe(false);
+
+    // Edit-Sprung: Profil-Step wird vorbefuellt geoeffnet (Name + Werte)
+    fireEvent.click(editBtn);
+    await waitFor(() =>
+      expect(document.querySelector(".cv-workflow-overlay .cv-result")).toBeTruthy()
+    );
+    expect((document.getElementById("cv-profile-name") as HTMLInputElement).value).toBe("Frontend - Profil1");
+    expect((document.getElementById("cv-skills") as HTMLInputElement).value).toBe("React");
+    expect((document.getElementById("cv-city") as HTMLInputElement).value).toBe("Berlin");
+
+    // Gleicher Name beim Speichern -> ueberschreibt (Stadt geaendert)
+    fireEvent.change(document.getElementById("cv-city") as HTMLInputElement, {
+      target: { value: "Hamburg" },
+    });
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+
+    // Immer noch genau EIN Eintrag mit dem Namen (kein Duplikat)
+    const searchBox = document.getElementById("cv-saved-search-profile") as HTMLSelectElement;
+    const names = Array.from(searchBox.options).map((o) => o.text).filter((n) => n !== "— auswählen —");
+    expect(names).toEqual(["Frontend - Profil1"]);
+  });
+
+  it("CV-UPLOAD-UX-08: 'Job-Suche starten' nutzt das gewaehlte gespeicherte Suchprofil", async () => {
+    mockProfile();
+    vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+
+    // Suchprofil waehlen + Start
+    fireEvent.change(document.getElementById("cv-saved-search-profile") as HTMLSelectElement, {
+      target: {
+        value: (document.querySelector("#cv-saved-search-profile option:not([value=''])") as HTMLOptionElement).value,
+      },
+    });
+    const callsBefore = vi.mocked(fetchJobs).mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Job-Suche starten" }));
+    await waitFor(() => expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore + 1));
+    expect(vi.mocked(fetchJobs).mock.calls.at(-1)![0]).toMatchObject({
+      skills: "React",
+      targetRole: "Frontend",
+      city: "Berlin",
+    });
+  });
 });
 
 describe("No landing-page flash during a search", () => {

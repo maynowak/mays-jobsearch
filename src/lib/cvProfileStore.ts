@@ -88,13 +88,17 @@ export function saveCvSearchProfile(
   if (!hash) return null;
   const now = Date.now();
   const bucket = getOrCreateBucket(hash, now);
-  const entry: CvSearchProfileEntry = {
-    id: generateEntryId(),
-    name: name.trim() || profile.targetRole || "Suchprofil",
-    savedAt: now,
-    profile,
-  };
-  bucket.searchProfiles = [entry, ...bucket.searchProfiles].slice(0, MAX_ENTRIES_PER_LIST);
+  const finalName = name.trim() || profile.targetRole || "Suchprofil";
+  // CV-UPLOAD-UX-08: gleicher Name -> vorhandener Eintrag wird ueberschrieben
+  // (ID bleibt stabil; der Eintrag wandert nach vorn).
+  const existing = bucket.searchProfiles.find((e) => e.name === finalName);
+  const entry: CvSearchProfileEntry = existing
+    ? { ...existing, savedAt: now, profile }
+    : { id: generateEntryId(), name: finalName, savedAt: now, profile };
+  bucket.searchProfiles = [
+    entry,
+    ...bucket.searchProfiles.filter((e) => e.id !== entry.id),
+  ].slice(0, MAX_ENTRIES_PER_LIST);
   buckets.set(hash, bucket);
   return entry;
 }
@@ -108,14 +112,16 @@ export function saveCvAtsProfile(
   if (!hash) return null;
   const now = Date.now();
   const bucket = getOrCreateBucket(hash, now);
-  const entry: CvAtsProfileEntry = {
-    id: generateEntryId(),
-    name: name.trim() || skills[0] || "ATS-Profil",
-    savedAt: now,
-    targetRole,
-    skills,
-  };
-  bucket.atsProfiles = [entry, ...bucket.atsProfiles].slice(0, MAX_ENTRIES_PER_LIST);
+  const finalName = name.trim() || skills[0] || "ATS-Profil";
+  // CV-UPLOAD-UX-08: Ueberschreiben bei gleichem Namen (wie Suchprofile)
+  const existing = bucket.atsProfiles.find((e) => e.name === finalName);
+  const entry: CvAtsProfileEntry = existing
+    ? { ...existing, savedAt: now, skills, targetRole }
+    : { id: generateEntryId(), name: finalName, savedAt: now, targetRole, skills };
+  bucket.atsProfiles = [
+    entry,
+    ...bucket.atsProfiles.filter((e) => e.id !== entry.id),
+  ].slice(0, MAX_ENTRIES_PER_LIST);
   buckets.set(hash, bucket);
   return entry;
 }

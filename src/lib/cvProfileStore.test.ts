@@ -60,6 +60,22 @@ describe("cvProfileStore (CV-PROFILE-LISTS-01/02)", () => {
     expect(readCvProfileLists(undefined).atsProfiles).toEqual([]);
   });
 
+  it("CV-UPLOAD-UX-08: gleicher Name ueberschreibt den Eintrag (kein Duplikat)", () => {
+    const first = saveCvSearchProfile("h1", "Meins", profile);
+    saveCvSearchProfile("h1", "Meins", { ...profile, city: "Hamburg" });
+    const lists = readCvProfileLists("h1");
+    expect(lists.searchProfiles).toHaveLength(1);
+    expect(lists.searchProfiles[0].profile.city).toBe("Hamburg");
+    expect(lists.searchProfiles[0].id).toBe(first!.id); // ID stabil
+
+    saveCvAtsProfile("h1", "A1", ["React"], "Frontend");
+    const overwritten = saveCvAtsProfile("h1", "A1", ["React", "Node.js"], "Frontend");
+    const listsAts = readCvProfileLists("h1");
+    expect(listsAts.atsProfiles).toHaveLength(1);
+    expect(listsAts.atsProfiles[0].skills).toEqual(["React", "Node.js"]);
+    expect(overwritten?.savedAt).toBeGreaterThanOrEqual(first!.savedAt);
+  });
+
   it("CV-PROFILE-LISTS-02 (Privacy): Listen werden 12 h nach Verarbeitung automatisch geleert", () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000);
