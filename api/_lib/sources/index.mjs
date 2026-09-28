@@ -1,11 +1,17 @@
 import * as arbeitnow from "./arbeitnow.mjs";
+import * as greenhouse from "./greenhouse.mjs";
+import { createPublicJobSource } from "./public-ats/index.mjs";
 import { APIFY_ACTORS } from "./apify/actors.mjs";
 import { createApifySource } from "./apify/index.mjs";
 import { countJobSourceRequest } from "../usage.mjs";
 import { applySearchFilters } from "../filter.mjs";
 import { applySearchStrategy, applySearchStrategyWithTargetRole } from "../searchStrategy.mjs";
+import { getConfig } from "../config.mjs";
 
-export const SOURCES = [arbeitnow, ...APIFY_ACTORS.map(createApifySource)];
+const publicAtsConfigs = getConfig().publicAtsSources || [];
+const publicAtsSources = publicAtsConfigs.map(createPublicJobSource);
+
+export const SOURCES = [arbeitnow, greenhouse, ...publicAtsSources, ...APIFY_ACTORS.map(createApifySource)];
 
 export function enabledSources() {
   return SOURCES.filter((source) => source.enabled());

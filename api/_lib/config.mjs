@@ -111,6 +111,11 @@ export function getConfig() {
       process.env.JOB_SOURCE_ARBEITSAGENTUR_ENABLED,
       true
     ),
+    jobSourceGreenhouseEnabled: parseBoolean(
+      process.env.JOB_SOURCE_GREENHOUSE_ENABLED,
+      true
+    ),
+    jobSourceGreenhouseBoards: process.env.JOB_SOURCE_GREENHOUSE_BOARDS || "",
     edenaiMonthlySoftLimitUsd: parsePositiveNumber(
       process.env.EDENAI_MONTHLY_SOFT_LIMIT_USD,
       1.0
@@ -119,7 +124,36 @@ export function getConfig() {
       process.env.EDENAI_MONTHLY_MAX_REQUESTS,
       200
     ),
+    jobSourceGreenhouseEnabled: parseBoolean(
+      process.env.JOB_SOURCE_GREENHOUSE_ENABLED,
+      true
+    ),
+    jobSourceGreenhouseBoards: process.env.JOB_SOURCE_GREENHOUSE_BOARDS || "",
+    publicAtsSources: parsePublicAtsSources(process.env.PUBLIC_ATS_SOURCES || "[]"),
   };
+}
+
+function parsePublicAtsSources(value) {
+  if (!value || value === "[]") return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) throw new Error("Not an array");
+    return parsed.map((item, i) => {
+      if (!item.provider || !item.identifier) {
+        throw new Error(`Invalid config at index ${i}: provider and identifier required`);
+      }
+      return {
+        provider: String(item.provider).trim(),
+        identifier: String(item.identifier).trim(),
+        enabled: item.enabled !== false,
+        label: item.label ? String(item.label).trim() : undefined,
+        options: item.options && typeof item.options === "object" ? item.options : {},
+      };
+    });
+  } catch (e) {
+    console.error("[config] Invalid PUBLIC_ATS_SOURCES:", e.message);
+    return [];
+  }
 }
 
 export function isPeakTime(date = new Date()) {
