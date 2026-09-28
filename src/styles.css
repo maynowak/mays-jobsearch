@@ -3932,6 +3932,13 @@ body {
   color: var(--text);
 }
 
+.ats-section-annotation {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
 .ats-section-content {
   padding: 16px;
 }
@@ -4088,5 +4095,38 @@ body {
 @media (max-width: 680px) {
   .ats-score-value {
     font-size: 2.5rem;
+  }
+  .ats-requirement,
+  .ats-gap-item {
+    font-size: 0.85rem;
+  }
+  .ats-requirement-status {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ats-module {
+    gap: 12px;
+  }
+  .ats-section-header {
+    padding: 10px 12px;
+  }
+  .ats-section-content {
+    padding: 12px;
+  }
+  .ats-requirement,
+  .ats-gap-item {
+    padding: 10px;
+  }
+  .ats-tip-card {
+    padding: 12px;
+  }
+  .ats-tip-card > div {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ats-tip-card div[style*="minWidth"] {
+    min-width: auto;
   }
 }
