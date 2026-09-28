@@ -53,7 +53,7 @@ export default function App() {
   const [foundJobs, setFoundJobs] = useState<Job[]>([]);
   const [profile, setProfile] = useState<Profile>({
     skills: "",
-    targetRole: "",
+    targetRoles: [],
     city: "",
     radiusKm: null,
     workModes: [],
@@ -157,7 +157,7 @@ export default function App() {
 
   const profilesEqual = (a: Profile, b: Profile) =>
     a.skills === b.skills &&
-    a.targetRole === b.targetRole &&
+    arraysEqual(a.targetRoles, b.targetRoles) &&
     a.city === b.city &&
     a.radiusKm === b.radiusKm &&
     arraysEqual(a.workModes, b.workModes) &&
@@ -238,7 +238,8 @@ export default function App() {
     setFoundJobs([]);
     setMatches([]);
 
-    if (!submitted.skills && !submitted.targetRole) {
+    const hasTargetRoles = Array.isArray(submitted.targetRoles) && submitted.targetRoles.length > 0;
+    if (!submitted.skills && !hasTargetRoles) {
       setStatus({ type: "error", message: t("status.noSkills") });
       busyRef.current = false;
       return;
@@ -249,7 +250,7 @@ export default function App() {
       const board = await fetchJobs(submitted);
 
       if (!board.jobs.length) {
-        const query = submitted.skills || submitted.targetRole;
+        const query = submitted.skills || (Array.isArray(submitted.targetRoles) ? submitted.targetRoles.join(", ") : submitted.targetRoles || "");
         setStatus({
           type: "warn",
           message: submitted.city
@@ -276,7 +277,8 @@ export default function App() {
     // cvProfile aus dem State — oder direkt uebergeben (Listener-Aufrufe duerfen
     // nicht auf einen veralteten State-Closure zeigen)
     const submitted = submittedOverride ?? cvState.cvProfile;
-    if (!submitted || (!submitted.skills && !submitted.targetRole)) {
+    const hasTargetRoles = Array.isArray(submitted?.targetRoles) && submitted.targetRoles.length > 0;
+    if (!submitted || (!submitted.skills && !hasTargetRoles)) {
       setStatus({ type: "error", message: t("status.noSkills") });
       busyRef.current = false;
       return;
@@ -293,7 +295,7 @@ export default function App() {
       const board = await fetchJobs(submitted);
 
       if (!board.jobs.length) {
-        const query = submitted.skills || submitted.targetRole;
+        const query = submitted.skills || (Array.isArray(submitted.targetRoles) ? submitted.targetRoles.join(", ") : submitted.targetRoles || "");
         setStatus({
           type: "warn",
           message: submitted.city
@@ -503,7 +505,7 @@ export default function App() {
       suggestedProfile: {
         skills: entry.profile.skills.split(",").map((s) => s.trim()).filter(Boolean),
         experienceLevel: "",
-        targetRoles: entry.profile.targetRole ? [entry.profile.targetRole] : [],
+        targetRoles: entry.profile.targetRoles ?? [],
         location: entry.profile.city,
       },
       cvProfile: entry.profile,
@@ -534,7 +536,7 @@ export default function App() {
       suggestedProfile: {
         skills: [...entry.skills],
         experienceLevel: "",
-        targetRoles: entry.targetRole ? [entry.targetRole] : [],
+        targetRoles: entry.targetRoles ?? [],
         location: "",
       },
       selectedSkills: [...entry.skills],
@@ -590,7 +592,7 @@ export default function App() {
     // Create a merged profile with skills from all selected CVs.
     // Quelle: bestaetigtes CV-Profil zuerst (cvProfile) — CV-UPLOAD-UX-01 legt
     // Uploads ohne Inline-Profil an, die Skills kommen dann aus dem Workflow.
-    const baseProfile = cvState.cvProfile ?? cvState.profile ?? { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] as EmploymentType[] };
+    const baseProfile = cvState.cvProfile ?? cvState.profile ?? { skills: "", targetRoles: [], city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] as EmploymentType[] };
     const mergedProfile = {
       ...baseProfile,
       skills: [...new Set([...(baseProfile.skills?.split(", ") || []), ...allSkills])].filter(Boolean).join(", "),
@@ -731,7 +733,7 @@ export default function App() {
     if (cvState.processingGoal === "ats") {
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
       const count = readCvProfileLists(doc?.hash ?? null).atsProfiles.length + 1;
-      const base = cvState.cvProfile?.targetRole || cvState.suggestedProfile?.targetRoles[0] || "ATS";
+      const base = cvState.cvProfile?.targetRoles?.[0] || cvState.suggestedProfile?.targetRoles[0] || "ATS";
       setAtsProfileName(`${base} - ATS${count}`);
     }
     // isProcessing bleibt false: skill-selection benoetigt bedienbare
@@ -767,7 +769,7 @@ export default function App() {
             doc.hash,
             atsProfileName,
             cvState.selectedSkills,
-            cvState.cvProfile?.targetRole ?? cvState.suggestedProfile?.targetRoles[0] ?? ""
+            cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? []
           )?.name ?? null;
       }
       setCvState((prev) => ({
@@ -783,7 +785,7 @@ export default function App() {
     // Use selected skills for the search profile - JSON encode to preserve
     // multi-word skill boundaries. Quelle: bestaetigtes CV-Profil zuerst
     // (cvProfile), Legacy-Fallback cvState.profile.
-    const baseProfile = cvState.cvProfile ?? cvState.profile ?? { skills: "", targetRole: "", city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] };
+    const baseProfile = cvState.cvProfile ?? cvState.profile ?? { skills: "", targetRoles: [], city: "", radiusKm: null, workModes: [], employmentTypes: ["full_time"] };
     const searchProfile = { ...baseProfile, skills: JSON.stringify(cvState.selectedSkills) };
     runAiSearchWithProfile(searchProfile, t);
   };
@@ -875,7 +877,7 @@ export default function App() {
     const atsProfile = cvState.cvProfile ?? cvState.profile;
     const selectedDoc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
     const jobForAts = selectedDoc ? {
-      title: cvState.suggestedProfile?.targetRoles[0] || atsProfile?.targetRole || "",
+      title: cvState.suggestedProfile?.targetRoles[0] || atsProfile?.targetRoles?.[0] || "",
       // CV-UPLOAD-UX-04: Primaere Basis sind die vom Benutzer bestaetigten
       // Skills (Skills-Auswahl laeuft vor der ATS-Analyse); Fallback: die vom
       // CV vorgeschlagenen Skills.
@@ -1043,7 +1045,7 @@ export default function App() {
 
     // Create a job object for ATS analysis from the current profile
     const jobForAts = {
-      title: cvState.suggestedProfile?.targetRoles[0] || cvState.profile?.targetRole || "",
+      title: cvState.suggestedProfile?.targetRoles[0] || cvState.profile?.targetRoles?.[0] || "",
       tags: cvState.suggestedProfile?.skills || cvState.profile?.skills?.split(",") || [],
       slug: "cv-ats-reanalysis-" + Date.now(),
     };
@@ -1137,8 +1139,8 @@ export default function App() {
     try {
       const result = await computeMatchImpact({
         job: { title: job.title, tags: job.tags, slug: job.slug },
-        originalProfile: { skills: cvState.originalProfile.skills, targetRole: cvState.originalProfile.targetRole, city: cvState.originalProfile.city },
-        improvedProfile: { skills: cvState.profile!.skills, targetRole: cvState.profile!.targetRole, city: cvState.profile!.city },
+        originalProfile: { skills: cvState.originalProfile.skills, targetRoles: cvState.originalProfile.targetRoles, city: cvState.originalProfile.city },
+        improvedProfile: { skills: cvState.profile!.skills, targetRoles: cvState.profile!.targetRoles, city: cvState.profile!.city },
       });
 
       setCvState((prev) => ({
@@ -2238,7 +2240,7 @@ export default function App() {
             activeAtsEntry
               ? {
                   skills: activeAtsEntry.skills.join(", "),
-                  targetRole: activeAtsEntry.targetRole,
+                  targetRoles: activeAtsEntry.targetRoles ?? [],
                   city: "",
                   radiusKm: null,
                   workModes: [],

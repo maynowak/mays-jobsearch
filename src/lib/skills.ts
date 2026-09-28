@@ -24,3 +24,15 @@ export function parseSkills(input: string): string[] {
 export function formatSkills(skills: string[]): string {
   return skills.join(" ");
 }
+
+export function parseTargetRoles(input: string): string[] {
+  if (!input?.trim()) return [];
+  return input
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function formatTargetRoles(roles: string[]): string {
+  return roles.join(", ");
+}

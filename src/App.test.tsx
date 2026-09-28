@@ -310,7 +310,7 @@ describe("Explizites AI-Matching nach Jobsuche (Step 22)", () => {
 
       const lastCall = vi.mocked(fetchMatches).mock.calls.at(-1)!;
       expect(lastCall[0].skills).toBe("aws");
-      expect(lastCall[0].targetRole).toBe("Engineer");
+      expect(lastCall[0].targetRoles).toEqual(["Engineer"]);
       expect(lastCall[0].city).toBe("Berlin");
     });
   });
@@ -1492,7 +1492,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await waitFor(() => expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore + 1));
     expect(vi.mocked(fetchJobs).mock.calls.at(-1)![0]).toMatchObject({
       skills: "React",
-      targetRole: "Frontend",
+      targetRoles: ["Frontend"],
       city: "Berlin",
     });
   });

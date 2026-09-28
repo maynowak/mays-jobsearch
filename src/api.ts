@@ -186,7 +186,9 @@ export async function apiFetch<T = unknown>(url: string, options?: RequestInit):
 export async function fetchJobs(profile: Profile): Promise<JobsResponse> {
   const params = new URLSearchParams();
   if (profile.skills) params.set("skills", profile.skills);
-  if (profile.targetRole) params.set("targetRole", profile.targetRole);
+  if (profile.targetRoles?.length) {
+    profile.targetRoles.forEach((role) => params.append("targetRole", role));
+  }
   if (profile.city) params.set("city", profile.city);
   if (profile.radiusKm) params.set("radiusKm", String(profile.radiusKm));
   if (profile.workModes?.length) params.set("workMode", profile.workModes.join(","));

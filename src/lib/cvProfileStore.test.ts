@@ -11,7 +11,7 @@ import type { Profile } from "../types";
 
 const profile: Profile = {
   skills: "React, TypeScript",
-  targetRole: "Frontend",
+  targetRoles: ["Frontend"],
   city: "Berlin",
   radiusKm: 25,
   workModes: [],
@@ -39,16 +39,16 @@ describe("cvProfileStore (CV-PROFILE-LISTS-01/02)", () => {
 
   it("trennt Listen strikt pro Hash (CV A sieht CV B nicht)", () => {
     saveCvSearchProfile("h1", "Profil A", profile);
-    saveCvAtsProfile("h1", "ATS A", ["React"], "Frontend");
+    saveCvAtsProfile("h1", "ATS A", ["React"], ["Frontend"]);
     expect(readCvProfileLists("h2").searchProfiles).toEqual([]);
     expect(readCvProfileLists("h2").atsProfiles).toEqual([]);
   });
 
-  it("ATS-Profile: neueste zuerst, Default-Name = erster Skill", () => {
-    saveCvAtsProfile("h1", "React ATS", ["React"], "Frontend");
-    const second = saveCvAtsProfile("h1", "  ", ["React", "TypeScript"], "Frontend");
-    expect(second?.name).toBe("React");
-    expect(readCvProfileLists("h1").atsProfiles.map((e) => e.name)).toEqual(["React", "React ATS"]);
+  it("ATS-Profile: neueste zuerst, Default-Name = erste Zielrolle (Fallback: erster Skill)", () => {
+    saveCvAtsProfile("h1", "React ATS", ["React"], ["Frontend"]);
+    const second = saveCvAtsProfile("h1", "  ", ["React", "TypeScript"], ["Frontend"]);
+    expect(second?.name).toBe("Frontend");
+    expect(readCvProfileLists("h1").atsProfiles.map((e) => e.name)).toEqual(["Frontend", "React ATS"]);
   });
 
   it("Default-Name des Suchprofils ist die Zielrolle", () => {
@@ -68,8 +68,8 @@ describe("cvProfileStore (CV-PROFILE-LISTS-01/02)", () => {
     expect(lists.searchProfiles[0].profile.city).toBe("Hamburg");
     expect(lists.searchProfiles[0].id).toBe(first!.id); // ID stabil
 
-    saveCvAtsProfile("h1", "A1", ["React"], "Frontend");
-    const overwritten = saveCvAtsProfile("h1", "A1", ["React", "Node.js"], "Frontend");
+    saveCvAtsProfile("h1", "A1", ["React"], ["Frontend"]);
+    const overwritten = saveCvAtsProfile("h1", "A1", ["React", "Node.js"], ["Frontend"]);
     const listsAts = readCvProfileLists("h1");
     expect(listsAts.atsProfiles).toHaveLength(1);
     expect(listsAts.atsProfiles[0].skills).toEqual(["React", "Node.js"]);
@@ -80,7 +80,7 @@ describe("cvProfileStore (CV-PROFILE-LISTS-01/02)", () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000);
     saveCvSearchProfile("h1", "Profil1", profile);
-    saveCvAtsProfile("h1", "ATS-Profil1", ["React"], "Frontend");
+    saveCvAtsProfile("h1", "ATS-Profil1", ["React"], ["Frontend"]);
 
     // kurz vor Ablauf: noch da
     vi.setSystemTime(1_000_000 + CV_LISTS_TTL_MS - 1000);

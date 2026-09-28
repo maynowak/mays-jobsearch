@@ -39,7 +39,7 @@ export const EMPLOYMENT_TYPES: EmploymentType[] = ["full_time", "part_time"];
 
 export interface Profile {
   skills: string;
-  targetRole: string;
+  targetRoles: string[];
   city: string;
   radiusKm: number | null;
   workModes: WorkMode[];

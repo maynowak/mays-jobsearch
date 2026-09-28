@@ -38,11 +38,11 @@ function renderForm(
 }
 
 function baseProfile(
-  overrides: Partial<Pick<Profile, "skills" | "targetRole" | "city">> = {}
+  overrides: Partial<Pick<Profile, "skills" | "targetRoles" | "city">> = {}
 ): Profile {
   return {
     skills: "",
-    targetRole: "",
+    targetRoles: [],
     city: "",
     radiusKm: null,
     workModes: [],
@@ -92,7 +92,7 @@ describe("SearchForm is a controlled component", () => {
     expect(onChange).toHaveBeenCalledWith(baseProfile({ skills: "aws" }));
 
     fireEvent.change(screen.getByLabelText("Zielrolle"), { target: { value: "Frontend" } });
-    expect(onChange).toHaveBeenCalledWith(baseProfile({ targetRole: "Frontend" }));
+    expect(onChange).toHaveBeenCalledWith(baseProfile({ targetRoles: ["Frontend"] }));
 
     fireEvent.change(screen.getByLabelText("Stadt oder PLZ"), { target: { value: "Berlin" } });
     expect(onChange).toHaveBeenCalledWith(baseProfile({ city: "Berlin" }));
@@ -101,17 +101,17 @@ describe("SearchForm is a controlled component", () => {
   it("sendet getrimmte Werte über onSubmit", () => {
     const onSubmit = vi.fn();
     renderForm(
-      baseProfile({ skills: " aws ", targetRole: " Frontend ", city: " Berlin " }),
+      baseProfile({ skills: " aws ", targetRoles: [" Frontend "], city: " Berlin " }),
       vi.fn(),
       onSubmit
     );
 
     fireEvent.click(screen.getByRole("button"));
-    expect(onSubmit).toHaveBeenCalledWith(baseProfile({ skills: "aws", targetRole: "Frontend", city: "Berlin" }));
+    expect(onSubmit).toHaveBeenCalledWith(baseProfile({ skills: "aws", targetRoles: ["Frontend"], city: "Berlin" }));
   });
 
   it("zeigt nach einem Remount weiterhin die Werte aus dem value-Prop", () => {
-    const value: Profile = baseProfile({ skills: "aws", targetRole: "Frontend", city: "Berlin" });
+    const value: Profile = baseProfile({ skills: "aws", targetRoles: ["Frontend"], city: "Berlin" });
 
     const first = renderForm(value, vi.fn(), vi.fn());
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");

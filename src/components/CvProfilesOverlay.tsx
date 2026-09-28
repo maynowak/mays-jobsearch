@@ -74,7 +74,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose }: Props) 
             (latestSearchProfile ? (
               <dl className="cv-profiles-overlay__profile-detail">
                 <dt>{t("cv.targetRoles")}</dt>
-                <dd>{latestSearchProfile.profile.targetRole || "—"}</dd>
+                <dd>{(latestSearchProfile.profile.targetRoles ?? []).join(", ") || "—"}</dd>
                 <dt>{t("cv.skills")}</dt>
                 <dd>{latestSearchProfile.profile.skills || "—"}</dd>
                 <dt>{t("cv.location")}</dt>
@@ -191,7 +191,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose }: Props) 
             {selection.kind === "search" ? (
               <dl className="cv-profiles-overlay__profile-detail">
                 <dt>{t("cv.targetRoles")}</dt>
-                <dd>{selection.entry.profile.targetRole || "—"}</dd>
+                <dd>{(selection.entry.profile.targetRoles ?? []).join(", ") || "—"}</dd>
                 <dt>{t("cv.skills")}</dt>
                 <dd>{selection.entry.profile.skills || "—"}</dd>
                 <dt>{t("cv.location")}</dt>
@@ -206,7 +206,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose }: Props) 
             ) : (
               <div>
                 <p>
-                  <strong>{t("cv.targetRoles")}:</strong> {selection.entry.targetRole || "—"}
+                  <strong>{t("cv.targetRoles")}:</strong> {(selection.entry.targetRoles ?? []).join(", ") || "—"}
                 </p>
                 <ul className="cv-profiles-overlay__skills">
                   {selection.entry.skills.map((skill) => (

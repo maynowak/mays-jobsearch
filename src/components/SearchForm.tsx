@@ -6,6 +6,7 @@ import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import CvUpload from "./CvUpload";
 import { parseSkills, formatSkills } from "../lib/skills";
+import { parseTargetRoles, formatTargetRoles } from "../lib/skills";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
 
@@ -39,13 +40,15 @@ export default function SearchForm({
 }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
-  const { skills: rawSkills, targetRole } = value;
+  const { skills: rawSkills, targetRoles } = value;
   // Rohtext-State: Der angezeigte Text wird nicht bei jedem Tastenschlag
   // normalisiert, damit Leerzeichen in Multi-Word-Skills (z. B. "Spring Boot")
   // normal eingegeben werden können. Tokenisierung passiert erst beim Lesen /
   // Absenden über parseSkills.
   const [skillsText, setSkillsText] = useState<string>(() => formatSkills(parseSkills(rawSkills)));
   const parsedSkills = parseSkills(skillsText);
+  const [targetRolesText, setTargetRolesText] = useState<string>(() => formatTargetRoles(targetRoles ?? []));
+  const parsedTargetRoles = parseTargetRoles(targetRolesText);
   const {
     city,
     suggestions,
@@ -87,10 +90,17 @@ export default function SearchForm({
   // dem lokalen Text entspricht — dann darf nichts zurückgeschrieben werden,
   // sonst würden getippte Leerzeichen wieder entfernt.
   const [prevRawSkills, setPrevRawSkills] = useState(rawSkills);
+  const [prevTargetRoles, setPrevTargetRoles] = useState(targetRoles ?? []);
   if (rawSkills !== prevRawSkills) {
     setPrevRawSkills(rawSkills);
     if (rawSkills !== skillsText) {
       setSkillsText(rawSkills);
+    }
+  }
+  if (targetRoles !== prevTargetRoles) {
+    setPrevTargetRoles(targetRoles ?? []);
+    if (formatTargetRoles(targetRoles ?? []) !== targetRolesText) {
+      setTargetRolesText(formatTargetRoles(targetRoles ?? []));
     }
   }
 
@@ -104,7 +114,7 @@ export default function SearchForm({
     if (mode === "cv") return;
     onSubmit({
       skills: formatSkills(parsedSkills),
-      targetRole: targetRole.trim(),
+      targetRoles: parsedTargetRoles,
       city: city.trim(),
       radiusKm: value.radiusKm,
       workModes: value.workModes,
@@ -163,8 +173,11 @@ export default function SearchForm({
               id="targetRole"
               type="text"
               placeholder={t("search.targetRolePh")}
-              value={targetRole}
-              onChange={(e) => onChange({ ...value, targetRole: e.target.value })}
+              value={targetRolesText}
+              onChange={(e) => {
+                setTargetRolesText(e.target.value);
+                onChange({ ...value, targetRoles: parseTargetRoles(e.target.value) });
+              }}
               disabled={busy}
               autoComplete="off"
             />

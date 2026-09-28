@@ -27,7 +27,7 @@ export default function AlertCard({ profile }: Props) {
     try {
       const message = await subscribeAlert(trimmed, {
         skills: profile.skills,
-        targetRole: profile.targetRole,
+        targetRoles: profile.targetRoles,
         city: profile.city,
         radiusKm: profile.radiusKm,
         workModes: profile.workModes,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Profile, SuggestedProfile } from "../types";
-import { parseSkills, formatSkills } from "../lib/skills";
+import { parseSkills, formatSkills, parseTargetRoles } from "../lib/skills";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import { RADIUS_KM_OPTIONS } from "../types";
@@ -50,9 +50,8 @@ export default function CvProfileResult({
     onConfirm(
       {
         skills: formatSkills(parsedSkills),
-        // CV-UPLOAD-UX-11: das BEARBEITETE Feld gilt (vorher: immer der
-        // vorgeschlagene Wert — Zielrolle war faktisch nicht entfernbar)
-        targetRole: targetRoles.split(",")[0]?.trim() ?? "",
+        // CV-UPLOAD-UX-12: alle eingegebenen Zielrollen (kommasepariert) speichern
+        targetRoles: parseTargetRoles(targetRoles),
         city: city.trim(),
         radiusKm,
         workModes: [],
