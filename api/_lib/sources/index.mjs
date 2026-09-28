@@ -48,8 +48,10 @@ export function dedupJobs(jobs) {
   return result;
 }
 
-export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMode, employmentType }) {
+export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radiusKm, workMode, employmentType }) {
   const sources = enabledSources();
+  // Backward compatibility: support both targetRoles (array) and targetRole (string)
+  const roles = Array.isArray(targetRoles) ? targetRoles : (targetRole ? [targetRole] : []);
   // Geo-Semantik: "Entfernung egal" (kein numerischer Radius) bedeutet keine
   // geografische Einschränkung. Die Stadt wird nur dann als Ortsfilter an die
   // Quellen weitergereicht, wenn ein konkreter Radius gewählt wurde. Sonst wirkt
@@ -58,7 +60,7 @@ export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMod
   const radiusValue = Number(radiusKm);
   const geoCity = Number.isFinite(radiusValue) && radiusValue > 0 ? city : "";
   const settled = await Promise.allSettled(
-    sources.map((source) => source.fetchJobs({ skills, targetRole, city: geoCity }))
+    sources.map((source) => source.fetchJobs({ skills, targetRoles: roles, city: geoCity }))
   );
 
   const results = [];
@@ -78,7 +80,7 @@ export async function fetchAllJobs({ skills, targetRole, city, radiusKm, workMod
   const combined = dedupJobs(results.flatMap((result) => result.jobs));
   const filtered = applySearchFilters(combined, { radiusKm, workMode, employmentType });
 
-  const searchStrategyResult = applySearchStrategyWithTargetRole(skills, targetRole, filtered, {
+  const searchStrategyResult = applySearchStrategyWithTargetRole(skills, roles, filtered, {
     id: "combined",
     provider: "search-strategy"
   });

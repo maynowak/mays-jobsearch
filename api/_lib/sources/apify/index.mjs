@@ -32,13 +32,15 @@ export function emptyResult(reason) {
   };
 }
 
-export async function fetchActorJobs(actor, { skills, targetRole, city }) {
+export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, city }) {
   const apiToken = process.env.APIFY_API_TOKEN;
   if (!apiToken) {
     return emptyResult("missing_config");
   }
 
-  const query = String(targetRole || skills || "").trim();
+  // Backward compatibility: support both targetRoles (array) and targetRole (string)
+  const roles = Array.isArray(targetRoles) ? targetRoles : (targetRole ? [targetRole] : []);
+  const query = String(roles[0] || skills || "").trim();
   if (!query) {
     return emptyResult("no_query");
   }
@@ -105,7 +107,7 @@ export async function fetchActorJobs(actor, { skills, targetRole, city }) {
     if (records.length) await cacheSet(cacheKey, records, APIFY_CACHE_TTL_SEC);
   }
 
-  const keywordTokens = [...tokenize(targetRole), ...tokenize(skills)];
+  const keywordTokens = [...roles.flatMap(tokenize), ...tokenize(skills)];
   const cityQueries = String(city || "")
     .split(",")
     .map((c) => c.trim().toLowerCase())

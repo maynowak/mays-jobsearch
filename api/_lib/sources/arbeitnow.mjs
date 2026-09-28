@@ -75,10 +75,12 @@ function compactJob(job) {
   };
 }
 
-export async function fetchFilteredJobs({ skills, targetRole, city }) {
+export async function fetchFilteredJobs({ skills, targetRoles, targetRole, city }) {
   const jobs = await fetchArbeitnow();
 
-  const keywordTokens = [...tokenize(targetRole), ...tokenize(skills)];
+  // Backward compatibility: support both targetRoles (array) and targetRole (string)
+  const roles = Array.isArray(targetRoles) ? targetRoles : (targetRole ? [targetRole] : []);
+  const keywordTokens = [...roles.flatMap(tokenize), ...tokenize(skills)];
   const cityQueries = String(city || "")
     .split(",")
     .map((c) => c.trim().toLowerCase())

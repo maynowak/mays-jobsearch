@@ -26,7 +26,10 @@ export default async function handler(req, res) {
       }
     }
 
-    const result = await fetchAllJobs({ skills: skillsArray, targetRole, city, radiusKm, workMode, employmentType });
+    // Parse targetRole - support multiple values (array) or single string
+    const targetRoles = Array.isArray(targetRole) ? targetRole : (targetRole ? [targetRole] : []);
+
+    const result = await fetchAllJobs({ skills: skillsArray, targetRoles, city, radiusKm, workMode, employmentType });
 
     return res.status(200).json(result);
   } catch (err) {

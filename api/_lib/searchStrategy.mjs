@@ -185,27 +185,28 @@ export function applySearchStrategy(skills, allJobs, source, options = {}) {
   return buildCandidatePool(skills, allJobs, source, options);
 }
 
-export function applySearchStrategyWithTargetRole(skills, targetRole, allJobs, source, options = {}) {
+export function applySearchStrategyWithTargetRole(skills, targetRoles, allJobs, source, options = {}) {
   const { targetRoleWeight = 1 } = options;
+  const roles = Array.isArray(targetRoles) ? targetRoles : (targetRoles ? [targetRoles] : []);
   
-  if (!skills.length && !targetRole) {
+  if (!skills.length && !roles.length) {
     return buildCandidatePool([], allJobs, source, options);
   }
 
-  // First, get jobs matching targetRole (hard filter)
-  const targetRoleJobs = targetRole ? allJobs.filter(job => {
+  // First, get jobs matching ANY targetRole (hard filter, OR across roles)
+  const targetRoleJobs = roles.length ? allJobs.filter(job => {
     const title = (job.title || "").toLowerCase();
     const tags = (job.tags || []).join(" ").toLowerCase();
     const haystack = `${title} ${tags}`;
-    return haystack.includes(targetRole.toLowerCase());
+    return roles.some(role => haystack.includes(role.toLowerCase()));
   }) : [];
 
   // Then apply skill strategy to remaining jobs
-  const nonTargetRoleJobs = targetRole ? allJobs.filter(job => {
+  const nonTargetRoleJobs = roles.length ? allJobs.filter(job => {
     const title = (job.title || "").toLowerCase();
     const tags = (job.tags || []).join(" ").toLowerCase();
     const haystack = `${title} ${tags}`;
-    return !haystack.includes(targetRole.toLowerCase());
+    return !roles.some(role => haystack.includes(role.toLowerCase()));
   }) : allJobs;
 
   const skillResult = buildCandidatePool(skills, nonTargetRoleJobs, source, options);
