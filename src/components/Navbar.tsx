@@ -22,7 +22,7 @@ function LangToggle() {
   );
 }
 
-export type NavbarRoute = "landing" | "matcher";
+export type NavbarRoute = "landing" | "matcher" | "impressum";
 
 interface Props {
   route: NavbarRoute;
@@ -85,7 +85,10 @@ export default function Navbar({ route }: Props) {
   }, []);
 
   const isLanding = route === "landing";
+  const isImprint = route === "impressum";
   const links: Array<[string, string]> = isLanding
+    ? [[t("nav.search"), "/top"]]
+    : isImprint
     ? [[t("nav.search"), "/top"]]
     : [
         [t("nav.search"), "top"],

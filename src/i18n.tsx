@@ -423,6 +423,18 @@ const en: Dict = {
   "footer.pre": "Job listings",
   "footer.post": ". Scores are AI-generated suggestions — always check the original posting.",
   "footer.version": "Version",
+  "footer.imprint": "Imprint",
+  "footer.privacy": "Privacy",
+  "footer.legalAriaLabel": "Legal links",
+  "legal.imprintTitle": "Imprint",
+  "legal.providerHeading": "Provider",
+  "legal.providerName": "Name",
+  "legal.providerNameDev": "May's Job Matcher (Development)",
+  "legal.providerAddress": "Address",
+  "legal.addressDev": "The operator address will be added before this page is legally finalized.",
+  "legal.contactHeading": "Contact",
+  "legal.contactEmail": "E-Mail",
+  "legal.devNotice": "Notice: This imprint is in development. The operator address is not yet finalized.",
 };
 
 const de: Dict = {
@@ -841,6 +853,18 @@ const de: Dict = {
   "footer.pre": "Jobangebote",
   "footer.post": ". Bewertungen sind KI-generierte Vorschläge — prüfe immer die Original-Anzeige.",
   "footer.version": "Version",
+  "footer.imprint": "Impressum",
+  "footer.privacy": "Datenschutz",
+  "footer.legalAriaLabel": "Rechtliche Links",
+  "legal.imprintTitle": "Impressum",
+  "legal.providerHeading": "Anbieter",
+  "legal.providerName": "Name",
+  "legal.providerNameDev": "May's Job Matcher (Entwicklung)",
+  "legal.providerAddress": "Anschrift",
+  "legal.addressDev": "Die Betreiberanschrift wird vor dem produktiven rechtlichen Abschluss dieser Seite ergaenzt.",
+  "legal.contactHeading": "Kontakt",
+  "legal.contactEmail": "E-Mail",
+  "legal.devNotice": "Hinweis: Dieses Impressum befindet sich in der Entwicklung. Die Betreiberanschrift ist noch nicht finalisiert.",
 };
 
 const translations: Record<Lang, Dict> = { en, de };

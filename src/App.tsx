@@ -23,6 +23,7 @@ import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
 import CvGoalSelection from "./components/CvGoalSelection";
+import Imprint from "./components/Imprint";
 
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
@@ -44,9 +45,12 @@ interface JobDataset {
 
 export default function App() {
   const { t } = useLang();
-  const [route] = useState<NavbarRoute>(() =>
-    window.location.pathname === "/top" ? "matcher" : "landing"
-  );
+  // Route aus URL ableiten (reaktiv bei Navigation)
+  const route: NavbarRoute = (() => {
+    const path = window.location.pathname;
+    if (path === "/impressum") return "impressum";
+    return path === "/top" ? "matcher" : "landing";
+  })();
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -2188,81 +2192,88 @@ export default function App() {
     ? (cvState.documents.find((d) => d.id === profilesDocId) ?? null)
     : null;
 
-  return (
+return (
     <ErrorBoundary
       title={t("error.boundaryTitle")}
       message={t("error.boundaryMessage")}
       reloadLabel={t("error.boundaryReload")}
     >
-      <Navbar route="matcher" />
-      <Hero />
+      <Navbar route={route} />
+      {route === "impressum" ? (
+        <main className="container legal-main">
+          <Imprint />
+        </main>
+      ) : (
+        <>
+          <Hero />
+          <main className="container layout-search">
+            <aside className="search-sidebar">
+              {searchCard}
+              {cvProcessingUI}
+            </aside>
 
-      <main className="container layout-search">
-        <aside className="search-sidebar">
-          {searchCard}
-          {cvProcessingUI}
-        </aside>
-
-        {hasResults ? (
-          <section className="results-workspace">
-            <Results
-              matches={matches}
-              foundJobs={foundJobs}
-              onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
-              onAtsEvaluate={(job) => setAtsJob(job)}
+            {hasResults ? (
+              <section className="results-workspace">
+                <Results
+                  matches={matches}
+                  foundJobs={foundJobs}
+                  onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
+                  onAtsEvaluate={(job) => setAtsJob(job)}
+                />
+              </section>
+            ) : (
+              <section className="alerts-section">
+                <AlertCard profile={profile} />
+              </section>
+            )}
+          </main>
+        </>
+      )}
+      {route !== "impressum" && (
+        <>
+          {letterJob && (
+            <LetterModal
+              job={letterJob.job}
+              prepare={letterJob.prepare}
+              profile={profile}
+              model={effectiveModel}
+              availableModels={models.map((model) => model.id)}
+              recommendedModel={recommendedModel}
+              onClose={() => setLetterJob(null)}
             />
-          </section>
-        ) : (
-          <section className="alerts-section">
-            <AlertCard profile={profile} />
-          </section>
-        )}
-      </main>
+          )}
 
-      {letterJob && (
-        <LetterModal
-          job={letterJob.job}
-          prepare={letterJob.prepare}
-          profile={profile}
-          model={effectiveModel}
-          availableModels={models.map((model) => model.id)}
-          recommendedModel={recommendedModel}
-          onClose={() => setLetterJob(null)}
-        />
+          {atsJob && (activeAtsEntry || profile) && (
+            <ATSModal
+              job={atsJob}
+              // CV-UPLOAD-UX-07: gewaehltes ATS-Profil (im CV-Bereich) hat Vorrang
+              // vor dem allgemeinen Suchprofil
+              profile={
+                activeAtsEntry
+                  ? {
+                      skills: activeAtsEntry.skills.join(", "),
+                      targetRoles: activeAtsEntry.targetRoles ?? [],
+                      city: "",
+                      radiusKm: null,
+                      workModes: [],
+                      employmentTypes: ["full_time"],
+                    }
+                  : profile
+              }
+              onClose={() => setAtsJob(null)}
+            />
+          )}
+
+          {profilesDoc && (
+            <CvProfilesOverlay
+              docName={profilesDoc.name}
+              docHash={profilesDoc.hash ?? null}
+              onClose={() => setProfilesDocId(null)}
+            />
+          )}
+          <Footer />
+        </>
       )}
-
-      {atsJob && (activeAtsEntry || profile) && (
-        <ATSModal
-          job={atsJob}
-          // CV-UPLOAD-UX-07: gewaehltes ATS-Profil (im CV-Bereich) hat Vorrang
-          // vor dem allgemeinen Suchprofil
-          profile={
-            activeAtsEntry
-              ? {
-                  skills: activeAtsEntry.skills.join(", "),
-                  targetRoles: activeAtsEntry.targetRoles ?? [],
-                  city: "",
-                  radiusKm: null,
-                  workModes: [],
-                  employmentTypes: ["full_time"],
-                }
-              : profile
-          }
-          onClose={() => setAtsJob(null)}
-        />
-      )}
-
-      {/* CV-PROFILE-LISTS-01: Profil-Overlay pro CV (benannte Listen:
-          Suchprofile + ATS-Profile) */}
-      {profilesDoc && (
-        <CvProfilesOverlay
-          docName={profilesDoc.name}
-          docHash={profilesDoc.hash ?? null}
-          onClose={() => setProfilesDocId(null)}
-        />
-      )}
-
-      <Footer />
     </ErrorBoundary>
   );
 }

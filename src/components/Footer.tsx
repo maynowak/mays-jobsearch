@@ -12,6 +12,11 @@ export default function Footer({ info = {} }: Props) {
 
   return (
     <footer className="footer">
+      <nav className="footer-links" aria-label={t("footer.legalAriaLabel")}>
+        <a href="/impressum">{t("footer.imprint")}</a>
+        <span aria-hidden="true">·</span>
+        <a href="/datenschutz">{t("footer.privacy")}</a>
+      </nav>
       <p>
         {t("footer.pre")}{" "}
         <a href="https://www.arbeitnow.com" target="_blank" rel="noopener noreferrer">
