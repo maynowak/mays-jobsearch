@@ -1,9 +1,14 @@
 import { HttpError, tokenize, stripHtml, locationMatches, keywordHits, detectLanguage } from "../filter.mjs";
 import { getConfig } from "../config.mjs";
+import { cacheGet, cacheSet } from "../cache.mjs";
+import { countJobSourceCacheHit, countJobSourceCacheMiss } from "../usage.mjs";
 
 const API_BASE = "https://api.adzuna.com/v1/api/jobs";
 const RESULTS_PER_PAGE = 50;
 const MAX_JOBS_TO_AI = 40;
+// L1 result cache (same pattern as Apify): repeated identical searches reuse
+// the raw upstream payload instead of burning paid API quota.
+const CACHE_TTL_SEC = 600;
 
 const SOURCE_ID = "adzuna";
 
@@ -59,7 +64,7 @@ export async function fetchAdzunaJobs({ skills, targetRoles, targetRole, city })
 
   for (const country of countries) {
     try {
-      const jobs = await fetchCountryJobs(country, credentials, what, where);
+      const jobs = await fetchCountryJobsCached(country, credentials, what, where);
       allJobs.push(...jobs);
     } catch (err) {
       console.error(`[adzuna] Country ${country} failed:`, err);
@@ -94,6 +99,23 @@ export async function fetchAdzunaJobs({ skills, targetRoles, targetRole, city })
       totalFiltered: ranked.length,
     },
   };
+}
+
+function countryCacheKey(country, what, where) {
+  return `job-source:adzuna:${country}|${String(what || "").toLowerCase().trim()}|${String(where || "").toLowerCase().trim()}`;
+}
+
+async function fetchCountryJobsCached(country, credentials, what, where) {
+  const key = countryCacheKey(country, what, where);
+  const cached = await cacheGet(key);
+  if (Array.isArray(cached)) {
+    await countJobSourceCacheHit(SOURCE_ID);
+    return cached;
+  }
+  await countJobSourceCacheMiss(SOURCE_ID);
+  const jobs = await fetchCountryJobs(country, credentials, what, where);
+  if (jobs.length) await cacheSet(key, jobs, CACHE_TTL_SEC);
+  return jobs;
 }
 
 async function fetchCountryJobs(country, { appId, appKey }, what, where) {

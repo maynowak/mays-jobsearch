@@ -10,7 +10,18 @@ vi.mock("../../api/_lib/config.mjs", () => ({
   })),
 }));
 
+vi.mock("../../api/_lib/cache.mjs", () => ({
+  cacheGet: vi.fn(async () => null),
+  cacheSet: vi.fn(async () => undefined),
+}));
+
+vi.mock("../../api/_lib/usage.mjs", () => ({
+  countJobSourceCacheHit: vi.fn(async () => {}),
+  countJobSourceCacheMiss: vi.fn(async () => {}),
+}));
+
 const { getConfig } = await import("../../api/_lib/config.mjs");
+const { cacheGet, cacheSet } = await import("../../api/_lib/cache.mjs");
 const { fetchJobs, normalizeAdzunaJob } = await import("../../api/_lib/sources/adzuna.mjs");
 
 const sampleAdzunaJob = {
@@ -55,6 +66,8 @@ beforeEach(() => {
     adzunaAppKey: "test-app-key",
     adzunaCountries: "de",
   });
+  vi.mocked(cacheGet).mockResolvedValue(null);
+  vi.mocked(cacheSet).mockResolvedValue(undefined);
 });
 
 describe("Adzuna Source Adapter", () => {
@@ -275,6 +288,57 @@ describe("Adzuna Source Adapter", () => {
       const job = normalizeAdzunaJob(sampleAdzunaJob, "de");
       expect(job.descriptionPlain).not.toContain("<p>");
       expect(job.descriptionPlain).toContain("Senior Frontend Engineer");
+    });
+  });
+
+  describe("L1 result cache (quota protection)", () => {
+    it("serves cached country payload without paid API call on repeat search", async () => {
+      vi.mocked(cacheGet).mockResolvedValue([{ job: sampleAdzunaJob, country: "de" }]);
+      setupFetchMock(() => {
+        throw new Error("fetch must not be called on cache hit");
+      });
+      const result = await fetchJobs({ skills: "frontend", targetRoles: [], city: "berlin" });
+      expect(result.jobs.length).toBe(1);
+      expect(result.jobs[0].slug).toBe("az-de-1234567890");
+      expect(result.meta.totalScanned).toBe(1);
+    });
+
+    it("stores fresh country payload under namespaced key after miss", async () => {
+      setupFetchMock(() => okResponse({ count: 1, results: [sampleAdzunaJob] }));
+      await fetchJobs({ skills: "frontend", targetRoles: [], city: "berlin" });
+      expect(vi.mocked(cacheSet)).toHaveBeenCalledTimes(1);
+      const [key, value, ttl] = vi.mocked(cacheSet).mock.calls[0];
+      expect(String(key).startsWith("job-source:adzuna:de|")).toBe(true);
+      expect(Array.isArray(value)).toBe(true);
+      expect(ttl).toBe(600);
+    });
+
+    it("caches per country independently", async () => {
+      vi.mocked(getConfig).mockReturnValue({
+        jobSourceAdzunaEnabled: true,
+        adzunaAppId: "id",
+        adzunaAppKey: "key",
+        adzunaCountries: "de,gb",
+      });
+      vi.mocked(cacheGet).mockImplementation(async (key) =>
+        String(key).includes(":de|") ? [{ job: sampleAdzunaJobMinimal, country: "de" }] : null
+      );
+      const seen = [];
+      setupFetchMock((url) => {
+        seen.push(url);
+        return okResponse({ count: 0, results: [] });
+      });
+      const result = await fetchJobs({ skills: "", targetRoles: [], city: "" });
+      expect(result.jobs.length).toBe(1);
+      expect(seen.some((u) => u.includes("/jobs/gb/search/"))).toBe(true);
+      expect(seen.some((u) => u.includes("/jobs/de/search/"))).toBe(false);
+    });
+
+    it("does not cache empty results", async () => {
+      setupFetchMock(() => okResponse({ count: 0, results: [] }));
+      const result = await fetchJobs({ skills: "nothingmatchesthis", targetRoles: [], city: "" });
+      expect(result.jobs).toEqual([]);
+      expect(vi.mocked(cacheSet)).not.toHaveBeenCalled();
     });
   });
 });

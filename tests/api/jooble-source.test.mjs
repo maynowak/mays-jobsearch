@@ -8,7 +8,18 @@ vi.mock("../../api/_lib/config.mjs", () => ({
   })),
 }));
 
+vi.mock("../../api/_lib/cache.mjs", () => ({
+  cacheGet: vi.fn(async () => null),
+  cacheSet: vi.fn(async () => undefined),
+}));
+
+vi.mock("../../api/_lib/usage.mjs", () => ({
+  countJobSourceCacheHit: vi.fn(async () => {}),
+  countJobSourceCacheMiss: vi.fn(async () => {}),
+}));
+
 const { getConfig } = await import("../../api/_lib/config.mjs");
+const { cacheGet, cacheSet } = await import("../../api/_lib/cache.mjs");
 const { fetchJobs, normalizeJoobleJob } = await import("../../api/_lib/sources/jooble.mjs");
 
 const sampleJoobleJob = {
@@ -51,6 +62,8 @@ beforeEach(() => {
     jobSourceJoobleEnabled: true,
     joobleApiKey: "test-jooble-key",
   });
+  vi.mocked(cacheGet).mockResolvedValue(null);
+  vi.mocked(cacheSet).mockResolvedValue(undefined);
 });
 
 describe("Jooble Source Adapter", () => {
@@ -202,6 +215,36 @@ describe("Jooble Source Adapter", () => {
       const job = normalizeJoobleJob(sampleJoobleJob);
       expect(job.descriptionPlain).not.toContain("<");
       expect(job.descriptionPlain).toContain("Senior Frontend Developer");
+    });
+  });
+
+  describe("L1 result cache (quota protection)", () => {
+    it("serves cached records without paid API call on repeat search", async () => {
+      vi.mocked(cacheGet).mockResolvedValue([sampleJoobleJob]);
+      setupFetchMock(() => {
+        throw new Error("fetch must not be called on cache hit");
+      });
+      const result = await fetchJobs({ skills: "frontend", targetRoles: [], city: "berlin" });
+      expect(result.jobs.length).toBe(1);
+      expect(result.jobs[0].slug).toBe("jo-123456789");
+      expect(result.meta.totalScanned).toBe(1);
+    });
+
+    it("stores fresh results under namespaced key after miss", async () => {
+      setupFetchMock(() => okResponse({ totalCount: 1, jobs: [sampleJoobleJob] }));
+      await fetchJobs({ skills: "frontend", targetRoles: [], city: "berlin" });
+      expect(vi.mocked(cacheSet)).toHaveBeenCalledTimes(1);
+      const [key, value, ttl] = vi.mocked(cacheSet).mock.calls[0];
+      expect(String(key).startsWith("job-source:jooble:")).toBe(true);
+      expect(Array.isArray(value)).toBe(true);
+      expect(ttl).toBe(600);
+    });
+
+    it("does not cache empty results", async () => {
+      setupFetchMock(() => okResponse({ totalCount: 0, jobs: [] }));
+      const result = await fetchJobs({ skills: "nothingmatchesthis", targetRoles: [], city: "" });
+      expect(result.jobs).toEqual([]);
+      expect(vi.mocked(cacheSet)).not.toHaveBeenCalled();
     });
   });
 });

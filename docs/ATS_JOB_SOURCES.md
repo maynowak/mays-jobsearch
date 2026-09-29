@@ -28,7 +28,8 @@ Unlike the ATS sources above, these official job-board APIs require free credent
 - **Coverage**: UK, USA, Germany, France + 10+ more countries (one country code per request).
 - **Native search**: `what` (keywords), `where` (location), `results_per_page`, `page`, plus `salary_min`, `full_time`, `sort_by` (reserved for future use).
 - **Structured data incl. geodata + salary**: `latitude`/`longitude` per job → normalized as optional `latitude`/`longitude` fields (feeds the per-job-radius upgrade point from GEO-WORKMODE); `salary_min`/`salary_max` → `salary` range string (no currency invented).
-- **Multi-country**: `ADZUNA_COUNTRIES="de,gb"` loops countries like Greenhouse loops boards; per-country failures logged, остальные fortgesetzt; if NOTHING was fetched, the first error is rethrown (visible misconfiguration instead of silent empty).
+- **Multi-country**: `ADZUNA_COUNTRIES="de,gb"` loops countries like Greenhouse loops boards; per-country failures are logged and the loop continues; if NOTHING was fetched at all, the first error is rethrown (visible misconfiguration instead of silent empty).
+- **Quota-Schutz via L1-Cache**: Roh-Payloads je Land + Query (`job-source:adzuna:<country>|<what>|<where>`, TTL 600 s, wie Apify-L1). Wiederholte identische Suchen kosten keinen Paid-Call; leere Ergebnisse werden nicht gecacht.
 - **Config**: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `ADZUNA_COUNTRIES` (default `"de"`), `JOB_SOURCE_ADZUNA_ENABLED` (default `true`); missing credentials → `emptyResult("missing_config")`.
 - **Field mapping**: `az-{country}-{id}` externalId; `company.display_name`; `location.display_name` + `location.area[]`; `redirect_url` (url/applyUrl/jobUrl); `created` → `created_at`; `contract_time` → `jobTypes`; `category.label` → `tags`/`department`.
 - **Endpoint verified** against official docs (`developer.adzuna.com/docs/search`): path, `app_id`/`app_key`, `results_per_page`, `what`, `where`, `redirect_url` confirmed 2026-09-29.
@@ -39,6 +40,7 @@ Unlike the ATS sources above, these official job-board APIs require free credent
 - **Local filtering still applies** afterwards (consistent with all sources).
 - **Config**: `JOOBLE_API_KEY`, `JOB_SOURCE_JOOBLE_ENABLED` (default `true`); missing key → `emptyResult("missing_config")`.
 - **Field mapping**: `jo-{id}` externalId; `snippet` (plain text with `<b>` highlights → stripped for `descriptionPlain`); `salary` string passed through unchanged; `type` → `tags`/`jobTypes`; `link` (url/applyUrl/jobUrl); `updated` → `created_at`.
+- **Quota-Schutz via L1-Cache**: Roh-Payload je Query (`job-source:jooble:<keywords>|<location>`, TTL 600 s, wie Apify-L1). Wiederholte identische Suchen kosten keinen Paid-Call; leere Ergebnisse werden nicht gecacht.
 - **Verification status**: docs page bot-blocked (403) at check time — field mapping implemented defensively per documented schema; **verify against a live key before relying on Jooble in production** (single valid response suffices: all fields optional except array shape).
 
 ## Common ATS Source Contract

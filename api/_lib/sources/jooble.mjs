@@ -1,8 +1,13 @@
 import { HttpError, tokenize, stripHtml, locationMatches, keywordHits, detectLanguage } from "../filter.mjs";
 import { getConfig } from "../config.mjs";
+import { cacheGet, cacheSet } from "../cache.mjs";
+import { countJobSourceCacheHit, countJobSourceCacheMiss } from "../usage.mjs";
 
 const API_BASE = "https://jooble.org/api";
 const MAX_JOBS_TO_AI = 40;
+// L1 result cache (same pattern as Apify): repeated identical searches reuse
+// the raw upstream payload instead of burning paid API quota.
+const CACHE_TTL_SEC = 600;
 
 const SOURCE_ID = "jooble";
 
@@ -38,6 +43,50 @@ export async function fetchJoobleJobs({ skills, targetRoles, targetRole, city })
   const keywords = keywordTokens.join(" ");
   const location = cityQueries.join(" ");
 
+  const allJobs = await fetchJoobleJobsCached(apiKey, keywords, location);
+
+  const candidates = allJobs
+    .map(normalizeJoobleJob)
+    .filter((job) => {
+      if (!locationMatches(job, cityQueries)) return false;
+      if (keywordTokens.length) return keywordHits(job, keywordTokens) > 0;
+      return true;
+    });
+
+  const ranked = candidates
+    .map((job) => ({ job, hits: keywordHits(job, keywordTokens) }))
+    .sort((a, b) => b.hits - a.hits || (b.job.created_at || 0) - (a.job.created_at || 0))
+    .map(({ job }) => job);
+
+  return {
+    jobs: ranked.slice(0, MAX_JOBS_TO_AI),
+    meta: {
+      enabled: true,
+      reason: null,
+      totalScanned: allJobs.length,
+      totalFiltered: ranked.length,
+    },
+  };
+}
+
+function searchCacheKey(keywords, location) {
+  return `job-source:jooble:${String(keywords || "").toLowerCase().trim()}|${String(location || "").toLowerCase().trim()}`;
+}
+
+async function fetchJoobleJobsCached(apiKey, keywords, location) {
+  const key = searchCacheKey(keywords, location);
+  const cached = await cacheGet(key);
+  if (Array.isArray(cached)) {
+    await countJobSourceCacheHit(SOURCE_ID);
+    return cached;
+  }
+  await countJobSourceCacheMiss(SOURCE_ID);
+  const jobs = await fetchJoobleUpstream(apiKey, keywords, location);
+  if (jobs.length) await cacheSet(key, jobs, CACHE_TTL_SEC);
+  return jobs;
+}
+
+async function fetchJoobleUpstream(apiKey, keywords, location) {
   const url = `${API_BASE}/${encodeURIComponent(apiKey)}`;
   const body = {};
   if (keywords) body.keywords = keywords;
@@ -75,30 +124,7 @@ export async function fetchJoobleJobs({ skills, targetRoles, targetRole, city })
     throw new HttpError(502, "Jooble API sent an unexpected response. Try again shortly.", "upstream");
   }
 
-  const allJobs = json.jobs;
-
-  const candidates = allJobs
-    .map(normalizeJoobleJob)
-    .filter((job) => {
-      if (!locationMatches(job, cityQueries)) return false;
-      if (keywordTokens.length) return keywordHits(job, keywordTokens) > 0;
-      return true;
-    });
-
-  const ranked = candidates
-    .map((job) => ({ job, hits: keywordHits(job, keywordTokens) }))
-    .sort((a, b) => b.hits - a.hits || (b.job.created_at || 0) - (a.job.created_at || 0))
-    .map(({ job }) => job);
-
-  return {
-    jobs: ranked.slice(0, MAX_JOBS_TO_AI),
-    meta: {
-      enabled: true,
-      reason: null,
-      totalScanned: allJobs.length,
-      totalFiltered: ranked.length,
-    },
-  };
+  return json.jobs;
 }
 
 export function normalizeJoobleJob(job) {
