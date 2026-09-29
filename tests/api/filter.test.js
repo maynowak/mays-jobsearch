@@ -8,6 +8,8 @@ import {
   applySearchFilters,
   tokenize,
   splitQuotedPhrases,
+  deriveWorkMode,
+  workModeMatches,
 } from "../../api/_lib/filter.mjs";
 
 describe("API filter - quoted-phrase tokenization", () => {
@@ -228,5 +230,65 @@ describe("API filter - applySearchFilters keeps both sources without employmentT
     ];
     const result = applySearchFilters(jobs, { employmentType: "full_time" });
     expect(result.map((j) => j.slug)).toEqual(["a", "c", "d"]);
+  });
+});
+
+describe("API filter - deriveWorkMode (text-based work model detection)", () => {
+  it("prefers provider metadata: workplaceType, then remote flag", () => {
+    expect(deriveWorkMode({ title: "X", remote: true })).toBe("remote");
+    expect(deriveWorkMode({ title: "X", workplaceType: "hybrid" })).toBe("hybrid");
+    expect(deriveWorkMode({ title: "X", workplaceType: "On-Site" })).toBe("onsite");
+  });
+
+  it("detects strong remote text markers", () => {
+    expect(deriveWorkMode({ title: "Dev (100% Remote)" })).toBe("remote");
+    expect(deriveWorkMode({ title: "Dev", description: "vollständig im Homeoffice" })).toBe("remote");
+  });
+
+  it("detects hybrid keywords", () => {
+    expect(deriveWorkMode({ title: "Dev", description: "Hybrides Arbeiten: 2 Tage Büro" })).toBe("hybrid");
+    expect(deriveWorkMode({ title: "Dev", description: "Homeoffice möglich" })).toBe("hybrid");
+  });
+
+  it("detects onsite keywords", () => {
+    expect(deriveWorkMode({ title: "Dev", description: "Arbeit vor Ort in der Werkstatt" })).toBe("onsite");
+    expect(deriveWorkMode({ title: "Dev", description: "Kein Homeoffice" })).toBe("onsite");
+  });
+
+  it("remote metadata wins over onsite text", () => {
+    expect(deriveWorkMode({ title: "Dev vor Ort", remote: true })).toBe("remote");
+  });
+
+  it("falls back to onsite without any signal", () => {
+    expect(deriveWorkMode({ title: "Dev", description: "Spannende Aufgaben" })).toBe("onsite");
+  });
+});
+
+describe("API filter - workModeMatches with derived modes", () => {
+  const hybridJob = { slug: "h", title: "Dev", description: "hybrid, 2 Tage Büro", remote: false };
+  const onsiteJob = { slug: "o", title: "Dev", description: "Arbeit vor Ort", remote: false };
+  const remoteJob = { slug: "r", title: "Dev", remote: true };
+
+  it("no selection passes everything", () => {
+    expect(workModeMatches(hybridJob, [])).toBe(true);
+    expect(workModeMatches(onsiteJob, [])).toBe(true);
+  });
+
+  it("remote-only keeps remote jobs, drops others", () => {
+    expect(workModeMatches(remoteJob, ["remote"])).toBe(true);
+    expect(workModeMatches(hybridJob, ["remote"])).toBe(false);
+    expect(workModeMatches(onsiteJob, ["remote"])).toBe(false);
+  });
+
+  it("hybrid selection keeps hybrid jobs only", () => {
+    expect(workModeMatches(hybridJob, ["hybrid"])).toBe(true);
+    expect(workModeMatches(onsiteJob, ["hybrid"])).toBe(false);
+    expect(workModeMatches(remoteJob, ["hybrid"])).toBe(false);
+  });
+
+  it("multi-select keeps every selected mode", () => {
+    expect(workModeMatches(hybridJob, ["hybrid", "remote"])).toBe(true);
+    expect(workModeMatches(remoteJob, ["hybrid", "remote"])).toBe(true);
+    expect(workModeMatches(onsiteJob, ["hybrid", "remote"])).toBe(false);
   });
 });

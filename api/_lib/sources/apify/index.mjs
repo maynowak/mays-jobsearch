@@ -32,7 +32,7 @@ export function emptyResult(reason) {
   };
 }
 
-export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, city }) {
+export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, city, geo }) {
   const apiToken = process.env.APIFY_API_TOKEN;
   if (!apiToken) {
     return emptyResult("missing_config");
@@ -47,6 +47,12 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
 
   const location = String(city || "").trim();
   const input = actor.buildInput(query, location, actor.maxJobs);
+  // Umkreis-Koordinaten additiv mitgeben (Actors ignorieren unbekannte Felder).
+  if (geo && Number.isFinite(geo.lat) && Number.isFinite(geo.lon)) {
+    input.latitude = geo.lat;
+    input.longitude = geo.lon;
+    if (Number.isFinite(geo.radiusKm)) input.radiusKm = geo.radiusKm;
+  }
 
   const cacheKey = jobCacheKey(actor.sourceId, input.query, input.location);
   const datasetKey = datasetCacheKey(actor.sourceId, input.query, input.location);

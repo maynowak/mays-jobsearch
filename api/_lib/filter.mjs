@@ -197,14 +197,64 @@ export function employmentMatches(job, employmentTypes) {
   });
 }
 
+const REMOTE_TEXT_MARKERS = ["100% remote", "100 % remote", "vollständig im homeoffice", "vollstaendig im homeoffice"];
+const HYBRID_KEYWORDS = [
+  "hybrid",
+  "teilweise homeoffice",
+  "homeoffice möglich",
+  "homeoffice moeglich",
+  "flexibles arbeiten",
+  "remote-anteil",
+  "remoteanteil",
+  "präsenz und homeoffice",
+  "praesenz und homeoffice",
+  "bzw. homeoffice",
+  "blended working",
+];
+const ONSITE_KEYWORDS = [
+  "vor ort",
+  "präsenz",
+  "praesenz",
+  "im büro",
+  "im buero",
+  "werkstatt",
+  "baustelle",
+  "kein homeoffice",
+  "ladenlokal",
+  "on-site",
+  "onsite",
+];
+
+/**
+ * Bestimmt das wahrscheinlichste Arbeitsmodell eines Jobs.
+ * Reihenfolge: Provider-Metadaten (workplaceType, remote-Flag),
+ * dann starke Remote-Textmarker, dann Hybrid-, dann Onsite-Keywords.
+ * Fallback ohne Signal: "onsite" (Branchen-Standard).
+ * Vorschlag: Google AI (Feldzugriffe ans Jobmodell angepasst).
+ */
+export function deriveWorkMode(job) {
+  const workplace = String(job?.workplaceType || "").trim().toLowerCase();
+  if (workplace === "remote" || workplace === "hybrid" || workplace === "onsite") {
+    return workplace;
+  }
+  if (job?.remote === true) return "remote";
+  const text = `${job?.title || ""} ${job?.descriptionPlain || job?.description || ""} ${(job?.tags || []).join(" ")}`.toLowerCase();
+  if (REMOTE_TEXT_MARKERS.some((marker) => text.includes(marker))) return "remote";
+  if (HYBRID_KEYWORDS.some((keyword) => text.includes(keyword))) return "hybrid";
+  if (ONSITE_KEYWORDS.some((keyword) => text.includes(keyword))) return "onsite";
+  return "onsite";
+}
+
 export function workModeMatches(job, workModes) {
-  if (!workModes.length) return true;
-  const requested = new Set(workModes);
-  if (requested.has("remote") && !requested.has("hybrid") && !requested.has("onsite")) {
+  const requested = new Set(
+    (Array.isArray(workModes) ? workModes : []).map((m) => String(m).toLowerCase().trim()).filter(Boolean)
+  );
+  if (!requested.size) return true;
+  if (requested.size === 1 && requested.has("remote")) {
     if (job.remote === true) return true;
     if (job.remote === false) return false;
   }
-  return true;
+  return requested.has(deriveWorkMode(job));
 }
 
 export function applySearchFilters(jobs, { radiusKm, workMode, employmentType }) {

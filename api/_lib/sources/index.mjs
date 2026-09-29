@@ -7,6 +7,7 @@ import { countJobSourceRequest } from "../usage.mjs";
 import { applySearchFilters } from "../filter.mjs";
 import { applySearchStrategy, applySearchStrategyWithTargetRole } from "../searchStrategy.mjs";
 import { getConfig } from "../config.mjs";
+import { geocodeCity } from "../geo.mjs";
 
 const publicAtsConfigs = getConfig().publicAtsSources || [];
 const publicAtsSources = publicAtsConfigs.map(createPublicJobSource);
@@ -65,8 +66,16 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
   // Substring-Filter und engt die Suche stärker ein als eine Suche ohne Stadt.
   const radiusValue = Number(radiusKm);
   const geoCity = Number.isFinite(radiusValue) && radiusValue > 0 ? city : "";
+  // Umkreis-Geokodierung (best-effort, gecacht): löst die Such-Stadt einmalig
+  // in Koordinaten auf. Bei Fehlschlag bleibt geo null und das bisherige
+  // Substring-Verhalten gilt unverändert.
+  let geo = null;
+  if (geoCity) {
+    const coords = await geocodeCity(geoCity);
+    if (coords) geo = { ...coords, radiusKm: radiusValue, city: geoCity };
+  }
   const settled = await Promise.allSettled(
-    sources.map((source) => source.fetchJobs({ skills, targetRoles: roles, city: geoCity }))
+    sources.map((source) => source.fetchJobs({ skills, targetRoles: roles, city: geoCity, geo }))
   );
 
   const results = [];
@@ -117,6 +126,7 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
       totalFiltered: searchStrategyResult.jobs.length,
       city: arbeitnowResult?.meta?.city ?? results[0]?.meta?.city ?? [],
       keywords: arbeitnowResult?.meta?.keywords ?? results[0]?.meta?.keywords ?? [],
+      geo,
       sources: sourcesMeta,
       sourceReasons,
       sourceCounts,

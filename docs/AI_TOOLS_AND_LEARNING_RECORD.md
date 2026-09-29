@@ -23,6 +23,25 @@ This file records which AI tools were used on **My Job Matcher** and what was le
 - Vercel deploys a directory named `Mays-Jobsearch` only after an explicit `--name`, and nested `api/cron/*.mjs` needs `api/**/*.mjs` in the functions config.
 - Keys shared in chat should be rotated if there is any concern.
 
+## 2026-09-29
+
+**Tools:** Google AI (suggestion: Nominatim geocoding + text-based work-mode detection) + Muse Spark (review, corrected implementation, tests, docs)
+
+**Work performed:**
+
+- New `api/_lib/geo.mjs`: `geocodeCity()` via Nominatim (fixed endpoint URL, valid User-Agent, 8s timeout, 30-day Redis cache, graceful `null` fallback) + `haversineKm()` for future per-job radius filtering.
+- Geo integration: `fetchAllJobs` resolves the search city once per request (only when city + numeric radius are set), passes `geo` to sources, exposes `meta.geo`; Apify actor input receives additive `latitude`/`longitude`/`radiusKm` (actors ignore unknown fields).
+- New `deriveWorkMode()` in `api/_lib/filter.mjs` (remote → hybrid → onsite keyword detection, provider metadata first, onsite default) + strict matching in `workModeMatches` (remote-only fast path preserved).
+- Tests: `tests/api/geo.test.mjs` (8, mocked Nominatim/cache), `deriveWorkMode`/`workModeMatches` cases in `tests/api/filter.test.js`.
+- Report: `docs/reports/GEO-WORKMODE-GOOGLE-AI-01-EXECUTION_LOG.md`.
+
+**Lessons learned:**
+
+- Google AI's Nominatim snippet had a broken URL (`openstreetmap.org{encodeURIComponent(...)}` → must be `nominatim.openstreetmap.org/search?q=...`) and a malformed contact in the User-Agent — always verify generated endpoint code against the provider docs.
+- Nominatim usage policy requires a valid User-Agent and ~1 req/sec; server-side caching is mandatory, never call per job.
+- Per-job radius filtering is impossible without job coordinates — geocode the search city (cheap, cacheable), pass coordinates additively, document the rest as upgrade point.
+- Text-derived `onsite` default + strict multi-select matching changes filter semantics: verify existing tests first (remote-only/empty selections were unaffected here).
+
 ## Future record
 
 Add entries here after each meaningful AI-assisted work session.
