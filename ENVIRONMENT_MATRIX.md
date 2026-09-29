@@ -36,12 +36,28 @@
 - MODEL_FALLBACK_MAX_ATTEMPTS : number (default 3)
 - JOB_SOURCE_ARBEITNOW_ENABLED : true/false
 - JOB_SOURCE_ARBEITSAGENTUR_ENABLED : true/false
+- JOB_SOURCE_GREENHOUSE_ENABLED : true/false
+- JOB_SOURCE_GREENHOUSE_BOARDS : comma-separated board tokens (empty = no jobs)
+- JOB_SOURCE_ADZUNA_ENABLED : true/false
+- ADZUNA_APP_ID / ADZUNA_APP_KEY : (secrets - Vercel dashboard)
+- ADZUNA_COUNTRIES : comma-separated country codes (default de)
+- JOB_SOURCE_JOOBLE_ENABLED : true/false
+- JOOBLE_API_KEY : (secret - Vercel dashboard)
+- JOB_SOURCE_THEIRSTACK_ENABLED : true/false
+- THEIRSTACK_API_KEY : (secret - Vercel dashboard)
+- THEIRSTACK_MONTHLY_MAX_CREDITS : number (default 200)
+- THEIRSTACK_MAX_CREDITS_PER_USER : number (default 20)
+- PUBLIC_ATS_SOURCES : JSON array (default [])
 
 ## 3. Feature Flags / Conditional Variables
 - OPENROUTER_ENABLED : true/false
 - EDENAI_ENABLED : true/false
 - JOB_SOURCE_ARBEITNOW_ENABLED : true/false
 - JOB_SOURCE_ARBEITSAGENTUR_ENABLED : true/false
+- JOB_SOURCE_GREENHOUSE_ENABLED : true/false
+- JOB_SOURCE_ADZUNA_ENABLED : true/false
+- JOB_SOURCE_JOOBLE_ENABLED : true/false
+- JOB_SOURCE_THEIRSTACK_ENABLED : true/false
 
 ## 4. Cost/Usage Guards (optional)
 - OPENROUTER_MONTHLY_SOFT_LIMIT_USD : number (USD)

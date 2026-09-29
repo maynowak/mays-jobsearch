@@ -57,6 +57,9 @@ export default function App() {
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [foundJobs, setFoundJobs] = useState<Job[]>([]);
+  // Roh-Treffer je Source aus der letzten Suche (meta.sources) — damit auch
+  // Quellen sichtbar bleiben, die geliefert haben, aber aus dem 50er-Anzeige-Pool fielen
+  const [foundSources, setFoundSources] = useState<Partial<Record<string, number>> | null>(null);
   const [profile, setProfile] = useState<Profile>({
     skills: "",
     targetRoles: [],
@@ -242,6 +245,7 @@ export default function App() {
     setModelExhausted(false);
     setDataset(null);
     setFoundJobs([]);
+    setFoundSources(null);
     setMatches([]);
 
     const hasTargetRoles = Array.isArray(submitted.targetRoles) && submitted.targetRoles.length > 0;
@@ -269,6 +273,7 @@ export default function App() {
       const nextDataset: JobDataset = { jobs: board.jobs, profile: submitted };
       setDataset(nextDataset);
       setFoundJobs(board.jobs);
+      setFoundSources(board.meta?.sources ?? null);
     } catch (err) {
       setStatus({ type: "error", message: describeError(err) });
     } finally {
@@ -295,6 +300,7 @@ export default function App() {
     setModelExhausted(false);
     setDataset(null);
     setFoundJobs([]);
+    setFoundSources(null);
     setMatches([]);
 
     setPhase("searching");
@@ -315,6 +321,7 @@ export default function App() {
       const nextDataset: JobDataset = { jobs: board.jobs, profile: submitted };
       setDataset(nextDataset);
       setFoundJobs(board.jobs);
+      setFoundSources(board.meta?.sources ?? null);
     } catch (err) {
       console.error("[runCvSearch] error:", err);
       setStatus({ type: "error", message: describeError(err) });
@@ -1330,7 +1337,7 @@ export default function App() {
             )}
           </div>
         )}
-      <JobSources jobs={foundJobs} />
+      <JobSources jobs={foundJobs} deliveredCounts={foundSources} />
       <div className="model-divider" aria-hidden="true" />
       <ModelSelector
         state={modelsState}

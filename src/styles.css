@@ -1243,6 +1243,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.job-sources-row--cut {
+  opacity: 0.65;
+}
+
+.job-sources-muted {
+  font-size: 0.78rem;
+  color: var(--text-placeholder);
+}
+
 .job-sources-total {
   display: flex;
   justify-content: space-between;

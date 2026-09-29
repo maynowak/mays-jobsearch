@@ -64,4 +64,36 @@ describe("JobSources", () => {
     const { container } = renderSources([]);
     expect(container.querySelector(".job-sources")).toBeNull();
   });
+
+  it("zeigt liefernde, aber herausgefilterte Quellen zusätzlich an", () => {
+    const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
+    render(
+      <LangProvider>
+        <JobSources jobs={jobs} deliveredCounts={{ arbeitnow: 40, jooble: 25, greenhouse: 0 }} />
+      </LangProvider>
+    );
+    expect(screen.getByText("Arbeitnow")).toBeTruthy();
+    expect(screen.getByText("Jooble")).toBeTruthy();
+    const cutRow = document.querySelector(".job-sources-row--cut");
+    expect(cutRow?.textContent).toContain("25 Stellen");
+    expect(cutRow?.textContent).toContain("nicht angezeigt");
+    expect(screen.queryByText("Greenhouse")).toBeNull();
+  });
+
+  it("ohne deliveredCounts bleibt das bisherige Verhalten", () => {
+    const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
+    renderSources(jobs);
+    expect(document.querySelector(".job-sources-row--cut")).toBeNull();
+  });
+
+  it("keine doppelte Zeile, wenn liefernde Quelle auch angezeigt wird", () => {
+    const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
+    render(
+      <LangProvider>
+        <JobSources jobs={jobs} deliveredCounts={{ arbeitnow: 40 }} />
+      </LangProvider>
+    );
+    expect(document.querySelectorAll(".job-sources-row").length).toBe(1);
+    expect(document.querySelector(".job-sources-row--cut")).toBeNull();
+  });
 });

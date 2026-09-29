@@ -1,5 +1,6 @@
 import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { HttpError } from "./_lib/filter.mjs";
+import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
 
 function parseArrayParam(value, delimiters = /[,;]+/) {
   if (!value) return [];
@@ -57,13 +58,19 @@ export default async function handler(req, res) {
     // Parse radiusKm - number or string
     const radiusKmNum = parseNumberParam(radiusKm);
 
-    const result = await fetchAllJobs({ 
-      skills: skillsArray, 
-      targetRoles, 
-      city, 
-      radiusKm: radiusKmNum, 
-      workMode: workModes, 
-      employmentType: employmentTypes 
+    // Anonymous session identity for per-user quotas (sources without
+    // identity simply skip user accounting). Same pattern as /api/match.
+    const identity = anonymousIdentity(req);
+    res.setHeader("Set-Cookie", sessionCookieHeader(identity.sessionId));
+
+    const result = await fetchAllJobs({
+      skills: skillsArray,
+      targetRoles,
+      city,
+      radiusKm: radiusKmNum,
+      workMode: workModes,
+      employmentType: employmentTypes,
+      identity,
     });
 
     return res.status(200).json(result);

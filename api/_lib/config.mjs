@@ -137,6 +137,10 @@ export function getConfig() {
       process.env.THEIRSTACK_MONTHLY_MAX_CREDITS,
       200
     ),
+    theirstackMaxCreditsPerUser: parsePositiveInt(
+      process.env.THEIRSTACK_MAX_CREDITS_PER_USER,
+      20
+    ),
     edenaiMonthlySoftLimitUsd: parsePositiveNumber(
       process.env.EDENAI_MONTHLY_SOFT_LIMIT_USD,
       1.0

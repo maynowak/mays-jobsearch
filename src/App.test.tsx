@@ -214,6 +214,22 @@ describe("Explizites AI-Matching nach Jobsuche (Step 22)", () => {
       expect(screen.getByText("AWS Engineer")).toBeTruthy();
       expect(screen.getByText("Java Engineer")).toBeTruthy();
     });
+
+    it("liefernde, aber herausgefilterte Quellen bleiben in der Jobquellen-Box sichtbar", async () => {
+      const sourcedJob: Job = { ...job, source: ["arbeitnow"] };
+      vi.mocked(fetchJobs).mockResolvedValue({
+        jobs: [sourcedJob],
+        meta: { totalFiltered: 1, sources: { arbeitnow: 1, jooble: 25 } },
+      });
+      renderApp();
+
+      fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
+      fireEvent.click(screen.getByText("Meine Treffer finden"));
+
+      await screen.findByText("AWS Engineer");
+      expect(screen.getByText("Jooble")).toBeTruthy();
+      expect(screen.getByText(/nicht angezeigt/)).toBeTruthy();
+    });
   });
 
   describe("B: Nach erfolgreicher Jobsuche wurde /api/match NICHT automatisch aufgerufen", () => {

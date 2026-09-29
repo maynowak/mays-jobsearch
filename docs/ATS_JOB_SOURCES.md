@@ -48,8 +48,9 @@ Unlike the ATS sources above, these official job-board APIs require free credent
 - **Coverage**: worldwide, 100+ Länder; besonders stark Tech/Startup-Jobs mit strukturierten Tech-/Seniority-/Gehaltsfeldern.
 - **Request**: `POST https://api.theirstack.com/v1/jobs/search`, `Authorization: Bearer <key>`, Body mit `job_description_contains_or` (Skills, Whole-Word, ohne Regex-Escaping-Fallen), `job_title_or` (Zielrollen), `limit` (max. 40), `page: 0` sowie Pflichtfilter `posted_at_max_age_days: 30` (API lehnt ohne Datums-/Company-Filter ab).
 - **Kostenmodell (wichtig!)**: **1 Credit pro geliefertem Datensatz** (nicht pro Request) — Doku-verifiziert. Kontingent wird deshalb in Credits gezählt: `THEIRSTACK_MONTHLY_MAX_CREDITS` (Default `200`), Zähler `mj-usage:theirstack:credits:<YYYY-MM>`, bei Erreichen `emptyResult("limit_reached")` ohne Paid-Call. Cache-Hits kosten 0. Verbrauch pro Suche = Anzahl gelieferter Records (max. 40).
+- **Per-User-Limit**: zusätzlich max. `THEIRSTACK_MAX_CREDITS_PER_USER` Credits pro User und Monat (Default `20`; anonyme Session = User, Zähler `mj-usage:theirstack:credits:user:<hash>:<YYYY-MM>`), bei Erreichen `emptyResult("user_limit_reached")` ohne Paid-Call. Identität kommt per `identity`-Param aus `/api/jobs` (Session-Cookie); ohne Identity greift nur der globale Guard.
 - **401/403** → Credentials prüfen; **402** = Provider-Credits aufgebraucht (Upstream-Fehler + Hinweis auf Billing-Dashboard).
-- **Config**: `THEIRSTACK_API_KEY`, `JOB_SOURCE_THEIRSTACK_ENABLED` (default `true`), `THEIRSTACK_MONTHLY_MAX_CREDITS` (default `200`); fehlender Key → `emptyResult("missing_config")`.
+- **Config**: `THEIRSTACK_API_KEY`, `JOB_SOURCE_THEIRSTACK_ENABLED` (default `true`), `THEIRSTACK_MONTHLY_MAX_CREDITS` (default `200`), `THEIRSTACK_MAX_CREDITS_PER_USER` (default `20`); fehlender Key → `emptyResult("missing_config")`.
 - **Field mapping** (gegen offizielle API-Referenz verifiziert): `ts-{id}` externalId; `job_title`; `company_object.name` (Fallback `company`); `location` (Fallback `long_location`); `remote`/`hybrid`-Flags → `remote`/`workplaceType`; `technology_slugs` + `seniority` → `tags`; `final_url`/`url`/`source_url` (url/applyUrl/jobUrl); `date_posted` → `created_at`; `employment_statuses[]` → `jobTypes`; `salary_string` (Fallback min/max-Range); `latitude`/`longitude`.
 - **Quota-Schutz via L1-Cache**: Roh-`data`-Payload je Body (`job-source:theirstack:<body>|<city>`, TTL 600 s). Leere Ergebnisse werden nicht gecacht; `no_query` ohne Suchbegriffe (kein 40-Credit-Blindflug).
 
@@ -491,10 +492,27 @@ THEIRSTACK_MONTHLY_MAX_CREDITS=200
 - [ ] Commit + Push to main
 - [ ] Git clean
 
+## Key-based Sources — Capability Matrix (Adzuna / Jooble / Theirstack)
+
+| Capability | Adzuna | Jooble | Theirstack |
+|------------|:------:|:------:|:----------:|
+| **Format** | JSON | JSON | JSON |
+| **Auth** | `app_id` + `app_key` (query) | API key (URL path) | Bearer token (header) |
+| **Native Filter** | Keywords (`what`), location (`where`) | Keywords + location (POST body) | Description/title/country/date filters |
+| **Location** | `location.display_name` + `area[]` | `location` string | `location` (+ `long_location` fallback) |
+| **Department** | `category.label` | ❌ | ❌ |
+| **Employment Type** | `contract_time` | `type` | `employment_statuses[]` |
+| **Workplace Type** | remote (inferred) | remote (inferred) | `remote` / `hybrid` flags |
+| **Salary** | `salary_min`/`max` range | `salary` string | `salary_string` / min/max USD |
+| **Geodata** | `latitude`/`longitude` | ❌ | `latitude`/`longitude` |
+| **L1 Cache (600 s)** | ✅ per country+query | ✅ per query | ✅ per body |
+| **Cost unit** | Free tier (per-call) | Per request (1000-request quota) | **Per returned record** (credit guard!) |
+
 ## Next Steps
 
-All 6 providers are now implemented. Future enhancements could include:
-1. Add caching layer for ATS sources (similar to Apify L1/L2 cache)
-2. Add pagination support for Lever/Ashby/Workable/Recruitee
-3. Add EU endpoint support for Lever (api.eu.lever.co)
-4. Add auto-discovery for company identifiers
+All 6 ATS providers plus Adzuna, Jooble and Theirstack are now implemented. Future enhancements could include:
+1. Add pagination support for Lever/Ashby/Workable/Recruitee
+2. Add EU endpoint support for Lever (api.eu.lever.co)
+3. Add auto-discovery for company identifiers
+4. Per-job radius filtering once jobs carry coordinates (`latitude`/`longitude` already normalized where provided)
+5. Jooble field mapping against a live key end-verified (currently defensive)

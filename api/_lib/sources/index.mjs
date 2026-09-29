@@ -58,7 +58,7 @@ export function dedupJobs(jobs) {
   return result;
 }
 
-export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radiusKm, workMode, employmentType }) {
+export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radiusKm, workMode, employmentType, identity }) {
   const sources = enabledSources();
   // Backward compatibility: support both targetRoles (array) and targetRole (string)
   const roles = Array.isArray(targetRoles) ? targetRoles : (targetRole ? [targetRole] : []);
@@ -78,7 +78,7 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
     if (coords) geo = { ...coords, radiusKm: radiusValue, city: geoCity };
   }
   const settled = await Promise.allSettled(
-    sources.map((source) => source.fetchJobs({ skills, targetRoles: roles, city: geoCity, geo }))
+    sources.map((source) => source.fetchJobs({ skills, targetRoles: roles, city: geoCity, geo, identity }))
   );
 
   const results = [];

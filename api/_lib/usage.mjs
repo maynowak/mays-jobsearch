@@ -1,4 +1,5 @@
 import { getConfig } from "./config.mjs";
+import { hashToken } from "./identity.mjs";
 import {
   cacheGet,
   cacheHGetAll,
@@ -199,6 +200,25 @@ export async function theirstackCreditLimitReached() {
   const cfg = getConfig();
   const used = await readCount(THEIRSTACK_CREDIT_KEY);
   return used >= cfg.theirstackMonthlyMaxCredits;
+}
+
+function theirstackUserCreditKey(identity) {
+  return `mj-usage:theirstack:credits:user:${hashToken(identity?.sessionId)}`;
+}
+
+// Per-user monthly credit guard (anonymous session = user). Without identity
+// there is nothing to attribute to, so callers skip user accounting and only
+// the global guard applies.
+export async function countTheirstackUserCredits(identity, n) {
+  if (!identity?.sessionId || !Number.isFinite(n) || n <= 0) return;
+  await cacheIncrBy(monthScoped(theirstackUserCreditKey(identity)), Math.floor(n), MONTH_TTL_SEC);
+}
+
+export async function theirstackUserCreditLimitReached(identity) {
+  if (!identity?.sessionId) return false;
+  const cfg = getConfig();
+  const used = await readCount(theirstackUserCreditKey(identity));
+  return used >= cfg.theirstackMaxCreditsPerUser;
 }
 
 export async function getUsageSnapshot() {

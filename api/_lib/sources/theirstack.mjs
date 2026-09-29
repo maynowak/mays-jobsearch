@@ -5,7 +5,9 @@ import {
   countJobSourceCacheHit,
   countJobSourceCacheMiss,
   countTheirstackCredits,
+  countTheirstackUserCredits,
   theirstackCreditLimitReached,
+  theirstackUserCreditLimitReached,
 } from "../usage.mjs";
 
 const API_BASE = "https://api.theirstack.com/v1/jobs/search";
@@ -34,7 +36,7 @@ function theirstackApiKey() {
   return key || null;
 }
 
-export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, city }) {
+export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, city, identity }) {
   const apiKey = theirstackApiKey();
   if (!apiKey) {
     return emptyResult("missing_config");
@@ -76,8 +78,15 @@ export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, cit
     if (await theirstackCreditLimitReached()) {
       return emptyResult("limit_reached");
     }
+    // Per-user monthly guard (anonymous session = user, 20 credits default).
+    // Without identity there is nothing to attribute to — global guard above
+    // still applies.
+    if (identity && (await theirstackUserCreditLimitReached(identity))) {
+      return emptyResult("user_limit_reached");
+    }
     rawJobs = await fetchTheirstackUpstream(apiKey, body);
     await countTheirstackCredits(rawJobs.length);
+    if (identity) await countTheirstackUserCredits(identity, rawJobs.length);
     if (rawJobs.length) await cacheSet(cacheKey, rawJobs, CACHE_TTL_SEC);
   }
 

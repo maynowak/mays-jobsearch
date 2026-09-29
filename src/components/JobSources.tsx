@@ -1,9 +1,13 @@
 import type { Job, JobSource } from "../types";
 import { useLang } from "../i18n";
 
-const SOURCE_LABEL_KEYS: Record<JobSource, string> = {
+const SOURCE_LABEL_KEYS: Partial<Record<JobSource, string>> = {
   arbeitnow: "source.arbeitnow",
   arbeitsagentur: "source.arbeitsagentur",
+  greenhouse: "source.greenhouse",
+  adzuna: "source.adzuna",
+  jooble: "source.jooble",
+  theirstack: "source.theirstack",
 };
 
 function sourceLabel(source: JobSource, t: (key: string) => string): string {
@@ -13,9 +17,13 @@ function sourceLabel(source: JobSource, t: (key: string) => string): string {
 
 interface Props {
   jobs: Job[];
+  // Roh-Treffer je Source (meta.sources der letzten Suche). Quellen, die
+  // geliefert haben, aber aus dem Anzeige-Pool fielen, erscheinen zusätzlich
+  // als abgesetzte Zeilen — keine liefernde Quelle bleibt unsichtbar.
+  deliveredCounts?: Partial<Record<string, number>> | null;
 }
 
-export default function JobSources({ jobs }: Props) {
+export default function JobSources({ jobs, deliveredCounts }: Props) {
   const { t } = useLang();
   if (jobs.length === 0) return null;
 
@@ -32,6 +40,15 @@ export default function JobSources({ jobs }: Props) {
 
   if (rows.length === 0) return null;
 
+  const shown = new Set(rows.map(([source]) => source));
+  const cutRows: Array<[string, number]> = [];
+  for (const [source, raw] of Object.entries(deliveredCounts ?? {})) {
+    if (typeof raw === "number" && raw > 0 && !shown.has(source as JobSource)) {
+      cutRows.push([source, raw]);
+    }
+  }
+  cutRows.sort((a, b) => b[1] - a[1]);
+
   return (
     <div className="job-sources" aria-label={t("sources.heading")}>
       <span className="job-sources-title">{t("sources.heading")}</span>
@@ -41,6 +58,15 @@ export default function JobSources({ jobs }: Props) {
             <span className="job-sources-name">{sourceLabel(source, t)}</span>
             <span className="job-sources-count">
               {count} {t("sources.unit")}
+            </span>
+          </li>
+        ))}
+        {cutRows.map(([source, raw]) => (
+          <li key={source} className="job-sources-row job-sources-row--cut">
+            <span className="job-sources-name">{sourceLabel(source as JobSource, t)}</span>
+            <span className="job-sources-count">
+              {raw} {t("sources.unit")}{" "}
+              <span className="job-sources-muted">({t("sources.notShown")})</span>
             </span>
           </li>
         ))}

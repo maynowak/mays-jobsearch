@@ -399,10 +399,15 @@ const en: Dict = {
   "source.label": "Source",
   "source.arbeitnow": "Arbeitnow",
   "source.arbeitsagentur": "Arbeitsagentur",
+  "source.greenhouse": "Greenhouse",
+  "source.adzuna": "Adzuna",
+  "source.jooble": "Jooble",
+  "source.theirstack": "Theirstack",
 
   "sources.heading": "Job sources",
   "sources.total": "Total",
   "sources.unit": "jobs",
+  "sources.notShown": "not shown",
 
 
   "sources.info": "Data source info",
@@ -834,10 +839,15 @@ const de: Dict = {
   "source.label": "Quelle",
   "source.arbeitnow": "Arbeitnow",
   "source.arbeitsagentur": "Arbeitsagentur",
+  "source.greenhouse": "Greenhouse",
+  "source.adzuna": "Adzuna",
+  "source.jooble": "Jooble",
+  "source.theirstack": "Theirstack",
 
   "sources.heading": "Jobquellen",
   "sources.total": "Insgesamt",
   "sources.unit": "Stellen",
+  "sources.notShown": "nicht angezeigt",
 
   "sources.info": "Datenquellen-Info",
   "sources.infoTooltip": "May's Job Matcher verarbeitet Stellenangebote aus verschiedenen Datenquellen und bereitet sie für Suche und Darstellung auf. Die Quelle jedes Stellenangebots wird direkt im Stellenangebot angezeigt.",

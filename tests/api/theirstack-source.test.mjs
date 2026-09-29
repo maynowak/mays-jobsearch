@@ -18,12 +18,19 @@ vi.mock("../../api/_lib/usage.mjs", () => ({
   countJobSourceCacheHit: vi.fn(async () => {}),
   countJobSourceCacheMiss: vi.fn(async () => {}),
   countTheirstackCredits: vi.fn(async () => {}),
+  countTheirstackUserCredits: vi.fn(async () => {}),
   theirstackCreditLimitReached: vi.fn(async () => false),
+  theirstackUserCreditLimitReached: vi.fn(async () => false),
 }));
 
 const { getConfig } = await import("../../api/_lib/config.mjs");
 const { cacheGet, cacheSet } = await import("../../api/_lib/cache.mjs");
-const { countTheirstackCredits, theirstackCreditLimitReached } = await import("../../api/_lib/usage.mjs");
+const {
+  countTheirstackCredits,
+  countTheirstackUserCredits,
+  theirstackCreditLimitReached,
+  theirstackUserCreditLimitReached,
+} = await import("../../api/_lib/usage.mjs");
 const { fetchJobs, normalizeTheirstackJob } = await import("../../api/_lib/sources/theirstack.mjs");
 
 const sampleTheirstackJob = {
@@ -170,6 +177,34 @@ describe("Theirstack Source Adapter", () => {
       setupFetchMock(() => okResponse({ data: [sampleTheirstackJob, sampleTheirstackJobMinimal], metadata: {} }));
       await fetchJobs({ skills: "", targetRoles: ["engineer"], city: "" });
       expect(vi.mocked(countTheirstackCredits)).toHaveBeenCalledWith(2);
+    });
+
+    it("counts user credits when identity is passed", async () => {
+      setupFetchMock(() => okResponse({ data: [sampleTheirstackJob], metadata: {} }));
+      const identity = { sessionId: "abc123", ip: "1.2.3.4" };
+      await fetchJobs({ skills: "python", targetRoles: [], city: "", identity });
+      expect(vi.mocked(countTheirstackUserCredits)).toHaveBeenCalledWith(identity, 1);
+    });
+
+    it("returns user_limit_reached without paid call when user quota exhausted", async () => {
+      vi.mocked(theirstackUserCreditLimitReached).mockResolvedValue(true);
+      setupFetchMock(() => {
+        throw new Error("fetch must not be called when user limit reached");
+      });
+      const identity = { sessionId: "abc123", ip: "1.2.3.4" };
+      const result = await fetchJobs({ skills: "python", targetRoles: [], city: "", identity });
+      expect(result.jobs).toEqual([]);
+      expect(result.meta.enabled).toBe(false);
+      expect(result.meta.reason).toBe("user_limit_reached");
+      expect(vi.mocked(countTheirstackCredits)).not.toHaveBeenCalled();
+    });
+
+    it("skips user accounting without identity (global guard still applies)", async () => {
+      setupFetchMock(() => okResponse({ data: [sampleTheirstackJob], metadata: {} }));
+      await fetchJobs({ skills: "python", targetRoles: [], city: "" });
+      expect(vi.mocked(theirstackUserCreditLimitReached)).not.toHaveBeenCalled();
+      expect(vi.mocked(countTheirstackUserCredits)).not.toHaveBeenCalled();
+      expect(vi.mocked(countTheirstackCredits)).toHaveBeenCalledWith(1);
     });
 
     it("handles minimal job data (missing optional fields)", async () => {
