@@ -469,21 +469,36 @@ describe("Search Strategy - Candidate Pool Metadata", () => {
 });
 
 describe("Search Strategy - Multi-Source Behavior", () => {
-  it("exact strategy with 3 skills requires all skills", () => {
-    // With 3 skills, threshold = 3 (exact strategy), so no jobs match
+  it("exact strategy falls back to lower threshold instead of empty pool", () => {
+    // With 3 skills, threshold starts at 3 (exact strategy); no job matches all 3,
+    // so the threshold is lowered until partial matches are found
     const skills = ["aws", "terraform", "docker"];
     const jobs = [
       { slug: "1", title: "Cloud Engineer", tags: ["aws", "terraform"], description: "", source: ["arbeitnow"] },
       { slug: "2", title: "DevOps", tags: ["aws", "docker"], description: "", source: ["arbeitsagentur"] },
     ];
-    
+
     const combinedSource = { id: "combined", provider: "search-strategy" };
     const result = applySearchStrategyWithTargetRole(skills, "", jobs, combinedSource);
-    
-    // Exact strategy with threshold 3 requires all 3 skills, no jobs match
-    expect(result.jobs.length).toBe(0);
+
+    // Both jobs match 2 of 3 skills -> fallback to threshold 2 returns them
+    expect(result.jobs.length).toBe(2);
     expect(result.meta.skillsUsed).toBe(3);
     expect(result.meta.strategy).toBe("exact");
+    expect(result.meta.threshold).toBe(2);
+  });
+
+  it("exact strategy stays empty only when nothing matches even threshold 1", () => {
+    const skills = ["aws", "terraform", "docker"];
+    const jobs = [
+      { slug: "1", title: "Unrelated", tags: ["python"], description: "", source: ["arbeitnow"] },
+    ];
+
+    const combinedSource = { id: "combined", provider: "search-strategy" };
+    const result = applySearchStrategyWithTargetRole(skills, "", jobs, combinedSource);
+
+    expect(result.jobs.length).toBe(0);
+    expect(result.meta.threshold).toBe(1);
   });
 
   it("progressive strategy with more skills finds matches via fallback", () => {

@@ -1,8 +1,10 @@
 export function parseSkills(input: string): string[] {
   if (!input?.trim()) return [];
-  
-  // Split by space, comma, or semicolon
-  const parts = input.split(/[\s,;]+/);
+
+  // Split by comma or semicolon only — never by whitespace, so multi-word
+  // skills ("Spring Boot") survive display/submit round-trips as one skill.
+  // Whitespace-separated input still works: the API/backend tokenizes it.
+  const parts = input.split(/[,;]+/);
   
   // Trim, lowercase for deduplication, preserve original case for display
   const seen = new Set<string>();
@@ -22,7 +24,7 @@ export function parseSkills(input: string): string[] {
 }
 
 export function formatSkills(skills: string[]): string {
-  return skills.join(" ");
+  return skills.join(", ");
 }
 
 export function parseTargetRoles(input: string): string[] {

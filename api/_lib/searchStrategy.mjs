@@ -132,10 +132,18 @@ export function buildCandidatePool(skills, allJobs, source, options = {}) {
   const { skills: normalizedSkills, threshold, queries, strategy } = progressiveSkillSearch(skills, source);
   
   if (strategy === "and" || strategy === "exact") {
-    const filtered = filterJobsBySkillThreshold(allJobs, normalizedSkills, threshold);
+    let usedThreshold = threshold;
+    let filtered = filterJobsBySkillThreshold(allJobs, normalizedSkills, usedThreshold);
+    // Fallback: never return an empty pool while lower-threshold matches exist.
+    // Without this, e.g. 3 skills with no job matching all 3 yield zero results
+    // even though partial matches are available.
+    while (filtered.length === 0 && usedThreshold > 1) {
+      usedThreshold -= 1;
+      filtered = filterJobsBySkillThreshold(allJobs, normalizedSkills, usedThreshold);
+    }
     return {
       jobs: filtered.slice(0, candidatePoolTarget),
-      meta: { threshold, strategy, skillsUsed: normalizedSkills.length }
+      meta: { threshold: usedThreshold, strategy, skillsUsed: normalizedSkills.length }
     };
   }
 
