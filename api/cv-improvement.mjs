@@ -42,12 +42,16 @@ function validateRequest(body) {
   return { valid: true };
 }
 
+function unquote(skill) {
+  return String(skill ?? "").trim().replace(/^"(.*)"$/s, "$1").trim();
+}
+
 function parseSkills(skills) {
   if (typeof skills === "string") {
-    return skills.split(",").map(s => s.trim()).filter(s => s);
+    return skills.split(",").map(s => unquote(s)).filter(s => s);
   }
   if (Array.isArray(skills)) {
-    return skills;
+    return skills.map(s => unquote(s)).filter(s => s);
   }
   return [];
 }

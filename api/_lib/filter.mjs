@@ -6,6 +6,30 @@ export class HttpError extends Error {
   }
 }
 
+export function splitQuotedPhrases(input) {
+  // Splits on comma/semicolon/newline; a "..." phrase inside a segment
+  // counts as ONE token, remaining text splits on whitespace.
+  // Stray quotes are dropped. Contract shared with src/lib/skills.ts.
+  const tokens = [];
+  for (const segment of String(input ?? "").split(/[,;\n]+/)) {
+    const seg = segment.trim();
+    if (!seg) continue;
+    const re = /"([^"]*)"|[^\s"]+/g;
+    let m;
+    let matched = false;
+    while ((m = re.exec(seg)) !== null) {
+      matched = true;
+      const token = (m[1] !== undefined ? m[1] : m[0]).trim();
+      if (token) tokens.push(token);
+    }
+    if (!matched) {
+      const fallback = seg.replace(/"/g, "").trim();
+      if (fallback) tokens.push(fallback);
+    }
+  }
+  return tokens;
+}
+
 export function tokenize(input) {
   if (!input) return [];
 
@@ -16,11 +40,9 @@ export function tokenize(input) {
       .filter((t) => t.length > 0);
   }
 
-  // Handle string input (legacy format)
-  return String(input)
-    .toLowerCase()
-    .split(/[\s\n,;]+/)
-    .map((t) => t.trim())
+  // Handle string input (legacy format, quote-aware)
+  return splitQuotedPhrases(input)
+    .map((t) => t.toLowerCase().trim())
     .filter((t) => t.length > 0);
 }
 

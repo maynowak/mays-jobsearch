@@ -216,7 +216,7 @@ describe("BROWSER-BUG-03: Leerzeichen im manuellen Skill-Input", () => {
     expect(input.value).toBe("Amazon Web Services");
   });
 
-  it("Leerzeichen löst keinen Submit aus und zerlegt den Text beim Absenden nicht", () => {
+  it("Leerzeichen löst keinen Submit aus; beim Absenden wird kommasepariert normalisiert", () => {
     const onSubmit = vi.fn();
     render(<StatefulForm onSubmit={onSubmit} />);
     const input = screen.getByLabelText("Skills") as HTMLInputElement;
@@ -226,7 +226,19 @@ describe("BROWSER-BUG-03: Leerzeichen im manuellen Skill-Input", () => {
     expect(onSubmit).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Meine Treffer finden" }));
-    expect(onSubmit).toHaveBeenCalledWith(baseProfile({ skills: "Spring Boot" }));
+    expect(onSubmit).toHaveBeenCalledWith(baseProfile({ skills: "Spring, Boot" }));
+  });
+
+  it("Anführungszeichen-Phrase bleibt ein Token (kommasepariert vorgefüllt)", () => {
+    const onSubmit = vi.fn();
+    render(<StatefulForm onSubmit={onSubmit} />);
+    const input = screen.getByLabelText("Skills") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: 'tokenwordA tokenwordB "token wordX tokenwordZ", nexttoken' } });
+    fireEvent.click(screen.getByRole("button", { name: "Meine Treffer finden" }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      baseProfile({ skills: 'tokenwordA, tokenwordB, "token wordX tokenwordZ", nexttoken' })
+    );
   });
 });
 

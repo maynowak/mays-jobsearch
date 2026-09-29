@@ -6,6 +6,7 @@ import type {
   Profile,
   SuggestedProfile,
 } from "./types";
+import { parseSkills } from "./lib/skills";
 
 export class ApiError extends Error {
   readonly code?: string;
@@ -189,20 +190,33 @@ function ensureArray<T>(value: T | T[] | undefined): T[] {
 }
 
 function normalizeSkillsParam(skills: string | string[] | undefined): string {
+  // Always send a JSON array so multi-word tokens (e.g. quoted phrases)
+  // survive the transport as single tokens. /api/jobs parses JSON first.
+  const toTokens = (list: unknown[]): string[] =>
+    (Array.isArray(list) ? list : [])
+      .map((s) => String(s ?? "").trim())
+      .filter(Boolean);
   if (!skills) return "";
-  if (Array.isArray(skills)) return skills.join(",");
+  if (Array.isArray(skills)) {
+    const tokens = toTokens(skills);
+    return tokens.length ? JSON.stringify(tokens) : "";
+  }
   const s = String(skills).trim();
   if (!s) return "";
-  // If it's a JSON array string, parse and rejoin
+  // Already a JSON array string (e.g. from CV workflow) — pass through cleaned
   if (s.startsWith("[") && s.endsWith("]")) {
     try {
       const parsed = JSON.parse(s);
-      if (Array.isArray(parsed)) return parsed.join(",");
+      if (Array.isArray(parsed)) {
+        const tokens = toTokens(parsed);
+        return tokens.length ? JSON.stringify(tokens) : "";
+      }
     } catch {
-      // Not valid JSON, treat as comma-separated
+      // Not valid JSON, fall through to quoted-phrase parsing
     }
   }
-  return s;
+  const tokens = parseSkills(s);
+  return tokens.length ? JSON.stringify(tokens) : "";
 }
 
 export async function fetchJobs(profile: Profile): Promise<JobsResponse> {

@@ -80,6 +80,11 @@ describe("Search Strategy - Skill Normalization", () => {
     const result = normalizeSkills("B, A, b, C");
     expect(result).toEqual(["B", "A", "C"]);
   });
+
+  it("treats a quoted phrase as a single skill", () => {
+    const result = normalizeSkills('tokenwordA tokenwordB "token wordX tokenwordZ", nexttoken');
+    expect(result).toEqual(["tokenwordA", "tokenwordB", "token wordX tokenwordZ", "nexttoken"]);
+  });
 });
 
 describe("Search Strategy - Threshold Calculation", () => {

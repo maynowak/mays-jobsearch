@@ -1,4 +1,4 @@
-import { tokenize } from "./filter.mjs";
+import { tokenize, splitQuotedPhrases } from "./filter.mjs";
 
 export const MAX_SKILLS = 20;
 export const DEFAULT_CANDIDATE_POOL_TARGET = 50;
@@ -9,7 +9,7 @@ export function normalizeSkills(skillsInput) {
   
   let skills = [];
   if (typeof skillsInput === "string") {
-    skills = skillsInput.split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
+    skills = splitQuotedPhrases(skillsInput);
   } else if (Array.isArray(skillsInput)) {
     skills = skillsInput.map(s => String(s).trim()).filter(Boolean);
   }

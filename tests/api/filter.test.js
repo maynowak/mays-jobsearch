@@ -6,7 +6,33 @@ import {
   detectLanguage,
   employmentMatches,
   applySearchFilters,
+  tokenize,
+  splitQuotedPhrases,
 } from "../../api/_lib/filter.mjs";
+
+describe("API filter - quoted-phrase tokenization", () => {
+  it("treats a \"...\" phrase as a single token", () => {
+    expect(tokenize('tokenwordA tokenwordB "token wordX tokenwordZ", nexttoken')).toEqual([
+      "tokenworda",
+      "tokenwordb",
+      "token wordx tokenwordz",
+      "nexttoken",
+    ]);
+  });
+
+  it("behaves like before for input without quotes", () => {
+    expect(tokenize("Java, AWS; Terraform")).toEqual(["java", "aws", "terraform"]);
+    expect(tokenize("")).toEqual([]);
+  });
+
+  it("splitQuotedPhrases preserves case for downstream use", () => {
+    expect(splitQuotedPhrases('"Spring Boot", React')).toEqual(["Spring Boot", "React"]);
+  });
+
+  it("drops a stray unterminated quote instead of swallowing text", () => {
+    expect(tokenize('"Spring Boot')).toEqual(["spring", "boot"]);
+  });
+});
 
 describe("API filter - stripHtml (plain text extraction for descriptionPlain)", () => {
   it("1) Raw HTML strips to plain text", () => {
