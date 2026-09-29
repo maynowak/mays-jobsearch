@@ -16,6 +16,11 @@ function parseArrayParam(value, delimiters = /[,;]+/) {
   return str.split(delimiters).map(s => s.trim()).filter(Boolean);
 }
 
+// Skills can be space-separated (from URL-encoded +), comma-separated, or JSON array
+function parseSkillsParam(value) {
+  return parseArrayParam(value, /[\s,;]+/);
+}
+
 function parseNumberParam(value) {
   if (!value && value !== 0) return undefined;
   const n = Number(value);
@@ -37,8 +42,8 @@ export default async function handler(req, res) {
       employmentType 
     } = req.query || {};
 
-    // Parse skills - support JSON array, comma-separated, or legacy string
-    const skillsArray = parseArrayParam(skills);
+    // Parse skills - support JSON array, comma/space/semicolon separated, or legacy string
+    const skillsArray = parseSkillsParam(skills);
 
     // Parse targetRole - support multiple values (array) or single string
     const targetRoles = parseArrayParam(targetRole);
