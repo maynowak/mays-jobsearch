@@ -25,6 +25,8 @@ export interface Job {
   contractType?: string;
   salary?: string;
   startDate?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export type WorkMode = "remote" | "hybrid" | "onsite";

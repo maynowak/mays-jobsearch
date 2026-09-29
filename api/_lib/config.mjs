@@ -116,6 +116,18 @@ export function getConfig() {
       true
     ),
     jobSourceGreenhouseBoards: process.env.JOB_SOURCE_GREENHOUSE_BOARDS || "",
+    jobSourceAdzunaEnabled: parseBoolean(
+      process.env.JOB_SOURCE_ADZUNA_ENABLED,
+      true
+    ),
+    adzunaAppId: process.env.ADZUNA_APP_ID || "",
+    adzunaAppKey: process.env.ADZUNA_APP_KEY || "",
+    adzunaCountries: process.env.ADZUNA_COUNTRIES || "de",
+    jobSourceJoobleEnabled: parseBoolean(
+      process.env.JOB_SOURCE_JOOBLE_ENABLED,
+      true
+    ),
+    joobleApiKey: process.env.JOOBLE_API_KEY || "",
     edenaiMonthlySoftLimitUsd: parsePositiveNumber(
       process.env.EDENAI_MONTHLY_SOFT_LIMIT_USD,
       1.0

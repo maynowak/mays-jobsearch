@@ -15,6 +15,32 @@ Enable Mays Jobsearch to fetch published job postings from major ATS platforms v
 | Recruitee | `https://{company_subdomain}.recruitee.com/api/v2/jobs` | JSON | `company_subdomain` | No |
 | Personio | `https://{career_site}.jobs.personio.de/xml` | XML | `career_site` | No |
 
+## Key-based Job APIs (Adzuna, Jooble)
+
+Unlike the ATS sources above, these official job-board APIs require free credentials (**server-side only**, never in frontend code):
+
+| Provider | Public Endpoint | Format | Identifier | Auth Required |
+|----------|----------------|--------|------------|---------------|
+| Adzuna | `https://api.adzuna.com/v1/api/jobs/{country}/search/{page}` | JSON | country code (`de`, `gb`, `us`, `fr`, …) | Yes — `app_id` + `app_key` (free tier at developer.adzuna.com) |
+| Jooble | `https://jooble.org/api/{api_key}` (POST, JSON body) | JSON | — (worldwide, country via search params) | Yes — API key in URL path |
+
+### Adzuna
+- **Coverage**: UK, USA, Germany, France + 10+ more countries (one country code per request).
+- **Native search**: `what` (keywords), `where` (location), `results_per_page`, `page`, plus `salary_min`, `full_time`, `sort_by` (reserved for future use).
+- **Structured data incl. geodata + salary**: `latitude`/`longitude` per job → normalized as optional `latitude`/`longitude` fields (feeds the per-job-radius upgrade point from GEO-WORKMODE); `salary_min`/`salary_max` → `salary` range string (no currency invented).
+- **Multi-country**: `ADZUNA_COUNTRIES="de,gb"` loops countries like Greenhouse loops boards; per-country failures logged, остальные fortgesetzt; if NOTHING was fetched, the first error is rethrown (visible misconfiguration instead of silent empty).
+- **Config**: `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `ADZUNA_COUNTRIES` (default `"de"`), `JOB_SOURCE_ADZUNA_ENABLED` (default `true`); missing credentials → `emptyResult("missing_config")`.
+- **Field mapping**: `az-{country}-{id}` externalId; `company.display_name`; `location.display_name` + `location.area[]`; `redirect_url` (url/applyUrl/jobUrl); `created` → `created_at`; `contract_time` → `jobTypes`; `category.label` → `tags`/`department`.
+- **Endpoint verified** against official docs (`developer.adzuna.com/docs/search`): path, `app_id`/`app_key`, `results_per_page`, `what`, `where`, `redirect_url` confirmed 2026-09-29.
+
+### Jooble
+- **Coverage**: worldwide, 60+ countries; filtering by keywords + location via POST body.
+- **Request**: `POST https://jooble.org/api/{key}`, `Content-Type: application/json`, body `{keywords, location}` (only set when non-empty).
+- **Local filtering still applies** afterwards (consistent with all sources).
+- **Config**: `JOOBLE_API_KEY`, `JOB_SOURCE_JOOBLE_ENABLED` (default `true`); missing key → `emptyResult("missing_config")`.
+- **Field mapping**: `jo-{id}` externalId; `snippet` (plain text with `<b>` highlights → stripped for `descriptionPlain`); `salary` string passed through unchanged; `type` → `tags`/`jobTypes`; `link` (url/applyUrl/jobUrl); `updated` → `created_at`.
+- **Verification status**: docs page bot-blocked (403) at check time — field mapping implemented defensively per documented schema; **verify against a live key before relying on Jooble in production** (single valid response suffices: all fields optional except array shape).
+
 ## Common ATS Source Contract
 
 Each ATS source adapter MUST implement the following interface to integrate with the existing Source Registry (`api/_lib/sources/index.mjs`):
@@ -82,6 +108,8 @@ All ATS sources MUST normalize to these fields. Missing fields remain `undefined
 | `salary` | string | No | Salary info if available |
 | `publishedAt` | number | No | Publication timestamp (seconds) |
 | `updatedAt` | number | No | Last update timestamp (seconds) |
+| `latitude` | number | No | Job latitude if provided (currently Adzuna) — feeds future per-job radius filtering |
+| `longitude` | number | No | Job longitude if provided (currently Adzuna) — feeds future per-job radius filtering |
 
 ## Configuration
 
@@ -330,8 +358,10 @@ JOB_SOURCE_GREENHOUSE_BOARDS="stripe,airbnb,coinbase"
 | Workable | ✅ Implemented | `api/_lib/sources/public-ats/adapters/workable.mjs` |
 | Recruitee | ✅ Implemented | `api/_lib/sources/public-ats/adapters/recruitee.mjs` |
 | Personio | ✅ Implemented | `api/_lib/sources/public-ats/adapters/personio.mjs` (XML) |
+| Adzuna | ✅ Implemented | `api/_lib/sources/adzuna.mjs` (key-based, multi-country, geo+salary) |
+| Jooble | ✅ Implemented | `api/_lib/sources/jooble.mjs` (key-based POST, verify live before prod use) |
 
-All 6 providers implemented via factory pattern in `api/_lib/sources/public-ats/`.
+All 6 ATS providers implemented via factory pattern in `api/_lib/sources/public-ats/`. Adzuna + Jooble are first-class sources in `api/_lib/sources/index.mjs` (they need credentials, so they are not part of `PUBLIC_ATS_SOURCES`).
 
 ## Configuration (Updated)
 
@@ -354,6 +384,20 @@ PUBLIC_ATS_SOURCES='[
 ```
 
 Each source reads its configuration from `getConfig().publicAtsSources` in `api/_lib/config.mjs`.
+
+Key-based sources use dedicated env vars (server-side only):
+
+```bash
+# Adzuna (free tier at https://developer.adzuna.com/)
+ADZUNA_APP_ID=your-app-id
+ADZUNA_APP_KEY=your-app-key
+ADZUNA_COUNTRIES=de,gb
+JOB_SOURCE_ADZUNA_ENABLED=true
+
+# Jooble (API key, worldwide)
+JOOBLE_API_KEY=your-jooble-key
+JOB_SOURCE_JOOBLE_ENABLED=true
+```
 
 ## Testing Requirements
 
@@ -396,6 +440,7 @@ Each source reads its configuration from `getConfig().publicAtsSources` in `api/
 - All fetches are **server-side only** (existing API/Source layer)
 - No ATS configuration in React frontend
 - No API keys required for public endpoints
+- Key-based sources (Adzuna, Jooble, Apify) read credentials exclusively from server env vars (`ADZUNA_APP_ID/ADZUNA_APP_KEY`, `JOOBLE_API_KEY`, `APIFY_API_TOKEN`) — never in frontend code, logs, or docs
 - If a source ever requires credentials → document as `BLOCKED/REQUIRES_CREDENTIALS`, do not scrape or workaround
 
 ## Definition of Done (This Task)
