@@ -67,6 +67,8 @@ export default async function handler(req, res) {
       return res.status(err.status).json({ error: err.message, code: err.code });
     }
     console.error("[/api/jobs] unexpected:", err);
+    console.error("[/api/jobs] error stack:", err?.stack);
+    console.error("[/api/jobs] request query:", req.query);
     return res.status(500).json({
       error: "Something went wrong on our end. Please try again in a moment.",
       code: "internal",

@@ -281,6 +281,7 @@ export default function App() {
     // cvProfile aus dem State — oder direkt uebergeben (Listener-Aufrufe duerfen
     // nicht auf einen veralteten State-Closure zeigen)
     const submitted = submittedOverride ?? cvState.cvProfile;
+    console.debug("[runCvSearch] submitted profile:", JSON.stringify(submitted, null, 2));
     const hasTargetRoles = Array.isArray(submitted?.targetRoles) && submitted.targetRoles.length > 0;
     if (!submitted || (!submitted.skills && !hasTargetRoles)) {
       setStatus({ type: "error", message: t("status.noSkills") });
@@ -313,6 +314,7 @@ export default function App() {
       setDataset(nextDataset);
       setFoundJobs(board.jobs);
     } catch (err) {
+      console.error("[runCvSearch] error:", err);
       setStatus({ type: "error", message: describeError(err) });
     } finally {
       busyRef.current = false;
@@ -798,6 +800,7 @@ export default function App() {
     searchProfile: Profile,
     t: (key: string, vars?: Record<string, string | number>) => string
   ) => {
+    console.debug("[runAiSearchWithProfile] searchProfile:", JSON.stringify(searchProfile, null, 2));
     if (!searchProfile || !searchProfile.skills) {
       setCvState((prev) => ({
         ...prev,
