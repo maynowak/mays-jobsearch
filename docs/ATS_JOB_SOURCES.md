@@ -189,6 +189,64 @@ updatedAt: job.updatedAt ? Date.parse(job.updatedAt) / 1000 : undefined
 
 *(Similar mappings for Ashby, Workable, Recruitee, Personio — see individual adapter implementations)*
 
+## Generalized Source Addon (`jsonFeedSource`)
+
+New JSON-feed providers are added as thin addons on top of one shared helper — no copy-paste of fetch/filter/rank logic.
+
+**Helper:** `api/_lib/sources/public-ats/jsonFeedSource.mjs` → `createJsonFeedSource({...})`
+
+The helper owns the ground structure (configured once, reused by all JSON sources):
+- standard input `fetchJobs({ skills, targetRoles, targetRole, city })` (comma-separated skills entry)
+- keyword/city tokenization via `filter.mjs`
+- fetch with `Accept: application/json`
+- HTTP mapping: 404 → `not_found`, 429 → `rate_limited`, other non-OK/network → `upstream`/`network` (`HttpError`)
+- JSON parse + list-shape validation
+- local filtering, ranking, `meta: { enabled, reason, totalScanned, totalFiltered }`, max 40 jobs
+
+**Provider addon supplies only** (bound at creation time via the factory):
+- `providerName`, `identifier`, `enabled`, `label`, `options`
+- `buildUrl(identifier, options)` — e.g. Lever: `` `${API_BASE}/${encodeURIComponent(id)}?mode=json` ``
+- `extractList(json)` — e.g. Lever/Ashby: `json`; Workable: `json.jobs`; Recruitee: `json.offers`
+- `normalizeJob(raw, sourceId)` — maps one raw item to the normalized Job contract; **must use the passed `sourceId`** for `source: [sourceId, "ats"]` (never a module-level constant, identifiers differ per instance)
+
+**Adding a new JSON source (5 steps):**
+1. Create `api/_lib/sources/public-ats/adapters/<provider>.mjs` with `export function create<Provider>Source({ identifier, enabled, label, options = {} })` calling `createJsonFeedSource`.
+2. Register it in `ADAPTERS` in `api/_lib/sources/public-ats/factory.mjs` (static map — no dynamic imports).
+3. Add the `provider` literal to the `PublicJobSourceConfig` docs and `.env.example` (`PUBLIC_ATS_SOURCES`).
+4. Add the row to the Providers Overview + Capability Matrix in this doc.
+5. Test with a mocked `fetch` (valid payload, 404, invalid JSON) — no production calls.
+
+**Worked example (Lever):**
+```js
+import { createJsonFeedSource } from "../jsonFeedSource.mjs";
+
+export function createLeverSource({ identifier, enabled, label, options = {} }) {
+  return createJsonFeedSource({
+    providerName: "lever",
+    identifier,
+    enabled,
+    label,
+    options,
+    buildUrl: (id) => `https://api.lever.co/v0/postings/${encodeURIComponent(id)}?mode=json`,
+    extractList: (json) => json,
+    normalizeJob: (raw) => normalizeLeverJob(raw, `lever:${identifier}`),
+  });
+}
+```
+
+**Not covered by the helper (by design):**
+- Greenhouse legacy multi-board source (`api/_lib/sources/greenhouse.mjs`) — own loop over `JOB_SOURCE_GREENHOUSE_BOARDS`; plus single-board `createGreenhouseSource` for the factory.
+- Personio (`adapters/personio.mjs`) — XML feed, own fetch/parse; shares the same normalization contract and error-code conventions.
+
+### Upgrade points for later sources
+1. **Pagination** — extend the helper with an optional `paginate({ url, options, extractList })` hook (fetch-all-pages + concat); keep default single-request to avoid behavior changes for existing providers.
+2. **Native server-side filtering** — optional `buildUrl(identifier, options, { keywordTokens, cityQueries })`; only for providers with real filter support (e.g. Lever `location/commitment/team`). Local filtering stays as fallback.
+3. **Caching** — optional L1 cache (e.g. 10 min, keyed `ats:{sourceId}:{query}|{location}`) in the helper; must respect per-source TTL via `options`.
+4. **EU/region endpoints** — via `options` (already used: Recruitee `baseUrl`, Personio `baseUrl`+`language`, Ashby `includeCompensation`); document per provider.
+5. **XML feeds** — extract a `xmlFeedSource` sibling helper once a second XML provider appears; until then Personio stays standalone.
+6. **Capability declarations** — if the search strategy ever needs them, add an optional `capabilities` field to the helper return (declared, not enforced; must not change search pipeline).
+7. **Rate-limit backoff** — centralize retry-after handling in the helper instead of per-adapter messages.
+
 ## Deduplication Strategy
 
 Cross-source deduplication uses `api/_lib/sources/index.mjs::jobKey()`:

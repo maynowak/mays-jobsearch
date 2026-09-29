@@ -100,7 +100,7 @@ export function createPersonioSource({ identifier, enabled, label, options = {} 
         };
       }
 
-      const allJobs = Array.from(positions).map(normalizePersonioJob);
+      const allJobs = Array.from(positions).map((node) => normalizePersonioJob(node, SOURCE_ID));
       const candidates = allJobs.filter((job) => {
         if (!locationMatches(job, cityQueries)) return false;
         if (keywordTokens.length) return keywordHits(job, keywordTokens) > 0;
@@ -125,7 +125,7 @@ export function createPersonioSource({ identifier, enabled, label, options = {} 
   };
 }
 
-function normalizePersonioJob(positionNode) {
+function normalizePersonioJob(positionNode, sourceId) {
   const id = extractText(positionNode, "id");
   const company = extractText(positionNode, "subcompany");
   const office = extractText(positionNode, "office");
@@ -161,7 +161,7 @@ function normalizePersonioJob(positionNode) {
     tags,
     url: "", // Personio XML doesn't provide direct job URL
     created_at: Number.isFinite(createdAt) ? Math.floor(createdAt / 1000) : undefined,
-    source: [SOURCE_ID, "ats"],
+    source: [sourceId, "ats"],
     description: descriptionHtml || undefined,
     descriptionPlain: descriptionPlain || undefined,
     language: detectLanguage(descriptionPlain),
