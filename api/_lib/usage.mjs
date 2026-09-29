@@ -4,6 +4,7 @@ import {
   cacheHGetAll,
   cacheHIncrBy,
   cacheIncr,
+  cacheIncrBy,
   cacheReserveIncr,
   cacheDecrBy,
 } from "./cache.mjs";
@@ -181,6 +182,25 @@ export async function refundApifyRunSlot() {
   await cacheDecrBy(monthScoped(APIFY_RUN_KEY), 1);
 }
 
+const THEIRSTACK_CREDIT_KEY = "mj-usage:theirstack:credits";
+
+// TheirStack bills 1 API credit per returned record, so the contingent is
+// tracked in credits (not requests). Cache hits cost 0.
+export async function countTheirstackCredits(n) {
+  if (!Number.isFinite(n) || n <= 0) return;
+  await cacheIncrBy(monthScoped(THEIRSTACK_CREDIT_KEY), Math.floor(n), MONTH_TTL_SEC);
+}
+
+export async function theirstackCreditCount() {
+  return readCount(THEIRSTACK_CREDIT_KEY);
+}
+
+export async function theirstackCreditLimitReached() {
+  const cfg = getConfig();
+  const used = await readCount(THEIRSTACK_CREDIT_KEY);
+  return used >= cfg.theirstackMonthlyMaxCredits;
+}
+
 export async function getUsageSnapshot() {
   const cfg = getConfig();
   const now = new Date();
@@ -205,6 +225,10 @@ export async function getUsageSnapshot() {
       datasetReuses: await readCount(APIFY_REUSE_KEY),
       cacheHits: await readCount(APIFY_CACHE_HIT_KEY),
       cacheMisses: await readCount(APIFY_CACHE_MISS_KEY),
+    },
+    theirstack: {
+      creditCount: await readCount(THEIRSTACK_CREDIT_KEY),
+      creditLimit: cfg.theirstackMonthlyMaxCredits,
     },
     jobSources: {
       [ARBEITNOW_SOURCE_ID]: {

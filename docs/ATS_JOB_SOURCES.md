@@ -23,6 +23,7 @@ Unlike the ATS sources above, these official job-board APIs require free credent
 |----------|----------------|--------|------------|---------------|
 | Adzuna | `https://api.adzuna.com/v1/api/jobs/{country}/search/{page}` | JSON | country code (`de`, `gb`, `us`, `fr`, …) | Yes — `app_id` + `app_key` (free tier at developer.adzuna.com) |
 | Jooble | `https://jooble.org/api/{api_key}` (POST, JSON body) | JSON | — (worldwide, country via search params) | Yes — API key in URL path |
+| Theirstack | `https://api.theirstack.com/v1/jobs/search` (POST, Bearer) | JSON | — (worldwide, 100+ Länder, Filter via Body) | Yes — Bearer API key (1 Credit pro geliefertem Datensatz) |
 
 ### Adzuna
 - **Coverage**: UK, USA, Germany, France + 10+ more countries (one country code per request).
@@ -42,6 +43,15 @@ Unlike the ATS sources above, these official job-board APIs require free credent
 - **Field mapping**: `jo-{id}` externalId; `snippet` (plain text with `<b>` highlights → stripped for `descriptionPlain`); `salary` string passed through unchanged; `type` → `tags`/`jobTypes`; `link` (url/applyUrl/jobUrl); `updated` → `created_at`.
 - **Quota-Schutz via L1-Cache**: Roh-Payload je Query (`job-source:jooble:<keywords>|<location>`, TTL 600 s, wie Apify-L1). Wiederholte identische Suchen kosten keinen Paid-Call; leere Ergebnisse werden nicht gecacht.
 - **Verification status**: docs page bot-blocked (403) at check time — field mapping implemented defensively per documented schema; **verify against a live key before relying on Jooble in production** (single valid response suffices: all fields optional except array shape).
+
+### Theirstack
+- **Coverage**: worldwide, 100+ Länder; besonders stark Tech/Startup-Jobs mit strukturierten Tech-/Seniority-/Gehaltsfeldern.
+- **Request**: `POST https://api.theirstack.com/v1/jobs/search`, `Authorization: Bearer <key>`, Body mit `job_description_contains_or` (Skills, Whole-Word, ohne Regex-Escaping-Fallen), `job_title_or` (Zielrollen), `limit` (max. 40), `page: 0` sowie Pflichtfilter `posted_at_max_age_days: 30` (API lehnt ohne Datums-/Company-Filter ab).
+- **Kostenmodell (wichtig!)**: **1 Credit pro geliefertem Datensatz** (nicht pro Request) — Doku-verifiziert. Kontingent wird deshalb in Credits gezählt: `THEIRSTACK_MONTHLY_MAX_CREDITS` (Default `200`), Zähler `mj-usage:theirstack:credits:<YYYY-MM>`, bei Erreichen `emptyResult("limit_reached")` ohne Paid-Call. Cache-Hits kosten 0. Verbrauch pro Suche = Anzahl gelieferter Records (max. 40).
+- **401/403** → Credentials prüfen; **402** = Provider-Credits aufgebraucht (Upstream-Fehler + Hinweis auf Billing-Dashboard).
+- **Config**: `THEIRSTACK_API_KEY`, `JOB_SOURCE_THEIRSTACK_ENABLED` (default `true`), `THEIRSTACK_MONTHLY_MAX_CREDITS` (default `200`); fehlender Key → `emptyResult("missing_config")`.
+- **Field mapping** (gegen offizielle API-Referenz verifiziert): `ts-{id}` externalId; `job_title`; `company_object.name` (Fallback `company`); `location` (Fallback `long_location`); `remote`/`hybrid`-Flags → `remote`/`workplaceType`; `technology_slugs` + `seniority` → `tags`; `final_url`/`url`/`source_url` (url/applyUrl/jobUrl); `date_posted` → `created_at`; `employment_statuses[]` → `jobTypes`; `salary_string` (Fallback min/max-Range); `latitude`/`longitude`.
+- **Quota-Schutz via L1-Cache**: Roh-`data`-Payload je Body (`job-source:theirstack:<body>|<city>`, TTL 600 s). Leere Ergebnisse werden nicht gecacht; `no_query` ohne Suchbegriffe (kein 40-Credit-Blindflug).
 
 ## Common ATS Source Contract
 
@@ -362,6 +372,7 @@ JOB_SOURCE_GREENHOUSE_BOARDS="stripe,airbnb,coinbase"
 | Personio | ✅ Implemented | `api/_lib/sources/public-ats/adapters/personio.mjs` (XML) |
 | Adzuna | ✅ Implemented | `api/_lib/sources/adzuna.mjs` (key-based, multi-country, geo+salary) |
 | Jooble | ✅ Implemented | `api/_lib/sources/jooble.mjs` (key-based POST, verify live before prod use) |
+| Theirstack | ✅ Implemented | `api/_lib/sources/theirstack.mjs` (Bearer, credit-billed: 200/Monat-Default, L1-Cache) |
 
 All 6 ATS providers implemented via factory pattern in `api/_lib/sources/public-ats/`. Adzuna + Jooble are first-class sources in `api/_lib/sources/index.mjs` (they need credentials, so they are not part of `PUBLIC_ATS_SOURCES`).
 
@@ -399,6 +410,12 @@ JOB_SOURCE_ADZUNA_ENABLED=true
 # Jooble (API key, worldwide)
 JOOBLE_API_KEY=your-jooble-key
 JOB_SOURCE_JOOBLE_ENABLED=true
+
+# Theirstack (Bearer API key at https://app.theirstack.com/ Settings > API Keys;
+# 1 credit per returned record — contingent counted in credits, not requests)
+THEIRSTACK_API_KEY=your-theirstack-key
+JOB_SOURCE_THEIRSTACK_ENABLED=true
+THEIRSTACK_MONTHLY_MAX_CREDITS=200
 ```
 
 ## Testing Requirements
@@ -442,7 +459,7 @@ JOB_SOURCE_JOOBLE_ENABLED=true
 - All fetches are **server-side only** (existing API/Source layer)
 - No ATS configuration in React frontend
 - No API keys required for public endpoints
-- Key-based sources (Adzuna, Jooble, Apify) read credentials exclusively from server env vars (`ADZUNA_APP_ID/ADZUNA_APP_KEY`, `JOOBLE_API_KEY`, `APIFY_API_TOKEN`) — never in frontend code, logs, or docs
+- Key-based sources (Adzuna, Jooble, Theirstack, Apify) read credentials exclusively from server env vars (`ADZUNA_APP_ID/ADZUNA_APP_KEY`, `JOOBLE_API_KEY`, `THEIRSTACK_API_KEY`, `APIFY_API_TOKEN`) — never in frontend code, logs, or docs
 - If a source ever requires credentials → document as `BLOCKED/REQUIRES_CREDENTIALS`, do not scrape or workaround
 
 ## Definition of Done (This Task)

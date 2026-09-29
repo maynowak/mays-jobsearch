@@ -54,6 +54,15 @@ export async function cacheIncr(key, ttlSec) {
   return typeof result === "number" ? result : null;
 }
 
+export async function cacheIncrBy(key, by, ttlSec) {
+  if (!Number.isFinite(by) || by <= 0) return null;
+  const result = await cacheCommand("INCRBY", key, Math.floor(by));
+  if (typeof result === "number" && result === Math.floor(by) && ttlSec) {
+    await cacheCommand("EXPIRE", key, ttlSec);
+  }
+  return typeof result === "number" ? result : null;
+}
+
 export async function cacheHIncrBy(key, field, by = 1, ttlSec) {
   const result = await cacheCommand("HINCRBY", key, field, by);
   if (typeof result === "number" && result === by && ttlSec) {

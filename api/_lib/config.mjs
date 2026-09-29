@@ -128,6 +128,15 @@ export function getConfig() {
       true
     ),
     joobleApiKey: process.env.JOOBLE_API_KEY || "",
+    jobSourceTheirstackEnabled: parseBoolean(
+      process.env.JOB_SOURCE_THEIRSTACK_ENABLED,
+      true
+    ),
+    theirstackApiKey: process.env.THEIRSTACK_API_KEY || "",
+    theirstackMonthlyMaxCredits: parsePositiveInt(
+      process.env.THEIRSTACK_MONTHLY_MAX_CREDITS,
+      200
+    ),
     edenaiMonthlySoftLimitUsd: parsePositiveNumber(
       process.env.EDENAI_MONTHLY_SOFT_LIMIT_USD,
       1.0
