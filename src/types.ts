@@ -1,4 +1,4 @@
-export type JobSource = "arbeitnow" | "arbeitsagentur";
+export type JobSource = "arbeitnow" | "arbeitsagentur" | (string & {});
 
 export interface SourceInfo {
   id: string;
