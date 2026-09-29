@@ -183,6 +183,11 @@ export async function apiFetch<T = unknown>(url: string, options?: RequestInit):
   return data as T;
 }
 
+function ensureArray<T>(value: T | T[] | undefined): T[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
 export async function fetchJobs(profile: Profile): Promise<JobsResponse> {
   const params = new URLSearchParams();
   if (profile.skills) params.set("skills", profile.skills);
@@ -191,9 +196,9 @@ export async function fetchJobs(profile: Profile): Promise<JobsResponse> {
   }
   if (profile.city) params.set("city", profile.city);
   if (profile.radiusKm) params.set("radiusKm", String(profile.radiusKm));
-  if (profile.workModes?.length) params.set("workMode", profile.workModes.join(","));
-  if (profile.employmentTypes?.length)
-    params.set("employmentType", profile.employmentTypes.join(","));
+  if (ensureArray(profile.workModes).length) params.set("workMode", ensureArray(profile.workModes).join(","));
+  if (ensureArray(profile.employmentTypes).length)
+    params.set("employmentType", ensureArray(profile.employmentTypes).join(","));
   return apiFetch<JobsResponse>(`/api/jobs?${params.toString()}`);
 }
 
