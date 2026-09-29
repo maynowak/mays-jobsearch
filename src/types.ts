@@ -68,6 +68,7 @@ export interface JobsResponse {
     city?: string[];
     keywords?: string[];
     sources?: Partial<Record<JobSource, number>>;
+    sourceReasons?: Partial<Record<string, string | null>>;
     sourceCounts?: Partial<Record<JobSource, number>>;
     disabledSources?: string[];
     sourceDetails?: SourceInfo[];

@@ -76,7 +76,11 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
     if (outcome.status === "rejected") {
       if (source.critical) throw outcome.reason;
       console.error(`[sources] ${source.id} failed:`, outcome.reason);
-      results.push({ sourceId: source.id, jobs: [], meta: {} });
+      results.push({
+        sourceId: source.id,
+        jobs: [],
+        meta: { reason: outcome.reason?.code ?? "error" },
+      });
     } else {
       await countJobSourceRequest(source.id);
       results.push({ sourceId: source.id, ...outcome.value });
@@ -92,7 +96,11 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
   });
 
   const sourcesMeta = {};
-  for (const result of results) sourcesMeta[result.sourceId] = result.jobs.length;
+  const sourceReasons = {};
+  for (const result of results) {
+    sourcesMeta[result.sourceId] = result.jobs.length;
+    sourceReasons[result.sourceId] = result.meta?.reason ?? null;
+  }
 
   const sourceCounts = {};
   for (const job of searchStrategyResult.jobs) {
@@ -110,6 +118,7 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
       city: arbeitnowResult?.meta?.city ?? results[0]?.meta?.city ?? [],
       keywords: arbeitnowResult?.meta?.keywords ?? results[0]?.meta?.keywords ?? [],
       sources: sourcesMeta,
+      sourceReasons,
       sourceCounts,
       disabledSources: disabledSources(),
       sourceDetails: sourceDetails(),

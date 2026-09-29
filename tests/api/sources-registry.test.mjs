@@ -154,6 +154,17 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
     expect(job.source).toEqual(expect.arrayContaining(["arbeitnow", "arbeitsagentur"]));
   });
 
+  it("M) meta.sourceReasons nennt Grund je Source (z.B. missing_config, no_boards_configured)", async () => {
+    delete process.env.APIFY_API_TOKEN;
+    delete process.env.JOB_SOURCE_GREENHOUSE_BOARDS;
+    setupFetchMock({ arbeitnowJobs: [baseArbeitnowJob] });
+    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    expect(result.meta.sources.arbeitnow).toBeGreaterThan(0);
+    expect(result.meta.sourceReasons.arbeitnow).toBeNull();
+    expect(result.meta.sourceReasons.greenhouse).toBe("no_boards_configured");
+    expect(result.meta.sourceReasons.arbeitsagentur).toBe("missing_config");
+  });
+
   describe("BROWSER-BUG-04: Stadt + 'Entfernung egal' (kein numerischer Radius)", () => {
     const geoJobs = [
       { ...baseArbeitnowJob, slug: "ffm", title: "Frontend Developer", location: ["Frankfurt"], remote: false, tags: ["react"] },
