@@ -4,6 +4,7 @@ import { parseSkills, formatSkills, parseTargetRoles } from "../lib/skills";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import { RADIUS_KM_OPTIONS } from "../types";
+import FieldClear from "./FieldClear";
 
 interface Props {
   suggested: SuggestedProfile;
@@ -69,72 +70,112 @@ export default function CvProfileResult({
           (Vorschlag "<Zielrolle> - Profil1/2/3…"; Klick markiert alles) */}
       <div className="field">
         <label htmlFor="cv-profile-name">{t("cv.profileNameLabel")}</label>
-        <input
-          id="cv-profile-name"
-          type="text"
-          value={profileName}
-          onChange={(e) => setProfileName(e.target.value)}
-          disabled={busy}
-          autoComplete="off"
-          placeholder={t("cv.profileNamePlaceholder")}
-          onFocus={(e) => e.currentTarget.select()}
-        />
+        <div className="field-input-wrap">
+          <input
+            id="cv-profile-name"
+            type="text"
+            value={profileName}
+            onChange={(e) => setProfileName(e.target.value)}
+            disabled={busy}
+            autoComplete="off"
+            placeholder={t("cv.profileNamePlaceholder")}
+            onFocus={(e) => e.currentTarget.select()}
+          />
+          <FieldClear
+            visible={profileName.trim().length > 0}
+            disabled={busy}
+            label={t("field.clear")}
+            onClear={() => setProfileName("")}
+          />
+        </div>
       </div>
 
       <div className="field">
         <label htmlFor="cv-skills">{t("cv.skills")}</label>
-        <input
-          id="cv-skills"
-          type="text"
-          value={formatSkills(parsedSkills)}
-          onChange={(e) => {
-            const parsed = parseSkills(e.target.value);
-            setParsedSkills(parsed);
-          }}
-          disabled={busy}
-          autoComplete="off"
-        />
+        <div className="field-input-wrap">
+          <input
+            id="cv-skills"
+            type="text"
+            value={formatSkills(parsedSkills)}
+            onChange={(e) => {
+              const parsed = parseSkills(e.target.value);
+              setParsedSkills(parsed);
+            }}
+            disabled={busy}
+            autoComplete="off"
+          />
+          <FieldClear
+            visible={parsedSkills.length > 0}
+            disabled={busy}
+            label={t("field.clear")}
+            onClear={() => setParsedSkills([])}
+          />
+        </div>
       </div>
 
       <div className="field">
         <label htmlFor="cv-level">{t("cv.experienceLevel")}</label>
-        <input
-          id="cv-level"
-          type="text"
-          value={experienceLevel}
-          onChange={(e) => setExperienceLevel(e.target.value)}
-          disabled={busy}
-          autoComplete="off"
-        />
+        <div className="field-input-wrap">
+          <input
+            id="cv-level"
+            type="text"
+            value={experienceLevel}
+            onChange={(e) => setExperienceLevel(e.target.value)}
+            disabled={busy}
+            autoComplete="off"
+          />
+          <FieldClear
+            visible={experienceLevel.trim().length > 0}
+            disabled={busy}
+            label={t("field.clear")}
+            onClear={() => setExperienceLevel("")}
+          />
+        </div>
       </div>
 
       <div className="field">
         <label htmlFor="cv-targetRole">{t("cv.targetRoles")}</label>
-        <input
-          id="cv-targetRole"
-          type="text"
-          value={targetRoles}
-          onChange={(e) => setTargetRoles(e.target.value)}
-          disabled={busy}
-          autoComplete="off"
-        />
+        <div className="field-input-wrap">
+          <input
+            id="cv-targetRole"
+            type="text"
+            value={targetRoles}
+            onChange={(e) => setTargetRoles(e.target.value)}
+            disabled={busy}
+            autoComplete="off"
+          />
+          <FieldClear
+            visible={targetRoles.trim().length > 0}
+            disabled={busy}
+            label={t("field.clear")}
+            onClear={() => setTargetRoles("")}
+          />
+        </div>
       </div>
 
       <div className="field city-field" ref={boxRef}>
         <label htmlFor="cv-city">{t("cv.location")}</label>
-        <input
-          id="cv-city"
-          type="text"
-          value={city}
-          onChange={(e) => handleCityChange(e.target.value)}
-          onKeyDown={handleCityKeyDown}
-          disabled={busy}
-          autoComplete="off"
-          role="combobox"
-          aria-expanded={open}
-          aria-controls="cv-city-suggestions"
-          aria-activedescendant={active >= 0 ? `cv-city-option-${active}` : undefined}
-        />
+        <div className="field-input-wrap">
+          <input
+            id="cv-city"
+            type="text"
+            value={city}
+            onChange={(e) => handleCityChange(e.target.value)}
+            onKeyDown={handleCityKeyDown}
+            disabled={busy}
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls="cv-city-suggestions"
+            aria-activedescendant={active >= 0 ? `cv-city-option-${active}` : undefined}
+          />
+          <FieldClear
+            visible={city.trim().length > 0}
+            disabled={busy}
+            label={t("field.clear")}
+            onClear={() => handleCityChange("")}
+          />
+        </div>
         {open && (
           <ul id="cv-city-suggestions" className="city-suggestions" role="listbox">
             {loading && <li className="city-suggestion-status">{t("search.citySearching")}</li>}

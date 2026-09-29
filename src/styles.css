@@ -778,6 +778,50 @@ body {
   box-shadow: 0 0 0 3px rgba(201, 178, 138, 0.3);
 }
 
+/* Clear (×) button inside text inputs, right side */
+.field-input-wrap {
+  position: relative;
+}
+
+.field-input-wrap > input {
+  padding-right: 36px;
+}
+
+.field-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #c0392b;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.field-clear:hover:not(:disabled) {
+  background: rgba(192, 57, 43, 0.12);
+}
+
+.field-clear:focus-visible {
+  outline: 2px solid #c0392b;
+  outline-offset: 1px;
+}
+
+.field-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .field select {
   width: 100%;
   max-width: 100%;

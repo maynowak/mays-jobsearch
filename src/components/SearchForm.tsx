@@ -5,6 +5,7 @@ import { EMPLOYMENT_TYPES, RADIUS_KM_OPTIONS, WORK_MODES } from "../types";
 import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import CvUpload from "./CvUpload";
+import FieldClear from "./FieldClear";
 import { parseSkills, formatSkills } from "../lib/skills";
 import { parseTargetRoles, formatTargetRoles } from "../lib/skills";
 
@@ -109,6 +110,20 @@ export default function SearchForm({
     onChange({ ...value, skills: e.target.value });
   };
 
+  const clearSkills = () => {
+    setSkillsText("");
+    onChange({ ...value, skills: "" });
+  };
+
+  const clearTargetRoles = () => {
+    setTargetRolesText("");
+    onChange({ ...value, targetRoles: [] });
+  };
+
+  const clearCity = () => {
+    handleCityChange("");
+  };
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (mode === "cv") return;
@@ -155,49 +170,73 @@ export default function SearchForm({
         <div id="manual-panel">
         <div className="field">
           <label htmlFor="skills">{t("search.skills")}</label>
-          <input
-            id="skills"
-            type="text"
-            placeholder={t("search.skillsPh")}
-            value={skillsText}
-            onChange={handleSkillsChange}
-            disabled={busy}
-            autoComplete="off"
-          />
+          <div className="field-input-wrap">
+            <input
+              id="skills"
+              type="text"
+              placeholder={t("search.skillsPh")}
+              value={skillsText}
+              onChange={handleSkillsChange}
+              disabled={busy}
+              autoComplete="off"
+            />
+            <FieldClear
+              visible={skillsText.trim().length > 0}
+              disabled={busy}
+              label={t("field.clear")}
+              onClear={clearSkills}
+            />
+          </div>
         </div>
 
         <div className="field-row">
           <div className="field">
             <label htmlFor="targetRole">{t("search.targetRole")}</label>
-            <input
-              id="targetRole"
-              type="text"
-              placeholder={t("search.targetRolePh")}
-              value={targetRolesText}
-              onChange={(e) => {
-                setTargetRolesText(e.target.value);
-                onChange({ ...value, targetRoles: parseTargetRoles(e.target.value) });
-              }}
-              disabled={busy}
-              autoComplete="off"
-            />
+            <div className="field-input-wrap">
+              <input
+                id="targetRole"
+                type="text"
+                placeholder={t("search.targetRolePh")}
+                value={targetRolesText}
+                onChange={(e) => {
+                  setTargetRolesText(e.target.value);
+                  onChange({ ...value, targetRoles: parseTargetRoles(e.target.value) });
+                }}
+                disabled={busy}
+                autoComplete="off"
+              />
+              <FieldClear
+                visible={targetRolesText.trim().length > 0}
+                disabled={busy}
+                label={t("field.clear")}
+                onClear={clearTargetRoles}
+              />
+            </div>
           </div>
           <div className="field city-field" ref={boxRef}>
             <label htmlFor="city">{t("search.city")}</label>
-            <input
-              id="city"
-              type="text"
-              placeholder={t("search.cityPh")}
-              value={city}
-              onChange={(e) => handleCityChange(e.target.value)}
-              onKeyDown={handleCityKeyDown}
-              disabled={busy}
-              autoComplete="off"
-              role="combobox"
-              aria-expanded={open}
-              aria-controls="city-suggestions"
-              aria-activedescendant={active >= 0 ? `city-option-${active}` : undefined}
-            />
+            <div className="field-input-wrap">
+              <input
+                id="city"
+                type="text"
+                placeholder={t("search.cityPh")}
+                value={city}
+                onChange={(e) => handleCityChange(e.target.value)}
+                onKeyDown={handleCityKeyDown}
+                disabled={busy}
+                autoComplete="off"
+                role="combobox"
+                aria-expanded={open}
+                aria-controls="city-suggestions"
+                aria-activedescendant={active >= 0 ? `city-option-${active}` : undefined}
+              />
+              <FieldClear
+                visible={city.trim().length > 0}
+                disabled={busy}
+                label={t("field.clear")}
+                onClear={clearCity}
+              />
+            </div>
             <p className="field-hint">{t("search.cityHelp")}</p>
             {open && (
               <ul id="city-suggestions" className="city-suggestions" role="listbox">

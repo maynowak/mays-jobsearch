@@ -47,6 +47,7 @@ const en: Dict = {
   "search.employmentType": "Working hours",
   "employmentType.full_time": "Full time",
   "employmentType.part_time": "Part time",
+  "field.clear": "Clear input",
 
   "cv.modeLabel": "How to create your profile",
   "cv.manual": "Enter manually",
@@ -479,6 +480,7 @@ const de: Dict = {
   "search.employmentType": "Arbeitszeit",
   "employmentType.full_time": "Vollzeit",
   "employmentType.part_time": "Teilzeit",
+  "field.clear": "Eingabe löschen",
 
   "cv.modeLabel": "So erstellst du dein Profil",
   "cv.manual": "Manuell eingeben",

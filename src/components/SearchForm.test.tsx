@@ -106,7 +106,7 @@ describe("SearchForm is a controlled component", () => {
       onSubmit
     );
 
-    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: "Meine Treffer finden" }));
     expect(onSubmit).toHaveBeenCalledWith(baseProfile({ skills: "aws", targetRoles: ["Frontend"], city: "Berlin" }));
   });
 
@@ -121,6 +121,29 @@ describe("SearchForm is a controlled component", () => {
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
     expect((screen.getByLabelText("Zielrolle") as HTMLInputElement).value).toBe("Frontend");
     expect((screen.getByLabelText("Stadt oder PLZ") as HTMLInputElement).value).toBe("Berlin");
+  });
+});
+
+describe("Eingabefeld löschen (×-Button)", () => {
+  it("zeigt ein rotes × pro befülltem Eingabefeld", () => {
+    renderForm(baseProfile({ skills: "aws", targetRoles: ["Frontend"], city: "Berlin" }), vi.fn(), vi.fn());
+    expect(screen.getAllByRole("button", { name: "Eingabe löschen" })).toHaveLength(3);
+  });
+
+  it("zeigt kein × bei leeren Eingabefeldern", () => {
+    renderForm(empty, vi.fn(), vi.fn());
+    expect(screen.queryByRole("button", { name: "Eingabe löschen" })).toBeNull();
+  });
+
+  it("Klick auf × leert Skills, Zielrolle und Stadt", () => {
+    render(<StatefulForm initial={baseProfile({ skills: "aws", targetRoles: ["Frontend"], city: "Berlin" })} />);
+    const clears = screen.getAllByRole("button", { name: "Eingabe löschen" });
+    expect(clears).toHaveLength(3);
+    clears.forEach((btn) => fireEvent.click(btn));
+    expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("Zielrolle") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("Stadt oder PLZ") as HTMLInputElement).value).toBe("");
+    expect(screen.queryByRole("button", { name: "Eingabe löschen" })).toBeNull();
   });
 });
 
