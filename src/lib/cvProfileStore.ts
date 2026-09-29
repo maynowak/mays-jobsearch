@@ -80,6 +80,14 @@ export function readCvProfileLists(
     : emptyLists();
 }
 
+export function findSavedSearchProfile(
+  lists: CvProfileLists | null | undefined,
+  id: string | null | undefined
+): CvSearchProfileEntry | null {
+  if (!lists || !id) return null;
+  return lists.searchProfiles.find((e) => e.id === id) ?? null;
+}
+
 export function saveCvSearchProfile(
   hash: string | null | undefined,
   name: string,

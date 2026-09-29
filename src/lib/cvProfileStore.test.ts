@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CV_LISTS_TTL_MS,
+  findSavedSearchProfile,
   purgeLegacyCvListsFromLocalStorage,
   readCvProfileLists,
   resetCvProfileLists,
@@ -117,5 +118,21 @@ describe("cvProfileStore (CV-PROFILE-LISTS-01/02)", () => {
     saveCvSearchProfile("h1", "Profil1", profile);
     resetCvProfileLists();
     expect(readCvProfileLists("h1").searchProfiles).toEqual([]);
+  });
+
+  it("findSavedSearchProfile findet Eintrag per ID (für stille-Start-Verhinderung)", () => {
+    const entry = saveCvSearchProfile("h1", "Meins", profile);
+    const lists = readCvProfileLists("h1");
+    expect(findSavedSearchProfile(lists, entry!.id)).toEqual(entry);
+  });
+
+  it("findSavedSearchProfile liefert null bei unbekannter ID / leerer Liste / null", () => {
+    saveCvSearchProfile("h1", "Meins", profile);
+    const lists = readCvProfileLists("h1");
+    expect(findSavedSearchProfile(lists, "gibt-es-nicht")).toBeNull();
+    expect(findSavedSearchProfile(lists, null)).toBeNull();
+    expect(findSavedSearchProfile(lists, "")).toBeNull();
+    expect(findSavedSearchProfile({ searchProfiles: [], atsProfiles: [] }, "x")).toBeNull();
+    expect(findSavedSearchProfile(null, "x")).toBeNull();
   });
 });

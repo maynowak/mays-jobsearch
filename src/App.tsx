@@ -28,14 +28,16 @@ import Imprint from "./components/Imprint";
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
 import CvProfilesOverlay from "./components/CvProfilesOverlay";
-import { saveCvAtsProfile, saveCvSearchProfile, purgeLegacyCvListsFromLocalStorage, readCvProfileLists, resetCvProfileLists } from "./lib/cvProfileStore";
+import { saveCvAtsProfile, saveCvSearchProfile, purgeLegacyCvListsFromLocalStorage, readCvProfileLists, resetCvProfileLists, findSavedSearchProfile } from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
 
-function arraysEqual<T>(a: T[], b: T[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
+function arraysEqual<T>(a: T[] | null | undefined, b: T[] | null | undefined): boolean {
+  const left = a ?? [];
+  const right = b ?? [];
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 interface JobDataset {
@@ -558,8 +560,12 @@ export default function App() {
   const startSearchWithSavedProfile = () => {
     const doc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0];
     const lists = readCvProfileLists(doc?.hash ?? null);
-    const entry = lists.searchProfiles.find((e) => e.id === selectedSavedSearchId);
-    if (!entry) return; // Schutz: ohne gewaehltes Profil kein Start
+    const entry = findSavedSearchProfile(lists, selectedSavedSearchId);
+    if (!entry) {
+      // Kein stiller Abbruch: der Klick muss immer eine sichtbare Reaktion haben
+      setStatus({ type: "error", message: t("cv.startSearchMissing") });
+      return;
+    }
     handleProfileChange(entry.profile);
     handleSubmit(entry.profile);
   };
