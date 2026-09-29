@@ -188,11 +188,29 @@ function ensureArray<T>(value: T | T[] | undefined): T[] {
   return Array.isArray(value) ? value : [value];
 }
 
+function normalizeSkillsParam(skills: string | string[] | undefined): string {
+  if (!skills) return "";
+  if (Array.isArray(skills)) return skills.join(",");
+  const s = String(skills).trim();
+  if (!s) return "";
+  // If it's a JSON array string, parse and rejoin
+  if (s.startsWith("[") && s.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed.join(",");
+    } catch {
+      // Not valid JSON, treat as comma-separated
+    }
+  }
+  return s;
+}
+
 export async function fetchJobs(profile: Profile): Promise<JobsResponse> {
   const params = new URLSearchParams();
-  if (profile.skills) params.set("skills", profile.skills);
-  if (profile.targetRoles?.length) {
-    profile.targetRoles.forEach((role) => params.append("targetRole", role));
+  if (profile.skills) params.set("skills", normalizeSkillsParam(profile.skills));
+  const targetRoles = ensureArray(profile.targetRoles);
+  if (targetRoles.length) {
+    targetRoles.forEach((role) => params.append("targetRole", role));
   }
   if (profile.city) params.set("city", profile.city);
   if (profile.radiusKm) params.set("radiusKm", String(profile.radiusKm));
