@@ -1,35 +1,65 @@
 import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { HttpError } from "./_lib/filter.mjs";
 
+function parseArrayParam(value, delimiters = /[,;]+/) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
+  const str = String(value).trim();
+  if (!str) return [];
+  // Try JSON array first
+  if (str.startsWith("[") && str.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(str);
+      if (Array.isArray(parsed)) return parsed.map(v => String(v).trim()).filter(Boolean);
+    } catch { /* fall through */ }
+  }
+  return str.split(delimiters).map(s => s.trim()).filter(Boolean);
+}
+
+function parseNumberParam(value) {
+  if (!value && value !== 0) return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(204).end();
 
   try {
-    const { skills = "", targetRole = "", city = "", radiusKm, workMode, employmentType } =
-      req.query || {};
+    const { 
+      skills = "", 
+      targetRole = "", 
+      city = "", 
+      radiusKm, 
+      workMode, 
+      employmentType 
+    } = req.query || {};
 
-    // Parse skills - support both JSON array and legacy string format
-    let skillsArray = [];
-    if (skills) {
-      try {
-        const parsed = JSON.parse(skills);
-        if (Array.isArray(parsed)) {
-          skillsArray = parsed;
-        } else if (typeof parsed === "string") {
-          skillsArray = parsed.split(/[;,]+/).map(s => s.trim()).filter(Boolean);
-        }
-      } catch {
-        // Legacy format: split on semicolon, comma, whitespace
-        skillsArray = skills.split(/[;,]+/).map(s => s.trim()).filter(Boolean);
-      }
-    }
+    // Parse skills - support JSON array, comma-separated, or legacy string
+    const skillsArray = parseArrayParam(skills);
 
     // Parse targetRole - support multiple values (array) or single string
-    const targetRoles = Array.isArray(targetRole) ? targetRole : (targetRole ? [targetRole] : []);
+    const targetRoles = parseArrayParam(targetRole);
 
-    const result = await fetchAllJobs({ skills: skillsArray, targetRoles, city, radiusKm, workMode, employmentType });
+    // Parse workMode - comma-separated or JSON array
+    const workModes = parseArrayParam(workMode);
+
+    // Parse employmentType - comma-separated or JSON array
+    const employmentTypes = parseArrayParam(employmentType);
+
+    // Parse radiusKm - number or string
+    const radiusKmNum = parseNumberParam(radiusKm);
+
+    const result = await fetchAllJobs({ 
+      skills: skillsArray, 
+      targetRoles, 
+      city, 
+      radiusKm: radiusKmNum, 
+      workMode: workModes, 
+      employmentType: employmentTypes 
+    });
 
     return res.status(200).json(result);
   } catch (err) {
