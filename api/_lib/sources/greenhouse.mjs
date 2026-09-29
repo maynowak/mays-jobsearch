@@ -156,3 +156,52 @@ function emptyResult(reason) {
 export async function fetchJobs(params) {
   return fetchGreenhouseJobs(params);
 }
+
+// Factory adapter: single board instance, configured at creation time.
+// Standard input stays comma-separated skills entry; the board token is
+// bound per source so the registry needs no source-specific logic.
+export function createGreenhouseSource({ identifier, enabled = true, label } = {}) {
+  const board = String(identifier ?? "").trim();
+  const sourceId = `greenhouse:${board}`;
+  return {
+    id: sourceId,
+    displayName: label || `Greenhouse (${board})`,
+    provider: "ats",
+    enabled: () => enabled === true,
+    fetchJobs: async ({ skills, targetRoles, targetRole, city }) => {
+      if (!board) {
+        return emptyResult("no_boards_configured");
+      }
+      const roles = Array.isArray(targetRoles) ? targetRoles : (targetRole ? [targetRole] : []);
+      const keywordTokens = [...roles.flatMap(tokenize), ...tokenize(skills)];
+      const cityQueries = String(city || "")
+        .split(",")
+        .map((c) => c.trim().toLowerCase())
+        .filter(Boolean);
+
+      const rawJobs = await fetchBoardJobs(board);
+      const candidates = rawJobs
+        .map((job) => ({ ...normalizeGreenhouseJob(job), source: [sourceId, "ats"] }))
+        .filter((job) => {
+          if (!locationMatches(job, cityQueries)) return false;
+          if (keywordTokens.length) return keywordHits(job, keywordTokens) > 0;
+          return true;
+        });
+
+      const ranked = candidates
+        .map((job) => ({ job, hits: keywordHits(job, keywordTokens) }))
+        .sort((a, b) => b.hits - a.hits || (b.job.created_at || 0) - (a.job.created_at || 0))
+        .map(({ job }) => job);
+
+      return {
+        jobs: ranked.slice(0, MAX_JOBS_TO_AI),
+        meta: {
+          enabled: true,
+          reason: null,
+          totalScanned: rawJobs.length,
+          totalFiltered: ranked.length,
+        },
+      };
+    },
+  };
+}

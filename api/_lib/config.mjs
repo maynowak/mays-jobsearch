@@ -124,11 +124,6 @@ export function getConfig() {
       process.env.EDENAI_MONTHLY_MAX_REQUESTS,
       200
     ),
-    jobSourceGreenhouseEnabled: parseBoolean(
-      process.env.JOB_SOURCE_GREENHOUSE_ENABLED,
-      true
-    ),
-    jobSourceGreenhouseBoards: process.env.JOB_SOURCE_GREENHOUSE_BOARDS || "",
     publicAtsSources: parsePublicAtsSources(process.env.PUBLIC_ATS_SOURCES || "[]"),
   };
 }
