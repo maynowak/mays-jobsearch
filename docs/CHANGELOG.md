@@ -137,3 +137,10 @@ Precise Model Fallback Feedback + Suchparameter-Erweiterung.
 - **Server-Filter (best-effort):** `employmentType` (DE/EN-Aliases; Stellen ohne Beschäftigungs-Info werden nicht ausgeschlossen), `workMode` (nur bei ausschließlich „remote" filterbar via `job.remote`). Offene Punkte dokumentiert: `radiusKm` ohne Geocoding, `hybrid`/`onsite` nicht aus den Jobdaten ableitbar.
 - **Merge:** Feature-Branch Fast-forward nach `main` (Commit `0305d52`), Production-Deployment `dpl_DJRUFY1BtYjnY7ZPr81hhwGsswL7`, Deployment-Identität verifiziert, Live-Tests (Suchfilter + `/api/match`).
 - **Tests:** 159/159 grün (inkl. 15 neue Suchparameter-Tests). Env-Variablen-Matrix in `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK.md`.
+
+## Unreleased — 2026-09-29
+
+Apify run backstop scale-up (cost estimate included).
+
+- `APIFY_MONTHLY_MAX_RUNS` default raised 30 → 100: 30 runs (≈1/day) proved too tight in practice (`limit_reached` before month end); 100 (≈3/day) fits the $5.00 Apify budget (see estimate below). Override per env var unchanged; counter resets monthly automatically.
+- Cost estimate (actor `blackfalcondata~arbeitsagentur-jobs-feed`, `maxResults: 40`): `$0.79 / 1,000 results` is the author's per-result unit price ("from", not an average) plus small compute per run (~10 s runs). Observed September: ~$0.26 at ≥30 runs (≈$0.01/run). Projected: ~$0.55 at 60 runs, ~$0.90 at 100 runs (typical partial results); worst case 100 × 40 results ≈ $3.30 — all within budget. Cache (10 min), dataset reuse (6 h peak / 12 h off-peak) and daily quotas further limit real runs. Apify console remains authoritative for billing.

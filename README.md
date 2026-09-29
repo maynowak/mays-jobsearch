@@ -107,7 +107,7 @@ All keys are server-side only.
 | `OPENROUTER_MONTHLY_MAX_REQUESTS` (optional) | OpenRouter AI request-count backstop for the cost guard (default `1000`/month) | — |
 | `EDENAI_MONTHLY_MAX_REQUESTS` (optional) | EdenAI request-count backstop (default `200`/month) | — |
 | `OPENROUTER_ENABLED` / `EDENAI_ENABLED` (optional) | Enable/disable each AI provider (default `true`) | — |
-| `APIFY_MONTHLY_MAX_RUNS` (optional) | Apify Actor-run backstop for the cost guard (default `30`/month) | — |
+| `APIFY_MONTHLY_MAX_RUNS` (optional) | Apify Actor-run backstop for the cost guard (default `100`/month) | — |
 | `MODEL_FALLBACK_MAX_ATTEMPTS` (optional) | Max AI fallback attempts, exposed to the client (default `3`) | — |
 | `APIFY_DATASET_REFRESH_PEAK_HOURS` (optional) | Apify dataset reuse window during peak hours (default `6`) | — |
 | `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (optional) | Apify dataset reuse window off-peak (default `12`) | — |
@@ -134,7 +134,7 @@ Important — these are **application-side counters, not provider billing**:
 - The `*_SOFT_LIMIT_USD` values are advisory operator thresholds shown in `/api/usage`; the app cannot derive exact spend from its counters and therefore does **not** block on them.
 - The guards use the counter backstops instead:
   - **AI providers:** once a provider's monthly request count reaches its backstop (`OPENROUTER_MONTHLY_MAX_REQUESTS` default `1000`, `EDENAI_MONTHLY_MAX_REQUESTS` default `200`), the router fails fast for that provider (`503 limit_reached`) and automatically tries the next enabled provider; only when all are exhausted does the request fail with the existing friendly UX. Client-side fallbacks stay bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`.
-  - **Apify:** once the monthly Actor-run count reaches `APIFY_MONTHLY_MAX_RUNS` (default `30`), no new paid Actor runs are started. Cached / dataset-reused results keep working; only brand-new searches that would need a run return empty for the Apify source (Arbeitnow still works).
+  - **Apify:** once the monthly Actor-run count reaches `APIFY_MONTHLY_MAX_RUNS` (default `100`), no new paid Actor runs are started. Cached / dataset-reused results keep working; only brand-new searches that would need a run return empty for the Apify source (Arbeitnow still works).
 - Apify dataset reuse is **time-of-day aware** in a configurable IANA timezone: during the peak window (`APIFY_DATASET_REFRESH_PEAK_START`–`APIFY_DATASET_REFRESH_PEAK_END`, default 08:00–18:00 `Europe/Berlin`) the dataset refresh window is `APIFY_DATASET_REFRESH_PEAK_HOURS` (default 6 h); off-peak it is `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default 12 h). Longer off-peak reuse means fewer paid runs. Summer/winter time is resolved automatically from the IANA timezone (no hardcoded UTC offset).
 - The Redis L1 job cache (10 min), the Apify L2 dataset reuse, the CV-profile cache and the automatic model fallback are all unchanged.
 

@@ -47,11 +47,11 @@
 - OPENROUTER_MONTHLY_SOFT_LIMIT_USD : number (USD)
 - APIFY_MONTHLY_SOFT_LIMIT_USD : number (USD) (default: 4.0)
 - EDENAI_MONTHLY_MAX_REQUESTS : number (default 200)
-- APIFY_MONTHLY_MAX_RUNS : number (default 30)
+- APIFY_MONTHLY_MAX_RUNS : number (default 100)
 - EDENAI_MONTHLY_MAX_REQUESTS : number (default 200)
-- APIFY_MONTHLY_MAX_RUNS : number (default 30)
+- APIFY_MONTHLY_MAX_RUNS : number (default 100)
 - EDENAI_MONTHLY_SOFT_LIMIT_USD : number (USD) (default 1.0)
-- APIFY_MONTHLY_MAX_RUNS : number (default 30)
+- APIFY_MONTHLY_MAX_RUNS : number (default 100)
 - APIFY_DATASET_REFRESH_PEAK_HOURS : number (hours) (default 6)
 - APIFY_DATASET_REFRESH_OFFPEAK_HOURS : number (hours) (default 12)
 - APIFY_DATASET_REFRESH_TIMEZONE : timezone (default Europe/Berlin)
@@ -59,7 +59,7 @@
 - APIFY_DATASET_REFRESH_PEAK_END : time (default 18:00)
 - OPENROUTER_MONTHLY_MAX_REQUESTS : number (default 1000)
 - EDENAI_MONTHLY_MAX_REQUESTS : number (default 200)
-- APIFY_MONTHLY_MAX_RUNS : number (default 30)
+- APIFY_MONTHLY_MAX_RUNS : number (default 100)
 
 ## 5. Application Configuration
 - MODEL_FALLBACK_MAX_ATTEMPTS : number (default 3)

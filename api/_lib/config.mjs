@@ -92,7 +92,7 @@ export function getConfig() {
       process.env.OPENROUTER_MONTHLY_MAX_REQUESTS,
       1000
     ),
-    apifyMonthlyMaxRuns: parsePositiveInt(process.env.APIFY_MONTHLY_MAX_RUNS, 30),
+    apifyMonthlyMaxRuns: parsePositiveInt(process.env.APIFY_MONTHLY_MAX_RUNS, 100),
     apifyDetailMaxPerUserPerDay: parsePositiveInt(
       process.env.APIFY_DETAIL_MAX_PER_USER_PER_DAY,
       30

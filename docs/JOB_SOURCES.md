@@ -99,7 +99,7 @@ The Apify infrastructure uses a two-layer cache with **source-scoped keys** to a
 
 ## Cost Guard (Apify)
 
-Before starting a new Actor run, `apifyRunLimitReached()` checks the monthly run counter (`mj-usage:apify:runs:<YYYY-MM>`). At the backstop (`APIFY_MONTHLY_MAX_RUNS`, default 30):
+Before starting a new Actor run, `apifyRunLimitReached()` checks the monthly run counter (`mj-usage:apify:runs:<YYYY-MM>`). At the backstop (`APIFY_MONTHLY_MAX_RUNS`, default 100):
 - No new paid run is started
 - Source returns `emptyResult("limit_reached")`
 - Cached and dataset-reused searches keep working
@@ -240,7 +240,7 @@ Existing cached data (old key format) will miss once on first deploy — harmles
 | `JOB_SOURCE_ARBEITNOW_ENABLED` | `true` | Enable/disable Arbeitnow source |
 | `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` | `true` | Enable/disable Arbeitsagentur source |
 | `APIFY_API_TOKEN` | (unset) | Required for Apify-based sources |
-| `APIFY_MONTHLY_MAX_RUNS` | `30` | Apify run-count backstop |
+| `APIFY_MONTHLY_MAX_RUNS` | `100` | Apify run-count backstop |
 | `APIFY_DATASET_REFRESH_PEAK_HOURS` | `6` | Peak dataset reuse window (hours) |
 | `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` | `12` | Off-peak dataset reuse window (hours) |
 | `APIFY_DATASET_REFRESH_TIMEZONE` | `Europe/Berlin` | IANA timezone for peak window |

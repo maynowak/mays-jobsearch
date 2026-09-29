@@ -280,7 +280,7 @@ All tunables are environment variables with safe defaults (see `docs/DEPLOYMENT.
 | Apify peak window end | `APIFY_DATASET_REFRESH_PEAK_END` | `18:00` |
 | AI request-count backstop | `OPENROUTER_MONTHLY_MAX_REQUESTS` | 1000 |
 | EdenAI request-count backstop | `EDENAI_MONTHLY_MAX_REQUESTS` | 200 |
-| Apify run-count backstop | `APIFY_MONTHLY_MAX_RUNS` | 30 |
+| Apify run-count backstop | `APIFY_MONTHLY_MAX_RUNS` | 100 |
 | Diagnostics token for `GET /api/usage` | `USAGE_DIAGNOSTICS_TOKEN` | unset → endpoint disabled |
 
 ### Counters (`api/_lib/usage.mjs`)
