@@ -1,15 +1,15 @@
 # JAVA-ONLY-SOURCES-01 — Gespeichertes "java"-Profil liefert nur Arbeitnow
 
 ## Current status
-INVESTIGATED — Kein Bug im Anfrage-Call. Alle aktivierten Sources werden parallel abgefragt; nur Arbeitnow liefert Jobs, weil die anderen Sources serverseitig nicht mit Daten versorgt sind (keine Boards, kein Token, keine PUBLIC_ATS_SOURCES-Einträge).
+RESOLVED — Produktions-Response liefert die exakte Ursache: Arbeitsagentur = `limit_reached` (Monats-Run-Counter am Backstop, beabsichtigter Cost-Guard), Greenhouse = `no_boards_configured`. Kein Bug.
 
 ## Audit date/time
-2026-09-29 14:20:00 CET
+2026-09-29 14:20:00 CET (Produktions-Evidenz ergänzt: 2026-09-29 13:36 UTC-Request)
 
 ## Git branch and HEAD
 - Branch: main
-- HEAD: 9fe4f52
-- Working tree: clean (nur dieser Report als neue Datei)
+- HEAD: 4897383
+- Working tree: clean (nur dieser Report geändert)
 
 ## Audit scope
 Befund: gespeichertes Profil mit ausschließlich Skill "java" → Jobquellen-Anzeige listet nur Arbeitnow. Vermutung des Users: Fehler im Anfrage-Call ("das müsste alle Quellen anfragen"). Geprüft: Frontend-Request (was wird gesendet), Backend-Fanout (welche Sources werden abgefragt), Lieferverhalten je Source, Anzeige-Logik. Read-only; keine Codeänderung.
@@ -51,8 +51,17 @@ Befund: gespeichertes Profil mit ausschließlich Skill "java" → Jobquellen-Anz
 - Laufzeit-Check: `enabled: [arbeitnow, greenhouse, arbeitsagentur]`, `disabled: []`
 - Tests: `sources-registry.test.mjs`, `search-strategy.test.mjs`, `filter.test.js` — 97/97 grün
 
+## Production evidence (Request 29.09.2026 13:36 UTC, `skills=["java"]`, `employmentType=full_time`)
+`GET /api/jobs?skills=["java"]&employmentType=full_time` → HTTP 200. Relevante `meta`-Werte:
+- `sources: {arbeitnow: 23, greenhouse: 0, arbeitsagentur: 0}` — alle drei abgefragt.
+- `sourceReasons: {greenhouse: "no_boards_configured", arbeitsagentur: "limit_reached", arbeitnow: null}` — exakte Gründe (Feld aus AA-LIVE-VS-WEBSITE-01; dass es vorhanden ist, belegt zugleich den aktuellen Production-Deploy).
+- `apify: {enabled: false, reason: "limit_reached"}` — App-seitiger Monats-Run-Counter hat `APIFY_MONTHLY_MAX_RUNS` erreicht; Cost-Guard blockt neue Paid-Runs (beabsichtigt, kein Fehler). Token ist konfiguriert (sonst stünde `missing_config`).
+- `totalScanned: 326` (Roh-Board) → `jobsCombined: 23` (Java-Treffer) → `totalFiltered: 22` (ein Teilzeit-Job fällt korrekterweise durch den `full_time`-Filter).
+- `searchStrategy: {threshold: 1, strategy: "exact", skillsUsed: 1}`, `keywords: ["java"]`, `city: []`, `disabledSources: []` — alles korrekt.
+- `sourceCounts: {arbeitnow: 22}` → UI zeigt folgerichtig nur Arbeitnow.
+
 ## Classification
-**GREEN** — Anfrage-Call verifiziert korrekt; Ursache (Konfiguration/Versorgung der Zusatz-Sources) benannt und per `meta` überprüfbar; kein Code-Bug, keine Änderung nötig.
+**GREEN** — Anfrage-Call verifiziert korrekt; Produktions-Evidenz benennt die exakte Ursache je Source; kein Code-Bug, keine Änderung nötig.
 
 ## Terraform checks actually executed and their results
 N/A — this project does not use Terraform.
