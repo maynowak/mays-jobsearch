@@ -1461,7 +1461,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
     await backToDocumentList();
 
-    const startBtn = screen.getByRole("button", { name: "Job-Suche starten" }) as HTMLButtonElement;
+    const startBtn = screen.getByRole("button", { name: "Jobs Finden" }) as HTMLButtonElement;
     const searchSelect = document.getElementById("cv-saved-search-profile") as HTMLSelectElement;
 
     // Nach dem Speichern ist das Profil auto-selektiert -> Start aktiv
@@ -1485,7 +1485,32 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await waitFor(() => expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore + 1));
   });
 
-  it("CV-UPLOAD-UX-08: 'Job-Suche starten' nutzt das gewaehlte gespeicherte Suchprofil", async () => {
+  it("'Jobs Finden' zeigt Spinner und sperrt während der Suche (Anfragerunner)", async () => {
+    mockProfile();
+    const gate = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(gate.promise);
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    await backToDocumentList();
+
+    const startBtn = screen.getByRole("button", { name: "Jobs Finden" }) as HTMLButtonElement;
+    fireEvent.click(startBtn);
+
+    // Suche läuft: Button zeigt Spinner + Such-Label und ist gesperrt
+    await waitFor(() => expect(startBtn.disabled).toBe(true));
+    expect(startBtn.querySelector(".spinner")).toBeTruthy();
+    expect(startBtn.textContent).toContain("Suche");
+
+    gate.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
+    await screen.findByText("AWS Engineer");
+  });
+
+  it("CV-UPLOAD-UX-08: 'Jobs Finden' nutzt das gewaehlte gespeicherte Suchprofil", async () => {
     mockProfile();
     vi.mocked(fetchJobs).mockResolvedValue({ jobs: [job], meta: { totalFiltered: 1 } });
     renderApp();
@@ -1504,7 +1529,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
       },
     });
     const callsBefore = vi.mocked(fetchJobs).mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Job-Suche starten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Jobs Finden" }));
     await waitFor(() => expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore + 1));
     expect(vi.mocked(fetchJobs).mock.calls.at(-1)![0]).toMatchObject({
       skills: "React",

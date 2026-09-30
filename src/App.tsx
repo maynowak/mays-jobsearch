@@ -1326,9 +1326,10 @@ export default function App() {
                   type="button"
                   className="cv-continue-btn cv-saved-profiles__start"
                   onClick={startSearchWithSavedProfile}
-                  disabled={cvState.isProcessing || !selectedSavedSearchId}
+                  disabled={cvState.isProcessing || !selectedSavedSearchId || isSearching || isMatching}
                 >
-                  {t("cv.startSearch")}
+                  <span className="btn-label">{isSearching ? t("search.searching") : t("cv.startSearch")}</span>
+                  {isSearching && <span className="spinner" />}
                 </button>
                 {!selectedSavedSearchId && (
                   <p className="cv-saved-profiles__hint">{t("cv.startSearchHint")}</p>
@@ -1493,7 +1494,7 @@ export default function App() {
             recommendedModel={recommendedModel}
             value={effectiveModel}
             onChange={handleModelChange}
-            disabled={cvState.isProcessing}
+            disabled={cvState.isProcessing || isSearching || isMatching}
             attention={modelExhausted}
           />
           {cvState.isProcessing && (
@@ -1879,7 +1880,7 @@ export default function App() {
               recommendedModel={recommendedModel}
               value={effectiveModel}
               onChange={handleModelChange}
-              disabled={cvState.isProcessing}
+              disabled={cvState.isProcessing || isSearching || isMatching}
               attention={true}
             />
           </div>
