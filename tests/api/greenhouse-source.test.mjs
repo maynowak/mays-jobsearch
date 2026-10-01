@@ -102,13 +102,13 @@ describe("Greenhouse Source Adapter", () => {
       expect(enabled()).toBe(false);
     });
 
-    it("enabled() returns true when enabled but no boards", async () => {
+    it("JOB-SOURCES-01: enabled() returns false when enabled but no boards (honest enabled)", async () => {
       vi.mocked(getConfig).mockReturnValue({
         jobSourceGreenhouseEnabled: true,
         jobSourceGreenhouseBoards: "",
       });
       const { enabled } = await import("../../api/_lib/sources/greenhouse.mjs");
-      expect(enabled()).toBe(true);
+      expect(enabled()).toBe(false);
     });
   });
 

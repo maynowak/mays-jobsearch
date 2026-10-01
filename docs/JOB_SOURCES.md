@@ -79,14 +79,15 @@ The registry (`SOURCES` array) orders sources: Arbeitnow first, then Apify actor
 - **Empty without credentials**: `emptyResult("missing_config")`
 - **Enable toggle**: `JOB_SOURCE_ADZUNA_ENABLED` (default `true`)
 
-### 6. Jooble (`id: "jooble"`, provider: `job-api`)
+### 6. JobsPipe (`id: "jobspipe"`, provider: `job-api`)
 
-- **Module**: `api/_lib/sources/jooble.mjs`
-- **API**: `POST https://jooble.org/api/{key}` with `{keywords, location}` body — requires `JOOBLE_API_KEY`
-- **Fetch**: single search + L1 result cache (600 s per query, protects the request quota)
-- **Normalization**: `snippet` handling, `salary` passthrough, `jo-{id}` external IDs
+- **Module**: `api/_lib/sources/jobspipe.mjs`
+- **API**: `POST https://api.jobspipe.dev/v1/jobs/search` with Bearer key — requires `JOBSPIPE_API_KEY`
+- **Billing**: credits per returned record (`limit` capped at 40); global monthly credit guard `JOBSPIPE_MONTHLY_MAX_CREDITS` (default `200`) → `emptyResult("limit_reached")`; per-user monthly guard `JOBSPIPE_MAX_CREDITS_PER_USER` (default `20`, session-based)
+- **Fetch**: native `skills_or`/`job_title_or`/date filters + L1 result cache (600 s); `no_query` guard without search terms (`include_technologies` NOT set — costs extra credits)
+- **Normalization**: incl. `technology_slugs`/`keyword_slugs` tags, `salary_string`, `employment_statuses`, `latitude`/`longitude`, `jp-{id}` external IDs
 - **Empty without key**: `emptyResult("missing_config")`
-- **Enable toggle**: `JOB_SOURCE_JOOBLE_ENABLED` (default `true`)
+- **Enable toggle**: `JOB_SOURCE_JOBSPIPE_ENABLED` (default `true`)
 
 ### 7. Theirstack (`id: "theirstack"`, provider: `job-api`)
 
@@ -110,7 +111,7 @@ Each source can be independently disabled via environment variables:
 | `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` | `true` | No Apify run, no dataset read, no cache miss, no cost, no jobs from Arbeitsagentur |
 | `JOB_SOURCE_GREENHOUSE_ENABLED` | `true` | No Greenhouse board requests, no jobs from Greenhouse |
 | `JOB_SOURCE_ADZUNA_ENABLED` | `true` | No Adzuna API request, no cost, no jobs from Adzuna |
-| `JOB_SOURCE_JOOBLE_ENABLED` | `true` | No Jooble API request, no cost, no jobs from Jooble |
+| `JOB_SOURCE_JOBSPIPE_ENABLED` | `true` | No JobsPipe API request, no credits spent, no jobs from JobsPipe |
 | `JOB_SOURCE_THEIRSTACK_ENABLED` | `true` | No Theirstack API request, no credits spent, no jobs from Theirstack |
 
 **Behavior**:
@@ -258,7 +259,7 @@ The frontend components are **data-driven** and already support arbitrary source
 - `src/types.ts` — `JobSource = "arbeitnow" | "arbeitsagentur" | (string & {})` (open for all current + future sources)
 - `src/components/JobSources.tsx` — iterates `job.source[]`, maps via `SOURCE_LABEL_KEYS` with fallback to raw id; additionally renders `deliveredCounts` rows (`meta.sources`) for sources that delivered jobs but were cut from the displayed pool
 - `src/components/SourceBadge.tsx` — same pattern
-- `src/i18n.tsx` — label keys `source.arbeitnow`, `source.arbeitsagentur`, `source.adzuna`, `source.jooble`, `source.theirstack`, `source.greenhouse` (+ `sources.notShown` note)
+- `src/i18n.tsx` — label keys `source.arbeitnow`, `source.arbeitsagentur`, `source.adzuna`, `source.jobspipe`, `source.theirstack`, `source.greenhouse` (+ `sources.notShown` note)
 
 No new UI code is needed when a new source is added; it will automatically appear in the job sources list with its raw id as the label until a translation key is added.
 

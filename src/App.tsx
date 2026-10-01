@@ -60,6 +60,10 @@ export default function App() {
   // Roh-Treffer je Source aus der letzten Suche (meta.sources) — damit auch
   // Quellen sichtbar bleiben, die geliefert haben, aber aus dem 50er-Anzeige-Pool fielen
   const [foundSources, setFoundSources] = useState<Partial<Record<string, number>> | null>(null);
+  // Inaktive Quellen + Laufzeit-Gründe der letzten Suche (meta.disabledSources /
+  // meta.sourceReasons) — JOB-SOURCES-01: fehlende Quellen nicht kommentarlos fehlen lassen
+  const [foundDisabledSources, setFoundDisabledSources] = useState<string[] | null>(null);
+  const [foundSourceReasons, setFoundSourceReasons] = useState<Partial<Record<string, string | null>> | null>(null);
   const [profile, setProfile] = useState<Profile>({
     skills: "",
     targetRoles: [],
@@ -246,6 +250,8 @@ export default function App() {
     setDataset(null);
     setFoundJobs([]);
     setFoundSources(null);
+    setFoundDisabledSources(null);
+    setFoundSourceReasons(null);
     setMatches([]);
 
     const hasTargetRoles = Array.isArray(submitted.targetRoles) && submitted.targetRoles.length > 0;
@@ -274,6 +280,8 @@ export default function App() {
       setDataset(nextDataset);
       setFoundJobs(board.jobs);
       setFoundSources(board.meta?.sources ?? null);
+      setFoundDisabledSources(board.meta?.disabledSources ?? null);
+      setFoundSourceReasons(board.meta?.sourceReasons ?? null);
     } catch (err) {
       setStatus({ type: "error", message: describeError(err) });
     } finally {
@@ -301,6 +309,8 @@ export default function App() {
     setDataset(null);
     setFoundJobs([]);
     setFoundSources(null);
+    setFoundDisabledSources(null);
+    setFoundSourceReasons(null);
     setMatches([]);
 
     setPhase("searching");
@@ -322,6 +332,8 @@ export default function App() {
       setDataset(nextDataset);
       setFoundJobs(board.jobs);
       setFoundSources(board.meta?.sources ?? null);
+      setFoundDisabledSources(board.meta?.disabledSources ?? null);
+      setFoundSourceReasons(board.meta?.sourceReasons ?? null);
     } catch (err) {
       console.error("[runCvSearch] error:", err);
       setStatus({ type: "error", message: describeError(err) });
@@ -1338,7 +1350,7 @@ export default function App() {
             )}
           </div>
         )}
-      <JobSources jobs={foundJobs} deliveredCounts={foundSources} />
+      <JobSources jobs={foundJobs} deliveredCounts={foundSources} disabledSources={foundDisabledSources} sourceReasons={foundSourceReasons} />
       <div className="model-divider" aria-hidden="true" />
       <ModelSelector
         state={modelsState}

@@ -15,14 +15,14 @@ Enable Mays Jobsearch to fetch published job postings from major ATS platforms v
 | Recruitee | `https://{company_subdomain}.recruitee.com/api/v2/jobs` | JSON | `company_subdomain` | No |
 | Personio | `https://{career_site}.jobs.personio.de/xml` | XML | `career_site` | No |
 
-## Key-based Job APIs (Adzuna, Jooble)
+## Key-based Job APIs (Adzuna, JobsPipe)
 
 Unlike the ATS sources above, these official job-board APIs require free credentials (**server-side only**, never in frontend code):
 
 | Provider | Public Endpoint | Format | Identifier | Auth Required |
 |----------|----------------|--------|------------|---------------|
 | Adzuna | `https://api.adzuna.com/v1/api/jobs/{country}/search/{page}` | JSON | country code (`de`, `gb`, `us`, `fr`, …) | Yes — `app_id` + `app_key` (free tier at developer.adzuna.com) |
-| Jooble | `https://jooble.org/api/{api_key}` (POST, JSON body) | JSON | — (worldwide, country via search params) | Yes — API key in URL path |
+| JobsPipe | `https://api.jobspipe.dev/v1/jobs/search` (POST, Bearer) | JSON | — (30+ sources, single normalized schema) | Yes — Bearer API key (`JOBSPIPE_API_KEY`) |
 | Theirstack | `https://api.theirstack.com/v1/jobs/search` (POST, Bearer) | JSON | — (worldwide, 100+ Länder, Filter via Body) | Yes — Bearer API key (1 Credit pro geliefertem Datensatz) |
 
 ### Adzuna
@@ -35,14 +35,14 @@ Unlike the ATS sources above, these official job-board APIs require free credent
 - **Field mapping**: `az-{country}-{id}` externalId; `company.display_name`; `location.display_name` + `location.area[]`; `redirect_url` (url/applyUrl/jobUrl); `created` → `created_at`; `contract_time` → `jobTypes`; `category.label` → `tags`/`department`.
 - **Endpoint verified** against official docs (`developer.adzuna.com/docs/search`): path, `app_id`/`app_key`, `results_per_page`, `what`, `where`, `redirect_url` confirmed 2026-09-29.
 
-### Jooble
-- **Coverage**: worldwide, 60+ countries; filtering by keywords + location via POST body.
-- **Request**: `POST https://jooble.org/api/{key}`, `Content-Type: application/json`, body `{keywords, location}` (only set when non-empty).
+### JobsPipe
+- **Coverage**: 30+ sources (job boards, public employment services, company ATS) via one normalized schema.
+- **Request**: `POST https://api.jobspipe.dev/v1/jobs/search`, `Authorization: Bearer <key>`, body `{skills_or, job_title_or, posted_at_max_age_days, limit}`.
 - **Local filtering still applies** afterwards (consistent with all sources).
-- **Config**: `JOOBLE_API_KEY`, `JOB_SOURCE_JOOBLE_ENABLED` (default `true`); missing key → `emptyResult("missing_config")`.
-- **Field mapping**: `jo-{id}` externalId; `snippet` (plain text with `<b>` highlights → stripped for `descriptionPlain`); `salary` string passed through unchanged; `type` → `tags`/`jobTypes`; `link` (url/applyUrl/jobUrl); `updated` → `created_at`.
-- **Quota-Schutz via L1-Cache**: Roh-Payload je Query (`job-source:jooble:<keywords>|<location>`, TTL 600 s, wie Apify-L1). Wiederholte identische Suchen kosten keinen Paid-Call; leere Ergebnisse werden nicht gecacht.
-- **Verification status**: docs page bot-blocked (403) at check time — field mapping implemented defensively per documented schema; **verify against a live key before relying on Jooble in production** (single valid response suffices: all fields optional except array shape).
+- **Config**: `JOBSPIPE_API_KEY`, `JOB_SOURCE_JOBSPIPE_ENABLED` (default `true`), `JOBSPIPE_MONTHLY_MAX_CREDITS` (default `200`), `JOBSPIPE_MAX_CREDITS_PER_USER` (default `20`); missing key → `emptyResult("missing_config")`.
+- **Field mapping**: `jp-{id}` externalId; `job_title`; `company`/`company_object.name`; `location`/`long_location`/`cities[0]`; `technology_slugs`/`keyword_slugs` → tags; `salary_string` passthrough; `employment_statuses` → `jobTypes`; `url`/`source_url`; `date_posted` → `created_at`.
+- **Quota-Schutz via L1-Cache**: Roh-Payload je Query (`job-source:jobspipe:<body>|<city>`, TTL 600 s). Wiederholte identische Suchen kosten keinen Paid-Call; leere Ergebnisse werden nicht gecacht. `include_technologies` wird nicht gesetzt (Extra-Credits).
+- **Verification status**: Doku per Fetch verifiziert 2026-10-01 (Filter-/Job-Schema); Live-Beweis siehe JOBSPIPE-01-Log.
 
 ### Theirstack
 - **Coverage**: worldwide, 100+ Länder; besonders stark Tech/Startup-Jobs mit strukturierten Tech-/Seniority-/Gehaltsfeldern.
@@ -372,10 +372,10 @@ JOB_SOURCE_GREENHOUSE_BOARDS="stripe,airbnb,coinbase"
 | Recruitee | ✅ Implemented | `api/_lib/sources/public-ats/adapters/recruitee.mjs` |
 | Personio | ✅ Implemented | `api/_lib/sources/public-ats/adapters/personio.mjs` (XML) |
 | Adzuna | ✅ Implemented | `api/_lib/sources/adzuna.mjs` (key-based, multi-country, geo+salary) |
-| Jooble | ✅ Implemented | `api/_lib/sources/jooble.mjs` (key-based POST, verify live before prod use) |
+| JobsPipe | ✅ Implemented | `api/_lib/sources/jobspipe.mjs` (Bearer, credit-billed: 200/Monat-Default, L1-Cache) |
 | Theirstack | ✅ Implemented | `api/_lib/sources/theirstack.mjs` (Bearer, credit-billed: 200/Monat-Default, L1-Cache) |
 
-All 6 ATS providers implemented via factory pattern in `api/_lib/sources/public-ats/`. Adzuna + Jooble are first-class sources in `api/_lib/sources/index.mjs` (they need credentials, so they are not part of `PUBLIC_ATS_SOURCES`).
+All 6 ATS providers implemented via factory pattern in `api/_lib/sources/public-ats/`. Adzuna + JobsPipe are first-class sources in `api/_lib/sources/index.mjs` (they need credentials, so they are not part of `PUBLIC_ATS_SOURCES`).
 
 ## Configuration (Updated)
 
@@ -408,9 +408,11 @@ ADZUNA_APP_KEY=your-app-key
 ADZUNA_COUNTRIES=de,gb
 JOB_SOURCE_ADZUNA_ENABLED=true
 
-# Jooble (API key, worldwide)
-JOOBLE_API_KEY=your-jooble-key
-JOB_SOURCE_JOOBLE_ENABLED=true
+# JobsPipe (Bearer API key at https://jobspipe.dev/signup)
+JOBSPIPE_API_KEY=your-jobspipe-key
+JOB_SOURCE_JOBSPIPE_ENABLED=true
+JOBSPIPE_MONTHLY_MAX_CREDITS=200
+JOBSPIPE_MAX_CREDITS_PER_USER=20
 
 # Theirstack (Bearer API key at https://app.theirstack.com/ Settings > API Keys;
 # 1 credit per returned record — contingent counted in credits, not requests)
@@ -460,7 +462,7 @@ THEIRSTACK_MONTHLY_MAX_CREDITS=200
 - All fetches are **server-side only** (existing API/Source layer)
 - No ATS configuration in React frontend
 - No API keys required for public endpoints
-- Key-based sources (Adzuna, Jooble, Theirstack, Apify) read credentials exclusively from server env vars (`ADZUNA_APP_ID/ADZUNA_APP_KEY`, `JOOBLE_API_KEY`, `THEIRSTACK_API_KEY`, `APIFY_API_TOKEN`) — never in frontend code, logs, or docs
+- Key-based sources (Adzuna, JobsPipe, Theirstack, Apify) read credentials exclusively from server env vars (`ADZUNA_APP_ID/ADZUNA_APP_KEY`, `JOBSPIPE_API_KEY`, `THEIRSTACK_API_KEY`, `APIFY_API_TOKEN`) — never in frontend code, logs, or docs
 - If a source ever requires credentials → document as `BLOCKED/REQUIRES_CREDENTIALS`, do not scrape or workaround
 
 ## Definition of Done (This Task)
@@ -492,27 +494,26 @@ THEIRSTACK_MONTHLY_MAX_CREDITS=200
 - [ ] Commit + Push to main
 - [ ] Git clean
 
-## Key-based Sources — Capability Matrix (Adzuna / Jooble / Theirstack)
+## Key-based Sources — Capability Matrix (Adzuna / JobsPipe / Theirstack)
 
-| Capability | Adzuna | Jooble | Theirstack |
+| Capability | Adzuna | JobsPipe | Theirstack |
 |------------|:------:|:------:|:----------:|
 | **Format** | JSON | JSON | JSON |
-| **Auth** | `app_id` + `app_key` (query) | API key (URL path) | Bearer token (header) |
-| **Native Filter** | Keywords (`what`), location (`where`) | Keywords + location (POST body) | Description/title/country/date filters |
-| **Location** | `location.display_name` + `area[]` | `location` string | `location` (+ `long_location` fallback) |
+| **Auth** | `app_id` + `app_key` (query) | Bearer token (header) | Bearer token (header) |
+| **Native Filter** | Keywords (`what`), location (`where`) | Skills (`skills_or`), title, date | Description/title/country/date filters |
+| **Location** | `location.display_name` + `area[]` | `location`/`cities[0]` | `location` (+ `long_location` fallback) |
 | **Department** | `category.label` | ❌ | ❌ |
-| **Employment Type** | `contract_time` | `type` | `employment_statuses[]` |
-| **Workplace Type** | remote (inferred) | remote (inferred) | `remote` / `hybrid` flags |
-| **Salary** | `salary_min`/`max` range | `salary` string | `salary_string` / min/max USD |
-| **Geodata** | `latitude`/`longitude` | ❌ | `latitude`/`longitude` |
-| **L1 Cache (600 s)** | ✅ per country+query | ✅ per query | ✅ per body |
-| **Cost unit** | Free tier (per-call) | Per request (1000-request quota) | **Per returned record** (credit guard!) |
+| **Employment Type** | `contract_time` | `employment_statuses[]` | `employment_statuses[]` |
+| **Workplace Type** | remote (inferred) | `remote` / `hybrid` flags | `remote` / `hybrid` flags |
+| **Salary** | `salary_min`/`max` range | `salary_string` / min/max USD | `salary_string` / min/max USD |
+| **Geodata** | `latitude`/`longitude` | `latitude`/`longitude` | `latitude`/`longitude` |
+| **L1 Cache (600 s)** | ✅ per country+query | ✅ per body | ✅ per body |
+| **Cost unit** | Free tier (per-call) | **Per returned record** (credit guard!) | **Per returned record** (credit guard!) |
 
 ## Next Steps
 
-All 6 ATS providers plus Adzuna, Jooble and Theirstack are now implemented. Future enhancements could include:
+All 6 ATS providers plus Adzuna, JobsPipe and Theirstack are now implemented. Future enhancements could include:
 1. Add pagination support for Lever/Ashby/Workable/Recruitee
 2. Add EU endpoint support for Lever (api.eu.lever.co)
 3. Add auto-discovery for company identifiers
 4. Per-job radius filtering once jobs carry coordinates (`latitude`/`longitude` already normalized where provided)
-5. Jooble field mapping against a live key end-verified (currently defensive)

@@ -17,7 +17,9 @@ export const displayName = "Adzuna";
 export const provider = "job-api";
 
 export function enabled() {
-  return getConfig().jobSourceAdzunaEnabled;
+  // Ehrlich: Flag UND Credentials. Ohne Keys lieferte die Quelle nur
+  // missing_config-Leermengen, wurde aber als aktiv gemeldet.
+  return getConfig().jobSourceAdzunaEnabled && adzunaCredentials() !== null;
 }
 
 function adzunaCredentials() {
@@ -139,7 +141,7 @@ async function fetchCountryJobs(country, { appId, appKey }, what, where) {
   }
 
   if (response.status === 401 || response.status === 403) {
-    throw new HttpError(502, "Adzuna API rejected the credentials. Check ADZUNA_APP_ID/ADZUNA_APP_KEY.", "upstream");
+    throw new HttpError(502, "Adzuna API rejected the credentials. Check ADZUNA_APP_ID/ADZUNA_APP_KEY (aliases ADZUNA_APPLICATION_ID/ADZUNA_APPLICATION_KEY).", "upstream");
   }
   if (response.status === 404) {
     throw new HttpError(404, `Adzuna country "${country}" not found.`, "not_found");

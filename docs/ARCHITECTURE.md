@@ -415,7 +415,7 @@ Facade that re-exports `getFreeModels`, `assertFreeModel`, `getCompatibleFallbac
 
 Job Source Registry (router):
 
-- `SOURCES` — ordered list of all registered sources (Arbeitnow, Greenhouse, Adzuna, Jooble, Theirstack, public ATS factory instances, Apify actors).
+- `SOURCES` — ordered list of all registered sources (Arbeitnow, Greenhouse, Adzuna, JobsPipe, Theirstack, public ATS factory instances, Apify actors).
 - `enabledSources()` / `disabledSources()` / `sourceDetails()` — registry queries.
 - `fetchAllJobs({ skills, targetRoles, targetRole, city, radiusKm, workMode, employmentType, identity? })` — parallel fetch of enabled sources, cross-source dedup, combined meta (`sources`, `sourceReasons`, `sourceCounts`, `disabledSources`, `sourceDetails`, `jobsCombined`, `searchStrategy`, `geo`, `apify`). Optional `identity` (`{sessionId, ip}`) is passed through to sources for per-user quotas.
 - `jobKey(job)` / `dedupJobs(jobs)` — cross-source deduplication by `title | company | location`.

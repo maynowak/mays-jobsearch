@@ -231,7 +231,7 @@ describe("Explizites AI-Matching nach Jobsuche (Step 22)", () => {
       const sourcedJob: Job = { ...job, source: ["arbeitnow"] };
       vi.mocked(fetchJobs).mockResolvedValue({
         jobs: [sourcedJob],
-        meta: { totalFiltered: 1, sources: { arbeitnow: 1, jooble: 25 } },
+        meta: { totalFiltered: 1, sources: { arbeitnow: 1, jobspipe: 25 } },
       });
       renderApp();
 
@@ -239,7 +239,7 @@ describe("Explizites AI-Matching nach Jobsuche (Step 22)", () => {
       fireEvent.click(screen.getByText("Meine Treffer finden"));
 
       await screen.findByText("AWS Engineer");
-      expect(screen.getByText("Jooble")).toBeTruthy();
+      expect(screen.getByText("JobsPipe")).toBeTruthy();
       expect(screen.getByText(/nicht angezeigt/)).toBeTruthy();
     });
   });

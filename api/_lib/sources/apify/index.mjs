@@ -38,9 +38,12 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
     return emptyResult("missing_config");
   }
 
-  // Backward compatibility: support both targetRoles (array) and targetRole (string)
+  // Backward compatibility: support both targetRoles (array) and targetRole (string).
+  // skills ist ein Array — explizit mit Space joinen (String(array) ergäbe
+  // Komma-Join wie "Docker,Kubernetes", was Actors ggf. nichts finden lässt).
   const roles = Array.isArray(targetRoles) ? targetRoles : (targetRole ? [targetRole] : []);
-  const query = String(roles[0] || skills || "").trim();
+  const skillQuery = Array.isArray(skills) ? skills.join(" ") : String(skills || "");
+  const query = String(roles[0] || skillQuery || "").trim();
   if (!query) {
     return emptyResult("no_query");
   }

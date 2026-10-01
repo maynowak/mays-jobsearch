@@ -120,14 +120,22 @@ export function getConfig() {
       process.env.JOB_SOURCE_ADZUNA_ENABLED,
       true
     ),
-    adzunaAppId: process.env.ADZUNA_APP_ID || "",
-    adzunaAppKey: process.env.ADZUNA_APP_KEY || "",
+    adzunaAppId: process.env.ADZUNA_APP_ID || process.env.ADZUNA_APPLICATION_ID || "",
+    adzunaAppKey: process.env.ADZUNA_APP_KEY || process.env.ADZUNA_APPLICATION_KEY || "",
     adzunaCountries: process.env.ADZUNA_COUNTRIES || "de",
-    jobSourceJoobleEnabled: parseBoolean(
-      process.env.JOB_SOURCE_JOOBLE_ENABLED,
+    jobSourceJobspipeEnabled: parseBoolean(
+      process.env.JOB_SOURCE_JOBSPIPE_ENABLED,
       true
     ),
-    joobleApiKey: process.env.JOOBLE_API_KEY || "",
+    jobspipeApiKey: process.env.JOBSPIPE_API_KEY || "",
+    jobspipeMonthlyMaxCredits: parsePositiveInt(
+      process.env.JOBSPIPE_MONTHLY_MAX_CREDITS,
+      200
+    ),
+    jobspipeMaxCreditsPerUser: parsePositiveInt(
+      process.env.JOBSPIPE_MAX_CREDITS_PER_USER,
+      20
+    ),
     jobSourceTheirstackEnabled: parseBoolean(
       process.env.JOB_SOURCE_THEIRSTACK_ENABLED,
       true

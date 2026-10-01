@@ -221,6 +221,44 @@ export async function theirstackUserCreditLimitReached(identity) {
   return used >= cfg.theirstackMaxCreditsPerUser;
 }
 
+export async function jobspipeUserCreditLimitReached(identity) {
+  if (!identity?.sessionId) return false;
+  const cfg = getConfig();
+  const used = await readCount(jobspipeUserCreditKey(identity));
+  return used >= cfg.jobspipeMaxCreditsPerUser;
+}
+
+const JOBSPIPE_CREDIT_KEY = "mj-usage:jobspipe:credits";
+
+// JobsPipe bills credits per returned record, so the contingent is tracked
+// in credits (not requests). Cache hits cost 0.
+export async function countJobspipeCredits(n) {
+  if (!Number.isFinite(n) || n <= 0) return;
+  await cacheIncrBy(monthScoped(JOBSPIPE_CREDIT_KEY), Math.floor(n), MONTH_TTL_SEC);
+}
+
+export async function jobspipeCreditCount() {
+  return readCount(JOBSPIPE_CREDIT_KEY);
+}
+
+export async function jobspipeCreditLimitReached() {
+  const cfg = getConfig();
+  const used = await readCount(JOBSPIPE_CREDIT_KEY);
+  return used >= cfg.jobspipeMonthlyMaxCredits;
+}
+
+function jobspipeUserCreditKey(identity) {
+  return `mj-usage:jobspipe:credits:user:${hashToken(identity?.sessionId)}`;
+}
+
+// Per-user monthly credit guard (anonymous session = user). Without identity
+// there is nothing to attribute to, so callers skip user accounting and only
+// the global guard applies.
+export async function countJobspipeUserCredits(identity, n) {
+  if (!identity?.sessionId || !Number.isFinite(n) || n <= 0) return;
+  await cacheIncrBy(monthScoped(jobspipeUserCreditKey(identity)), Math.floor(n), MONTH_TTL_SEC);
+}
+
 export async function getUsageSnapshot() {
   const cfg = getConfig();
   const now = new Date();
@@ -249,6 +287,10 @@ export async function getUsageSnapshot() {
     theirstack: {
       creditCount: await readCount(THEIRSTACK_CREDIT_KEY),
       creditLimit: cfg.theirstackMonthlyMaxCredits,
+    },
+    jobspipe: {
+      creditCount: await readCount(JOBSPIPE_CREDIT_KEY),
+      creditLimit: cfg.jobspipeMonthlyMaxCredits,
     },
     jobSources: {
       [ARBEITNOW_SOURCE_ID]: {

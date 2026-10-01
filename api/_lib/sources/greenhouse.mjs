@@ -11,7 +11,9 @@ export const displayName = "Greenhouse";
 export const provider = "ats";
 
 export function enabled() {
-  return getConfig().jobSourceGreenhouseEnabled;
+  // Ehrlich: Flag UND konfigurierte Boards (sonst nur
+  // no_boards_configured-Leermengen).
+  return getConfig().jobSourceGreenhouseEnabled && parseGreenhouseBoards().length > 0;
 }
 
 function parseGreenhouseBoards() {

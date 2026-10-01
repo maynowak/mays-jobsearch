@@ -39,7 +39,11 @@ export const APIFY_ACTORS = [
     displayName: "Arbeitsagentur",
     actorId: "blackfalcondata~arbeitsagentur-jobs-feed",
     maxJobs: 40,
-    enabled: () => getConfig().jobSourceArbeitsagenturEnabled,
+    enabled: () =>
+      getConfig().jobSourceArbeitsagenturEnabled &&
+      // Ehrlich: ohne APIFY_API_TOKEN liefert der Actor nur
+      // missing_config-Leermengen (siehe fetchActorJobs).
+      Boolean((process.env.APIFY_API_TOKEN || "").trim()),
     buildInput: (query, location, maxJobs) => ({
       query,
       location,

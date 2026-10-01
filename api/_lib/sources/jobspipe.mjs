@@ -4,41 +4,42 @@ import { cacheGet, cacheSet } from "../cache.mjs";
 import {
   countJobSourceCacheHit,
   countJobSourceCacheMiss,
-  countTheirstackCredits,
-  countTheirstackUserCredits,
-  theirstackCreditLimitReached,
-  theirstackUserCreditLimitReached,
+  countJobspipeCredits,
+  countJobspipeUserCredits,
+  jobspipeCreditLimitReached,
+  jobspipeUserCreditLimitReached,
 } from "../usage.mjs";
 
-const API_BASE = "https://api.theirstack.com/v1/jobs/search";
-// TheirStack bills 1 API credit per returned record: keep the page small
-// and consistent with the other sources.
+const API_BASE = "https://api.jobspipe.dev/v1/jobs/search";
+// JobsPipe bills credits per returned record: keep the page small and
+// consistent with the other sources. NOTE: `include_technologies` is NOT
+// set — it costs 1 extra credit per job that names a technology.
 const RESULTS_LIMIT = 40;
 const MAX_JOBS_TO_AI = 40;
 // L1 result cache (same pattern as the other key-based sources): repeated
 // identical searches reuse the raw upstream payload instead of burning credits.
 const CACHE_TTL_SEC = 600;
-// The API rejects requests without at least one date/company filter.
+// Freshness guard: only postings from the last 30 days (same as TheirStack).
 const POSTED_MAX_AGE_DAYS = 30;
 
-const SOURCE_ID = "theirstack";
+const SOURCE_ID = "jobspipe";
 
 export const id = SOURCE_ID;
-export const displayName = "Theirstack";
+export const displayName = "JobsPipe";
 export const provider = "job-api";
 
 export function enabled() {
   // Ehrlich: Flag UND API-Key (sonst nur missing_config-Leermengen).
-  return getConfig().jobSourceTheirstackEnabled && theirstackApiKey() !== null;
+  return getConfig().jobSourceJobspipeEnabled && jobspipeApiKey() !== null;
 }
 
-function theirstackApiKey() {
-  const key = (getConfig().theirstackApiKey || "").trim();
+function jobspipeApiKey() {
+  const key = (getConfig().jobspipeApiKey || "").trim();
   return key || null;
 }
 
-export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, city, identity }) {
-  const apiKey = theirstackApiKey();
+export async function fetchJobspipeJobs({ skills, targetRoles, targetRole, city, identity }) {
+  const apiKey = jobspipeApiKey();
   if (!apiKey) {
     return emptyResult("missing_config");
   }
@@ -57,44 +58,43 @@ export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, cit
     return emptyResult("no_query");
   }
 
-  // Native server-side search. `job_description_contains_or` matches whole
-  // words (no regex-escaping pitfalls); `job_title_or` matches all words of
-  // a pattern in any order. Local filtering still applies afterwards
-  // (consistent with all sources).
+  // Native server-side search. `skills_or` matches skill slugs (better than
+  // description matching for known skills, per JobsPipe docs);
+  // `job_title_or` matches title substrings; local filtering still applies
+  // afterwards (consistent with all sources).
   const body = {
-    job_description_contains_or: keywordTokens,
+    skills_or: keywordTokens,
     limit: RESULTS_LIMIT,
-    page: 0,
     posted_at_max_age_days: POSTED_MAX_AGE_DAYS,
   };
   if (roles.length) body.job_title_or = roles;
 
-  const cacheKey = `job-source:theirstack:${JSON.stringify(body)}|${cityQueries.join(",")}`;
+  const cacheKey = `job-source:jobspipe:${JSON.stringify(body)}|${cityQueries.join(",")}`;
   const cached = await cacheGet(cacheKey);
   let rawJobs = Array.isArray(cached) ? cached : null;
   if (rawJobs) {
     await countJobSourceCacheHit(SOURCE_ID);
   } else {
     await countJobSourceCacheMiss(SOURCE_ID);
-    if (await theirstackCreditLimitReached()) {
+    if (await jobspipeCreditLimitReached()) {
       return emptyResult("limit_reached");
     }
     // Per-user monthly guard (anonymous session = user, 20 credits default).
     // Without identity there is nothing to attribute to — global guard above
     // still applies.
-    if (identity && (await theirstackUserCreditLimitReached(identity))) {
+    if (identity && (await jobspipeUserCreditLimitReached(identity))) {
       return emptyResult("user_limit_reached");
     }
-    rawJobs = await fetchTheirstackUpstream(apiKey, body);
-    await countTheirstackCredits(rawJobs.length);
-    if (identity) await countTheirstackUserCredits(identity, rawJobs.length);
+    rawJobs = await fetchJobspipeUpstream(apiKey, body);
+    await countJobspipeCredits(rawJobs.length);
+    if (identity) await countJobspipeUserCredits(identity, rawJobs.length);
     if (rawJobs.length) await cacheSet(cacheKey, rawJobs, CACHE_TTL_SEC);
   }
 
   const allJobs = rawJobs;
 
   const candidates = allJobs
-    .map(normalizeTheirstackJob)
+    .map(normalizeJobspipeJob)
     .filter((job) => {
       if (!locationMatches(job, cityQueries)) return false;
       if (keywordTokens.length) return keywordHits(job, keywordTokens) > 0;
@@ -129,7 +129,7 @@ async function readErrorExcerpt(response) {
   }
 }
 
-async function fetchTheirstackUpstream(apiKey, body) {
+async function fetchJobspipeUpstream(apiKey, body) {
   let response;
   try {
     response = await fetch(API_BASE, {
@@ -142,58 +142,55 @@ async function fetchTheirstackUpstream(apiKey, body) {
       body: JSON.stringify(body),
     });
   } catch {
-    throw new HttpError(502, "Couldn't reach Theirstack API right now. Please try again in a moment.", "network");
+    throw new HttpError(502, "Couldn't reach JobsPipe API right now. Please try again in a moment.", "network");
   }
 
   if (response.status === 401 || response.status === 403) {
-    throw new HttpError(502, `Theirstack API rejected the credentials. Check THEIRSTACK_API_KEY.${await readErrorExcerpt(response)}`, "upstream");
+    throw new HttpError(502, `JobsPipe API rejected the credentials. Check JOBSPIPE_API_KEY.${await readErrorExcerpt(response)}`, "upstream");
   }
   if (response.status === 402) {
-    throw new HttpError(502, `Theirstack API credits are exhausted. Check the TheirStack billing dashboard.${await readErrorExcerpt(response)}`, "upstream");
+    throw new HttpError(502, `JobsPipe API credits are exhausted. Check the JobsPipe billing dashboard.${await readErrorExcerpt(response)}`, "upstream");
   }
   if (response.status === 429) {
-    throw new HttpError(429, "Theirstack API is busy right now. Give it a minute and try again.", "rate_limited");
+    throw new HttpError(429, "JobsPipe API is busy right now. Give it a minute and try again.", "rate_limited");
   }
   if (!response.ok) {
-    throw new HttpError(502, `Theirstack API returned an error (HTTP ${response.status}). Try again shortly.${await readErrorExcerpt(response)}`, "upstream");
+    throw new HttpError(502, `JobsPipe API returned an error (HTTP ${response.status}). Try again shortly.${await readErrorExcerpt(response)}`, "upstream");
   }
 
   let json;
   try {
     json = await response.json();
   } catch {
-    throw new HttpError(502, "Theirstack API sent back something unreadable. Try again shortly.", "upstream");
+    throw new HttpError(502, "JobsPipe API sent back something unreadable. Try again shortly.", "upstream");
   }
 
   if (!json || !Array.isArray(json.data)) {
-    throw new HttpError(502, "Theirstack API sent an unexpected response. Try again shortly.", "upstream");
+    throw new HttpError(502, "JobsPipe API sent back an unexpected response. Try again shortly.", "upstream");
   }
 
   return json.data;
 }
 
-export function normalizeTheirstackJob(job) {
+export function normalizeJobspipeJob(job) {
   const company =
     (job.company_object && typeof job.company_object.name === "string" && job.company_object.name.trim()) ||
     (typeof job.company === "string" ? job.company.trim() : "");
   const locationName =
     (typeof job.location === "string" && job.location.trim()) ||
     (typeof job.long_location === "string" && job.long_location.trim()) ||
-    "";
+    (Array.isArray(job.cities) && job.cities.length ? String(job.cities[0]).trim() : "");
   const allLocations = locationName ? [locationName] : [];
 
   const techSlugs = Array.isArray(job.technology_slugs) ? job.technology_slugs.filter(Boolean) : [];
+  const keywordSlugs = Array.isArray(job.keyword_slugs) ? job.keyword_slugs.filter(Boolean) : [];
   const seniority = typeof job.seniority === "string" && job.seniority.trim() ? [job.seniority.trim()] : [];
-  const tags = [...techSlugs.map(String), ...seniority];
+  const tags = [...techSlugs.map(String), ...keywordSlugs.map(String), ...seniority];
 
-  // Description is markdown; plain text derived the standard way.
   const descriptionHtml = typeof job.description === "string" ? job.description : "";
   const descriptionPlain = stripHtml(descriptionHtml);
 
   const createdAt = job.date_posted ? Date.parse(job.date_posted) : NaN;
-
-  const lat = Number(job.latitude);
-  const lon = Number(job.longitude);
 
   const remote = job.remote === true;
   const hybrid = job.hybrid === true;
@@ -218,30 +215,30 @@ export function normalizeTheirstackJob(job) {
           : undefined);
 
   // External ID for deduplication
-  const externalId = `ts-${job.id ?? "unknown"}`;
+  const externalId = `jp-${job.id ?? "unknown"}`;
 
   return {
     slug: externalId,
-    title: String(job.title || job.job_title || "").trim(),
+    title: String(job.job_title || job.title || "").trim(),
     company_name: String(company || "").trim(),
     location: allLocations,
     remote,
     tags,
-    url: (typeof job.final_url === "string" && job.final_url.trim()) || (typeof job.url === "string" && job.url.trim()) || (typeof job.source_url === "string" && job.source_url.trim()) || "",
+    url: (typeof job.url === "string" && job.url.trim()) || (typeof job.source_url === "string" && job.source_url.trim()) || "",
     created_at: Number.isFinite(createdAt) ? Math.floor(createdAt / 1000) : undefined,
     source: [SOURCE_ID],
     description: descriptionHtml || undefined,
     descriptionPlain: descriptionPlain || undefined,
     language: detectLanguage(descriptionPlain),
     jobTypes: employmentStatuses.length ? employmentStatuses : undefined,
-    // Theirstack-specific fields
-    applyUrl: (typeof job.final_url === "string" && job.final_url.trim()) || undefined,
-    jobUrl: (typeof job.url === "string" && job.url.trim()) || undefined,
+    // JobsPipe-specific fields
+    applyUrl: (typeof job.url === "string" && job.url.trim()) || undefined,
+    jobUrl: (typeof job.source_url === "string" && job.source_url.trim()) || undefined,
     workplaceType,
-    department: undefined, // not provided by TheirStack
+    department: undefined, // not provided by JobsPipe
     salary,
-    latitude: Number.isFinite(lat) ? lat : undefined,
-    longitude: Number.isFinite(lon) ? lon : undefined,
+    latitude: Number.isFinite(Number(job.latitude)) ? Number(job.latitude) : undefined,
+    longitude: Number.isFinite(Number(job.longitude)) ? Number(job.longitude) : undefined,
     externalId,
   };
 }
@@ -254,8 +251,5 @@ function emptyResult(reason) {
 }
 
 export async function fetchJobs(params) {
-  return fetchTheirstackJobs(params);
+  return fetchJobspipeJobs(params);
 }
-
-// Backwards compatibility exports
-export { SOURCE_ID };

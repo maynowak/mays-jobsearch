@@ -65,6 +65,16 @@ The role integrates into the existing team structure; no existing role is rename
 
 Kimi K3 arbeitet nach dem Working Agreement: Commits/Pushes nur nach ausdrücklicher Freigabe; Audit-Einträge nach Muster in AI_AUDITLOG.md. Stand der Beiträge: 2026-09-26.
 
+**Muse Spark (opencode) — Job-Source-Konsolidierung / Live-Verifikation / Audit-Doku**
+
+- CV-SEARCH-SILENT-01: stiller Abbruch beim Saved-Profile-Suchstart → sichtbare Fehlermeldung, `arraysEqual`-Härtung, `findSavedSearchProfile`-Helper + Tests
+- JOB-SOURCES-01: ehrliches `enabled()` (Flag + Config) für Adzuna/Jooble/Theirstack/Greenhouse/Arbeitsagentur, Apify-Skill-Query Space-Join, `disabledSources`/`sourceReasons` in der JobSources-UI (DE/EN) + Tests
+- JOB-SOURCES-LIVE-01: Vercel-Dev-Weg per CLI (`vercel link`, `env pull`, `vercel dev`), gated Live-Test `tests/api/sources-live.test.mjs`, Vorher-/Nachher-Beweise (Prod-curl + lokaler Handler + Dev-Runtime mit echten Dev-Keys)
+- Adzuna-Alias `ADZUNA_APPLICATION_ID`/`ADZUNA_APPLICATION_KEY` in `getConfig()` + Doku (End-to-End-Nachweis: Adzuna liefert live)
+- Audit-Logging nach Template (docs/AI_AUDITLOG.md + docs/reports/…-EXECUTION_LOG.md)
+
+Muse Spark arbeitet nach dem Working Agreement: Commits/Pushes nur nach ausdrücklicher Freigabe; keine Secrets in Code, Logs oder Doku. Stand der Beiträge: 2026-10-01.
+
 ## Working Agreement
 
 - AI contributions are proposals.

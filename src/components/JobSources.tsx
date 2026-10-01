@@ -6,7 +6,7 @@ const SOURCE_LABEL_KEYS: Partial<Record<JobSource, string>> = {
   arbeitsagentur: "source.arbeitsagentur",
   greenhouse: "source.greenhouse",
   adzuna: "source.adzuna",
-  jooble: "source.jooble",
+  jobspipe: "source.jobspipe",
   theirstack: "source.theirstack",
 };
 
@@ -21,9 +21,31 @@ interface Props {
   // geliefert haben, aber aus dem Anzeige-Pool fielen, erscheinen zusätzlich
   // als abgesetzte Zeilen — keine liefernde Quelle bleibt unsichtbar.
   deliveredCounts?: Partial<Record<string, number>> | null;
+  // Deaktivierte/nicht konfigurierte Quellen (meta.disabledSources) — werden
+  // als inaktive Zeilen gezeigt, damit fehlende Quellen nicht kommentarlos
+  // fehlen (JOB-SOURCES-01: Docker-Suche lieferte nur 2 Quellen).
+  disabledSources?: string[] | null;
+  // Laufzeit-Gründe je abgefragter Quelle (meta.sourceReasons, null = ok).
+  // Nicht-nulle Gründe werden als Hinweis-Zeilen gezeigt.
+  sourceReasons?: Partial<Record<string, string | null>> | null;
 }
 
-export default function JobSources({ jobs, deliveredCounts }: Props) {
+const NOT_CONFIGURED_REASONS = new Set([
+  "missing_config",
+  "no_boards_configured",
+  "no_countries_configured",
+  "disabled",
+]);
+
+const LIMIT_REASONS = new Set(["limit_reached", "user_limit_reached"]);
+
+function reasonLabel(reason: string, t: (key: string) => string): string {
+  if (NOT_CONFIGURED_REASONS.has(reason)) return t("sources.reasonNotConfigured");
+  if (LIMIT_REASONS.has(reason)) return t("sources.reasonLimitReached");
+  return reason;
+}
+
+export default function JobSources({ jobs, deliveredCounts, disabledSources, sourceReasons }: Props) {
   const { t } = useLang();
   if (jobs.length === 0) return null;
 
@@ -49,6 +71,27 @@ export default function JobSources({ jobs, deliveredCounts }: Props) {
   }
   cutRows.sort((a, b) => b[1] - a[1]);
 
+  // Inaktive Quellen (deaktiviert oder nicht konfiguriert) + Quellen mit
+  // Laufzeit-Problem — jeweils nur, wenn sie nicht bereits als liefernd
+  // angezeigt werden.
+  const inactiveRows: Array<[string, string]> = [];
+  for (const source of disabledSources ?? []) {
+    if (!shown.has(source as JobSource) && !inactiveRows.some(([s]) => s === source)) {
+      inactiveRows.push([source, t("sources.inactive")]);
+    }
+  }
+  for (const [source, reason] of Object.entries(sourceReasons ?? {})) {
+    if (
+      typeof reason === "string" &&
+      reason &&
+      !shown.has(source as JobSource) &&
+      !inactiveRows.some(([s]) => s === source)
+    ) {
+      inactiveRows.push([source, reasonLabel(reason, t)]);
+    }
+  }
+  inactiveRows.sort((a, b) => a[0].localeCompare(b[0]));
+
   return (
     <div className="job-sources" aria-label={t("sources.heading")}>
       <span className="job-sources-title">{t("sources.heading")}</span>
@@ -67,6 +110,14 @@ export default function JobSources({ jobs, deliveredCounts }: Props) {
             <span className="job-sources-count">
               {raw} {t("sources.unit")}{" "}
               <span className="job-sources-muted">({t("sources.notShown")})</span>
+            </span>
+          </li>
+        ))}
+        {inactiveRows.map(([source, note]) => (
+          <li key={source} className="job-sources-row job-sources-row--inactive">
+            <span className="job-sources-name">{sourceLabel(source as JobSource, t)}</span>
+            <span className="job-sources-count">
+              <span className="job-sources-muted">({note})</span>
             </span>
           </li>
         ))}

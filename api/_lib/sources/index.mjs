@@ -1,7 +1,7 @@
 import * as arbeitnow from "./arbeitnow.mjs";
 import * as greenhouse from "./greenhouse.mjs";
 import * as adzuna from "./adzuna.mjs";
-import * as jooble from "./jooble.mjs";
+import * as jobspipe from "./jobspipe.mjs";
 import * as theirstack from "./theirstack.mjs";
 import { createPublicJobSource } from "./public-ats/index.mjs";
 import { APIFY_ACTORS } from "./apify/actors.mjs";
@@ -15,7 +15,7 @@ import { geocodeCity } from "../geo.mjs";
 const publicAtsConfigs = getConfig().publicAtsSources || [];
 const publicAtsSources = publicAtsConfigs.map(createPublicJobSource);
 
-export const SOURCES = [arbeitnow, greenhouse, adzuna, jooble, theirstack, ...publicAtsSources, ...APIFY_ACTORS.map(createApifySource)];
+export const SOURCES = [arbeitnow, greenhouse, adzuna, jobspipe, theirstack, ...publicAtsSources, ...APIFY_ACTORS.map(createApifySource)];
 
 export function enabledSources() {
   return SOURCES.filter((source) => source.enabled());

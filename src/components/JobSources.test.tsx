@@ -69,11 +69,11 @@ describe("JobSources", () => {
     const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
     render(
       <LangProvider>
-        <JobSources jobs={jobs} deliveredCounts={{ arbeitnow: 40, jooble: 25, greenhouse: 0 }} />
+        <JobSources jobs={jobs} deliveredCounts={{ arbeitnow: 40, jobspipe: 25, greenhouse: 0 }} />
       </LangProvider>
     );
     expect(screen.getByText("Arbeitnow")).toBeTruthy();
-    expect(screen.getByText("Jooble")).toBeTruthy();
+    expect(screen.getByText("JobsPipe")).toBeTruthy();
     const cutRow = document.querySelector(".job-sources-row--cut");
     expect(cutRow?.textContent).toContain("25 Stellen");
     expect(cutRow?.textContent).toContain("nicht angezeigt");
@@ -95,5 +95,41 @@ describe("JobSources", () => {
     );
     expect(document.querySelectorAll(".job-sources-row").length).toBe(1);
     expect(document.querySelector(".job-sources-row--cut")).toBeNull();
+  });
+
+  it("JOB-SOURCES-01: deaktivierte Quellen erscheinen als inaktive Zeilen", () => {
+    const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
+    render(
+      <LangProvider>
+        <JobSources jobs={jobs} disabledSources={["adzuna", "jobspipe"]} />
+      </LangProvider>
+    );
+    expect(screen.getByText("Adzuna")).toBeTruthy();
+    expect(screen.getByText("JobsPipe")).toBeTruthy();
+    const inactiveRows = document.querySelectorAll(".job-sources-row--inactive");
+    expect(inactiveRows.length).toBe(2);
+    expect(inactiveRows[0]?.textContent).toContain("inaktiv");
+  });
+
+  it("JOB-SOURCES-01: Quellengründe werden gemappt angezeigt, liefernde Quellen nicht doppelt", () => {
+    const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
+    render(
+      <LangProvider>
+        <JobSources
+          jobs={jobs}
+          disabledSources={["adzuna"]}
+          sourceReasons={{ adzuna: "missing_config", theirstack: "missing_config", jobspipe: "limit_reached", arbeitnow: null }}
+        />
+      </LangProvider>
+    );
+    // adzuna nur einmal (disabled gewinnt über reason), theirstack/jobspipe mit gemapptem Grund
+    expect(document.querySelectorAll(".job-sources-row--inactive").length).toBe(3);
+    expect(screen.getByText("Theirstack")).toBeTruthy();
+    const rows = document.querySelector(".job-sources")?.textContent ?? "";
+    expect(rows).toContain("inaktiv");
+    expect(rows).toContain("nicht konfiguriert");
+    expect(rows).toContain("Limit erreicht");
+    // arbeitnow liefert und steht genau einmal drin
+    expect(screen.getAllByText("Arbeitnow").length).toBe(1);
   });
 });
