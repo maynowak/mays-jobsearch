@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Job, MatchResponse, ModelsResponse, JobsResponse, SuggestedProfile } from "./types";
 
 vi.mock("./api", async () => {
@@ -71,6 +71,18 @@ function renderApp() {
       <App />
     </LangProvider>
   );
+}
+
+// Zwei Buttons heißen "Jobs Finden": in der Saved-Profile-Box und in der
+// CV-Dokumentenliste — Abfragen deshalb je Bereich scopen.
+function savedBoxStartButton() {
+  const box = document.querySelector(".cv-saved-profiles") as HTMLElement;
+  return within(box).getByRole("button", { name: "Jobs Finden" }) as HTMLButtonElement;
+}
+
+function docListStartButton() {
+  const list = document.querySelector(".cv-document-list") as HTMLElement;
+  return within(list).getByRole("button", { name: "Jobs Finden" }) as HTMLButtonElement;
 }
 
 const singleModel: ModelsResponse = {
@@ -639,7 +651,7 @@ describe("CV workflow", () => {
     expect(screen.getByText("1 ausgewählt")).toBeTruthy();
 
     // Aktionen sind mit Auswahl aktiviert
-    expect((screen.getByRole("button", { name: "Mit ausgewählten suchen" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "Jobs Finden" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   // Gemeinsamer Upload-Helper für die CV-Flow-Tests.
@@ -1461,7 +1473,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
     await backToDocumentList();
 
-    const startBtn = screen.getByRole("button", { name: "Jobs Finden" }) as HTMLButtonElement;
+    const startBtn = savedBoxStartButton();
     const searchSelect = document.getElementById("cv-saved-search-profile") as HTMLSelectElement;
 
     // Nach dem Speichern ist das Profil auto-selektiert -> Start aktiv
@@ -1480,8 +1492,8 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     fireEvent.change(searchSelect, {
       target: { value: (searchSelect.querySelector("option:not([value=''])") as HTMLOptionElement).value },
     });
-    expect(startBtn.disabled).toBe(false);
-    fireEvent.click(startBtn);
+    expect(savedBoxStartButton().disabled).toBe(false);
+    fireEvent.click(savedBoxStartButton());
     await waitFor(() => expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore + 1));
   });
 
@@ -1498,10 +1510,11 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
     await backToDocumentList();
 
-    const startBtn = screen.getByRole("button", { name: "Jobs Finden" }) as HTMLButtonElement;
+    const startBtn = savedBoxStartButton();
     fireEvent.click(startBtn);
 
     // Suche läuft: Button zeigt Spinner + Such-Label und ist gesperrt
+    // (DOM-Node bleibt über Re-Renders stabil, daher einmalig referenzieren)
     await waitFor(() => expect(startBtn.disabled).toBe(true));
     expect(startBtn.querySelector(".spinner")).toBeTruthy();
     expect(startBtn.textContent).toContain("Suche");
@@ -1529,7 +1542,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
       },
     });
     const callsBefore = vi.mocked(fetchJobs).mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Jobs Finden" }));
+    fireEvent.click(savedBoxStartButton());
     await waitFor(() => expect(vi.mocked(fetchJobs).mock.calls.length).toBe(callsBefore + 1));
     expect(vi.mocked(fetchJobs).mock.calls.at(-1)![0]).toMatchObject({
       skills: "React",
@@ -1778,8 +1791,8 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
     } as SuggestedProfile);
 
     // CV-UPLOAD-UX-01: Upload startet den Workflow im Overlay; Profil anlegen
-    // (cvProfile) und bestaetigen, dann zurueck zur Liste und "Mit
-    // ausgewählten suchen" loest die CV-Suche aus (runCvSearch)
+    // (cvProfile) und bestaetigen, dann zurueck zur Liste und "Jobs Finden"
+    // loest die CV-Suche aus (runCvSearch)
     await uploadCvToConsent();
     await acceptUploadConsent();
     await proceedToProfileReady();
@@ -1792,7 +1805,7 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
     await screen.findByText("Deine Lebensläufe");
     // Dokument blieb ausgewaehlt
     expect(screen.getByText("1 ausgewählt")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Mit ausgewählten suchen" }));
+    fireEvent.click(docListStartButton());
 
     await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
     expect(document.querySelector(".results-workspace")).toBeFalsy();
@@ -1800,6 +1813,38 @@ describe("Old results / Search Clearing A-G (neue Semantik: sofortiges Leeren be
     jobsB.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
     await screen.findByText("Java Engineer");
     await waitFor(() => expect(screen.queryByText("AWS Engineer")).toBeNull());
+  });
+
+  it("CV-Dokumentenliste: 'Jobs Finden' startet die Suche (Liste navigiert zur Ziel-Ansicht)", async () => {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["Java"],
+      experienceLevel: "Senior",
+      targetRoles: ["Backend"],
+      location: "Frankfurt",
+    } as SuggestedProfile);
+    const jobsGate = deferred<JobsResponse>();
+    vi.mocked(fetchJobs).mockReturnValue(jobsGate.promise);
+    renderApp();
+
+    await uploadCvToConsent();
+    await acceptUploadConsent();
+    await proceedToProfileReady();
+    confirmProfileInOverlay();
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zum Profil" }));
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Zurück zum Bearbeiten" }));
+    await screen.findByText("Deine Lebensläufe");
+
+    fireEvent.click(docListStartButton());
+
+    // Der Klick navigiert zur Ziel-Ansicht (Liste wird entmountet, daher kein
+    // Spinner auf dem alten Button) und startet die CV-Suche.
+    await waitFor(() => expect(vi.mocked(fetchJobs)).toHaveBeenCalled());
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+
+    jobsGate.resolve({ jobs: [jobB], meta: { totalFiltered: 1 } });
+    await screen.findByText("Java Engineer");
   });
 
   it("Test G: Model-Fallback während Matching B -> alte Ergebnisse bereits entfernt", async () => {

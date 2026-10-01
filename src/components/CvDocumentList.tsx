@@ -18,6 +18,8 @@ interface Props {
   onRemoveData: () => void;
   disabled: boolean;
   processing: boolean;
+  // Laufende App-Suche/Matching (Anfragerunner + Lock, wie Start-Button)
+  searching?: boolean;
 }
 
 export default function CvDocumentList({
@@ -31,6 +33,7 @@ export default function CvDocumentList({
   onRemoveData,
   disabled,
   processing,
+  searching = false,
 }: Props): React.ReactElement {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -185,9 +188,10 @@ export default function CvDocumentList({
               type="button"
               className="cv-search-btn"
               onClick={onSearch}
-              disabled={disabled || processing || !hasSelection}
+              disabled={disabled || processing || searching || !hasSelection}
             >
-              {t("cv.searchWithSelected")}
+              <span className="btn-label">{searching ? t("search.searching") : t("cv.startSearch")}</span>
+              {searching && <span className="spinner" />}
             </button>
           </div>
           {/* CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — mit

@@ -1453,6 +1453,7 @@ export default function App() {
           onRemoveData={handleCvRemoveData}
           disabled={cvState.isProcessing || cvState.step !== "document-selected"}
           processing={cvState.isProcessing}
+          searching={isSearching || isMatching}
         />
       )}
 

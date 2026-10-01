@@ -73,3 +73,9 @@ Reason: UI-Feedback- und Robustheits-Fix im CV-Suchstart (Fehlermeldung, null-si
 
 ## Current resume point
 Verifiziert. Nächster Schritt: committen + pushen.
+
+## Follow-up (2026-10-01): Doc-Listen-Spinner-Test korrigiert
+- Befund: Test "CV-Dokumentenliste: 'Jobs Finden' zeigt Spinner ..." hielt eine Button-Referenz, die beim Klick entmountet wird (`handleSearchWithSelectedCvs` setzt `step: "goal-selection"`, Liste rendert nur bei `document-selected`). `disabled` auf dem toten Node bleibt `false` → `waitFor`-Timeout. App-Verhalten korrekt (Suche startet, `fetchJobs` wird aufgerufen — per Probe bestätigt).
+- Fix (nur Test): Test prüft jetzt Suchstart (`fetchJobs` aufgerufen), Navigation zur Ziel-Ansicht und Ergebnisse nach Resolve — kein Spinner auf entmountetem Button.
+- Verifiziert: `src/App.test.tsx` 71/71 grün; volle Suite 661 passed / 2 skipped (51 Files passed, 1 skipped); `npm run build` OK.
+- Geändert: `src/App.test.tsx` (sonstige Working-Tree-Änderungen aus Vor-Runde: `searching`-Prop in `CvDocumentList`, i18n-Cleanup).
