@@ -6,13 +6,16 @@
 
 A job search assistant with AI-powered matching, cover-letter generation and daily digest alerts.
 
-## Current Project Status
+## Current Project Status (Stand 2026-10-02)
 
 - Core matching: completed (`/api/jobs` + `/api/match`)
 - Multi-city search: completed
 - AI cover-letter generator: completed
 - Daily job alerts: implemented (needs Upstash + Resend keys for real delivery)
-- Model info display: completed
+- Model info display: completed (`/api/models` + `/api/model`, Provider-Router OpenRouter↔EdenAI mit `withModelFallback`)
+- Job-Source-Registry: `arbeitnow, greenhouse, adzuna, jobspipe, theirstack`, Public-ATS, Apify-Actor (Arbeitsagentur); Suche mit `radiusKm/workMode/employmentType` + Geocoding (`meta.geo`)
+- CV-Workflows: Upload + `/api/profile`, ATS-Analyse, CV-Improvement (`/apply`, `/reanalyze`, `/match-impact`), Job-Details-Enrichment
+- Cost-Guard + Usage: `GET /api/usage` (token-geschützt), Monthly-/User-Limits (AI-Requests, Apify-Runs, Source-Credits)
 - Production deployment: verified
 - Deployment target: Vercel
 - Live: https://mays-job-matcher.vercel.app
@@ -41,7 +44,7 @@ Every AI assistant working on this repository should:
 6. Distinguish observations from hypotheses.
 7. Make small, reversible changes.
 8. Preserve the existing architecture unless a structural change is explicitly justified.
-9. Run `node --check` after implementation changes.
+9. Run `npm run build` (type-check + build) after frontend changes; `node --check` nur für `.mjs`-Smoke; verify serverless endpoints live where possible (siehe `docs/AGENTS.md` → Validation).
 10. Verify serverless endpoints live where possible.
 11. Summarize modified files and the reason for each change.
 
@@ -93,8 +96,8 @@ Die folgenden Regeln sind für jeden Agenten verbindlich:
   Nach jedem Step: Report aktualisieren → Tests → `git status` → `git diff --check` →
   Secret Audit → Commit → Push.
 - **BLOCKED bedeutet STOPP.** Keine eigenständigen Workarounds, kein Übergehen ohne Freigabe.
-- **Die Recovery-Datei ist nach einem Absturz maßgeblich.**
-  `docs/reports/FEATURE_*.md` ist die Arbeitsgrundlage; nicht aus alten Chat-/Terminal-Ausgaben
+- **Die Recovery-Dateien sind nach einem Absturz maßgeblich.**
+  `docs/reports/*-EXECUTION_LOG.md` (früher teils `FEATURE_*.md`) sind die Arbeitsgrundlage; nicht aus alten Chat-/Terminal-Ausgaben
   rekonstruieren.
 - **Deployment-Stand und Git-HEAD sind unterschiedliche Zustände.**
   Kein Agent darf aus einem vermeintlich aktuellen Git-HEAD schließen, dass dieser bereits

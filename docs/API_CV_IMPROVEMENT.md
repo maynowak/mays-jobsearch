@@ -1,15 +1,18 @@
 # CV Improvement API
 
+> Stand 2026-10-02: Die Repo-Route ist **`POST /api/cv-improvement`** (Function-Datei `api/cv-improvement.mjs`, Sub-Dispatch `/apply`, `/reanalyze`, `/match-impact` via URL-Suffix). Das Frontend ruft bereits `/api/v1/…` auf, aber es existiert **kein `api/v1/`-Verzeichnis und kein Rewrite** → 404-Risiko (siehe API-CONSOLIDATION-02). Die `/v1/`-Angaben unten sind das **Zielbild**, nicht der IST-Stand.
+
 ## Endpoint
 ```http
-POST /api/v1/cv-improvement
+POST /api/cv-improvement
 ```
+(Ziel: `POST /api/v1/cv-improvement` — Migration ausstehend.)
 
 ## Purpose
 Generate CV improvement recommendations based on a job posting and candidate profile to improve ATS (Applicant Tracking System) compatibility.
 
 ## Version
-`v1` (since 2026-09-20)
+`meta.version = "v1"` in Responses (kein URL-Prefix; seit 2026-09-20)
 
 ## Authentication
 - **Required**: No
@@ -21,7 +24,8 @@ Generate CV improvement recommendations based on a job posting and candidate pro
 | Header | Required | Description |
 |--------|----------|-------------|
 | Content-Type | Yes | application/json |
-| X-Request-ID | No | UUID for tracing |
+
+(Hinweis: Kein `X-Request-ID`-Echo — der Server generiert `requestId` per `crypto.randomUUID()` nur in den Sub-Pfad-Envelopes; der Standard-Endpoint liefert `meta: {version, generatedAt}` ohne `requestId`.)
 
 ### Body Parameters
 
@@ -326,29 +330,31 @@ Recommendations with `DO_NOT_GENERATE` or `REVIEW_REQUIRED` status should not be
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2026-09-20 | Standardized to API v1 format |
+| v1 | 2026-09-20 | `meta.version="v1"` in Responses (URL weiter unversioned; `/v1/`-Migration ausstehend) |
 
-## Related Endpoints
+## Related Endpoints (alle unversioned im Repo)
 
-- `POST /api/v1/ats-analysis` - Full ATS analysis with AI formulations
-- `POST /api/v1/profile` - Create profile from CV text
-- `POST /api/v1/jobs` - Search jobs by profile
-- `POST /api/v1/match` - Match jobs against profile with AI
+- `POST /api/ats-analysis` - Full ATS analysis with AI formulations
+- `POST /api/profile` - Create profile from CV text
+- `GET /api/jobs` - Search jobs by profile
+- `POST /api/match` - Match jobs against profile with AI
+- `POST /api/cv-improvement/apply` - Ausgewählte Empfehlungen übernehmen (Envelope `{data:{improvedProfile,…}, meta}`)
+- `POST /api/cv-improvement/reanalyze` - Re-Analyse (`before/after/delta`)
+- `POST /api/cv-improvement/match-impact` - Match-Impact (`before/after/delta/changes`)
 
 ## Migration Notes
 
-**Legacy Endpoint**: `POST /api/cv-improvement` (unversioned)
+**Legacy (= IST)**: `POST /api/cv-improvement` (unversioned, flache Responses; nur Sub-Pfade mit Envelope + Server-`requestId`)
 
-**Status**: Migration Pending
+**Status**: Migration Pending (umgekehrt als früher dokumentiert: das Frontend ist der Migration **voraus** — es ruft `/api/v1/…`, was noch 404 läuft)
 
 **Target**: `POST /api/v1/cv-improvement`
 
 **Migration Status**: See [API Migration Plan](/docs/API_MIGRATION_PLAN.md)
 
-**Breaking Changes from Legacy**:
-- Response wrapped in `data` object
-- `meta.version` format: `1.0.0` → `v1`
-- Added `requestId` and `timestamp` to meta
-- Response wrapped in `data` object
+**Breaking Changes (Legacy → Target)**:
+- Response in `data`-Envelope (Standard-Endpoint heute flach)
+- `meta.version` bleibt `"v1"`, plus `requestId` + `timestamp` in meta
+- (Doppelte „Response wrapped"-Zeile bereinigt.)
 
 **Migration Guide**: See [API Migration Plan v1→v2](/docs/API_MIGRATION_PLAN.md#cv-improvement-api)

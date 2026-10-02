@@ -1,13 +1,13 @@
 # AI Providers
 
-The app routes all AI work (CV profile extraction, job matching, cover letters) through a **provider router** that supports multiple AI providers behind one `chat()` facade.
+The app routes all AI work (CV profile extraction, job matching, cover letters, ATS analysis/formulations, match-impact scoring) through a **provider router** that supports multiple AI providers behind one `chat()` facade.
 
 ## Providers
 
 | Provider | Catalogue | Chat | Free eligibility | Key env vars |
 |---|---|---|---|---|
-| OpenRouter | `GET https://openrouter.ai/api/v1/models` | `POST https://openrouter.ai/api/v1/chat/completions` | Pricing free (`prompt`/`completion`/`request` all `"0"`), text in + text out, not expired | `OPENROUTER_API_KEY` |
-| EdenAI | `GET https://api.edenai.run/v3/models` (public) | `POST https://api.edenai.run/v3/chat/completions` (OpenAI-compatible) | Catalogue `pricing` zero-cost (`input_cost_per_token` / `output_cost_per_token` = `"0"`), text in + text out (no audio-only), structured via `capabilities.supports_response_schema` | `EDENAI_API_KEY` / `EDENAI_DEV_API_KEY` |
+| OpenRouter | `GET https://openrouter.ai/api/v1/models` | `POST https://openrouter.ai/api/v1/chat/completions` | Pricing free (`prompt`/`completion`/`request` all `"0"`), text in + text out, not expired, **kein Reasoning-Modell** | `OPENROUTER_API_KEY` |
+| EdenAI | `GET https://api.edenai.run/v3/models` (public) | `POST https://api.edenai.run/v3/chat/completions` (OpenAI-compatible) | Catalogue `pricing` zero-cost (`input_cost_per_token` / `output_cost_per_token` = `"0"`), text in + text out (no audio-only), **kein Reasoning-Modell** (Blockliste + Runtime-Guard) | `EDENAI_API_KEY` / `EDENAI_DEV_API_KEY` |
 
 Providers are never hardcoded by model name. "Free" is always derived from machine-readable pricing metadata.
 
@@ -97,7 +97,7 @@ Sandbox tokens return simulated/mock responses at no cost through the same endpo
 
 ### Vercel Environment
 - **Development**: AI-Testumgebung mit simulierten Responses
-- **Preview**: Isoliertes Deployment, AI-Provider nur bei Setzen von `EDENAI_DEV_API_KEY` aktiv
+- **Preview**: Isoliertes Deployment; OpenRouter aktiv sobald `OPENROUTER_API_KEY` gesetzt (unabhängig von EdenAI-Dev-Key), EdenAI-Sandbox bei gesetztem `EDENAI_DEV_API_KEY`
 - **Production**: Echte Provider-Keys und Budget
 
 ### EdenAI
@@ -138,64 +138,11 @@ Sandbox tokens return simulated/mock responses at no cost through the same endpo
   aber Requests zählen gegen die jeweiligen Free-/Account-Limits.
 - EdenAI Sandbox (falls verfügbar) soll für normale
   Development-Provider-Tests bevorzugt werden,
-  damit OpenRouter-Free-Kontingent nicht unnötig verbraucht wird.',
-''
+  damit OpenRouter-Free-Kontingent nicht unnötig verbraucht wird.
 
-if '## Usage & cost guards' in content:
-    content = content.replace('## Usage & cost guards', new_section + '## Usage & cost guards')
-else:
-    # Fallback: insert after Key selection section
-    content = content.replace('### Key selection (EdenAI)
-Sandbox tokens return simulated/mock responses at no cost through the same endpoints (there is no separate sandbox host). A missing key simply disables that provider; it never blocks the other provider.', 
-                              '### Key selection (EdenAI)
-Sandbox tokens return simulated/mock responses at no cost through the same endpoints (there is no separate sandbox host). A missing key simply disables that provider; it never blocks the other provider.
+> Hinweis 2026-10-02: Hier stand doppelt derselbe Abschnitt plus ein Python-Snippet (Merge-Artefakt) — entfernt. Es gilt der Abschnitt oben; zusätzlich korrigiert: **Preview** aktiviert OpenRouter unabhängig (sobald `OPENROUTER_API_KEY` gesetzt), nicht „nur bei `EDENAI_DEV_API_KEY`". `enabled()` je Provider = Config-Flag **und** Key vorhanden.
 
-## Development / Sandbox Testing
-
-### Vercel Environment
-- **Development**: AI-Testumgebung mit simulierten Responses
-- **Preview**: Isoliertes Deployment, AI-Provider nur bei Setzen von `EDENAI_DEV_API_KEY` aktiv
-- **Production**: Echte Provider-Keys und Budget
-
-### EdenAI
-- **Sandbox (Development/Preview)**:
-  - Key: `EDENAI_DEV_API_KEY`
-  - Lieferte simulierte/mockierte Responses bei keinem Kostenaufwand
-  - Same Endpoint wie Production (`/v3/chat/completions`)
-  - Wird bevorzugt wenn `EDENAI_ENV !== "production"`
-  - Kein Production-Key erforderlich
-- **Production**:
-  - Key: `EDENAI_API_KEY`
-  - Echtes Guthaben/Contingent
-
-### OpenRouter
-- **Sandbox/Dev**: Es gibt keinen separaten Sandbox-Modus.
-- Free-Modelle können für Development-Tests verwendet werden,
-  aber Requests zählen gegen die jeweiligen Free-/Account-Limits.
-- **Entwicklungshinweis**: Sollte EdenAI Sandbox verfügbar sein,
-  wird dieser für normale Development-Provider-Tests vorgezogen,
-  um OpenRouter-Free-Kontingent nicht unnötig zu verbrauchen.
-
-### Teststrategie
-- **PRIORITÄT 1**: EdenAI Sandbox in Vercel Development
-- **PRIORITÄT 2**: andere echte Provider-Sandbox/Dev-Umgebung, falls vorhanden
-- **PRIORITÄT 3**: Free-Modelle eines Providers, wenn keine Sandbox existiert
-- **PRIORITÄT 4**: Production-Provider nur nach ausdrücklicher Freigabe
-
-### Wichtige Regeln
-- Keine unnötigen kostenpflichtigen Requests
-- Keine unnötigen Apify-Runs
-- Keine Production-Keys in Development
-- Keine Sandbox-Keys in Production
-- Keine Umgehung von Rate Limits
-
-### OpenRouter Besonderheit
-- OpenRouter Free ≠ Sandbox.
-- Free-Modelle können für Development-Tests verwendet werden,
-  aber Requests zählen gegen die jeweiligen Free-/Account-Limits.
-- EdenAI Sandbox (falls verfügbar) soll für normale
-  Development-Provider-Tests vorgezogen werden,
-  damit OpenRouter-Free-Kontingent nicht unnötig verbraucht wird.## Usage & cost guards
+## Usage & cost guards
 
 - Per-provider monthly counters live in Upstash Redis: OpenRouter keeps its original keys (`mj-usage:openrouter:*`), EdenAI uses `mj-usage:ai:edenai:*`.
 - Before a call, the provider's `limitReached()` checks the request-count backstop → `503 limit_reached` without calling the provider. The router then tries the next enabled provider; only when all are exhausted does the request fail.
@@ -235,7 +182,7 @@ Sandbox tokens return simulated/mock responses at no cost through the same endpo
 
 **References:**
 - Privacy Policy: https://openrouter.ai/privacy
-- Verified: December 2024
+- Verified: August 31, 2026 (einheitliches Prüfdatum; altes „December 2024" ersetzt)
 
 ### EdenAI
 

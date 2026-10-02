@@ -46,8 +46,8 @@ Unlike the ATS sources above, these official job-board APIs require free credent
 
 ### Theirstack
 - **Coverage**: worldwide, 100+ Länder; besonders stark Tech/Startup-Jobs mit strukturierten Tech-/Seniority-/Gehaltsfeldern.
-- **Request**: `POST https://api.theirstack.com/v1/jobs/search`, `Authorization: Bearer <key>`, Body mit `job_description_contains_or` (Skills, Whole-Word, ohne Regex-Escaping-Fallen), `job_title_or` (Zielrollen), `limit` (max. 40), `page: 0` sowie Pflichtfilter `posted_at_max_age_days: 30` (API lehnt ohne Datums-/Company-Filter ab).
-- **Kostenmodell (wichtig!)**: **1 Credit pro geliefertem Datensatz** (nicht pro Request) — Doku-verifiziert. Kontingent wird deshalb in Credits gezählt: `THEIRSTACK_MONTHLY_MAX_CREDITS` (Default `200`), Zähler `mj-usage:theirstack:credits:<YYYY-MM>`, bei Erreichen `emptyResult("limit_reached")` ohne Paid-Call. Cache-Hits kosten 0. Verbrauch pro Suche = Anzahl gelieferter Records (max. 40).
+- **Request**: `POST https://api.theirstack.com/v1/jobs/search`, `Authorization: Bearer <key>`, Body mit `job_description_contains_or` (Skills, Whole-Word, ohne Regex-Escaping-Fallen), `job_title_or` (Zielrollen), `limit` (25 = Doku-Default/Beispiel), `page: 0` sowie Pflichtfilter `posted_at_max_age_days: 30` (API lehnt ohne Datums-/Company-Filter ab).
+- **Kostenmodell (wichtig!)**: **1 Credit pro geliefertem Datensatz** (nicht pro Request) — Doku-verifiziert. Kontingent wird deshalb in Credits gezählt: `THEIRSTACK_MONTHLY_MAX_CREDITS` (Default `200`), Zähler `mj-usage:theirstack:credits:<YYYY-MM>`, bei Erreichen `emptyResult("limit_reached")` ohne Paid-Call. Cache-Hits kosten 0. Verbrauch pro Suche = Anzahl gelieferter Records (max. 25).
 - **Per-User-Limit**: zusätzlich max. `THEIRSTACK_MAX_CREDITS_PER_USER` Credits pro User und Monat (Default `20`; anonyme Session = User, Zähler `mj-usage:theirstack:credits:user:<hash>:<YYYY-MM>`), bei Erreichen `emptyResult("user_limit_reached")` ohne Paid-Call. Identität kommt per `identity`-Param aus `/api/jobs` (Session-Cookie); ohne Identity greift nur der globale Guard.
 - **401/403** → Credentials prüfen; **402** = Provider-Credits aufgebraucht (Upstream-Fehler + Hinweis auf Billing-Dashboard).
 - **Config**: `THEIRSTACK_API_KEY`, `JOB_SOURCE_THEIRSTACK_ENABLED` (default `true`), `THEIRSTACK_MONTHLY_MAX_CREDITS` (default `200`), `THEIRSTACK_MAX_CREDITS_PER_USER` (default `20`); fehlender Key → `emptyResult("missing_config")`.
@@ -509,6 +509,7 @@ THEIRSTACK_MONTHLY_MAX_CREDITS=200
 | **Geodata** | `latitude`/`longitude` | `latitude`/`longitude` | `latitude`/`longitude` |
 | **L1 Cache (600 s)** | ✅ per country+query | ✅ per body | ✅ per body |
 | **Cost unit** | Free tier (per-call) | **Per returned record** (credit guard!) | **Per returned record** (credit guard!) |
+| **Live-Test** | mock-only (`tests/api/adzuna-source.test.mjs`) | — | Nur bei Bedarf (`tests/api/theirstack-live.test.mjs`: `THEIRSTACK_LIVE_TESTS=1` + Key, 1 Call mit Limit 3, kostet Credits; default skipped) |
 
 ## Next Steps
 

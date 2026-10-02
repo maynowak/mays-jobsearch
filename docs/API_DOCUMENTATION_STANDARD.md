@@ -607,9 +607,10 @@ describe("POST /api/v1/resource", () => {
 | 3 | Add deprecation meta to legacy endpoint | Not Started |
 | 4 | Set sunset date (90 days) | Not Started |
 | 5 | Publish migration guide | Not Started |
-| 6 | Update frontend client | Not Started |
-| 6 | Set sunset date (90 days from announcement) | Not Started |
+| 6 | Update frontend client | Partial — VORSICHT: Frontend ruft bereits `POST /api/v1/cv-improvement`, `/apply`, `/reanalyze`, `/match-impact` (`src/api.ts`), aber es existiert serverseitig kein `api/v1/`-Verzeichnis und kein Rewrite dafür (`vercel.json`) → diese Calls laufen ins Leere (404-Risiko). Zuerst Schritt 1 umsetzen! (Stand 2026-10-02, siehe API-CONSOLIDATION-02) |
 | 7 | Remove legacy endpoint | Not Started |
+
+(Doppelte Zeile 6 „Set sunset date" bereinigt.)
 
 ---
 

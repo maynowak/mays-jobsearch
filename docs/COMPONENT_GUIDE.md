@@ -2,7 +2,7 @@
 
 #beschreibt Verhalten und Aufbau der UI-Komponenten.
 
-## Component status
+## Component status (Stand 2026-10-02; vollständig: `ls src/components/*.tsx`)
 
 Hero / Header
 ✅ Complete
@@ -11,21 +11,21 @@ Landing hero / Navbar
 ✅ Complete
 
 Search form
+✅ Complete (inkl. Umkreis/Arbeitsmodell/Arbeitszeit, Multi-City, CV-Profil/targetRoles)
+
+CV upload (+ CV-Workflow: `CvConsentGate`, `CvAnonymizationChoice`, `CvModelSelector`, `CvProcessingStatus/Steps`, `CvProfileResult`, `CvGoalSelection`, `CvDocumentList`, `CvProfilesOverlay`)
 ✅ Complete
 
-CV upload
+Model selector (`ModelSelector` für Matching, `CvModelSelector` für CV-Flow)
 ✅ Complete
 
-Model selector
-✅ Complete
-
-Job sources
+Job sources (inkl. `disabledSources`/`sourceReasons`, Cut-Rows, `SourcesInfo`, `SourceBadge`)
 ✅ Complete
 
 Alert form (daily digest)
 ✅ Complete
 
-Status / alert messages
+Status / alert messages (+ `ErrorBoundary`, `RemainingCard`)
 ✅ Complete
 
 Match cards
@@ -37,10 +37,13 @@ Results (top-5 + expand)
 Score badge
 ✅ Complete
 
-Cover-letter modal
+Cover-letter modal (`LetterModal`, inkl. Prep-Antwort)
 ✅ Complete
 
-Footer
+Footer (+ `Imprint`, `PrivacyNotice`, `ConsentGate`, `FieldClear`)
+✅ Complete
+
+ATS overlay (`AtsOverlay`/`ATSDetails`)
 ✅ Complete
 
 ---
@@ -49,7 +52,7 @@ Footer
 
 Behavior
 
-- collects `skills`, `targetRole`, `city`
+- collects `skills`, `targetRole`/`targetRoles`, `city`, `radiusKm` (Umkreis), `workMode` (remote/hybrid/onsite, multi), `employmentType`, multi-city, CV-Profil
 - requires at least one of skills or target role
 - validated in `App.tsx` (`runSearch`)
 - calls `GET /api/jobs` then `POST /api/match`
@@ -88,6 +91,8 @@ State
 
 ## Model selector
 
+(`ModelSelector.tsx` für Matching — `CvModelSelector.tsx` ist die CV-Flow-Variante.)
+
 Behavior
 
 - custom listbox (ARIA combobox/listbox) replacing the native select
@@ -111,8 +116,9 @@ State
 Behavior
 
 - small module directly below the search button, clearly separated from the AI model selector
-- computes real per-source counts from the delivered jobs' `source[]` arrays (source ids: `arbeitnow`, `arbeitsagentur`, and any future sources)
+- computes real per-source counts from the delivered jobs' `source[]` arrays (source ids: `arbeitnow`, `arbeitsagentur`, `adzuna`, `jobspipe`, `theirstack`, `greenhouse` + Public-ATS)
 - only sources with a count > 0 are shown; a total line summarizes all delivered jobs
+- zusätzlich: Cut-Rows für liefernde, aber herausgefilterte Quellen (`deliveredCounts`) sowie inaktive Zeilen für `disabledSources`/`sourceReasons` (seit JOB-SOURCES-01) — keine liefernde oder fehlende Quelle bleibt kommentarlos
 - pure frontend computation over the delivered `foundJobs` — no additional request
 - label mapping is data-driven with a fallback to the raw source id for future sources (no code changes needed when a new source is added)
 
@@ -156,14 +162,14 @@ Colors
 
 ---
 
-## Cover-letter modal
+## Cover-letter modal (`LetterModal.tsx`)
 
 Behavior
 
 - hidden by default
 - opens via the card button
 - fetches `POST /api/cover-letter`
-- shows loading spinner, then the letter text
+- shows loading spinner, then the letter text **plus Prep-Antwort**
 - buttons: Kopieren, Download .txt
 - closes via ✕, backdrop click, or Escape
 

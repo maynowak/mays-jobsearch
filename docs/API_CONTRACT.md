@@ -304,14 +304,14 @@ Deprecation-Markierung bis Sunset. **Nicht jetzt ausführen.**
 Query-Parameter (alle optional):
 | Param | Typ | Semantik |
 |---|---|---|
-| `skills` | string | **JSON-Array-String** (Multi-Word-fähig, z. B. `["Spring Boot"]`) ODER Legacy `;`/`,`-Liste. JSON-Form hat Vorrang und bleibt geschützt (SEARCH-STRATEGY-03). |
-| `targetRole` | string | Zielrolle |
+| `skills` | string | **JSON-Array-String** (Multi-Word-fähig, z. B. `["Spring Boot"]`) ODER per Whitespace/Komma/Semikolon getrennt (URL-`+` = Space) ODER Quoted-Phrase (`"Spring Boot"` = 1 Token). JSON-Form hat Vorrang (SEARCH- STRATEGY-03). Geparst via `parseArrayParam` (`/[\s,;]+/`). |
+| `targetRole` | string (wiederholbar) | Zielrolle, OR-verknüpft (`?targetRole=A&targetRole=B`); intern `targetRoles: string[]` (API-TARGETROLES-01) |
 | `city` | string | Ortsfilter — **nur wirksam mit `radiusKm > 0`** (BUG-04) |
 | `radiusKm` | number-string | fehlt/0 → „Entfernung egal" (kein Geo-Filter) |
 | `workMode` | CSV | `remote,hybrid,onsite` |
 | `employmentType` | CSV | `full_time,part_time` |
 
-Success 200: `{ jobs: Job[], meta: { totalScanned, totalFiltered, city[], keywords[], sources, sourceCounts, disabledSources, sourceDetails[], jobsCombined, searchStrategy, apify } }`.
+Success 200: `{ jobs: Job[], meta: { totalScanned, totalFiltered, city[], keywords[], sources, sourceCounts, sourceReasons, disabledSources, sourceDetails[], jobsCombined, searchStrategy, geo, apify } }` (`sourceReasons: {[id]: reason|null}`, `geo: {lat,lon,radiusKm,city}|null`; Stand 2026-10-01, JOB-SOURCES-01).
 
 TARGET-Versionierung: `/api/v1/jobs` im Zielbild gleicher Parameter-
 Semantik, Response in Envelope-Form (Breaking → neue Version, §6/§9).

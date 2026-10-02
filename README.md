@@ -16,8 +16,8 @@ Find live jobs that actually fit you. You either upload a **CV (PDF)** or type y
 
 1. **CV upload (optional):** the PDF is read in the browser (PDF.js), text-extracted and turned into an editable search profile by the AI (`/api/profile`). The profile is cached per CV hash, so repeated uploads of the same CV are instant. The PDF file itself is never sent to the server, and raw CV text is never stored.
 2. **Model selection:** the app dynamically shows the currently available free AI models and preselects a recommended one. The user can switch to any other free model (`/api/models`). Models come from a provider router with **OpenRouter** as the primary provider and **EdenAI** as an optional second provider; when one provider reports a quota exhaustion the router automatically falls back to the other. During a running search/scoring the selector is locked so the chosen model cannot be changed mid-flight.
-3. Fetches current openings from all registered job sources in parallel — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api), the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`), public ATS job boards (Greenhouse, Lever, Ashby, Workable, Recruitee, Personio) and key-based job APIs (Adzuna, Jooble, Theirstack, each only when configured) — and filters them by your keywords, cities and search parameters (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse + L1 result cache for key-based sources) to avoid unnecessary paid API calls. Once jobs are delivered, a small "Jobquellen" module directly below the search button shows the real per-source counts (e.g. "Arbeitnow 26 Stellen · Arbeitsagentur 40 Stellen"), computed dynamically from the delivered jobs and clearly separated from the AI model selector. Sources that delivered jobs but were cut from the displayed pool are listed additionally.
-   - **Suchparameter (server-side, best-effort):** `employmentType` filters jobs that carry employment-type metadata (`full_time`/`part_time`, DE/EN aliases); jobs without metadata are **not** excluded, so the default "Vollzeit" search is not artificially empty. `workMode` is matched strictly per selection — `remote` from job metadata, `hybrid`/`onsite` derived from job text via keyword detection (`deriveWorkMode`); jobs without any signal default to `onsite`. `radiusKm` is geocoded via Nominatim (coordinates in `meta.geo`, passed to Apify); job-side distance filtering remains an open point.
+3. Fetches current openings from all registered job sources in parallel — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api), the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`), public ATS job boards (Greenhouse, Lever, Ashby, Workable, Recruitee, Personio) and key-based job APIs (Adzuna, JobsPipe, Theirstack, each only when configured) — and filters them by your keywords, cities and search parameters (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse + L1 result cache for key-based sources) to avoid unnecessary paid API calls. Once jobs are delivered, a small "Jobquellen" module directly below the search button shows the real per-source counts (e.g. "Arbeitnow 26 Stellen · Arbeitsagentur 40 Stellen"), computed dynamically from the delivered jobs and clearly separated from the AI model selector. Sources that delivered jobs but were cut from the displayed pool are listed additionally, and inactive sources appear with their reason (`disabledSources`/`sourceReasons`).
+   - **Suchparameter (server-side, best-effort):** `employmentType` filters jobs that carry employment-type metadata (`full_time`/`part_time`, DE/EN aliases); jobs without metadata are **not** excluded, so the default "Vollzeit" search is not artificially empty. `workMode` is matched strictly per selection — `remote` from job metadata, `hybrid`/`onsite` derived from job text via keyword detection (`deriveWorkMode`); jobs without any signal default to `onsite`. `radiusKm` is geocoded via Nominatim (coordinates in `meta.geo`, passed to Apify).
    - **Dataset invalidation:** every change to a search parameter invalidates the current job dataset; the next search must be started manually and may call `/api/jobs` again. Changing the **AI model does not** invalidate the dataset, does not call `/api/jobs` and does not trigger Apify — it only re-matches the existing dataset manually (see precise-fallback UX below).
 4. Sends the filtered pool + your profile to the AI provider (`/api/match`). To stay within the function timeout, the pool is narrowed to **max 10 candidates** by keyword hits, the AI scores those **0–100** and the **top 5** are shown with:
    - the score,
@@ -73,7 +73,7 @@ Project documentation lives in [`docs/`](docs/):
 │       ├── LandingHero.tsx
 │       ├── Navbar.tsx
 │       ├── SearchForm.tsx
-│       ├── JobSources.tsx     # per-source counts (Arbeitnow / Arbeitsagentur) from delivered jobs
+│       ├── JobSources.tsx     # per-source counts + disabled/reason rows from delivered jobs
 │       ├── CvUpload.tsx       # PDF upload → extract → hash → profile cache → /api/profile
 │       ├── ModelSelector.tsx  # accessible free-model listbox with recommended section
 │       ├── AlertCard.tsx
@@ -99,6 +99,14 @@ All keys are server-side only.
 | `EDENAI_ENV` (optional) | Force EdenAI key mode (`production` or sandbox); defaults to `VERCEL_ENV` | — |
 | `EDENAI_MODEL` (optional) | Override the default EdenAI model | — |
 | `APIFY_API_TOKEN` (optional) | Second job source: Arbeitsagentur feed via Apify | <https://console.apify.com/settings/integrations> |
+| `ADZUNA_APP_ID` / `ADZUNA_APP_KEY` (optional, Aliase `ADZUNA_APPLICATION_ID` / `_KEY`) | Adzuna job source (free tier) | <https://developer.adzuna.com/> |
+| `ADZUNA_COUNTRIES` (optional) | Adzuna country codes (default `de`) | — |
+| `JOBSPIPE_API_KEY` (optional) | JobsPipe job source (credits per record) | <https://jobspipe.dev/signup> |
+| `JOBSPIPE_MONTHLY_MAX_CREDITS` / `JOBSPIPE_MAX_CREDITS_PER_USER` (optional) | JobsPipe credit guards (default `200`/`20`) | — |
+| `THEIRSTACK_API_KEY` (optional) | Theirstack job source (1 credit per record) | <https://app.theirstack.com/> |
+| `THEIRSTACK_MONTHLY_MAX_CREDITS` / `THEIRSTACK_MAX_CREDITS_PER_USER` (optional) | Theirstack credit guards (default `200`/`20`) | — |
+| `JOB_SOURCE_ARBEITNOW_ENABLED` / `_ARBEITSAGENTUR_ENABLED` / `_GREENHOUSE_ENABLED` / `_ADZUNA_ENABLED` / `_JOBSPIPE_ENABLED` / `_THEIRSTACK_ENABLED` (optional) | Enable/disable each job source (default `true`; without required config a source reports as disabled) | — |
+| `JOB_SOURCE_GREENHOUSE_BOARDS` / `PUBLIC_ATS_SOURCES` (optional) | Greenhouse board list / public ATS board configs | — |
 | `UPSTASH_REDIS_REST_URL` | Apify job cache, CV profile cache, alert subscriptions | <https://upstash.com> (free Redis) |
 | `UPSTASH_REDIS_REST_TOKEN` | Same as above | Upstash |
 | `RESEND_API_KEY` | Sending digest emails | <https://resend.com> (free) |
@@ -191,7 +199,7 @@ City:          Berlin, München
 
 ## Testing
 
-- **159/159 tests passing** (`npm test`, Vitest) across frontend, serverless functions and provider integration.
+- **657 tests passing, 5 skipped** (`npm test` = `vitest run`, Stand 2026-10-02) across frontend, serverless functions and provider integration.
 - `npx tsc -b` — strict TypeScript build, PASS.
 - `npm run build` — Vite production build, PASS.
 - Live endpoint verification against the deployed Vercel functions where possible.

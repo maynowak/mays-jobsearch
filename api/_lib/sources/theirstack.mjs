@@ -11,9 +11,10 @@ import {
 } from "../usage.mjs";
 
 const API_BASE = "https://api.theirstack.com/v1/jobs/search";
-// TheirStack bills 1 API credit per returned record: keep the page small
-// and consistent with the other sources.
-const RESULTS_LIMIT = 40;
+// TheirStack bills 1 API credit per returned record: keep the page small.
+// Limit 25 = documented default + example value (a higher limit is a
+// 422-candidate on small plans); local pool cap stays 40.
+const RESULTS_LIMIT = 25;
 const MAX_JOBS_TO_AI = 40;
 // L1 result cache (same pattern as the other key-based sources): repeated
 // identical searches reuse the raw upstream payload instead of burning credits.

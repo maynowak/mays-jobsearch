@@ -9,13 +9,14 @@ This document defines the project phases and the sprint backlog aligned with the
 
 ---
 
-## Project Phases
+## Project Phases (Stand 2026-10-02)
 
 - **Version 1.0 — Core Matching**: live jobs, keyword/city filter, AI scoring, top-5 cards.
 - **Version 1.1 — Model Transparency**: show the model in use under the search button.
 - **Version 1.2 — Match to Application**: multi-city, AI cover-letter generator, daily digest alerts.
 - **Version 1.3 — Polish**: bug fixes and refinement.
 - **Version 2.0 — Release**: real email delivery active, accessibility audit, saved profiles.
+- **Seit 2026-08-16 zusätzlich DONE** (Reports): Job-Source-Registry (Arbeitnow, Greenhouse, Adzuna, **JobsPipe** statt Jooble, Theirstack, Public-ATS, Apify-Arbeitsagentur), ehrliches `enabled()` + Quellengründe in UI, Credit-/Run-Guards + Usage, Nominatim-Geocoding + `deriveWorkMode`, Pool-Cap-50, CV-Workflows (Upload/UX-01–12, ATS-Analyse, CV-Improvement, Skill-Bestätigung), Provider-Router OpenRouter↔EdenAI + präzises Fallback, L1-Caches, Model-Lock während Suche.
 
 ---
 
@@ -46,9 +47,10 @@ This document defines the project phases and the sprint backlog aligned with the
 
 ✅ Completed
 
-- ✅ multi-city search (`Berlin, München, Hamburg`)
+- ✅ multi-city search (`Berlin, München, Hamburg`) + Umkreis/Arbeitsmodell/Arbeitszeit (`radiusKm`, `workMode`, `employmentType`)
 - ✅ AI cover-letter generator (`/api/cover-letter` + modal + download)
 - ✅ daily digest alerts (`/api/alerts`, `/api/cron/digest`)
+- ✅ CV-Profil aus Upload (`/api/profile`), dynamischer Modellkatalog (`/api/models`) + Provider-Router OpenRouter↔EdenAI
 - ✅ project documentation (`docs/`)
 
 ---
@@ -70,12 +72,11 @@ This document defines the project phases and the sprint backlog aligned with the
 - Verify a real digest email delivery end-to-end.
 - Final accessibility audit.
 - Add candidate profile persistence.
-
----
+- (Code-seitig implementiert, nur per Keys zu aktivieren: `/api/alerts` + `/api/cron/digest` + Redis/Resend-Cache.)
 
 ## Sprint 2.1 Automation & Tracking
 
-🟡 Planned
+🟡 Planned (CV-Teilpakete daraus bereits DONE: CV-Improvement, ATS-Analyse, `CvProfileResult`/`CvGoalSelection`/`CvAnonymizationChoice` — siehe Reports CV-IMPROVEMENT-02/03)
 
 - Auto-drafted application packages (letter + CV placeholder + pre-filled checklist).
 - Application tracker with follow-up reminders.
@@ -101,6 +102,7 @@ Idee:
 - Während einer laufenden Matching-Suche ist die Model-Combobox deaktiviert
   (Seitenaufbau → UI sofort verfügbar → Background Availability Check → Modellstatus aktualisieren;
   Suche startet → Combobox deaktivieren → Matching läuft → fertig → Combobox wieder aktivieren).
+  ✅ Combobox-Lock umgesetzt (Start-Button-Runner + Model-Lock, Commit `ec08f80`); Background-Check + Caching weiter offen.
 
 Hinweis: Kein Bestandteil des abgeschlossenen Timeout-Features; separat von `main` als neuer
 Feature-/Analyse-Branch umzusetzen.

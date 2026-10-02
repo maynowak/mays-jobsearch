@@ -136,7 +136,7 @@ Precise Model Fallback Feedback + Suchparameter-Erweiterung.
 - **Suchparameter (neu, in Production):** `Umkreis` (10/25/50/100 km), `Arbeitsmodell` (Remote/Hybrid/Vor Ort, Mehrfachauswahl), `Arbeitszeit` (Vollzeit default, Teilzeit zusätzlich; mind. eine aktiv). Alle gehören zum Suchprofil und landen über `/api/jobs` beim Server. Dataset-Invalidierung je Parameter; neue Suche manuell; UI-Locking während Suche/Matching.
 - **Server-Filter (best-effort):** `employmentType` (DE/EN-Aliases; Stellen ohne Beschäftigungs-Info werden nicht ausgeschlossen), `workMode` (nur bei ausschließlich „remote" filterbar via `job.remote`). Offene Punkte dokumentiert: `radiusKm` ohne Geocoding, `hybrid`/`onsite` nicht aus den Jobdaten ableitbar.
 - **Merge:** Feature-Branch Fast-forward nach `main` (Commit `0305d52`), Production-Deployment `dpl_DJRUFY1BtYjnY7ZPr81hhwGsswL7`, Deployment-Identität verifiziert, Live-Tests (Suchfilter + `/api/match`).
-- **Tests:** 159/159 grün (inkl. 15 neue Suchparameter-Tests). Env-Variablen-Matrix in `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK.md`.
+- **Tests:** 159/159 grün (Stand damals, inkl. 15 neue Suchparameter-Tests; heute 657 passed / 5 skipped — siehe README). Env-Variablen-Matrix in `docs/reports/FEATURE_PRECISE_MODEL_FALLBACK_FEEDBACK.md`.
 
 ## Unreleased — 2026-09-29
 

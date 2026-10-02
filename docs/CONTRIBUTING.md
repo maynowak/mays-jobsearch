@@ -2,7 +2,7 @@
 
 Code Style.
 
-- Vanilla JavaScript.
+- React + TypeScript strict (Funktionskomponenten/Hooks only, kein `any`, Interfaces, Typen in `src/types.ts`); Serverless weiter ESM-`.mjs`.
 - No new dependencies without approval.
 - Friendly error messages with `{ error, code }`.
 
@@ -12,16 +12,19 @@ Commit Messages.
 
 Ordnerstruktur.
 
-- Frontend: `index.html`, `styles.css`, `app.js`.
+- Frontend: `src/App.tsx`, `src/api.ts`, `src/types.ts`, `src/styles.css`, `src/hooks/`, `src/lib/`, `src/components/*.tsx`.
 - Backend: `api/**/*.mjs`.
 - Shared helpers: `api/_lib/`.
+- Tests: `tests/api/`, `tests/integration/`, `src/**/*.test.tsx` (`api/**` ist von Vitest exkludiert).
 
 Regeln.
 
 - Keys nur über `process.env`, nie im Frontend.
-- Nach Änderungen: `node --check <file>`.
+- Nach Änderungen: `npm test` (= `vitest run`), `npx tsc -b`, `npm run build` (`tsc -b && vite build`); `node --check` nur als `.mjs`-Smoke.
 - Fehler immer freundlich ausgeben.
 - Dokumentation in `docs/` pflegen.
+- Live-API-Tests sind strikt Opt-in (default skipped, Kosten-Disziplin): `APIFY_LIVE_TESTS=1` + Token, `LIVE_API_TESTS=1` + `LIVE_API_BASE`, `THEIRSTACK_LIVE_TESTS=1` + Key — nur bei Bedarf, nie gegen Production.
+- Deploy explizit per CLI mit Scope: `vercel dev` (Development), `vercel deploy` (Preview), `vercel --prod --scope maymilly` (Production; Scope Pflicht, Projekt liegt im `maymilly`-Team).
 
 ## Git Lifecycle
 
@@ -66,7 +69,7 @@ git push -u origin feature/<name>
 
 ### Push
 
-- Nach jedem abgeschlossenen Step: Report aktualisieren → Tests → `git status` →
+- Nach jedem abgeschlossenen Step: Report (`docs/reports/*-EXECUTION_LOG.md`, Pflicht nach `docs/AI_AUDITLOG.md`) aktualisieren → Tests → `git status` →
   `git diff --check` → Secret Audit → Commit → Push.
 
 ### Branch-Cleanup

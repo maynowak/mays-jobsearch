@@ -93,7 +93,7 @@ The registry (`SOURCES` array) orders sources: Arbeitnow first, then Apify actor
 
 - **Module**: `api/_lib/sources/theirstack.mjs`
 - **API**: `POST https://api.theirstack.com/v1/jobs/search` with Bearer key — requires `THEIRSTACK_API_KEY`
-- **Billing**: 1 credit per returned record (`limit` capped at 40); global monthly credit guard `THEIRSTACK_MONTHLY_MAX_CREDITS` (default `200`) → `emptyResult("limit_reached")`; per-user monthly guard `THEIRSTACK_MAX_CREDITS_PER_USER` (default `20`, session-based)
+- **Billing**: 1 credit per returned record (`limit` capped at 25 = TheirStack default/example); global monthly credit guard `THEIRSTACK_MONTHLY_MAX_CREDITS` (default `200`) → `emptyResult("limit_reached")`; per-user monthly guard `THEIRSTACK_MAX_CREDITS_PER_USER` (default `20`, session-based)
 - **Fetch**: native description/title/date filters + L1 result cache (600 s); `no_query` guard without search terms
 - **Normalization**: incl. `salary_string`, `employment_statuses`, `latitude`/`longitude`, `ts-{id}` external IDs
 - **Empty without key**: `emptyResult("missing_config")`

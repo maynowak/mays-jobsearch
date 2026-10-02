@@ -1,6 +1,6 @@
 # API Inventory
 
-**Stand**: 2026-09-25 — vollständig gegen den Code validiert (HEAD `0abbd59`, Branch `main`).
+**Stand**: 2026-10-02 — gegen den Code validiert (HEAD `3cd58b8`, Branch `main`; Vor-Stand 2026-09-25 @ `0abbd59`).
 
 ## Source of Truth
 
@@ -14,7 +14,7 @@ Diese Inventur wurde ausschließlich aus den tatsächlichen Handlern in `api/`,
 
 | Method | Endpoint | Auth | Version | Implementation | Tests |
 |---|---|---|---|---|---|
-| GET | `/api/jobs` | none | keine (`/api/*`) | `api/jobs.mjs` → `api/_lib/sources/index.mjs: fetchAllJobs` | `tests/api/sources-registry.test.mjs`, `tests/api/apify-actor.test.mjs`, `tests/integration/20-skills-regression.test.mjs`, `tests/integration/cv-to-jobs-e2e.test.mjs` |
+| GET | `/api/jobs` | none (setzt aber `Set-Cookie: mj-session` für Per-User-Quotas) | keine (`/api/*`) | `api/jobs.mjs` → `api/_lib/sources/index.mjs: fetchAllJobs` | `tests/api/sources-registry.test.mjs`, `tests/api/apify-actor.test.mjs`, `tests/api/jobspipe-source.test.mjs`, `tests/api/theirstack-source.test.mjs`, `tests/api/greenhouse-source.test.mjs`, `tests/integration/20-skills-regression.test.mjs`, `tests/integration/cv-to-jobs-e2e.test.mjs` |
 | POST | `/api/match` | Anonyme Session (`Set-Cookie: mj-session`) | keine | `api/match.mjs` → `api/_lib/matching.mjs: computeMatch` | `tests/api/match-cache.test.mjs`, `tests/api/match-enrich.test.mjs`, `src/App.test.tsx` |
 | POST | `/api/job-details` | Anonyme Session (`Set-Cookie: mj-session`) | keine | `api/job-details.mjs` → `api/_lib/detailEnrich.mjs` | `tests/api/job-details.test.mjs`, `tests/api/detail-enrich.test.mjs` |
 | POST | `/api/profile` | none | keine | `api/profile.mjs` → `api/_lib/ai.mjs: chat` | `tests/api/profile-cache.test.mjs`, `src/App.test.tsx` |
@@ -34,9 +34,11 @@ Hinweis: `GET /api/alerts` liefert nur `{ count }` und wird vom Frontend nicht v
 ## Detail: Requests / Responses / Errors (aus dem Code)
 
 ### `GET /api/jobs`
-- Query: `skills` (String; JSON-Array oder Legacy `;`/,` Liste), `targetRole`, `city`, `radiusKm`, `workMode` (CSV), `employmentType` (CSV) — alle optional.
-- 200 → `{ jobs: Job[], meta: { totalScanned, totalFiltered, city[], keywords[], sources, sourceCounts, disabledSources, sourceDetails, jobsCombined, searchStrategy, apify } }`
-- Errors: `HttpError`-kodiert (`network` 502, `rate_limited` 429, `upstream` 502 aus Arbeitnow-Quelle), sonst 500 `{ error, code: "internal" }`.
+- Query: `skills` (String; JSON-Array, Quoted-Phrasen, Space-/Komma-/Semikolon-getrennt via `/[\s,;]+/`), `targetRole` (wiederholbar, OR) / `targetRoles[]`, `city`, `radiusKm`, `workMode` (CSV), `employmentType` (CSV) — alle optional.
+- 200 → `{ jobs: Job[], meta: { totalScanned, totalFiltered, city[], keywords[], sources, sourceCounts, sourceReasons, disabledSources, sourceDetails, jobsCombined, searchStrategy, geo, apify } }` (`sourceReasons: {[id]: reason|null}` seit JOB-SOURCES-01; `geo` seit BROWSER-BUG-04/Geocoding).
+- Quellen (Stand 2026-10-01): `arbeitnow, greenhouse, adzuna, jobspipe, theirstack` + Public-ATS + Apify-Actor (Arbeitsagentur). Jooble ersatzlos entfernt (JOBSPIPE-01). `enabled()` = Flag **und** Config (Key/Token/Boards) — sonst `disabledSources`, kein Request, keine Zählung.
+- Errors: `HttpError`-kodiert (`network` 502, `rate_limited` 429, `upstream` 502 aus allen Key-Quellen; Upstream-Body als 200-Zeichen-Excerpt in Server-Logs), sonst 500 `{ error, code: "internal" }`.
+- Guards: TheirStack `limit: 25`, JobsPipe `limit: 40` (je 1 Credit/Record); Monthly-/User-Credit-Guards (Default 200/20); L1-Cache 600 s; setzt `Set-Cookie` (anonyme Session für Per-User-Quotas).
 - Geo-Semantik (seit BROWSER-BUG-04): `city` wird nur an die Quellen gereicht, wenn `radiusKm` numerisch > 0 ist („Entfernung egal" = kein Ortsfilter).
 
 ### `POST /api/match`
@@ -87,7 +89,7 @@ Hinweis: `GET /api/alerts` liefert nur `{ count }` und wird vom Frontend nicht v
 
 ### `GET /api/usage`
 - Auth: `x-usage-token` Header oder `Authorization: Bearer` vs. `USAGE_DIAGNOSTICS_TOKEN` (Constant-Time-Compare).
-- 200 → Usage-Snapshot (Zähler). Errors: 401 `unauthorized`, 403 `forbidden` (Endpoint deaktiviert ohne Token-Env), 405 `method`, 500 `internal`.
+- 200 → Usage-Snapshot (Zähler inkl. `theirstack:{creditCount,creditLimit}`, `jobspipe:{creditCount,creditLimit}`, `jobSources:{…}`). Errors: 401 `unauthorized`, 403 `forbidden` (Endpoint deaktiviert ohne Token-Env), 405 `method`, 500 `internal`.
 
 ### `POST /api/cron/digest`
 - Auth: automatisch bei Vercel-Cron (`x-vercel-cron`-Header), sonst optional `Bearer $CRON_SECRET`; **ohne gesetztes `CRON_SECRET` ist der Endpoint öffentlich aufrufbar** (Befund, siehe Mismatches).
@@ -122,7 +124,7 @@ Client-Fehlerhandling: `ApiError { message, status?, code? }`, Retries nur via `
 | Endpoint / Thema | Dokumentiert | Tatsächlicher Code | Klassifikation | Evidence |
 |---|---|---|---|---|
 | Anzahl Endpunkte | alte `API_INVENTORY.md` (2026-09-20): „13", mit Duplikaten (`/api/match`, `/api/job-details` doppelt) | 12 Function-Dateien, 12+2 konkrete Schnittstellen | DOCUMENTATION-MISMATCH | `api/*.mjs`, `api/cron/*.mjs` |
-| Version-Prefix | Alter Bestand: „alle unversioned" | Frontend ruft `/api/v1/cv-improvement*` auf; **kein `api/v1/`-Verzeichnis und kein Rewrite in `vercel.json`** existiert | DOCUMENTATION-MISMATCH + Vertragsrisiko | `src/api.ts:416,446,527,582`; `vercel.json`; `ls api/` |
+| Version-Prefix | Alter Bestand: „alle unversioned" | Frontend ruft `/api/v1/cv-improvement*` auf; **kein `api/v1/`-Verzeichnis und kein Rewrite in `vercel.json`** existiert → 404-Risiko | DOCUMENTATION-MISMATCH + Vertragsrisiko | `src/api.ts:455,485,566,621`; `vercel.json`; `ls api/` |
 | CV-Improvement Response | `docs/API_CV_IMPROVEMENT.md`: `{ data, meta: { version, requestId } }`-Envelope | Standard-Endpoint liefert **flach** (`{ improvement, analysis, meta }` ohne `requestId`); nur Sub-Pfade nutzen die Envelope | DOCUMENTATION-MISMATCH | `api/cv-improvement.mjs` (269–286 vs 191–202 etc.) |
 | CV-Improvement Pfad | `docs/API_CV_IMPROVEMENT.md`: `POST /api/v1/cv-improvement` | Repo-Route ist `api/cv-improvement.mjs` (ohne `v1`), Sub-Dispatch via `req.url.endsWith` | DOCUMENTATION-MISMATCH | `api/cv-improvement.mjs:96–98` |
 | Auth pauschal „none" | alte Inventory: „No authentication required for any public endpoints" | `/api/usage` verlangt `x-usage-token`/Bearer; `/api/cron/digest` verlangt Cron-Header/Secret (offen ohne `CRON_SECRET`); `/api/match` & `/api/job-details` setzen Session-Cookies | DOCUMENTATION-MISMATCH | `api/usage.mjs:15–41`, `api/cron/digest.mjs:59–77`, `api/match.mjs:77–78` |
@@ -142,10 +144,10 @@ Client-Fehlerhandling: `ApiError { message, status?, code? }`, Retries nur via `
 ## Implemented but not documented
 
 - `GET /api/alerts` (`{ count }` — nur Server-seitig; alte Doku nannte nur POST/DELETE).
-- `ai.model` am ATS-Endpunkt (seit BROWSER-BUG-22) — bislang nicht in `docs/API_CV_IMPROVEMENT.md`/alter Inventory.
-- Session-Cookie (`Set-Cookie: mj-session`) auf `/api/match` und `/api/job-details` (Anonyme Identität für Arbeitsagentur-Detail-Enrichment + Quota).
+- `ai.model` am ATS-Endpunkt (seit BUG-22) — bislang nicht in `docs/API_CV_IMPROVEMENT.md`/alter Inventory.
+- Session-Cookie (`Set-Cookie: mj-session`) auf `/api/match`, `/api/job-details` **und `/api/jobs`** (Anonyme Identität für Arbeitsagentur-Detail-Enrichment + Per-User-Quotas, seit JOB-SOURCES-01 auch Jobs).
 - `x-mj-attempt`-Request-Header (Modell-Fallback-Attempt-Propagierung) auf `/api/match`, `/api/profile`, `/api/cover-letter`.
-- Job-Quellen-Metadaten (`meta.sources`, `meta.sourceCounts`, `meta.sourceDetails`) in `/api/jobs`.
+- Job-Quellen-Metadaten (`meta.sources`, `meta.sourceCounts`, `meta.sourceDetails`, **`meta.sourceReasons`**) in `/api/jobs` — `disabledSources`/`sourceReasons` werden seit JOB-SOURCES-01 in der JobSources-UI angezeigt (inkl. Cut-Rows für herausgefilterte Quellen).
 
 ## Documented but not implemented
 
@@ -198,7 +200,8 @@ Der Standard ist nicht eingeführt. Die Dokumente beschreiben einen Zielzustand,
 
 | Bereich | Dateien |
 |---|---|
-| Jobs/Sources/Strategie | `tests/api/sources-registry.test.mjs`, `tests/api/apify-actor.test.mjs`, `tests/api/apify-client.test.mjs`, `tests/api/filter.test.js`, `tests/api/search-strategy.test.mjs`, `tests/integration/20-skills-regression.test.mjs`, `tests/integration/cv-to-jobs-e2e.test.mjs` |
+| Jobs/Sources/Strategie | `tests/api/sources-registry.test.mjs`, `tests/api/apify-actor.test.mjs`, `tests/api/apify-client.test.mjs`, `tests/api/jobspipe-source.test.mjs`, `tests/api/theirstack-source.test.mjs`, `tests/api/greenhouse-source.test.mjs`, `tests/api/adzuna-source.test.mjs`, `tests/api/filter.test.js`, `tests/api/search-strategy.test.mjs`, `tests/integration/20-skills-regression.test.mjs`, `tests/integration/cv-to-jobs-e2e.test.mjs` |
+| Live (Opt-in, skipped by default) | `tests/api/apify-live.test.mjs` (`APIFY_LIVE_TESTS=1` + Token), `tests/api/sources-live.test.mjs` (`LIVE_API_TESTS=1` + `LIVE_API_BASE`), `tests/api/theirstack-live.test.mjs` (`THEIRSTACK_LIVE_TESTS=1` + Key) — Kosten-Disziplin, nur bei Bedarf |
 | Match | `tests/api/match-cache.test.mjs`, `tests/api/match-enrich.test.mjs`, `src/App.test.tsx` |
 | Profile | `tests/api/profile-cache.test.mjs`, `src/App.test.tsx` |
 | ATS | `tests/api/ats-analysis.test.js`, `tests/api/ats-extraction.test.js`, `tests/api/ats-model-selection.test.mjs` |
@@ -209,4 +212,4 @@ Der Standard ist nicht eingeführt. Die Dokumente beschreiben einen Zielzustand,
 | Client/Frontend | `src/api.test.ts`, Komponententests unter `src/components/*.test.tsx` |
 | Keinen eigenen API-Test | `/api/model`, `/api/alerts`, `/api/usage`, `/api/cron/digest`, `/api/cover-letter` (direkt) |
 
-Gesamtsuite zum Stand der Inventur: 486 Tests (426 Unit-/API-Tests in `tests/` + `src/` + Integration).
+Gesamtsuite zum Stand der Inventur: **657 passed / 5 skipped** (`npm test` = `vitest run`; `api/**` excluded — API-Tests liegen unter `tests/api/`).
