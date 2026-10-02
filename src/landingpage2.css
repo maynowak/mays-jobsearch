@@ -9,23 +9,28 @@
   overflow-x: hidden;
 }
 
-/* ---------- Header ---------- */
+/* ---------- Header (REFINEMENT-01: transparent über der Hero-Bühne) ---------- */
 .lp2-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem clamp(1rem, 4vw, 3rem);
-  background: #fff;
-  position: relative;
-  z-index: 30;
+  background: transparent;
+  z-index: 40;
 }
 
 .lp2-brand {
   font-weight: 700;
   font-size: 1.1rem;
-  color: var(--text);
+  color: #fff;
   text-decoration: none;
+  text-shadow: 0 1px 12px rgba(8, 30, 60, 0.55);
+  white-space: nowrap;
 }
 
 .lp2-nav {
@@ -35,25 +40,30 @@
 }
 
 .lp2-nav-link {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
+  text-shadow: 0 1px 10px rgba(8, 30, 60, 0.55);
 }
 
 .lp2-nav-cta {
-  background: var(--brand);
-  color: #fff;
+  background: #fff;
+  color: var(--brand-dark);
   text-decoration: none;
   padding: 0.55rem 1.1rem;
-  border-radius: var(--radius);
-  font-weight: 600;
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: 0 2px 14px rgba(8, 30, 60, 0.25);
 }
 
-/* ---------- Hero / Visual Stage ---------- */
+/* ---------- Hero / Visual Stage (REFINEMENT-01: dominante Fläche,
+   Content zentriert, Bild bis Unterkante, Fade unten minimal) ---------- */
 .lp2-hero {
   position: relative;
-  min-height: 92vh;
+  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -67,9 +77,11 @@
   z-index: 0;
 }
 
-/* BackgroundOverlay: oben weich nach Weiß, unten weich in den
-   Seitenhintergrund; dazu eine sehr dezente blaue Schicht, die harte
-   Baumkonturen optisch einbettet, ohne die Lichtlinien zu schlucken. */
+/* BackgroundOverlay (REFINEMENT-01): oben nur leichte Abdunklung für
+   Nav-Lesbarkeit (Foto ist dort von sich aus hell); unten nur noch ein
+   sehr kurzer, dezenter Übergang in den Seitenhintergrund; mittig fast
+   nichts, damit Stadt + Lichtlinien voll tragen. Dezentes Blau bettet
+   harte Baumkonturen ein. */
 .lp2-overlay {
   position: absolute;
   inset: 0;
@@ -78,21 +90,18 @@
   background:
     linear-gradient(
       180deg,
-      #ffffff 0%,
-      rgba(255, 255, 255, 0.92) 8%,
-      rgba(219, 245, 253, 0.45) 22%,
-      rgba(219, 245, 253, 0) 40%
+      rgba(8, 25, 55, 0.32) 0%,
+      rgba(8, 25, 55, 0) 22%
     ),
     linear-gradient(
       0deg,
       var(--page-bg) 0%,
-      rgba(248, 250, 252, 0.85) 10%,
-      rgba(248, 250, 252, 0) 28%
+      rgba(248, 250, 252, 0) 12%
     ),
     linear-gradient(
       180deg,
-      rgba(34, 211, 238, 0.06) 0%,
-      rgba(34, 211, 238, 0) 55%
+      rgba(34, 211, 238, 0.05) 0%,
+      rgba(34, 211, 238, 0) 50%
     );
 }
 
@@ -105,19 +114,22 @@
   pointer-events: none;
 }
 
-/* ContentLayer */
+/* ContentLayer (REFINEMENT-01: zentriertes Glass-Panel statt opak-weißer
+   Karte links — Bild bleibt sichtbar, Text bleibt lesbar). */
 .lp2-hero-content {
   position: relative;
   z-index: 3;
   max-width: 640px;
-  margin-left: clamp(1rem, 6vw, 5rem);
-  margin-right: 1rem;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--border);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  text-align: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.38);
   border-radius: var(--radius);
-  padding: clamp(1.25rem, 3vw, 2.25rem);
-  box-shadow: var(--shadow);
+  box-shadow: 0 12px 40px rgba(8, 30, 60, 0.28);
 }
 
 .lp2-kicker {
@@ -126,43 +138,50 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--brand-dark);
+  color: #d9f6ff;
+  text-shadow: 0 1px 10px rgba(8, 30, 60, 0.5);
 }
 
 .lp2-title {
   margin: 0 0 0.75rem;
   font-size: clamp(1.9rem, 4.5vw, 3.25rem);
   line-height: 1.08;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(8, 30, 60, 0.55);
 }
 
 .lp2-subtitle {
-  margin: 0 0 1.5rem;
-  color: var(--muted);
+  margin: 0 auto 1.5rem;
+  max-width: 34rem;
+  color: rgba(255, 255, 255, 0.93);
   font-size: clamp(1rem, 1.6vw, 1.15rem);
+  text-shadow: 0 1px 12px rgba(8, 30, 60, 0.55);
 }
 
 .lp2-cta-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.75rem;
 }
 
 .lp2-cta-primary {
-  background: var(--brand);
-  color: #fff;
+  background: #fff;
+  color: #0b3b5e;
   text-decoration: none;
-  padding: 0.7rem 1.4rem;
-  border-radius: var(--radius);
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
   font-weight: 700;
+  box-shadow: 0 2px 16px rgba(8, 30, 60, 0.3);
 }
 
 .lp2-cta-secondary {
-  color: var(--brand-dark);
+  color: #fff;
   text-decoration: none;
-  padding: 0.7rem 1.4rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: #fff;
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
   font-weight: 600;
 }
 
@@ -217,7 +236,7 @@
 /* ---------- Responsive: Tablet + Mobile ---------- */
 @media (max-width: 900px) {
   .lp2-hero {
-    min-height: 84vh;
+    min-height: 100svh;
   }
 
   .lp2-cards {
@@ -227,8 +246,7 @@
 
 @media (max-width: 600px) {
   .lp2-hero {
-    min-height: 78vh;
-    align-items: flex-end;
+    min-height: 100svh;
   }
 
   /* Mobile: Bild stärker beschnitten (cover), Wirkung bleibt. */
@@ -237,11 +255,29 @@
   }
 
   .lp2-hero-content {
-    margin: 0 1rem 1.5rem;
+    margin: 0 1rem;
   }
 
   .lp2-header {
     padding: 0.85rem 1rem;
+  }
+
+  .lp2-brand {
+    font-size: 0.95rem;
+  }
+
+  .lp2-nav {
+    gap: 0.6rem;
+  }
+
+  .lp2-nav-link {
+    font-size: 0.9rem;
+  }
+
+  .lp2-nav-cta {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
   }
 
   .lp2-footer {
