@@ -20,7 +20,10 @@ describe("LandingPage2 (LANDINGPAGE-02 Prototype)", () => {
     const { container } = renderPage();
     expect(screen.getByText("May's Job Matcher")).toBeTruthy();
     expect(screen.getByLabelText("Visuelle Bühne")).toBeTruthy();
-    expect(screen.getByText("Jobs, die zu dir passen.")).toBeTruthy();
+    expect(screen.getByText("Jobsearch")).toBeTruthy();
+    expect(screen.getByText(/Dein nächster Karriereschritt/)).toBeTruthy();
+    expect(screen.getByText("mit KI")).toBeTruthy();
+    expect(screen.getByText(/die zu dir passen/)).toBeTruthy();
     expect(screen.getByLabelText("Highlights")).toBeTruthy();
     expect(container.querySelector(".lp2-footer")).toBeTruthy();
   });

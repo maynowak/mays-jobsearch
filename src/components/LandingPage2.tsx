@@ -35,11 +35,18 @@ export default function LandingPage2(): React.ReactElement {
             Zettel-Animation; liegt über dem Hintergrund, unter dem Content. */}
         <div className="job-stream-layer" aria-hidden="true" />
         <div className="lp2-hero-content">
-          <p className="lp2-kicker">Prototype · Landingpage 2</p>
-          <h1 className="lp2-title">Jobs, die zu dir passen.</h1>
+          <p className="lp2-kicker">Jobsearch</p>
+          <h1 className="lp2-title">
+            Dein nächster Karriereschritt
+            <br />
+            <span className="lp2-title-accent">mit KI</span>
+            <br />
+            die zu dir passen
+          </h1>
           <p className="lp2-subtitle">
-            May&apos;s Job Matcher durchsucht Stellenangebote aus mehreren Quellen
-            und bewertet per KI, was wirklich zu deinem Profil passt.
+            Stellenangebote aus mehreren Quellen,
+            <br />
+            Persönlich auf dich abgestimmt.
           </p>
           <div className="lp2-cta-row">
             <a className="lp2-cta-primary" href="/top">
