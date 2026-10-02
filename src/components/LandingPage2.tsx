@@ -1,26 +1,23 @@
 import { useState } from "react";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 
-// LANDINGPAGE-02 — visueller Prototype (visuelle Bühne, keine App-Logik).
-// Hinweis: Das Task-Asset `hero-bg-jobstream.jpg` existiert im Repo nicht;
-// verwendet wird das abgelegte Bild (Lichtlinien, Neon-Rahmen, Stadt im
-// blauen Abendlicht).
-// Schichten: BackgroundLayer < BackgroundOverlay < JobStreamLayer (leer,
-// für spätere Zettel-Animation vorbereitet) < ContentLayer.
-// Sprache (EN/DE) ist bewusst komponentenlokal (lp2-lang), kein Eingriff in
-// das App-i18n.
+// LANDINGPAGE-02-HERO-COMPOSITION-02 — reines Hintergrundbild + darüber
+// positionierte HTML/CSS-Ebenen (Glass-Nav, zentrierter Hero-Content).
+// Kein Text im Bild; keine Zettel/Animation (folgen in LANDINGPAGE-03/04).
+// Sprache (EN/DE) bleibt komponentenlokal (lp2-lang), kein App-i18n-Eingriff.
 type Lp2Lang = "de" | "en";
 
 const STRINGS: Record<Lp2Lang, Record<string, string>> = {
   de: {
     cta: "Zum Job-Matcher",
-    kicker: "Jobsearch",
+    navSearch: "Suche",
+    navAlerts: "Benachrichtigungen",
+    eyebrow: "MAY'S JOB MATCHER",
     titleA: "Dein nächster Karriereschritt",
     titleAccent: "mit KI",
-    titleB: "die zu dir passen",
     subA: "Stellenangebote aus mehreren Quellen,",
     subB: "Persönlich auf dich abgestimmt.",
-    findJobs: "Jobs finden",
+    findJobs: "Jobs finden →",
     learnMore: "Mehr erfahren",
     card1t: "Mehrere Quellen",
     card1p: "Arbeitnow, Arbeitsagentur, Adzuna, JobsPipe, Theirstack und ATS-Boards — eine Suche, ein Ergebnis.",
@@ -32,13 +29,14 @@ const STRINGS: Record<Lp2Lang, Record<string, string>> = {
   },
   en: {
     cta: "Open Job Matcher",
-    kicker: "Jobsearch",
+    navSearch: "Search",
+    navAlerts: "Alerts",
+    eyebrow: "MAY'S JOB MATCHER",
     titleA: "Your next career move",
     titleAccent: "with AI",
-    titleB: "that truly fit you",
     subA: "Job postings from multiple sources,",
-    subB: "Personally matched to you.",
-    findJobs: "Find jobs",
+    subB: "personally matched to you.",
+    findJobs: "Find jobs →",
     learnMore: "Learn more",
     card1t: "Multiple sources",
     card1p: "Arbeitnow, Arbeitsagentur, Adzuna, JobsPipe, Theirstack and ATS boards — one search, one result.",
@@ -71,44 +69,6 @@ export default function LandingPage2(): React.ReactElement {
   };
   return (
     <div className="lp2">
-      <header className="lp2-header">
-        <div className="lp2-bar" role="navigation" aria-label="Landingpage 2">
-          <a className="lp2-brand" href="/">
-            May&apos;s Job Matcher
-          </a>
-          <div className="lp2-lang" role="group" aria-label="Language / Sprache">
-            <button
-              type="button"
-              className={lang === "en" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
-              aria-pressed={lang === "en"}
-              onClick={() => switchLang("en")}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              className={lang === "de" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
-              aria-pressed={lang === "de"}
-              onClick={() => switchLang("de")}
-            >
-              DE
-            </button>
-          </div>
-          <nav className="lp2-nav" aria-label="Bereiche">
-            <a className="lp2-nav-link" href="/top">
-              {lang === "de" ? "Suche" : "Search"}
-            </a>
-            <a className="lp2-nav-link" href="/top">
-              {lang === "de" ? "Benachrichtigungen" : "Alerts"}
-            </a>
-            {/* Login noch ohne Funktion (Prototype) */}
-            <button type="button" className="lp2-login" aria-disabled="true">
-              Login
-            </button>
-          </nav>
-        </div>
-      </header>
-
       <section className="lp2-hero" aria-label="Visuelle Bühne">
         <div
           className="lp2-background"
@@ -117,17 +77,52 @@ export default function LandingPage2(): React.ReactElement {
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         <div className="lp2-overlay" aria-hidden="true" />
-        {/* Job-Stream-Layer: bewusst leer (LANDINGPAGE-02 §8/§9) — spätere
-            Zettel-Animation; liegt über dem Hintergrund, unter dem Content. */}
+        {/* Job-Stream-Layer: bewusst leer — spätere Zettel-Animation
+            (LANDINGPAGE-03/04); liegt über dem Hintergrund, unter dem Content. */}
         <div className="job-stream-layer" aria-hidden="true" />
+        <header className="lp2-header">
+          <div className="lp2-bar" role="navigation" aria-label="Landingpage 2">
+            <a className="lp2-brand" href="/">
+              May&apos;s Job Matcher
+            </a>
+            <nav className="lp2-nav" aria-label="Bereiche">
+              <a className="lp2-nav-link" href="/top">
+                {t.navSearch}
+              </a>
+              <a className="lp2-nav-link" href="/top">
+                {t.navAlerts}
+              </a>
+            </nav>
+            <div className="lp2-lang" role="group" aria-label="Language / Sprache">
+              <button
+                type="button"
+                className={lang === "en" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
+                aria-pressed={lang === "en"}
+                onClick={() => switchLang("en")}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={lang === "de" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
+                aria-pressed={lang === "de"}
+                onClick={() => switchLang("de")}
+              >
+                DE
+              </button>
+            </div>
+            {/* Login noch ohne Funktion (Prototype) */}
+            <button type="button" className="lp2-login" aria-disabled="true">
+              Login
+            </button>
+          </div>
+        </header>
         <div className="lp2-hero-content">
-          <p className="lp2-kicker">{t.kicker}</p>
+          <p className="lp2-kicker">{t.eyebrow}</p>
           <h1 className="lp2-title">
             {t.titleA}
             <br />
             <span className="lp2-title-accent">{t.titleAccent}</span>
-            <br />
-            <span className="lp2-title-sub">{t.titleB}</span>
           </h1>
           <p className="lp2-subtitle">
             {t.subA}

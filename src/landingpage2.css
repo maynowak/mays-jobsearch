@@ -1,5 +1,5 @@
-/* LANDINGPAGE-02 — visuelle Bühne (Prototype). Nutzt bestehende Tokens aus
-   styles.css (:root), keine neue globale Designstruktur. Alle Klassen sind
+/* LANDINGPAGE-02-HERO-COMPOSITION-02 — reines Hintergrundbild, darüber
+   Glass-Navigation + absolut zentrierter Hero-Content. Alle Klassen sind
    unter .lp2 gescopet; bestehende Selektoren bleiben unberührt. */
 
 .lp2 {
@@ -9,119 +9,14 @@
   overflow-x: hidden;
 }
 
-/* ---------- Header-Leiste (REFINEMENT-05) ----------
-   Eine transparente Leiste über der Hero-Bühne: Start links, EN/DE mittig,
-   CTA rechts. Dünner Rand in exakt der Farbe des „Mehr erfahren"-Buttons,
-   innen transparent, Rundung rechts unten betont. */
-.lp2-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  padding: 0.9rem clamp(1rem, 4vw, 3rem) 0;
-  background: transparent;
-  z-index: 40;
-  pointer-events: none;
-}
-
-.lp2-bar {
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  width: min(1060px, 100%);
-  padding: 0.55rem 0.7rem 0.55rem 1.1rem;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: 12px 12px 26px 12px;
-}
-
-.lp2-brand {
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: #fff;
-  text-decoration: none;
-  text-shadow: 0 1px 12px rgba(8, 30, 60, 0.55);
-  white-space: nowrap;
-}
-
-.lp2-nav-link {
-  color: rgba(255, 255, 255, 0.92);
-  text-decoration: none;
-  text-shadow: 0 1px 10px rgba(8, 30, 60, 0.55);
-  white-space: nowrap;
-}
-
-.lp2-nav {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-/* Login-Oval: gleiche Höhe wie der EN/DE-Schalter, vorerst ohne Funktion. */
-.lp2-login {
-  border: none;
-  background: #fff;
-  color: #0b3b5e;
-  font-weight: 700;
-  font-size: 0.85rem;
-  padding: 0.4rem 1.1rem;
-  border-radius: 999px;
-  cursor: default;
-  box-shadow: 0 2px 14px rgba(8, 30, 60, 0.25);
-  white-space: nowrap;
-}
-
-.lp2-lang {
-  display: flex;
-  margin-inline: auto;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.lp2-lang-btn {
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 700;
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-}
-
-.lp2-lang-active {
-  background: #fff;
-  color: #0b3b5e;
-}
-
-.lp2-nav-cta {
-  background: #fff;
-  color: #0b3b5e;
-  text-decoration: none;
-  padding: 0.55rem 1.1rem;
-  border-radius: 999px;
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 2px 14px rgba(8, 30, 60, 0.25);
-}
-
-/* ---------- Hero / Visual Stage (REFINEMENT-01: dominante Fläche,
-   Content zentriert, Bild bis Unterkante, Fade unten minimal) ---------- */
+/* ---------- Hero (§1+§2: 82vh, cover/center/no-repeat, Bild bis Unterkante) ---------- */
 .lp2-hero {
   position: relative;
-  min-height: 100vh;
-  min-height: 100svh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 82vh;
   overflow: hidden;
 }
 
-/* BackgroundLayer: Foto füllt die Bühne, nie verzerrt. */
+/* BackgroundLayer: reines Foto, füllt die Hero-Fläche, nie verzerrt. */
 .lp2-background {
   position: absolute;
   inset: 0;
@@ -131,37 +26,22 @@
   z-index: 0;
 }
 
-/* BackgroundOverlay (REFINEMENT-05): oben Weiß-Blende (hell, aber
-   transluzent, damit das Blau durchscheint und weiße Header-Typo lesbar
-   bleibt); unten nur noch ein sehr kurzer, dezenter Übergang in den
-   Seitenhintergrund; mittig fast nichts, damit Stadt + Lichtlinien voll
-   tragen. Dezentes Blau bettet harte Baumkonturen ein. */
+/* Overlay (§3): KEIN Weiß-Fade — nur ein sehr kurzer, weicher Übergang
+   direkt am Hero-Ende in den Content-Hintergrund. */
 .lp2-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.9) 0%,
-      rgba(255, 255, 255, 0.35) 12%,
-      rgba(255, 255, 255, 0) 24%
-    ),
-    linear-gradient(
-      0deg,
-      var(--page-bg) 0%,
-      rgba(248, 250, 252, 0) 12%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(34, 211, 238, 0.05) 0%,
-      rgba(34, 211, 238, 0) 50%
-    );
+  background: linear-gradient(
+    0deg,
+    var(--page-bg) 0%,
+    rgba(248, 250, 252, 0) 8%
+  );
 }
 
-/* JobStreamLayer (§8): bewusst leer, vorbereitet für spätere Animation.
-   Über Hintergrund + Overlay, unter dem Content; blockiert keine Pointer. */
+/* JobStreamLayer (§19): bewusst leer, vorbereitet für spätere Animation.
+   Über Hintergrund + Overlay, unter Header + Content; keine Pointer. */
 .job-stream-layer {
   position: absolute;
   inset: 0;
@@ -169,15 +49,103 @@
   pointer-events: none;
 }
 
-/* ContentLayer (REFINEMENT-02: KEIN Panel mehr — reine transparente Typo
-   direkt auf dem Foto, ohne Ränder/Blur/Schatten, damit das Bild überall
-   voll scharf bleibt. Lesbarkeit trägt Text-Shadow.) */
-.lp2-hero-content {
-  position: relative;
-  z-index: 3;
-  max-width: 720px;
+/* ---------- Header / Glass-Navigation (§4–§7) ---------- */
+.lp2-header {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.lp2-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  width: min(90vw, 1200px);
+  min-height: 60px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0.5rem 0.6rem 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.13);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.lp2-brand {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.lp2-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.lp2-nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.lp2-nav-link:hover {
+  color: #fff;
+}
+
+.lp2-lang {
+  display: flex;
+  margin-left: auto;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lp2-lang-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.lp2-lang-active {
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b3b5e;
+}
+
+/* Login-Oval (§7): hebt sich bewusst ab, vorerst ohne Funktion. */
+.lp2-login {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b3b5e;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: default;
+  white-space: nowrap;
+}
+
+/* ---------- Hero-Content (§8–§14: absolut zentriert, top 47%) ---------- */
+.lp2-hero-content {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: min(720px, 92%);
   text-align: center;
   color: #fff;
   background: transparent;
@@ -186,69 +154,70 @@
 }
 
 .lp2-kicker {
-  margin: 0 0 0.75rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
+  margin: 0 0 0.9rem;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 12px rgba(8, 30, 60, 0.6);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .lp2-title {
-  margin: 0 0 1rem;
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  line-height: 1.12;
+  margin: 0;
+  font-size: clamp(42px, 5vw, 72px);
+  font-weight: 700;
+  line-height: 1.05;
   color: #fff;
-  text-shadow: 0 2px 22px rgba(8, 30, 60, 0.6);
 }
 
 .lp2-title-accent {
-  color: #5eead4;
-}
-
-/* REFINEMENT-03: dritte Headline-Zeile auf Subtitle-Maß. */
-.lp2-title-sub {
-  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  display: block;
+  margin-top: 0.1em;
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 650;
+  color: var(--accent);
 }
 
 .lp2-subtitle {
-  margin: 0 auto 1.75rem;
-  max-width: 34rem;
-  color: rgba(255, 255, 255, 0.94);
-  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
-  line-height: 1.5;
-  text-shadow: 0 1px 14px rgba(8, 30, 60, 0.6);
+  margin: 1.1rem auto 1.75rem;
+  max-width: 540px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 19px;
+  line-height: 1.45;
 }
 
 .lp2-cta-row {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 14px;
+}
+
+.lp2-cta-primary,
+.lp2-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0.7rem 1.7rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .lp2-cta-primary {
   background: #fff;
   color: #0b3b5e;
-  text-decoration: none;
-  padding: 0.7rem 1.6rem;
-  border-radius: 999px;
-  font-weight: 700;
   box-shadow: 0 2px 16px rgba(8, 30, 60, 0.3);
 }
 
 .lp2-cta-secondary {
   color: #fff;
-  text-decoration: none;
-  padding: 0.7rem 1.6rem;
-  border-radius: 12px 12px 26px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
   font-weight: 600;
 }
 
-/* ---------- Content ---------- */
+/* ---------- Content (§17: nach dem Hero, helle Karten) ---------- */
 .lp2-content {
   padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem);
   background: var(--page-bg);
@@ -296,10 +265,16 @@
   color: var(--brand-dark);
 }
 
-/* ---------- Responsive: Tablet + Mobile ---------- */
+/* ---------- Responsive (§18) ---------- */
 @media (max-width: 900px) {
   .lp2-hero {
-    min-height: 100svh;
+    min-height: 82vh;
+  }
+
+  .lp2-bar {
+    width: min(94vw, 1200px);
+    gap: 0.8rem;
+    padding: 0.5rem 0.6rem 0.5rem 1rem;
   }
 
   .lp2-cards {
@@ -312,47 +287,37 @@
     min-height: 100svh;
   }
 
-  /* Mobile: Bild stärker beschnitten (cover), Wirkung bleibt. */
   .lp2-background {
-    background-position: 62% center;
-  }
-
-  .lp2-hero-content {
-    margin: 0 1rem;
-  }
-
-  .lp2-header {
-    padding: 0.85rem 1rem;
-  }
-
-  .lp2-brand {
-    font-size: 0.85rem;
+    background-position: center center;
   }
 
   .lp2-bar {
+    flex-wrap: nowrap;
     gap: 0.5rem;
     padding: 0.45rem 0.5rem 0.45rem 0.8rem;
   }
 
-  /* Brand führt bereits nach "/" — Start-Link auf Mobile ausblenden,
-     damit die Leiste ohne Scrollen passt (funktional kein Verlust). */
   .lp2-bar .lp2-nav-link {
     display: none;
   }
 
-  .lp2-lang-btn {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.75rem;
+  .lp2-brand {
+    font-size: 0.9rem;
   }
 
-  .lp2-nav-cta {
-    padding: 0.45rem 0.8rem;
-    font-size: 0.85rem;
+  .lp2-hero-content {
+    top: 50%;
+    width: min(720px, 94%);
   }
 
-  .lp2-login {
-    padding: 0.35rem 0.8rem;
-    font-size: 0.8rem;
+  .lp2-cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp2-cta-primary,
+  .lp2-cta-secondary {
+    justify-content: center;
   }
 
   .lp2-footer {
