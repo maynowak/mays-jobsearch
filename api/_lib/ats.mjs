@@ -291,7 +291,21 @@ export function extractRequirementsFromJob(job) {
     });
   }
 
-  return requirements;
+  // ATS-UI-DATA-01 (Root Cause B): quellenübergreifend deduplizieren.
+  // Titel/Tags/Description lieferten je eigene Objekte mit identischem
+  // `normalized` ("DevOps" vs. "devops") — die UI zeigte sie doppelt.
+  // Schlüssel: case-insensitive + trim + whitespace-normalisiert;
+  // erstes Vorkommen gewinnt (kein fachliches Zusammenwerfen).
+  const seenNormalized = new Set();
+  return requirements.filter((req) => {
+    const key = String(req.normalized ?? req.text ?? "")
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, " ");
+    if (seenNormalized.has(key)) return false;
+    seenNormalized.add(key);
+    return true;
+  });
 }
 
 export function matchRequirement(req, cvSkills, cvData) {

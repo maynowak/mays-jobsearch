@@ -42,7 +42,7 @@ export function ATSDetails({ result }: ATSDetailsProps) {
           {Math.round(analysis.score)}/100
         </div>
         <div className="text-sm text-gray-600 mt-1">
-          Keyword Coverage: {Math.round(analysis.keywordCoverage.overall * 100)}%
+          Keyword Coverage: {Math.min(100, Math.max(0, Math.round(analysis.keywordCoverage.overall)))}%
         </div>
       </div>
 

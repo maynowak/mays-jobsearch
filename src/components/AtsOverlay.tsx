@@ -233,7 +233,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
           </div>
           <div className="ats-score-label">
             Keyword Coverage:{' '}
-            {Math.round((analysis.analysis?.keywordCoverage?.overall ?? 0) * 100)}%
+            {Math.min(100, Math.max(0, Math.round(analysis.analysis?.keywordCoverage?.overall ?? 0)))}%
           </div>
         </div>
       ),

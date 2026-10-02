@@ -227,9 +227,9 @@ describe("STEP 37B - ATS Analysis Core", () => {
     };
     const profile = { skills: "React, TypeScript" };
     const result = analyzeJobForAts(job, profile);
-    // With fixed tokenize: "React Developer" -> ["react", "developer"]
-    // Exact matches: "react" (title + tag) and "typescript" (tag) = 2 MATCHED from tags + 1 from title = 3
-    expect(result.summary.matched).toBe(3);
+    // ATS-UI-DATA-01: quellenübergreifend deduped — "react" (Titel + Tag)
+    // ist EIN Requirement: MATCHED = react + typescript = 2
+    expect(result.summary.matched).toBe(2);
     // No partials with exact tokenization
     expect(result.summary.partial).toBe(0);
     // One recommendation for missing "nodejs" skill
@@ -653,5 +653,40 @@ describe("STEP 37D-PRIVACY - Logging Safety", () => {
   it("J) Unknown data handling documented", () => {
     const notice = getPrivacyNotice();
     expect(notice.details.dataSent).toBeDefined();
+  });
+});
+
+describe("ATS-UI-DATA-01: Requirement Uniqueness (quellenübergreifend)", () => {
+  // INVARIANT B: case-insensitive + trim + whitespace-normalisiert eindeutig.
+  function devopsJob() {
+    return {
+      slug: "dup-1",
+      title: "DevOps Engineer",
+      company_name: "Dup Corp",
+      location: ["Berlin"],
+      remote: false,
+      tags: ["devops", "Kubernetes"],
+      descriptionPlain: "We need DEVOPS experience and docker skills.",
+    };
+  }
+
+  it("TEST 6: DevOps/devops/DEVOPS aus Titel/Tags/Description → genau 1 Requirement", () => {
+    const reqs = extractRequirementsFromJob(devopsJob());
+    const devopsReqs = reqs.filter((r) => String(r.normalized).toLowerCase().replace(/\s+/g, " ") === "devops");
+    expect(devopsReqs.length).toBe(1);
+  });
+
+  it("TEST 7: unterschiedliche Begriffe bleiben erhalten", () => {
+    const reqs = extractRequirementsFromJob(devopsJob());
+    const normalized = reqs.map((r) => String(r.normalized).toLowerCase().replace(/\s+/g, " "));
+    // Tatsächliche Überlebende: devops (einmal, aus Titel), engineer,
+    // Kubernetes (Tag), onsite (remote-Flag) — docker fällt schon bei der
+    // Description-Extraktion raus (nur geänderte/REQUIRED-Tokens)
+    expect(normalized).toContain("devops");
+    expect(normalized).toContain("engineer");
+    expect(normalized).toContain("kubernetes");
+    expect(normalized).toContain("onsite");
+    // Eindeutigkeit insgesamt: keine doppelten Schlüssel
+    expect(new Set(normalized).size).toBe(normalized.length);
   });
 });

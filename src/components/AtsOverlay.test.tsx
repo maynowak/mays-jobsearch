@@ -50,7 +50,7 @@ function createMockAnalysis(overrides: Partial<AtsAnalysisResponse> = {}): AtsAn
   const base: AtsAnalysisResponse = {
     analysis: {
       score: 75,
-      keywordCoverage: { overall: 0.75 },
+      keywordCoverage: { overall: 75 },
       criticalGaps: [],
       requirements: [
         { id: "req-1", text: "React", category: "skill", importance: "high" },
@@ -144,7 +144,7 @@ describe("ATS-UI-IMPROVEMENT-01: AtsOverlay user-facing presentation", () => {
     const analysis = createMockAnalysis({
       analysis: {
         score: 25,
-        keywordCoverage: { overall: 0.25 },
+        keywordCoverage: { overall: 25 },
         criticalGaps: [],
         requirements: [
           { id: "req-1", text: "Kubernetes", category: "skill", importance: "high" },
@@ -259,5 +259,53 @@ describe("ATS-UI-IMPROVEMENT-01: AtsOverlay user-facing presentation", () => {
     expect(screen.getByText("What Already Matches")).toBeInTheDocument();
     expect(screen.getByText("Where Evidence Is Missing")).toBeInTheDocument();
     expect(screen.getByText("Application Tips")).toBeInTheDocument();
+  });
+});
+describe("ATS-UI-DATA-01: Keyword Coverage ist Prozent, kein Ratio", () => {
+  // Produktions-Einheit ist 0..100 (Prozent). overall 50 darf nie zu 5000 % werden.
+  async function renderWithCoverage(overall: number) {
+    const { analyzeATS } = await import("../api");
+    vi.mocked(analyzeATS).mockResolvedValue(
+      createMockAnalysis({ analysis: {
+        score: 50,
+        keywordCoverage: { overall },
+        criticalGaps: [],
+        requirements: [],
+        matches: [],
+      } })
+    );
+    render(
+      <LangProvider>
+        <AtsOverlay job={baseJob} profile={baseProfile} onClose={vi.fn()} />
+      </LangProvider>
+    );
+    await screen.findByText("ATS-Bewertung");
+    return document.body.textContent ?? "";
+  }
+
+  it("TEST 1: coverage 0 ist gültig (0 %)", async () => {
+    const text = await renderWithCoverage(0);
+    expect(text).toContain("0%");
+    cleanup();
+  });
+
+  it("TEST 3: coverage 50 wird als 50 % angezeigt (nie 5000 %)", async () => {
+    const text = await renderWithCoverage(50);
+    expect(text).toContain("50%");
+    expect(text).not.toContain("5000%");
+    cleanup();
+  });
+
+  it("TEST 4: coverage 100 ist gültig (100 %)", async () => {
+    const text = await renderWithCoverage(100);
+    expect(text).toContain("100%");
+    cleanup();
+  });
+
+  it("TEST 5: coverage > 100 wird gekappt (kein ungültiger Wert)", async () => {
+    const text = await renderWithCoverage(150);
+    expect(text).toContain("100%");
+    expect(text).not.toContain("150%");
+    cleanup();
   });
 });
