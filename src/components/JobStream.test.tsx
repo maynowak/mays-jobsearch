@@ -2,10 +2,23 @@ import { describe, expect, it, afterEach, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import JobStream, {
   buildStreamNotes,
+  recycleNote,
   depthClass,
+  noteOpacity,
   STREAM_COUNTS,
   SAFE_ZONE,
 } from "./JobStream";
+
+function mulberry(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 afterEach(() => {
   cleanup();
@@ -62,10 +75,59 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
     expect(checks).toBeLessThanOrEqual(3);
   });
 
-  it("Tiefenklassen staffeln Größen", () => {
-    expect(depthClass(0.1)).toBe("js-back");
-    expect(depthClass(0.5)).toBe("js-mid");
-    expect(depthClass(0.9)).toBe("js-front");
+  it("Tiefenklassen staffeln Größen (+ Ambient-Sonderklasse)", () => {
+    const base = buildStreamNotes()[0];
+    expect(depthClass({ ...base, depth: 0.1, ambient: false })).toBe("js-back");
+    expect(depthClass({ ...base, depth: 0.5, ambient: false })).toBe("js-mid");
+    expect(depthClass({ ...base, depth: 0.9, ambient: false })).toBe("js-front");
+    expect(depthClass({ ...base, ambient: true })).toContain("js-ambient");
+  });
+
+  it("genau 2 Ambient-Notes, genau 2 mit Check", () => {
+    const notes = buildStreamNotes();
+    expect(notes.filter((n) => n.ambient).length).toBe(2);
+    expect(notes.filter((n) => n.hasCheck).length).toBe(2);
+  });
+
+  it("Opacity-Mapping folgt der Tiefe (Ambient am dezentesten)", () => {
+    const notes = buildStreamNotes();
+    const front = notes.find((n) => !n.ambient && n.depth >= 0.7)!;
+    const back = notes.find((n) => !n.ambient && n.depth < 0.35)!;
+    const ambient = notes.find((n) => n.ambient)!;
+    expect(noteOpacity(front)).toBe(0.9);
+    expect(noteOpacity(back)).toBe(0.3);
+    expect(noteOpacity(ambient)).toBe(0.22);
+    expect(noteOpacity(ambient)).toBeLessThan(noteOpacity(back));
+  });
+
+  it("Check-Fenster liegt bei ca. 600–1100 ms", () => {
+    for (const n of buildStreamNotes().filter((x) => x.hasCheck)) {
+      // Pop-Fenster ≈ 6 % der Dauer
+      const visibleMs = 0.06 * n.duration * 1000;
+      expect(visibleMs).toBeGreaterThanOrEqual(600);
+      expect(visibleMs).toBeLessThanOrEqual(1100);
+    }
+  });
+
+  it("Recycling: gleiche IDs, neue Generation, begrenzte Menge", () => {
+    const rng = mulberry(99);
+    let notes = buildStreamNotes();
+    for (let round = 0; round < 5; round += 1) {
+      notes = notes.map((n) => recycleNote(n, rng));
+    }
+    expect(notes.length).toBe(10);
+    expect(notes.map((n) => n.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(notes.every((n) => n.gen === 5)).toBe(true);
+    const inside = (x: number, y: number) =>
+      x > SAFE_ZONE.x0 + 0.05 &&
+      x < SAFE_ZONE.x1 - 0.05 &&
+      y > SAFE_ZONE.y0 + 0.05 &&
+      y < SAFE_ZONE.y1 - 0.05;
+    for (const n of notes) {
+      expect(inside(n.startX, n.startY) && inside(n.endX, n.endY)).toBe(false);
+      expect(n.delay).toBeGreaterThanOrEqual(0.2);
+      expect(n.delay).toBeLessThanOrEqual(1.2);
+    }
   });
 
   it("Flugbahnen meiden überwiegend das Safe-Zonen-Innere", () => {

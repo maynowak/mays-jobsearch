@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-// LANDINGPAGE-02-HERO-ANIMATION-03 — Phase B: animierter Job-Stream.
+// JOB-NOTES-FINETUNING-01 — Phase B: animierter Job-Stream (verfeinert).
 // Echte HTML/CSS-Elemente mit Dummy-Daten (keine API, keine Canvas, keine Libs).
-// Bewegung: WAAPI-Einmal-Setup (transform/opacity only, keine Re-Renders);
-// Checks: CSS-Pulse synchron zur Noten-Dauer.
+// Bewegung: WAAPI pro Zettel, EIN Durchlauf, danach individuelles Recycling
+// via onfinish (kein Gesamt-Reset, keine Re-Renders pro Frame).
+// Checks: CSS-Pulse (~0,7 s Fenster) synchron zur Noten-Dauer.
 
 export const STREAM_WIDTH = 1600;
 export const STREAM_HEIGHT = 900;
@@ -15,6 +16,8 @@ export const SAFE_ZONE = { x0: 0.3, x1: 0.7, y0: 0.25, y1: 0.7 };
 
 export interface StreamNote {
   id: number;
+  /** Recycling-Generation (Key-Wechsel pro Zyklus) */
+  gen: number;
   startX: number;
   startY: number;
   endX: number;
@@ -24,8 +27,10 @@ export interface StreamNote {
   /** Sekunden, negativ = beim Laden bereits unterwegs */
   delay: number;
   rotation: number;
-  /** 0 (hinten) … 1 (vorne) */
+  /** 0 (hinten) … 1 (vorne), stabil pro Zettel */
   depth: number;
+  /** dezente Hintergrund-Note (räumliche Tiefe, kein Fokus) */
+  ambient: boolean;
   hasCheck: boolean;
   /** Zeitpunkt des Checks als Anteil des Durchlaufs (0…1) */
   checkAt: number;
@@ -42,8 +47,8 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-// Bahnen in virtuellen Koordinaten (0…1, Start darf außerhalb liegen).
-// Durchgehend ↘-Drift (wie die Lichtstreifen), Safe Zone bleibt frei.
+// Initial-Bahnen in virtuellen Koordinaten (0…1, Start darf außerhalb
+// liegen). Durchgehend ↘-Drift (wie die Lichtstreifen), Safe Zone frei.
 const LANES: Array<[number, number, number, number]> = [
   [-0.1, 0.06, 0.72, 0.18],
   [0.15, 0.02, 1.1, 0.13],
@@ -59,12 +64,16 @@ const LANES: Array<[number, number, number, number]> = [
 
 const DEPTHS = [0.15, 0.4, 0.65, 0.9, 0.3, 0.55, 0.8, 0.2, 0.5, 0.7];
 
+// 2 der 10 Noten sind Ambient (räumliche Tiefe, kein Fokus).
+const AMBIENT_IDS = new Set([2, 7]);
+
 export function buildStreamNotes(seed: number = STREAM_SEED): StreamNote[] {
   const rng = mulberry32(seed);
   return LANES.map(([sx, sy, ex, ey], i) => {
     const duration = 11 + rng() * 6;
     return {
       id: i,
+      gen: 0,
       startX: sx,
       startY: sy,
       endX: ex,
@@ -73,17 +82,79 @@ export function buildStreamNotes(seed: number = STREAM_SEED): StreamNote[] {
       delay: -rng() * duration,
       rotation: (rng() - 0.5) * 8,
       depth: DEPTHS[i % DEPTHS.length],
-      // ca. 30 % der Karten erhalten einen Check
-      hasCheck: i % 4 === 1,
+      ambient: AMBIENT_IDS.has(i),
+      // 2 von 10 mit Check (maximal ein bis zwei gleichzeitig)
+      hasCheck: i % 5 === 1,
       checkAt: 0.35 + rng() * 0.3,
     };
   });
 }
 
-export function depthClass(depth: number): "js-back" | "js-mid" | "js-front" {
-  if (depth < 0.35) return "js-back";
-  if (depth < 0.7) return "js-mid";
+function insideSafe(x: number, y: number, margin = 0.05): boolean {
+  return (
+    x > SAFE_ZONE.x0 + margin &&
+    x < SAFE_ZONE.x1 - margin &&
+    y > SAFE_ZONE.y0 + margin &&
+    y < SAFE_ZONE.y1 - margin
+  );
+}
+
+// Recycling: neuer Pfad in Außenbändern (↘-Drift bleibt), Kennung stabil.
+export function recycleNote(prev: StreamNote, rng: () => number): StreamNote {
+  const bands = [
+    // oben: y bleibt über der Zone
+    () => {
+      const sx = -0.1 + rng() * 0.9;
+      return { sx, sy: 0.02 + rng() * 0.1, ex: sx + 0.4 + rng() * 0.5, ey: 0.1 + rng() * 0.12 };
+    },
+    // links: x bleibt links der Zone
+    () => {
+      const sy = -0.1 + rng() * 0.6;
+      return { sx: rng() * 0.12, sy, ex: 0.02 + rng() * 0.18, ey: sy + 0.4 + rng() * 0.4 };
+    },
+    // rechts: x bleibt rechts der Zone
+    () => {
+      const sy = -0.08 + rng() * 0.48;
+      return { sx: 0.88 + rng() * 0.2, sy, ex: 0.82 + rng() * 0.23, ey: sy + 0.35 + rng() * 0.4 };
+    },
+    // unten: y bleibt unter der Zone
+    () => {
+      const sx = -0.08 + rng() * 0.68;
+      return { sx, sy: 0.8 + rng() * 0.18, ex: sx + 0.3 + rng() * 0.5, ey: 0.76 + rng() * 0.19 };
+    },
+  ];
+  const pick = bands[Math.floor(rng() * bands.length)]();
+  // Sicherheitsnetz: Endpunkte nie tief in der Zone
+  const fix = (x: number, y: number) => (insideSafe(x, y) ? { x: 0.15, y } : { x, y });
+  const s = fix(pick.sx, pick.sy);
+  const e = fix(pick.ex, pick.ey);
+  return {
+    ...prev,
+    gen: prev.gen + 1,
+    startX: s.x,
+    startY: s.y,
+    endX: e.x,
+    endY: e.y,
+    duration: 11 + rng() * 6,
+    delay: 0.2 + rng() * 1.0,
+    rotation: (rng() - 0.5) * 8,
+    checkAt: 0.35 + rng() * 0.3,
+  };
+}
+
+export function depthClass(note: StreamNote): string {
+  if (note.ambient) return "js-back js-ambient";
+  if (note.depth < 0.35) return "js-back";
+  if (note.depth < 0.7) return "js-mid";
   return "js-front";
+}
+
+/** Basis-Opacity je Note (WAAPI-Envelope nutzt denselben Wert). */
+export function noteOpacity(note: StreamNote): number {
+  if (note.ambient) return 0.22;
+  if (note.depth < 0.35) return 0.3;
+  if (note.depth < 0.7) return 0.6;
+  return 0.9;
 }
 
 function pickCount(): number {
@@ -103,13 +174,93 @@ function reducedMotion(): boolean {
   );
 }
 
+interface NoteProps {
+  note: StreamNote;
+  size: { width: number; height: number };
+  staticMotion: boolean;
+  onRecycle: (id: number) => void;
+}
+
+function StreamNoteView({ note, size, staticMotion, onRecycle }: NoteProps): React.ReactElement {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || staticMotion || typeof el.animate !== "function") return undefined;
+    const opacity = noteOpacity(note);
+    const x0 = note.startX * size.width;
+    const y0 = note.startY * size.height;
+    const x1 = note.endX * size.width;
+    const y1 = note.endY * size.height;
+    const anim = el.animate(
+      [
+        { opacity: 0, transform: `translate(${x0}px, ${y0}px)` },
+        { opacity, transform: `translate(${x0}px, ${y0}px)`, offset: 0.08 },
+        { opacity, transform: `translate(${x1}px, ${y1}px)`, offset: 0.9 },
+        { opacity: 0, transform: `translate(${x1}px, ${y1}px)` },
+      ],
+      {
+        duration: note.duration * 1000,
+        delay: note.delay * 1000,
+        iterations: 1,
+        easing: "linear",
+        fill: "both",
+      }
+    );
+    // Individuelles Recycling: Pause, dann neuer Pfad (kein Gesamt-Reset).
+    let timer: number | undefined;
+    anim.onfinish = () => {
+      timer = window.setTimeout(() => onRecycle(note.id), 400 + (note.id % 3) * 200);
+    };
+    return () => {
+      window.clearTimeout(timer);
+      anim.cancel();
+    };
+  }, [note, size, onRecycle, staticMotion]);
+
+  // Statisch (Reduced Motion / ohne WAAPI): Note auf Bahnhälfte legen.
+  const staticPos = staticMotion
+    ? {
+        left: `${((note.startX + note.endX) / 2) * 100}%`,
+        top: `${((note.startY + note.endY) / 2) * 100}%`,
+      }
+    : undefined;
+
+  return (
+    <div ref={ref} className={`js-note ${depthClass(note)}`} style={staticPos}>
+      <div className="js-note-inner" style={{ transform: `rotate(${note.rotation.toFixed(2)}deg)` }}>
+        <span className="js-note-icon" />
+        <span className="js-note-lines">
+          <i style={{ width: "82%" }} />
+          <i style={{ width: "64%" }} />
+          <i style={{ width: "47%" }} />
+          <b />
+        </span>
+        {note.hasCheck && (
+          <span
+            className="js-check"
+            style={{
+              animationDuration: `${note.duration.toFixed(2)}s`,
+              animationDelay: `${(note.delay + note.checkAt * note.duration).toFixed(2)}s`,
+            }}
+          >
+            ✓
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function JobStream(): React.ReactElement {
   const notes = useMemo(() => buildStreamNotes(), []);
+  const [items, setItems] = useState<StreamNote[]>(notes);
   const [count, setCount] = useState<number>(pickCount);
   const [staticMotion] = useState<boolean>(reducedMotion);
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const layerRef = useRef<HTMLDivElement>(null);
-  const noteRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const visible = notes.slice(0, count);
+  const rngRef = useRef<(() => number) | undefined>(undefined);
+  if (!rngRef.current) rngRef.current = mulberry32(STREAM_SEED + 1);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
@@ -119,50 +270,22 @@ export default function JobStream(): React.ReactElement {
     return () => queries.forEach((q) => q.removeEventListener?.("change", onChange));
   }, []);
 
-  // Einmaliges Bewegungs-Setup (keine Re-Renders pro Frame).
-  // Resize: Animationen abbrechen und mit neuen Maßen neu aufsetzen.
   useEffect(() => {
     const layer = layerRef.current;
-    if (!layer || staticMotion) return undefined;
-    let animations: Animation[] = [];
-    const setup = () => {
-      animations.splice(0).forEach((a) => a.cancel());
-      const width = layer.clientWidth || 1;
-      const height = layer.clientHeight || 1;
-      visible.forEach((note, i) => {
-        const el = noteRefs.current[i];
-        if (!el || typeof el.animate !== "function") return;
-        const opacity = 0.35 + note.depth * 0.55;
-        const x0 = note.startX * width;
-        const y0 = note.startY * height;
-        const x1 = note.endX * width;
-        const y1 = note.endY * height;
-        animations.push(
-          el.animate(
-            [
-              { opacity: 0, transform: `translate(${x0}px, ${y0}px)` },
-              { opacity, transform: `translate(${x0}px, ${y0}px)`, offset: 0.08 },
-              { opacity, transform: `translate(${x1}px, ${y1}px)`, offset: 0.9 },
-              { opacity: 0, transform: `translate(${x1}px, ${y1}px)` },
-            ],
-            {
-              duration: note.duration * 1000,
-              delay: note.delay * 1000,
-              iterations: Infinity,
-              easing: "linear",
-            }
-          )
-        );
-      });
-    };
-    setup();
-    window.addEventListener("resize", setup);
-    return () => {
-      window.removeEventListener("resize", setup);
-      animations.forEach((a) => a.cancel());
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible.length, staticMotion]);
+    if (!layer || typeof window === "undefined") return undefined;
+    const measure = () =>
+      setSize({ width: layer.clientWidth || 1, height: layer.clientHeight || 1 });
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const recycle = useCallback((id: number) => {
+    const rng = rngRef.current ?? mulberry32(STREAM_SEED + 1);
+    setItems((prev) => prev.map((n) => (n.id === id ? recycleNote(n, rng) : n)));
+  }, []);
+
+  const visible = items.slice(0, count);
 
   return (
     <div
@@ -171,38 +294,14 @@ export default function JobStream(): React.ReactElement {
       data-motion={staticMotion ? "static" : "live"}
       aria-hidden="true"
     >
-      {visible.map((note, i) => (
-        <div
-          key={note.id}
-          ref={(el) => {
-            noteRefs.current[i] = el;
-          }}
-          className={`js-note ${depthClass(note.depth)}`}
-        >
-          <div
-            className="js-note-inner"
-            style={{ transform: `rotate(${note.rotation.toFixed(2)}deg)` }}
-          >
-            <span className="js-note-icon" />
-            <span className="js-note-lines">
-              <i style={{ width: "82%" }} />
-              <i style={{ width: "64%" }} />
-              <i style={{ width: "47%" }} />
-              <b />
-            </span>
-            {note.hasCheck && (
-              <span
-                className="js-check"
-                style={{
-                  animationDuration: `${note.duration.toFixed(2)}s`,
-                  animationDelay: `${(note.delay + note.checkAt * note.duration).toFixed(2)}s`,
-                }}
-              >
-                ✓
-              </span>
-            )}
-          </div>
-        </div>
+      {visible.map((note) => (
+        <StreamNoteView
+          key={`${note.id}:${note.gen}`}
+          note={note}
+          size={size}
+          staticMotion={staticMotion}
+          onRecycle={recycle}
+        />
       ))}
     </div>
   );

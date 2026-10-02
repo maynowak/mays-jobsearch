@@ -179,19 +179,26 @@
 
 .js-back {
   width: 80px;
-  opacity: 0.4;
-  filter: blur(1.5px);
+  opacity: 0.3;
+  filter: blur(2px);
 }
 
 .js-mid {
   width: 120px;
-  opacity: 0.65;
-  filter: blur(0.5px);
+  opacity: 0.6;
+  filter: blur(0.7px);
 }
 
 .js-front {
   width: 160px;
   opacity: 0.9;
+}
+
+/* Ambient (§7): maximal dezent, räumliche Tiefe ohne Fokus. */
+.js-ambient {
+  width: 64px;
+  opacity: 0.22;
+  filter: blur(2.5px);
 }
 
 .js-note-inner {
@@ -262,15 +269,15 @@
     opacity: 0;
     transform: scale(0.4);
   }
-  3% {
+  1.5% {
     opacity: 1;
     transform: scale(1.15);
   }
-  9% {
+  3% {
     opacity: 1;
     transform: scale(1);
   }
-  16%,
+  6%,
   100% {
     opacity: 0;
     transform: scale(0.9);
@@ -544,6 +551,32 @@
 @media (max-width: 600px) {
   .lp2-hero {
     min-height: 100svh;
+  }
+
+  /* Mobile (§9): deutlich reduzierte Opacity + Glow, kleinere Karten,
+     kürzere gefühlte Bahnen durch kleinere Fläche. */
+  .js-front {
+    width: 120px;
+    opacity: 0.75;
+  }
+
+  .js-mid {
+    width: 90px;
+    opacity: 0.5;
+  }
+
+  .js-back {
+    width: 60px;
+    opacity: 0.25;
+  }
+
+  .js-ambient {
+    width: 48px;
+    opacity: 0.18;
+  }
+
+  .js-check {
+    box-shadow: 0 0 6px rgba(22, 163, 74, 0.7);
   }
 
   .lp2-background {
