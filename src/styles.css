@@ -277,6 +277,46 @@ body {
   gap: 1.4rem;
 }
 
+@media (min-width: 768px) {
+  /* Desktop: Links-Gruppe rechts (darf die Mobile-Regel
+     `display: none` weiter unten nicht überstimmen). */
+  .nav-links {
+    margin-left: auto;
+  }
+}
+
+/* Aufgaben-Menü: Brand links (statt BUG-13-Mittenzentrierung),
+   EN/DE-Schalter in der Mitte, Links + Login rechts. */
+.navbar-title-left {
+  position: static;
+  transform: none;
+}
+
+.nav-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.nav-login {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.4rem 1.1rem;
+  border-radius: var(--radius-full);
+  cursor: default;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .nav-center {
+    display: none;
+  }
+}
+
 .nav-links a {
   text-decoration: none;
   color: var(--text);
@@ -422,7 +462,7 @@ body {
 }
 
 @media (max-width: 767px) {
-  .nav-links {
+  .navbar:not(.scrolled) .nav-links {
     display: none;
   }
   .burger {
@@ -440,7 +480,7 @@ body {
   position: relative;
   color: var(--text);
   padding: 64px 20px 72px;
-  text-align: left;
+  text-align: center;
   background:
     linear-gradient(
       90deg,
@@ -458,6 +498,7 @@ body {
 
 .hero-inner {
   max-width: 640px;
+  margin: 0 auto;
 }
 
 .hero h1 {
@@ -467,7 +508,7 @@ body {
 }
 
 .tagline {
-  margin: 12px 0 0;
+  margin: 12px auto 0;
   max-width: 560px;
   font-size: 1.05rem;
   color: var(--text);

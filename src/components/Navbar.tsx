@@ -125,9 +125,13 @@ export default function Navbar({ route }: Props) {
   return (
     <header className="navbar">
       <nav className="nav-inner" aria-label={t("nav.aria")}>
-        <a href="/" className="navbar-title">
+        <a href="/" className="navbar-title navbar-title-left">
           May&rsquo;s Job Matcher
         </a>
+
+        <div className="nav-center">
+          <LangToggle />
+        </div>
 
         <div className="nav-links">
           {links.map(([label, href]) => (
@@ -135,7 +139,10 @@ export default function Navbar({ route }: Props) {
               {label}
             </a>
           ))}
-          <LangToggle />
+          {/* Login noch ohne Funktion (Prototype-Vorbereitung) */}
+          <button type="button" className="nav-login" aria-disabled="true">
+            Login
+          </button>
         </div>
 
         <button
@@ -167,6 +174,9 @@ export default function Navbar({ route }: Props) {
               <div className="mobile-lang">
                 <LangToggle />
               </div>
+              <button type="button" className="nav-login" aria-disabled="true">
+                Login
+              </button>
             </div>
           </div>
         )}

@@ -13,7 +13,6 @@ type Lp2Lang = "de" | "en";
 
 const STRINGS: Record<Lp2Lang, Record<string, string>> = {
   de: {
-    home: "Start",
     cta: "Zum Job-Matcher",
     kicker: "Jobsearch",
     titleA: "Dein nächster Karriereschritt",
@@ -32,7 +31,6 @@ const STRINGS: Record<Lp2Lang, Record<string, string>> = {
     footer: "May's Job Matcher · Prototype Landingpage 2",
   },
   en: {
-    home: "Home",
     cta: "Open Job Matcher",
     kicker: "Jobsearch",
     titleA: "Your next career move",
@@ -78,9 +76,6 @@ export default function LandingPage2(): React.ReactElement {
           <a className="lp2-brand" href="/">
             May&apos;s Job Matcher
           </a>
-          <a className="lp2-nav-link" href="/">
-            {t.home}
-          </a>
           <div className="lp2-lang" role="group" aria-label="Language / Sprache">
             <button
               type="button"
@@ -99,9 +94,18 @@ export default function LandingPage2(): React.ReactElement {
               DE
             </button>
           </div>
-          <a className="lp2-nav-cta" href="/top">
-            {t.cta}
-          </a>
+          <nav className="lp2-nav" aria-label="Bereiche">
+            <a className="lp2-nav-link" href="/top">
+              {lang === "de" ? "Suche" : "Search"}
+            </a>
+            <a className="lp2-nav-link" href="/top">
+              {lang === "de" ? "Benachrichtigungen" : "Alerts"}
+            </a>
+            {/* Login noch ohne Funktion (Prototype) */}
+            <button type="button" className="lp2-login" aria-disabled="true">
+              Login
+            </button>
+          </nav>
         </div>
       </header>
 

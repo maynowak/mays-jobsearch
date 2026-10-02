@@ -61,24 +61,27 @@ describe("LandingPage2 (LANDINGPAGE-02 Prototype)", () => {
     expect(jobs.href).toContain("/top");
   });
 
-  it("Top-Leiste enthält Start, EN/DE mittig und CTA (REFINEMENT-05)", () => {
+  it("Top-Leiste enthält Brand, EN/DE mittig, Suche/Benachrichtigungen/Login", () => {
     renderPage();
     const bar = document.querySelector(".lp2-bar") as HTMLElement;
     expect(bar).toBeTruthy();
-    expect(within(bar).getByText("Start")).toBeTruthy();
+    expect(within(bar).getByText("May's Job Matcher")).toBeTruthy();
     expect(within(bar).getByText("EN")).toBeTruthy();
     expect(within(bar).getByText("DE")).toBeTruthy();
-    expect(within(bar).getByText("Zum Job-Matcher")).toBeTruthy();
+    expect(within(bar).getByText("Suche")).toBeTruthy();
+    expect(within(bar).getByText("Benachrichtigungen")).toBeTruthy();
+    expect(within(bar).getByText("Login")).toBeTruthy();
   });
 
   it("EN/DE-Schalter wechselt die Sprache und merkt sie sich", () => {
     renderPage();
     fireEvent.click(screen.getByText("EN"));
     expect(screen.getByText("Find jobs")).toBeTruthy();
-    expect(screen.getByText("Home")).toBeTruthy();
+    expect(screen.getByText("Search")).toBeTruthy();
     expect(window.localStorage.getItem("lp2-lang")).toBe("en");
     fireEvent.click(screen.getByText("DE"));
     expect(screen.getByText("Jobs finden")).toBeTruthy();
+    expect(screen.getByText("Suche")).toBeTruthy();
     expect(window.localStorage.getItem("lp2-lang")).toBe("de");
   });
 });

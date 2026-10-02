@@ -54,6 +54,26 @@
   white-space: nowrap;
 }
 
+.lp2-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Login-Oval: gleiche Höhe wie der EN/DE-Schalter, vorerst ohne Funktion. */
+.lp2-login {
+  border: none;
+  background: #fff;
+  color: #0b3b5e;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.4rem 1.1rem;
+  border-radius: 999px;
+  cursor: default;
+  box-shadow: 0 2px 14px rgba(8, 30, 60, 0.25);
+  white-space: nowrap;
+}
+
 .lp2-lang {
   display: flex;
   margin-inline: auto;
@@ -328,6 +348,11 @@
   .lp2-nav-cta {
     padding: 0.45rem 0.8rem;
     font-size: 0.85rem;
+  }
+
+  .lp2-login {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8rem;
   }
 
   .lp2-footer {
