@@ -2,14 +2,16 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import LandingPage2 from "./components/LandingPage2";
 import { LangProvider } from "./i18n";
+import { rootComponentFor } from "./rootRoute";
 
-// LANDINGPAGE-02: separater Prototype unter /landingspage2 — rendert OHNE
-// die Job-Matcher-App (keine Änderung an bestehenden Routen/Features).
-const isLandingPage2 =
-  typeof window !== "undefined" && window.location.pathname === "/landingspage2";
+// LANDINGPAGE-SWAP: "/" rendert die visuelle LandingPage2 (OHNE App-Logik),
+// alles andere die Job-Matcher-App (alte Landing unter "/landingspage2",
+// Matcher unter "/top", Impressum). Entscheidung testbar in rootRoute.ts.
+const rootComponent =
+  typeof window !== "undefined" ? rootComponentFor(window.location.pathname) : "app";
 
 createRoot(document.getElementById("root")!).render(
   <LangProvider>
-    {isLandingPage2 ? <LandingPage2 /> : <App />}
+    {rootComponent === "landing2" ? <LandingPage2 /> : <App />}
   </LangProvider>
 );
