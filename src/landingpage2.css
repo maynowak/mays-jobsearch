@@ -9,49 +9,83 @@
   overflow-x: hidden;
 }
 
-/* ---------- Header (REFINEMENT-01: transparent über der Hero-Bühne) ---------- */
+/* ---------- Header-Leiste (REFINEMENT-05) ----------
+   Eine transparente Leiste über der Hero-Bühne: Start links, EN/DE mittig,
+   CTA rechts. Dünner Rand in exakt der Farbe des „Mehr erfahren"-Buttons,
+   innen transparent, Rundung rechts unten betont. */
 .lp2-header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem clamp(1rem, 4vw, 3rem);
+  justify-content: center;
+  padding: 0.9rem clamp(1rem, 4vw, 3rem) 0;
   background: transparent;
   z-index: 40;
+  pointer-events: none;
+}
+
+.lp2-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  width: min(1060px, 100%);
+  padding: 0.55rem 0.7rem 0.55rem 1.1rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 12px 12px 26px 12px;
 }
 
 .lp2-brand {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: #fff;
   text-decoration: none;
   text-shadow: 0 1px 12px rgba(8, 30, 60, 0.55);
   white-space: nowrap;
 }
 
-.lp2-nav {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
 .lp2-nav-link {
   color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
   text-shadow: 0 1px 10px rgba(8, 30, 60, 0.55);
+  white-space: nowrap;
+}
+
+.lp2-lang {
+  display: flex;
+  margin-inline: auto;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lp2-lang-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.lp2-lang-active {
+  background: #fff;
+  color: #0b3b5e;
 }
 
 .lp2-nav-cta {
   background: #fff;
-  color: var(--brand-dark);
+  color: #0b3b5e;
   text-decoration: none;
   padding: 0.55rem 1.1rem;
   border-radius: 999px;
   font-weight: 700;
+  white-space: nowrap;
   box-shadow: 0 2px 14px rgba(8, 30, 60, 0.25);
 }
 
@@ -77,11 +111,11 @@
   z-index: 0;
 }
 
-/* BackgroundOverlay (REFINEMENT-01): oben nur leichte Abdunklung für
-   Nav-Lesbarkeit (Foto ist dort von sich aus hell); unten nur noch ein
-   sehr kurzer, dezenter Übergang in den Seitenhintergrund; mittig fast
-   nichts, damit Stadt + Lichtlinien voll tragen. Dezentes Blau bettet
-   harte Baumkonturen ein. */
+/* BackgroundOverlay (REFINEMENT-05): oben Weiß-Blende (hell, aber
+   transluzent, damit das Blau durchscheint und weiße Header-Typo lesbar
+   bleibt); unten nur noch ein sehr kurzer, dezenter Übergang in den
+   Seitenhintergrund; mittig fast nichts, damit Stadt + Lichtlinien voll
+   tragen. Dezentes Blau bettet harte Baumkonturen ein. */
 .lp2-overlay {
   position: absolute;
   inset: 0;
@@ -90,8 +124,9 @@
   background:
     linear-gradient(
       180deg,
-      rgba(8, 25, 55, 0.32) 0%,
-      rgba(8, 25, 55, 0) 22%
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0.35) 12%,
+      rgba(255, 255, 255, 0) 24%
     ),
     linear-gradient(
       0deg,
@@ -187,8 +222,8 @@
   color: #fff;
   text-decoration: none;
   padding: 0.7rem 1.6rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 12px 12px 26px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
   background: rgba(255, 255, 255, 0.1);
   font-weight: 600;
 }
@@ -271,21 +306,28 @@
   }
 
   .lp2-brand {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
   }
 
-  .lp2-nav {
-    gap: 0.6rem;
+  .lp2-bar {
+    gap: 0.5rem;
+    padding: 0.45rem 0.5rem 0.45rem 0.8rem;
   }
 
-  .lp2-nav-link {
-    font-size: 0.9rem;
+  /* Brand führt bereits nach "/" — Start-Link auf Mobile ausblenden,
+     damit die Leiste ohne Scrollen passt (funktional kein Verlust). */
+  .lp2-bar .lp2-nav-link {
+    display: none;
+  }
+
+  .lp2-lang-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
   }
 
   .lp2-nav-cta {
-    padding: 0.5rem 0.9rem;
-    font-size: 0.9rem;
-    white-space: nowrap;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.85rem;
   }
 
   .lp2-footer {

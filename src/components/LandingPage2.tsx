@@ -1,26 +1,108 @@
+import { useState } from "react";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 
 // LANDINGPAGE-02 — visueller Prototype (visuelle Bühne, keine App-Logik).
 // Hinweis: Das Task-Asset `hero-bg-jobstream.jpg` existiert im Repo nicht;
-// verwendet wird das am 2026-10-02 abgelegte Bild (identisches Motiv:
-// blaue Lichtlinien, Baumkonturen, Stadt im blauen Abendlicht).
+// verwendet wird das abgelegte Bild (Lichtlinien, Neon-Rahmen, Stadt im
+// blauen Abendlicht).
 // Schichten: BackgroundLayer < BackgroundOverlay < JobStreamLayer (leer,
 // für spätere Zettel-Animation vorbereitet) < ContentLayer.
+// Sprache (EN/DE) ist bewusst komponentenlokal (lp2-lang), kein Eingriff in
+// das App-i18n.
+type Lp2Lang = "de" | "en";
+
+const STRINGS: Record<Lp2Lang, Record<string, string>> = {
+  de: {
+    home: "Start",
+    cta: "Zum Job-Matcher",
+    kicker: "Jobsearch",
+    titleA: "Dein nächster Karriereschritt",
+    titleAccent: "mit KI",
+    titleB: "die zu dir passen",
+    subA: "Stellenangebote aus mehreren Quellen,",
+    subB: "Persönlich auf dich abgestimmt.",
+    findJobs: "Jobs finden",
+    learnMore: "Mehr erfahren",
+    card1t: "Mehrere Quellen",
+    card1p: "Arbeitnow, Arbeitsagentur, Adzuna, JobsPipe, Theirstack und ATS-Boards — eine Suche, ein Ergebnis.",
+    card2t: "KI-Bewertung",
+    card2p: "Jede Stelle erhält einen Match-Score mit Begründung und Vorbereitungsfrage.",
+    card3t: "CV-Upload",
+    card3p: "Lebenslauf hochladen, Profil prüfen, passende Jobs finden — alles im Browser beginnend.",
+    footer: "May's Job Matcher · Prototype Landingpage 2",
+  },
+  en: {
+    home: "Home",
+    cta: "Open Job Matcher",
+    kicker: "Jobsearch",
+    titleA: "Your next career move",
+    titleAccent: "with AI",
+    titleB: "that truly fit you",
+    subA: "Job postings from multiple sources,",
+    subB: "Personally matched to you.",
+    findJobs: "Find jobs",
+    learnMore: "Learn more",
+    card1t: "Multiple sources",
+    card1p: "Arbeitnow, Arbeitsagentur, Adzuna, JobsPipe, Theirstack and ATS boards — one search, one result.",
+    card2t: "AI scoring",
+    card2p: "Every job gets a match score with reasoning and a prep question.",
+    card3t: "CV upload",
+    card3p: "Upload your CV, review the profile, find matching jobs — starting right in the browser.",
+    footer: "May's Job Matcher · Prototype landing page 2",
+  },
+};
+
+function initialLang(): Lp2Lang {
+  try {
+    return window.localStorage.getItem("lp2-lang") === "en" ? "en" : "de";
+  } catch {
+    return "de";
+  }
+}
+
 export default function LandingPage2(): React.ReactElement {
+  const [lang, setLang] = useState<Lp2Lang>(initialLang);
+  const t = STRINGS[lang];
+  const switchLang = (next: Lp2Lang) => {
+    setLang(next);
+    try {
+      window.localStorage.setItem("lp2-lang", next);
+    } catch {
+      /* ignore */
+    }
+  };
   return (
     <div className="lp2">
       <header className="lp2-header">
-        <a className="lp2-brand" href="/">
-          May&apos;s Job Matcher
-        </a>
-        <nav className="lp2-nav" aria-label="Landingpage 2">
+        <div className="lp2-bar" role="navigation" aria-label="Landingpage 2">
+          <a className="lp2-brand" href="/">
+            May&apos;s Job Matcher
+          </a>
           <a className="lp2-nav-link" href="/">
-            Start
+            {t.home}
           </a>
+          <div className="lp2-lang" role="group" aria-label="Language / Sprache">
+            <button
+              type="button"
+              className={lang === "en" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
+              aria-pressed={lang === "en"}
+              onClick={() => switchLang("en")}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              className={lang === "de" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
+              aria-pressed={lang === "de"}
+              onClick={() => switchLang("de")}
+            >
+              DE
+            </button>
+          </div>
           <a className="lp2-nav-cta" href="/top">
-            Zum Job-Matcher
+            {t.cta}
           </a>
-        </nav>
+        </div>
       </header>
 
       <section className="lp2-hero" aria-label="Visuelle Bühne">
@@ -35,25 +117,25 @@ export default function LandingPage2(): React.ReactElement {
             Zettel-Animation; liegt über dem Hintergrund, unter dem Content. */}
         <div className="job-stream-layer" aria-hidden="true" />
         <div className="lp2-hero-content">
-          <p className="lp2-kicker">Jobsearch</p>
+          <p className="lp2-kicker">{t.kicker}</p>
           <h1 className="lp2-title">
-            Dein nächster Karriereschritt
+            {t.titleA}
             <br />
-            <span className="lp2-title-accent">mit KI</span>
+            <span className="lp2-title-accent">{t.titleAccent}</span>
             <br />
-            <span className="lp2-title-sub">die zu dir passen</span>
+            <span className="lp2-title-sub">{t.titleB}</span>
           </h1>
           <p className="lp2-subtitle">
-            Stellenangebote aus mehreren Quellen,
+            {t.subA}
             <br />
-            Persönlich auf dich abgestimmt.
+            {t.subB}
           </p>
           <div className="lp2-cta-row">
             <a className="lp2-cta-primary" href="/top">
-              Jobs finden
+              {t.findJobs}
             </a>
             <a className="lp2-cta-secondary" href="#lp2-content">
-              Mehr erfahren
+              {t.learnMore}
             </a>
           </div>
         </div>
@@ -62,23 +144,23 @@ export default function LandingPage2(): React.ReactElement {
       <main className="lp2-content" id="lp2-content">
         <section className="lp2-cards" aria-label="Highlights">
           <article className="lp2-card">
-            <h2>Mehrere Quellen</h2>
-            <p>Arbeitnow, Arbeitsagentur, Adzuna, JobsPipe, Theirstack und ATS-Boards — eine Suche, ein Ergebnis.</p>
+            <h2>{t.card1t}</h2>
+            <p>{t.card1p}</p>
           </article>
           <article className="lp2-card">
-            <h2>KI-Bewertung</h2>
-            <p>Jede Stelle erhält einen Match-Score mit Begründung und Vorbereitungsfrage.</p>
+            <h2>{t.card2t}</h2>
+            <p>{t.card2p}</p>
           </article>
           <article className="lp2-card">
-            <h2>CV-Upload</h2>
-            <p>Lebenslauf hochladen, Profil prüfen, passende Jobs finden — alles im Browser beginnend.</p>
+            <h2>{t.card3t}</h2>
+            <p>{t.card3p}</p>
           </article>
         </section>
       </main>
 
       <footer className="lp2-footer">
-        <span>May&apos;s Job Matcher · Prototype Landingpage 2</span>
-        <a href="/top">Zum Job-Matcher</a>
+        <span>{t.footer}</span>
+        <a href="/top">{t.cta}</a>
       </footer>
     </div>
   );

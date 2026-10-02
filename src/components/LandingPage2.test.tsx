@@ -1,10 +1,14 @@
-import { describe, expect, it, afterEach } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, afterEach, beforeEach } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import LandingPage2 from "./LandingPage2";
 
 afterEach(() => {
   cleanup();
+});
+
+beforeEach(() => {
+  window.localStorage.removeItem("lp2-lang");
 });
 
 function renderPage() {
@@ -55,5 +59,26 @@ describe("LandingPage2 (LANDINGPAGE-02 Prototype)", () => {
     for (const cta of ctas) expect(cta.href).toContain("/top");
     const jobs = screen.getByText("Jobs finden") as HTMLAnchorElement;
     expect(jobs.href).toContain("/top");
+  });
+
+  it("Top-Leiste enthält Start, EN/DE mittig und CTA (REFINEMENT-05)", () => {
+    renderPage();
+    const bar = document.querySelector(".lp2-bar") as HTMLElement;
+    expect(bar).toBeTruthy();
+    expect(within(bar).getByText("Start")).toBeTruthy();
+    expect(within(bar).getByText("EN")).toBeTruthy();
+    expect(within(bar).getByText("DE")).toBeTruthy();
+    expect(within(bar).getByText("Zum Job-Matcher")).toBeTruthy();
+  });
+
+  it("EN/DE-Schalter wechselt die Sprache und merkt sie sich", () => {
+    renderPage();
+    fireEvent.click(screen.getByText("EN"));
+    expect(screen.getByText("Find jobs")).toBeTruthy();
+    expect(screen.getByText("Home")).toBeTruthy();
+    expect(window.localStorage.getItem("lp2-lang")).toBe("en");
+    fireEvent.click(screen.getByText("DE"));
+    expect(screen.getByText("Jobs finden")).toBeTruthy();
+    expect(window.localStorage.getItem("lp2-lang")).toBe("de");
   });
 });
