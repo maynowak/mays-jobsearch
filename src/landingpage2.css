@@ -152,6 +152,11 @@
   color: #5eead4;
 }
 
+/* REFINEMENT-03: dritte Headline-Zeile auf Subtitle-Maß. */
+.lp2-title-sub {
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+}
+
 .lp2-subtitle {
   margin: 0 auto 1.75rem;
   max-width: 34rem;

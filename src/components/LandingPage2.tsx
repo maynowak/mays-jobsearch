@@ -41,7 +41,7 @@ export default function LandingPage2(): React.ReactElement {
             <br />
             <span className="lp2-title-accent">mit KI</span>
             <br />
-            die zu dir passen
+            <span className="lp2-title-sub">die zu dir passen</span>
           </h1>
           <p className="lp2-subtitle">
             Stellenangebote aus mehreren Quellen,
