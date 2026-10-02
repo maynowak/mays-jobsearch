@@ -1,0 +1,251 @@
+/* LANDINGPAGE-02 — visuelle Bühne (Prototype). Nutzt bestehende Tokens aus
+   styles.css (:root), keine neue globale Designstruktur. Alle Klassen sind
+   unter .lp2 gescopet; bestehende Selektoren bleiben unberührt. */
+
+.lp2 {
+  min-height: 100vh;
+  background: var(--page-bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ---------- Header ---------- */
+.lp2-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+  background: #fff;
+  position: relative;
+  z-index: 30;
+}
+
+.lp2-brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.lp2-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lp2-nav-link {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.lp2-nav-cta {
+  background: var(--brand);
+  color: #fff;
+  text-decoration: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+/* ---------- Hero / Visual Stage ---------- */
+.lp2-hero {
+  position: relative;
+  min-height: 92vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* BackgroundLayer: Foto füllt die Bühne, nie verzerrt. */
+.lp2-background {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+/* BackgroundOverlay: oben weich nach Weiß, unten weich in den
+   Seitenhintergrund; dazu eine sehr dezente blaue Schicht, die harte
+   Baumkonturen optisch einbettet, ohne die Lichtlinien zu schlucken. */
+.lp2-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      rgba(255, 255, 255, 0.92) 8%,
+      rgba(219, 245, 253, 0.45) 22%,
+      rgba(219, 245, 253, 0) 40%
+    ),
+    linear-gradient(
+      0deg,
+      var(--page-bg) 0%,
+      rgba(248, 250, 252, 0.85) 10%,
+      rgba(248, 250, 252, 0) 28%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(34, 211, 238, 0.06) 0%,
+      rgba(34, 211, 238, 0) 55%
+    );
+}
+
+/* JobStreamLayer (§8): bewusst leer, vorbereitet für spätere Animation.
+   Über Hintergrund + Overlay, unter dem Content; blockiert keine Pointer. */
+.job-stream-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ContentLayer */
+.lp2-hero-content {
+  position: relative;
+  z-index: 3;
+  max-width: 640px;
+  margin-left: clamp(1rem, 6vw, 5rem);
+  margin-right: 1rem;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  box-shadow: var(--shadow);
+}
+
+.lp2-kicker {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-dark);
+}
+
+.lp2-title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.9rem, 4.5vw, 3.25rem);
+  line-height: 1.08;
+}
+
+.lp2-subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+}
+
+.lp2-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.lp2-cta-primary {
+  background: var(--brand);
+  color: #fff;
+  text-decoration: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius);
+  font-weight: 700;
+}
+
+.lp2-cta-secondary {
+  color: var(--brand-dark);
+  text-decoration: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #fff;
+  font-weight: 600;
+}
+
+/* ---------- Content ---------- */
+.lp2-content {
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem);
+  background: var(--page-bg);
+}
+
+.lp2-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.lp2-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.lp2-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.lp2-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ---------- Footer ---------- */
+.lp2-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem clamp(1rem, 4vw, 3rem);
+  background: #fff;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.lp2-footer a {
+  color: var(--brand-dark);
+}
+
+/* ---------- Responsive: Tablet + Mobile ---------- */
+@media (max-width: 900px) {
+  .lp2-hero {
+    min-height: 84vh;
+  }
+
+  .lp2-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .lp2-hero {
+    min-height: 78vh;
+    align-items: flex-end;
+  }
+
+  /* Mobile: Bild stärker beschnitten (cover), Wirkung bleibt. */
+  .lp2-background {
+    background-position: 62% center;
+  }
+
+  .lp2-hero-content {
+    margin: 0 1rem 1.5rem;
+  }
+
+  .lp2-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .lp2-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
