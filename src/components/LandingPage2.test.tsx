@@ -1,5 +1,5 @@
-import { describe, expect, it, afterEach, beforeEach } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, within, act } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import LandingPage2 from "./LandingPage2";
 
@@ -40,7 +40,7 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     expect(screen.queryByText(/PROTOTYPE/)).toBeNull();
   });
 
-  it("Hero-Schichten: Background, Overlay, leerer JobStreamLayer, Content", () => {
+  it("Hero-Schichten: Background, Overlay, JobStreamLayer mit Stream, Content", () => {
     renderPage();
     const hero = screen.getByLabelText("Visuelle Bühne");
     expect(within(hero).getByRole("img", { name: /Futuristische Stadt/i })).toBeTruthy();
@@ -49,7 +49,8 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     const stream = hero.querySelector(".job-stream-layer") as HTMLElement;
     expect(stream).toBeTruthy();
     expect(stream.getAttribute("aria-hidden")).toBe("true");
-    expect(stream.childElementCount).toBe(0);
+    // Phase B: Stream lebt im Layer (Dummy-Noten, keine API)
+    expect(stream.querySelector(".js-stream")).toBeTruthy();
     expect(hero.querySelector(".lp2-hero-content")).toBeTruthy();
   });
 
@@ -78,6 +79,22 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     for (const el of els) expect(el.href).toContain("/top");
     const jobs = screen.getByText("Jobs finden →") as HTMLAnchorElement;
     expect(jobs.href).toContain("/top");
+  });
+
+  it("Phase A: Opening-Layer vorhanden, Stream startet erst nach Timeout", () => {
+    vi.useFakeTimers();
+    try {
+      renderPage();
+      expect(document.querySelector(".hero-opening-layer")).toBeTruthy();
+      expect(document.querySelector(".hero-opening-dot")).toBeTruthy();
+      expect(document.querySelector(".job-stream-layer.is-live")).toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(1500);
+      });
+      expect(document.querySelector(".job-stream-layer.is-live")).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("EN/DE-Schalter wechselt die Sprache und merkt sie sich", () => {

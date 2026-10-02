@@ -40,13 +40,272 @@
   );
 }
 
-/* JobStreamLayer (§19): bewusst leer, vorbereitet für spätere Animation.
-   Über Hintergrund + Overlay, unter Header + Content; keine Pointer. */
+/* JobStreamLayer: Phase B lebt hier (JobStream-Komponente); startet erst
+   mit .is-live (nach Opening). Über Hintergrund + Overlay, unter Header +
+   Content; keine Pointer. */
+/* ---------- Phase A: Hero Opening (HERO-ANIMATION-03) ----------
+   Punkt → Expansion (Clip-Reveal des Hintergrunds + Glow-Punkt),
+   danach Nav-/Content-Fade-Ins. Gesamt ~1,25 s, ruhig, kein Bounce. */
+.hero-opening-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  animation: lp2-opening-done 0.3s ease 1.25s forwards;
+}
+
+@keyframes lp2-opening-done {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.hero-opening-dot {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c9f5ff;
+  box-shadow:
+    0 0 12px rgba(0, 220, 255, 0.65),
+    0 0 30px rgba(0, 220, 255, 0.25);
+  transform: translate(-50%, -50%) scale(0);
+  animation: lp2-dot 1.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes lp2-dot {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(60);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(150);
+    opacity: 0;
+  }
+}
+
+.lp2-background {
+  animation: lp2-reveal 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+@keyframes lp2-reveal {
+  from {
+    clip-path: circle(0px at 50% 48%);
+  }
+  to {
+    clip-path: circle(120vmax at 50% 48%);
+  }
+}
+
+.lp2-bar {
+  opacity: 0;
+  animation: lp2-drop 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.7s forwards;
+}
+
+@keyframes lp2-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Hero-Content (§8–§14: absolut zentriert, top 47%) ---------- */
+.lp2-hero-content {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: min(720px, 92%);
+  text-align: center;
+  color: #fff;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+@keyframes lp2-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+}
+
+/* ---------- Phase B: Job Stream (HERO-ANIMATION-03) ---------- */
 .job-stream-layer {
   position: absolute;
   inset: 0;
   z-index: 2;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.job-stream-layer.is-live {
+  opacity: 1;
+}
+
+.js-stream {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.js-note {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform, opacity;
+}
+
+.js-back {
+  width: 80px;
+  opacity: 0.4;
+  filter: blur(1.5px);
+}
+
+.js-mid {
+  width: 120px;
+  opacity: 0.65;
+  filter: blur(0.5px);
+}
+
+.js-front {
+  width: 160px;
+  opacity: 0.9;
+}
+
+.js-note-inner {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 18px rgba(8, 30, 60, 0.25);
+}
+
+.js-note-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+}
+
+.js-note-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+.js-note-lines i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: #cbd5e1;
+}
+
+.js-note-lines b {
+  display: block;
+  height: 6px;
+  width: 38%;
+  border-radius: 3px;
+  background: #bae6fd;
+}
+
+.js-check {
+  position: absolute;
+  right: -9px;
+  top: -9px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  box-shadow: 0 0 10px rgba(22, 163, 74, 0.8);
+  animation-name: js-check-pop;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes js-check-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  3% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  9% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  16%,
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* ---------- Reduced Motion (Pflicht) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .hero-opening-layer {
+    display: none;
+  }
+
+  .lp2-background {
+    animation: none;
+  }
+
+  .lp2-bar {
+    animation: none;
+    opacity: 1;
+  }
+
+  .lp2-hero-content {
+    animation: none;
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+
+  .job-stream-layer {
+    opacity: 1;
+  }
+
+  .js-check {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 /* ---------- Header / Glass-Navigation (§4–§7) ---------- */

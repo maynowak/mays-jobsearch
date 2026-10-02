@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
+import JobStream from "./JobStream";
 
 // LANDINGPAGE-02-HERO-COMPOSITION-02 — reines Hintergrundbild + darüber
 // positionierte HTML/CSS-Ebenen (Glass-Nav, zentrierter Hero-Content).
@@ -58,6 +59,12 @@ function initialLang(): Lp2Lang {
 
 export default function LandingPage2(): React.ReactElement {
   const [lang, setLang] = useState<Lp2Lang>(initialLang);
+  // HERO-ANIMATION-03: Stream startet erst nach dem Opening (~1,4 s).
+  const [streamLive, setStreamLive] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setStreamLive(true), 1400);
+    return () => window.clearTimeout(id);
+  }, []);
   const t = STRINGS[lang];
   const switchLang = (next: Lp2Lang) => {
     setLang(next);
@@ -77,9 +84,16 @@ export default function LandingPage2(): React.ReactElement {
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         <div className="lp2-overlay" aria-hidden="true" />
-        {/* Job-Stream-Layer: bewusst leer — spätere Zettel-Animation
-            (LANDINGPAGE-03/04); liegt über dem Hintergrund, unter dem Content. */}
-        <div className="job-stream-layer" aria-hidden="true" />
+        {/* Opening-Layer (Phase A): Lichtpunkt → Expansion, danach unsichtbar. */}
+        <div className="hero-opening-layer" aria-hidden="true">
+          <span className="hero-opening-dot" />
+        </div>
+        {/* Job-Stream-Layer (Phase B): bewusst nur Dummy-Noten, startet
+            erst nach dem Opening (is-live); liegt über dem Hintergrund,
+            unter dem Content. */}
+        <div className={`job-stream-layer${streamLive ? " is-live" : ""}`} aria-hidden="true">
+          <JobStream />
+        </div>
         <header className="lp2-header">
           <div className="lp2-bar" role="navigation" aria-label="Landingpage 2">
             <a className="lp2-brand" href="/">
