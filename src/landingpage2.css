@@ -243,6 +243,149 @@
   background: #bae6fd;
 }
 
+/* ---------- AI Match Pulse (AI-MATCH-PULSE-01) ----------
+   Kleiner cyanfarbener Matching-Kern neben „mit KI": 6-s-Zyklus,
+   Puls-Fenster ~1,2 s, Text-Glow synchron. Kein Grün (gehört den Zetteln). */
+.mp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  margin-left: 14px;
+  vertical-align: middle;
+}
+
+/* Hauchdünner dunkler Hof für Kontrast auf hellen Bildstellen
+   (keine Karte, keine Ränder — nur Lesbarkeit des Punkts). */
+.mp::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(8, 30, 60, 0.28),
+    rgba(8, 30, 60, 0)
+  );
+  pointer-events: none;
+}
+
+.mp-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow:
+    0 0 10px rgba(34, 211, 238, 0.8),
+    0 0 22px rgba(34, 211, 238, 0.35);
+  animation: mp-dot 6s ease-in-out infinite;
+}
+
+.mp-ring {
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(34, 211, 238, 0.8);
+  border-radius: 50%;
+  opacity: 0;
+  animation: mp-ring 6s linear infinite;
+}
+
+.mp-sat {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(34, 211, 238, 0.7);
+  animation: mp-sat 6s ease-in-out infinite;
+}
+
+.mp-sat-1 {
+  left: 1px;
+  top: 5px;
+}
+
+.mp-sat-2 {
+  right: 0;
+  top: 3px;
+  animation-delay: -2s;
+}
+
+.mp-sat-3 {
+  left: 4px;
+  bottom: 2px;
+  animation-delay: -4s;
+}
+
+@keyframes mp-ring {
+  0%,
+  78% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  84% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes mp-dot {
+  0%,
+  78% {
+    box-shadow:
+      0 0 10px rgba(34, 211, 238, 0.8),
+      0 0 22px rgba(34, 211, 238, 0.35);
+    transform: scale(1);
+  }
+  86% {
+    box-shadow:
+      0 0 16px rgba(34, 211, 238, 1),
+      0 0 34px rgba(34, 211, 238, 0.5);
+    transform: scale(1.25);
+  }
+  100% {
+    box-shadow:
+      0 0 10px rgba(34, 211, 238, 0.8),
+      0 0 22px rgba(34, 211, 238, 0.35);
+    transform: scale(1);
+  }
+}
+
+@keyframes mp-sat {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(1.5px, -1.5px);
+  }
+}
+
+/* Dezenter Text-Glow auf „mit KI", synchron zum Puls. */
+.lp2-title-accent {
+  animation: mp-glow 6s ease-in-out infinite;
+}
+
+@keyframes mp-glow {
+  0%,
+  78% {
+    text-shadow: 0 0 0 rgba(34, 211, 238, 0);
+  }
+  86% {
+    text-shadow: 0 0 18px rgba(34, 211, 238, 0.75);
+  }
+  100% {
+    text-shadow: 0 0 0 rgba(34, 211, 238, 0);
+  }
+}
+
+/* Gekoppelter Check: einmalig ~850 ms (via .js-check-once). */
 .js-check {
   position: absolute;
   right: -9px;
@@ -259,25 +402,28 @@
   justify-content: center;
   opacity: 0;
   box-shadow: 0 0 10px rgba(22, 163, 74, 0.8);
-  animation-name: js-check-pop;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
 }
 
-@keyframes js-check-pop {
+.js-check-once {
+  animation: js-check-once 0.85s linear 1;
+}
+
+@keyframes js-check-once {
   0% {
     opacity: 0;
     transform: scale(0.4);
   }
-  1.5% {
+  12% {
     opacity: 1;
     transform: scale(1.15);
   }
-  3% {
+  30% {
     opacity: 1;
     transform: scale(1);
   }
-  6%,
+  75% {
+    opacity: 1;
+  }
   100% {
     opacity: 0;
     transform: scale(0.9);
@@ -312,6 +458,13 @@
   .js-check {
     animation: none;
     opacity: 0;
+  }
+
+  .mp-dot,
+  .mp-ring,
+  .mp-sat,
+  .lp2-title-accent {
+    animation: none;
   }
 }
 
@@ -437,8 +590,6 @@
 }
 
 .lp2-title-accent {
-  display: block;
-  margin-top: 0.1em;
   font-size: clamp(32px, 4vw, 56px);
   font-weight: 650;
   color: var(--accent);
@@ -551,6 +702,22 @@
 @media (max-width: 600px) {
   .lp2-hero {
     min-height: 100svh;
+  }
+
+  /* Match Pulse kompakter (Sats aus – Platz/Lesbarkeit). */
+  .mp {
+    width: 22px;
+    height: 22px;
+    margin-left: 10px;
+  }
+
+  .mp-dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .mp-sat {
+    display: none;
   }
 
   /* Mobile (§9): deutlich reduzierte Opacity + Glow, kleinere Karten,

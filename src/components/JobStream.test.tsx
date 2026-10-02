@@ -100,12 +100,32 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
     expect(noteOpacity(ambient)).toBeLessThan(noteOpacity(back));
   });
 
-  it("Check-Fenster liegt bei ca. 600–1100 ms", () => {
-    for (const n of buildStreamNotes().filter((x) => x.hasCheck)) {
-      // Pop-Fenster ≈ 6 % der Dauer
-      const visibleMs = 0.06 * n.duration * 1000;
-      expect(visibleMs).toBeGreaterThanOrEqual(600);
-      expect(visibleMs).toBeLessThanOrEqual(1100);
+  it("Kopplung: Match-Puls löst genau einen Check aus, der wieder verschwindet", async () => {
+    const { MATCH_PULSE_EVENT } = await import("./MatchPulse");
+    vi.useFakeTimers();
+    try {
+      const { act } = await import("@testing-library/react");
+      render(<JobStream />);
+      expect(document.querySelector(".js-check-once")).toBeNull();
+      act(() => {
+        window.dispatchEvent(new CustomEvent(MATCH_PULSE_EVENT));
+      });
+      // 600 ms Versatz: noch kein Check
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(document.querySelector(".js-check-once")).toBeNull();
+      // danach genau ein Check für ~850 ms
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(document.querySelectorAll(".js-check-once").length).toBe(1);
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(document.querySelector(".js-check-once")).toBeNull();
+    } finally {
+      vi.useRealTimers();
     }
   });
 

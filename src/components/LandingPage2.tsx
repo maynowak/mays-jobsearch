@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 import JobStream from "./JobStream";
+import MatchPulse from "./MatchPulse";
 
 // LANDINGPAGE-02-HERO-COMPOSITION-02 — reines Hintergrundbild + darüber
 // positionierte HTML/CSS-Ebenen (Glass-Nav, zentrierter Hero-Content).
@@ -136,7 +137,8 @@ export default function LandingPage2(): React.ReactElement {
           <h1 className="lp2-title">
             {t.titleA}
             <br />
-            <span className="lp2-title-accent">{t.titleAccent}</span>
+            <span className="lp2-title-accent">{t.titleAccent}</span>{" "}
+            <MatchPulse />
           </h1>
           <p className="lp2-subtitle">
             {t.subA}

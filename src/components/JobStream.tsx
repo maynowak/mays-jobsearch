@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MATCH_PULSE_EVENT } from "./MatchPulse";
 
 // JOB-NOTES-FINETUNING-01 — Phase B: animierter Job-Stream (verfeinert).
 // Echte HTML/CSS-Elemente mit Dummy-Daten (keine API, keine Canvas, keine Libs).
@@ -178,10 +179,11 @@ interface NoteProps {
   note: StreamNote;
   size: { width: number; height: number };
   staticMotion: boolean;
+  forcedCheck: boolean;
   onRecycle: (id: number) => void;
 }
 
-function StreamNoteView({ note, size, staticMotion, onRecycle }: NoteProps): React.ReactElement {
+function StreamNoteView({ note, size, staticMotion, forcedCheck, onRecycle }: NoteProps): React.ReactElement {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -236,16 +238,8 @@ function StreamNoteView({ note, size, staticMotion, onRecycle }: NoteProps): Rea
           <i style={{ width: "47%" }} />
           <b />
         </span>
-        {note.hasCheck && (
-          <span
-            className="js-check"
-            style={{
-              animationDuration: `${note.duration.toFixed(2)}s`,
-              animationDelay: `${(note.delay + note.checkAt * note.duration).toFixed(2)}s`,
-            }}
-          >
-            ✓
-          </span>
+        {forcedCheck && (
+          <span className="js-check js-check-once">✓</span>
         )}
       </div>
     </div>
@@ -257,6 +251,11 @@ export default function JobStream(): React.ReactElement {
   const [items, setItems] = useState<StreamNote[]>(notes);
   const [count, setCount] = useState<number>(pickCount);
   const [staticMotion] = useState<boolean>(reducedMotion);
+  // Gekoppelter Check (AI-MATCH-PULSE-01): genau eine Note pro Puls.
+  const [forcedId, setForcedId] = useState<number | null>(null);
+  const forceCounter = useRef(0);
+  const forceTimer = useRef<number | undefined>(undefined);
+  const clearTimer = useRef<number | undefined>(undefined);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const layerRef = useRef<HTMLDivElement>(null);
   const rngRef = useRef<(() => number) | undefined>(undefined);
@@ -285,6 +284,32 @@ export default function JobStream(): React.ReactElement {
     setItems((prev) => prev.map((n) => (n.id === id ? recycleNote(n, rng) : n)));
   }, []);
 
+  // Kopplung: Match-Puls → 600 ms Versatz → genau eine sichtbare,
+  // check-berechtigte Note bekommt 850 ms den Check.
+  useEffect(() => {
+    if (staticMotion || typeof window === "undefined") return undefined;
+    const onPulse = () => {
+      window.clearTimeout(forceTimer.current);
+      window.clearTimeout(clearTimer.current);
+      forceTimer.current = window.setTimeout(() => {
+        setItems((prev) => {
+          const eligible = prev.filter((n) => n.hasCheck);
+          if (!eligible.length) return prev;
+          const pick = eligible[forceCounter.current++ % eligible.length];
+          setForcedId(pick.id);
+          return prev;
+        });
+        clearTimer.current = window.setTimeout(() => setForcedId(null), 900);
+      }, 600);
+    };
+    window.addEventListener(MATCH_PULSE_EVENT, onPulse);
+    return () => {
+      window.removeEventListener(MATCH_PULSE_EVENT, onPulse);
+      window.clearTimeout(forceTimer.current);
+      window.clearTimeout(clearTimer.current);
+    };
+  }, [staticMotion]);
+
   const visible = items.slice(0, count);
 
   return (
@@ -300,6 +325,7 @@ export default function JobStream(): React.ReactElement {
           note={note}
           size={size}
           staticMotion={staticMotion}
+          forcedCheck={forcedId === note.id}
           onRecycle={recycle}
         />
       ))}

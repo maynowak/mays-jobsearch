@@ -81,6 +81,18 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     expect(jobs.href).toContain("/top");
   });
 
+  it("Match Pulse sitzt neben „mit KI\" (AI-MATCH-PULSE-01)", () => {
+    window.localStorage.setItem("lp2-lang", "en");
+    renderPage();
+    const accent = screen.getByText("with AI");
+    expect(accent).toBeTruthy();
+    const pulse = document.querySelector(".mp") as HTMLElement;
+    expect(pulse).toBeTruthy();
+    expect(pulse.getAttribute("aria-hidden")).toBe("true");
+    expect(pulse.querySelector(".mp-dot")).toBeTruthy();
+    expect(pulse.querySelector(".mp-ring")).toBeTruthy();
+  });
+
   it("Phase A: Opening-Layer vorhanden, Stream startet erst nach Timeout", () => {
     vi.useFakeTimers();
     try {
