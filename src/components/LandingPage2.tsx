@@ -1,4 +1,4 @@
-import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht.png";
+import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 
 // LANDINGPAGE-02 — visueller Prototype (visuelle Bühne, keine App-Logik).
 // Hinweis: Das Task-Asset `hero-bg-jobstream.jpg` existiert im Repo nicht;

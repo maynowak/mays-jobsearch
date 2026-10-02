@@ -45,7 +45,7 @@ describe("LandingPage2 (LANDINGPAGE-02 Prototype)", () => {
   it("Hintergrundbild ist eingebunden (nicht verzerrt per CSS: cover)", () => {
     renderPage();
     const bg = document.querySelector(".lp2-background") as HTMLElement;
-    expect(bg.style.backgroundImage).toContain("Futuristische_Stadt");
+    expect(bg.style.backgroundImage).toContain("Futuristische_Stadt_im_blauen_Abendlicht2");
   });
 
   it("Links führen zu Bestand-Routen (kein Umbau der App-Navigation)", () => {
