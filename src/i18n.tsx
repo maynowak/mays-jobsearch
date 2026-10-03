@@ -444,6 +444,38 @@ const en: Dict = {
   "legal.contactHeading": "Contact",
   "legal.contactEmail": "E-Mail",
   "legal.devNotice": "Notice: This imprint is in development. The operator address is not yet finalized.",
+
+  "auth.registerTitle": "Create account",
+  "auth.registerLead":
+    "With an account you can save your search profiles and ATS profiles permanently — no matter which device or browser you use.",
+  "auth.loginTitle": "Log in",
+  "auth.loginLead": "Log in to access your saved search profiles and ATS profiles.",
+  "auth.email": "Email address",
+  "auth.emailPh": "e.g. name@example.com",
+  "auth.password": "Password",
+  "auth.passwordPh": "At least 8 characters",
+  "auth.passwordRepeat": "Repeat password",
+  "auth.passwordRepeatPh": "Repeat your password",
+  "auth.privacy": "I accept the privacy policy.",
+  "auth.terms": "I accept the terms of use.",
+  "auth.submitRegister": "Create account",
+  "auth.submitLogin": "Log in",
+  "auth.toLogin": "Already registered? Log in",
+  "auth.toRegister": "No account yet? Create one",
+  "auth.backToMatcher": "Back to Job Matcher (continue as guest)",
+  "auth.errorEmailRequired": "Please enter your email address.",
+  "auth.errorEmailInvalid": "Please enter a valid email address.",
+  "auth.errorPasswordRequired": "Please enter a password.",
+  "auth.errorPasswordShort": "The password must be at least 8 characters long.",
+  "auth.errorPasswordMismatch": "The passwords do not match.",
+  "auth.errorPrivacyRequired": "Please accept the privacy policy.",
+  "auth.errorTermsRequired": "Please accept the terms of use.",
+  "auth.preparedTitle": "Registration prepared.",
+  "auth.preparedText":
+    "Registration is prepared. The account creation will be connected to the authentication system in the next step.",
+  "auth.loginPreparedTitle": "Login prepared.",
+  "auth.loginPreparedText":
+    "Login is prepared. The sign-in will be connected to the authentication system in the next step.",
 };
 
 const de: Dict = {
@@ -883,6 +915,38 @@ const de: Dict = {
   "legal.contactHeading": "Kontakt",
   "legal.contactEmail": "E-Mail",
   "legal.devNotice": "Hinweis: Dieses Impressum befindet sich in der Entwicklung. Die Betreiberanschrift ist noch nicht finalisiert.",
+
+  "auth.registerTitle": "Konto erstellen",
+  "auth.registerLead":
+    "Mit einem Konto kannst du deine Suchprofile und ATS-Profile dauerhaft speichern — unabhängig von Gerät und Browser.",
+  "auth.loginTitle": "Anmelden",
+  "auth.loginLead": "Melde dich an, um auf deine gespeicherten Suchprofile und ATS-Profile zuzugreifen.",
+  "auth.email": "E-Mail-Adresse",
+  "auth.emailPh": "z. B. name@beispiel.de",
+  "auth.password": "Passwort",
+  "auth.passwordPh": "Mindestens 8 Zeichen",
+  "auth.passwordRepeat": "Passwort wiederholen",
+  "auth.passwordRepeatPh": "Wiederhole dein Passwort",
+  "auth.privacy": "Ich akzeptiere die Datenschutzerklärung.",
+  "auth.terms": "Ich akzeptiere die Nutzungsbedingungen.",
+  "auth.submitRegister": "Konto erstellen",
+  "auth.submitLogin": "Anmelden",
+  "auth.toLogin": "Bereits registriert? Anmelden",
+  "auth.toRegister": "Noch kein Konto? Jetzt erstellen",
+  "auth.backToMatcher": "Zurück zum Job Matcher (als Gast fortfahren)",
+  "auth.errorEmailRequired": "Bitte gib deine E-Mail-Adresse ein.",
+  "auth.errorEmailInvalid": "Bitte gib eine gültige E-Mail-Adresse ein.",
+  "auth.errorPasswordRequired": "Bitte gib ein Passwort ein.",
+  "auth.errorPasswordShort": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+  "auth.errorPasswordMismatch": "Die Passwörter stimmen nicht überein.",
+  "auth.errorPrivacyRequired": "Bitte akzeptiere die Datenschutzerklärung.",
+  "auth.errorTermsRequired": "Bitte akzeptiere die Nutzungsbedingungen.",
+  "auth.preparedTitle": "Registrierung vorbereitet.",
+  "auth.preparedText":
+    "Die Registrierung ist vorbereitet. Die Kontoerstellung wird im nächsten Schritt mit dem Authentifizierungssystem verbunden.",
+  "auth.loginPreparedTitle": "Anmeldung vorbereitet.",
+  "auth.loginPreparedText":
+    "Die Anmeldung ist vorbereitet. Die Anmeldung wird im nächsten Schritt mit dem Authentifizierungssystem verbunden.",
 };
 
 const translations: Record<Lang, Dict> = { en, de };

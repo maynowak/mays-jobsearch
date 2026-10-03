@@ -307,8 +307,9 @@ body {
   font-size: 0.85rem;
   padding: 0.4rem 1.1rem;
   border-radius: var(--radius-full);
-  cursor: default;
+  cursor: pointer;
   white-space: nowrap;
+  text-decoration: none;
 }
 
 @media (max-width: 767px) {
@@ -1181,6 +1182,7 @@ body {
 }
 
 #find-btn,
+.auth-submit,
 .cv-confirm {
   width: 100%;
   margin-top: 8px;
@@ -4351,5 +4353,57 @@ body {
   }
   .legal-dl dt {
     margin-bottom: 2px;
+  }
+}
+
+/* REGISTRATION-UI-01: Auth-Masken (reine GUI, kein Backend).
+   Nutzt Design-Token + .card/.field; nur Auth-spezifisches hier. */
+.auth-page {
+  width: 100%;
+  max-width: 560px;
+}
+
+.auth-card h2 {
+  margin: 0 0 8px;
+}
+
+.auth-lead {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.auth-card .field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--green);
+}
+
+.auth-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.field-error {
+  margin: 6px 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--red);
+}
+
+.auth-links {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    max-width: 100%;
   }
 }

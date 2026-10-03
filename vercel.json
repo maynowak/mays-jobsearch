@@ -18,6 +18,14 @@
     {
       "source": "/landingspage2",
       "destination": "/index.html"
+    },
+    {
+      "source": "/registrieren",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/anmelden",
+      "destination": "/index.html"
     }
   ]
 }

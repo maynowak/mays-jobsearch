@@ -18,6 +18,8 @@ import AlertCard from "./components/AlertCard";
 import Footer from "./components/Footer";
 import LetterModal from "./components/LetterModal";
 import ATSModal from "./components/AtsOverlay";
+import RegisterForm from "./components/RegisterForm";
+import LoginForm from "./components/LoginForm";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -62,6 +64,9 @@ export default function App() {
   const route: NavbarRoute = (() => {
     const path = window.location.pathname;
     if (path === "/impressum") return "impressum";
+    // REGISTRATION-UI-01: reine GUI-Routen (kein Backend, keine Session).
+    if (path === "/registrieren") return "register";
+    if (path === "/anmelden") return "login";
     return path === "/top" ? "matcher" : "landing";
   })();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -2252,6 +2257,17 @@ return (
         <main className="container legal-main">
           <Imprint />
         </main>
+      ) : route === "register" || route === "login" ? (
+        // REGISTRATION-UI-01: Auth-Masken als reine GUI (kein Backend,
+        // keine Session, keine Gast-State-Berührung).
+        <>
+          <main className="container legal-main">
+            <div className="auth-page">
+              {route === "register" ? <RegisterForm /> : <LoginForm />}
+            </div>
+          </main>
+          <Footer />
+        </>
       ) : (
         <>
           <Hero />

@@ -22,7 +22,7 @@ function LangToggle() {
   );
 }
 
-export type NavbarRoute = "landing" | "matcher" | "impressum";
+export type NavbarRoute = "landing" | "matcher" | "impressum" | "register" | "login";
 
 interface Props {
   route: NavbarRoute;
@@ -86,9 +86,10 @@ export default function Navbar({ route }: Props) {
 
   const isLanding = route === "landing";
   const isImprint = route === "impressum";
+  const isAuth = route === "register" || route === "login";
   const links: Array<[string, string]> = isLanding
     ? [[t("nav.search"), "/top"]]
-    : isImprint
+    : isImprint || isAuth
     ? [[t("nav.search"), "/top"]]
     : [
         [t("nav.search"), "top"],
@@ -139,10 +140,11 @@ export default function Navbar({ route }: Props) {
               {label}
             </a>
           ))}
-          {/* Login noch ohne Funktion (Prototype-Vorbereitung) */}
-          <button type="button" className="nav-login" aria-disabled="true">
+          {/* REGISTRATION-UI-01: Login-Button führt zur Anmelde-Maske
+              (reine GUI, kein Backend). */}
+          <a href="/anmelden" className="nav-login">
             Login
-          </button>
+          </a>
         </div>
 
         <button
@@ -174,9 +176,9 @@ export default function Navbar({ route }: Props) {
               <div className="mobile-lang">
                 <LangToggle />
               </div>
-              <button type="button" className="nav-login" aria-disabled="true">
+              <a href="/anmelden" className="nav-login" onClick={close}>
                 Login
-              </button>
+              </a>
             </div>
           </div>
         )}
