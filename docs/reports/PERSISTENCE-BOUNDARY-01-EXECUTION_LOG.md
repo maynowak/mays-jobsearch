@@ -162,3 +162,17 @@ RIS-relevante Boundary (CURRENT OWNER / CURRENT STORAGE / CURRENT LIFETIME, kein
 - Persistent über den Browser hinaus leben: UI-Sprache (harmlos), der anonyme `mj_session`-Cookie mit Quota-Zählern (wiedererkennbar, aber inhaltsleer) sowie serverseitig der 30-Tage-Profil-Cache und dauerhafte Alert-Abos. Nur der Profil-Cache ist CV-abgeleitet und vom "CV-Daten entfernen"-Pfad NICHT abgedeckt — das ist der einzige YELLOW-treibende Client/Server-Bruch neben der fachlich zu klärenden Session-Cookie-Lebensdauer (1 Jahr).
 - Consent ist heute NUR KI-Verarbeitungs-Consent (pro Sitzung + separat für ATS-KI); ein Speicher-Consent existiert NICHT. Eine authentifizierte RIS-Persistenz existiert NICHT.
 - Code geändert: NEIN. Tests ausgeführt: NEIN (zur Analyse nicht notwendig; existierende Tests nur referenziert).
+
+---
+
+## Audit-Nachweis (AI_AUDITLOG-pflichtig, am 2026-10-03 nachgetragen — keine Inhaltsänderung)
+
+- Status: YELLOW (30-Tage-Server-Profil-Cache ohne Client-Löschpfad; 1-Jahres-Session-Cookie fachlich zu klären)
+- Audit-Zeitpunkt: 2026-10-03; Branch: main; HEAD zum Audit-Zeitpunkt: 3c79ccc; Report-Commit: 5920e2f
+- Terraform-Checks: keine ausgeführt (Analyse-only, keine Infrastruktur im Scope)
+- Git-Status: Commit 5920e2f enthält ausschließlich diese neue Report-Datei (164 insertions, 1 file changed) — belegt, dass kein Code geändert wurde
+- Geänderte Dateien durch diese Analyse: ausschließlich `docs/reports/PERSISTENCE-BOUNDARY-01-EXECUTION_LOG.md` (neu)
+- Explizite Bestätigung: keine Änderung an `src/`, `api/`, `tests/`, Config, Infrastruktur
+- Risiken: keine (read-only Analyse)
+- Nächste Schritte: keine offenen Analyseaufgaben; fachliche Follow-ups = Open Questions 1–6 dieses Reports
+- Resume-Punkt: abgeschlossen (Analyse + Report-Commit vorhanden)
