@@ -19,6 +19,8 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [prepared, setPrepared] = useState(false);
+  // AUTH-UI-01: UI-only Hinweis (kein Backend, kein Reset-Flow).
+  const [showForgotHint, setShowForgotHint] = useState(false);
 
   const validate = (): FieldErrors => {
     const next: FieldErrors = {};
@@ -103,6 +105,22 @@ export default function LoginForm() {
           <span className="btn-label">{t("auth.submitLogin")}</span>
         </button>
       </form>
+      <div className="auth-forgot">
+        <button
+          type="button"
+          className="btn-ghost"
+          onClick={() => setShowForgotHint((prev) => !prev)}
+          aria-expanded={showForgotHint}
+        >
+          {t("auth.forgotPassword")}
+        </button>
+        {showForgotHint && (
+          <p className="auth-hint" role="status">
+            {t("auth.forgotHint")}
+          </p>
+        )}
+      </div>
+      <div className="auth-divider" aria-hidden="true" />
       <nav className="auth-links" aria-label={t("auth.loginTitle")}>
         <a href="/registrieren">{t("auth.toRegister")}</a>
         <a href="/top">{t("auth.backToMatcher")}</a>

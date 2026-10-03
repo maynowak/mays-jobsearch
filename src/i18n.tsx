@@ -460,6 +460,9 @@ const en: Dict = {
   "auth.terms": "I accept the terms of use.",
   "auth.submitRegister": "Create account",
   "auth.submitLogin": "Log in",
+  "auth.forgotPassword": "Forgot password?",
+  "auth.forgotHint":
+    "Password reset is not connected yet. It will be connected to the authentication system in the next step.",
   "auth.toLogin": "Already registered? Log in",
   "auth.toRegister": "No account yet? Create one",
   "auth.backToMatcher": "Back to Job Matcher (continue as guest)",
@@ -931,8 +934,11 @@ const de: Dict = {
   "auth.terms": "Ich akzeptiere die Nutzungsbedingungen.",
   "auth.submitRegister": "Konto erstellen",
   "auth.submitLogin": "Anmelden",
+  "auth.forgotPassword": "Passwort vergessen?",
+  "auth.forgotHint":
+    "Das Zurücksetzen des Passworts ist noch nicht verbunden. Es wird im nächsten Schritt mit dem Authentifizierungssystem verbunden.",
   "auth.toLogin": "Bereits registriert? Anmelden",
-  "auth.toRegister": "Noch kein Konto? Jetzt erstellen",
+  "auth.toRegister": "Noch kein Konto? Registrieren",
   "auth.backToMatcher": "Zurück zum Job Matcher (als Gast fortfahren)",
   "auth.errorEmailRequired": "Bitte gib deine E-Mail-Adresse ein.",
   "auth.errorEmailInvalid": "Bitte gib eine gültige E-Mail-Adresse ein.",

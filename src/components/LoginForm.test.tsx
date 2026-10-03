@@ -27,7 +27,8 @@ describe("REGISTRATION-UI-01: Login-Maske (Navigationsziel, reine GUI, kein Back
     expect(screen.getByLabelText("E-Mail-Adresse")).toBeTruthy();
     expect(screen.getByLabelText("Passwort")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Anmelden" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Noch kein Konto? Jetzt erstellen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Passwort vergessen?" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Noch kein Konto? Registrieren" })).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Zurück zum Job Matcher (als Gast fortfahren)" })
     ).toBeTruthy();
@@ -55,10 +56,19 @@ describe("REGISTRATION-UI-01: Login-Maske (Navigationsziel, reine GUI, kein Back
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("Passwort vergessen zeigt UI-only Hinweis ohne Backend-Aufruf", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}"));
+    renderForm();
+    expect(screen.queryByText(/Das Zurücksetzen des Passworts/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Passwort vergessen?" }));
+    expect(screen.getByText(/Das Zurücksetzen des Passworts/)).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("Navigation Login ↔ Registrierung und zurück zum Gastmodus", () => {
     renderForm();
     expect(
-      screen.getByRole("link", { name: "Noch kein Konto? Jetzt erstellen" }).getAttribute("href")
+      screen.getByRole("link", { name: "Noch kein Konto? Registrieren" }).getAttribute("href")
     ).toBe("/registrieren");
     expect(
       screen
