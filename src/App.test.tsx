@@ -1550,6 +1550,181 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
       city: "Berlin",
     });
   });
+
+  describe("PROFILE-TAB-STATE-01: Manual Tab vs CV Tab Load/Remove", () => {
+    // Gemeinsamer Flow: CV verarbeiten -> Suchprofil speichern ("Frontend -
+    // Profil1") -> zurueck zur Dokumentenliste (Profil auto-selektiert).
+    async function saveProfileAndBackToList() {
+      mockProfile();
+      vi.mocked(fetchJobs).mockResolvedValue({ jobs: [], meta: {} });
+      renderApp();
+      await uploadCvToConsent();
+      await acceptUploadConsent();
+      await proceedToProfileReady();
+      confirmProfileInOverlay();
+      await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+      await backToDocumentList();
+    }
+
+    function manualInputs() {
+      return {
+        skills: document.getElementById("skills") as HTMLInputElement,
+        role: document.getElementById("targetRole") as HTMLInputElement,
+        city: document.getElementById("city") as HTMLInputElement,
+        radius: document.getElementById("radius") as HTMLSelectElement,
+      };
+    }
+
+    function switchToManualTab() {
+      fireEvent.click(document.getElementById("mode-manual") as HTMLElement);
+    }
+
+    async function removeCvData() {
+      fireEvent.click(screen.getByRole("button", { name: "CV-Daten entfernen" }));
+      fireEvent.click(screen.getByRole("button", { name: "Endgültig entfernen" }));
+      await waitFor(() => expect(screen.queryByText("Deine Lebensläufe")).toBeNull());
+    }
+
+    it("1+7: Manual Profil laden fuellt alle Felder; CV-Tab bleibt unveraendert", async () => {
+      await saveProfileAndBackToList();
+      // Profil ist nach dem Speichern auto-selektiert -> direkt starten (laedt
+      // in die Manual-Maske + startet die Suche)
+      fireEvent.click(savedBoxStartButton());
+      switchToManualTab();
+
+      const { skills, role, city, radius } = manualInputs();
+      await waitFor(() => expect(skills.value).toContain("React"));
+      expect(role.value).toContain("Frontend");
+      expect(city.value).toContain("Berlin");
+      expect(radius.value).toBe("");
+      expect((screen.getByLabelText("Remote") as HTMLInputElement).checked).toBe(false);
+      expect((screen.getByLabelText("Vollzeit") as HTMLInputElement).checked).toBe(true);
+      expect((screen.getByLabelText("Teilzeit") as HTMLInputElement).checked).toBe(false);
+
+      // CV-Tab unveraendert: Dokument + gespeicherter Eintrag vorhanden
+      expect(screen.getByText("cv.pdf")).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+      expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
+      const searchTable = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
+      expect(searchTable.textContent).toContain("Frontend - Profil1");
+      fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    });
+
+    it("2+9: Manual Profil entfernen leert die Maske; alte Werte kommen nicht zurueck", async () => {
+      await saveProfileAndBackToList();
+      fireEvent.click(savedBoxStartButton());
+      switchToManualTab();
+      const { skills } = manualInputs();
+      await waitFor(() => expect(skills.value).toContain("React"));
+
+      await removeCvData();
+      switchToManualTab();
+      const after = manualInputs();
+      expect(after.skills.value).toBe("");
+      expect(after.role.value).toBe("");
+      expect(after.city.value).toBe("");
+      expect(after.radius.value).toBe("");
+      expect((screen.getByLabelText("Remote") as HTMLInputElement).checked).toBe(false);
+      expect((screen.getByLabelText("Hybrid") as HTMLInputElement).checked).toBe(false);
+      expect((screen.getByLabelText("Vor Ort") as HTMLInputElement).checked).toBe(false);
+      expect((screen.getByLabelText("Vollzeit") as HTMLInputElement).checked).toBe(true);
+      expect((screen.getByLabelText("Teilzeit") as HTMLInputElement).checked).toBe(false);
+
+      // Re-render (Tab-Wechsel demontiert/remontiert die Maske): nichts kommt zurueck
+      fireEvent.click(document.getElementById("mode-cv") as HTMLElement);
+      switchToManualTab();
+      expect((document.getElementById("skills") as HTMLInputElement).value).toBe("");
+      expect((document.getElementById("targetRole") as HTMLInputElement).value).toBe("");
+      expect((document.getElementById("city") as HTMLInputElement).value).toBe("");
+    });
+
+    it("3: Manuelles Leeren der Maske beruehrt das CV-Profil nicht", async () => {
+      await saveProfileAndBackToList();
+      fireEvent.click(savedBoxStartButton());
+      switchToManualTab();
+      const { skills } = manualInputs();
+      await waitFor(() => expect(skills.value).toContain("React"));
+
+      // Manuelle Maske leeren (aequivalent zum X-Button: gleiche onChange-Pfade)
+      fireEvent.change(skills, { target: { value: "" } });
+      expect(skills.value).toBe("");
+
+      // Gespeicherter CV-Eintrag unversehrt
+      fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+      expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
+      const searchTable = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
+      expect(searchTable.textContent).toContain("Frontend - Profil1");
+      fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    });
+
+    it("4+8: CV Profil laden (Edit) zeigt Eintragswerte; Manual-Tab bleibt unveraendert", async () => {
+      await saveProfileAndBackToList();
+      // Manual-Maske vorher unabhaengig befuellen
+      switchToManualTab();
+      const { skills } = manualInputs();
+      fireEvent.change(skills, { target: { value: "Go" } });
+      expect(skills.value).toBe("Go");
+
+      // Gespeicherten Eintrag zum Bearbeiten laden (CV-Workflow)
+      fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+      await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+      expect((document.getElementById("cv-profile-name") as HTMLInputElement).value).toBe("Frontend - Profil1");
+      expect((document.getElementById("cv-skills") as HTMLInputElement).value).toContain("React");
+
+      // Manual-Maske unveraendert (Tab-Grenze: kein Ruecktransfer in App.profile)
+      switchToManualTab();
+      expect((document.getElementById("skills") as HTMLInputElement).value).toBe("Go");
+    });
+
+    it("5: CV Profil entfernen leert die CV-Maske", async () => {
+      await saveProfileAndBackToList();
+      await removeCvData();
+      // Kein Workflow-UI mehr sichtbar; Dropzone als Neueinstieg
+      expect(document.querySelector(".cv-processing-card")).toBeNull();
+      expect(document.querySelector(".cv-saved-profiles")).toBeNull();
+      expect(document.querySelector(".cv-dropzone")).toBeTruthy();
+    });
+
+    it("6: CV entfernen bei unabhaengiger manueller Eingabe laesst Manual unangetastet", async () => {
+      mockProfile();
+      renderApp();
+      // Unabhaengige manuelle Eingabe (kein Laden aus CV-Daten)
+      const { skills, role, city, radius } = manualInputs();
+      fireEvent.change(skills, { target: { value: "Go, Kubernetes" } });
+      fireEvent.change(role, { target: { value: "Backend" } });
+      fireEvent.change(city, { target: { value: "Hamburg" } });
+      fireEvent.change(radius, { target: { value: "50" } });
+      fireEvent.click(screen.getByLabelText("Remote"));
+
+      // CV-Kontext aufbauen (ohne Confirm -> kein gespeicherter Eintrag noetig:
+      // Upload bis Optionen, dann zurueck zur Liste)
+      fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+      const file = new File(["Go Developer with ten years of experience"], "go.pdf", {
+        type: "application/pdf",
+      });
+      fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+        target: { files: [file] },
+      });
+      await screen.findByText("CV-Verarbeitung erlauben?");
+      fireEvent.click(
+        screen.getByRole("checkbox", {
+          name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+        })
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+      await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+      fireEvent.click(screen.getByRole("button", { name: "Zurück zu Dokumenten" }));
+      await screen.findByText("Deine Lebensläufe");
+
+      await removeCvData();
+      switchToManualTab();
+      expect((document.getElementById("skills") as HTMLInputElement).value).toBe("Go, Kubernetes");
+      expect((document.getElementById("targetRole") as HTMLInputElement).value).toBe("Backend");
+      expect((document.getElementById("city") as HTMLInputElement).value).toBe("Hamburg");
+      expect((document.getElementById("radius") as HTMLSelectElement).value).toBe("50");
+      expect((screen.getByLabelText("Remote") as HTMLInputElement).checked).toBe(true);
+    });
+  });
 });
 
 describe("No landing-page flash during a search", () => {

@@ -40,6 +40,17 @@ function arraysEqual<T>(a: T[] | null | undefined, b: T[] | null | undefined): b
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+// PROFILE-TAB-STATE-01: Ausgangswert der manuellen Suchmaske (Manual Tab).
+// Dient auch als Reset-Ziel, wenn die Maske ein entferntes Profil zeigte.
+const INITIAL_MANUAL_PROFILE: Profile = {
+  skills: "",
+  targetRoles: [],
+  city: "",
+  radiusKm: null,
+  workModes: [],
+  employmentTypes: ["full_time"],
+};
+
 interface JobDataset {
   jobs: Job[];
   profile: Profile;
@@ -64,14 +75,7 @@ export default function App() {
   // meta.sourceReasons) — JOB-SOURCES-01: fehlende Quellen nicht kommentarlos fehlen lassen
   const [foundDisabledSources, setFoundDisabledSources] = useState<string[] | null>(null);
   const [foundSourceReasons, setFoundSourceReasons] = useState<Partial<Record<string, string | null>> | null>(null);
-  const [profile, setProfile] = useState<Profile>({
-    skills: "",
-    targetRoles: [],
-    city: "",
-    radiusKm: null,
-    workModes: [],
-    employmentTypes: ["full_time"],
-  });
+  const [profile, setProfile] = useState<Profile>({ ...INITIAL_MANUAL_PROFILE });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
   const [atsJob, setAtsJob] = useState<Job | null>(null);
   // CV-PROFILE-LISTS-01: Profil-Overlay pro CV (benannte Such-/ATS-Profile)
@@ -477,6 +481,17 @@ export default function App() {
   // + Legacy-localStorage + Dokumente/Workflow-States. Danach ist ein
   // erneutes Hochladen noetig (Hinweis im Bestaetigungsdialog).
   const handleCvRemoveData = () => {
+    // PROFILE-TAB-STATE-01: Zeigt die Manual-Maske gerade ein gespeichertes
+    // Suchprofil, das hiermit entfernt wird (Load via "Jobs Finden" aus der
+    // Profil-Box), muss auch die Maske geleert werden — sonst bleiben die
+    // Werte des geloeschten Profils sichtbar (State gesetzt, Form stale).
+    // Eine unabhaengige manuelle Eingabe (ungleich allen entfernten Eintraegen)
+    // bleibt erhalten (Tab-Grenze). Pruefung VOR dem Leeren der Listen.
+    const manualShowsRemovedProfile = cvState.documents.some((doc) =>
+      readCvProfileLists(doc.hash ?? null).searchProfiles.some((entry) =>
+        profilesEqual(entry.profile, profile)
+      )
+    );
     resetCvProfileLists();
     purgeLegacyCvListsFromLocalStorage();
     setProfilesDocId(null);
@@ -484,7 +499,11 @@ export default function App() {
     // CV-UPLOAD-UX-10: Auswahl-IDs zuruecksetzen (Listen sind entfernt)
     setSelectedSavedSearchId(null);
     setActiveAtsEntryId(null);
+    setEditingSearchName(null);
     setConsentDismissed(false);
+    if (manualShowsRemovedProfile) {
+      setProfile({ ...INITIAL_MANUAL_PROFILE });
+    }
     setCvState({
       step: "idle",
       documents: [],
