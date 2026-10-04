@@ -38,9 +38,10 @@ const singleModel: ModelsResponse = {
   recommendedModel: null,
 };
 
-// SEARCH-HERO-BG-03: Layout-Reihenfolge der Search-Seite absichern.
-// Sollte: Hero -> Suchmaske -> Ergebnisliste -> Lobby-Band -> Footer.
-describe("SEARCH-HERO-BG-03: Reihenfolge Suchmaske / Ergebnisse / Bildband / Footer", () => {
+// SEARCH-BG-POSITION-01: Atrium-Hintergrund trägt den Search-Bereich.
+// Sollte: Hero -> .search-stage (Suchmaske + Ergebnisliste) -> Footer.
+// Kein Bildstreifen am Seitenende mehr.
+describe("SEARCH-BG-POSITION-01: Hintergrund trägt Search-Bereich, kein Streifen am Ende", () => {
   beforeEach(() => {
     localStorage.setItem("mj-lang", "de");
     window.history.pushState({}, "", "/top");
@@ -73,19 +74,27 @@ describe("SEARCH-HERO-BG-03: Reihenfolge Suchmaske / Ergebnisse / Bildband / Foo
     return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) > 0;
   }
 
-  it("Leerzustand: Suchmaske vor Bildband, Bildband vor Footer", () => {
+  it("Leerzustand: Hero -> search-stage (Suchmaske) -> Footer, ohne Streifen", () => {
     const { container } = renderApp();
+    const hero = container.querySelector("header.hero");
+    const stage = container.querySelector(".search-stage");
     const form = container.querySelector(".search-card");
-    const band = container.querySelector(".lobby-band");
     const footer = container.querySelector("footer");
+
+    expect(hero).toBeTruthy();
+    expect(stage).toBeTruthy();
     expect(form).toBeTruthy();
-    expect(band).toBeTruthy();
     expect(footer).toBeTruthy();
-    expect(follows(form as Element, band as Element)).toBe(true);
-    expect(follows(band as Element, footer as Element)).toBe(true);
+    // Suchmaske liegt im Hintergrund-Container.
+    expect(stage?.contains(form as Element)).toBe(true);
+    // Reihenfolge Hero -> Stage -> Footer.
+    expect(follows(hero as Element, stage as Element)).toBe(true);
+    expect(follows(stage as Element, footer as Element)).toBe(true);
+    // Alter Bildstreifen am Seitenende existiert nicht mehr.
+    expect(container.querySelector(".lobby-band")).toBeNull();
   });
 
-  it("Mit Ergebnissen: Ergebnisliste vor Bildband, Bildband vor Footer", async () => {
+  it("Mit Ergebnissen: Ergebnisliste im Stage, Stage vor Footer, kein Streifen", async () => {
     const { container } = renderApp();
 
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "AWS" } });
@@ -95,14 +104,32 @@ describe("SEARCH-HERO-BG-03: Reihenfolge Suchmaske / Ergebnisse / Bildband / Foo
 
     await waitFor(() => expect(container.querySelector(".results-workspace")).toBeTruthy());
 
+    const stage = container.querySelector(".search-stage");
     const results = container.querySelector(".results-workspace");
-    const band = container.querySelector(".lobby-band");
     const footer = container.querySelector("footer");
-    expect(band).toBeTruthy();
-    // Ergebnisliste vollständig VOR dem Band, Band VOR dem Footer.
-    expect(follows(results as Element, band as Element)).toBe(true);
-    expect(follows(band as Element, footer as Element)).toBe(true);
-    // Band liegt nicht innerhalb des Inhaltscontainers.
-    expect((band as Element).closest("main")).toBeNull();
+    expect(stage?.contains(results as Element)).toBe(true);
+    expect(follows(stage as Element, footer as Element)).toBe(true);
+    expect(container.querySelector(".lobby-band")).toBeNull();
+  });
+
+  it("Auth- und Landing-Routen erhalten keinen Search-Hintergrund", () => {
+    cleanup();
+    window.history.pushState({}, "", "/anmelden");
+    const { container: login } = render(
+      <LangProvider>
+        <App />
+      </LangProvider>
+    );
+    expect(login.querySelector(".search-stage")).toBeNull();
+    expect(login.querySelector("header.hero")).toBeNull();
+
+    cleanup();
+    window.history.pushState({}, "", "/");
+    const { container: landing } = render(
+      <LangProvider>
+        <App />
+      </LangProvider>
+    );
+    expect(landing.querySelector(".search-stage")).toBeNull();
   });
 });

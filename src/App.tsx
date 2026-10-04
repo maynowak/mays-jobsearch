@@ -2271,27 +2271,32 @@ return (
       ) : (
         <>
           <Hero />
-          <main className="container layout-search">
-            <aside className="search-sidebar">
-              {searchCard}
-              {cvProcessingUI}
-            </aside>
+          {/* SEARCH-BG-POSITION-01: Atrium-Bild als Hintergrund-Layer des
+              Search-Bereichs (startet direkt unter dem Hero). Die Such-UI
+              liegt per z-index darüber; Karten bleiben unverändert. */}
+          <div className="search-stage">
+            <main className="container layout-search">
+              <aside className="search-sidebar">
+                {searchCard}
+                {cvProcessingUI}
+              </aside>
 
-            {hasResults ? (
-              <section className="results-workspace">
-                <Results
-                  matches={matches}
-                  foundJobs={foundJobs}
-                  onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
-                  onAtsEvaluate={(job) => setAtsJob(job)}
-                />
-              </section>
-            ) : (
-              <section className="alerts-section">
-                <AlertCard profile={profile} />
-              </section>
-            )}
-          </main>
+              {hasResults ? (
+                <section className="results-workspace">
+                  <Results
+                    matches={matches}
+                    foundJobs={foundJobs}
+                    onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
+                    onAtsEvaluate={(job) => setAtsJob(job)}
+                  />
+                </section>
+              ) : (
+                <section className="alerts-section">
+                  <AlertCard profile={profile} />
+                </section>
+              )}
+            </main>
+          </div>
         </>
       )}
       {route !== "impressum" && (
@@ -2336,9 +2341,6 @@ return (
               onClose={() => setProfilesDocId(null)}
             />
           )}
-          {/* SEARCH-HERO-BG-02: dekoratives Lobby-Band zwischen Inhalt und
-              Footer (nur Search-Seite). Rein visuell, ohne Inhalt/Logik. */}
-          {route === "matcher" && <section className="lobby-band" aria-hidden="true" />}
           <Footer />
         </>
       )}

@@ -585,30 +585,86 @@ body {
   }
 }
 
-/* SEARCH-HERO-BG-02: Dekoratives Bildband zwischen Inhalt und Footer
-   (nur Search-Seite). Reines Hintergrundmotiv — kein Text, aria-hidden. */
+/* SEARCH-BG-POSITION-01: Futuristische Job-/KI-Eingangshalle als
+   Hintergrund-Layer des Search-Bereichs. Startet direkt unter dem Hero,
+   die Such-UI liegt per z-index darüber (Karten bleiben unverändert).
+   Kein Bildstreifen am Seitenende mehr, keine grüne Platzhalterfläche. */
 
-.lobby-band {
+.search-stage {
   position: relative;
-  width: 100%;
-  min-height: clamp(220px, 32vh, 420px);
+  /* Ruhiger Untergrund für Bereiche unterhalb des Bildausschnitts
+     (z. B. lange Ergebnislisten) — neutral hell-blau, kein Grün. */
+  background: linear-gradient(180deg, #f8fafc 0%, #eef4fa 45%, #e9f1f9 100%);
+}
+
+.search-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  /* Höhe gedeckelt: verhindert Über-Zoom bei sehr langen Ergebnislisten. */
+  height: clamp(470px, 82vh, 880px);
+  z-index: 0;
+  pointer-events: none;
   background:
+    /* Verlauf = weicher Übergang Hero (oben, hell) → Cyan/Blau → ruhiger
+       Auslauf nach unten; hält Text/Karten kontrastfähig. */
     linear-gradient(
       180deg,
-      rgba(248, 250, 252, 0.92) 0%,
-      rgba(240, 246, 251, 0.42) 22%,
-      rgba(233, 242, 250, 0.18) 60%,
-      rgba(226, 238, 248, 0.5) 100%
+      #f8fafc 0%,
+      rgba(248, 250, 252, 0.8) 8%,
+      rgba(240, 246, 251, 0.36) 24%,
+      rgba(226, 238, 249, 0.16) 52%,
+      rgba(224, 237, 248, 0.12) 76%,
+      rgba(233, 242, 249, 0.62) 100%
     ),
     image-set(
       url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
       url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
-    ) center / cover no-repeat;
+    ) center 42% / cover no-repeat;
+}
+
+.search-stage > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 900px) {
+  .search-stage::before {
+    /* Tablet/Mobile: Bild proportional, stärkere Abdunklung für Lesbarkeit. */
+    height: clamp(420px, 72vh, 720px);
+    background-image:
+      linear-gradient(
+        180deg,
+        #f8fafc 0%,
+        rgba(248, 250, 252, 0.86) 10%,
+        rgba(238, 245, 251, 0.55) 34%,
+        rgba(228, 239, 249, 0.42) 70%,
+        rgba(233, 242, 249, 0.72) 100%
+      ),
+      image-set(
+        url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
+        url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
+      );
+    background-position: center 38%;
+  }
 }
 
 @media (max-width: 560px) {
-  .lobby-band {
-    min-height: clamp(160px, 22vh, 260px);
+  .search-stage::before {
+    height: clamp(360px, 58vh, 520px);
+    background-image:
+      linear-gradient(
+        180deg,
+        #f8fafc 0%,
+        rgba(248, 250, 252, 0.92) 12%,
+        rgba(238, 245, 251, 0.7) 40%,
+        rgba(230, 240, 250, 0.62) 100%
+      ),
+      image-set(
+        url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
+        url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
+      );
+    background-position: center 34%;
   }
 }
 
