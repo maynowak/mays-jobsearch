@@ -2336,6 +2336,9 @@ return (
               onClose={() => setProfilesDocId(null)}
             />
           )}
+          {/* SEARCH-HERO-BG-02: dekoratives Lobby-Band zwischen Inhalt und
+              Footer (nur Search-Seite). Rein visuell, ohne Inhalt/Logik. */}
+          {route === "matcher" && <section className="lobby-band" aria-hidden="true" />}
           <Footer />
         </>
       )}

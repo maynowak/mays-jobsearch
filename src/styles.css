@@ -482,20 +482,18 @@ body {
   color: var(--text);
   padding: 64px 20px 72px;
   text-align: center;
-  /* Heller Verlauf als Lesbarkeits-Schicht: der Text bleibt dunkel
-     (--text), das Lobby-Motiv ist hell/cyan. */
   background:
     linear-gradient(
       90deg,
-      rgba(248, 250, 252, 0.92) 0%,
-      rgba(245, 248, 252, 0.78) 38%,
-      rgba(233, 242, 250, 0.62) 62%,
-      rgba(214, 231, 245, 0.34) 100%
+      rgba(248, 250, 252, 0.9) 0%,
+      rgba(245, 248, 252, 0.7) 34%,
+      rgba(224, 234, 245, 0.4) 60%,
+      rgba(209, 226, 240, 0.1) 100%
     ),
     image-set(
-      url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
-      url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
-    ) center / cover no-repeat;
+      url("/job-matcher-next-step-searchpage.webp") type("image/webp"),
+      url("assets/images/job-matcher-next-step-searchpage.png") type("image/png")
+    ) center 55% / cover no-repeat;
   border-bottom: 1px solid var(--border);
 }
 
@@ -584,6 +582,33 @@ body {
   }
   .search-hero .search-card {
     max-width: none;
+  }
+}
+
+/* SEARCH-HERO-BG-02: Dekoratives Bildband zwischen Inhalt und Footer
+   (nur Search-Seite). Reines Hintergrundmotiv — kein Text, aria-hidden. */
+
+.lobby-band {
+  position: relative;
+  width: 100%;
+  min-height: clamp(220px, 32vh, 420px);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(248, 250, 252, 0.92) 0%,
+      rgba(240, 246, 251, 0.42) 22%,
+      rgba(233, 242, 250, 0.18) 60%,
+      rgba(226, 238, 248, 0.5) 100%
+    ),
+    image-set(
+      url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
+      url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
+    ) center / cover no-repeat;
+}
+
+@media (max-width: 560px) {
+  .lobby-band {
+    min-height: clamp(160px, 22vh, 260px);
   }
 }
 
