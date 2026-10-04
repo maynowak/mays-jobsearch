@@ -482,18 +482,20 @@ body {
   color: var(--text);
   padding: 64px 20px 72px;
   text-align: center;
+  /* Heller Verlauf als Lesbarkeits-Schicht: der Text bleibt dunkel
+     (--text), das Lobby-Motiv ist hell/cyan. */
   background:
     linear-gradient(
       90deg,
-      rgba(248, 250, 252, 0.9) 0%,
-      rgba(245, 248, 252, 0.7) 34%,
-      rgba(224, 234, 245, 0.4) 60%,
-      rgba(209, 226, 240, 0.1) 100%
+      rgba(248, 250, 252, 0.92) 0%,
+      rgba(245, 248, 252, 0.78) 38%,
+      rgba(233, 242, 250, 0.62) 62%,
+      rgba(214, 231, 245, 0.34) 100%
     ),
     image-set(
-      url("/job-matcher-next-step-searchpage.webp") type("image/webp"),
-      url("assets/images/job-matcher-next-step-searchpage.png") type("image/png")
-    ) center 55% / cover no-repeat;
+      url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
+      url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
+    ) center / cover no-repeat;
   border-bottom: 1px solid var(--border);
 }
 
