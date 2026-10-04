@@ -2271,31 +2271,46 @@ return (
       ) : (
         <>
           <Hero />
-          {/* SEARCH-BG-POSITION-01: Atrium-Bild als Hintergrund-Layer des
-              Search-Bereichs (startet direkt unter dem Hero). Die Such-UI
-              liegt per z-index darüber; Karten bleiben unverändert. */}
-          <div className="search-stage">
-            <main className="container layout-search">
-              <aside className="search-sidebar">
-                {searchCard}
-                {cvProcessingUI}
-              </aside>
+          {/* SEARCH-WORLD-01: durchgehende futuristische „Future Search World"
+              vom Hero bis zum Footer. Reines CSS-Layering, KEINE Animation.
+              Bestehende Such-/Notification-UI bleibt unverändert und liegt
+              per z-index vor dem Hintergrund. */}
+          <div className="search-world">
+            <div className="search-world__background" aria-hidden="true" />
+            <div className="search-world__intelligence" aria-hidden="true">
+              <span className="search-world__chip search-world__chip--ai">AI</span>
+              <span className="search-world__chip search-world__chip--jobs">JOBS</span>
+              <span className="search-world__connector" />
+              <span className="search-world__label">INTELLIGENCE</span>
+              <span className="search-world__panel search-world__panel--a" />
+              <span className="search-world__panel search-world__panel--b" />
+              <span className="search-world__panel search-world__panel--c" />
+              <span className="search-world__lines" />
+            </div>
+            <div className="search-world__content">
+              <main className="container layout-search">
+                <aside className="search-sidebar">
+                  {searchCard}
+                  {cvProcessingUI}
+                </aside>
 
-              {hasResults ? (
-                <section className="results-workspace">
-                  <Results
-                    matches={matches}
-                    foundJobs={foundJobs}
-                    onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
-                    onAtsEvaluate={(job) => setAtsJob(job)}
-                  />
-                </section>
-              ) : (
-                <section className="alerts-section">
-                  <AlertCard profile={profile} />
-                </section>
-              )}
-            </main>
+                {hasResults ? (
+                  <section className="results-workspace">
+                    <Results
+                      matches={matches}
+                      foundJobs={foundJobs}
+                      onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
+                      onAtsEvaluate={(job) => setAtsJob(job)}
+                    />
+                  </section>
+                ) : (
+                  <section className="alerts-section">
+                    <AlertCard profile={profile} />
+                  </section>
+                )}
+              </main>
+            </div>
+            <div className="search-world__fade" aria-hidden="true" />
           </div>
         </>
       )}

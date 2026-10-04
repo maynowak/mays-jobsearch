@@ -38,10 +38,10 @@ const singleModel: ModelsResponse = {
   recommendedModel: null,
 };
 
-// SEARCH-BG-POSITION-01: Atrium-Hintergrund trägt den Search-Bereich.
-// Sollte: Hero -> .search-stage (Suchmaske + Ergebnisliste) -> Footer.
-// Kein Bildstreifen am Seitenende mehr.
-describe("SEARCH-BG-POSITION-01: Hintergrund trägt Search-Bereich, kein Streifen am Ende", () => {
+// SEARCH-WORLD-01: "Future Search World" trägt den Search-Bereich vom Hero
+// bis zum Footer. Sollte: Hero -> .search-world (Suchmaske + Ergebnisliste) -> Footer,
+// mit Hintergrund-/Overlay-/Deko-/Fade-/Content-Layern. Kein Bildstreifen am Ende.
+describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am Ende", () => {
   beforeEach(() => {
     localStorage.setItem("mj-lang", "de");
     window.history.pushState({}, "", "/top");
@@ -74,27 +74,40 @@ describe("SEARCH-BG-POSITION-01: Hintergrund trägt Search-Bereich, kein Streife
     return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) > 0;
   }
 
-  it("Leerzustand: Hero -> search-stage (Suchmaske) -> Footer, ohne Streifen", () => {
+  it("Leerzustand: Hero -> search-world (Suchmaske) -> Footer, alle Layer vorhanden", () => {
     const { container } = renderApp();
     const hero = container.querySelector("header.hero");
-    const stage = container.querySelector(".search-stage");
+    const world = container.querySelector(".search-world");
     const form = container.querySelector(".search-card");
     const footer = container.querySelector("footer");
 
     expect(hero).toBeTruthy();
-    expect(stage).toBeTruthy();
+    expect(world).toBeTruthy();
     expect(form).toBeTruthy();
     expect(footer).toBeTruthy();
-    // Suchmaske liegt im Hintergrund-Container.
-    expect(stage?.contains(form as Element)).toBe(true);
-    // Reihenfolge Hero -> Stage -> Footer.
-    expect(follows(hero as Element, stage as Element)).toBe(true);
-    expect(follows(stage as Element, footer as Element)).toBe(true);
-    // Alter Bildstreifen am Seitenende existiert nicht mehr.
+    // Suchmaske liegt im Content-Layer der Welt.
+    expect(world?.contains(form as Element)).toBe(true);
+    // Reihenfolge Hero -> World -> Footer.
+    expect(follows(hero as Element, world as Element)).toBe(true);
+    expect(follows(world as Element, footer as Element)).toBe(true);
+
+    // Layer-Vollständigkeit: Background, Intelligence, Fade, Content.
+    expect(world?.querySelector(".search-world__background")).toBeTruthy();
+    expect(world?.querySelector(".search-world__intelligence")).toBeTruthy();
+    expect(world?.querySelector(".search-world__fade")).toBeTruthy();
+    expect(world?.querySelector(".search-world__content")).toBeTruthy();
+
+    // Deko ist rein dekorativ (aria-hidden) und liegt AUSSERHALB des Contents.
+    const intel = world?.querySelector(".search-world__intelligence");
+    expect(intel?.getAttribute("aria-hidden")).toBe("true");
+    expect(intel?.contains(form as Element)).toBe(false);
+
+    // Alter Bildstreifen / alte Stage existiert nicht mehr.
     expect(container.querySelector(".lobby-band")).toBeNull();
+    expect(container.querySelector(".search-stage")).toBeNull();
   });
 
-  it("Mit Ergebnissen: Ergebnisliste im Stage, Stage vor Footer, kein Streifen", async () => {
+  it("Mit Ergebnissen: Ergebnisliste im World, World vor Footer, kein Streifen", async () => {
     const { container } = renderApp();
 
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "AWS" } });
@@ -104,12 +117,13 @@ describe("SEARCH-BG-POSITION-01: Hintergrund trägt Search-Bereich, kein Streife
 
     await waitFor(() => expect(container.querySelector(".results-workspace")).toBeTruthy());
 
-    const stage = container.querySelector(".search-stage");
+    const world = container.querySelector(".search-world");
     const results = container.querySelector(".results-workspace");
     const footer = container.querySelector("footer");
-    expect(stage?.contains(results as Element)).toBe(true);
-    expect(follows(stage as Element, footer as Element)).toBe(true);
+    expect(world?.contains(results as Element)).toBe(true);
+    expect(follows(world as Element, footer as Element)).toBe(true);
     expect(container.querySelector(".lobby-band")).toBeNull();
+    expect(container.querySelector(".search-stage")).toBeNull();
   });
 
   it("Auth- und Landing-Routen erhalten keinen Search-Hintergrund", () => {
@@ -120,7 +134,7 @@ describe("SEARCH-BG-POSITION-01: Hintergrund trägt Search-Bereich, kein Streife
         <App />
       </LangProvider>
     );
-    expect(login.querySelector(".search-stage")).toBeNull();
+    expect(login.querySelector(".search-world")).toBeNull();
     expect(login.querySelector("header.hero")).toBeNull();
 
     cleanup();
@@ -130,6 +144,6 @@ describe("SEARCH-BG-POSITION-01: Hintergrund trägt Search-Bereich, kein Streife
         <App />
       </LangProvider>
     );
-    expect(landing.querySelector(".search-stage")).toBeNull();
+    expect(landing.querySelector(".search-world")).toBeNull();
   });
 });

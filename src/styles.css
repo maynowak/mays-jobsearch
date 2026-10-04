@@ -585,86 +585,270 @@ body {
   }
 }
 
-/* SEARCH-BG-POSITION-01: Futuristische Job-/KI-Eingangshalle als
-   Hintergrund-Layer des Search-Bereichs. Startet direkt unter dem Hero,
-   die Such-UI liegt per z-index darüber (Karten bleiben unverändert).
-   Kein Bildstreifen am Seitenende mehr, keine grüne Platzhalterfläche. */
+/* SEARCH-WORLD-01: "Future Search World" — durchgehende futuristische
+   Umgebung vom Hero bis zum Footer. Reines CSS-Layering, KEINE Animation
+   (Animationen folgen in einem separaten Task).
+   Layering: Background 0 → Overlays 1 → Deko 2 → Fade 3 → Such-UI 10. */
 
-.search-stage {
+.search-world {
   position: relative;
-  /* Ruhiger Untergrund für Bereiche unterhalb des Bildausschnitts
-     (z. B. lange Ergebnislisten) — neutral hell-blau, kein Grün. */
-  background: linear-gradient(180deg, #f8fafc 0%, #eef4fa 45%, #e9f1f9 100%);
+  isolation: isolate;
+  overflow: hidden;
+  /* Füllraum, damit unter der UI kein weißes Loch entsteht. */
+  min-height: clamp(780px, 102vh, 1240px);
+  padding-bottom: clamp(120px, 18vh, 220px);
+  /* Basis der Welt: Hero-Nähe hell → Cyan → Blau → ruhiges Ende.
+     Neutral hell-blau, KEINE grüne Platzhalterfläche. */
+  background: linear-gradient(
+    180deg,
+    #f8fafc 0%,
+    #eef6fb 16%,
+    #e3f1f9 38%,
+    #d7ecf7 58%,
+    #cfe6f4 76%,
+    #e9f1f8 100%
+  );
 }
 
-.search-stage::before {
-  content: "";
+/* --- Layer 0: Hintergrundbild (große Fläche, kein Streifen) --------- */
+
+.search-world__background {
   position: absolute;
   inset: 0 0 auto 0;
   /* Höhe gedeckelt: verhindert Über-Zoom bei sehr langen Ergebnislisten. */
-  height: clamp(470px, 82vh, 880px);
+  height: clamp(620px, 86vh, 1020px);
   z-index: 0;
   pointer-events: none;
-  background:
-    /* Verlauf = weicher Übergang Hero (oben, hell) → Cyan/Blau → ruhiger
-       Auslauf nach unten; hält Text/Karten kontrastfähig. */
-    linear-gradient(
-      180deg,
-      #f8fafc 0%,
-      rgba(248, 250, 252, 0.8) 8%,
-      rgba(240, 246, 251, 0.36) 24%,
-      rgba(226, 238, 249, 0.16) 52%,
-      rgba(224, 237, 248, 0.12) 76%,
-      rgba(233, 242, 249, 0.62) 100%
-    ),
-    image-set(
-      url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
-      url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
-    ) center 42% / cover no-repeat;
+  background-image: image-set(
+    url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
+    url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
+  );
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
 }
 
-.search-stage > * {
-  position: relative;
+/* --- Layer 1: Overlays / Farbverlauf (Hero → Cyan → Blau → ruhig) --- */
+
+.search-world::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    /* oben exakt Hero-Farbe → kein harter Bruch */
+    #f8fafc 0%,
+    rgba(248, 250, 252, 0.82) 7%,
+    rgba(240, 247, 252, 0.34) 22%,
+    rgba(226, 240, 250, 0.14) 42%,
+    rgba(214, 234, 246, 0.2) 62%,
+    rgba(206, 230, 244, 0.46) 84%,
+    rgba(233, 241, 248, 0.9) 100%
+  );
 }
+
+/* --- Layer 2: dezente Intelligence-Deko (reine Atmosphäre) ---------- */
+
+.search-world__intelligence {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* diffuse Lichtpunkte */
+.search-world__intelligence::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 22% 62%, rgba(34, 211, 238, 0.16) 0 2px, transparent 3px),
+    radial-gradient(circle at 68% 70%, rgba(34, 211, 238, 0.14) 0 2px, transparent 3px),
+    radial-gradient(circle at 84% 58%, rgba(14, 165, 166, 0.12) 0 3px, transparent 4px),
+    radial-gradient(circle at 46% 80%, rgba(125, 211, 252, 0.16) 0 2px, transparent 3px),
+    radial-gradient(circle at 12% 78%, rgba(34, 211, 238, 0.1) 0 2px, transparent 3px);
+}
+
+/* kurze horizontale/diagonale Lichtlinien */
+.search-world__lines {
+  position: absolute;
+  left: 50%;
+  top: 64%;
+  width: min(880px, 78vw);
+  height: 120px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(34, 211, 238, 0.22) 18%, transparent 46%),
+    linear-gradient(90deg, transparent 54%, rgba(125, 211, 252, 0.18) 82%, transparent 100%),
+    linear-gradient(90deg, transparent 30%, rgba(14, 165, 166, 0.12) 70%, transparent 100%);
+  -webkit-mask-image: repeating-linear-gradient(
+    180deg,
+    #000 0 1px,
+    transparent 1px 14px
+  );
+  mask-image: repeating-linear-gradient(180deg, #000 0 1px, transparent 1px 14px);
+  opacity: 0.9;
+}
+
+/* transparente Glasflächen / dezente Panels */
+.search-world__panel {
+  position: absolute;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 18px;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0.06) 55%,
+    rgba(34, 211, 238, 0.05) 100%
+  );
+}
+
+.search-world__panel--a {
+  left: 6%;
+  top: 58%;
+  width: clamp(120px, 16vw, 220px);
+  height: clamp(64px, 8vh, 96px);
+}
+
+.search-world__panel--b {
+  right: 7%;
+  top: 64%;
+  width: clamp(140px, 19vw, 260px);
+  height: clamp(70px, 9vh, 110px);
+}
+
+.search-world__panel--c {
+  left: 50%;
+  top: 82%;
+  width: clamp(160px, 22vw, 300px);
+  height: 1px;
+  border: 0;
+  border-top: 1px solid rgba(34, 211, 238, 0.28);
+  border-radius: 0;
+  background: none;
+  transform: translateX(-50%);
+}
+
+/* AI / JOBS Chips + Connector + INTELLIGENCE (rein dekorativ) */
+.search-world__chip,
+.search-world__label {
+  position: absolute;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(13, 110, 145, 0.34);
+  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.6);
+}
+
+.search-world__chip {
+  font-size: clamp(0.68rem, 1.1vw, 0.82rem);
+  padding: 6px 14px;
+  border: 1px solid rgba(34, 211, 238, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.search-world__chip--ai {
+  left: 38%;
+  top: 63%;
+}
+
+.search-world__chip--jobs {
+  left: 52%;
+  top: 63%;
+}
+
+.search-world__connector {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  width: 1px;
+  height: clamp(48px, 7vh, 78px);
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.42), rgba(34, 211, 238, 0));
+}
+
+.search-world__label {
+  left: 50%;
+  top: calc(68% + clamp(48px, 7vh, 78px));
+  transform: translateX(-50%);
+  font-size: clamp(0.72rem, 1.2vw, 0.9rem);
+  white-space: nowrap;
+}
+
+/* --- Layer 3: weicher Auslauf zum Footer --------------------------- */
+
+.search-world__fade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: clamp(140px, 22vh, 260px);
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(233, 241, 248, 0) 0%, #f4f8fc 62%, #f8fafc 100%);
+}
+
+/* --- Layer 10: Such-UI (Karten unverändert) ------------------------ */
+
+.search-world__content {
+  position: relative;
+  z-index: 10;
+}
+
+/* --- Responsive ----------------------------------------------------- */
 
 @media (max-width: 900px) {
-  .search-stage::before {
-    /* Tablet/Mobile: Bild proportional, stärkere Abdunklung für Lesbarkeit. */
-    height: clamp(420px, 72vh, 720px);
-    background-image:
-      linear-gradient(
-        180deg,
-        #f8fafc 0%,
-        rgba(248, 250, 252, 0.86) 10%,
-        rgba(238, 245, 251, 0.55) 34%,
-        rgba(228, 239, 249, 0.42) 70%,
-        rgba(233, 242, 249, 0.72) 100%
-      ),
-      image-set(
-        url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
-        url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
-      );
-    background-position: center 38%;
+  .search-world {
+    min-height: clamp(700px, 96vh, 1040px);
+  }
+  .search-world__background {
+    height: clamp(520px, 76vh, 860px);
+  }
+  .search-world::before {
+    background: linear-gradient(
+      180deg,
+      #f8fafc 0%,
+      rgba(248, 250, 252, 0.88) 9%,
+      rgba(240, 247, 252, 0.5) 26%,
+      rgba(222, 238, 249, 0.3) 50%,
+      rgba(210, 233, 246, 0.5) 82%,
+      rgba(233, 241, 248, 0.92) 100%
+    );
+  }
+  /* Deko zurücknehmen: weniger Panels, kleinere Chips. */
+  .search-world__panel--c,
+  .search-world__lines {
+    display: none;
   }
 }
 
 @media (max-width: 560px) {
-  .search-stage::before {
-    height: clamp(360px, 58vh, 520px);
-    background-image:
-      linear-gradient(
-        180deg,
-        #f8fafc 0%,
-        rgba(248, 250, 252, 0.92) 12%,
-        rgba(238, 245, 251, 0.7) 40%,
-        rgba(230, 240, 250, 0.62) 100%
-      ),
-      image-set(
-        url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
-        url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
-      );
-    background-position: center 34%;
+  .search-world {
+    min-height: 0;
+    padding-bottom: clamp(96px, 14vh, 150px);
+  }
+  .search-world__background {
+    height: clamp(380px, 62vh, 560px);
+    background-position: center top;
+  }
+  .search-world::before {
+    background: linear-gradient(
+      180deg,
+      #f8fafc 0%,
+      rgba(248, 250, 252, 0.94) 10%,
+      rgba(240, 247, 252, 0.66) 32%,
+      rgba(226, 240, 250, 0.52) 70%,
+      rgba(233, 241, 248, 0.94) 100%
+    );
+  }
+  /* Mobile: dekorative Elemente stark reduzieren, Achse frei lassen. */
+  .search-world__panel,
+  .search-world__lines,
+  .search-world__chip,
+  .search-world__label,
+  .search-world__connector {
+    display: none;
   }
 }
 
