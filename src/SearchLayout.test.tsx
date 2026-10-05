@@ -143,6 +143,35 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(container.querySelector(".search-stage")).toBeNull();
   });
 
+  it("SEARCH-WORLD-08: Column-Gruppe ist zentriert, untere Welt bleibt im Fluss und kompakt", async () => {
+    // Regression: `padding-left: 36% / padding-right: 3%` + `space-around`
+    // schob die AI/MATCH/ATS-Gruppe messbar nach rechts (bei 1440 px:
+    // Gruppenmitte 957 px bei Viewportmitte 720 px = +237 px). Symmetrie +
+    // center ist die stabile Invariarte fuer eine mittige Gruppe.
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+
+    const rule = (selector: string): string => {
+      const m = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`));
+      expect(m, `Regel .${selector} nicht gefunden`).toBeTruthy();
+      return m![1];
+    };
+
+    const cols = rule("search-world__columns");
+    const pl = cols.match(/padding-left:\s*([\d.]+)%/)?.[1];
+    const pr = cols.match(/padding-right:\s*([\d.]+)%/)?.[1];
+    // Symmetrisch -> die Gruppe sitzt auf der Viewport-Achse.
+    expect(pl, "padding-left als % erwartet").toBeTruthy();
+    expect(pr, "padding-right als % erwartet").toBeTruthy();
+    expect(pl).toBe(pr);
+    expect(cols).toMatch(/justify-content:\s*center/);
+
+    // SW-05 bleibt: die untere Welt ist im normalen Fluss, nicht verankert.
+    for (const sel of ["search-world__columns", "search-world__intelligence", "search-world__floor", "search-world__fade"]) {
+      expect(rule(sel)).toMatch(/position:\s*relative/);
+      expect(rule(sel)).not.toMatch(/bottom:/);
+    }
+  });
+
   it("SEARCH-WORLD-07: Results bekommen den groesseren Breitenanteil, Sidebar bleibt kompakt", async () => {
     // Regression: `max-width: 1220px` auf dem Workspace-Container liess auf einem
     // 1440px-Viewport nur 788px fuer die Results (55% der Breite) zu -> die
