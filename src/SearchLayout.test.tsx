@@ -97,22 +97,23 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(world?.querySelector(".search-world__background")).toBeTruthy();
     expect(world?.querySelector(".search-world__top-light")).toBeTruthy();
     expect(world?.querySelector(".search-world__intelligence")).toBeTruthy();
-    expect(world?.querySelector(".search-world__floor")).toBeTruthy();
     expect(world?.querySelector(".search-world__fade")).toBeTruthy();
+    // SEARCH-WORLD-09: Der Boden liegt nicht mehr INNERHALB der World, sondern
+    // als letzter Abschluss hinter dem Footer.
+    expect(world?.querySelector(".search-world__floor")).toBeNull();
+    expect(container.querySelector(".search-world__floor")).toBeTruthy();
     expect(world?.querySelector(".search-world__content")).toBeTruthy();
 
     // SEARCH-WORLD-02: Portal, Deck und Boden sind rein dekorativ.
-    for (const sel of [
-      ".search-world__top-light",
-      ".search-world__intelligence",
-      ".search-world__floor",
-      ".search-world__fade",
-    ]) {
+    for (const sel of [".search-world__top-light", ".search-world__intelligence", ".search-world__fade"]) {
       expect(world?.querySelector(sel)?.getAttribute("aria-hidden")).toBe("true");
     }
-    // Boden liegt vor dem Footer (kein weisses Loch dazwischen).
-    const floor = world?.querySelector(".search-world__floor");
-    if (floor) expect(follows(floor as Element, footer as Element)).toBe(true);
+    expect(container.querySelector(".search-world__floor")?.getAttribute("aria-hidden")).toBe("true");
+    // SEARCH-WORLD-09: Das Podium kommt NACH dem Footer (letzter Abschluss)
+    // statt davor — kein weisses Loch dazwischen, da der Fade den World-
+    // Abschluss bildet.
+    const floor = container.querySelector(".search-world__floor");
+    if (floor) expect(follows(footer as Element, floor as Element)).toBe(true);
 
     // Deko ist rein dekorativ (aria-hidden) und liegt AUSSERHALB des Contents.
     const intel = world?.querySelector(".search-world__intelligence");
@@ -166,10 +167,15 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(cols).toMatch(/justify-content:\s*center/);
 
     // SW-05 bleibt: die untere Welt ist im normalen Fluss, nicht verankert.
-    for (const sel of ["search-world__columns", "search-world__intelligence", "search-world__floor", "search-world__fade"]) {
+    for (const sel of ["search-world__columns", "search-world__intelligence", "search-world__fade"]) {
       expect(rule(sel)).toMatch(/position:\s*relative/);
       expect(rule(sel)).not.toMatch(/bottom:/);
     }
+    // SEARCH-WORLD-09: Das Podium bleibt im normalen Fluss (nur hinter dem
+    // Footer platziert) und darf nicht section-verankert werden.
+    const podium = rule("search-world__floor");
+    expect(podium).toMatch(/position:\s*relative/);
+    expect(podium).not.toMatch(/bottom:/);
   });
 
   it("SEARCH-WORLD-07: Results bekommen den groesseren Breitenanteil, Sidebar bleibt kompakt", async () => {
@@ -248,11 +254,12 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     // Regression: Deck/Columns duerfen nie section-verankert sein, sonst
     // landen sie bei wachsender Ergebnisliste hinter den Job Cards.
     const { container } = renderApp();
+    // SEARCH-WORLD-09: Das Podium ist nicht mehr Teil dieses Flusses
+    // (es liegt hinter dem Footer) — der World-Fluss endet mit dem Fade.
     const order = [
       ".search-world__content",
       ".search-world__columns",
       ".search-world__intelligence",
-      ".search-world__floor",
       ".search-world__fade",
       "footer",
     ].map((sel) => container.querySelector(sel));
@@ -263,6 +270,45 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
       const next = order[i + 1] as Element;
       expect(follows(current, next)).toBe(true);
     }
+  });
+
+  it("SEARCH-WORLD-09: Halbrundes Podium liegt als letzter Abschluss hinter dem Footer", async () => {
+    // Reihenfolge ist hier die eigentliche Anforderung: Das bestehende Podium
+    // (`.search-world__floor`, unveraendert wiederverwendet) ist der LETZTE
+    // visuelle Abschluss der Seite und liegt hinter dem Footer. Zuvor war es
+    // letztes Kind der Search World und stand damit VOR dem Footer.
+    const { container } = renderApp();
+    const podium = container.querySelector(".search-world__floor");
+    const footer = container.querySelector("footer");
+    const fade = container.querySelector(".search-world__fade");
+    expect(podium).toBeTruthy();
+    expect(footer).toBeTruthy();
+    expect(fade).toBeTruthy();
+
+    // Fade -> Footer -> Podium.
+    expect(follows(fade as Element, footer as Element)).toBe(true);
+    expect(follows(footer as Element, podium as Element)).toBe(true);
+
+    // Das Podium ist nicht mehr Teil der Search World (kein Grund, dort
+    // weiterhin Platz zu reservieren oder es per overflow zu beschneiden).
+    expect(container.querySelector(".search-world .search-world__floor")).toBeNull();
+
+    // Layering: Footer ueber Podium, Podium bleibt rein dekorativ.
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const rule = (selector: string): string => {
+      const m = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`));
+      expect(m, `Regel .${selector} nicht gefunden`).toBeTruthy();
+      return m![1];
+    };
+    const z = (ruleText: string): number => Number(ruleText.match(/z-index:\s*(-?\d+)/)?.[1] ?? 0);
+    expect(z(rule("footer"))).toBeGreaterThan(z(rule("search-world__floor")));
+    expect(rule("search-world__floor")).toMatch(/pointer-events:\s*none/);
+    // Ueberlappung ohne zusaetzlichen Leerraum: das Podium zieht sich mit
+    // negativem margin-top hinter die Fusszeile.
+    expect(rule("search-world__floor")).toMatch(/margin-top:\s*calc\(-1\s*\*/);
+    // Kein horizontaler Ueberstand mehr (die World-clipte ihn vorher).
+    expect(rule("search-world__floor")).toMatch(/width:\s*100%/);
+    expect(rule("search-world__floor")).not.toMatch(/width:\s*calc\(/);
   });
 
   it("Auth- und Landing-Routen erhalten keinen Search-Hintergrund", () => {

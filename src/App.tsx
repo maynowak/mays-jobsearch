@@ -2251,7 +2251,18 @@ export default function App() {
     ? (cvState.documents.find((d) => d.id === profilesDocId) ?? null)
     : null;
 
-return (
+// SEARCH-WORLD-09: Das halbrunde Podium (bisher `.search-world__floor`) ist der
+  // LETZTE visuelle Abschluss der Future Search World und liegt hinter dem Footer.
+  // Es wird deshalb nicht mehr im World-Fluss gefuehrt, sondern zusammen mit dem
+  // Footer gerendert. Voraussetzung ist exakt dieselbe Bedingung wie fuer den
+  // World-Zweig weiter unten — das Podium existiert nur, wo es die World gibt.
+  const showsSearchWorld =
+    route !== "impressum" &&
+    route !== "register" &&
+    route !== "login" &&
+    !(route === "landing" && !isSearching);
+
+  return (
     <ErrorBoundary
       title={t("error.boundaryTitle")}
       message={t("error.boundaryMessage")}
@@ -2333,7 +2344,6 @@ return (
               <span className="search-world__lines" />
               <span className="search-world__particles" />
             </div>
-            <div className="search-world__floor" aria-hidden="true" />
             <div className="search-world__fade" aria-hidden="true" />
           </div>
         </>
@@ -2381,6 +2391,13 @@ return (
             />
           )}
           <Footer />
+          {/* SEARCH-WORLD-09: Halbrundes Podium als letzter visueller Abschluss.
+              Das BESTEHENDE Boden-Element wird hier weiterverwendet und nur
+              raeumlich verschoben: es liegt hinter dem Footer (z-index 0 gegen
+              Footer z-index 1), ist rein dekorativ (aria-hidden, pointer-events
+              none) und markiert das Ende der Seite. Keine neue Grafik, keine
+              neue Komponente, kein neues Design. */}
+          {showsSearchWorld && <div className="search-world__floor" aria-hidden="true" />}
         </>
       )}
     </ErrorBoundary>

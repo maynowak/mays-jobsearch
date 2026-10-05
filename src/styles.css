@@ -1054,13 +1054,27 @@ body {
 
 .search-world__floor {
   position: relative;
-  /* etwas breiter als die Section (Bogenform), per negativem Margin */
-  width: calc(100% + 4%);
-  margin: 0 -2%;
+  /* SEARCH-WORLD-09: Das bestehende halbrunde Podium ist jetzt der LETZTE
+     visuelle Abschluss der Seite und liegt HINTER dem Footer. Es bleibt im
+     normalen Fluss (kein absolute) und liefert damit die Abschlusshoehe der
+     Seite — die World selbst verliert 81 px und wird NICHT groesser.
+     Die Formerkmale (Halbkreis, Breite, Licht/Glas) bleiben unveraendert. */
+  /* Vorher stand das Podium in der World (overflow: hidden): der Ueberstand
+     +4%/-2% wurde komplett abgeschnitten, sichtbar war die Kuppel also bereits
+     exakt viewport-breit. Ausserhalb der World waere er echter Overflow, daher
+     jetzt 100% — visuell identisch, aber garantiert ohne horizontalen Ueberlauf.
+     Die Kuppel selbst (border-radius auf ::before/::after, inset: 0) fuellt die
+     Box exakt, die Form bleibt unveraendert. */
+  width: 100%;
+  /* Der obere Teil des Podiums schiebt sich hinter die Fusszeile: gewuenschter
+     Layering-Zustand, kein harter Schnitt, kein zusaetzlicher Leerraum. */
+  margin: 0;
+  margin-top: calc(-1 * clamp(24px, 4vh, 44px));
   height: clamp(64px, 9vh, 104px);
   flex: 0 0 auto;
-  /* SEARCH-WORLD-03: Boden ueber den Columns (Columns = 3). */
-  z-index: 5;
+  /* SEARCH-WORLD-03: Boden bleibt der unterste dekorative Layer (z-index 5),
+     liegt aber jetzt unter dem Footer (z-index 1 in dieser Ebene). */
+  z-index: 0;
   pointer-events: none;
 }
 
@@ -1334,8 +1348,11 @@ body {
   }
   .search-world__floor {
     height: clamp(58px, 9vh, 92px);
-    width: calc(100% + 10%);
-    margin: 0 -5%;
+    /* SEARCH-WORLD-09: Ueberstand entfaellt (siehe Basis-Regel) — die Kuppel
+       war auch mobil durch overflow:hidden auf Viewport-Breite beschnitten.
+       Wichtig: KEIN `margin: 0` hier, das wuerde das negative margin-top der
+       Basis-Regel (Ueberlappung mit dem Footer) auf mobil zuruecksetzen. */
+    width: 100%;
   }
   /* SEARCH-WORLD-03: Mobile — drei schmale, stark transparente Saeulen,
      Innendetails reduziert; Such-UI bleibt dominant. */
@@ -4746,6 +4763,12 @@ body {
   color: var(--muted);
   font-size: 0.88rem;
   padding: 24px 20px 40px;
+  /* SEARCH-WORLD-09: Der Footer liegt VOR dem Podium und wird von diesem
+     nicht verdraengt: eigener Stacking-Kontext mit z-index 1 ueber dem
+     Podium (z-index 0). Inhalt, Links, Typografie und Navigation bleiben
+     unveraendert — rein die visuelle Umgebung wird angepasst. */
+  position: relative;
+  z-index: 1;
 }
 
 .footer .footer-version {
