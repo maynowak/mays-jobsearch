@@ -1072,10 +1072,21 @@ body {
      Box exakt, die Form bleibt unveraendert. */
   width: 100%;
   /* Der obere Teil des Podiums schiebt sich hinter die Fusszeile: gewuenschter
-     Layering-Zustand, kein harter Schnitt, kein zusaetzlicher Leerraum. */
+     Layering-Zustand, kein harter Schnitt, kein zusaetzlicher Leerraum.
+     SEARCH-WORLD-11: Die Ueberdeckung waechst von 4vh/36 px auf 5.6vh/50 px.
+     Da der Footer KEINEN Hintergrund hat, ist die Kuppel dadurch auch in der
+     Fusszeile sichtbar: der Footer liegt optisch auf der Podium-Atmosphaere,
+     ohne dass eine einzige Footer-Eigenschaft (Inhalt, Typografie, Padding)
+     angefasst werden musste. Die 40 px Bottom-Padding-Zone des Footers werden
+     so vom Podium ausgefuellt statt als weisser Leerraum zu enden. */
   margin: 0;
-  margin-top: calc(-1 * clamp(24px, 4vh, 44px));
-  height: clamp(64px, 9vh, 104px);
+  margin-top: calc(-1 * clamp(40px, 5.6vh, 68px));
+  /* SEARCH-WORLD-11: Kuppel hoeher (9vh/81 px -> 11vh/99 px @1440), damit die
+     sichtbare Halbkugel unterhalb des Footers von 45 px auf ~49 px waechst und
+     die Flaeche als bewusstes Podium statt als Randlinie liest. Die Obergrenze
+     bleibt bewusst moderat (124 px), damit 1920 keine erneute
+     Ueberdimensionierung erzeugt (Boden-Historie: 46vh -> 25vh -> 9vh -> 11vh). */
+  height: clamp(80px, 11vh, 124px);
   flex: 0 0 auto;
   /* SEARCH-WORLD-03: Boden bleibt der unterste dekorative Layer (z-index 5),
      liegt aber jetzt unter dem Footer (z-index 1 in dieser Ebene). */
@@ -1089,12 +1100,20 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  /* SEARCH-WORLD-11: Blaue Integration. Der Verlauf bleibt dieselbe Glas-
+     Aesthetik und dieselbe 180deg-Richtung, aber die blauen Toene des bereits
+     vorhandenen World-Farbraums (rgba(203,234,250) / rgba(133,196,238) /
+     rgba(70,150,205)) sind deutlichpraesenter. Der Bogen-Glanz oben bleibt
+     hell, damit die Fusszeilentexte darauf lesbar bleiben; die Basis unten
+     traegt das ruhige Blau. KEINE neue Palette, KEINE harte Flaeche:
+     gemessene Saettigung ~18 %, gemessener Kontrast zur Seitenhintergrundfarbe
+     53 statt bisher 15 (Seitenende vorher rgb(236,244,249) S 6 %). */
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.52) 0%,
-    rgba(219, 239, 250, 0.36) 30%,
-    rgba(190, 224, 242, 0.24) 62%,
-    rgba(162, 206, 231, 0.14) 100%
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(203, 234, 250, 0.5) 22%,
+    rgba(133, 196, 238, 0.42) 54%,
+    rgba(70, 150, 205, 0.3) 100%
   );
   box-shadow:
     0 -12px 34px rgba(11, 94, 130, 0.08),
@@ -1107,10 +1126,15 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  border-top: 1px solid rgba(34, 211, 238, 0.36);
-  box-shadow: 0 -16px 44px rgba(34, 211, 238, 0.14);
-  -webkit-mask-image: linear-gradient(180deg, #000 0 24%, transparent 66%);
-  mask-image: linear-gradient(180deg, #000 0 24%, transparent 66%);
+  /* SEARCH-WORLD-11: Die Lichtkante des Bogens wird deutlicher (0.36 -> 0.55)
+     und der weiche cyanfarbene Schein etwas kraeftiger, damit die Halbkugel
+     als bewusste Form liest und nicht als 1px-Randlinie. Die Maske reicht
+     weiter nach unten (0-34 % / bis 72 %), weil die Kuppel hoeher ist und
+     sonst nur die oberste Mitte der Kurve sichtbar bliebe. */
+  border-top: 1px solid rgba(34, 211, 238, 0.55);
+  box-shadow: 0 -16px 44px rgba(34, 211, 238, 0.2);
+  -webkit-mask-image: linear-gradient(180deg, #000 0 34%, transparent 72%);
+  mask-image: linear-gradient(180deg, #000 0 34%, transparent 72%);
 }
 
 /* --- Layer 5: weicher Auslauf zum Footer --------------------------- */
@@ -1122,8 +1146,12 @@ body {
      SW-08-Historie: 24vh/280 px -> 14vh/168 px -> jetzt 11vh/140 px.
      Der Verlauf bleibt unveraendert (transparent -> #f0f6fb -> #f8fafc),
      nur kuerzer: Deck -> Footer bleibt weich, ohne grosses atmospherisches
-     Feld. Kein weisses Loch, keine harte Linie (Naht nachgemessen). */
-  height: clamp(84px, 11vh, 140px);
+     Feld. Kein weisses Loch, keine harte Linie (Naht nachgemessen).
+     SEARCH-WORLD-11: 11vh -> 8.5vh (99 px -> 76 px @1440). Der Bereich unter
+     der World wird dadurch kuerzer und die Kuppel bekommt mehr relativen
+     Anteil am Seitenende. Der VERLAUF selbst bleibt byte-identisch — die
+     Naht Fade -> Footer landet weiterhin exakt auf #f8fafc (nachgemessen). */
+  height: clamp(72px, 8.5vh, 112px);
   flex: 0 0 auto;
   /* SEARCH-WORLD-03: Fade bleibt oberste Deko-Ebene. */
   z-index: 6;
@@ -1279,7 +1307,9 @@ body {
   }
   .search-world__floor {
     /* SEARCH-WORLD-08: Boden auch auf Tablet kompakter (11vh/128 -> 8vh/92). */
-    height: clamp(58px, 8vh, 92px);
+    /* SEARCH-WORLD-11: 8vh/89 px -> 10vh/111 px, damit die Kuppel auf Tablet
+       ebenfalls als Podium liest und nicht als Randlinie. */
+    height: clamp(76px, 10vh, 112px);
   }
   /* SEARCH-WORLD-03: Tablet — weiterhin drei Saeulen, schmaler, transparenter,
      weniger Innendetails. */
@@ -1307,7 +1337,9 @@ body {
      Nachmessung: Tablet lag mit -14.1 % knapp unter dem Zielband; der Fade
      ist der letzte rein atmosphärische Rest, deshalb nur er. */
   .search-world__fade {
-    height: clamp(68px, 9vh, 108px);
+    /* SEARCH-WORLD-10: 12vh/133 px -> 9vh/100 px. SEARCH-WORLD-11: -> 7vh/78 px,
+       Bottom-Space weiter verkleinert. */
+    height: clamp(60px, 7vh, 92px);
   }
   .intelligence-column::after {
     display: none;
@@ -1358,7 +1390,12 @@ body {
     height: clamp(110px, 16vh, 170px);
   }
   .search-world__floor {
-    height: clamp(58px, 9vh, 92px);
+    /* SEARCH-WORLD-11: 9vh/76 px -> 9.5vh/80 px. */
+    height: clamp(68px, 9.5vh, 100px);
+    /* SEARCH-WORLD-11: Eigene, kleinere Ueberdeckung (5.6vh -> 4vh). Der
+       Mobile-Footer ist hoeher (208 px) und die Kuppel kleiner; mit der
+       Basis-Ueberdeckung bliebe nur ~33 px sichtbar, so bleiben es ~46 px. */
+    margin-top: calc(-1 * clamp(32px, 4vh, 48px));
     /* SEARCH-WORLD-09: Ueberstand entfaellt (siehe Basis-Regel) — die Kuppel
        war auch mobil durch overflow:hidden auf Viewport-Breite beschnitten.
        Wichtig: KEIN `margin: 0` hier, das wuerde das negative margin-top der
@@ -1389,7 +1426,9 @@ body {
     height: clamp(132px, 16vh, 190px);
   }
   .search-world__fade {
-    height: clamp(58px, 7.5vh, 96px);
+    /* SEARCH-WORLD-11: 7.5vh/63 px -> 6vh/51 px (Bottom-Space, SW-10-Block
+       darunter dokumentiert die Historie 10vh -> 7.5vh). */
+    height: clamp(52px, 6vh, 80px);
   }
   .intelligence-column {
     flex-basis: clamp(40px, 13vw, 62px);

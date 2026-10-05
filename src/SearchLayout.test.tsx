@@ -353,15 +353,80 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
       expect(rule(sel)).not.toMatch(/bottom:/);
     }
 
-    // SW-09: die Kompression darf das Podium nicht mitziehen — Groesse, Breite,
-    // Layering und Footer-Beziehung bleiben exakt auf dem SW-09-Stand.
+    // SW-09/SW-11: die Kompression darf das Podium nicht mitziehen — Breite,
+    // Layering und Footer-Beziehung bleiben auf dem SW-09-Stand, die Hoehe ist
+    // in SW-11 bewusst angehoben worden (104 px -> 124 px Obergrenze).
     const podium = rule("search-world__floor");
     const [, , podiumMax] = clamp3(podium, "height");
-    expect(podiumMax).toBe(104);
+    expect(podiumMax).toBe(124);
     expect(podium).toMatch(/width:\s*100%/);
     expect(podium).toMatch(/z-index:\s*0/);
     expect(podium).toMatch(/margin-top:\s*calc\(-1\s*\*/);
     expect(podium).toMatch(/pointer-events:\s*none/);
+  });
+
+  it("SEARCH-WORLD-11: Podium bleibt sichtbares, blau integriertes Element ohne Bottom-Auslauf", async () => {
+    // SW-11 haelt das halbrunde Podium als bewusstes visuelles Element am
+    // Seitenende. Drei echte Rueckfall-Risiken werden hier festgeschrieben:
+    // 1) die Kuppel muss dauerhaft breiter sichtbar sein als eine Randlinie,
+    // 2) sie muss dauerhaft im vorhandenen blauen Farbraum liegen (kein
+    //    Zurueckfallen auf ein blasses, faktisch farbloses Glas),
+    // 3) der untere Leerraum (Fade) darf nicht wieder wachsen.
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const rule = (selector: string, pseudo?: string): string => {
+      const re = pseudo
+        ? new RegExp(`\\.${selector}::${pseudo}\\s*\\{([^}]*)\\}`)
+        : new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`);
+      const m = css.match(re);
+      expect(m, `Regel .${selector}${pseudo ? `::${pseudo}` : ""} nicht gefunden`).toBeTruthy();
+      return m![1];
+    };
+    // min / vh-Anteil / max
+    // Deklariert als clamp(...) oder in calc(-1 * clamp(...)) (negative Ueberdeckung)
+    const clamp3 = (t: string, prop: string): [number, number, number] => {
+      const m = t.match(new RegExp(`${prop}:[^;]*?clamp\\((\\d+)px,\\s*(\\d+(?:\\.\\d+)?)vh,\\s*(\\d+)px\\)`));
+      expect(m, `clamp() fuer ${prop} erwartet`).toBeTruthy();
+      return [Number(m![1]), Number(m![2]), Number(m![3])];
+    };
+    const at = ([min, vh, max]: [number, number, number], vhPx: number) =>
+      Math.min(max, Math.max(min, vhPx * vh));
+    const overlap = clamp3(rule("search-world__floor"), "margin-top");
+
+    // 1) Sichtbare Kuppel: Hoehe minus Ueberdeckung ueber den Footer.
+    // Mindestens 40 px bei jeder Viewport-Hoehe — eine 1px-Linie ist damit
+    // ausgeschlossen (vor SW-11 waren es 45 px, davor das Blatt ~1 px).
+    for (const vhPx of [320, 480, 600, 700, 768, 800, 844, 900, 1024, 1080, 1200]) {
+      const visible = at(clamp3(rule("search-world__floor"), "height"), vhPx) - at(overlap, vhPx);
+      expect(visible, `sichtbare Kuppel bei ${vhPx}px Viewport-Hoehe`).toBeGreaterThanOrEqual(40);
+    }
+    // Die Ueberdeckung muss kleiner sein als die Box, sonst verschwindet die
+    // Kuppel komplett hinter dem Footer.
+    expect(overlap[1]).toBeLessThan(clamp3(rule("search-world__floor"), "height")[1]);
+
+    // 2) Blaue Integration: vorhandene World-Toene, kein blasses Glas.
+    const before = rule("search-world__floor", "before");
+    expect(before).toMatch(/rgba\(70, 150, 205, 0\.3\)/);
+    expect(before).toMatch(/rgba\(133, 196, 238, 0\.42\)/);
+    // Lichtkante des Bogens muss als Form lesbar bleiben (>= 0.5 Deckkraft).
+    const edge = rule("search-world__floor", "after").match(/border-top:[^;]*rgba\(34, 211, 238, ([\d.]+)\)/);
+    expect(edge, "Bogen-Lichtkante nicht gefunden").toBeTruthy();
+    expect(Number(edge![1])).toBeGreaterThanOrEqual(0.5);
+
+    // 3) Bottom-Space: der Fade bleibt kurz und wird nicht wieder zum Feld.
+    const [, fadeVh, fadeMax] = clamp3(rule("search-world__fade"), "height");
+    expect(fadeVh).toBeLessThanOrEqual(9);
+    expect(fadeMax).toBeLessThanOrEqual(120);
+
+    // SW-09 bleibt Grundlage: Podium hinter dem Footer, rein dekorativ, Form
+    // unveraendert halbrund/elliptisch, ausserhalb der Search World.
+    const podium = rule("search-world__floor");
+    expect(podium).toMatch(/width:\s*100%/);
+    expect(podium).toMatch(/z-index:\s*0/);
+    expect(podium).toMatch(/pointer-events:\s*none/);
+    expect(podium).toMatch(/position:\s*relative/);
+    expect(podium).not.toMatch(/bottom:/);
+    expect(rule("search-world__floor", "before")).toMatch(/border-radius:\s*50% 50% 0 0 \/ 100% 100% 0 0/);
+    expect(rule("search-world__floor", "after")).toMatch(/border-radius:\s*50% 50% 0 0 \/ 100% 100% 0 0/);
   });
 
   it("Auth- und Landing-Routen erhalten keinen Search-Hintergrund", () => {
