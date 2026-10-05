@@ -18,6 +18,7 @@ import AlertCard from "./components/AlertCard";
 import Footer from "./components/Footer";
 import LetterModal from "./components/LetterModal";
 import ATSModal from "./components/AtsOverlay";
+import { useSearchWorldMotion } from "./hooks/useSearchWorldMotion";
 import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
 import CvDocumentList from "./components/CvDocumentList";
@@ -1247,6 +1248,10 @@ export default function App() {
     }
   };
 
+  // SEARCH-WORLD-04: schreibt beim Scrollen nur die CSS-Property
+  // `--sw-progress` (kein State, kein Re-Rendering der App).
+  const searchWorldRef = useSearchWorldMotion();
+
   const isSearching = phase === "searching" || phase === "scoring";
   const isMatching = phase === "matching";
   const canRematch = !!dataset && profilesEqual(dataset.profile, profile);
@@ -2275,7 +2280,7 @@ return (
               vom Hero bis zum Footer. Reines CSS-Layering, KEINE Animation.
               Bestehende Such-/Notification-UI bleibt unverändert und liegt
               per z-index vor dem Hintergrund. */}
-          <div className="search-world">
+          <div className="search-world" ref={searchWorldRef}>
             <div className="search-world__background" aria-hidden="true" />
             {/* SEARCH-WORLD-02: architektonisches Lichtportal zwischen Hero
                 und Search World (rein dekorativ). */}

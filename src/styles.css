@@ -1105,6 +1105,103 @@ body {
   z-index: 10;
 }
 
+/* =====================================================================
+   SEARCH-WORLD-04: Scroll-getriebene Motion (nur Deko-Layer)
+   Fortschritt kommt aus `--sw-progress` (0 → 1), geschrieben von
+   src/hooks/useSearchWorldMotion.ts. Ausschliesslich transform/opacity,
+   damit kein Layout-Reflow entsteht. Die Search UI (z-index 10) bleibt
+   vollstaendig unberuehrt — sie wird bewusst NICHT animiert.
+   Amplituden bewusst klein (max. 24 px auf Desktop).
+   ===================================================================== */
+
+/* 2) Atrium-Hintergrund: minimale Tiefenbewegung.
+   scale(1.06) + transform-origin: top erzeugen Ueberstand, damit beim
+   Verschieben KEIN neuer Bildrand entsteht. */
+.search-world__background {
+  transform-origin: center top;
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -18px), 0) scale(1.06);
+}
+
+/* 3) Intelligence Columns: differenziert, aber klein
+   (AI staerker/frueher, MATCH mittel, ATS schwaecher/spaeter). */
+.intelligence-column--ai {
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -24px), 0);
+}
+
+.intelligence-column--match {
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -14px), 0);
+}
+
+.intelligence-column--ats {
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -8px), 0);
+}
+
+/* 4) Intelligence Deck: minimale Verschiebung + sehr leichte Opacity-Anpassung */
+.search-world__intelligence {
+  opacity: calc(0.88 + var(--sw-progress, 0) * 0.12);
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -10px), 0);
+}
+
+/* 5) Halbrunder Boden: langsame raeumliche Reaktion, Form bleibt erhalten
+   (keine Skalierung, keine Rotation). */
+.search-world__floor {
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -6px), 0);
+}
+
+/* 6) Dekorative Labels: zusaetzliche, sehr leichte Tiefe (unterschiedlich) */
+.search-world__chip {
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -6px), 0);
+}
+
+.search-world__micro {
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -4px), 0);
+}
+
+.search-world__label {
+  transform: translate3d(0, calc(var(--sw-progress, 0) * -8px), 0);
+}
+
+/* 10) Mobile: Bewegung deutlich reduziert (ca. 40 %), Search UI bleibt stabil. */
+@media (max-width: 560px) {
+  .search-world__background {
+    transform: translate3d(0, calc(var(--sw-progress, 0) * -7px), 0) scale(1.03);
+  }
+  .intelligence-column--ai {
+    transform: translate3d(0, calc(var(--sw-progress, 0) * -10px), 0);
+  }
+  .intelligence-column--match {
+    transform: translate3d(0, calc(var(--sw-progress, 0) * -6px), 0);
+  }
+  .intelligence-column--ats {
+    transform: translate3d(0, calc(var(--sw-progress, 0) * -3px), 0);
+  }
+  .search-world__intelligence {
+    transform: translate3d(0, calc(var(--sw-progress, 0) * -4px), 0);
+  }
+  .search-world__floor {
+    transform: translate3d(0, calc(var(--sw-progress, 0) * -3px), 0);
+  }
+}
+
+/* 10b) Reduced Motion: alle Scroll-Bewegungen deaktiviert.
+   Die statische SEARCH-WORLD-03-Darstellung bleibt vollstaendig erhalten. */
+@media (prefers-reduced-motion: reduce) {
+  .search-world__background,
+  .intelligence-column--ai,
+  .intelligence-column--match,
+  .intelligence-column--ats,
+  .search-world__intelligence,
+  .search-world__floor,
+  .search-world__chip,
+  .search-world__micro,
+  .search-world__label {
+    transform: none !important;
+  }
+  .search-world__intelligence {
+    opacity: 1 !important;
+  }
+}
+
 /* --- Responsive ----------------------------------------------------- */
 
 @media (max-width: 900px) {

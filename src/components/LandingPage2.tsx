@@ -27,7 +27,7 @@ const STRINGS: Record<Lp2Lang, Record<string, string>> = {
     card2p: "Jede Stelle erhält einen Match-Score mit Begründung und Vorbereitungsfrage.",
     card3t: "CV-Upload",
     card3p: "Lebenslauf hochladen, Profil prüfen, passende Jobs finden — alles im Browser beginnend.",
-    footer: "May's Job Matcher · Prototype Landingpage 2",
+    footer: "May's Job Matcher · Landingpage",
   },
   en: {
     cta: "Open Job Matcher",
@@ -46,7 +46,7 @@ const STRINGS: Record<Lp2Lang, Record<string, string>> = {
     card2p: "Every job gets a match score with reasoning and a prep question.",
     card3t: "CV upload",
     card3p: "Upload your CV, review the profile, find matching jobs — starting right in the browser.",
-    footer: "May's Job Matcher · Prototype landing page 2",
+    footer: "May's Job Matcher · Landingpage",
   },
 };
 
