@@ -685,6 +685,11 @@ body {
   padding-right: 3%;
   height: clamp(360px, 46vh, 560px);
   flex: 0 0 auto;
+  /* SEARCH-WORLD-06: kurzer raeumlicher Uebergang zwischen den offenen
+     Job-Results und den Intelligence Columns. Kein Absender im
+     Ergebnisbereich, sondern Luft, in der die Future World sichtbar
+     bleibt — die Columns sind die einzigen vertikalen Elemente. */
+  margin-top: clamp(40px, 7vh, 96px);
   z-index: 3;
   display: flex;
   align-items: stretch;
@@ -1243,6 +1248,7 @@ body {
     padding-right: 2%;
     height: clamp(300px, 40vh, 440px);
     gap: clamp(12px, 3vw, 32px);
+    margin-top: clamp(32px, 6vh, 72px);
   }
   .intelligence-column {
     flex-basis: clamp(58px, 7vw, 92px);
@@ -1308,6 +1314,7 @@ body {
     padding-right: 2%;
     height: clamp(240px, 32vh, 340px);
     gap: clamp(8px, 2.4vw, 18px);
+    margin-top: clamp(28px, 5vh, 56px);
   }
   .intelligence-column {
     flex-basis: clamp(40px, 13vw, 62px);
@@ -1428,18 +1435,29 @@ body {
   min-width: 0;
 }
 
+/* SEARCH-WORLD-06: Der Results-Bereich ist ein reiner Flow-Container und
+   bleibt strukturell bestehen, ist aber visuell OFFEN: keine Box, kein
+   Hintergrund, kein Rahmen, kein Radius, kein Schatten, kein Padding.
+   Grund: Ein durchgehender Hintergrund + Cyan-Rand um die gesamte Liste
+   erzeugte eine hohe, geschlossene vertikale "Results-Sa(e)ule" — die
+   Jobstellen selbst sind aber gar keine Saeule. Die Welt muss zwischen
+   den einzelnen Cards sichtbar durchscheinen.
+
+   Die eigenstaendige Optik jeder Job Card kommt unveraendert aus
+   `.match-card` (eigener Verlauf, eigener Rahmen, eigener Radius,
+   eigener Schatten). Diese bleiben eigenstaendige Objekte — sie sind
+   jetzt bewusst die einzige Traegerin der Card-Optik, nicht mehr der
+   gemeinsame Container.
+   Bewusst KEIN neuer Hintergrund/keine neue Farbe hier: die Cards
+   tragen sich selbst, der Raum dazwischen ist die Future World. */
 .results-workspace {
   flex: 1;
   min-width: 0;
-  /* SEARCH-WORLD-05: Ergebnisse bekommen eine eigene, ruhige Flaeche —
-     gleiche Tokens wie die Suchkarte (keine neuen Farbsysteme). Dadurch
-     wirken sie als Hauptnhalt statt als dekorative Karten auf dem
-     Future-World-Hintergrund; die Welt bleibt rundum sichtbar. */
-  background: var(--main-gradient);
-  border: 3px solid var(--border-primary);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 24px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
 .results-workspace .results {
@@ -4250,7 +4268,11 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  /* SEARCH-WORLD-06: klarer Raum zwischen den einzelnen Job Cards. Ohne
+     gemeinsamen Container ist der Abstand das, was die Cards als
+     eigenstaendige Objekte trennt — vorher wirkte der enge Abstand
+     innerhalb der Saeule wie eine Liste in einem Schacht. */
+  gap: 28px;
 }
 
   .match-card {

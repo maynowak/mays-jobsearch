@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
@@ -139,6 +141,44 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(follows(world as Element, footer as Element)).toBe(true);
     expect(container.querySelector(".lobby-band")).toBeNull();
     expect(container.querySelector(".search-stage")).toBeNull();
+  });
+
+  it("SEARCH-WORLD-06: Results-Workspace ist visuell OFFEN (kein Turm, keine Seitenkante)", async () => {
+    // Regression: SW-05 hatte Hintergrund + 3px-Cyan-Rand + Radius + Schatten
+    // + Padding um die GESAMTE Ergebnisliste. Das erzeugte eine hohe, geschlossene
+    // vertikale "Results-Sa(e)ule". Der Bereich muss strukturell Flow-Container
+    // bleiben, visuell aber transparent sein — nur AI/MATCH/ATS sind Saulen.
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+
+    const rule = (selector: string): string => {
+      const m = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`));
+      expect(m, `Regel .${selector} nicht gefunden`).toBeTruthy();
+      return m![1];
+    };
+
+    const ws = rule("results-workspace");
+    expect(ws).toMatch(/background:\s*none/);
+    expect(ws).toMatch(/border:\s*0/);
+    expect(ws).toMatch(/box-shadow:\s*none/);
+    expect(ws).toMatch(/padding:\s*0/);
+    // Keine Fläche, keine Seitenkanten, kein Radius, kein Verlauf im Bereich.
+    expect(ws).not.toMatch(/linear-gradient|radial-gradient/);
+    expect(ws).not.toMatch(/border-(left|right|top|bottom)/);
+    expect(ws).toMatch(/border-radius:\s*0/);
+    // Struktur bleibt: Flow-Container mit Flex.
+    expect(ws).toMatch(/flex:\s*1/);
+
+    // Die Job Card selbst traegt weiterhin ihr eigenes, unveraendertes Design.
+    const card = rule("match-card");
+    expect(card).toMatch(/background:\s*var\(--main-gradient\)/);
+    expect(card).toMatch(/border:\s*3px solid var\(--border-primary\)/);
+    expect(card).toMatch(/border-radius:\s*var\(--radius\)/);
+    expect(card).toMatch(/box-shadow:/);
+
+    // Klare Zwischenraeume zwischen den einzelnen Cards.
+    const list = rule("match-list");
+    const gap = Number(list.match(/gap:\s*(\d+)px/)?.[1] ?? 0);
+    expect(gap).toBeGreaterThanOrEqual(24);
   });
 
   it("SEARCH-WORLD-05: Untere Welt liegt im Dokumentfluss NACH dem Content", () => {
