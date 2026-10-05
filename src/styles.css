@@ -669,7 +669,121 @@ body {
   );
 }
 
-/* --- Layer 2: dezente Intelligence-Deko (reine Atmosphäre) ---------- */
+/* --- SEARCH-WORLD-03: Intelligence Columns (AI / MATCH / ATS) -------- */
+/* Drei transparente Glas-/Lichtsaeulen, die den Intelligence Deck mit dem
+   halbrunden Boden verbinden. Rein dekorativ: aria-hidden, keine Daten,
+   keine klickbaren Inhalte, KEINE Animation. */
+
+.search-world__columns {
+  position: absolute;
+  /* Rechts-ausgerichtet: die linke Spalte ist von der Search Card belegt,
+     die Saeulen sollen nicht hinter der Karte versteckt sein. */
+  left: 36%;
+  right: 3%;
+  /* Unteres Ende liegt bewusst INNERHALB der Bodenzone (Boden-Oberkante
+     liegt bei ~216 px, Ende der Columns bei ~198 px) -> weiches Einschmelzen. */
+  bottom: clamp(140px, 22vh, 230px);
+  height: clamp(360px, 46vh, 560px);
+  z-index: 3;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: clamp(16px, 4vw, 64px);
+  pointer-events: none;
+}
+
+/* Bodenreflexion: weicher Lichtsee, wo die Saeulen auf den Boden treffen. */
+.search-world__columns::after {
+  content: "";
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: -7%;
+  height: 24%;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(34, 211, 238, 0.16) 0%,
+    rgba(125, 211, 252, 0.07) 46%,
+    transparent 72%
+  );
+}
+
+.intelligence-column {
+  position: relative;
+  flex: 0 1 clamp(74px, 8.5vw, 132px);
+  border-radius: 16px 16px 0 0;
+  /* Transparentes Glas statt Masse: kein 3D-Koerper, keine harte Kontur. */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(226, 242, 250, 0.2) 38%,
+    rgba(190, 224, 242, 0.15) 72%,
+    rgba(176, 211, 234, 0.06) 100%
+  );
+  border: 1px solid rgba(125, 211, 252, 0.34);
+  border-bottom: 0;
+  /* Etwas kraeftiger, damit die Saeulen auch ueber der spiegelnden
+     Atriumzone als Architektur lesbar bleiben (SEARCH-WORLD-03). */
+  box-shadow:
+    0 0 34px rgba(34, 211, 238, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 0 22px rgba(255, 255, 255, 0.18);
+  opacity: 0.72;
+  padding-top: 14px;
+  text-align: center;
+  font-size: clamp(0.58rem, 0.85vw, 0.7rem);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(11, 92, 122, 0.62);
+  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.85);
+  /* Unteres Einschmelzen in den Boden: keine harte Unterkante. */
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0 56%,
+    rgba(0, 0, 0, 0.4) 80%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0 56%,
+    rgba(0, 0, 0, 0.4) 80%,
+    transparent 100%
+  );
+}
+
+/* Innere abstrakte Datenstruktur: vertikale Lichtspur + feine Linien */
+.intelligence-column::before {
+  content: "";
+  position: absolute;
+  inset: 16% 26% 10%;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(34, 211, 238, 0.3) 0%,
+      rgba(34, 211, 238, 0.05) 58%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgba(125, 211, 252, 0.18) 0 1px,
+      transparent 1px 18px
+    );
+}
+
+/* Geometrische Verbindungen / Punkte (keine echten Daten) */
+.intelligence-column::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.34) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 56%, rgba(125, 211, 252, 0.26) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 32% 42%, rgba(34, 211, 238, 0.18) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 68% 68%, rgba(125, 211, 252, 0.16) 0 1.5px, transparent 2.5px);
+}
+
+/* --- Layer 4: dezente Intelligence-Deko (reine Atmosphäre) ---------- */
 
 .search-world__intelligence {
   position: absolute;
@@ -684,7 +798,8 @@ body {
   /* Fix braucht eine echte Hoehe: die Kinder positionieren sich prozentual
      auf diesen Deck-Raum (sonst faellt der Raum auf 0 zusammen). */
   height: clamp(300px, 36vh, 440px);
-  z-index: 3;
+  /* SEARCH-WORLD-03: Deck sitzt jetzt ueber den Columns (Columns = 3). */
+  z-index: 4;
   pointer-events: none;
   overflow: hidden;
 }
@@ -928,7 +1043,8 @@ body {
   right: -2%;
   bottom: clamp(64px, 11vh, 148px);
   height: clamp(86px, 13vh, 158px);
-  z-index: 4;
+  /* SEARCH-WORLD-03: Boden ueber den Columns (Columns = 3). */
+  z-index: 5;
   pointer-events: none;
 }
 
@@ -968,7 +1084,8 @@ body {
   position: absolute;
   inset: auto 0 0 0;
   height: clamp(150px, 24vh, 280px);
-  z-index: 5;
+  /* SEARCH-WORLD-03: Fade bleibt oberste Deko-Ebene. */
+  z-index: 6;
   pointer-events: none;
   /* SEARCH-BG-STATE-01 Fix 3b: Fade beginnt aus der blauen Zone heraus
      (vorher sofort aus fast Weiß) und landet weich auf der Footer-Farbe. */
@@ -1027,6 +1144,22 @@ body {
     height: clamp(74px, 11vh, 128px);
     bottom: clamp(56px, 9vh, 120px);
   }
+  /* SEARCH-WORLD-03: Tablet — weiterhin drei Saeulen, schmaler, transparenter,
+     weniger Innendetails. */
+  .search-world__columns {
+    left: 30%;
+    right: 2%;
+    bottom: clamp(120px, 18vh, 190px);
+    height: clamp(300px, 40vh, 440px);
+    gap: clamp(12px, 3vw, 32px);
+  }
+  .intelligence-column {
+    flex-basis: clamp(58px, 7vw, 92px);
+    opacity: 0.5;
+  }
+  .intelligence-column::after {
+    display: none;
+  }
   .search-world__micro--profile,
   .search-world__micro--skills {
     display: none;
@@ -1078,6 +1211,31 @@ body {
     bottom: clamp(44px, 7vh, 90px);
     left: -6%;
     right: -6%;
+  }
+  /* SEARCH-WORLD-03: Mobile — drei schmale, stark transparente Saeulen,
+     Innendetails reduziert; Such-UI bleibt dominant. */
+  .search-world__columns {
+    left: 12%;
+    right: 2%;
+    bottom: clamp(110px, 15vh, 170px);
+    height: clamp(240px, 32vh, 340px);
+    gap: clamp(8px, 2.4vw, 18px);
+  }
+  .intelligence-column {
+    flex-basis: clamp(40px, 13vw, 62px);
+    opacity: 0.38;
+    padding-top: 10px;
+    font-size: 0.55rem;
+    letter-spacing: 0.22em;
+  }
+  .intelligence-column::before {
+    inset: 18% 32% 12%;
+  }
+  .intelligence-column::after {
+    display: none;
+  }
+  .search-world__columns::after {
+    display: none;
   }
   .search-world__intelligence {
     top: auto;

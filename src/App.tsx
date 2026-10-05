@@ -2303,6 +2303,14 @@ return (
                 )}
               </main>
             </div>
+            {/* SEARCH-WORLD-03: drei vertikale Intelligence Columns
+                (AI / MATCH / ATS) vom Deck bis in den Boden. Rein
+                dekorativ, z-index 3 — unter Deck (4), Boden (5), UI (10). */}
+            <div className="search-world__columns" aria-hidden="true">
+              <span className="intelligence-column intelligence-column--ai">AI</span>
+              <span className="intelligence-column intelligence-column--match">MATCH</span>
+              <span className="intelligence-column intelligence-column--ats">ATS</span>
+            </div>
             {/* SEARCH-WORLD-02: Lower Intelligence Deck + halbrunder Boden. */}
             <div className="search-world__intelligence" aria-hidden="true">
               <span className="search-world__chip search-world__chip--ai">AI</span>
