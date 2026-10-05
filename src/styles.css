@@ -594,9 +594,10 @@ body {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  /* Füllraum, damit unter der UI kein weißes Loch entsteht. */
-  min-height: clamp(780px, 102vh, 1240px);
-  padding-bottom: clamp(120px, 18vh, 220px);
+  /* Füllraum, damit unter der UI kein weißes Loch entsteht und
+     Intelligence-Deck + Bodenplatz haben. */
+  min-height: clamp(880px, 116vh, 1380px);
+  padding-bottom: clamp(210px, 30vh, 330px);
   /* Basis der Welt: Hero-Nähe hell → Cyan → Blau → ruhiges Ende.
      Neutral hell-blau, KEINE grüne Platzhalterfläche. */
   background: linear-gradient(
@@ -653,8 +654,13 @@ body {
 
 .search-world__intelligence {
   position: absolute;
-  inset: 0;
-  z-index: 2;
+  left: 0;
+  right: 0;
+  /* SEARCH-WORLD-02: eigener unterer Raum ("Lower Intelligence Deck"),
+     damit die Komposition unabhängig von der Gesamthöhe sitzt. */
+  top: 54%;
+  bottom: 0;
+  z-index: 3;
   pointer-events: none;
   overflow: hidden;
 }
@@ -676,7 +682,7 @@ body {
 .search-world__lines {
   position: absolute;
   left: 50%;
-  top: 64%;
+  top: 12%;
   width: min(880px, 78vw);
   height: 120px;
   transform: translateX(-50%);
@@ -708,21 +714,21 @@ body {
 
 .search-world__panel--a {
   left: 6%;
-  top: 58%;
+  top: 34%;
   width: clamp(120px, 16vw, 220px);
   height: clamp(64px, 8vh, 96px);
 }
 
 .search-world__panel--b {
   right: 7%;
-  top: 64%;
+  top: 46%;
   width: clamp(140px, 19vw, 260px);
   height: clamp(70px, 9vh, 110px);
 }
 
 .search-world__panel--c {
   left: 50%;
-  top: 82%;
+  top: 74%;
   width: clamp(160px, 22vw, 300px);
   height: 1px;
   border: 0;
@@ -753,18 +759,18 @@ body {
 
 .search-world__chip--ai {
   left: 38%;
-  top: 63%;
+  top: 6%;
 }
 
 .search-world__chip--jobs {
   left: 52%;
-  top: 63%;
+  top: 6%;
 }
 
 .search-world__connector {
   position: absolute;
   left: 50%;
-  top: 68%;
+  top: 11%;
   width: 1px;
   height: clamp(48px, 7vh, 78px);
   background: linear-gradient(180deg, rgba(34, 211, 238, 0.42), rgba(34, 211, 238, 0));
@@ -772,19 +778,173 @@ body {
 
 .search-world__label {
   left: 50%;
-  top: calc(68% + clamp(48px, 7vh, 78px));
+  top: calc(11% + clamp(48px, 7vh, 78px));
   transform: translateX(-50%);
   font-size: clamp(0.72rem, 1.2vw, 0.9rem);
   white-space: nowrap;
 }
 
-/* --- Layer 3: weicher Auslauf zum Footer --------------------------- */
+/* --- SEARCH-WORLD-02: Top-Light-Portal ------------------------------ */
+/* Architektonische Lichtkomponente an der Grenze Hero -> Search World:
+   leuchtender Portalbogen + Lichtkranz. KEIN UI-Element, rein dekorativ. */
+
+.search-world__top-light {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: clamp(96px, 14vh, 172px);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Portalbogen: flacher Ellipsenbogen mit Cyan-Lichtkante */
+.search-world__top-light::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: min(1280px, 90vw);
+  height: 100%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  border-top: 2px solid rgba(125, 211, 252, 0.5);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(226, 241, 250, 0.22) 44%,
+    rgba(214, 236, 248, 0.08) 74%,
+    transparent 100%
+  );
+  box-shadow:
+    0 -8px 30px rgba(34, 211, 238, 0.22),
+    inset 0 12px 26px rgba(255, 255, 255, 0.4);
+}
+
+/* Lichtkranz unter dem Bogen: weiche Übergangsfläche Hero -> Welt */
+.search-world__top-light::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translateX(-50%);
+  width: min(1560px, 96vw);
+  height: clamp(150px, 22vh, 260px);
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(34, 211, 238, 0.16) 0%,
+    rgba(125, 211, 252, 0.09) 34%,
+    rgba(186, 230, 253, 0.04) 62%,
+    transparent 78%
+  );
+}
+
+/* --- SEARCH-WORLD-02: Lower Intelligence Deck (Verfeinerung) --------- */
+
+/* zarte Micro-Labels (rein dekorativ, keine Daten) */
+.search-world__micro {
+  position: absolute;
+  font-size: clamp(0.6rem, 0.9vw, 0.7rem);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(13, 110, 145, 0.22);
+  white-space: nowrap;
+}
+
+.search-world__micro--match {
+  /* rechte freie Deck-Fläche: links liegt die Suchkarte davor. */
+  left: 68%;
+  top: 16%;
+}
+
+.search-world__micro--ats {
+  left: 78%;
+  top: 30%;
+}
+
+.search-world__micro--profile {
+  left: 22%;
+  top: 62%;
+}
+
+.search-world__micro--skills {
+  left: 72%;
+  top: 66%;
+}
+
+/* vierte Glasfläche für mehr Tiefenstaffelung */
+.search-world__panel--d {
+  left: 34%;
+  top: 52%;
+  width: clamp(110px, 14vw, 190px);
+  height: clamp(56px, 7vh, 88px);
+  opacity: 0.7;
+}
+
+/* sehr dezente, statische Partikelpunkte */
+.search-world__particles {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 18%, rgba(34, 211, 238, 0.14) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 58% 40%, rgba(125, 211, 252, 0.12) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 74% 22%, rgba(14, 165, 166, 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 44% 62%, rgba(34, 211, 238, 0.1) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 86% 58%, rgba(125, 211, 252, 0.12) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 20% 44%, rgba(14, 165, 166, 0.09) 0 1.5px, transparent 2.5px);
+}
+
+/* --- SEARCH-WORLD-02: halbrunder Boden ------------------------------ */
+/* Große flache elliptische Plattform über die Breite der Search World:
+   Glas/reflektierende Fläche, dezente Lichtkante, weiche Schatten,
+   keine harte Kontur, keine sichtbare Box. */
+
+.search-world__floor {
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: clamp(64px, 11vh, 148px);
+  height: clamp(86px, 13vh, 158px);
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Plattform-Oberfläche (Halbkreis nach oben) */
+.search-world__floor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.52) 0%,
+    rgba(219, 239, 250, 0.36) 30%,
+    rgba(190, 224, 242, 0.24) 62%,
+    rgba(162, 206, 231, 0.14) 100%
+  );
+  box-shadow:
+    0 -12px 34px rgba(11, 94, 130, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Lichtkante entlang des Bogens + Reflexion (nur obere Hälfte) */
+.search-world__floor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  border-top: 1px solid rgba(34, 211, 238, 0.36);
+  box-shadow: 0 -16px 44px rgba(34, 211, 238, 0.14);
+  -webkit-mask-image: linear-gradient(180deg, #000 0 24%, transparent 66%);
+  mask-image: linear-gradient(180deg, #000 0 24%, transparent 66%);
+}
+
+/* --- Layer 5: weicher Auslauf zum Footer --------------------------- */
 
 .search-world__fade {
   position: absolute;
   inset: auto 0 0 0;
-  height: clamp(140px, 22vh, 260px);
-  z-index: 3;
+  height: clamp(150px, 24vh, 280px);
+  z-index: 5;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(233, 241, 248, 0) 0%, #f4f8fc 62%, #f8fafc 100%);
 }
@@ -800,7 +960,8 @@ body {
 
 @media (max-width: 900px) {
   .search-world {
-    min-height: clamp(700px, 96vh, 1040px);
+    min-height: clamp(820px, 110vh, 1180px);
+    padding-bottom: clamp(190px, 27vh, 280px);
   }
   .search-world__background {
     height: clamp(520px, 76vh, 860px);
@@ -818,7 +979,24 @@ body {
   }
   /* Deko zurücknehmen: weniger Panels, kleinere Chips. */
   .search-world__panel--c,
+  .search-world__panel--d,
+  .search-world__particles,
   .search-world__lines {
+    display: none;
+  }
+  /* SEARCH-WORLD-02: Portal und Boden proportional kleiner. */
+  .search-world__top-light {
+    height: clamp(84px, 12vh, 140px);
+  }
+  .search-world__top-light::before {
+    width: min(1120px, 94vw);
+  }
+  .search-world__floor {
+    height: clamp(74px, 11vh, 128px);
+    bottom: clamp(56px, 9vh, 120px);
+  }
+  .search-world__micro--profile,
+  .search-world__micro--skills {
     display: none;
   }
 }
@@ -826,7 +1004,7 @@ body {
 @media (max-width: 560px) {
   .search-world {
     min-height: 0;
-    padding-bottom: clamp(96px, 14vh, 150px);
+    padding-bottom: clamp(150px, 20vh, 220px);
   }
   .search-world__background {
     height: clamp(380px, 62vh, 560px);
@@ -845,10 +1023,32 @@ body {
   /* Mobile: dekorative Elemente stark reduzieren, Achse frei lassen. */
   .search-world__panel,
   .search-world__lines,
+  .search-world__particles,
+  .search-world__micro,
   .search-world__chip,
   .search-world__label,
   .search-world__connector {
     display: none;
+  }
+  /* SEARCH-WORLD-02: Portal deutlich reduziert, Boden kompakter. */
+  .search-world__top-light {
+    height: clamp(58px, 9vh, 92px);
+  }
+  .search-world__top-light::before {
+    width: min(880px, 98vw);
+    border-top-width: 1.5px;
+  }
+  .search-world__top-light::after {
+    height: clamp(110px, 16vh, 170px);
+  }
+  .search-world__floor {
+    height: clamp(58px, 9vh, 92px);
+    bottom: clamp(44px, 7vh, 90px);
+    left: -6%;
+    right: -6%;
+  }
+  .search-world__intelligence {
+    top: 58%;
   }
 }
 

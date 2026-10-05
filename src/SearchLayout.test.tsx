@@ -91,11 +91,26 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(follows(hero as Element, world as Element)).toBe(true);
     expect(follows(world as Element, footer as Element)).toBe(true);
 
-    // Layer-Vollständigkeit: Background, Intelligence, Fade, Content.
+    // Layer-Vollständigkeit: Background, Top-Light, Intelligence, Floor, Fade, Content.
     expect(world?.querySelector(".search-world__background")).toBeTruthy();
+    expect(world?.querySelector(".search-world__top-light")).toBeTruthy();
     expect(world?.querySelector(".search-world__intelligence")).toBeTruthy();
+    expect(world?.querySelector(".search-world__floor")).toBeTruthy();
     expect(world?.querySelector(".search-world__fade")).toBeTruthy();
     expect(world?.querySelector(".search-world__content")).toBeTruthy();
+
+    // SEARCH-WORLD-02: Portal, Deck und Boden sind rein dekorativ.
+    for (const sel of [
+      ".search-world__top-light",
+      ".search-world__intelligence",
+      ".search-world__floor",
+      ".search-world__fade",
+    ]) {
+      expect(world?.querySelector(sel)?.getAttribute("aria-hidden")).toBe("true");
+    }
+    // Boden liegt vor dem Footer (kein weisses Loch dazwischen).
+    const floor = world?.querySelector(".search-world__floor");
+    if (floor) expect(follows(floor as Element, footer as Element)).toBe(true);
 
     // Deko ist rein dekorativ (aria-hidden) und liegt AUSSERHALB des Contents.
     const intel = world?.querySelector(".search-world__intelligence");

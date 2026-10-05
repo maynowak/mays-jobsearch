@@ -42,6 +42,25 @@ This file records which AI tools were used on **My Job Matcher** and what was le
 - Per-job radius filtering is impossible without job coordinates — geocode the search city (cheap, cacheable), pass coordinates additively, document the rest as upgrade point.
 - Text-derived `onsite` default + strict multi-select matching changes filter semantics: verify existing tests first (remote-only/empty selections were unaffected here).
 
+## 2026-10-05
+
+**Tool:** Space Bunny (opencode, Modell `space-bunny-free`)
+
+**Work performed:**
+
+- Read-only Discovery-/Gap-Audits (RIS-JOBSEARCH-04, PROFILE-HIERARCHY-01 bis -05): Identity-/Produktverträge, Profil-Datenmodell, Migrations-Gap, Search-/ATS-Flow mit Code-, Test- und Browser-Belegen; Kapazitätsfestlegung 10/2/5 als Produktvorgabe.
+- Reine Frontend-GUI-Schritte ohne Backend (REGISTRATION-UI-01, AUTH-UI-01): Login-/Registrierungsmasken mit Frontend-Validierung, Platzhalter-Zuständen, i18n DE/EN, SPA-Routen und Tests.
+- Visuelle Verpackung des Search-Bereichs (SEARCH-HERO-BG-01/-02/-03, SEARCH-BG-POSITION-01, SEARCH-WORLD-01/-02): Atrium-Bild als Hintergrund-Layer statt Streifen, „Future Search World" mit Intelligence-Deck, Top-Light-Portal und halbrundem Boden; responsive Layering per z-index, ohne Animation.
+- Strukturierte Regressionstests für die Layout-Reihenfolge; Execution Logs nach AI_AUDITLOG-Template.
+
+**Lessons learned:**
+
+- Ein Feature kann strukturell bereits korrekt sein und trotzdem als „falsch" wirken: Erst die tatsächliche Reihenfolge im Browser messen (auch mit Ergebnissen, nicht nur im Leerzustand), dann entscheiden — hier ersetzte die Messung eine vermeintlich nötige Änderung.
+- Production muss gegen den echten Build geprüft werden, nicht gegen den Push: Vercel-Deploys laufen in diesem Projekt explizit über CLI.
+- Hintergrundbilder als `cover`-Layer brauchen einen Höhen-Deckel, sonst überdehnt das Bild bei langen Ergebnislisten (Über-Zoom).
+- Wo eine Auftragsprämisse (z. B. „10 × 10 × 10") nicht im Code existiert, gehört das als Befund dokumentiert, nicht als Ist-Zustand behauptet.
+- Bei reinen Darstellungsaufgaben: bestehende Regressionstests mit Struktur-Assertions absichern, damit die Komposition nicht unbemerkt verrutscht.
+
 ## Future record
 
 Add entries here after each meaningful AI-assisted work session.

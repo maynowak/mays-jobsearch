@@ -2271,22 +2271,15 @@ return (
       ) : (
         <>
           <Hero />
-          {/* SEARCH-WORLD-01: durchgehende futuristische „Future Search World"
+          {/* SEARCH-WORLD-01/-02: durchgehende futuristische „Future Search World"
               vom Hero bis zum Footer. Reines CSS-Layering, KEINE Animation.
               Bestehende Such-/Notification-UI bleibt unverändert und liegt
               per z-index vor dem Hintergrund. */}
           <div className="search-world">
             <div className="search-world__background" aria-hidden="true" />
-            <div className="search-world__intelligence" aria-hidden="true">
-              <span className="search-world__chip search-world__chip--ai">AI</span>
-              <span className="search-world__chip search-world__chip--jobs">JOBS</span>
-              <span className="search-world__connector" />
-              <span className="search-world__label">INTELLIGENCE</span>
-              <span className="search-world__panel search-world__panel--a" />
-              <span className="search-world__panel search-world__panel--b" />
-              <span className="search-world__panel search-world__panel--c" />
-              <span className="search-world__lines" />
-            </div>
+            {/* SEARCH-WORLD-02: architektonisches Lichtportal zwischen Hero
+                und Search World (rein dekorativ). */}
+            <div className="search-world__top-light" aria-hidden="true" />
             <div className="search-world__content">
               <main className="container layout-search">
                 <aside className="search-sidebar">
@@ -2310,6 +2303,24 @@ return (
                 )}
               </main>
             </div>
+            {/* SEARCH-WORLD-02: Lower Intelligence Deck + halbrunder Boden. */}
+            <div className="search-world__intelligence" aria-hidden="true">
+              <span className="search-world__chip search-world__chip--ai">AI</span>
+              <span className="search-world__chip search-world__chip--jobs">JOBS</span>
+              <span className="search-world__connector" />
+              <span className="search-world__label">INTELLIGENCE</span>
+              <span className="search-world__micro search-world__micro--match">MATCH</span>
+              <span className="search-world__micro search-world__micro--ats">ATS</span>
+              <span className="search-world__micro search-world__micro--profile">PROFILE</span>
+              <span className="search-world__micro search-world__micro--skills">SKILLS</span>
+              <span className="search-world__panel search-world__panel--a" />
+              <span className="search-world__panel search-world__panel--b" />
+              <span className="search-world__panel search-world__panel--c" />
+              <span className="search-world__panel search-world__panel--d" />
+              <span className="search-world__lines" />
+              <span className="search-world__particles" />
+            </div>
+            <div className="search-world__floor" aria-hidden="true" />
             <div className="search-world__fade" aria-hidden="true" />
           </div>
         </>

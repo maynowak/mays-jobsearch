@@ -75,6 +75,17 @@ Kimi K3 arbeitet nach dem Working Agreement: Commits/Pushes nur nach ausdrückli
 
 Muse Spark arbeitet nach dem Working Agreement: Commits/Pushes nur nach ausdrücklicher Freigabe; keine Secrets in Code, Logs oder Doku. Stand der Beiträge: 2026-10-01.
 
+**Space Bunny (opencode, Modell `space-bunny-free`) — Discovery-/Gap-Audits / Profil-Datenmodell / Auth-GUI / Search-World-Visualisierung**
+
+- RIS-JOBSEARCH-04: Discovery-/Gap-Report zu IdP, Login/Auth, JWT/Claims, User-/Tenant-Identity, UserProfile, JobSearch ↔ RIS, Google-Federation, Account Linking (read-only, Gate-Frage mit belastbarer Evidenz beantwortet)
+- PROFILE-HIERARCHY-01 bis -05: IST-Audit der CV-/SearchProfile-/ATS-Hierarchie (Code, Tests, Browser-Beleg), Datenmodell- und Migrations-Gap, Flow-Audit CV → SearchProfile → ATS-Suche, Target-Spezifikation, Kapazitätsfestlegung 10/2/5
+- REGISTRATION-UI-01 + AUTH-UI-01: Login- und Registrierungsmaske als reine Frontend-GUI (Validierung, Platzhalter statt Backend, i18n DE/EN, Routen, Tests) — bewusst ohne Cognito/API/Persistenz
+- SEARCH-HERO-BG-01/-02/-03, SEARCH-BG-POSITION-01, SEARCH-WORLD-01/-02: visuelle Verpackung des Search-Bereichs (Atrium-Hintergrund als Layer, „Future Search World", Top-Light-Portal, Intelligence-Deck, halbrunder Boden) inkl. Responsive- und Browser-Verifikation
+- Strukturierte Regressionstests (`SearchLayout.test.tsx`) zur Absicherung der Layout-Reihenfolge
+- Audit-Logging nach Template (docs/AI_AUDITLOG.md + docs/reports/…-EXECUTION_LOG.md)
+
+Space Bunny arbeitet nach dem Working Agreement: Commits/Pushes nur nach ausdrücklicher Freigabe; keine Secrets in Code, Logs oder Doku; keine Architektur- oder Produktentscheidung ohne belastbare Quelle. Stand der Beiträge: 2026-10-05.
+
 ## Working Agreement
 
 - AI contributions are proposals.
