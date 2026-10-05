@@ -594,10 +594,13 @@ body {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  /* Füllraum, damit unter der UI kein weißes Loch entsteht und
-     Intelligence-Deck + Bodenplatz haben. */
+  /* SEARCH-WORLD-05: Die untere Welt (Columns, Deck, Boden, Auslauf) fliesst
+     als normale Flex-Spalte direkt hinter dem Content. Damit liegt sie
+     IMMER nach den Ergebnissen — unabhaengig von der Ergebnislisten-Hoehe
+     und ohne Prozentpositionierung. */
+  display: flex;
+  flex-direction: column;
   min-height: clamp(880px, 116vh, 1380px);
-  padding-bottom: clamp(210px, 30vh, 330px);
   /* Basis der Welt: Hero-Nähe hell → Cyan → Blau → ruhiges Ende.
      Neutral hell-blau, KEINE grüne Platzhalterfläche. */
   /* SEARCH-BG-STATE-01 Fix 2: Die Zone unter dem Bild bleibt ein ruhiges
@@ -675,15 +678,13 @@ body {
    keine klickbaren Inhalte, KEINE Animation. */
 
 .search-world__columns {
-  position: absolute;
+  position: relative;
   /* Rechts-ausgerichtet: die linke Spalte ist von der Search Card belegt,
      die Saeulen sollen nicht hinter der Karte versteckt sein. */
-  left: 36%;
-  right: 3%;
-  /* Unteres Ende liegt bewusst INNERHALB der Bodenzone (Boden-Oberkante
-     liegt bei ~216 px, Ende der Columns bei ~198 px) -> weiches Einschmelzen. */
-  bottom: clamp(140px, 22vh, 230px);
+  padding-left: 36%;
+  padding-right: 3%;
   height: clamp(360px, 46vh, 560px);
+  flex: 0 0 auto;
   z-index: 3;
   display: flex;
   align-items: stretch;
@@ -786,23 +787,17 @@ body {
 /* --- Layer 4: dezente Intelligence-Deko (reine Atmosphäre) ---------- */
 
 .search-world__intelligence {
-  position: absolute;
-  left: 0;
-  right: 0;
-  /* SEARCH-WORLD-02/-03: eigener unterer Raum ("Lower Intelligence Deck").
-     SEARCH-BG-STATE-01 Fix 3: Verankerung unten statt "top: 54 %" — vorher
-     driftete das Deck bei wachsender Section (Ergebnisliste) nach unten und
-     die AI-/JOBS-Elemente verschwanden aus dem Bild. */
-  top: auto;
-  bottom: clamp(230px, 32vh, 360px);
-  /* Fix braucht eine echte Hoehe: die Kinder positionieren sich prozentual
-     auf diesen Deck-Raum (sonst faellt der Raum auf 0 zusammen). */
+  /* SEARCH-WORLD-05: eigener unterer Raum ("Lower Intelligence Deck") im
+     normalen Fluss — direkt nach den Columns. Bewusst NICHT mehr section-
+     verankert (position: absolute): bei wachsender Ergebnisliste landete das
+     Deck dadurch hinter den Job Cards statt danach. */
+  position: relative;
+  width: 100%;
   height: clamp(300px, 36vh, 440px);
-  /* SEARCH-WORLD-03: Deck sitzt jetzt ueber den Columns (Columns = 3). */
+  flex: 0 0 auto;
   z-index: 4;
   pointer-events: none;
-  overflow: hidden;
-}
+  overflow: hidden;}
 
 /* diffuse Lichtpunkte */
 .search-world__intelligence::before {
@@ -1038,11 +1033,12 @@ body {
    keine harte Kontur, keine sichtbare Box. */
 
 .search-world__floor {
-  position: absolute;
-  left: -2%;
-  right: -2%;
-  bottom: clamp(64px, 11vh, 148px);
+  position: relative;
+  /* etwas breiter als die Section (Bogenform), per negativem Margin */
+  width: calc(100% + 4%);
+  margin: 0 -2%;
   height: clamp(86px, 13vh, 158px);
+  flex: 0 0 auto;
   /* SEARCH-WORLD-03: Boden ueber den Columns (Columns = 3). */
   z-index: 5;
   pointer-events: none;
@@ -1081,9 +1077,10 @@ body {
 /* --- Layer 5: weicher Auslauf zum Footer --------------------------- */
 
 .search-world__fade {
-  position: absolute;
-  inset: auto 0 0 0;
+  position: relative;
+  width: 100%;
   height: clamp(150px, 24vh, 280px);
+  flex: 0 0 auto;
   /* SEARCH-WORLD-03: Fade bleibt oberste Deko-Ebene. */
   z-index: 6;
   pointer-events: none;
@@ -1207,7 +1204,6 @@ body {
 @media (max-width: 900px) {
   .search-world {
     min-height: clamp(820px, 110vh, 1180px);
-    padding-bottom: clamp(190px, 27vh, 280px);
   }
   .search-world__background {
     height: clamp(520px, 76vh, 860px);
@@ -1239,14 +1235,12 @@ body {
   }
   .search-world__floor {
     height: clamp(74px, 11vh, 128px);
-    bottom: clamp(56px, 9vh, 120px);
   }
   /* SEARCH-WORLD-03: Tablet — weiterhin drei Saeulen, schmaler, transparenter,
      weniger Innendetails. */
   .search-world__columns {
-    left: 30%;
-    right: 2%;
-    bottom: clamp(120px, 18vh, 190px);
+    padding-left: 30%;
+    padding-right: 2%;
     height: clamp(300px, 40vh, 440px);
     gap: clamp(12px, 3vw, 32px);
   }
@@ -1266,7 +1260,6 @@ body {
 @media (max-width: 560px) {
   .search-world {
     min-height: 0;
-    padding-bottom: clamp(150px, 20vh, 220px);
   }
   .search-world__background {
     height: clamp(380px, 62vh, 560px);
@@ -1305,16 +1298,14 @@ body {
   }
   .search-world__floor {
     height: clamp(58px, 9vh, 92px);
-    bottom: clamp(44px, 7vh, 90px);
-    left: -6%;
-    right: -6%;
+    width: calc(100% + 10%);
+    margin: 0 -5%;
   }
   /* SEARCH-WORLD-03: Mobile — drei schmale, stark transparente Saeulen,
      Innendetails reduziert; Such-UI bleibt dominant. */
   .search-world__columns {
-    left: 12%;
-    right: 2%;
-    bottom: clamp(110px, 15vh, 170px);
+    padding-left: 12%;
+    padding-right: 2%;
     height: clamp(240px, 32vh, 340px);
     gap: clamp(8px, 2.4vw, 18px);
   }
@@ -1333,10 +1324,6 @@ body {
   }
   .search-world__columns::after {
     display: none;
-  }
-  .search-world__intelligence {
-    top: auto;
-    bottom: clamp(180px, 24vh, 260px);
   }
 }
 
@@ -1444,6 +1431,19 @@ body {
 .results-workspace {
   flex: 1;
   min-width: 0;
+  /* SEARCH-WORLD-05: Ergebnisse bekommen eine eigene, ruhige Flaeche —
+     gleiche Tokens wie die Suchkarte (keine neuen Farbsysteme). Dadurch
+     wirken sie als Hauptnhalt statt als dekorative Karten auf dem
+     Future-World-Hintergrund; die Welt bleibt rundum sichtbar. */
+  background: var(--main-gradient);
+  border: 3px solid var(--border-primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.results-workspace .results {
+  margin-top: 0;
 }
 
 @media (min-width: 900px) {

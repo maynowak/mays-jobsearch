@@ -141,6 +141,27 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(container.querySelector(".search-stage")).toBeNull();
   });
 
+  it("SEARCH-WORLD-05: Untere Welt liegt im Dokumentfluss NACH dem Content", () => {
+    // Regression: Deck/Columns duerfen nie section-verankert sein, sonst
+    // landen sie bei wachsender Ergebnisliste hinter den Job Cards.
+    const { container } = renderApp();
+    const order = [
+      ".search-world__content",
+      ".search-world__columns",
+      ".search-world__intelligence",
+      ".search-world__floor",
+      ".search-world__fade",
+      "footer",
+    ].map((sel) => container.querySelector(sel));
+    order.forEach((el) => expect(el).toBeTruthy());
+
+    for (let i = 0; i < order.length - 1; i += 1) {
+      const current = order[i] as Element;
+      const next = order[i + 1] as Element;
+      expect(follows(current, next)).toBe(true);
+    }
+  });
+
   it("Auth- und Landing-Routen erhalten keinen Search-Hintergrund", () => {
     cleanup();
     window.history.pushState({}, "", "/anmelden");
