@@ -690,12 +690,16 @@ body {
      Columns ueber den ganzen Viewport zu verteilen. */
   padding-left: 4%;
   padding-right: 4%;
-  /* 46vh (414 px @1440/900) -> 28vh (252 px): die Columns tragen die
-     Verbindung zum Deck, sie duerfen keine eigene Etage beanspruchen. */
-  height: clamp(220px, 28vh, 340px);
+  /* SEARCH-WORLD-10: 28vh (252 px @1440/900) -> 23vh (207 px). Die Columns
+     tragen nur noch die Verbindung zum Deck; als eigenstaendige Etage
+     kosteten sie nach SW-08 immer noch 42 % der unteren World.
+     SW-08-Historie: 46vh/414 px -> 28vh/252 px -> jetzt 23vh/207 px. */
+  height: clamp(190px, 23vh, 300px);
   flex: 0 0 auto;
-  /* Uebergang Results -> Columns verkuerzt (7vh/63 px -> 4.5vh/40 px). */
-  margin-top: clamp(28px, 4.5vh, 56px);
+  /* SEARCH-WORLD-10: Uebergang Results -> Columns 4.5vh (40.5 px) -> 3vh (27 px).
+     Inkl. Container-Padding bleibt der Atemraum bei ~87 px deutlich
+     wahrnehmbar (Zustand A idle: 41 px -> 27 px). */
+  margin-top: clamp(22px, 3vh, 40px);
   z-index: 3;
   display: flex;
   align-items: stretch;
@@ -809,11 +813,12 @@ body {
      Deck dadurch hinter den Job Cards statt danach. */
   position: relative;
   width: 100%;
-  /* SEARCH-WORLD-08: Deck kompakter — 36vh/440 px -> 25vh/300 px.
-     Alle Innenelemente (AI/JOBS-Chips, Connector, INTELLIGENCE-Label,
-     MATCH/ATS/PROFILE/SKILLS, Glas-Panels) positionieren prozentual und
-     bleiben damit erhalten; nur die Etagenhoehe schrumpft. */
-  height: clamp(200px, 25vh, 300px);
+  /* SEARCH-WORLD-10: Deck 25vh (225 px @1440/900) -> 21vh (189 px).
+     SW-08-Historie: 36vh/440 px -> 25vh/225 px -> jetzt 21vh/189 px.
+     Alle 15 Kindelemente positionieren prozentual und schrumpfen damit
+     proportional mit — keine Removed, keine Label-Aenderung, kein Clipping
+     (Deck-Clipping nach jeder Hoehenmessung geometrisch verifiziert). */
+  height: clamp(175px, 21vh, 260px);
   flex: 0 0 auto;
   z-index: 4;
   pointer-events: none;
@@ -1113,10 +1118,12 @@ body {
 .search-world__fade {
   position: relative;
   width: 100%;
-  /* SEARCH-WORLD-08: Fade nur noch so viel Platz, wie der Uebergang zum
-     Footer braucht — 24vh/280 px -> 14vh/168 px. Vorher 216 px @1440/900,
-     was als grosses leeres Feld zwischen Boden und Footer las. */
-  height: clamp(96px, 14vh, 168px);
+  /* SEARCH-WORLD-10: Fade 14vh (126 px @1440/900) -> 11vh (99 px).
+     SW-08-Historie: 24vh/280 px -> 14vh/168 px -> jetzt 11vh/140 px.
+     Der Verlauf bleibt unveraendert (transparent -> #f0f6fb -> #f8fafc),
+     nur kuerzer: Deck -> Footer bleibt weich, ohne grosses atmospherisches
+     Feld. Kein weisses Loch, keine harte Linie (Naht nachgemessen). */
+  height: clamp(84px, 11vh, 140px);
   flex: 0 0 auto;
   /* SEARCH-WORLD-03: Fade bleibt oberste Deko-Ebene. */
   z-index: 6;
@@ -1281,22 +1288,26 @@ body {
      Gruppenmitte dadurch +117 px rechtslastig bei 834 px). */
     padding-left: 4%;
     padding-right: 4%;
-    height: clamp(190px, 22vh, 280px);
+    /* SEARCH-WORLD-10: Tablet 22vh (245 px @834/1112) -> 19vh (211 px),
+     Uebergang 4vh (44.5 px) -> 2.8vh (31 px). */
+    height: clamp(165px, 19vh, 240px);
     gap: clamp(12px, 3vw, 32px);
-    margin-top: clamp(24px, 4vh, 48px);
+    margin-top: clamp(18px, 2.8vh, 34px);
     justify-content: center;
   }
   .intelligence-column {
     flex-basis: clamp(56px, 6.5vw, 88px);
     opacity: 0.5;
   }
-  /* SEARCH-WORLD-08: Deck auf Tablet kompakter (Basis 25vh greift, aber
-     36vh-Kontext wird hier explizit auf Tablet-Niveau gedrueckt). */
+  /* SEARCH-WORLD-10: Deck auf Tablet 22vh (245 px) -> 19vh (211 px). */
   .search-world__intelligence {
-    height: clamp(180px, 22vh, 260px);
+    height: clamp(160px, 19vh, 235px);
   }
+  /* SEARCH-WORLD-10: Fade auf Tablet 12vh (133 px) -> 9vh (100 px).
+     Nachmessung: Tablet lag mit -14.1 % knapp unter dem Zielband; der Fade
+     ist der letzte rein atmosphärische Rest, deshalb nur er. */
   .search-world__fade {
-    height: clamp(84px, 12vh, 140px);
+    height: clamp(68px, 9vh, 108px);
   }
   .intelligence-column::after {
     display: none;
@@ -1362,17 +1373,23 @@ body {
      auf dem kleinsten Viewport. */
     padding-left: 3%;
     padding-right: 3%;
-    height: clamp(160px, 20vh, 220px);
+    /* SEARCH-WORLD-10: Mobile 20vh (169 px @390/844) -> 17vh (143 px),
+     Uebergang 3.5vh (29.5 px) -> 2.6vh (22 px). Die drei Saeulen bleiben
+     als eigenstaendige Strukturen klar erkennbar (Label + Glas + Reflexion). */
+    height: clamp(140px, 17vh, 195px);
     gap: clamp(8px, 2.4vw, 18px);
-    margin-top: clamp(20px, 3.5vh, 40px);
+    margin-top: clamp(16px, 2.6vh, 30px);
     justify-content: center;
   }
-  /* SEARCH-WORLD-08: Deck + Fade auf Mobile kompakter. */
+  /* SEARCH-WORLD-10: Deck + Fade auf Mobile kompakter (18vh/152 px -> 16vh/135 px,
+     10vh/84 px -> 7.5vh/63 px). Auf Mobile sind nur die Glas-Panels sichtbar
+     (Chips/Label/Micros/Lines sind dort display:none), der Rest der Etage
+     war reiner Luftraum zwischen Deck und Footer. */
   .search-world__intelligence {
-    height: clamp(150px, 18vh, 210px);
+    height: clamp(132px, 16vh, 190px);
   }
   .search-world__fade {
-    height: clamp(72px, 10vh, 120px);
+    height: clamp(58px, 7.5vh, 96px);
   }
   .intelligence-column {
     flex-basis: clamp(40px, 13vw, 62px);

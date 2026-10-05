@@ -311,6 +311,59 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(rule("search-world__floor")).not.toMatch(/width:\s*calc\(/);
   });
 
+  it("SEARCH-WORLD-10: untere World bleibt kompakt, Podium bleibt unberuehrt", async () => {
+    // Die Kompression ist eine rein geometrische Groessenentscheidung. Damit sie
+    // nicht durch eine spaetere Aenderung still zurueckfaellt, werden die vier
+    // Stellschrauben der unteren World als Ober- UND Untergrenzen festgehalten —
+    // inklusive der Bedingung, dass der Results->Columns-Atemraum nicht
+    // verschwindet und dass die Aenderung das Podium (SW-09) nicht mitzieht.
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const rule = (selector: string): string => {
+      const m = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`));
+      expect(m, `Regel .${selector} nicht gefunden`).toBeTruthy();
+      return m![1];
+    };
+    // min / bevorzugte vh-Flaeche / max einer clamp()-Deklaration
+    const clamp3 = (ruleText: string, prop: string): [number, number, number] => {
+      const m = ruleText.match(new RegExp(`${prop}:\\s*clamp\\((\\d+)px,\\s*(\\d+(?:\\.\\d+)?)vh,\\s*(\\d+)px\\)`));
+      expect(m, `clamp() fuer ${prop} erwartet`).toBeTruthy();
+      return [Number(m![1]), Number(m![2]), Number(m![3])];
+    };
+
+    // Obergrenzen: die untere World darf nicht wieder zu einer Etage werden.
+    for (const [sel, prop, maxVh, maxPx] of [
+      ["search-world__columns", "height", 23, 300],
+      ["search-world__intelligence", "height", 21, 260],
+      ["search-world__fade", "height", 11, 140],
+      ["search-world__columns", "margin-top", 3, 40],
+    ] as const) {
+      const [min, vh, max] = clamp3(rule(sel), prop);
+      expect(vh, `${sel} ${prop}: vh-Anteil`).toBeLessThanOrEqual(maxVh);
+      expect(max, `${sel} ${prop}: max`).toBeLessThanOrEqual(maxPx);
+      // Untergrenze: nichts darf auf eine unsichtbare Resthoehe fallen.
+      expect(min, `${sel} ${prop}: min`).toBeGreaterThanOrEqual(16);
+    }
+
+    // Der Uebergang Results -> Columns bleibt wahrnehmbar (nicht 0).
+    expect(clamp3(rule("search-world__columns"), "margin-top")[0]).toBeGreaterThanOrEqual(22);
+
+    // SW-05: nichts der unteren World wird section-verankert.
+    for (const sel of ["search-world__columns", "search-world__intelligence", "search-world__fade", "search-world__floor"]) {
+      expect(rule(sel)).toMatch(/position:\s*relative/);
+      expect(rule(sel)).not.toMatch(/bottom:/);
+    }
+
+    // SW-09: die Kompression darf das Podium nicht mitziehen — Groesse, Breite,
+    // Layering und Footer-Beziehung bleiben exakt auf dem SW-09-Stand.
+    const podium = rule("search-world__floor");
+    const [, , podiumMax] = clamp3(podium, "height");
+    expect(podiumMax).toBe(104);
+    expect(podium).toMatch(/width:\s*100%/);
+    expect(podium).toMatch(/z-index:\s*0/);
+    expect(podium).toMatch(/margin-top:\s*calc\(-1\s*\*/);
+    expect(podium).toMatch(/pointer-events:\s*none/);
+  });
+
   it("Auth- und Landing-Routen erhalten keinen Search-Hintergrund", () => {
     cleanup();
     window.history.pushState({}, "", "/anmelden");
