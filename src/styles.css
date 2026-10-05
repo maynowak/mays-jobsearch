@@ -1423,7 +1423,17 @@ body {
 
 /* Persistent search workspace for matcher */
 .container.layout-search {
-  max-width: 1220px;
+  /* SEARCH-WORLD-07: Ursache der schmalen Results-Komposition war dieser
+     Deckel, nicht die Card. Bei max-width 1220 px blieben auf einem
+     1440-px-Viewport 45 % der Breite ungenutzt: Sidebar 360 px + 32 px
+     Gap liessen fuer die Results nur 788 px (55 % des Viewports), die
+     Card wurde als hoher, schmaler Datenstreifen komponiert.
+     Der Workspace darf die vorhandene Viewportbreite ausschoepfen.
+     Kein neues Layout, keine Aenderung an der Sidebar-Breite (bleibt
+     360 px) und keine am Grid-Verhaeltnis 360px/1fr — nur die
+     Breiten-Obergrenze des Containers wird angehoben. Die Basisklasse
+     `.container` (820 px, andere Seiten) bleibt unberuehrt. */
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;

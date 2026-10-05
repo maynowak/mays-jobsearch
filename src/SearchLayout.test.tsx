@@ -143,6 +143,40 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(container.querySelector(".search-stage")).toBeNull();
   });
 
+  it("SEARCH-WORLD-07: Results bekommen den groesseren Breitenanteil, Sidebar bleibt kompakt", async () => {
+    // Regression: `max-width: 1220px` auf dem Workspace-Container liess auf einem
+    // 1440px-Viewport nur 788px fuer die Results (55% der Breite) zu -> die
+    // Card wirkte als schmaler vertikaler Datenstreifen. Der Deckel ist angehoben;
+    // die Sidebar bleibt bewusst 360px und das Grid 360px/1fr (Results = Rest).
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+
+    const rule = (selector: string): string => {
+      const m = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`));
+      expect(m, `Regel .${selector} nicht gefunden`).toBeTruthy();
+      return m![1];
+    };
+
+    const container = rule("container\\.layout-search");
+    const cap = Number(container.match(/max-width:\s*(\d+)px/)?.[1] ?? 0);
+    // Genug Reserve, damit die Results den verfuegbaren Viewport ausschoepfen.
+    expect(cap).toBeGreaterThanOrEqual(1400);
+
+    // Sidebar bleibt eine kompakte Steuerzentrale, kein Redesign.
+    expect(rule("search-sidebar")).toMatch(/flex:\s*0 0 360px/);
+
+    // Desktop-Grid unveraendert: 360px Sidebar, Rest fuer die Results.
+    const gridBlock = css.match(/@media \(min-width: 900px\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    expect(gridBlock).toMatch(/grid-template-columns:\s*360px 1fr/);
+
+    // Keine kuenstliche Begrenzung der Results-Spalte oder der Card -> das war
+    // die Ursache der Saeulenwirkung.
+    expect(rule("results-workspace")).not.toMatch(/max-width/);
+    expect(rule("match-card")).not.toMatch(/max-width/);
+
+    // Einspaltig bleibt einspaltig: keine Mehrspalten-/Raster-/Masonry-Regel.
+    expect(rule("match-list")).not.toMatch(/grid-template-columns|column-count|columns:/);
+  });
+
   it("SEARCH-WORLD-06: Results-Workspace ist visuell OFFEN (kein Turm, keine Seitenkante)", async () => {
     // Regression: SW-05 hatte Hintergrund + 3px-Cyan-Rand + Radius + Schatten
     // + Padding um die GESAMTE Ergebnisliste. Das erzeugte eine hohe, geschlossene
