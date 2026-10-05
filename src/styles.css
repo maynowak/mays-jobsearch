@@ -600,14 +600,17 @@ body {
   padding-bottom: clamp(210px, 30vh, 330px);
   /* Basis der Welt: Hero-Nähe hell → Cyan → Blau → ruhiges Ende.
      Neutral hell-blau, KEINE grüne Platzhalterfläche. */
+  /* SEARCH-BG-STATE-01 Fix 2: Die Zone unter dem Bild bleibt ein ruhiges
+     Blau (vorher ein fast weißes Plateau -> "milchiger Schleier"). */
   background: linear-gradient(
     180deg,
     #f8fafc 0%,
-    #eef6fb 16%,
-    #e3f1f9 38%,
-    #d7ecf7 58%,
-    #cfe6f4 76%,
-    #e9f1f8 100%
+    #eef6fb 14%,
+    #e3f1f9 34%,
+    #d5ebf7 54%,
+    #c7e2f2 72%,
+    #bcd9ec 88%,
+    #d9e9f4 100%
   );
 }
 
@@ -620,13 +623,27 @@ body {
   height: clamp(620px, 86vh, 1020px);
   z-index: 0;
   pointer-events: none;
-  background-image: image-set(
-    url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
-    url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
-  );
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
+  /* SEARCH-BG-STATE-01 Fix 1: Der Farbverlauf liegt auf der Bildfläche, nicht
+     auf der Section. Vorher dehnte er sich über die wachsende Section-Höhe
+     (mit Ergebnisliste +172 px) und zog den hellen Schleier über die ganze
+     untere Hälfte. */
+  background-image:
+    linear-gradient(
+      180deg,
+      #f8fafc 0%,
+      rgba(248, 250, 252, 0.88) 7%,
+      rgba(240, 247, 252, 0.3) 20%,
+      rgba(226, 240, 250, 0.06) 40%,
+      rgba(198, 226, 242, 0.1) 70%,
+      rgba(176, 211, 234, 0.34) 100%
+    ),
+    image-set(
+      url("/futuristische-lobby-mit-holografischen-displays.webp") type("image/webp"),
+      url("assets/images/Futuristische_Lobby_mit_holografischen_Displays.png") type("image/png")
+    );
+  background-size: cover, cover;
+  background-position: center top, center top;
+  background-repeat: no-repeat, no-repeat;
 }
 
 /* --- Layer 1: Overlays / Farbverlauf (Hero → Cyan → Blau → ruhig) --- */
@@ -637,16 +654,18 @@ body {
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  /* SEARCH-BG-STATE-01 Fix 1b: Dieser Layer macht nur noch den Hero-Uebergang.
+     Ein kurzer Verlauf statt eines sectionweiten Schleiers. */
+  inset: 0 0 auto 0;
+  height: clamp(200px, 30vh, 380px);
   background: linear-gradient(
     180deg,
     /* oben exakt Hero-Farbe → kein harter Bruch */
     #f8fafc 0%,
-    rgba(248, 250, 252, 0.82) 7%,
-    rgba(240, 247, 252, 0.34) 22%,
-    rgba(226, 240, 250, 0.14) 42%,
-    rgba(214, 234, 246, 0.2) 62%,
-    rgba(206, 230, 244, 0.46) 84%,
-    rgba(233, 241, 248, 0.9) 100%
+    rgba(248, 250, 252, 0.86) 6%,
+    rgba(240, 247, 252, 0.42) 16%,
+    rgba(228, 241, 250, 0.14) 32%,
+    transparent 100%
   );
 }
 
@@ -656,10 +675,15 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  /* SEARCH-WORLD-02: eigener unterer Raum ("Lower Intelligence Deck"),
-     damit die Komposition unabhängig von der Gesamthöhe sitzt. */
-  top: 54%;
-  bottom: 0;
+  /* SEARCH-WORLD-02/-03: eigener unterer Raum ("Lower Intelligence Deck").
+     SEARCH-BG-STATE-01 Fix 3: Verankerung unten statt "top: 54 %" — vorher
+     driftete das Deck bei wachsender Section (Ergebnisliste) nach unten und
+     die AI-/JOBS-Elemente verschwanden aus dem Bild. */
+  top: auto;
+  bottom: clamp(230px, 32vh, 360px);
+  /* Fix braucht eine echte Hoehe: die Kinder positionieren sich prozentual
+     auf diesen Deck-Raum (sonst faellt der Raum auf 0 zusammen). */
+  height: clamp(300px, 36vh, 440px);
   z-index: 3;
   pointer-events: none;
   overflow: hidden;
@@ -946,7 +970,15 @@ body {
   height: clamp(150px, 24vh, 280px);
   z-index: 5;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(233, 241, 248, 0) 0%, #f4f8fc 62%, #f8fafc 100%);
+  /* SEARCH-BG-STATE-01 Fix 3b: Fade beginnt aus der blauen Zone heraus
+     (vorher sofort aus fast Weiß) und landet weich auf der Footer-Farbe. */
+  background: linear-gradient(
+    180deg,
+    rgba(188, 217, 236, 0) 0%,
+    rgba(214, 233, 244, 0.72) 46%,
+    #f0f6fb 82%,
+    #f8fafc 100%
+  );
 }
 
 /* --- Layer 10: Such-UI (Karten unverändert) ------------------------ */
@@ -1048,7 +1080,8 @@ body {
     right: -6%;
   }
   .search-world__intelligence {
-    top: 58%;
+    top: auto;
+    bottom: clamp(180px, 24vh, 260px);
   }
 }
 
