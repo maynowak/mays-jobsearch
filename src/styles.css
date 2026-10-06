@@ -773,12 +773,11 @@ body {
      tragen nur noch die Verbindung zum Deck; als eigenstaendige Etage
      kosteten sie nach SW-08 immer noch 42 % der unteren World.
      SW-08-Historie: 46vh/414 px -> 28vh/252 px -> jetzt 23vh/207 px. */
-  height: clamp(190px, 23vh, 300px);
+  height: clamp(190px, 22vh, 300px);
   flex: 0 0 auto;
-  /* SEARCH-WORLD-10: Uebergang Results -> Columns 4.5vh (40.5 px) -> 3vh (27 px).
-     Inkl. Container-Padding bleibt der Atemraum bei ~87 px deutlich
-     wahrnehmbar (Zustand A idle: 41 px -> 27 px). */
-  margin-top: clamp(22px, 3vh, 40px);
+  /* SEARCH-WORLD-12: Uebergang Results -> Columns kuerzer, engerer Rhythmus.
+     Vorher 3vh, jetzt 2vh. Min bleibt 22px fuer Wahrnehmbarkeit. */
+  margin-top: clamp(22px, 2vh, 40px);
   z-index: 3;
   display: flex;
   align-items: stretch;
@@ -892,12 +891,9 @@ body {
      Deck dadurch hinter den Job Cards statt danach. */
   position: relative;
   width: 100%;
-  /* SEARCH-WORLD-10: Deck 25vh (225 px @1440/900) -> 21vh (189 px).
-     SW-08-Historie: 36vh/440 px -> 25vh/225 px -> jetzt 21vh/189 px.
-     Alle 15 Kindelemente positionieren prozentual und schrumpfen damit
-     proportional mit — keine Removed, keine Label-Aenderung, kein Clipping
-     (Deck-Clipping nach jeder Hoehenmessung geometrisch verifiziert). */
-  height: clamp(175px, 21vh, 260px);
+  /* SEARCH-WORLD-12: Deck kompakter fuer engeren Uebergang Columns -> Deck.
+     Vorher 21vh, jetzt 19vh. Min 175px bleibt fuer Kindelemente. */
+  height: clamp(175px, 19vh, 260px);
   flex: 0 0 auto;
   z-index: 4;
   pointer-events: none;
@@ -1221,16 +1217,9 @@ body {
 .search-world__fade {
   position: relative;
   width: 100%;
-  /* SEARCH-WORLD-10: Fade 14vh (126 px @1440/900) -> 11vh (99 px).
-     SW-08-Historie: 24vh/280 px -> 14vh/168 px -> jetzt 11vh/140 px.
-     Der Verlauf bleibt unveraendert (transparent -> #f0f6fb -> #f8fafc),
-     nur kuerzer: Deck -> Footer bleibt weich, ohne grosses atmospherisches
-     Feld. Kein weisses Loch, keine harte Linie (Naht nachgemessen).
-     SEARCH-WORLD-11: 11vh -> 8.5vh (99 px -> 76 px @1440). Der Bereich unter
-     der World wird dadurch kuerzer und die Kuppel bekommt mehr relativen
-     Anteil am Seitenende. Der VERLAUF selbst bleibt byte-identisch — die
-     Naht Fade -> Footer landet weiterhin exakt auf #f8fafc (nachgemessen). */
-  height: clamp(72px, 8.5vh, 112px);
+  /* SEARCH-WORLD-12: Fade noch komprimierter fuer engeren Abschluss Deck -> Footer.
+     Vorher 8.5vh, jetzt 6vh. Min 60px fuer sanften Verlauf. */
+  height: clamp(60px, 6vh, 100px);
   flex: 0 0 auto;
   /* SEARCH-WORLD-03: Fade bleibt oberste Deko-Ebene. */
   z-index: 6;
