@@ -488,9 +488,9 @@
 
 .lp2-bar {
   pointer-events: auto;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
   width: min(90vw, 1200px);
   min-height: 60px;
   margin: 0 auto;
@@ -511,6 +511,13 @@
   white-space: nowrap;
 }
 
+.lp2-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
 .lp2-nav {
   display: flex;
   align-items: center;
@@ -529,8 +536,11 @@
 }
 
 .lp2-lang {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  margin-left: auto;
   border: 1px solid rgba(255, 255, 255, 0.38);
   border-radius: 999px;
   overflow: hidden;
