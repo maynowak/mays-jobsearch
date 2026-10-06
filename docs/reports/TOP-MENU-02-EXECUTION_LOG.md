@@ -194,14 +194,20 @@ Umgesetzt:
 - `src/components/LandingPage2.tsx`: DOM-Reihenfolge geändert auf
   `brand → lp2-lang → lp2-nav → lp2-login`.
 - `src/components/Navbar.tsx`: Glass-Mode (`route="matcher"`) rendert
-  `brand → .nav-right-group { margin-left:auto }`
-  mit Kindern `nav-lang → nav-links → nav-login`. `.nav-center` wird nicht
-  gerendert, EN/DE ist Teil der rechten Gruppe.
-- `src/styles.css`: `.navbar-glass .nav-right-group { margin-left:auto; display:flex; ... }`,
-  `.navbar-glass .nav-lang { display:inline-flex }`,
-  `.navbar-glass .nav-links { margin-left:0 }`.
-- Tests `src/components/Navbar.test.tsx` angepasst an neue DOM-Struktur.
-- `tsc -b`, `npm run build`, 741 Tests, Browser-Verifikation bestanden.
+  `brand → nav-lang → nav-right`. `.nav-center` wird nicht gerendert.
+- `src/styles.css`: `.navbar-glass .nav-lang` absolut mittig
+  (`left:50%; top:50%; transform:translate(-50%,-50%)`), `.nav-right`
+  mit `margin-left:auto`.
+
+## Nachkorrektur 2026-10-06 19:55 (EN/DE mittig)
+User wünschte EN/DE visuell mittig in der Glass-Pille.
+Umgesetzt:
+- `src/components/Navbar.tsx`: Glass-Mode rendert EN/DE separat vor der
+  rechten Gruppe.
+- `src/styles.css`: `.navbar-glass .nav-lang` absolut zentriert,
+  `.nav-right` bleibt rechts mit `margin-left:auto`.
+- Tests angepasst, 741 Tests grün, Browser-Verifikation bestätigt
+  horizontale Zentrierung `langCenter === innerCenter`.
 
 ## Current resume point
 Erledigt. Nächster Schritt: Commit + Push (§6).

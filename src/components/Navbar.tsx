@@ -139,25 +139,27 @@ export default function Navbar({ route }: Props) {
             EN/DE hat margin-left:auto und schiebt die rechte Gruppe.
             Für alle anderen Routen bleibt die bisherige Zentrierung erhalten. */}
         {isGlass ? (
-          <div className="nav-right-group">
+          <>
             <div className="nav-lang">
               <LangToggle />
             </div>
-            <div className="nav-links">
-              {links.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.href}
-                  onClick={(e) => handleClick(e, link.href, link.inPage)}
-                >
-                  {t(link.labelKey)}
-                </a>
-              ))}
+            <div className="nav-right">
+              <div className="nav-links">
+                {links.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.href}
+                    onClick={(e) => handleClick(e, link.href, link.inPage)}
+                  >
+                    {t(link.labelKey)}
+                  </a>
+                ))}
+              </div>
+              <a href="/anmelden" className="nav-login">
+                Login
+              </a>
             </div>
-            <a href="/anmelden" className="nav-login">
-              Login
-            </a>
-          </div>
+          </>
         ) : (
           <>
             <div className="nav-center">

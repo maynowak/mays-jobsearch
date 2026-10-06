@@ -58,17 +58,15 @@ describe("TOP-MENU-02: Navbar Glass-Look nur auf der Suchmaske", () => {
     renderNavbar("matcher", "/search");
     const nav = document.querySelector(".nav-inner") as HTMLElement;
 
-    // Reihenfolge der direkten Kinder: Brand, rechte Gruppe.
+    // Reihenfolge der direkten Kinder: Brand, EN/DE, rechte Gruppe.
     const kids = [...nav.children].map((el) => el.className);
     expect(kids[0]).toContain("navbar-title");
-    expect(kids[1]).toContain("nav-right-group");
+    expect(kids[1]).toContain("nav-lang");
+    expect(kids[2]).toContain("nav-right");
 
-    // Rechte Gruppe enthält EN/DE, Links, Login in dieser Reihenfolge.
-    const right = document.querySelector(".nav-right-group") as HTMLElement;
-    const rightKids = [...right.children].map((el) => el.className);
-    expect(rightKids[0]).toContain("nav-lang");
-    expect(rightKids[1]).toContain("nav-links");
-    // Login ist direkter Sibling von nav-links, nicht innerhalb.
+    // Rechte Gruppe enthält Links und Login.
+    const right = document.querySelector(".nav-right") as HTMLElement;
+    expect(right.querySelector(".nav-links")).toBeTruthy();
     expect(right.querySelector(".nav-login")).toBeTruthy();
 
     // Nav-Links enthalten nur Suche und Benachrichtigungen (Login separat).
