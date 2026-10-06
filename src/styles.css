@@ -367,11 +367,14 @@ body {
    --page-bg (#f8fafc) — App.tsx rendert die Navbar aussertlich zu .search-world,
    das Lobby-Foto beginnt erst darunter. Weiße Landing-Schrift waere unleserlich. */
 .navbar-glass {
-  /* Streifen ueber der Pille bleibt leicht gefrostet (backdrop-filter der
-     Basisregel weiter gueltig), damit kein scharfer Inhaltsstreifen durch
-     die Pille entsteht. */
-  background: rgba(255, 255, 255, 0.35);
+  /* Glas-Pille soll allein milchig wirken, Streifen dahinter transparent.
+     Kein zusätzlicher milchiger Hintergrund über der Pille. */
+  background: transparent;
   border-bottom: none;
+  /* Zurücksetzen des Basis backdrop-filter, damit kein Halo über der Pille entsteht.
+     Die Pille selbst hat ihr eigenes backdrop-filter. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   /* Pille schwebt wie auf der Landing (lp2-bar y=20). Das negative
      margin-bottom haelt die Flusshoehe der Seite konstant — der Inhalt
      unter der Navbar rueutscht dadurch genau wie vorher. */
