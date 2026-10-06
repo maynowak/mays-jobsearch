@@ -120,8 +120,16 @@ export default function Navbar({ route }: Props) {
     close();
   };
 
+  // TOP-MENU-02: Glass-Look der Landingpage nur auf der Suchmaske
+  // (route === "matcher"). Alle anderen Routen behalten die bestehende Leiste.
+  const isGlass = route === "matcher";
+
   return (
-    <header className="navbar">
+    <header className={`navbar${isGlass ? " navbar-glass" : ""}`}>
+      {/* TOP-MENU-02: Element-Reihenfolge ist festgelegt und bleibt unveraendert:
+          1) Brand "May's Job Matcher" links  2) EN/DE-Switch mittig (.nav-center)
+          3) rechts die Modul-Links (Suche zuerst, auf /search danach
+             Benachrichtigungen)  4) Login ganz rechts. */}
       <nav className="nav-inner" aria-label={t("nav.aria")}>
         <a href="/" className="navbar-title navbar-title-left">
           May&rsquo;s Job Matcher

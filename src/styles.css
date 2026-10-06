@@ -355,6 +355,52 @@ body {
   color: var(--surface);
 }
 
+/* TOP-MENU-02: Glass-Look der Landingpage (`.lp2-bar`, landingpage2.css:489)
+   auf der Suchmaske. Gilt NUR fuer route="matcher" (/search) — alle anderen
+   App-Routen behalten die bestehende Leiste.
+
+   Element-Reihenfolge bleibt unveraendert (User-Vorgabe):
+   Brand links | EN/DE mittig (.nav-center) | rechts Suche -> Benachrichtigungen
+   -> Login.
+
+   Farben bleiben DUNKEL: hinter der Navbar liegt auf /search die helle Flaeche
+   --page-bg (#f8fafc) — App.tsx rendert die Navbar aussertlich zu .search-world,
+   das Lobby-Foto beginnt erst darunter. Weiße Landing-Schrift waere unleserlich. */
+.navbar-glass {
+  /* Streifen ueber der Pille bleibt leicht gefrostet (backdrop-filter der
+     Basisregel weiter gueltig), damit kein scharfer Inhaltsstreifen durch
+     die Pille entsteht. */
+  background: rgba(255, 255, 255, 0.35);
+  border-bottom: none;
+  /* Pille schwebt wie auf der Landing (lp2-bar y=20). Das negative
+     margin-bottom haelt die Flusshoehe der Seite konstant — der Inhalt
+     unter der Navbar rueutscht dadurch genau wie vorher. */
+  padding-top: 12px;
+  margin-bottom: -12px;
+}
+
+.navbar-glass .nav-inner {
+  /* Relativ, damit .nav-center (EN/DE) exakt auf der Pille zentriert wird
+     statt auf der vollen Navbar-Breite. */
+  position: relative;
+  width: min(90vw, 1200px);
+  max-width: none;
+  margin: 0 auto;
+  padding: 0.5rem 0.6rem 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.62);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+}
+
+/* Hide-on-scroll: die Basis setzt top:-60px, die Glass-Leiste ist durch das
+   12px padding-top jedoch hoeher — sonst bliebe ein Streifen sichtbar. */
+.navbar-glass.scrolled {
+  top: -74px;
+}
+
 .burger {
   display: none;
   flex-direction: column;
