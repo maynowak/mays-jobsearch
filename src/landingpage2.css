@@ -1,3 +1,11 @@
+/* ---------------------------------------------------------------------------
+   PRODUKTIONS-CSS für "/" — Styles der Landingpage (LandingPage2.tsx).
+   Bitte NICHT mehr suchen: Dies ist das aktuelle Landingpage-Stylesheet.
+   Benannt nach der Prototyp-Phase (LANDINGPAGE-02, Route "/landingspage2");
+   seit LANDINGPAGE-SWAP-01 (Commit 6efc1b3) liegt es auf "/". Der Name
+   "landingpage2" wurde nie umbenannt (siehe LandingPage2.tsx Kopfkommentar).
+   Die alte Landingpage nutzt weiterhin src/styles.css (Route "/landingspage2").
+   --------------------------------------------------------------------------- */
 /* LANDINGPAGE-02-HERO-COMPOSITION-02 — reines Hintergrundbild, darüber
    Glass-Navigation + absolut zentrierter Hero-Content. Alle Klassen sind
    unter .lp2 gescopet; bestehende Selektoren bleiben unberührt. */

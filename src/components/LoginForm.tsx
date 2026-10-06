@@ -54,7 +54,7 @@ export default function LoginForm() {
         </p>
         <nav className="auth-links" aria-label={t("auth.loginTitle")}>
           <a href="/registrieren">{t("auth.toRegister")}</a>
-          <a href="/top">{t("auth.backToMatcher")}</a>
+          <a href="/search">{t("auth.backToMatcher")}</a>
         </nav>
       </section>
     );
@@ -123,7 +123,7 @@ export default function LoginForm() {
       <div className="auth-divider" aria-hidden="true" />
       <nav className="auth-links" aria-label={t("auth.loginTitle")}>
         <a href="/registrieren">{t("auth.toRegister")}</a>
-        <a href="/top">{t("auth.backToMatcher")}</a>
+        <a href="/search">{t("auth.backToMatcher")}</a>
       </nav>
     </section>
   );

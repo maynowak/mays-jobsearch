@@ -35,7 +35,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  window.history.pushState({}, "", "/top");
+  window.history.pushState({}, "", "/search");
 });
 
 function renderAt(path: string) {
@@ -61,7 +61,7 @@ describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher (reine GUI)
       screen
         .getByRole("link", { name: "Zurück zum Job Matcher (als Gast fortfahren)" })
         .getAttribute("href")
-    ).toBe("/top");
+    ).toBe("/search");
   });
 
   it("/registrieren rendert Registrierungsmaske mit allen Navigationen", () => {
@@ -77,11 +77,11 @@ describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher (reine GUI)
       screen
         .getByRole("link", { name: "Zurück zum Job Matcher (als Gast fortfahren)" })
         .getAttribute("href")
-    ).toBe("/top");
+    ).toBe("/search");
   });
 
-  it("Gastmodus /top rendert weiterhin die Jobsuche (kein Auth-Zwang)", () => {
-    renderAt("/top");
+  it("Gastmodus /search rendert weiterhin die Jobsuche (kein Auth-Zwang)", () => {
+    renderAt("/search");
     expect(screen.getByRole("button", { name: "Meine Treffer finden" })).toBeTruthy();
   });
 });

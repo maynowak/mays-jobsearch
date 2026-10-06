@@ -68,7 +68,7 @@ export default function App() {
     // REGISTRATION-UI-01: reine GUI-Routen (kein Backend, keine Session).
     if (path === "/registrieren") return "register";
     if (path === "/anmelden") return "login";
-    return path === "/top" ? "matcher" : "landing";
+    return path === "/search" ? "matcher" : "landing";
   })();
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);

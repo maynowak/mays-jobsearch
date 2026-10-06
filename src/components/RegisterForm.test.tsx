@@ -124,6 +124,6 @@ describe("REGISTRATION-UI-01: Registrierungsmaske (reine GUI, kein Backend)", ()
       screen
         .getByRole("link", { name: "Zurück zum Job Matcher (als Gast fortfahren)" })
         .getAttribute("href")
-    ).toBe("/top");
+    ).toBe("/search");
   });
 });

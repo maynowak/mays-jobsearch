@@ -70,7 +70,7 @@ export default function RegisterForm() {
         </p>
         <nav className="auth-links" aria-label={t("auth.registerTitle")}>
           <a href="/anmelden">{t("auth.toLogin")}</a>
-          <a href="/top">{t("auth.backToMatcher")}</a>
+          <a href="/search">{t("auth.backToMatcher")}</a>
         </nav>
       </section>
     );
@@ -175,7 +175,7 @@ export default function RegisterForm() {
       </form>
       <nav className="auth-links" aria-label={t("auth.registerTitle")}>
         <a href="/anmelden">{t("auth.toLogin")}</a>
-        <a href="/top">{t("auth.backToMatcher")}</a>
+        <a href="/search">{t("auth.backToMatcher")}</a>
       </nav>
     </section>
   );

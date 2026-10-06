@@ -116,7 +116,7 @@ beforeEach(() => {
   // CV-PROFILE-LISTS-02: Listen leben im Session-Speicher — pro Test leeren
   // (der Inhalts-Hash ist testuebergreifend gleich).
   resetCvProfileLists();
-  window.history.pushState({}, "", "/top");
+  window.history.pushState({}, "", "/search");
   __resetModelsCacheForTests();
   setFallbackMaxAttempts(3);
   vi.mocked(fetchJobs).mockReset();
@@ -1749,7 +1749,7 @@ describe("No landing-page flash during a search", () => {
     expect(document.querySelector(".landing-hero")).toBeNull();
     expect(document.querySelector(".search-sidebar")).toBeTruthy();
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
-    expect(window.location.pathname).toBe("/top");
+    expect(window.location.pathname).toBe("/search");
 
     jobs.resolve({ jobs: [job], meta: { totalFiltered: 1 } });
     await screen.findByText("AWS Engineer");
@@ -1844,7 +1844,7 @@ describe("No landing-page flash during a search", () => {
     expect(document.querySelector(".landing")).toBeNull();
     expect(document.querySelector(".landing-hero")).toBeNull();
     expect(document.querySelector(".search-sidebar")).toBeTruthy();
-    expect(window.location.pathname).toBe("/top");
+    expect(window.location.pathname).toBe("/search");
 
     await acceptUploadConsent();
     await proceedToProfileReady();

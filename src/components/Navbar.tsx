@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 import { useLang } from "../i18n";
 import type { Lang } from "../i18n";
+import { navLinksFor } from "../navLinks";
+import type { NavRoute } from "../navLinks";
 
 function LangToggle() {
   const { lang, setLang, t } = useLang();
@@ -22,7 +24,9 @@ function LangToggle() {
   );
 }
 
-export type NavbarRoute = "landing" | "matcher" | "impressum" | "register" | "login";
+// TOP-MENU-01: Die Routen-Menge liegt zentral in src/navLinks.ts — hier
+// weiterhin als NavbarRoute exportiert, damit App.tsx unverändert importiert.
+export type NavbarRoute = NavRoute;
 
 interface Props {
   route: NavbarRoute;
@@ -84,17 +88,9 @@ export default function Navbar({ route }: Props) {
     };
   }, []);
 
-  const isLanding = route === "landing";
-  const isImprint = route === "impressum";
-  const isAuth = route === "register" || route === "login";
-  const links: Array<[string, string]> = isLanding
-    ? [[t("nav.search"), "/top"]]
-    : isImprint || isAuth
-    ? [[t("nav.search"), "/top"]]
-    : [
-        [t("nav.search"), "top"],
-        [t("nav.alerts"), "#alerts"],
-      ];
+  // TOP-MENU-01: Linkliste kommt aus dem zentralen Modul. Pro Route sind nur
+  // die dort freigegebenen Links sichtbar (Landingpage z.B. ohne Alerts).
+  const links = navLinksFor(route);
 
   const scrollToTopSmooth = () => {
     const start = window.scrollY;
@@ -111,13 +107,14 @@ export default function Navbar({ route }: Props) {
     requestAnimationFrame(step);
   };
 
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
-    if (target === "top") {
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>, href: string, inPage?: string) => {
+    const onTargetPage = window.location.pathname === href.split("#")[0];
+    if (inPage === "top" && onTargetPage) {
       event.preventDefault();
       scrollToTopSmooth();
-    } else if (target.startsWith("#")) {
+    } else if (inPage === "alerts" && onTargetPage) {
       event.preventDefault();
-      document.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector("#alerts")?.scrollIntoView({ behavior: "smooth", block: "start" });
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     close();
@@ -135,9 +132,13 @@ export default function Navbar({ route }: Props) {
         </div>
 
         <div className="nav-links">
-          {links.map(([label, href]) => (
-            <a key={href} href={href} onClick={(e) => handleClick(e, href)}>
-              {label}
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={link.href}
+              onClick={(e) => handleClick(e, link.href, link.inPage)}
+            >
+              {t(link.labelKey)}
             </a>
           ))}
           {/* REGISTRATION-UI-01: Login-Button führt zur Anmelde-Maske
@@ -162,15 +163,15 @@ export default function Navbar({ route }: Props) {
         {isOpen && (
           <div className="mobile-overlay" onClick={close}>
             <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
-              {links.map(([label, href], i) => (
+              {links.map((link, i) => (
                 <a
-                  key={href}
-                  href={href}
+                  key={link.id}
+                  href={link.href}
                   className="mobile-link"
                   style={{ animationDelay: `${i * 50}ms` }}
-                  onClick={(e) => handleClick(e, href)}
+                  onClick={(e) => handleClick(e, link.href, link.inPage)}
                 >
-                  {label}
+                  {t(link.labelKey)}
                 </a>
               ))}
               <div className="mobile-lang">

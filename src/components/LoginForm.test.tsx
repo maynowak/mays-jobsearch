@@ -74,6 +74,6 @@ describe("REGISTRATION-UI-01: Login-Maske (Navigationsziel, reine GUI, kein Back
       screen
         .getByRole("link", { name: "Zurück zum Job Matcher (als Gast fortfahren)" })
         .getAttribute("href")
-    ).toBe("/top");
+    ).toBe("/search");
   });
 });

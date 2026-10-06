@@ -66,19 +66,30 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     expect(bar).toBeTruthy();
     expect(within(bar).getByText("May's Job Matcher")).toBeTruthy();
     expect(within(bar).getByText("Suche")).toBeTruthy();
-    expect(within(bar).getByText("Benachrichtigungen")).toBeTruthy();
     expect(within(bar).getByText("EN")).toBeTruthy();
     expect(within(bar).getByText("DE")).toBeTruthy();
     expect(within(bar).getByText("Login")).toBeTruthy();
   });
 
-  it("Links führen zu Bestand-Routen (kein Umbau der App-Navigation)", () => {
+  it("TOP-MENU-01: Landingpage zeigt nur Suche, Benachrichtigungen ist ausgeblendet", () => {
+    renderPage();
+    const bar = document.querySelector(".lp2-bar") as HTMLElement;
+    const nav = bar.querySelector(".lp2-nav") as HTMLElement;
+    expect(nav).toBeTruthy();
+    // Ohne Anmeldung führt der Alerts-Link dort nur auf die Suchmaske.
+    expect(within(nav).queryByText("Benachrichtigungen")).toBeNull();
+    const links = within(nav).getAllByRole("link") as HTMLAnchorElement[];
+    expect(links).toHaveLength(1);
+    expect(links[0].getAttribute("href")).toBe("/search");
+  });
+
+  it("Links führen zur Suchmaske (TOP-MENU-01: /search statt /search)", () => {
     renderPage();
     const els = screen.getAllByText("Zum Job-Matcher") as HTMLAnchorElement[];
     expect(els.length).toBeGreaterThan(0);
-    for (const el of els) expect(el.href).toContain("/top");
+    for (const el of els) expect(el.href).toContain("/search");
     const jobs = screen.getByText("Jobs finden →") as HTMLAnchorElement;
-    expect(jobs.href).toContain("/top");
+    expect(jobs.href).toContain("/search");
   });
 
   it("Match Pulse sitzt neben „mit KI\" (AI-MATCH-PULSE-01)", () => {

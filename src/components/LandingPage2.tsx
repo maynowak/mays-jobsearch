@@ -2,7 +2,21 @@ import { useEffect, useState } from "react";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 import JobStream from "./JobStream";
 import MatchPulse from "./MatchPulse";
+import { navLinksFor } from "../navLinks";
 
+// ---------------------------------------------------------------------------
+// PRODUKTIONS-LANDINGPAGE — diese Komponente rendert "/" (Root-Domain).
+// Bitte NICHT mehr suchen: Dies ist die aktuelle, sichtbare Landingpage.
+//
+// HISTORIE (TOP-MENU-01, geprüft 2026-10-06):
+//   b12529c  LANDINGPAGE-02      neue Datei LandingPage2.tsx unter "/landingspage2"
+//   6efc1b3  LANDINGPAGE-SWAP-01 Tausch "/" <-> "/landingspage2"
+//   Ergebnis: seit 6efc1b3 ist LandingPage2 die Landingpage auf "/".
+//   Der Name "LandingPage2" stammt aus der Prototyp-Phase und wurde NIE
+//   umbenannt (git log --diff-filter=R auf *anding* ist leer). Die alte
+//   Landingpage läuft weiterhin unter "/landingspage2" (App, Route "landing").
+//   Dateien bleiben absichtlich unbenannt, damit die Branch-Historie stimmt.
+// ---------------------------------------------------------------------------
 // LANDINGPAGE-02-HERO-COMPOSITION-02 — reines Hintergrundbild + darüber
 // positionierte HTML/CSS-Ebenen (Glass-Nav, zentrierter Hero-Content).
 // Kein Text im Bild; keine Zettel/Animation (folgen in LANDINGPAGE-03/04).
@@ -12,8 +26,8 @@ type Lp2Lang = "de" | "en";
 const STRINGS: Record<Lp2Lang, Record<string, string>> = {
   de: {
     cta: "Zum Job-Matcher",
-    navSearch: "Suche",
-    navAlerts: "Benachrichtigungen",
+    "nav.search": "Suche",
+    "nav.alerts": "Benachrichtigungen",
     eyebrow: "MAY'S JOB MATCHER",
     titleA: "Dein nächster Karriereschritt",
     titleAccent: "mit KI",
@@ -31,8 +45,8 @@ const STRINGS: Record<Lp2Lang, Record<string, string>> = {
   },
   en: {
     cta: "Open Job Matcher",
-    navSearch: "Search",
-    navAlerts: "Alerts",
+    "nav.search": "Search",
+    "nav.alerts": "Alerts",
     eyebrow: "MAY'S JOB MATCHER",
     titleA: "Your next career move",
     titleAccent: "with AI",
@@ -100,13 +114,16 @@ export default function LandingPage2(): React.ReactElement {
             <a className="lp2-brand" href="/">
               May&apos;s Job Matcher
             </a>
+            {/* TOP-MENU-01: Links aus dem zentralen Modul (sichtbar auf dieser
+                Route). "Benachrichtigungen" ist hier bewusst NICHT freigeschaltet:
+                ohne Anmeldung führt der Link nur auf die Suchmaske und ist nicht
+                nützlich — bleibt erhalten auf /search, /registrieren, /anmelden. */}
             <nav className="lp2-nav" aria-label="Bereiche">
-              <a className="lp2-nav-link" href="/top">
-                {t.navSearch}
-              </a>
-              <a className="lp2-nav-link" href="/top">
-                {t.navAlerts}
-              </a>
+              {navLinksFor("landing").map((link) => (
+                <a key={link.id} className="lp2-nav-link" href={link.href}>
+                  {t[link.labelKey]}
+                </a>
+              ))}
             </nav>
             <div className="lp2-lang" role="group" aria-label="Language / Sprache">
               <button
@@ -146,7 +163,7 @@ export default function LandingPage2(): React.ReactElement {
             {t.subB}
           </p>
           <div className="lp2-cta-row">
-            <a className="lp2-cta-primary" href="/top">
+            <a className="lp2-cta-primary" href="/search">
               {t.findJobs}
             </a>
             <a className="lp2-cta-secondary" href="#lp2-content">
@@ -175,7 +192,7 @@ export default function LandingPage2(): React.ReactElement {
 
       <footer className="lp2-footer">
         <span>{t.footer}</span>
-        <a href="/top">{t.cta}</a>
+        <a href="/search">{t.cta}</a>
       </footer>
     </div>
   );

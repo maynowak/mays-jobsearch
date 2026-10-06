@@ -30,8 +30,8 @@ describe("Landing page at root path", () => {
         <App />
       </LangProvider>
     );
-    // Start at /top (matcher route)
-    window.history.pushState({}, "", "/top");
+    // Start at /search (matcher route)
+    window.history.pushState({}, "", "/search");
     // Re-render to trigger route update
     // Note: App uses initial pathname only, so we test the link href directly
     const headerLink = document.querySelector(".navbar-title") as HTMLAnchorElement;

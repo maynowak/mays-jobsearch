@@ -12,7 +12,7 @@
   ],
   "rewrites": [
     {
-      "source": "/top",
+      "source": "/search",
       "destination": "/index.html"
     },
     {

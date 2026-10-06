@@ -46,7 +46,7 @@ const singleModel: ModelsResponse = {
 describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am Ende", () => {
   beforeEach(() => {
     localStorage.setItem("mj-lang", "de");
-    window.history.pushState({}, "", "/top");
+    window.history.pushState({}, "", "/search");
     __resetModelsCacheForTests();
     vi.mocked(fetchModels).mockResolvedValue(singleModel);
     vi.mocked(fetchJobs).mockResolvedValue({
