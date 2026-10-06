@@ -114,17 +114,8 @@ export default function LandingPage2(): React.ReactElement {
             <a className="lp2-brand" href="/">
               May&apos;s Job Matcher
             </a>
-            {/* TOP-MENU-01: Links aus dem zentralen Modul (sichtbar auf dieser
-                Route). "Benachrichtigungen" ist hier bewusst NICHT freigeschaltet:
-                ohne Anmeldung führt der Link nur auf die Suchmaske und ist nicht
-                nützlich — bleibt erhalten auf /search, /registrieren, /anmelden. */}
-            <nav className="lp2-nav" aria-label="Bereiche">
-              {navLinksFor("landing").map((link) => (
-                <a key={link.id} className="lp2-nav-link" href={link.href}>
-                  {t[link.labelKey]}
-                </a>
-              ))}
-            </nav>
+            {/* TOP-MENU-02: Reihenfolge Landingpage = Brand → EN/DE → Suche → Login.
+                EN/DE hat margin-left:auto und schiebt die rechte Gruppe. */}
             <div className="lp2-lang" role="group" aria-label="Language / Sprache">
               <button
                 type="button"
@@ -143,6 +134,17 @@ export default function LandingPage2(): React.ReactElement {
                 DE
               </button>
             </div>
+            {/* TOP-MENU-01: Links aus dem zentralen Modul (sichtbar auf dieser
+                Route). "Benachrichtigungen" ist hier bewusst NICHT freigeschaltet:
+                ohne Anmeldung führt der Link nur auf die Suchmaske und ist nicht
+                nützlich — bleibt erhalten auf /search, /registrieren, /anmelden. */}
+            <nav className="lp2-nav" aria-label="Bereiche">
+              {navLinksFor("landing").map((link) => (
+                <a key={link.id} className="lp2-nav-link" href={link.href}>
+                  {t[link.labelKey]}
+                </a>
+              ))}
+            </nav>
             {/* Login noch ohne Funktion (Prototype) */}
             <button type="button" className="lp2-login" aria-disabled="true">
               Login

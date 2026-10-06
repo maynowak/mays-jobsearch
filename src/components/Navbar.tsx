@@ -126,35 +126,59 @@ export default function Navbar({ route }: Props) {
 
   return (
     <header className={`navbar${isGlass ? " navbar-glass" : ""}`}>
-      {/* TOP-MENU-02: Element-Reihenfolge ist festgelegt und bleibt unveraendert:
-          1) Brand "May's Job Matcher" links  2) EN/DE-Switch mittig (.nav-center)
-          3) rechts die Modul-Links (Suche zuerst, auf /search danach
-             Benachrichtigungen)  4) Login ganz rechts. */}
+      {/* TOP-MENU-02: Reihenfolge
+          Glass-Mode (/search): Brand links, rechte Gruppe mit EN/DE zuerst,
+          dann Links, dann Login. EN/DE hat margin-left:auto.
+          Nicht-Glass: Brand links, EN/DE zentriert, Links + Login rechts. */}
       <nav className="nav-inner" aria-label={t("nav.aria")}>
         <a href="/" className="navbar-title navbar-title-left">
           May&rsquo;s Job Matcher
         </a>
 
-        <div className="nav-center">
-          <LangToggle />
-        </div>
-
-        <div className="nav-links">
-          {links.map((link) => (
-            <a
-              key={link.id}
-              href={link.href}
-              onClick={(e) => handleClick(e, link.href, link.inPage)}
-            >
-              {t(link.labelKey)}
+        {/* TOP-MENU-02: Reihenfolge für Glass-Mode (/search) = Brand → EN/DE → Links → Login,
+            EN/DE hat margin-left:auto und schiebt die rechte Gruppe.
+            Für alle anderen Routen bleibt die bisherige Zentrierung erhalten. */}
+        {isGlass ? (
+          <div className="nav-right-group">
+            <div className="nav-lang">
+              <LangToggle />
+            </div>
+            <div className="nav-links">
+              {links.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.href}
+                  onClick={(e) => handleClick(e, link.href, link.inPage)}
+                >
+                  {t(link.labelKey)}
+                </a>
+              ))}
+            </div>
+            <a href="/anmelden" className="nav-login">
+              Login
             </a>
-          ))}
-          {/* REGISTRATION-UI-01: Login-Button führt zur Anmelde-Maske
-              (reine GUI, kein Backend). */}
-          <a href="/anmelden" className="nav-login">
-            Login
-          </a>
-        </div>
+          </div>
+        ) : (
+          <>
+            <div className="nav-center">
+              <LangToggle />
+            </div>
+            <div className="nav-links">
+              {links.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.href}
+                  onClick={(e) => handleClick(e, link.href, link.inPage)}
+                >
+                  {t(link.labelKey)}
+                </a>
+              ))}
+              <a href="/anmelden" className="nav-login">
+                Login
+              </a>
+            </div>
+          </>
+        )}
 
         <button
           type="button"

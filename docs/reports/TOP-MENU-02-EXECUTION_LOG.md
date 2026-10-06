@@ -184,5 +184,24 @@ KI-Ausführung, Modell, Provider, Datenverarbeitung, Persistenz, Tracking, Auth
 oder API. `docs/AI_AUDITLOG.md` bleibt unverändert; geführt wird dieser
 Report-Log.
 
+## Nachkorrektur 2026-10-06 (User-Klarstellung)
+User präzisierte die gewünschte Reihenfolge:
+- **Landingpage**: `Branding → EN/DE → Suche → Login` (EN/DE hat `margin-left:auto`)
+- **Searchpage** (`/search`): `Branding → EN/DE → Suche → Benachrichtigungen → Login`
+  (EN/DE hat `margin-left:auto` und schiebt die rechte Gruppe)
+
+Umgesetzt:
+- `src/components/LandingPage2.tsx`: DOM-Reihenfolge geändert auf
+  `brand → lp2-lang → lp2-nav → lp2-login`.
+- `src/components/Navbar.tsx`: Glass-Mode (`route="matcher"`) rendert
+  `brand → .nav-right-group { margin-left:auto }`
+  mit Kindern `nav-lang → nav-links → nav-login`. `.nav-center` wird nicht
+  gerendert, EN/DE ist Teil der rechten Gruppe.
+- `src/styles.css`: `.navbar-glass .nav-right-group { margin-left:auto; display:flex; ... }`,
+  `.navbar-glass .nav-lang { display:inline-flex }`,
+  `.navbar-glass .nav-links { margin-left:0 }`.
+- Tests `src/components/Navbar.test.tsx` angepasst an neue DOM-Struktur.
+- `tsc -b`, `npm run build`, 741 Tests, Browser-Verifikation bestanden.
+
 ## Current resume point
 Erledigt. Nächster Schritt: Commit + Push (§6).

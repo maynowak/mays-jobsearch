@@ -401,6 +401,26 @@ body {
   top: -74px;
 }
 
+/* TOP-MENU-02: Glass-Mode rechte Gruppe — EN/DE wird per margin-left:auto
+   nach rechts geschoben, Reihenfolge Brand → EN/DE → Links → Login. */
+.navbar-glass .nav-right-group {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.navbar-glass .nav-lang {
+  display: inline-flex;
+}
+
+/* In Glass-Mode sollen die Links nicht mehr automatisch nach rechts
+   ausweichen, die Gruppe übernimmt das. */
+.navbar-glass .nav-links {
+  margin-left: 0;
+  gap: 1.25rem;
+}
+
 .burger {
   display: none;
   flex-direction: column;
