@@ -267,8 +267,10 @@ export default function JobStream(): React.ReactElement {
   const layerRef = useRef<HTMLDivElement>(null);
   const rngRef = useRef<(() => number) | undefined>(undefined);
   if (!rngRef.current) rngRef.current = mulberry32(STREAM_SEED + 1);
-  const [userNotes, setUserNotes] = useState<StreamNote[]>([]);
-  const userNoteIdRef = useRef(-1);
+  type DynamicNote = { note: StreamNote; source: 'user' | 'auto' };
+  const [dynamicNotes, setDynamicNotes] = useState<DynamicNote[]>([]);
+  const dynamicIdRef = useRef(-1);
+  const hardCap = count + 10;
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
@@ -319,48 +321,87 @@ export default function JobStream(): React.ReactElement {
     };
   }, [staticMotion]);
 
-  // User Click → zusätzliche Note
+  // User Click → zusätzliche dynamische Note
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const MAX_USER_ADDED = 3;
     const handleUserPulse = () => {
-      setUserNotes((prev) => {
-        if (prev.length >= MAX_USER_ADDED) return prev;
-        const rng = rngRef.current ?? mulberry32(STREAM_SEED + 2);
-        const laneIdx = Math.floor(rng() * LANES.length);
-        const [sx0, sy0, ex0, ey0] = LANES[laneIdx];
-        const jitter = () => (rng() - 0.5) * 0.06;
-        const startX = sx0 + jitter();
-        const startY = sy0 + jitter();
-        const endX = ex0 + jitter();
-        const endY = ey0 + jitter();
-        const duration = 11 + rng() * 6;
-        const newNote: StreamNote = {
-          id: userNoteIdRef.current--,
-          gen: 0,
-          startX,
-          startY,
-          endX,
-          endY,
-          duration,
-          delay: -rng() * duration * 0.3,
-          rotation: (rng() - 0.5) * 8,
-          depth: DEPTHS[laneIdx % DEPTHS.length],
-          ambient: false,
-          hasCheck: true,
-          checkAt: 0.35 + rng() * 0.3,
-        };
-        return [...prev, newNote];
+      setDynamicNotes((prev) => {
+        const hardCap = count + 10;
+        if (prev.length >= hardCap - count) return prev;
+        const newEntry = createDynamicNote('user');
+        if (!newEntry) return prev;
+        return [...prev, newEntry];
       });
     };
     window.addEventListener(USER_PULSE_EVENT, handleUserPulse);
     return () => window.removeEventListener(USER_PULSE_EVENT, handleUserPulse);
-  }, []);
+  }, [count]);
+
+  // Auto Refill
+  useEffect(() => {
+    if (staticMotion || typeof window === "undefined") return undefined;
+    let timeoutId: number;
+    const scheduleAuto = () => {
+      const delay = 15000 + Math.random() * 25000; // 15-40s
+      timeoutId = window.setTimeout(() => {
+        setDynamicNotes((prev) => {
+          const hardCap = count + 10;
+          if (prev.length >= hardCap - count) {
+            scheduleAuto();
+            return prev;
+          }
+          const newEntry = createDynamicNote('auto');
+          if (!newEntry) {
+            scheduleAuto();
+            return prev;
+          }
+          scheduleAuto();
+          return [...prev, newEntry];
+        });
+      }, delay);
+    };
+    scheduleAuto();
+    return () => window.clearTimeout(timeoutId);
+  }, [count, staticMotion]);
+
+  const createDynamicNote = (source: 'user' | 'auto'): DynamicNote | null => {
+    const rng = rngRef.current ?? mulberry32(STREAM_SEED + 2);
+    // Mehrdimensionale Richtung: nutze recycleNote mit Dummy-Note für Variation
+    const dummy: StreamNote = {
+      id: 0,
+      gen: 0,
+      startX: 0,
+      startY: 0,
+      endX: 0,
+      endY: 0,
+      duration: 11,
+      delay: 0,
+      rotation: 0,
+      depth: 0.5,
+      ambient: false,
+      hasCheck: true,
+      checkAt: 0.5,
+    };
+    const recycled = recycleNote(dummy, rng);
+    const duration = 11 + rng() * 6;
+    // Stelle sicher, dass Delay negativ ist für sofortigen Start
+    const delay = -rng() * duration * 0.4;
+    const note: StreamNote = {
+      ...recycled,
+      id: dynamicIdRef.current--,
+      gen: 0,
+      duration,
+      delay,
+      hasCheck: true,
+      ambient: false,
+    };
+    return { note, source };
+  };
 
   const baseVisible = items.slice(0, count);
-  const visible = [...baseVisible, ...userNotes];
-  // Helper to determine if note is user-added
-  const isUserNote = (note: StreamNote) => note.id < 0;
+  const dynamicVisible = dynamicNotes.map(d => d.note);
+  const visible = [...baseVisible, ...dynamicVisible];
+  const isDynamicNote = (note: StreamNote) => note.id < 0;
 
   return (
     <div
@@ -376,7 +417,7 @@ export default function JobStream(): React.ReactElement {
           size={size}
           staticMotion={staticMotion}
           forcedCheck={forcedId === note.id}
-          onRecycle={isUserNote(note) ? (id) => setUserNotes(prev => prev.filter(n => n.id !== id)) : recycle}
+          onRecycle={isDynamicNote(note) ? (id) => setDynamicNotes(prev => prev.filter(d => d.note.id !== id)) : recycle}
         />
       ))}
     </div>
