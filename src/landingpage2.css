@@ -725,19 +725,19 @@
 
   /* Tablet: proportionale Skalierung – Breite reduziert, Höhe via aspect-ratio, Inhalt skaliert */
   .js-back {
-    width: 55px;
+    width: 48px;
     opacity: 0.28;
   }
   .js-mid {
-    width: 80px;
+    width: 70px;
     opacity: 0.55;
   }
   .js-front {
-    width: 110px;
+    width: 95px;
     opacity: 0.85;
   }
   .js-ambient {
-    width: 44px;
+    width: 38px;
     opacity: 0.20;
   }
   .js-note-inner {
@@ -772,19 +772,19 @@
 
   /* Mobile (§9): proportionale Skalierung – Breite reduziert, Höhe via aspect-ratio, Inhalt skaliert */
   .js-front {
-    width: 70px;
+    width: 60px;
     opacity: 0.70;
   }
   .js-mid {
-    width: 52px;
+    width: 44px;
     opacity: 0.45;
   }
   .js-back {
-    width: 36px;
+    width: 30px;
     opacity: 0.22;
   }
   .js-ambient {
-    width: 30px;
+    width: 24px;
     opacity: 0.15;
   }
   .js-note-inner {
