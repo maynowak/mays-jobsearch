@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 // Dispatcht weiterhin "lp2:match-pulse" für JobStream-Kopplung.
 export const MATCH_PULSE_EVENT = "lp2:match-pulse";
 export const MATCH_PULSE_INTERVAL_MS = 6000; // legacy constant for tests
+export const USER_PULSE_EVENT = "lp2:user-pulse";
 
 function reducedMotion(): boolean {
   return (
@@ -22,13 +23,19 @@ export default function MatchPulse(): React.ReactElement {
   const triggerVisualPulse = () => {
     const el = containerRef.current;
     if (!el) return;
+    el.classList.remove("is-pulsing");
+    // force reflow to restart animation
+    void el.offsetWidth;
     el.classList.add("is-pulsing");
     window.setTimeout(() => el.classList.remove("is-pulsing"), 1200);
 
     if (Math.random() < 0.2) {
       doubleTimeoutRef.current = window.setTimeout(() => {
         if (!containerRef.current) return;
-        containerRef.current.classList.add("is-pulsing");
+        const el2 = containerRef.current;
+        el2.classList.remove("is-pulsing");
+        void el2.offsetWidth;
+        el2.classList.add("is-pulsing");
         window.setTimeout(() => {
           containerRef.current?.classList.remove("is-pulsing");
         }, 1200);
@@ -78,7 +85,10 @@ export default function MatchPulse(): React.ReactElement {
       className="mp"
       ref={containerRef}
       aria-label="Mit KI pulsieren, Job-Stream aktualisieren"
-      onClick={() => window.dispatchEvent(new CustomEvent(MATCH_PULSE_EVENT))}
+      onClick={() => {
+        triggerVisualPulse();
+        window.dispatchEvent(new CustomEvent(USER_PULSE_EVENT));
+      }}
     >
       <span className="mp-ring" />
       <span className="mp-dot" />

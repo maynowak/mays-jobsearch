@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MATCH_PULSE_EVENT } from "./MatchPulse";
+import { MATCH_PULSE_EVENT, USER_PULSE_EVENT } from "./MatchPulse";
 
 // JOB-NOTES-FINETUNING-01 — Phase B: animierter Job-Stream (verfeinert).
 // Echte HTML/CSS-Elemente mit Dummy-Daten (keine API, keine Canvas, keine Libs).
@@ -267,6 +267,8 @@ export default function JobStream(): React.ReactElement {
   const layerRef = useRef<HTMLDivElement>(null);
   const rngRef = useRef<(() => number) | undefined>(undefined);
   if (!rngRef.current) rngRef.current = mulberry32(STREAM_SEED + 1);
+  const [userNotes, setUserNotes] = useState<StreamNote[]>([]);
+  const userNoteIdRef = useRef(-1);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
@@ -317,7 +319,46 @@ export default function JobStream(): React.ReactElement {
     };
   }, [staticMotion]);
 
-  const visible = items.slice(0, count);
+  // User Click → zusätzliche Note
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const MAX_USER_ADDED = 3;
+    const handleUserPulse = () => {
+      setUserNotes((prev) => {
+        if (prev.length >= MAX_USER_ADDED) return prev;
+        const rng = rngRef.current ?? mulberry32(STREAM_SEED + 2);
+        const laneIdx = Math.floor(rng() * LANES.length);
+        const [sx0, sy0, ex0, ey0] = LANES[laneIdx];
+        const jitter = () => (rng() - 0.5) * 0.06;
+        const startX = sx0 + jitter();
+        const startY = sy0 + jitter();
+        const endX = ex0 + jitter();
+        const endY = ey0 + jitter();
+        const duration = 11 + rng() * 6;
+        const newNote: StreamNote = {
+          id: userNoteIdRef.current--,
+          gen: 0,
+          startX,
+          startY,
+          endX,
+          endY,
+          duration,
+          delay: 0.1 + rng() * 0.5,
+          rotation: (rng() - 0.5) * 8,
+          depth: DEPTHS[laneIdx % DEPTHS.length],
+          ambient: false,
+          hasCheck: true,
+          checkAt: 0.35 + rng() * 0.3,
+        };
+        return [...prev, newNote];
+      });
+    };
+    window.addEventListener(USER_PULSE_EVENT, handleUserPulse);
+    return () => window.removeEventListener(USER_PULSE_EVENT, handleUserPulse);
+  }, []);
+
+  const baseVisible = items.slice(0, count);
+  const visible = [...baseVisible, ...userNotes];
 
   return (
     <div

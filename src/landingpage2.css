@@ -300,11 +300,10 @@
   box-shadow:
     0 0 10px rgba(34, 211, 238, 0.8),
     0 0 22px rgba(34, 211, 238, 0.35);
-  animation: mp-dot 1.2s ease-out forwards;
-  animation-play-state: paused;
+  animation: none;
 }
 .mp.is-pulsing .mp-dot {
-  animation-play-state: running;
+  animation: mp-dot 1.2s ease-out forwards;
 }
 
 .mp-ring {
@@ -313,11 +312,10 @@
   border: 1px solid rgba(34, 211, 238, 0.8);
   border-radius: 50%;
   opacity: 0;
-  animation: mp-ring 1.2s linear forwards;
-  animation-play-state: paused;
+  animation: none;
 }
 .mp.is-pulsing .mp-ring {
-  animation-play-state: running;
+  animation: mp-ring 1.2s linear forwards;
 }
 
 .mp-sat {
@@ -326,11 +324,10 @@
   height: 3px;
   border-radius: 50%;
   background: rgba(34, 211, 238, 0.7);
-  animation: mp-sat 1.2s ease-in-out forwards;
-  animation-play-state: paused;
+  animation: none;
 }
 .mp.is-pulsing .mp-sat {
-  animation-play-state: running;
+  animation: mp-sat 1.2s ease-in-out forwards;
 }
 
 .mp-sat-1 {
@@ -418,11 +415,10 @@
 
 /* Dezenter Text-Glow auf „mit KI", synchron zum Puls. */
 .lp2-title-accent {
-  animation: mp-glow 1.2s ease-out forwards;
-  animation-play-state: paused;
+  animation: none;
 }
 .lp2-title:has(.mp.is-pulsing) .lp2-title-accent {
-  animation-play-state: running;
+  animation: mp-glow 1.2s ease-out forwards;
 }
 
 @keyframes mp-glow {
