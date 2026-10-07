@@ -343,7 +343,7 @@ export default function JobStream(): React.ReactElement {
           endX,
           endY,
           duration,
-          delay: 0.1 + rng() * 0.5,
+          delay: -rng() * duration * 0.3,
           rotation: (rng() - 0.5) * 8,
           depth: DEPTHS[laneIdx % DEPTHS.length],
           ambient: false,
@@ -359,6 +359,8 @@ export default function JobStream(): React.ReactElement {
 
   const baseVisible = items.slice(0, count);
   const visible = [...baseVisible, ...userNotes];
+  // Helper to determine if note is user-added
+  const isUserNote = (note: StreamNote) => note.id < 0;
 
   return (
     <div
@@ -374,7 +376,7 @@ export default function JobStream(): React.ReactElement {
           size={size}
           staticMotion={staticMotion}
           forcedCheck={forcedId === note.id}
-          onRecycle={recycle}
+          onRecycle={isUserNote(note) ? (id) => setUserNotes(prev => prev.filter(n => n.id !== id)) : recycle}
         />
       ))}
     </div>
