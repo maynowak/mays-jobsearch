@@ -10,7 +10,7 @@ import { MATCH_PULSE_EVENT } from "./MatchPulse";
 export const STREAM_WIDTH = 1600;
 export const STREAM_HEIGHT = 900;
 export const STREAM_SEED = 20261002;
-export const STREAM_COUNTS = { desktop: 10, tablet: 7, mobile: 4 } as const;
+export const STREAM_COUNTS = { desktop: 11, tablet: 17, mobile: 26 } as const;
 
 // Zentrale Safe Zone (relativ): Flugbahnen führen darum herum.
 export const SAFE_ZONE = { x0: 0.3, x1: 0.7, y0: 0.25, y1: 0.7 };
@@ -70,22 +70,29 @@ const AMBIENT_IDS = new Set([2, 7]);
 
 export function buildStreamNotes(seed: number = STREAM_SEED): StreamNote[] {
   const rng = mulberry32(seed);
-  return LANES.map(([sx, sy, ex, ey], i) => {
+  const NOTE_COUNT = 26;
+  return Array.from({ length: NOTE_COUNT }, (_, i) => {
+    const laneIdx = i % LANES.length;
+    const [sx0, sy0, ex0, ey0] = LANES[laneIdx];
+    const jitter = () => (rng() - 0.5) * 0.06;
+    const startX = sx0 + jitter();
+    const startY = sy0 + jitter();
+    const endX = ex0 + jitter();
+    const endY = ey0 + jitter();
     const duration = 11 + rng() * 6;
     return {
       id: i,
       gen: 0,
-      startX: sx,
-      startY: sy,
-      endX: ex,
-      endY: ey,
+      startX,
+      startY,
+      endX,
+      endY,
       duration,
       delay: -rng() * duration,
       rotation: (rng() - 0.5) * 8,
-      depth: DEPTHS[i % DEPTHS.length],
-      ambient: AMBIENT_IDS.has(i),
-      // 2 von 10 mit Check (maximal ein bis zwei gleichzeitig)
-      hasCheck: i % 5 === 1,
+      depth: DEPTHS[laneIdx % DEPTHS.length],
+      ambient: i < LANES.length && AMBIENT_IDS.has(laneIdx),
+      hasCheck: i < LANES.length && laneIdx % 5 === 1,
       checkAt: 0.35 + rng() * 0.3,
     };
   });

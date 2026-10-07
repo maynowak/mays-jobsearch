@@ -59,7 +59,7 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
     const a = buildStreamNotes(1);
     const b = buildStreamNotes(1);
     expect(a).toEqual(b);
-    expect(a.length).toBe(10);
+    expect(a.length).toBe(26);
     for (const n of a) {
       expect(Number.isFinite(n.startX)).toBe(true);
       expect(Number.isFinite(n.endY)).toBe(true);
@@ -135,8 +135,8 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
     for (let round = 0; round < 5; round += 1) {
       notes = notes.map((n) => recycleNote(n, rng));
     }
-    expect(notes.length).toBe(10);
-    expect(notes.map((n) => n.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(notes.length).toBe(26);
+    expect(notes.map((n) => n.id)).toEqual(Array.from({ length: 26 }, (_, i) => i));
     expect(notes.every((n) => n.gen === 5)).toBe(true);
     const inside = (x: number, y: number) =>
       x > SAFE_ZONE.x0 + 0.05 &&

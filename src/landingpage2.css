@@ -186,25 +186,25 @@
 }
 
 .js-back {
-  width: 80px;
+  width: 70px;
   opacity: 0.3;
   filter: blur(2px);
 }
 
 .js-mid {
-  width: 120px;
+  width: 100px;
   opacity: 0.6;
   filter: blur(0.7px);
 }
 
 .js-front {
-  width: 160px;
+  width: 140px;
   opacity: 0.9;
 }
 
 /* Ambient (§7): maximal dezent, räumliche Tiefe ohne Fokus. */
 .js-ambient {
-  width: 64px;
+  width: 56px;
   opacity: 0.22;
   filter: blur(2.5px);
 }
@@ -715,6 +715,24 @@
   .lp2-cards {
     grid-template-columns: 1fr;
   }
+
+  /* Tablet: dichter, kleinere Notes */
+  .js-back {
+    width: 55px;
+    opacity: 0.28;
+  }
+  .js-mid {
+    width: 80px;
+    opacity: 0.55;
+  }
+  .js-front {
+    width: 110px;
+    opacity: 0.85;
+  }
+  .js-ambient {
+    width: 44px;
+    opacity: 0.20;
+  }
 }
 
 @media (max-width: 600px) {
@@ -739,25 +757,40 @@
   }
 
   /* Mobile (§9): deutlich reduzierte Opacity + Glow, kleinere Karten,
-     kürzere gefühlte Bahnen durch kleinere Fläche. */
+      kürzere gefühlte Bahnen durch kleinere Fläche. */
+  .js-note-inner {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+  .js-note-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .js-note-lines {
+    gap: 4px;
+  }
+  .js-note-lines i,
+  .js-note-lines b {
+    height: 5px;
+  }
   .js-front {
-    width: 120px;
-    opacity: 0.75;
+    width: 70px;
+    opacity: 0.70;
   }
 
   .js-mid {
-    width: 90px;
-    opacity: 0.5;
+    width: 52px;
+    opacity: 0.45;
   }
 
   .js-back {
-    width: 60px;
-    opacity: 0.25;
+    width: 36px;
+    opacity: 0.22;
   }
 
   .js-ambient {
-    width: 48px;
-    opacity: 0.18;
+    width: 30px;
+    opacity: 0.15;
   }
 
   .js-check {
