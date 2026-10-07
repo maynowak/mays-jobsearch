@@ -189,17 +189,20 @@
   width: 70px;
   opacity: 0.3;
   filter: blur(2px);
+  aspect-ratio: 70 / 85;
 }
 
 .js-mid {
   width: 100px;
   opacity: 0.6;
   filter: blur(0.7px);
+  aspect-ratio: 100 / 85;
 }
 
 .js-front {
   width: 140px;
   opacity: 0.9;
+  aspect-ratio: 140 / 85;
 }
 
 /* Ambient (§7): maximal dezent, räumliche Tiefe ohne Fokus. */
@@ -207,6 +210,7 @@
   width: 56px;
   opacity: 0.22;
   filter: blur(2.5px);
+  aspect-ratio: 56 / 85;
 }
 
 .js-note-inner {
@@ -716,7 +720,7 @@
     grid-template-columns: 1fr;
   }
 
-  /* Tablet: dichter, kleinere Notes */
+  /* Tablet: proportionale Skalierung – Breite reduziert, Höhe via aspect-ratio, Inhalt skaliert */
   .js-back {
     width: 55px;
     opacity: 0.28;
@@ -732,6 +736,10 @@
   .js-ambient {
     width: 44px;
     opacity: 0.20;
+  }
+  .js-note-inner {
+    transform: scale(0.785);
+    transform-origin: top left;
   }
 }
 
@@ -756,41 +764,26 @@
     display: none;
   }
 
-  /* Mobile (§9): deutlich reduzierte Opacity + Glow, kleinere Karten,
-      kürzere gefühlte Bahnen durch kleinere Fläche. */
-  .js-note-inner {
-    padding: 6px 8px;
-    gap: 6px;
-  }
-  .js-note-icon {
-    width: 18px;
-    height: 18px;
-  }
-  .js-note-lines {
-    gap: 4px;
-  }
-  .js-note-lines i,
-  .js-note-lines b {
-    height: 5px;
-  }
+  /* Mobile (§9): proportionale Skalierung – Breite reduziert, Höhe via aspect-ratio, Inhalt skaliert */
   .js-front {
     width: 70px;
     opacity: 0.70;
   }
-
   .js-mid {
     width: 52px;
     opacity: 0.45;
   }
-
   .js-back {
     width: 36px;
     opacity: 0.22;
   }
-
   .js-ambient {
     width: 30px;
     opacity: 0.15;
+  }
+  .js-note-inner {
+    transform: scale(0.5);
+    transform-origin: top left;
   }
 
   .js-check {
