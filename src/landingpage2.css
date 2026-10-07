@@ -270,6 +270,11 @@
   height: 32px;
   margin-left: 14px;
   vertical-align: middle;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 14px;
+  cursor: pointer;
 }
 
 /* Hauchdünner dunkler Hof für Kontrast auf hellen Bildstellen

@@ -99,7 +99,7 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     expect(accent).toBeTruthy();
     const pulse = document.querySelector(".mp") as HTMLElement;
     expect(pulse).toBeTruthy();
-    expect(pulse.getAttribute("aria-hidden")).toBe("true");
+    expect(pulse.getAttribute("aria-label")).toBe("Mit KI pulsieren, Job-Stream aktualisieren");
     expect(pulse.querySelector(".mp-dot")).toBeTruthy();
     expect(pulse.querySelector(".mp-ring")).toBeTruthy();
   });

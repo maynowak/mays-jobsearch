@@ -9,11 +9,12 @@ afterEach(() => {
 });
 
 describe("MatchPulse (AI-MATCH-PULSE-01)", () => {
-  it("rendert Punkt, Ring und 3 Satelliten (aria-hidden, dekorativ)", () => {
+  it("rendert Punkt, Ring und 3 Satelliten (klickbar)", () => {
     render(<MatchPulse />);
     const root = document.querySelector(".mp") as HTMLElement;
     expect(root).toBeTruthy();
-    expect(root.getAttribute("aria-hidden")).toBe("true");
+    expect(root.tagName).toBe("BUTTON");
+    expect(root.getAttribute("aria-label")).toBe("Mit KI pulsieren, Job-Stream aktualisieren");
     expect(root.querySelector(".mp-dot")).toBeTruthy();
     expect(root.querySelector(".mp-ring")).toBeTruthy();
     expect(root.querySelectorAll(".mp-sat").length).toBe(3);
