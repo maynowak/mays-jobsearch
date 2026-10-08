@@ -66,8 +66,8 @@ wiederverwendbare API.
 - Geändert: `src/components/JobStream.tsx` (-242 Zeilen Logik, + Bindungen)
 
 ## Git status
-- Neu/Geändert siehe oben; Vorbefunde `.opencode/agents/*.md`, `AGENTS.md`
-  unangetastet.
+- Commit `a1a8e81` auf main, gepusht auf origin/main (2026-10-08).
+- Vorbefunde `.opencode/agents/*.md`, `AGENTS.md` unangetastet.
 
 ## Explizite Bestätigung
 Verhalten 1:1: Komplette vorhandene Suite (760 Tests) grün ohne Fach-Änderung
@@ -75,4 +75,4 @@ an den Tests; neuer Modul-Test deckt Richtung, Zonen-Parameter, Bounds,
 Determinismus ab.
 
 ## Resume Point
-Commit + Push ausstehend (nach Freigabe). Kein Production Deploy.
+COMMITTED & PUSHED (`a1a8e81`). Kein Production Deploy. Aufgabe abgeschlossen.
