@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AUTO_PULSE_EVENT, MATCH_PULSE_EVENT, USER_PULSE_EVENT } from "./MatchPulse";
+import {
+  createFlightPath,
+  segmentCrossesZone,
+  zoneOverlap,
+} from "../lib/flightPath";
+import type { FlightPath, PathDims } from "../lib/flightPath";
 
 // JOB-NOTES-FINETUNING-01 — Phase B: animierter Job-Stream (verfeinert).
 // Echte HTML/CSS-Elemente mit Dummy-Daten (keine API, keine Canvas, keine Libs).
@@ -145,64 +151,33 @@ export function recycleNote(
 }
 
 // ---------------------------------------------------------------------------
-// Dynamic Path Engine (BUGFIX-FLIGHT)
+// Dynamic Path Engine (BUGFIX-FLIGHT) — Extrakt nach src/lib/flightPath.ts
 // ---------------------------------------------------------------------------
-// Zwei unabhängige Verzerrungen wurden gefunden und behoben:
-//
-//   1. CLAMP/VERWERFUNGS-VERZERRUNG: Der erste Ansatz wählte eine zufällige
-//      Kante als Start und clamped die Endpunkte. Diagonalen wurden auf
-//      Rechteck-Ecken abgeflacht → sichtbar fast nur vertikal/horizontal
-//      (gemessen: 69 % achsnah statt ~50 %).
-//      Fix: Winkel uniform über 2π ziehen und NIEMALS verwerfen; den Pfad
-//      stattdessen senkrecht verschieben, bis er die Safe Zone umgeht.
-//
-//   2. ASPEKT-VERZERRUNG: Der Layer ist z. B. 1440×738 (Aspekt ~1.95).
-//      `dx * W` gegen `dy * H` staucht eine im normalisierten Raum
-//      gleichverteilte Winkelmenge auf dem Bildschirm (gemessen: Ratio
-//      1.31x → 4.06x, achsnah 51 % → 57 %).
-//      Fix: Winkel im BILDSCHIRMRAUM ziehen, dann in normalisierte
-//      Koordinaten zurückrechnen.
-//
-// Start/Ende liegen garantiert auf dem Rand des Play-Bereichs (Ray-Box-
-// Clipping statt Clamp), Pfadlänge gebounded, Safe Zone wird umgangen.
+// Die 360°-Richtungs-/Safe-Zone-Engine ist seit 08-REFACTOR-FLIGHT-PATH-MODULE
+// als wiederverwendbares Modul extrahiert. Hier bleiben die jobstream-
+// spezifischen Bindungen an die lokale SAFE_ZONE; die Ursachen-Doku
+// (Verwerfungs- und Aspekt-Verzerrung) liegt jetzt am Modul.
 
-const PLAY_MIN = -0.15;
-const PLAY_MAX = 1.15;
-
-export interface DynamicPath {
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  /** Bildschirmwinkel in Radiant (0…2π), unabhängig von der Aspektverhältnis-Verzerrung */
-  angle: number;
-  pathLength: number;
-  /** Pfadlänge relativ zur Layer-Diagonalen (Basis für die Tempogleichung) */
-  relLength: number;
-}
+/** Kompatibilitäts-Alias auf das extrahierte Ergebnismodell. */
+export type DynamicPath = FlightPath;
 
 /** Layer-Maße für die Aspekt-Korrektur der Richtungsberechnung. */
-export interface PathDims {
-  w: number;
-  h: number;
+export type { PathDims } from "../lib/flightPath";
+
+/**
+ * JobStream-Bindung: Bildschirmraum-360°-Pfad, der die lokale SAFE_ZONE
+ * (Hero) garantiert frei lässt. Implementierung: src/lib/flightPath.ts.
+ */
+export function createDynamicPath(
+  rng: () => number,
+  dims: PathDims
+): DynamicPath | null {
+  return createFlightPath(rng, dims, SAFE_ZONE);
 }
 
 /**
- * EXAKTE Safe-Zone-Überlappung eines Pfads: Liang-Barsky-Clipping der Strecke
- * gegen das Hero-Rechteck. Rückgabe ist der Längenanteil der Strecke, der
- * innerhalb der Zone liegt. 0 = kein Kontakt.
- *
- * WARUM EXAKT (nicht gestichprobt): Eine 24er-Stichprobe über eine ~1,3 lange
- * Strecke hat einen Abstand von ~0,054. Die Safe-Zone-Schneiden sind fast
- * immer sehr flache Ecken-Streifen, kürzer als dieser Abstand — die Stichprobe
- * übersah sie komplett. Gemessen mit Liang-Barsky als Referenz:
- *
- *   steps=24  → 0 Treffer   (alle „grün", falsch)
- *   steps=30  → 65 Treffer
- *   steps=200 → 157 Treffer
- *   exakt     → 183 von 4000 = 4,6 % kreuzten wirklich die Hero-Zone
- *
- * Ein rein sampling-basierter „Schutz" hat hier also praktisch nicht gegriffen.
+ * EXAKTE Safe-Zone-Überlappung (Liang-Barsky) — bindet die generische
+ * `zoneOverlap` an die lokale SAFE_ZONE. 0 = kein Kontakt.
  */
 export function safeZonePenalty(
   x0: number,
@@ -210,33 +185,7 @@ export function safeZonePenalty(
   x1: number,
   y1: number
 ): number {
-  const dx = x1 - x0;
-  const dy = y1 - y0;
-  const p = [-dx, dx, -dy, dy];
-  const q = [
-    x0 - SAFE_ZONE.x0,
-    SAFE_ZONE.x1 - x0,
-    y0 - SAFE_ZONE.y0,
-    SAFE_ZONE.y1 - y0,
-  ];
-  let t0 = 0;
-  let t1 = 1;
-  for (let i = 0; i < 4; i++) {
-    if (p[i] === 0) {
-      // Parallel zur Kante: außerhalb → kein Schnitt.
-      if (q[i] < 0) return 0;
-    } else {
-      const t = q[i] / p[i];
-      if (p[i] < 0) {
-        if (t > t1) return 0;
-        if (t > t0) t0 = t;
-      } else {
-        if (t < t0) return 0;
-        if (t < t1) t1 = t;
-      }
-    }
-  }
-  return t1 > t0 ? t1 - t0 : 0;
+  return zoneOverlap(x0, y0, x1, y1, SAFE_ZONE);
 }
 
 /** Exakter Hero-Schutz: schneidet die Strecke die Safe Zone? */
@@ -246,145 +195,7 @@ export function segmentCrossesSafeZone(
   x1: number,
   y1: number
 ): boolean {
-  return safeZonePenalty(x0, y0, x1, y1) > 0;
-}
-
-/** Schnitt des Strahls (p + t*d) mit dem Rechteck [min,max]². */
-function clipRayToBox(
-  px: number,
-  py: number,
-  dx: number,
-  dy: number,
-  min: number,
-  max: number
-): { tmin: number; tmax: number } | null {
-  let tmin = -Infinity;
-  let tmax = Infinity;
-  const axes: Array<[number, number]> = [
-    [px, dx],
-    [py, dy],
-  ];
-  for (const [p, d] of axes) {
-    if (Math.abs(d) < 1e-9) {
-      if (p < min || p > max) return null;
-    } else {
-      let t1 = (min - p) / d;
-      let t2 = (max - p) / d;
-      if (t1 > t2) {
-        const tmp = t1;
-        t1 = t2;
-        t2 = tmp;
-      }
-      tmin = Math.max(tmin, t1);
-      tmax = Math.min(tmax, t2);
-      if (tmin > tmax) return null;
-    }
-  }
-  return { tmin, tmax };
-}
-
-/**
- * Erzeugt eine Dynamic-Flight-Pfad mit exakt gleichverteilten 360°-Richtungen.
- *
- * Zwei unabhängige Fehlerquellen wurden behoben:
- *
- * 1) VERWERFUNGS-VERZERRUNG: Der Winkel wurde verworfen, wenn der Pfad die
- *    Safe Zone kreuzte oder zu kurz war. Diagonale Chords durch die Box
- *    werden dabei fast immer verworfen, axiale Randbahnen nie → sichtbare
- *    Häufung von vertikal/horizontal (69 % achsnah statt ~50 %).
- *    Fix: Winkel EINMAL ziehen, nie verwerfen. Stattdessen den Pfad
- *    senkrecht verschieben (offset d), bis er die Safe Zone umgeht.
- *
- * 2) ASPEKT-VERZERRUNG: Die Layer ist z. B. 1440×738 (Aspekt ~1.95).
- *    `dx * W` gegen `dy * H` staucht eine uniforme Winkelverteilung im
- *    normalisierten Raum auf dem Bildschirm (gemessen: Ratio 1.31x → 4.06x).
- *    Fix: Winkel wird im BILDSCHIRMRAUM gezogen und dann in normalisierte
- *    Koordinaten zurückgerechnet.
- *
- * rng und dims sind Pflichtparameter: Ein Dimensions-Default würde die
- * Aspekt-Verzerrung stillschweigend reintroduzieren (siehe Punkt 2).
- */
-export function createDynamicPath(
-  rng: () => number,
-  dims: PathDims
-): DynamicPath | null {
-  const W = dims.w > 0 ? dims.w : 1;
-  const H = dims.h > 0 ? dims.h : 1;
-  const diag = Math.hypot(W, H) || 1;
-
-  // Winkel EINMAL im Bildschirmraum ziehen → exakt uniform, nie verworfen.
-  const angle = rng() * Math.PI * 2;
-  const screenDx = Math.cos(angle);
-  const screenDy = Math.sin(angle);
-  // Bildschirmrichtung -> normalisierte Richtung: (dx*W, dy*H) || (cos, sin)
-  const rawX = screenDx / W;
-  const rawY = screenDy / H;
-  const rawLen = Math.hypot(rawX, rawY) || 1;
-  const dx = rawX / rawLen;
-  const dy = rawY / rawLen;
-  const nx = -dy;
-  const ny = dx;
-  const cx = (PLAY_MIN + PLAY_MAX) / 2;
-  const cy = (PLAY_MIN + PLAY_MAX) / 2;
-
-  let fallback: DynamicPath | null = null;
-  let fallbackPenalty = Infinity;
-  // Sauberer Ersatzpfad mit leicht reduzierter Länge. Hat Vorrang vor einem
-  // Pfad, der die Hero-Zone streift: Spec verbietet Hero-Kollisionen,
-  // eine um ~10 % kürzere Bahn ist dagegen nicht sichtbar.
-  let cleanShort: DynamicPath | null = null;
-
-  for (let attempt = 0; attempt < 48; attempt++) {
-    // Senkrechter Versatz zur Box-Mittellinie.
-    const d = (rng() * 2 - 1) * 0.65;
-    const px = cx + nx * d;
-    const py = cy + ny * d;
-    const clip = clipRayToBox(px, py, dx, dy, PLAY_MIN, PLAY_MAX);
-    if (!clip) continue;
-    const pathLength = clip.tmax - clip.tmin;
-    // Weder Winzstrecke noch absurde Überlänge.
-    if (pathLength < 1.0 || pathLength > 1.8) continue;
-    const startX = px + clip.tmin * dx;
-    const startY = py + clip.tmin * dy;
-    const endX = px + clip.tmax * dx;
-    const endY = py + clip.tmax * dy;
-    const relLength =
-      Math.hypot((endX - startX) * W, (endY - startY) * H) / diag;
-    const candidate: DynamicPath = {
-      startX, startY, endX, endY, angle, pathLength, relLength,
-    };
-    const penalty = safeZonePenalty(startX, startY, endX, endY);
-    if (penalty === 0) return candidate;
-    // Kandidat mit geringstem Safe-Zone-Kontakt als letztes Mittel merken.
-    if (penalty < fallbackPenalty) {
-      fallbackPenalty = penalty;
-      fallback = candidate;
-    }
-  }
-
-  // Zweite Runde: Safe Zone ist Pflicht, Länge darf leicht nachgeben.
-  // Verläuft nur, wenn Runde 1 keinen kollisionsfreien Pfad fand.
-  for (let attempt = 0; attempt < 48 && !cleanShort; attempt++) {
-    const d = (rng() * 2 - 1) * 0.65;
-    const px = cx + nx * d;
-    const py = cy + ny * d;
-    const clip = clipRayToBox(px, py, dx, dy, PLAY_MIN, PLAY_MAX);
-    if (!clip) continue;
-    const pathLength = clip.tmax - clip.tmin;
-    if (pathLength < 0.85 || pathLength > 1.8) continue;
-    const startX = px + clip.tmin * dx;
-    const startY = py + clip.tmin * dy;
-    const endX = px + clip.tmax * dx;
-    const endY = py + clip.tmax * dy;
-    if (safeZonePenalty(startX, startY, endX, endY) !== 0) continue;
-    cleanShort = {
-      startX, startY, endX, endY, angle, pathLength,
-      relLength: Math.hypot((endX - startX) * W, (endY - startY) * H) / diag,
-    };
-  }
-
-  // Hero-Schutz schlägt Pfadlänge.
-  return cleanShort ?? fallback;
+  return segmentCrossesZone(x0, y0, x1, y1, SAFE_ZONE);
 }
 
 export function depthClass(note: StreamNote): string {
