@@ -6,6 +6,8 @@ import { useEffect, useRef } from "react";
 export const MATCH_PULSE_EVENT = "lp2:match-pulse";
 export const MATCH_PULSE_INTERVAL_MS = 6000; // legacy constant for tests
 export const USER_PULSE_EVENT = "lp2:user-pulse";
+/** Auto-Refill im JobStream hat eine Karte gestartet → Pulsar blitzt auf. */
+export const AUTO_PULSE_EVENT = "lp2:auto-pulse";
 
 function reducedMotion(): boolean {
   return (
@@ -55,6 +57,10 @@ export default function MatchPulse(): React.ReactElement {
     const eventHandler = () => triggerVisualPulse();
     window.addEventListener(MATCH_PULSE_EVENT, eventHandler);
 
+    // Eine Karte ist im Auto-Prozess gestartet → Pulsar blitzt von selbst auf.
+    const onAutoPulse = () => triggerVisualPulse();
+    window.addEventListener(AUTO_PULSE_EVENT, onAutoPulse);
+
     // Zufälliger visueller Pulse ohne Event-Dispatch
     const scheduleVisual = () => {
       const delay = 2000 + Math.random() * 4000;
@@ -73,6 +79,7 @@ export default function MatchPulse(): React.ReactElement {
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener(MATCH_PULSE_EVENT, eventHandler);
+      window.removeEventListener(AUTO_PULSE_EVENT, onAutoPulse);
       window.clearTimeout(startId);
       if (visualTimeoutRef.current) window.clearTimeout(visualTimeoutRef.current);
       if (doubleTimeoutRef.current) window.clearTimeout(doubleTimeoutRef.current);

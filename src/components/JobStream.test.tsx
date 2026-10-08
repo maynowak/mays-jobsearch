@@ -9,8 +9,11 @@ import JobStream, {
   segmentCrossesSafeZone,
   safeZonePenalty,
   STREAM_COUNTS,
+  STREAM_SEED,
   SAFE_ZONE,
+  MANUAL_EXTRA_NOTES,
 } from "./JobStream";
+import { AUTO_PULSE_EVENT, USER_PULSE_EVENT } from "./MatchPulse";
 
 function mulberry(seed: number): () => number {
   let a = seed >>> 0;
@@ -40,6 +43,30 @@ function mockMatchMedia(matches: (query: string) => boolean) {
   });
 }
 
+// Reale Layer-Maße. `dims` ist an buildStreamNotes/recycleNote/createDynamicPath
+// Pflicht – ein Default würde die Aspekt-Verzerrung stillschweigend
+// reintroduzieren (FINDING 7).
+const DESKTOP = { w: 1440, h: 738 };
+const MOBILE = { w: 412, h: 915 };
+const TABLET = { w: 834, h: 1112 };
+
+/** Bildschirmwinkel einer Note in Grad (0…180), gemessen wie gerendert. */
+const screenAngle = (
+  n: { startX: number; startY: number; endX: number; endY: number },
+  dims: { w: number; h: number }
+): number => {
+  const dx = (n.endX - n.startX) * dims.w;
+  const dy = (n.endY - n.startY) * dims.h;
+  const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
+  return ((deg % 180) + 180) % 180;
+};
+
+/** Abstand in Grad zum nächsten Vielfachen von 90° (0 = exakt achsnah). */
+const axialDistance = (deg: number): number => {
+  const m = ((deg % 90) + 90) % 90;
+  return Math.min(m, 90 - m);
+};
+
 describe("JobStream (HERO-ANIMATION-03)", () => {
   it("rendert Desktop-Anzahl (10) ohne MatchMedia", () => {
     render(<JobStream />);
@@ -59,8 +86,8 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
   });
 
   it("Kartenparameter sind deterministisch (gleicher Seed)", () => {
-    const a = buildStreamNotes(1);
-    const b = buildStreamNotes(1);
+    const a = buildStreamNotes(1, DESKTOP);
+    const b = buildStreamNotes(1, DESKTOP);
     expect(a).toEqual(b);
     expect(a.length).toBe(26);
     for (const n of a) {
@@ -79,7 +106,7 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
   });
 
   it("Tiefenklassen staffeln Größen (+ Ambient-Sonderklasse)", () => {
-    const base = buildStreamNotes()[0];
+    const base = buildStreamNotes(STREAM_SEED, DESKTOP)[0];
     expect(depthClass({ ...base, depth: 0.1, ambient: false })).toBe("js-back");
     expect(depthClass({ ...base, depth: 0.5, ambient: false })).toBe("js-mid");
     expect(depthClass({ ...base, depth: 0.9, ambient: false })).toBe("js-front");
@@ -87,13 +114,13 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
   });
 
   it("genau 2 Ambient-Notes, genau 2 mit Check", () => {
-    const notes = buildStreamNotes();
+    const notes = buildStreamNotes(STREAM_SEED, DESKTOP);
     expect(notes.filter((n) => n.ambient).length).toBe(2);
     expect(notes.filter((n) => n.hasCheck).length).toBe(2);
   });
 
   it("Opacity-Mapping folgt der Tiefe (Ambient am dezentesten)", () => {
-    const notes = buildStreamNotes();
+    const notes = buildStreamNotes(STREAM_SEED, DESKTOP);
     const front = notes.find((n) => !n.ambient && n.depth >= 0.7)!;
     const back = notes.find((n) => !n.ambient && n.depth < 0.35)!;
     const ambient = notes.find((n) => n.ambient)!;
@@ -134,9 +161,9 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
 
   it("Recycling: gleiche IDs, neue Generation, begrenzte Menge", () => {
     const rng = mulberry(99);
-    let notes = buildStreamNotes();
+    let notes = buildStreamNotes(STREAM_SEED, DESKTOP);
     for (let round = 0; round < 5; round += 1) {
-      notes = notes.map((n) => recycleNote(n, rng));
+      notes = notes.map((n) => recycleNote(n, rng, DESKTOP));
     }
     expect(notes.length).toBe(26);
     expect(notes.map((n) => n.id)).toEqual(Array.from({ length: 26 }, (_, i) => i));
@@ -154,7 +181,7 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
   });
 
   it("Flugbahnen meiden überwiegend das Safe-Zonen-Innere", () => {
-    const notes = buildStreamNotes();
+    const notes = buildStreamNotes(STREAM_SEED, DESKTOP);
     const inside = (x: number, y: number) =>
       x > SAFE_ZONE.x0 && x < SAFE_ZONE.x1 && y > SAFE_ZONE.y0 && y < SAFE_ZONE.y1;
     for (const n of notes) {
@@ -185,11 +212,6 @@ describe("JobStream (HERO-ANIMATION-03)", () => {
 });
 
 describe("Dynamic Path Engine (BUGFIX-FLIGHT)", () => {
-  // Reale Layer-Maße (Desktop). dims ist Pflicht – ein Default würde die
-  // Aspekt-Verzerrung stillschweigend reintroduzieren.
-  const DESKTOP = { w: 1440, h: 738 };
-  const MOBILE = { w: 412, h: 915 };
-
   it("verteilt Richtungen über alle vier Quadranten (>2 Families)", () => {
     const rng = mulberry(4242);
     const q = { pp: 0, pn: 0, np: 0, nn: 0 };
@@ -362,5 +384,130 @@ describe("Dynamic Path Engine (BUGFIX-FLIGHT)", () => {
     expect({ ...p! }).toEqual(snapshot);
     expect(p!.angle).toBeGreaterThanOrEqual(0);
     expect(p!.angle).toBeLessThan(Math.PI * 2);
+  });
+});
+
+describe("Basis-Noten (BUGFIX-FLIGHT Runde 3 / FINDING 7)", () => {
+  // Vor dem Fix: die LANES lagen im normalisierten Raum (und waren dort
+  // bereits achsnah), das Aspektverhältnis verstärkte das. Gemessen:
+  // achsnah ±22.5° (fair 50 %) war 91.4 % / 97.0 % / 87.5 %.
+  it("Basis-Noten fliegen in alle Richtungen (Aspekt-Verzerrung Regression)", () => {
+    for (const dims of [DESKTOP, TABLET, MOBILE]) {
+      const rng = mulberry(20261007);
+      const angles: number[] = [];
+      const quadrants = [0, 0, 0, 0];
+      const collect = (ns: ReturnType<typeof buildStreamNotes>) => {
+        ns.forEach((n) => {
+          angles.push(screenAngle(n, dims));
+          const dx = n.endX - n.startX;
+          const dy = n.endY - n.startY;
+          quadrants[(dy >= 0 ? 0 : 2) + (dx >= 0 ? 0 : 1)] += 1;
+        });
+      };
+      let notes = buildStreamNotes(STREAM_SEED, dims);
+      collect(notes);
+      for (let k = 0; k < 60; k++) {
+        notes = notes.map((n) => recycleNote(n, rng, dims));
+        collect(notes);
+      }
+      expect(angles.length).toBeGreaterThan(1500);
+      const axial = angles.filter((a) => axialDistance(a) < 22.5).length / angles.length;
+      expect(axial, `axial ${dims.w}x${dims.h}`).toBeLessThan(0.6);
+      // Alle vier Quadranten belegt → keine Zwei-Richtungs-Observation.
+      quadrants.forEach((countQ, i) =>
+        expect(countQ, `quadrant ${i} @${dims.w}x${dims.h}`).toBeGreaterThan(100)
+      );
+    }
+  });
+
+  it("Basis-Start/-Ende liegen innerhalb der Play-Box (kein Clamp-Kollaps)", () => {
+    for (const dims of [DESKTOP, TABLET, MOBILE]) {
+      const rng = mulberry(1359);
+      let notes = buildStreamNotes(STREAM_SEED, dims);
+      for (let round = 0; round < 3; round += 1) {
+        notes.forEach((n) => {
+          for (const [px, py] of [
+            [n.startX, n.startY],
+            [n.endX, n.endY],
+          ]) {
+            expect(px).toBeGreaterThanOrEqual(-0.151);
+            expect(px).toBeLessThanOrEqual(1.151);
+            expect(py).toBeGreaterThanOrEqual(-0.151);
+            expect(py).toBeLessThanOrEqual(1.151);
+          }
+        });
+        notes = notes.map((n) => recycleNote(n, rng, dims));
+      }
+    }
+  });
+
+  it("gleicher Seed + gleiche Maße → identische Basis-Noten (Determinismus)", () => {
+    const a = buildStreamNotes(7, DESKTOP);
+    const b = buildStreamNotes(7, DESKTOP);
+    expect(a).toEqual(b);
+    const c = buildStreamNotes(7, MOBILE);
+    // Anderes Aspektverhältnis → andere Flugbahnen (das IST der Fix).
+    expect(c).not.toEqual(a);
+  });
+});
+
+describe("Klickfenster & Auto-Refill (BUGFIX-FLIGHT Runde 3)", () => {
+  it("manuelle Klicks dürfen über das Auto-Maximum hinaus (+10)", async () => {
+    const { act } = await import("@testing-library/react");
+    render(<JobStream />);
+    // Auto-Fenster: hardCap - count = 10. Manuelles Fenster: +MANUAL_EXTRA_NOTES.
+    const autoMax = 10;
+    const clickMax = autoMax + MANUAL_EXTRA_NOTES;
+    act(() => {
+      for (let i = 0; i < clickMax + 10; i++) {
+        window.dispatchEvent(new CustomEvent(USER_PULSE_EVENT));
+      }
+    });
+    const spawned = document.querySelectorAll(
+      '.js-note[data-source="user"]'
+    ).length;
+    expect(spawned).toBe(clickMax);
+    expect(spawned).toBeGreaterThan(autoMax);
+  });
+
+  it("Auto-Refill bleibt auf dem engeren Auto-Fenster begrenzt", async () => {
+    // Der Reduced-Motion-Test weiter oben leakt sein matchMedia-Mock;
+    // ohne Neuinstallation wäre staticMotion=true und der Auto-Effekt pausiert.
+    mockMatchMedia(() => false);
+    const { act } = await import("@testing-library/react");
+    vi.useFakeTimers();
+    try {
+      render(<JobStream />);
+      // 10 × 45 s ≈ 450 s → ≈ 16 gezogene Refill-Fenster; Cap ist 10.
+      for (let i = 0; i < 10; i++) {
+        act(() => {
+          vi.advanceTimersByTime(45000);
+        });
+      }
+      const auto = document.querySelectorAll(
+        '.js-note[data-source="auto"]'
+      ).length;
+      expect(auto).toBeGreaterThan(0);
+      expect(auto).toBeLessThanOrEqual(10);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("Auto-Puls (BUGFIX-FLIGHT Runde 3 / FINDING 8)", () => {
+  it("Pulsar blitzt auf, wenn eine Karte im Auto-Prozess startet", async () => {
+    // Sauberer Reduced-Motion-Stand (siehe vorheriger Test).
+    mockMatchMedia(() => false);
+    const { AUTO_PULSE_EVENT: event } = await import("./MatchPulse");
+    const MatchPulse = (await import("./MatchPulse")).default;
+    const { act } = await import("@testing-library/react");
+    render(<MatchPulse />);
+    expect(document.querySelector(".mp")?.classList.contains("is-pulsing")).toBe(false);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(event));
+    });
+    expect(document.querySelector(".mp")?.classList.contains("is-pulsing")).toBe(true);
+    expect(event).toBe(AUTO_PULSE_EVENT);
   });
 });

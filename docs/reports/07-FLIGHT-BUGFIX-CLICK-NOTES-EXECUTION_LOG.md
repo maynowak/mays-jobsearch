@@ -264,3 +264,167 @@ GREEN
 
 ## Resume Point
 Alle Checks GREEN, Temporärskripte entfernt. Nächster Schritt: Commit.
+
+---
+
+# RUNDE 2 — TASK 08: Basis-Noten-Richtung, Auto-Puls, manuelles +10
+
+- **Status:** IN PROGRESS (Messung abgeschlossen, Fix offen)
+- **Stand:** 2026-10-07
+- **Branch:** main, HEAD `8d0655b`
+- **Auslöser (Anwender):** „diese karten die ganze zeit fast nur vertikal oder
+  horizontal fliegen … sollten in 360 grad zufällig fliegen", „der pulsar
+  sollte von sich aus aufblinken wenn eine karte im automatischen prozess
+  anfängt zu fliegen oder man klickt darauf", „ zusätzlich zu dem max im
+  automatischen prozess darf das manuelle klicken auf den pulsar +10 karten
+  zusätzlich erstellen".
+- **Workflow:** docs/AI_AUDITLOG.md, Read-only Audit → gefundene Fehler → Fix.
+- **Execution Log:** diese Datei (laufend aktualisiert).
+
+## Audit Scope (Runde 2)
+Alle Karten im JobStream (nicht nur dynamische), Pulsar-Sichtbarkeit bei
+Auto-Refill, Kapazitätsregeln Auto vs. manuell.
+
+## Completed Audit Sections (Runde 2)
+- [x] Vorbefund `8d0655b` identifiziert (drei Dateien, Produktiv-Deploy nein)
+- [x] Ursache „nur vertikal/horizontal" empirisch gemessen
+- [x] Pulsar-Verhalten im Code geprüft
+- [x] Kapazitätslogik geprüft
+
+## Actual Findings (Runde 2)
+
+### FINDING 7 — Basis-Noten fliegen fast nur vertikal/horizontal (ORANGE)
+**Korrigiert am 2026-10-07:** Der erste Entwurf dieses Findings enthielt aus
+der Hand geschätzte Lane-Koordinaten und Winkel. Ersetzt durch gemessene
+Werte (Quelle: `src/__measure__/dirbase.test.ts`, engine-seitig; und
+`.srcdir-measure.mjs`, browser-seitig). Nur die gemessenen Zahlen gelten.
+
+**Ursache:** `LANES` ist im normalisierten Raum definiert, die Animation
+rechnet aber `startX * size.width` / `startY * size.height` (StreamNoteView).
+Die X- und Y-Skalen unterscheiden sich beim echten Layer (z. B. 1440×738,
+Aspekt 1.95), der Richtungswinkel wird also verzerrt. Zusätzlich sind die
+LANES-Richtungen **im Normraum bereits selbst achsnah** (Lane 0: 8.3°,
+Lane 1: 6.6°, Lane 2: 82.4°, Lane 6: −8.7° …) — die Aspektverzerrung ist nur
+der Verstärker, nicht die eigentliche Ursache.
+
+**Gemessene Bildschirmwinkel — achsnah = Abstand < 22.5° zum nächsten
+Vielfachen von 90° (fairer Erwartungswert = 50 %):**
+
+| Viewport | vorher (Vorlauf `8d0655b`) | nachher (dieser Fix) |
+|---|---|---|
+| Desktop 1440×738 (n=1661) | **91.4 %** | **49.5 %** |
+| Tablet 834×1112 (n=2567) | **97.0 %** | **47.9 %** |
+| Mobile 412×915 (n=3926) | **87.5 %** | **49.0 %** |
+
+Messgrundlage: identische Seeds und identische Recycle-Folge für alte und neue
+Erzeugung, `src/__measure__/dirbase.test.ts` (Vorlauf-Quelle exakt aus
+`git show 8d0655b:src/components/JobStream.tsx`).
+
+**Browser-Gegenprobe vor dem Fix (echte WAAPI-Keyframes, `data-source` getrennt):**
+
+| Viewport | Basis-Noten | Dynamische Noten |
+|---|---|---|
+| Desktop 1440×738 | 72.7 % (n=22) | 0.0 % (n=10) |
+| Tablet 834×1112 | 100.0 % (n=34) | 62.5 % (n=16) |
+| Mobile 412×915 | 90.0 % (n=50) | 0.0 % (n=9) |
+
+→ Die dynamischen Noten sind seit `8d0655b` sauber, die **Basis-Noten**
+(11/17/26 Stück) sind die achsnahen Karten. Auf Mobile sind das 26 von 36
+sichtbaren Karten → der Anwender-Eindruck „fast nur vertikal oder horizontal"
+wird vollständig erklärt.
+
+**Konsequenz:** Basis-Noten müssen ebenfalls im Bildschirmraum erzeugt werden
+(Ebenfalls-Engine: `createDynamicPath`), inkl. Neuaufbau bei Layer-Maß-Änderung.
+
+### FINDING 8 — Auto-Refill löst keinen Pulsar-Blitz aus (YELLOW)
+**Beweis:** `MatchPulse` emittiert nur `USER_PULSE_EVENT` (Klick). Der
+Auto-Refill in JobStream (`setTimeout` + `scheduleAuto`) erzeugt Noten,
+dispatcht aber kein Event; `MatchPulse` kennt nur `MATCH_PULSE_EVENT`.
+→ Bei automatischem Start blitzt die Pulsar-Grafik nicht auf.
+
+### FINDING 9 — Manuelle Klicks sind an dieselben Grenzen gebunden (YELLOW)
+**Beweis:** `maxDynamic = hardCap - baseCount` (≈ +10) gilt für Auto-Refill
+und `handleManualSpawn` identisch; `trim()` entfernt zusätzlich jede Note
+über `hardCap`. Wunsch „manuell +10 zusätzlich" ist damit nicht abbildbar.
+
+## Fixes (Runde 2) — implementiert 2026-10-07
+
+### ROOT CAUSE (FINDING 7) — Basis-Richtung
+`LANES`/`recycleNote`-Bänder waren im normalisierten Raum definiert UND dort
+bereits achsnah; die `* width / * height`-Projektion verstärkte das je nach
+Aspekt. Fix: Basis-Noten nutzen jetzt exakt die Dynamic-Path-Engine
+(`createDynamicPath`) — Winkel uniform über 2π im Bildschirmraum,
+aspekt-korrekt zurückgerechnet, Safe Zone garantiert frei. `dims` ist Pflicht
+bei `buildStreamNotes(seed, dims)` und `recycleNote(prev, rng, dims)` (kein
+stillverzerrender Default). Neuaufbau bei Layer-Maß-Änderung (eigener Effekt,
+führt `gen` mit → keine ungewollten Key-Resets).
+
+### FIX (FINDING 8) — Auto-Puls
+Neues Event `AUTO_PULSE_EVENT = "lp2:auto-pulse"` (MatchPulse.tsx). JobStream
+dispatched es REAKTIV (Effekt zählt 'auto'-Noten; bei Zuwachs → dispatch) —
+der Timer-Updater bleibt seiteneffektfrei (StrictMode-sicher). MatchPulse
+lauscht darauf und ruft `triggerVisualPulse()`. Klickblitz bestand bereits.
+
+### FIX (FINDING 9) — Manuell +10 über Auto-Max
+`autoMax = hardCap - count` (=+10, unverändert) bleibt das Auto-Fenster.
+Neu `clickMax = autoMax + MANUAL_EXTRA_NOTES` (Export, =10). User-Klicks
+dürfen bis zum Klickfenster; Trim-Hard-Cap läuft gegen `clickMax`. Auto zieht
+keine manuellen Karten weg.
+
+## Files Changed (Runde 2)
+- `src/components/JobStream.tsx` — LANES/Bänder entfernt (`LANE_COUNT`,
+  `FALLBACK_PATH`), Engine für Basis+Recycle, Rebuild-effekt, `autoMax`/
+  `clickMax`, `MANUAL_EXTRA_NOTES`, reaktiver AUTO_PULSE_EVENT-Dispatch.
+- `src/components/MatchPulse.tsx` — `AUTO_PULSE_EVENT` + Listener.
+- `src/components/JobStream.test.tsx` — 26 Tests (+6), `dims`-Pflicht an
+  alle Basis-Aufrufe, neue Regressionstests (Richtung, Play-Box,
+  Determinismus, Kapazität, Auto-Puls).
+- `docs/reports/07-FLIGHT-BUGFIX-CLICK-NOTES-EXECUTION_LOG.md` — diese Datei.
+
+## Test Result (Runde 2, 2026-10-07)
+- `npx tsc -b` → 0 Fehler
+- `npm test -- --run` → **755 passed, 5 skipped** (63 Dateien)
+- `npm run build` → EXIT 0 (nur vorbestehende Chunk-Größen-Warnung)
+- `git diff --check` → nur vorbestehender Vorwurf `.opencode/agents/tester.md`
+  (nicht Teil dieses Audits, unangetastet)
+
+## Visual Result (echter Chrome, native WAAPI-Keyframes, Element-Dedup)
+achsnah = ±22.5°, fairer Wert 50 %:
+
+| Viewport (Layer) | Basis vorher→nachher | Dynamisch nachher |
+|---|---|---|
+| Desktop (1440×605) | 91–97 % → **45.5 %** | 35.0 % (n=20) |
+| Tablet (834×912) | → **45.2 %** | 50.0 % (n=20) |
+| Mobile (412×915) | → **51.1 %** | 40.0 % (n=20) |
+
+- Auto-Puls E2E: AUTO_PULSE_EVENT bei t≈19.5 s und ≈41.6 s, `is-pulsing=true`
+  synchron im Event, 0 JS-Errors.
+- Kapazität E2E: 24 schnelle Klicks → 20 User-Noten (= clickMax) auf allen
+  Viewports; Auto-Fenster ≤ 10 (Unit-Test).
+- Resize 900→400→900: Basis-Counts 17→26→17, achsnah 52.9/50/64.7 (n=17
+  Snapshot), 0 JS-Errors.
+- `hOverflow`: keine horizontalen Überschreitungen beobachtet.
+
+## Regression (Runde 2)
+Keine: Runde-1-Bugfixe (Back-Jump, 360°-Dynamik, Kapazität +10-Auto-Fenster,
+JOBSTREAM-05-Baseline) bleiben bestehen — alle Alttests grün. Dynamische
+Noten unverändert in Pfad-/Lifecycle-Logik; nur Basis-Erzeugung/Recycle
+umgestellt. Pulsar-Verhalten beim Klick unverändert.
+
+## Classification (Runde 2) — final
+- FINDING 7 Basis-Richtung: **GREEN** (fixiert, gemessen engine+e2e)
+- FINDING 8 Auto-Puls: **GREEN** (fixiert, Unit+E2E)
+- FINDING 9 Klickfenster: **GREEN** (fixiert, Unit+E2E)
+
+## Git status (Runde 2)
+- HEAD vor Fix: `8d0655b`. Geändert: die vier oben genannten Dateien.
+- Angefasst nicht: `.opencode/agents/*.md`, `AGENTS.md` (Vorbefunde).
+
+## Recommended Next Actions (Runde 2)
+1. Review der vier geänderten Dateien
+2. Commit + Push (nach Freigabe)
+3. Kein Production Deploy
+
+## Resume Point (Runde 2)
+Alle Checks GREEN, temporäre Skripte (.srcdir-measure.mjs,
+.autopulse-verify.mjs, src/__measure__/) entfernt. Offen: Commit-Freigabe.

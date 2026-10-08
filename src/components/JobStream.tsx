@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MATCH_PULSE_EVENT, USER_PULSE_EVENT } from "./MatchPulse";
+import { AUTO_PULSE_EVENT, MATCH_PULSE_EVENT, USER_PULSE_EVENT } from "./MatchPulse";
 
 // JOB-NOTES-FINETUNING-01 — Phase B: animierter Job-Stream (verfeinert).
 // Echte HTML/CSS-Elemente mit Dummy-Daten (keine API, keine Canvas, keine Libs).
@@ -11,6 +11,14 @@ export const STREAM_WIDTH = 1600;
 export const STREAM_HEIGHT = 900;
 export const STREAM_SEED = 20261002;
 export const STREAM_COUNTS = { desktop: 11, tablet: 17, mobile: 26 } as const;
+
+/**
+ * Manuelles Klick-Fenster: zusätzlich zum Auto-Maximum dürfen per Klick auf
+ * den Pulsar noch einmal 10 weitere Karten entstehen (Wunsch Anwender
+ * 2026-10-07). Das Auto-Refill bleibt auf seinem eigenen, engeren Fenster
+ * begrenzt.
+ */
+export const MANUAL_EXTRA_NOTES = 10;
 
 // Zentrale Safe Zone (relativ): Flugbahnen führen darum herum.
 export const SAFE_ZONE = { x0: 0.3, x1: 0.7, y0: 0.25, y1: 0.7 };
@@ -48,101 +56,87 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-// Initial-Bahnen in virtuellen Koordinaten (0…1, Start darf außerhalb
-// liegen). Durchgehend ↘-Drift (wie die Lichtstreifen), Safe Zone frei.
-const LANES: Array<[number, number, number, number]> = [
-  [-0.1, 0.06, 0.72, 0.18],
-  [0.15, 0.02, 1.1, 0.13],
-  [0.04, -0.1, 0.2, 1.1],
-  [0.16, 0.3, 0.05, 1.08],
-  [1.08, 0.3, 0.86, 1.05],
-  [0.9, -0.08, 1.06, 0.55],
-  [0.1, 0.95, 1.08, 0.8],
-  [-0.08, 0.84, 0.6, 0.97],
-  [-0.08, 0.45, 0.24, 0.99],
-  [0.3, 0.02, 1.05, 0.22],
-];
+// Anzahl der Lane-Indizes: legt fest, welche Basis-Notes Ambient/Check tragen.
+// Die Flugbahnen selbst kommen seit BUGFIX-FLIGHT-Runde 3 aus der
+// Dynamic-Path-Engine (Bildschirmraum). Die früheren LANES lagen im
+// normalisierten Raum; weil die Animation mit `startX * size.width` und
+// `startY * size.height` rechnet, verzerrte das Aspektverhältnis den Winkel —
+// gemessen 94–100 % achsnah statt ~50 % (FINDING 7). Die Lane-Indizes bleiben
+// als Struktur erhalten, damit Ambient-/Check-Verteilung stabil bleiben.
+const LANE_COUNT = 10;
 
 const DEPTHS = [0.15, 0.4, 0.65, 0.9, 0.3, 0.55, 0.8, 0.2, 0.5, 0.7];
 
 // 2 der 10 Noten sind Ambient (räumliche Tiefe, kein Fokus).
 const AMBIENT_IDS = new Set([2, 7]);
 
-export function buildStreamNotes(seed: number = STREAM_SEED): StreamNote[] {
+// Notfall-Pfad, falls die Engine keinen Pfad liefert (praktisch nie:
+// der Startpunkt liegt immer in der Play-Box, der Strahl trifft sie also).
+// Linker Gang diagonal — berührt die Safe Zone in keinem Punkt.
+const FALLBACK_PATH = {
+  startX: -0.1,
+  startY: -0.1,
+  endX: 0.2,
+  endY: 1.1,
+};
+
+/**
+ * Erzeugt die Basis-Noten.
+ *
+ * `dims` ist Pflicht: Die Flugrichtung wird im BILDSCHIRMRAUM gezogen und dann
+ * in normalisierte Koordinaten zurückgerechnet. Ein Dimensions-Default würde
+ * die Aspekt-Verzerrung stillschweigend reintroduzieren (FINDING 7).
+ */
+export function buildStreamNotes(seed: number, dims: PathDims): StreamNote[] {
   const rng = mulberry32(seed);
   const NOTE_COUNT = 26;
   return Array.from({ length: NOTE_COUNT }, (_, i) => {
-    const laneIdx = i % LANES.length;
-    const [sx0, sy0, ex0, ey0] = LANES[laneIdx];
-    const jitter = () => (rng() - 0.5) * 0.06;
-    const startX = sx0 + jitter();
-    const startY = sy0 + jitter();
-    const endX = ex0 + jitter();
-    const endY = ey0 + jitter();
+    const laneIdx = i % LANE_COUNT;
+    // Gleiche Engine wie die dynamischen Noten: Winkel uniform über 2π im
+    // Bildschirmraum, Aspekt-korrekt, Safe Zone frei.
+    const path = createDynamicPath(rng, dims) ?? FALLBACK_PATH;
     const duration = 11 + rng() * 6;
     return {
       id: i,
       gen: 0,
-      startX,
-      startY,
-      endX,
-      endY,
+      startX: path.startX,
+      startY: path.startY,
+      endX: path.endX,
+      endY: path.endY,
       duration,
       delay: -rng() * duration,
       rotation: (rng() - 0.5) * 8,
-      depth: DEPTHS[laneIdx % DEPTHS.length],
-      ambient: i < LANES.length && AMBIENT_IDS.has(laneIdx),
-      hasCheck: i < LANES.length && laneIdx % 5 === 1,
+      depth: DEPTHS[laneIdx],
+      ambient: i < LANE_COUNT && AMBIENT_IDS.has(laneIdx),
+      hasCheck: i < LANE_COUNT && laneIdx % 5 === 1,
       checkAt: 0.35 + rng() * 0.3,
     };
   });
 }
 
-function insideSafe(x: number, y: number, margin = 0.05): boolean {
-  return (
-    x > SAFE_ZONE.x0 + margin &&
-    x < SAFE_ZONE.x1 - margin &&
-    y > SAFE_ZONE.y0 + margin &&
-    y < SAFE_ZONE.y1 - margin
-  );
-}
-
-// Recycling: neuer Pfad in Außenbändern (↘-Drift bleibt), Kennung stabil.
-export function recycleNote(prev: StreamNote, rng: () => number): StreamNote {
-  const bands = [
-    // oben: y bleibt über der Zone
-    () => {
-      const sx = -0.1 + rng() * 0.9;
-      return { sx, sy: 0.02 + rng() * 0.1, ex: sx + 0.4 + rng() * 0.5, ey: 0.1 + rng() * 0.12 };
-    },
-    // links: x bleibt links der Zone
-    () => {
-      const sy = -0.1 + rng() * 0.6;
-      return { sx: rng() * 0.12, sy, ex: 0.02 + rng() * 0.18, ey: sy + 0.4 + rng() * 0.4 };
-    },
-    // rechts: x bleibt rechts der Zone
-    () => {
-      const sy = -0.08 + rng() * 0.48;
-      return { sx: 0.88 + rng() * 0.2, sy, ex: 0.82 + rng() * 0.23, ey: sy + 0.35 + rng() * 0.4 };
-    },
-    // unten: y bleibt unter der Zone
-    () => {
-      const sx = -0.08 + rng() * 0.68;
-      return { sx, sy: 0.8 + rng() * 0.18, ex: sx + 0.3 + rng() * 0.5, ey: 0.76 + rng() * 0.19 };
-    },
-  ];
-  const pick = bands[Math.floor(rng() * bands.length)]();
-  // Sicherheitsnetz: Endpunkte nie tief in der Zone
-  const fix = (x: number, y: number) => (insideSafe(x, y) ? { x: 0.15, y } : { x, y });
-  const s = fix(pick.sx, pick.sy);
-  const e = fix(pick.ex, pick.ey);
+/**
+ * Recycling einer Basis-Note: neuer Pfad aus der Dynamic-Path-Engine.
+ *
+ * Die früheren „Außenbänder" lagen ebenfalls im normalisierten Raum und
+ * waren durch das Aspektverhältnis achsnah verzerrt (FINDING 7). Die Engine
+ * zieht den Winkel im Bildschirmraum — die Safe Zone bleibt dabei garantiert
+ * frei, Start und Ende liegen auf dem Rand der Play-Box.
+ *
+ * `dims` ist Pflicht (siehe buildStreamNotes).
+ */
+export function recycleNote(
+  prev: StreamNote,
+  rng: () => number,
+  dims: PathDims
+): StreamNote {
+  const path = createDynamicPath(rng, dims) ?? FALLBACK_PATH;
   return {
     ...prev,
     gen: prev.gen + 1,
-    startX: s.x,
-    startY: s.y,
-    endX: e.x,
-    endY: e.y,
+    startX: path.startX,
+    startY: path.startY,
+    endX: path.endX,
+    endY: path.endY,
     duration: 11 + rng() * 6,
     delay: 0.2 + rng() * 1.0,
     rotation: (rng() - 0.5) * 8,
@@ -505,8 +499,13 @@ function StreamNoteView({ note, size, staticMotion, forcedCheck, onRecycle, isDy
 }
 
 export default function JobStream(): React.ReactElement {
-  const notes = useMemo(() => buildStreamNotes(), []);
-  const [items, setItems] = useState<StreamNote[]>(notes);
+  // Erstrender ohne gemessene Layer-Maße: {0,0} lässt die Engine quadratisch
+  // rechnen (W = H = 1). Die Bahnen werden weiter unten mit den echten
+  // Layer-Maßen neu erzeugt, sobald `size` steht — sonst blieben sie auf dem
+  // Erstrender-Aspekt stehen (FINDING 7).
+  const [items, setItems] = useState<StreamNote[]>(() =>
+    buildStreamNotes(STREAM_SEED, { w: 0, h: 0 })
+  );
   const [count, setCount] = useState<number>(pickCount);
   const [staticMotion] = useState<boolean>(reducedMotion);
   // Gekoppelter Check (AI-MATCH-PULSE-01): genau eine Note pro Puls.
@@ -524,6 +523,10 @@ export default function JobStream(): React.ReactElement {
   const [dynamicNotes, setDynamicNotes] = useState<DynamicNote[]>([]);
   const dynamicIdRef = useRef(-1);
   const hardCap = count + 10;
+  /** Auto-Prozess-Fenster: +10 über der Basis-Anzahl. */
+  const autoMax = Math.max(0, hardCap - count);
+  /** Manuelles Klick-Fenster: Auto-Fenster + MANUAL_EXTRA_NOTES. */
+  const clickMax = autoMax + MANUAL_EXTRA_NOTES;
 
   // Stabiler Recycle-Handler für Dynamic Notes. WICHTIG: darf nicht als
   // Inline-Lambda erzeugt werden – sonst ändert sich die Referenz pro
@@ -533,14 +536,38 @@ export default function JobStream(): React.ReactElement {
     setDynamicNotes((prev) => prev.filter((d) => d.note.id !== id));
   }, []);
 
-  // Hard-Cap-Absicherung: bei Viewport-Wechsel (kleineres Base-Count)
-  // überschüssige Dynamic Notes entfernen, nie über die Invariant kommen.
+  // Kapazitäts-Absicherung: die harte Grenze ist das MANUELLE Fenster
+  // (Basis + Auto-Fenster + 10). Das Auto-Refill hält zusätzlich sein
+  // eigenes, engeres Fenster ein — es darf aber niemals manuell erzeugte
+  // Karten entfernen.
   useEffect(() => {
-    setDynamicNotes((prev) => {
-      const maxDynamic = Math.max(0, hardCap - count);
-      return prev.length <= maxDynamic ? prev : prev.slice(0, maxDynamic);
-    });
-  }, [hardCap, count]);
+    setDynamicNotes((prev) =>
+      prev.length <= clickMax ? prev : prev.slice(0, clickMax)
+    );
+  }, [clickMax]);
+
+  // Basis-Pfade mit den echten Layer-Maßen (neu) erzeugen. Die Engine zieht
+  // die Richtung im Bildschirmraum — liegt `size` auf dem Erstrender-Wert
+  // {0,0}, entstünden quadratische Bahnen, die beim Rendern auf dem echten
+  // Aspekt wieder verzerrt würden (das war FINDING 7).
+  const builtForRef = useRef("");
+  useEffect(() => {
+    if (size.width <= 0 || size.height <= 0) return;
+    const key = `${size.width}x${size.height}`;
+    if (builtForRef.current === key) return;
+    builtForRef.current = key;
+    // Generationen mitführen: Ein Viewport-Wechsel soll die bestehenden
+    // Animationen nicht neu aufschlüsseln (der size-Dep-Effekt in
+    // StreamNoteView startet sie ohnehin sauber neu).
+    setItems((prev) =>
+      buildStreamNotes(STREAM_SEED, { w: size.width, h: size.height }).map(
+        (n, i) => ({
+          ...n,
+          gen: prev[i]?.gen ?? n.gen,
+        })
+      )
+    );
+  }, [size]);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
@@ -574,7 +601,14 @@ export default function JobStream(): React.ReactElement {
 
   const recycle = useCallback((id: number) => {
     const rng = rngRef.current ?? mulberry32(STREAM_SEED + 1);
-    setItems((prev) => prev.map((n) => (n.id === id ? recycleNote(n, rng) : n)));
+    // sizeRef statt `size`: der Handler hat keine size-Abhängigkeit und
+    // würde sonst mit dem Erstrender-Wert {0,0} recyceln. Die Maße stehen
+    // spätestens nach dem Mount-Measure, lange vor der ersten Animation.
+    const live = sizeRef.current;
+    const dims: PathDims = { w: live.width, h: live.height };
+    setItems((prev) =>
+      prev.map((n) => (n.id === id ? recycleNote(n, rng, dims) : n))
+    );
   }, []);
 
   // Kopplung: Match-Puls → 600 ms Versatz → genau eine sichtbare,
@@ -607,12 +641,12 @@ export default function JobStream(): React.ReactElement {
   // Kapazität wird atomar im Updater geprüft, aber NICHTS wird darin
   // erzeugt/seiteneffektiert (StrictMode-Doppelausführung würde sonst
   // doppelte Karten erzeugen).
+  // Manuelles Fenster: Auto-Maximum + MANUAL_EXTRA_NOTES (Klickfenster).
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const handleUserPulse = () => {
       setDynamicNotes((prev) => {
-        const maxDynamic = Math.max(0, hardCap - count);
-        if (prev.length >= maxDynamic) return prev;
+        if (prev.length >= clickMax) return prev;
         const newEntry = createDynamicNote('user');
         if (!newEntry) return prev;
         return [...prev, newEntry];
@@ -620,11 +654,13 @@ export default function JobStream(): React.ReactElement {
     };
     window.addEventListener(USER_PULSE_EVENT, handleUserPulse);
     return () => window.removeEventListener(USER_PULSE_EVENT, handleUserPulse);
-  }, [count, hardCap]);
+  }, [clickMax]);
 
   // Auto Refill — eigener, unregelmäßiger Timer (15–40 s), nie aggressiv,
   // nie synchron zum 2–6 s Visual-Puls oder 6 s MATCH_PULSE_EVENT.
   // Der Timer wird AUSSERHALB des State-Updaters neu geplant.
+  // Das Auto-Fenster bleibt absichtlich enger als das Klickfenster.
+  // Startet eine Karte, blitzt der Pulsar sichtbar auf (AUTO_PULSE_EVENT).
   useEffect(() => {
     if (staticMotion || typeof window === "undefined") return undefined;
     let timeoutId: number | undefined;
@@ -634,8 +670,7 @@ export default function JobStream(): React.ReactElement {
       timeoutId = window.setTimeout(() => {
         if (disposed) return;
         setDynamicNotes((prev) => {
-          const maxDynamic = Math.max(0, hardCap - count);
-          if (prev.length >= maxDynamic) return prev;
+          if (prev.length >= autoMax) return prev;
           const newEntry = createDynamicNote('auto');
           if (!newEntry) return prev;
           return [...prev, newEntry];
@@ -648,7 +683,22 @@ export default function JobStream(): React.ReactElement {
       disposed = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, [count, hardCap, staticMotion]);
+  }, [autoMax, staticMotion]);
+
+  // Startet eine Auto-Karte (die Anzahl der 'auto'-Noten wächst), blitzt der
+  // Pulsar von selbst auf. Rein reaktiv: der Timer-Updater oben muss rein
+  // bleiben (StrictMode), darum lauscht dieser Effekt auf das ERGEBNIS.
+  const prevAutoCountRef = useRef(0);
+  useEffect(() => {
+    const autoCount = dynamicNotes.reduce(
+      (n, d) => (d.source === 'auto' ? n + 1 : n),
+      0
+    );
+    if (autoCount > prevAutoCountRef.current) {
+      window.dispatchEvent(new CustomEvent(AUTO_PULSE_EVENT));
+    }
+    prevAutoCountRef.current = autoCount;
+  }, [dynamicNotes]);
 
   const createDynamicNote = (source: 'user' | 'auto'): DynamicNote | null => {
     const rng = rngRef.current ?? mulberry32(STREAM_SEED + 2);
