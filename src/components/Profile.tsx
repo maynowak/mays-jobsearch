@@ -5,6 +5,24 @@ export default function Profile() {
   const { t } = useLang();
   const auth = useAuth();
 
+  if (auth.isLoading) {
+    return (
+      <section className="card">
+        <h2>{t("profile.title")}</h2>
+        <p>Lade Profil...</p>
+      </section>
+    );
+  }
+
+  if (auth.error) {
+    return (
+      <section className="card">
+        <h2>{t("profile.title")}</h2>
+        <p>Fehler beim Laden des Profils.</p>
+      </section>
+    );
+  }
+
   if (!auth.isAuthenticated) {
     return (
       <section className="card">
