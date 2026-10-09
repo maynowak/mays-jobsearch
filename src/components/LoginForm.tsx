@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useLang } from "../i18n";
+import { useAuth } from "react-oidc-context";
 
 interface FieldErrors {
   email?: string;
@@ -15,6 +16,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // kein Cognito, keine API, keine Persistenz, keine Session.
 export default function LoginForm() {
   const { t } = useLang();
+  const auth = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -41,8 +43,12 @@ export default function LoginForm() {
     const next = validate();
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-    // Placeholder statt Backend: UI-Zustand "vorbereitet", sonst nichts.
-    setPrepared(true);
+    // Trigger OIDC Authorization Code + PKCE flow via Cognito hosted UI
+    try {
+      auth.signinRedirect();
+    } catch {
+      setPrepared(true);
+    }
   };
 
   if (prepared) {

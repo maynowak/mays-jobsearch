@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useLang } from "../i18n";
+import { useAuth } from "react-oidc-context";
 
 interface FieldErrors {
   email?: string;
@@ -19,6 +20,7 @@ const MIN_PASSWORD_LENGTH = 8;
 // Placeholder-Zustand ("Registrierung vorbereitet").
 export default function RegisterForm() {
   const { t } = useLang();
+  const auth = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordRepeat, setPasswordRepeat] = useState("");
@@ -57,8 +59,12 @@ export default function RegisterForm() {
     const next = validate();
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-    // Placeholder statt Backend: UI-Zustand "vorbereitet", sonst nichts.
-    setPrepared(true);
+    // Redirect to Cognito Hosted UI for registration via Authorization Code + PKCE
+    try {
+      auth.signinRedirect({ extraQueryParams: { prompt: "login" } });
+    } catch {
+      setPrepared(true);
+    }
   };
 
   if (prepared) {

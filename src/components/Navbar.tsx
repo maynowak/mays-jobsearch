@@ -4,6 +4,7 @@ import { useLang } from "../i18n";
 import type { Lang } from "../i18n";
 import { navLinksFor } from "../navLinks";
 import type { NavRoute } from "../navLinks";
+import { useAuth } from "react-oidc-context";
 
 function LangToggle() {
   const { lang, setLang, t } = useLang();
@@ -34,6 +35,7 @@ interface Props {
 
 export default function Navbar({ route }: Props) {
   const { t } = useLang();
+  const auth = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const close = useCallback(() => setIsOpen(false), []);
@@ -154,10 +156,25 @@ export default function Navbar({ route }: Props) {
                     {t(link.labelKey)}
                   </a>
                 ))}
+                {auth?.isAuthenticated && (
+                  <a href="/profil" className="nav-link">
+                    Profil
+                  </a>
+                )}
               </div>
-              <a href="/anmelden" className="nav-login">
-                Login
-              </a>
+              {auth?.isAuthenticated ? (
+                <button
+                  type="button"
+                  className="nav-login"
+                  onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}
+                >
+                  Logout
+                </button>
+              ) : (
+                <a href="/anmelden" className="nav-login">
+                  Login
+                </a>
+              )}
             </div>
           </>
         ) : (
@@ -211,9 +228,20 @@ export default function Navbar({ route }: Props) {
               <div className="mobile-lang">
                 <LangToggle />
               </div>
-              <a href="/anmelden" className="nav-login" onClick={close}>
-                Login
-              </a>
+              {auth?.isAuthenticated && (
+                <a href="/profil" className="mobile-link" onClick={close}>
+                  Profil
+                </a>
+              )}
+              {auth?.isAuthenticated ? (
+                <button className="nav-login" onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}>
+                  Logout
+                </button>
+              ) : (
+                <a href="/anmelden" className="nav-login" onClick={close}>
+                  Login
+                </a>
+              )}
             </div>
           </div>
         )}

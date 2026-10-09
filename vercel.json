@@ -26,6 +26,14 @@
     {
       "source": "/anmelden",
       "destination": "/index.html"
+    },
+    {
+      "source": "/auth/callback",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/profil",
+      "destination": "/index.html"
     }
   ]
 }

@@ -21,6 +21,8 @@ import ATSModal from "./components/AtsOverlay";
 import { useSearchWorldMotion } from "./hooks/useSearchWorldMotion";
 import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
+import AuthCallback from "./components/AuthCallback";
+import ProfilePage from "./components/Profile";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -70,6 +72,8 @@ export default function App() {
     if (path === "/anmelden") return "login";
     return path === "/search" ? "matcher" : "landing";
   })();
+  const isAuthCallback = window.location.pathname === "/auth/callback";
+  const isProfile = window.location.pathname === "/profil";
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -2261,6 +2265,25 @@ export default function App() {
     route !== "register" &&
     route !== "login" &&
     !(route === "landing" && !isSearching);
+
+  if (isAuthCallback) {
+    return <AuthCallback />;
+  }
+
+  if (isProfile) {
+    return (
+      <ErrorBoundary
+        title={t("error.boundaryTitle")}
+        message={t("error.boundaryMessage")}
+        reloadLabel={t("error.boundaryReload")}
+      >
+        <Navbar route={route} />
+        <main className="container legal-main">
+          <ProfilePage />
+        </main>
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary
