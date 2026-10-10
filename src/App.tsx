@@ -2299,14 +2299,11 @@ export default function App() {
       ) : route === "register" || route === "login" ? (
         // REGISTRATION-UI-01: Auth-Masken als reine GUI (kein Backend,
         // keine Session, keine Gast-State-Berührung).
-        <>
-          <main className="container legal-main">
-            <div className="auth-page">
-              {route === "register" ? <RegisterForm /> : <LoginForm />}
-            </div>
-          </main>
-          <Footer />
-        </>
+        <main className="container legal-main">
+          <div className="auth-page">
+            {route === "register" ? <RegisterForm /> : <LoginForm />}
+          </div>
+        </main>
       ) : (
         <>
           <Hero />
