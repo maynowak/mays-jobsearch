@@ -16,6 +16,8 @@ export default function Footer({ info = {} }: Props) {
         <a href="/impressum">{t("footer.imprint")}</a>
         <span aria-hidden="true">·</span>
         <a href="/datenschutz">{t("footer.privacy")}</a>
+        <span aria-hidden="true">·</span>
+        <a href="/datenschutzprinzipien">{t("footer.privacyPrinciples")}</a>
       </nav>
       <p>
         {t("footer.pre")}{" "}

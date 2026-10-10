@@ -34,6 +34,17 @@ describe("LEGAL-IMPRINT-01: Footer mit Legal-Links", () => {
     expect(privacyLink).toHaveAttribute("href", "/datenschutz");
   });
 
+  it("enthält Link zu /datenschutzprinzipien mit Text 'Datenschutzprinzipien'", () => {
+    render(
+      <LangProvider>
+        <Footer />
+      </LangProvider>
+    );
+
+    const principlesLink = screen.getByRole("link", { name: "Datenschutzprinzipien" });
+    expect(principlesLink).toHaveAttribute("href", "/datenschutzprinzipien");
+  });
+
   it("Legal-Links sind in nav mit aria-label 'Rechtliche Links'", () => {
     render(
       <LangProvider>
@@ -55,6 +66,7 @@ describe("LEGAL-IMPRINT-01: Footer mit Legal-Links", () => {
 
     expect(screen.getByRole("link", { name: "Imprint" })).toHaveAttribute("href", "/impressum");
     expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/datenschutz");
+    expect(screen.getByRole("link", { name: "Privacy principles" })).toHaveAttribute("href", "/datenschutzprinzipien");
     expect(screen.getByRole("navigation", { name: "Legal links" })).toBeInTheDocument();
   });
 });
