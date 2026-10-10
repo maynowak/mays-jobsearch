@@ -24,4 +24,4 @@ GREEN / FINDINGS / BLOCKER
 No changes performed.
 
 ## Notes
-- `docs/AI_AUDITLOG.md` — mandatory step tamplate auditlog workflow
+- docs/AI_AUDITLOG.md — mandatory step template auditlog workflow

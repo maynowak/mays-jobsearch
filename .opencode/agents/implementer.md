@@ -16,7 +16,7 @@ Implementation for Mays-Jobsearch.
 - Follow AI_AUDITLOG.md
 
 ## Notes
-- `docs/AI_AUDITLOG.md` — mandatory step tamplate auditlog workflow
+- docs/AI_AUDITLOG.md — mandatory step template auditlog workflow
 ## After changes
 - Run affected tests
 - Check `git diff`
