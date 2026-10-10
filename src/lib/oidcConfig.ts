@@ -5,7 +5,4 @@ export const oidcConfig = {
   post_logout_redirect_uri: 'https://www.mays-job-matcher.app/',
   response_type: 'code',
   scope: 'openid email profile',
-  extraQueryParams: {
-    prompt: 'login',
-  },
 };

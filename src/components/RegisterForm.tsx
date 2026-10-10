@@ -8,8 +8,8 @@ export default function RegisterForm() {
   const auth = useAuth();
 
   const handleRegister = () => {
-    // Startet Cognito Hosted UI mit Registrierungsmöglichkeit
-    auth.signinRedirect({ extraQueryParams: { prompt: "login" } });
+    // Startet Cognito Hosted UI mit Registrierungsseite
+    auth.signinRedirect({ extraQueryParams: { screen_hint: "signup" } });
   };
 
   return (

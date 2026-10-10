@@ -47,13 +47,12 @@ function renderAt(path: string) {
   );
 }
 
-describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher (reine GUI)", () => {
-  it("/anmelden rendert Login-Maske mit allen Navigationen", () => {
+describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher mit Cognito OIDC", () => {
+  it("/anmelden rendert Login-Maske mit Navigationen, ohne Passwortfeld", () => {
     renderAt("/anmelden");
     expect(screen.getByRole("heading", { name: "Anmelden" })).toBeTruthy();
-    expect(screen.getByLabelText("E-Mail-Adresse")).toBeTruthy();
-    expect(screen.getByLabelText("Passwort")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Passwort vergessen?" })).toBeTruthy();
+    expect(screen.queryByLabelText("E-Mail-Adresse")).toBeNull();
+    expect(screen.queryByLabelText("Passwort")).toBeNull();
     expect(
       screen.getByRole("link", { name: "Noch kein Konto? Registrieren" }).getAttribute("href")
     ).toBe("/registrieren");
@@ -64,12 +63,12 @@ describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher (reine GUI)
     ).toBe("/search");
   });
 
-  it("/registrieren rendert Registrierungsmaske mit allen Navigationen", () => {
+  it("/registrieren rendert Registrierungsmaske mit Navigationen, ohne Passwortfelder", () => {
     renderAt("/registrieren");
     expect(screen.getByRole("heading", { name: "Konto erstellen" })).toBeTruthy();
-    expect(screen.getByLabelText("E-Mail-Adresse")).toBeTruthy();
-    expect(screen.getByLabelText("Passwort", { exact: true })).toBeTruthy();
-    expect(screen.getByLabelText("Passwort wiederholen")).toBeTruthy();
+    expect(screen.queryByLabelText("E-Mail-Adresse")).toBeNull();
+    expect(screen.queryByLabelText("Passwort")).toBeNull();
+    expect(screen.queryByLabelText("Passwort wiederholen")).toBeNull();
     expect(
       screen.getByRole("link", { name: "Bereits registriert? Anmelden" }).getAttribute("href")
     ).toBe("/anmelden");
