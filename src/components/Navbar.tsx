@@ -122,9 +122,8 @@ export default function Navbar({ route }: Props) {
     close();
   };
 
-  // TOP-MENU-02: Glass-Look der Landingpage nur auf der Suchmaske
-  // (route === "matcher"). Alle anderen Routen behalten die bestehende Leiste.
-  const isGlass = route === "matcher";
+  // TOP-MENU-02: Glass-Look auf Suchmaske sowie Auth-Seiten für visuelle Konsistenz
+  const isGlass = route === "matcher" || route === "register" || route === "login";
 
   return (
     <header className={`navbar${isGlass ? " navbar-glass" : ""}`}>

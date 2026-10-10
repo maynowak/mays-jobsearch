@@ -30,7 +30,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe("TOP-MENU-02: Navbar Glass-Look nur auf der Suchmaske", () => {
+describe("TOP-MENU-02: Navbar Glass-Look auf Suchmaske und Auth-Seiten", () => {
   it("route matcher (/search) traegt die Glass-Klasse", () => {
     renderNavbar("matcher", "/search");
     const header = document.querySelector("header.navbar") as HTMLElement;
@@ -39,12 +39,19 @@ describe("TOP-MENU-02: Navbar Glass-Look nur auf der Suchmaske", () => {
     expect(document.querySelector(".nav-inner")).toBeTruthy();
   });
 
+  it("Auth-Routen register/login tragen Glass-Klasse", () => {
+    for (const route of ["register", "login"] as const) {
+      cleanup();
+      renderNavbar(route, route === "register" ? "/registrieren" : "/anmelden");
+      const header = document.querySelector("header.navbar") as HTMLElement;
+      expect(header.className).toContain("navbar-glass");
+    }
+  });
+
   it("alle anderen Routen bleiben ohne Glass-Klasse", () => {
     const cases: Array<[NavbarRoute, string]> = [
       ["landing", "/"],
       ["impressum", "/impressum"],
-      ["register", "/registrieren"],
-      ["login", "/anmelden"],
     ];
     for (const [route, path] of cases) {
       cleanup();
@@ -96,15 +103,14 @@ describe("TOP-MENU-02: Navbar Glass-Look nur auf der Suchmaske", () => {
       "Suche",
       "Login",
     ]);
+    // Glass Mode: Login ist außerhalb von .nav-links, daher nur Suche + Benachrichtigungen
     expect(navLinks("register", "/registrieren").map((l) => l.text)).toEqual([
       "Suche",
       "Benachrichtigungen",
-      "Login",
     ]);
     expect(navLinks("login", "/anmelden").map((l) => l.text)).toEqual([
       "Suche",
       "Benachrichtigungen",
-      "Login",
     ]);
   });
 
