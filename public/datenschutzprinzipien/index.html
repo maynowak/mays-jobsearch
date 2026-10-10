@@ -6,11 +6,12 @@
 <style>
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#e0f2fe 0%,#bae6fd 100%);color:#0f172a;overflow:auto}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#e0f2fe 0%,#bae6fd 100%);color:#0f172a;overflow:auto;position:relative}
 body::before{content:"";position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='none' stroke='%239ca3af' stroke-opacity='0.08' stroke-width='2'/%3E%3Cline x1='65' y1='55' x2='85' y2='75' stroke='%239ca3af' stroke-opacity='0.08' stroke-width='2'/%3E%3C/svg%3E") center/40% no-repeat;pointer-events:none;opacity:.6;z-index:0}
+.bg-image{position:fixed;top:25%;left:50%;transform:translateX(-50%);width:60%;max-width:600px;opacity:.08;z-index:0;pointer-events:none}
 .container{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem}
 .card{max-width:900px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 20px 60px rgba(2,6,23,.08);padding:2.5rem;position:relative;z-index:1;max-height:90vh;overflow:auto}
-h1{margin:0 0 .5rem;font-size:2rem;color:#0f172a}
+h1{margin:0 0 .5rem;font-size:2.5rem;color:#0f172a;-webkit-text-stroke:1px #ffffff;text-shadow:0 0 0 #0f172a}
 .lead{color:#475569;margin-bottom:1.5rem}
 a{color:#2563eb;text-decoration:none;font-weight:600}
 a:hover{text-decoration:underline}
@@ -19,6 +20,7 @@ hr{border:none;border-top:1px solid #e2e8f0;margin:1.5rem 0}
 </style>
 </head>
 <body>
+<img class="bg-image" src="/src/assets/images/Datenvielfalt-bgsicht.svg" alt="">
 <div class="container">
 <div class="card">
 <h1>Klare Datenschutzprinzipien</h1>
