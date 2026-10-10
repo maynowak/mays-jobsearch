@@ -9,6 +9,7 @@ export default function Imprint() {
   return (
     <section id="impressum" className="legal-page">
       <div className="legal-container">
+        <div className="legal-watermark">Personendatenschutz</div>
         <header className="legal-header">
           <h1>{t("legal.imprintTitle")}</h1>
         </header>

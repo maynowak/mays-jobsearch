@@ -5220,11 +5220,41 @@ body {
 }
 
 .legal-container {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  position: relative;
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
   border-radius: var(--border-radius-primary);
   padding: var(--space-xl);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(2,6,23,0.08);
+  overflow: hidden;
+}
+.legal-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('/datenschutzvielfalt.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 55%;
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
+}
+.legal-container > * {
+  position: relative;
+  z-index: 1;
+}
+.legal-watermark {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: rgba(37,99,235,0.08);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .legal-grid {
