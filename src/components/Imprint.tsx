@@ -13,6 +13,30 @@ export default function Imprint() {
           <h1>{t("legal.imprintTitle")}</h1>
         </header>
 
+        <div className="legal-grid">
+          <div className="legal-card">
+            <h3>{t("legal.privacyColumn")}</h3>
+            <ul>
+              <li><a href="/datenschutz">{t("footer.privacy")}</a></li>
+              <li><a href="/datenschutzprinzipien">{t("footer.privacyPrinciples")}</a></li>
+            </ul>
+          </div>
+          <div className="legal-card">
+            <h3>{t("legal.aboutColumn")}</h3>
+            <ul>
+              <li><a href="/">Startseite</a></li>
+              <li><a href="/impressum">Impressum</a></li>
+            </ul>
+          </div>
+          <div className="legal-card">
+            <h3>{t("legal.developersColumn")}</h3>
+            <ul>
+              <li><a href="https://github.com" target="_blank" rel="noopener noreferrer">API / Docs</a></li>
+              <li><a href="mailto:support@example.com">Kontakt Entwickler</a></li>
+            </ul>
+          </div>
+        </div>
+
         <section className="legal-section" aria-labelledby="provider-heading">
           <h2 id="provider-heading">{t("legal.providerHeading")}</h2>
           <dl className="legal-dl">

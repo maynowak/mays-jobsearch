@@ -445,6 +445,9 @@ const en: Dict = {
   "legal.contactHeading": "Contact",
   "legal.contactEmail": "E-Mail",
   "legal.devNotice": "Notice: This imprint is in development. The operator address is not yet finalized.",
+  "legal.privacyColumn": "Privacy",
+  "legal.aboutColumn": "About us",
+  "legal.developersColumn": "For developers",
 
   "auth.registerTitle": "Create account",
   "auth.registerLead":
@@ -920,6 +923,9 @@ const de: Dict = {
   "legal.contactHeading": "Kontakt",
   "legal.contactEmail": "E-Mail",
   "legal.devNotice": "Hinweis: Dieses Impressum befindet sich in der Entwicklung. Die Betreiberanschrift ist noch nicht finalisiert.",
+  "legal.privacyColumn": "Datenschutz",
+  "legal.aboutColumn": "Über uns",
+  "legal.developersColumn": "Für Entwickler",
 
   "auth.registerTitle": "Konto erstellen",
   "auth.registerLead":
