@@ -30,6 +30,7 @@ import CvProcessingSteps from "./components/CvProcessingSteps";
 import CvGoalSelection from "./components/CvGoalSelection";
 import Imprint from "./components/Imprint";
 import Privacy from "./components/Privacy";
+import Principles from "./components/Principles";
 
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
@@ -76,6 +77,7 @@ export default function App() {
   const isAuthCallback = window.location.pathname === "/auth/callback";
   const isProfile = window.location.pathname === "/profil";
   const isPrivacy = window.location.pathname === "/datenschutz";
+  const isPrinciples = window.location.pathname === "/datenschutzprinzipien";
   const [phase, setPhase] = useState<Phase>("idle");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -2294,7 +2296,11 @@ export default function App() {
       reloadLabel={t("error.boundaryReload")}
     >
       <Navbar route={route} />
-      {isPrivacy ? (
+      {isPrinciples ? (
+        <main className="container legal-main">
+          <Principles />
+        </main>
+      ) : isPrivacy ? (
         <main className="container legal-main">
           <Privacy />
         </main>

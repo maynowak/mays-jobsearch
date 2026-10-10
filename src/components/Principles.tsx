@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
 import { useLang } from "../i18n";
 
-export default function Privacy() {
+export default function Principles() {
   const { t } = useLang();
   const [content, setContent] = useState<string>("");
 
   useEffect(() => {
-    fetch("/legal/datenschutz.md")
+    fetch("/legal/prinzipien.md")
       .then((r) => r.text())
       .then(setContent)
-      .catch(() => setContent("Datenschutztext nicht verfügbar."));
+      .catch(() => setContent("Prinzipien nicht verfügbar."));
   }, []);
 
   return (
     <section className="card legal-page">
-      <h2>{t("footer.privacy")}</h2>
-      <div className="legal-content" style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontFamily: "ui-monospace, monospace", fontSize: "0.9rem" }}>
+      <h2>Klare Datenschutzprinzipien</h2>
+      <div className="legal-content" style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
         {content}
       </div>
       <p style={{ marginTop: 24 }}>
-        <a href="/datenschutzprinzipien">Klare Datenschutzprinzipien</a>
+        <a href="/datenschutz">{t("footer.privacy")}</a>
       </p>
     </section>
   );

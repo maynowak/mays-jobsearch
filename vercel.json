@@ -42,6 +42,10 @@
     {
       "source": "/datenschutz",
       "destination": "/index.html"
+    },
+    {
+      "source": "/datenschutzprinzipien",
+      "destination": "/index.html"
     }
   ]
 }
