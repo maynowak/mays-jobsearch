@@ -34,6 +34,14 @@
     {
       "source": "/profil",
       "destination": "/index.html"
+    },
+    {
+      "source": "/impressum",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/datenschutz",
+      "destination": "/index.html"
     }
   ]
 }
