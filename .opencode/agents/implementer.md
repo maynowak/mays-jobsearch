@@ -15,6 +15,8 @@ Implementation for Mays-Jobsearch.
 - Do not bypass tests
 - Follow AI_AUDITLOG.md
 
+## Notes
+- `docs/AI_AUDITLOG.md` — mandatory step tamplate auditlog workflow
 ## After changes
 - Run affected tests
 - Check `git diff`

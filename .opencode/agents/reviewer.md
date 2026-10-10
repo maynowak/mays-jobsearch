@@ -22,3 +22,6 @@ Read-only review after implementation.
 GREEN / FINDINGS / BLOCKER
 
 No changes performed.
+
+## Notes
+- `docs/AI_AUDITLOG.md` — mandatory step tamplate auditlog workflow

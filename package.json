@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "dompurify": "^3.4.14",
+    "oidc-client-ts": "^3.5.0",
     "pdfjs-dist": "^6.2.108",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-oidc-context": "^3.3.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

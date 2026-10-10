@@ -27,5 +27,9 @@ Read-only discovery for Mays-Jobsearch.
 - Risks
 - Recommendation for next action
 
+
+## Notes
+- `docs/AI_AUDITLOG.md` — mandatory step tamplate auditlog workflow
+
 ## Constraints
 Edit deny. Read-only. Respect AGENTS.md and AI_AUDITLOG.md.

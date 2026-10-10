@@ -27,6 +27,9 @@ Orchestrator for Mays-Jobsearch repository. No AWS, no Mays-RIS, no Mays-Orders-
 5. Collect and validate outputs
 6. Enforce AI_AUDITLOG.md check on every Implementation/Execution gate
 
+## Notes
+- `docs/AI_AUDITLOG.md` — mandatory step tamplate auditlog workflow
+
 ## Constraints
 - Project conventions: `feature/<name>` branches, no rebase/merge history rewrite
 - Production deploy only via `vercel --prod --scope maymilly` after explicit approval

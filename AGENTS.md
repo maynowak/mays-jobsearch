@@ -63,6 +63,7 @@ All keys server-side only. Key vars:
 - Model selector shows provider name + model name, accessible listbox with keyboard navigation, flips upward when needed.
 
 ## Important files
+- `docs/AI_AUDITLOG.md` — mandatory step tamplate auditlog workflow
 - `docs/DEVELOPMENT_WORKFLOW.md` — mandatory step workflow
 - `docs/ARCHITECTURE.md` — system wiring
 - `docs/DEPLOYMENT.md` — env vars
