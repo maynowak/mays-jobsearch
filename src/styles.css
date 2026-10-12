@@ -5660,20 +5660,80 @@ body {
   }
 }
 
-/* REGISTRATION-UI-01: Auth-Masken (reine GUI, kein Backend).
-   Visuell an die Searchpage angelehnt: weiße Karte, Türkis-Akzente,
-   großzügige Innenabstände, klare Typografie, Primär-Button-Optik. */
+/* REGISTRATION-UI-01 + HOLOGRAPHIC-CONSOLE-01: Auth-Masken als schwebende
+   3D-Hologramm-Konsole (Designreferenz: The Neural Gateway).
+   Milchglas mit hoher Lesbarkeit, eisblaue Kontur, türkises Leuchten,
+   mehrschichtige weiche Schatten, dezenter 3D-Tilt (max 3°).
+   Keine 3D-Bibliothek, keine Abhängigkeiten, bestehende Tokens. */
 .auth-page {
   width: 100%;
   max-width: 560px;
 }
 
+/* Aussen-Layer: Schwebe-Animation + Lichtschein unter der Karte. */
+.auth-card-outer {
+  position: relative;
+}
+
+.auth-card-outer::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -30px;
+  height: 48px;
+  background: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.3), transparent 72%);
+  filter: blur(12px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  @media (prefers-reduced-motion: no-preference) {
+    .auth-card-outer {
+      animation: auth-float 9s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes auth-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
 .auth-card {
-  background: #ffffff;
-  border: 1px solid rgba(13, 148, 136, 0.18);
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(125, 211, 252, 0.45);
   border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(13, 148, 136, 0.14);
-  padding: 32px;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.16),
+    0 0 26px rgba(34, 211, 238, 0.18),
+    0 10px 28px rgba(2, 6, 23, 0.14),
+    0 30px 70px rgba(2, 6, 23, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  padding: 36px;
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.18s ease-out, box-shadow 0.25s ease-out;
+  transform-style: preserve-3d;
+}
+
+/* Sanfter Lichtreflex, der der Maus folgt (Position via --mx/--my). */
+.auth-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    520px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.4),
+    rgba(34, 211, 238, 0.1) 45%,
+    transparent 68%
+  );
+  pointer-events: none;
 }
 
 .auth-card h2 {
@@ -5711,21 +5771,68 @@ body {
   color: var(--red);
 }
 
+/* Primary-Button: kraeftiger Tuerkisverlauf, inneres Highlight,
+   sanfter Glow, klare Fokusmarkierung. */
+.auth-card .auth-submit {
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(13, 78, 79, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(160deg, #2dd4bf 0%, #0d9488 55%, #0f766e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 6px rgba(2, 6, 23, 0.12),
+    0 10px 24px rgba(13, 148, 136, 0.35);
+}
+
+.auth-card .auth-submit:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.03);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    0 0 0 1px rgba(94, 234, 212, 0.65),
+    0 0 30px rgba(45, 212, 191, 0.5),
+    0 14px 30px rgba(13, 148, 136, 0.42);
+}
+
+.auth-card .auth-submit:active {
+  transform: translateY(1px);
+}
+
+.auth-card .auth-submit:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .auth-links {
   margin-top: 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .auth-links a {
-  color: var(--brand);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-dark);
   text-decoration: none;
   font-weight: 600;
 }
 
 .auth-links a:hover {
+  color: var(--brand);
   text-decoration: underline;
+}
+
+.auth-links a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.auth-link-icon {
+  opacity: 0.75;
+  flex-shrink: 0;
 }
 
 .auth-forgot {
@@ -5739,13 +5846,36 @@ body {
 
 .auth-divider {
   margin: 18px 0 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(125, 211, 252, 0.35);
 }
 
+/* Footer auf Auth-Seiten: dezente Glas-Flaeche, ausreichender Kontrast.
+   Kompakter Sibling-Selektor trennt Auth-Seiten vom Rest (kein Search-Impact). */
+.auth-main ~ .footer {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(125, 211, 252, 0.35);
+}
+
+/* A11Y: reduced-motion — keine Schwebeanimation, kaum Uebergaenge. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-card-outer {
+    animation: none;
+  }
+
+  .auth-card {
+    transition: none;
+  }
+}
+
+/* Mobile: kein Maus-Tilt (JS-seitig), keine Dauer-Schwebebewegung (per Media
+   oben), Karte bleibt kontraststark und vollbreit responsiv. */
 @media (max-width: 480px) {
   .auth-page {
     max-width: 100%;
   }
+
   .auth-card {
     padding: 24px;
   }
