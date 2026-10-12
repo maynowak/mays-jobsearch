@@ -5218,6 +5218,25 @@ body {
   padding: var(--space-xl) var(--space-md);
 }
 
+/* AUTH-NAVBAR-OVERLAP-FIX-01: Auth-Seiten brauchen festen Abstand zur
+   schwebenden Glass-Navbar (padding-top + negativer margin-bottom).
+   Hinweis: --space-xl/--space-md sind nicht definiert, daher fixe Werte. */
+.auth-main {
+  padding-top: 112px;
+}
+
+@media (max-width: 768px) {
+  .auth-main {
+    padding-top: 88px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-main {
+    padding-top: 76px;
+  }
+}
+
 .legal-page {
   width: 100%;
   max-width: 1000px;
