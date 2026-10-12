@@ -3,6 +3,8 @@
 Status: GREEN
 Datum: 2026-10-12
 Branch: main
+HEAD: 7a1e8eb (merge origin/main license commit + auth navbar overlap fix)
+Remote: origin/main synchronized ✅
 
 ## Scope
 Auf /anmelden und /registrieren wird der obere Bereich der Auth-Karte
