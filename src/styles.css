@@ -5849,13 +5849,36 @@ body {
   border-top: 1px solid rgba(125, 211, 252, 0.35);
 }
 
-/* Footer auf Auth-Seiten: dezente Glas-Flaeche, ausreichender Kontrast.
-   Kompakter Sibling-Selektor trennt Auth-Seiten vom Rest (kein Search-Impact). */
+/* FLOATING-FOOTER-01: Auf Auth-Seiten schwebt der Footer als kompaktes
+   „Floating Glass Dock“. Zentriert, max 950px, 20px Radius, eisblaue
+   Transparenz mit blur(12px), feine tuerkise Kontur, mehrschichtiger
+   weicher Schatten, kompakte Abstaende. Hintergrund bleibt links/rechts/
+   unterhalb sichtbar. Search-/Legal-Footer bleiben unveraendert (kein Impact). */
 .auth-main ~ .footer {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(125, 211, 252, 0.35);
+  width: min(950px, calc(100% - 40px));
+  margin: 0 auto 46px;
+  padding: 14px 24px 16px;
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.14),
+    0 10px 26px rgba(2, 6, 23, 0.12),
+    0 26px 56px rgba(2, 6, 23, 0.16);
+}
+
+.auth-main ~ .footer p {
+  margin: 4px 0;
+}
+
+@media (max-width: 640px) {
+  .auth-main ~ .footer {
+    width: calc(100% - 32px);
+    margin-bottom: 28px;
+    padding: 12px 16px 14px;
+  }
 }
 
 /* A11Y: reduced-motion — keine Schwebeanimation, kaum Uebergaenge. */

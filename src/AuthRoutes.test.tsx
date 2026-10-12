@@ -85,7 +85,7 @@ describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher mit Cognito
   });
 });
 
-describe("NEURAL-GATEWAY-01: Auth-Hintergrund auf Auth-Seiten", () => {
+describe("NEURAL-GATEWAY-01 + FLOATING-FOOTER-01: Auth-Hintergrund und Footer auf Auth-Seiten", () => {
   it("rendert Gateway-Ebenen auf /anmelden (Bild, 5 Bahnen, 5 Impulse, Glow)", () => {
     const { container } = renderAt("/anmelden");
     const gateway = container.querySelector(".auth-gateway");
@@ -97,8 +97,22 @@ describe("NEURAL-GATEWAY-01: Auth-Hintergrund auf Auth-Seiten", () => {
     expect(container.querySelector(".auth-gateway__glow")).toBeTruthy();
   });
 
-  it("rendert kein Gateway auf /search (keine Regression der Searchpage)", () => {
+  it("rendern kein Gateway auf /search (keine Regression der Searchpage)", () => {
     const { container } = renderAt("/search");
     expect(container.querySelector(".auth-gateway")).toBeNull();
+  });
+
+  it("Footer bleibt auf /anmelden mit allen Legal-/Meta-Inhalten erreichbar", () => {
+    const { container } = renderAt("/anmelden");
+    const footer = container.querySelector("footer.footer");
+    expect(footer).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Impressum" })).toHaveAttribute("href", "/impressum");
+    expect(screen.getByRole("link", { name: "Datenschutz" })).toHaveAttribute("href", "/datenschutz");
+    expect(screen.getByRole("link", { name: "Datenschutzprinzipien" })).toHaveAttribute(
+      "href",
+      "/datenschutzprinzipien"
+    );
+    // Dock-Scope presence: auth-main und .footer sind DOM-Geschwister
+    expect(container.querySelector("main.auth-main ~ footer.footer")).toBeTruthy();
   });
 });
