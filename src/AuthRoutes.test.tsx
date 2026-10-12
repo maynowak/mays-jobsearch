@@ -84,3 +84,21 @@ describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher mit Cognito
     expect(screen.getByRole("button", { name: "Meine Treffer finden" })).toBeTruthy();
   });
 });
+
+describe("NEURAL-GATEWAY-01: Auth-Hintergrund auf Auth-Seiten", () => {
+  it("rendert Gateway-Ebenen auf /anmelden (Bild, 5 Bahnen, 5 Impulse, Glow)", () => {
+    const { container } = renderAt("/anmelden");
+    const gateway = container.querySelector(".auth-gateway");
+    expect(gateway).toBeTruthy();
+    expect(gateway?.getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector(".auth-gateway__image")).toBeTruthy();
+    expect(container.querySelectorAll(".conduit").length).toBe(5);
+    expect(container.querySelectorAll(".light-dot").length).toBe(5);
+    expect(container.querySelector(".auth-gateway__glow")).toBeTruthy();
+  });
+
+  it("rendert kein Gateway auf /search (keine Regression der Searchpage)", () => {
+    const { container } = renderAt("/search");
+    expect(container.querySelector(".auth-gateway")).toBeNull();
+  });
+});

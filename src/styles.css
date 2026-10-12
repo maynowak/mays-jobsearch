@@ -5220,9 +5220,10 @@ body {
 
 /* AUTH-NAVBAR-OVERLAP-FIX-01: Auth-Seiten brauchen festen Abstand zur
    schwebenden Glass-Navbar (padding-top + negativer margin-bottom).
-   Hinweis: --space-xl/--space-md sind nicht definiert, daher fixe Werte. */
+   Hinweis: --space-xl/--space-md sind nicht definiert; .legal-main Padding
+   faellt deshalb komplett auf 0 — daher hier alle Seiten fest setzen. */
 .auth-main {
-  padding-top: 112px;
+  padding: 112px 20px 60px;
 }
 
 @media (max-width: 768px) {
@@ -5234,6 +5235,238 @@ body {
 @media (max-width: 480px) {
   .auth-main {
     padding-top: 76px;
+  }
+}
+
+/* NEURAL-GATEWAY-01: futuristischer Auth-Hintergrund "The Neural Gateway".
+   Drei getrennte Ebenen: (1) statisches Bild, (2) SVG-Lichtleiter und
+   Lichtimpulse, (3) bestehende Auth-Karte & Navbar.
+   Reine SVG+CSS-Animation, GPU-freundlich, pointer-events: none. */
+.auth-gateway {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.auth-gateway__image {
+  position: absolute;
+  inset: 0;
+  background: url("/images/auth-neural-gateway.png") center / cover no-repeat;
+}
+
+/* Leichte Abdunklung: auth-card (weiß) bleibt kontraststark lesbar. */
+.auth-gateway__image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(4, 13, 18, 0.22) 0%,
+    rgba(4, 13, 18, 0.38) 60%,
+    rgba(4, 13, 18, 0.3) 100%
+  );
+}
+
+/* Layer 2a: SVG-Lichtleiter (Lichtbahnen), sanft pulsierend. */
+.auth-gateway__conduits {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.conduit {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.5;
+  animation: conduit-pulse 7s ease-in-out infinite;
+}
+
+.conduit--lt,
+.conduit--rb {
+  stroke: rgba(34, 211, 238, 0.85);
+}
+
+.conduit--lb,
+.conduit--rt,
+.conduit--bc {
+  stroke: rgba(251, 191, 66, 0.8);
+}
+
+.conduit--lb { animation-delay: -1.6s; }
+.conduit--rt { animation-delay: -3.2s; }
+.conduit--rb { animation-delay: -4.7s; }
+.conduit--bc { animation-delay: -2.4s; }
+
+@keyframes conduit-pulse {
+  0%, 100% { opacity: 0.32; }
+  50% { opacity: 0.72; }
+}
+
+/* Layer 2b: Lichtimpulse entlang geschwungener Pfade (offset-path).
+   Jeder Punkt ist an einem Viewport-Rand verankert (left/right/bottom),
+   dadurch skalieren die Bahnen mit der Viewport-Breite. */
+.light-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  offset-rotate: 0deg;
+  animation: light-travel var(--dur, 9s) linear infinite;
+  will-change: offset-distance;
+}
+
+.light-dot--lt {
+  left: -6px;
+  top: 0;
+  background: #22d3ee;
+  box-shadow: 0 0 16px 5px rgba(34, 211, 238, 0.7);
+  offset-path: path("M 0 150 C 300 220 440 300 560 380");
+  --dur: 8.5s;
+}
+
+.light-dot--lb {
+  left: -6px;
+  bottom: 0;
+  background: #fbbf24;
+  box-shadow: 0 0 16px 5px rgba(251, 191, 66, 0.65);
+  offset-path: path("M 0 -150 C 260 -230 380 -310 540 -380");
+  --dur: 11s;
+  animation-delay: -4s;
+}
+
+.light-dot--rt {
+  right: -6px;
+  top: 0;
+  background: #22d3ee;
+  box-shadow: 0 0 16px 5px rgba(34, 211, 238, 0.7);
+  offset-path: path("M 0 150 C -300 220 -440 300 -560 380");
+  --dur: 10s;
+  animation-delay: -3s;
+}
+
+.light-dot--rb {
+  right: -6px;
+  bottom: 0;
+  background: #fbbf24;
+  box-shadow: 0 0 16px 5px rgba(251, 191, 66, 0.65);
+  offset-path: path("M 0 -150 C -260 -230 -380 -310 -540 -380");
+  --dur: 9s;
+  animation-delay: -5.5s;
+}
+
+.light-dot--bc {
+  left: 50%;
+  bottom: -6px;
+  margin-left: -5px;
+  background: #22d3ee;
+  box-shadow: 0 0 14px 4px rgba(34, 211, 238, 0.6);
+  offset-path: path("M 0 -20 C -60 -200 40 -320 0 -440");
+  --dur: 12s;
+  animation-delay: -2s;
+}
+
+@keyframes light-travel {
+  0% { offset-distance: 0%; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* Dezenter Lichtschein hinter der Auth-Karte. */
+.auth-gateway__glow {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  transform: translate(-50%, -50%);
+  width: 62vmin;
+  height: 62vmin;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(34, 211, 238, 0.26) 0%,
+    rgba(13, 148, 136, 0.12) 42%,
+    transparent 72%
+  );
+  filter: blur(6px);
+  animation: gateway-breath 6s ease-in-out infinite;
+}
+
+@keyframes gateway-breath {
+  0%, 100% { opacity: 0.65; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* Hover/Fokus des Auth-Buttons: Lichtimpulse beschleunigen kurzzeitig. */
+.auth-main:has(.auth-submit:is(:hover, :focus-visible)) .light-dot {
+  animation-duration: calc(var(--dur, 9s) * 0.45);
+}
+
+.auth-main:has(.auth-submit:is(:hover, :focus-visible)) .auth-gateway__glow {
+  opacity: 1;
+}
+
+/* Auth-Karte liegt auf Layer 3 über den Hintergrund-Ebenen. */
+.auth-page {
+  position: relative;
+  z-index: 1;
+}
+
+/* Barrierefreiheit: reduced-motion entfernt Impulse und Pulsieren. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-gateway .conduit,
+  .auth-gateway__glow {
+    animation: none;
+  }
+
+  .auth-gateway .light-dot {
+    display: none;
+  }
+}
+
+/* Tablet: reduzierte Anzahl von Lichtbahnen. */
+@media (max-width: 1024px) {
+  .light-dot--rt,
+  .light-dot--lb,
+  .conduit--rt,
+  .conduit--lb {
+    display: none;
+  }
+
+  .auth-gateway__glow {
+    width: 74vmin;
+    height: 74vmin;
+    top: 50%;
+  }
+}
+
+/* Mobile: vereinfachte Lichtbahnen von unten in Richtung Karte. */
+@media (max-width: 640px) {
+  .light-dot--lt,
+  .light-dot--rb,
+  .conduit--lt,
+  .conduit--rb {
+    display: none;
+  }
+
+  .conduit--bc {
+    animation-duration: 8s;
+  }
+
+  .light-dot--bc {
+    offset-path: path("M 0 -10 C -40 -160 30 -280 0 -380");
+    width: 8px;
+    height: 8px;
+  }
+
+  .auth-gateway__glow {
+    width: 90vmin;
+    height: 90vmin;
+    top: 52%;
+    filter: blur(8px);
   }
 }
 

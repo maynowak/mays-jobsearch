@@ -2311,7 +2311,30 @@ export default function App() {
       ) : route === "register" || route === "login" ? (
         // REGISTRATION-UI-01: Auth-Masken als reine GUI (kein Backend,
         // keine Session, keine Gast-State-Berührung).
+        // NEURAL-GATEWAY-01: dreistufiger Hintergrund für Auth-Seiten —
+        // Layer 1: statisches Bild, Layer 2: SVG-Lichtbahnen, Layer 3: Karte.
         <main className="container legal-main auth-main">
+          <div className="auth-gateway" aria-hidden="true">
+            <div className="auth-gateway__image" />
+            <svg
+              className="auth-gateway__conduits"
+              viewBox="0 0 1200 800"
+              preserveAspectRatio="none"
+              focusable="false"
+            >
+              <path className="conduit conduit--lt" d="M -60 140 C 300 200 450 280 600 360" />
+              <path className="conduit conduit--lb" d="M -60 660 C 300 600 450 520 600 400" />
+              <path className="conduit conduit--rt" d="M 1260 140 C 900 200 750 280 600 360" />
+              <path className="conduit conduit--rb" d="M 1260 660 C 900 600 750 520 600 400" />
+              <path className="conduit conduit--bc" d="M 600 820 C 540 700 560 560 600 460" />
+            </svg>
+            <span className="light-dot light-dot--lt" />
+            <span className="light-dot light-dot--lb" />
+            <span className="light-dot light-dot--rt" />
+            <span className="light-dot light-dot--rb" />
+            <span className="light-dot light-dot--bc" />
+            <div className="auth-gateway__glow" />
+          </div>
           <div className="auth-page">
             {route === "register" ? <RegisterForm /> : <LoginForm />}
           </div>
