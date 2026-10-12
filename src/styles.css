@@ -4661,7 +4661,8 @@ body {
 #find-btn,
 #alert-btn,
 .letter-btn,
-.cv-confirm {
+.cv-confirm,
+.auth-submit {
   color: var(--text);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
   border: 1px solid rgba(13, 148, 136, 0.4);
@@ -4694,7 +4695,8 @@ body {
 #find-btn:hover:not(:disabled),
 #alert-btn:hover:not(:disabled),
 .letter-btn:hover,
-.cv-confirm:hover:not(:disabled) {
+.cv-confirm:hover:not(:disabled),
+.auth-submit:hover {
   transform: translateY(-2px);
   filter: brightness(1.04) contrast(1.02);
   box-shadow:
@@ -4709,7 +4711,8 @@ body {
 #find-btn:active:not(:disabled),
 #alert-btn:active:not(:disabled),
 .letter-btn:active,
-.cv-confirm:active:not(:disabled) {
+.cv-confirm:active:not(:disabled),
+.auth-submit:active {
   transform: translateY(1px);
   box-shadow:
     inset 0 2px 5px rgba(245, 245, 245, 0.28),
@@ -4723,7 +4726,8 @@ body {
 #find-btn:focus-visible,
 #alert-btn:focus-visible,
 .letter-btn:focus-visible,
-.cv-confirm:focus-visible {
+.cv-confirm:focus-visible,
+.auth-submit:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -5405,14 +5409,26 @@ body {
 }
 
 /* REGISTRATION-UI-01: Auth-Masken (reine GUI, kein Backend).
-   Nutzt Design-Token + .card/.field; nur Auth-spezifisches hier. */
+   Visuell an die Searchpage angelehnt: weiße Karte, Türkis-Akzente,
+   großzügige Innenabstände, klare Typografie, Primär-Button-Optik. */
 .auth-page {
   width: 100%;
   max-width: 560px;
 }
 
+.auth-card {
+  background: #ffffff;
+  border: 1px solid rgba(13, 148, 136, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(13, 148, 136, 0.14);
+  padding: 32px;
+}
+
 .auth-card h2 {
   margin: 0 0 8px;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--text);
 }
 
 .auth-lead {
@@ -5425,7 +5441,7 @@ body {
   height: 18px;
   flex-shrink: 0;
   margin-top: 2px;
-  accent-color: var(--green);
+  accent-color: var(--brand);
 }
 
 .auth-check {
@@ -5450,6 +5466,16 @@ body {
   gap: 8px;
 }
 
+.auth-links a {
+  color: var(--brand);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
 .auth-forgot {
   margin-top: 12px;
 }
@@ -5467,5 +5493,8 @@ body {
 @media (max-width: 480px) {
   .auth-page {
     max-width: 100%;
+  }
+  .auth-card {
+    padding: 24px;
   }
 }

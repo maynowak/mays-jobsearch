@@ -1,22 +1,22 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import Privacy from "./Privacy";
 import { LangProvider } from "../i18n";
 
-vi.stubGlobal("fetch", async () => ({
-  ok: true,
-  text: async () => "Test Datenschutz Inhalt",
-}));
-
 describe("Privacy", () => {
-  it("lädt und zeigt Inhalt", async () => {
+  it("zeigt Link zur Datenschutzerklärung und Prinzipien", () => {
     render(
       <LangProvider>
         <Privacy />
       </LangProvider>
     );
-    await waitFor(() => {
-      expect(screen.getByText(/Test Datenschutz Inhalt/)).toBeTruthy();
-    });
+    expect(screen.getByRole("link", { name: /Datenschutzerklärung als Markdown öffnen/ })).toHaveAttribute(
+      "href",
+      "/legal/datenschutz.md"
+    );
+    expect(screen.getByRole("link", { name: /Klare Datenschutzprinzipien/ })).toHaveAttribute(
+      "href",
+      "/datenschutzprinzipien"
+    );
   });
 });

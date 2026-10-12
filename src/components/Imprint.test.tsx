@@ -22,7 +22,7 @@ describe("LEGAL-IMPRINT-01: Imprint page", () => {
       </LangProvider>
     );
 
-    expect(screen.getByText("Impressum")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Impressum" })).toBeInTheDocument();
     expect(screen.getByText("Anbieter")).toBeInTheDocument();
     expect(screen.getByText("Name")).toBeInTheDocument();
     expect(screen.getByText("Anschrift")).toBeInTheDocument();
