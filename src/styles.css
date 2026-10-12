@@ -5903,3 +5903,111 @@ body {
     padding: 24px;
   }
 }
+
+/* =====================================================================
+   HOLOGRAPHIC-WORKSPACE-01: /search als „Holographic Workspace"
+   Designreferenzen: The Neural Gateway / Holographic Console /
+   Floating Glass Dock. Reine visuelle Aufwertung — Filterlogik,
+   Modellwahl, ATS, Datenverarbeitung, API-Vertraege, Legal-Seiten,
+   Auth unverändert. .card global wird NICHT angefasst (kein Impact
+   auf Impressum/Datenschutz). Keine neuen Komponenten, keine Deps.
+   ===================================================================== */
+
+/* --- 2) Navbar-Clearance (Search-only, minimal) --------------------------- */
+/* Die schwebende Glass-Navbar reduziert den Flussabstand (padding-top:12px
+   + margin-bottom:-12px). Auf /search fehlte dadurch am Workspace-Start ein
+   sicherer Abstand: lokale Anhebung nur fuer den Search-Workspace —
+   Navbar-Optik/-Verhalten bleibt unveraendert. */
+.container.layout-search {
+  padding-top: 96px;
+}
+
+@media (max-width: 899px) {
+  .container.layout-search {
+    padding-top: 84px;
+  }
+}
+
+/* --- 3+4+5) Holographisches Panel-Material --------------------------------
+   Filter Console / Notification Panel / Result Cards treilen EIN Material:
+   Milchglas + blur, eisblaue Kontur, tuerkiser Glow, mehrschichtige
+   Schatten, 20px Radius, einheitliche Innenabstaende. */
+.search-card,
+.alert-card,
+.match-card {
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.14),
+    0 0 22px rgba(34, 211, 238, 0.14),
+    0 12px 30px rgba(2, 6, 23, 0.12),
+    0 30px 64px rgba(2, 6, 23, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Einheitliche Innenabstaende der Filter Console (3) */
+.search-card {
+  padding: 24px;
+}
+
+/* Notification Glass Panel: kompaktere Darstellung (4) */
+.alert-card {
+  padding: 20px 22px;
+}
+
+.alert-card .alert-hint {
+  margin-bottom: 12px;
+}
+
+/* Hover-/Focus-Elevation: dezent, kein Tilt, keine Dauer-Schwebebewegung. */
+.search-card:hover,
+.alert-card:hover {
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.22),
+    0 0 28px rgba(34, 211, 238, 0.22),
+    0 14px 34px rgba(2, 6, 23, 0.14),
+    0 34px 72px rgba(2, 6, 23, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.search-card:focus-within,
+.alert-card:focus-within {
+  box-shadow:
+    0 0 0 3px rgba(34, 211, 238, 0.18),
+    0 0 22px rgba(34, 211, 238, 0.16),
+    0 14px 34px rgba(2, 6, 23, 0.14),
+    0 34px 72px rgba(2, 6, 23, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+/* Result Cards: klare Elevation, sichtbare Hover-Hebung (dezent). */
+.match-card {
+  transition: transform 0.18s ease, box-shadow 0.22s ease;
+}
+
+@media (hover: hover) {
+  .match-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.2),
+      0 0 26px rgba(34, 211, 238, 0.2),
+      0 12px 26px rgba(2, 6, 23, 0.12),
+      0 34px 70px rgba(2, 6, 23, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-card {
+    transition: none;
+  }
+
+  @media (hover: hover) {
+    .match-card:hover {
+      transform: none; /* keine Hebung bei Motion-Reduktion */
+    }
+  }
+}
