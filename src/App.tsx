@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal, EmploymentType } from "./types";
 import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement, computeMatchImpact, ApiError } from "./api";
 import { useLang } from "./i18n";
@@ -1436,6 +1437,57 @@ export default function App() {
     }));
   };
 
+  // CV-MODAL-ISOLATION-01: A11y + Isolation des Dialogs.
+  // - Hintergrundscrollen sperren, solange der Dialog offen ist.
+  // - Escape schliesst den Dialog.
+  // - Fokus in den Dialog beim Öffnen, Rückgabe des Fokus beim Schliessen.
+  const cvOverlayActiveRef = useRef(cvOverlayActive);
+  cvOverlayActiveRef.current = cvOverlayActive;
+  const cvCloseRef = useRef(handleCvWorkflowClose);
+  cvCloseRef.current = handleCvWorkflowClose;
+  const cvPreviousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!cvOverlayActive) return;
+    cvPreviousFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = "hidden";
+
+    // Fokus in den Dialog (Karte hat tabIndex={-1} + ref). Verzoegert auf
+    // den naechsten Tick, damit der Portal-Commit abgeschlossen ist.
+    window.setTimeout(() => cvWorkflowRef.current?.focus(), 0);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        cvCloseRef.current();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      body.style.overflow = previousOverflow;
+      // Fokusrueckgabe: das vorherige Element kann durch das Step-Wechsel-
+      // Re-Rendering bereits aus dem DOM entfernt worden sein — dann faellt
+      // der Fokus auf das CV-Panel zurueck (tabIndex -1), nicht auf body.
+      // Verzoegert (0-ms-Task), damit die Folgerenderung abgeschlossen ist.
+      window.setTimeout(() => {
+        const previous = cvPreviousFocusRef.current;
+        // body ist kein sinnvolles Fokusziel (kein Fokusursprung) — dann auf
+        // das CV-Panel ausweichen.
+        if (previous && previous !== document.body && previous.isConnected) {
+          previous.focus();
+          return;
+        }
+        document.getElementById("cv-panel")?.focus();
+      }, 0);
+    };
+  }, [cvOverlayActive]);
+
   const cvProcessingCard = (
     <section
       ref={cvWorkflowRef}
@@ -2246,12 +2298,29 @@ export default function App() {
 
   // BUG-14..19 + CV-UPLOAD-UX-02: gemeinsames Overlay auf allen Viewports
   // (bzw. Inline fuer document-selected/consent-dismissed/ats-complete oben)
+  // CV-MODAL-ISOLATION-01: Das Overlay wird per React-Portal direkt unter
+  // document.body gerendert. Grund: es liegt sonst innerhalb von
+  // `.search-world` (isolation: isolate -> eigener Stacking-Context), sodass
+  // ein `position: fixed; z-index: 70` zwar gross ist, aber den Wurzel-
+  // Stacking-Context nie verlässt — die Navbar (z-index 40) und der Hero
+  // lagen dadurch ÜBER dem Dialog. Das Portal hebt den Dialog in die
+  // Wurzelebene; z-index 70 > Navbar 40 genügt dann.
+  const cvOverlayNode = cvState.step !== "idle" && cvOverlayActive && typeof document !== "undefined"
+    ? createPortal(
+        <div
+          className="cv-workflow-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cv-processing-title"
+        >
+          {cvProcessingCard}
+        </div>,
+        document.body
+      )
+    : null;
+
   const cvProcessingUI = cvState.step !== "idle" && (
-    cvOverlayActive ? (
-      <div className="cv-workflow-overlay">{cvProcessingCard}</div>
-    ) : (
-      cvProcessingCard
-    )
+    cvOverlayNode ?? cvProcessingCard
   );
 
   // CV-PROFILE-LISTS-01: Zum Profil-Overlay gehoeriges Dokument aufloesen

@@ -80,7 +80,7 @@ export default function CvUpload({ onManual, onWorkflowStart }: Props) {
   };
 
   return (
-    <div id="cv-panel" className="cv-panel">
+    <div id="cv-panel" className="cv-panel" tabIndex={-1}>
       <p className="cv-privacy">{t("cv.privacyNote")}</p>
 
       <label

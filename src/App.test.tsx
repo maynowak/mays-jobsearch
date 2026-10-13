@@ -2355,3 +2355,74 @@ it("19/20/21: Modellwechsel invalidiert Dataset NICHT und löst kein /api/jobs/A
     expect((screen.getByLabelText("Umkreis") as HTMLSelectElement).disabled).toBe(false);
   });
 });
+// CV-MODAL-ISOLATION-01: Der CV-Verarbeitungsdialog muss zuverlaessig ueber
+// Navbar (z-index 40) und Hero liegen. Root Cause war nicht die z-Hoehe,
+// sondern der Stacking-Context von `.search-world` (isolation: isolate).
+// Fix: React-Portal direkt unter document.body.
+describe("CV-MODAL-ISOLATION-01: Dialog isoliert von Navbar, Hero und Search World", () => {
+  async function openCvDialog() {
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      "cv.pdf",
+      { type: "application/pdf" }
+    );
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    return document.querySelector(".cv-workflow-overlay") as HTMLElement;
+  }
+
+  it("rendert per Portal direkt unter document.body (ausserhalb der Search World)", async () => {
+    renderApp();
+    const overlay = await openCvDialog();
+
+    expect(overlay).toBeTruthy();
+    expect(overlay.parentElement).toBe(document.body);
+    expect(overlay.closest(".search-world")).toBeNull();
+    expect(overlay.closest(".search-sidebar")).toBeNull();
+    expect(overlay.closest("header.navbar")).toBeNull();
+  });
+
+  it("Dialog ist als role=dialog + aria-modal ausgezeichnet und deckend", async () => {
+    renderApp();
+    const overlay = await openCvDialog();
+
+    expect(overlay.getAttribute("role")).toBe("dialog");
+    expect(overlay.getAttribute("aria-modal")).toBe("true");
+    expect(overlay.getAttribute("aria-labelledby")).toBe("cv-processing-title");
+    expect(document.getElementById("cv-processing-title")).toBeTruthy();
+    expect(overlay.querySelector(".cv-processing-card")).toBeTruthy();
+  });
+
+  it("sperrt das Scrollen des Hintergrunds, solange der Dialog offen ist", async () => {
+    renderApp();
+    await openCvDialog();
+    expect(document.body.style.overflow).toBe("hidden");
+  });
+
+  it("Escape schliesst den Dialog, hebt den Scroll-Lock auf und gibt den Fokus zurueck", async () => {
+    renderApp();
+    const trigger = screen.getByRole("tab", { name: "Lebenslauf hochladen" });
+    trigger.focus();
+    await openCvDialog();
+
+    // Fokus liegt im Dialog
+    const card = document.querySelector(".cv-processing-card") as HTMLElement;
+    await waitFor(() => expect(card.contains(document.activeElement)).toBe(true));
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    await waitFor(() => expect(document.querySelector(".cv-workflow-overlay")).toBeNull());
+    expect(document.body.style.overflow).not.toBe("hidden");
+    // Fokus liegt nach dem Schliessen wieder im CV-Bereich (Trigger oder Panel)
+    const panel = document.getElementById("cv-panel");
+    await waitFor(() => expect(document.activeElement).toBe(panel));
+    expect(
+      document.activeElement === trigger ||
+        (panel?.contains(document.activeElement) ?? false) ||
+        document.activeElement === panel
+    ).toBe(true);
+  });
+});
