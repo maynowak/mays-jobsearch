@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { acquireBodyScrollLock, releaseBodyScrollLock } from "./lib/scrollLock";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal, EmploymentType } from "./types";
 import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement, computeMatchImpact, ApiError } from "./api";
 import { useLang } from "./i18n";
@@ -1425,6 +1426,17 @@ export default function App() {
     !(cvState.step === "consent-required" && consentDismissed) &&
     cvState.step !== "ats-complete";
 
+  // SEARCH-SCROLL-REGRESSION-01 (Root Cause, verifiziert):
+  // `cvOverlayActive` ist auch fuer step "idle" TRUE (die Bedingung filtert
+  // nur document-selected / consent-dismissed / ats-complete). Der Dialog ist
+  // aber nur bei step !== "idle" wirklich sichtbar — das alte Rendering
+  // hatte deshalb den zusaetzlichen Guard `step !== "idle"`. Der Scroll-Lock
+  // (CV-MODAL-ISOLATION-01) war nur an `cvOverlayActive` gekoppelt und hat
+  // dadurch schon beim Laden von /search `body.style.overflow = "hidden"`
+  // gesetzt: die Seite war nicht mehr scrollbar. Lock + Portal binden sich
+  // jetzt an den WIRKLICH geoeffneten Dialog.
+  const cvDialogOpen = cvState.step !== "idle" && cvOverlayActive;
+
   // CV-UPLOAD-UX-09: Overlay in JEDEM Step schliessen (X im Karten-Kopf).
   // Zustand + Dokumente bleiben erhalten; Ziel = Dokumentliste inline unter
   // der Suchmaske (bzw. idle, wenn keine Dokumente). Im Consent-Step zaehlt
@@ -1447,20 +1459,20 @@ export default function App() {
   // - Hintergrundscrollen sperren, solange der Dialog offen ist.
   // - Escape schliesst den Dialog.
   // - Fokus in den Dialog beim Öffnen, Rückgabe des Fokus beim Schliessen.
-  const cvOverlayActiveRef = useRef(cvOverlayActive);
-  cvOverlayActiveRef.current = cvOverlayActive;
+  const cvDialogOpenRef = useRef(cvDialogOpen);
+  cvDialogOpenRef.current = cvDialogOpen;
   const cvCloseRef = useRef(handleCvWorkflowClose);
   cvCloseRef.current = handleCvWorkflowClose;
   const cvPreviousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!cvOverlayActive) return;
+    if (!cvDialogOpen) return;
     cvPreviousFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
-    const { body } = document;
-    const previousOverflow = body.style.overflow;
-    body.style.overflow = "hidden";
+    // Zentraler Lock (Zaehler): sichert den Originalwert und gibt ihn beim
+    // letzten Freigeben exakt wieder her — auch bei konkurrierenden Locks.
+    acquireBodyScrollLock();
 
     // Fokus in den Dialog (Karte hat tabIndex={-1} + ref). Verzoegert auf
     // den naechsten Tick, damit der Portal-Commit abgeschlossen ist.
@@ -1476,7 +1488,7 @@ export default function App() {
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      body.style.overflow = previousOverflow;
+      releaseBodyScrollLock();
       // Fokusrueckgabe: das vorherige Element kann durch das Step-Wechsel-
       // Re-Rendering bereits aus dem DOM entfernt worden sein — dann faellt
       // der Fokus auf das CV-Panel zurueck (tabIndex -1), nicht auf body.
@@ -1492,7 +1504,7 @@ export default function App() {
         document.getElementById("cv-panel")?.focus();
       }, 0);
     };
-  }, [cvOverlayActive]);
+  }, [cvDialogOpen]);
 
   const cvProcessingCard = (
     <section
@@ -1504,7 +1516,7 @@ export default function App() {
       <div className="cv-processing-card__head">
         <h2 id="cv-processing-title" className="cv-processing-title">{t("cv.statusTitle")}</h2>
         {/* CV-UPLOAD-UX-09: Schliessen in jedem Overlay-Step */}
-        {cvOverlayActive && (
+        {cvDialogOpen && (
           <button
             type="button"
             className="cv-processing-card__close"
@@ -2311,7 +2323,7 @@ export default function App() {
   // Stacking-Context nie verlässt — die Navbar (z-index 40) und der Hero
   // lagen dadurch ÜBER dem Dialog. Das Portal hebt den Dialog in die
   // Wurzelebene; z-index 70 > Navbar 40 genügt dann.
-  const cvOverlayNode = cvState.step !== "idle" && cvOverlayActive && typeof document !== "undefined"
+  const cvOverlayNode = cvDialogOpen && typeof document !== "undefined"
     ? createPortal(
         <div
           className="cv-workflow-overlay"

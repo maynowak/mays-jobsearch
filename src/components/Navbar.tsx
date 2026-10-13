@@ -5,6 +5,7 @@ import type { Lang } from "../i18n";
 import { navLinksFor } from "../navLinks";
 import type { NavRoute } from "../navLinks";
 import { useAuth } from "react-oidc-context";
+import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
 
 function LangToggle() {
   const { lang, setLang, t } = useLang();
@@ -46,10 +47,10 @@ export default function Navbar({ route }: Props) {
       if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", handler);
-    document.body.style.overflow = "hidden";
+    acquireBodyScrollLock();
     return () => {
       document.removeEventListener("keydown", handler);
-      document.body.style.overflow = "";
+      releaseBodyScrollLock();
     };
   }, [isOpen, close]);
 

@@ -36,6 +36,7 @@ import App from "./App";
 import { LangProvider } from "./i18n";
 import { __resetModelsCacheForTests } from "./hooks/useAvailableModels";
 import { resetCvProfileLists } from "./lib/cvProfileStore";
+import { __resetBodyScrollLockForTests } from "./lib/scrollLock";
 
 const job: Job = {
   slug: "aws-job",
@@ -2513,5 +2514,104 @@ describe("ATS-HOLOGRAPHIC-STUDIO-01: Dialog-Optik ohne Workflow-Aenderung", () =
 
     // Portal / Fokus / Escape / Scroll-Lock des vorigen Gates bleiben erhalten
     expect(css).toMatch(/role="dialog"|\.cv-workflow-overlay/);
+  });
+});
+
+// SEARCH-SCROLL-REGRESSION-01 (HIGH): /search war nicht mehr scrollbar.
+// Root Cause: Der Scroll-Lock war an `cvOverlayActive` gekoppelt, das auch
+// fuer step "idle" true ist — dadurch schon beim Laden `body.overflow=hidden`.
+describe("SEARCH-SCROLL-REGRESSION-01: Scrollen auf /search", () => {
+  beforeEach(() => {
+    __resetBodyScrollLockForTests();
+  });
+
+  afterEach(() => {
+    __resetBodyScrollLockForTests();
+  });
+
+  async function openCvDialogForScroll() {
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      "cv.pdf",
+      { type: "application/pdf" }
+    );
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByText("CV-Verarbeitung erlauben?");
+  }
+
+  // Test 1: /search ohne Dialog ist scrollbar (kein Lock)
+  it("setzt beim Laden von /search KEINEN Scroll-Lock", () => {
+    renderApp();
+    expect(document.querySelector(".cv-workflow-overlay")).toBeNull();
+    expect(document.body.style.overflow).not.toBe("hidden");
+    expect(document.documentElement.style.overflow).not.toBe("hidden");
+  });
+
+  // Test 2 + 8: Dialog öffnet -> Lock aktiv, Dialog bleibt intern scrollbar
+  it("Dialog öffnen sperrt den Hintergrund, Dialoginhalt bleibt scrollbar", async () => {
+    renderApp();
+    await openCvDialogForScroll();
+
+    expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy();
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.documentElement.style.overflow).toBe("hidden");
+  });
+
+  // Test 3 + 7: Schliessen stellt den urspruenglichen Zustand wieder her
+  it("Schliessen gibt den Lock frei und stellt den Overflow-Zustand wieder her", async () => {
+    renderApp();
+    await openCvDialogForScroll();
+
+    const closeBtn = screen.getByRole("button", { name: /Workflow schlie/ });
+    fireEvent.click(closeBtn);
+
+    await waitFor(() => expect(document.querySelector(".cv-workflow-overlay")).toBeNull());
+    expect(document.body.style.overflow).not.toBe("hidden");
+    expect(document.documentElement.style.overflow).not.toBe("hidden");
+  });
+
+  // Test 4: Escape gibt den Lock frei
+  it("Escape gibt den Scroll-Lock frei", async () => {
+    renderApp();
+    await openCvDialogForScroll();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    await waitFor(() => expect(document.body.style.overflow).not.toBe("hidden"));
+    expect(document.documentElement.style.overflow).not.toBe("hidden");
+  });
+
+  // Test 5: Unmount (Navigation) gibt den Lock frei
+  it("Unmount der App gibt den Scroll-Lock frei", async () => {
+    renderApp();
+    await openCvDialogForScroll();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    // Unmount der App (z. B. Navigation/Routenwechsel)
+    cleanup();
+
+    expect(document.body.style.overflow).not.toBe("hidden");
+    expect(document.documentElement.style.overflow).not.toBe("hidden");
+  });
+
+  // Test 6: erneutes Oeffnen und Schliessen
+  it("erlaubt mehrfaches Oeffnen und Schliessen ohne Rest-Lock", async () => {
+    renderApp();
+
+    await openCvDialogForScroll();
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(document.body.style.overflow).not.toBe("hidden"));
+
+    // Dialog erneut oeffnen (Einwilligung erneut anzeigen)
+    fireEvent.click(screen.getByRole("button", { name: /Einwilligung anzeigen/ }));
+    await waitFor(() => expect(document.querySelector(".cv-workflow-overlay")).toBeTruthy());
+    expect(document.body.style.overflow).toBe("hidden");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(document.body.style.overflow).not.toBe("hidden"));
   });
 });
