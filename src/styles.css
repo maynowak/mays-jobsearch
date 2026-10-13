@@ -6538,3 +6538,70 @@ body {
     font-size: var(--text-xs);
   }
 }
+
+/* =====================================================================
+   ATS-SKILL-INPUT-POLISH-01: Das Eingabefeld fuer eigene Skills im
+   Skill-Step wird auf die volle Breite des Skill-Containers gebracht.
+   Reines CSS, keine Logikaenderung: Enter ergaenzt weiterhin den Skill,
+   Auswahl/Bulk-Auswahl, ATS-Profil und CV-Workflow bleiben unberuehrt.
+   Platzhalter (DE "Skill eingeben und Enter dr\u00fccken") ist bereits in
+   src/i18n.tsx vorhanden und bleibt unveraendert.
+   ===================================================================== */
+.cv-workflow-overlay .cv-skill-selection__add {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--space-2);
+}
+
+.cv-workflow-overlay .cv-skill-selection__input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(125, 211, 252, 0.6);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text);
+  font-size: var(--text-base);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 2px 10px rgba(2, 6, 23, 0.06);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.cv-workflow-overlay .cv-skill-selection__input::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.cv-workflow-overlay .cv-skill-selection__input:hover:not(:disabled) {
+  border-color: rgba(34, 211, 238, 0.8);
+}
+
+.cv-workflow-overlay .cv-skill-selection__input:focus {
+  outline: 2px solid transparent;
+  border-color: var(--brand);
+  box-shadow:
+    0 0 0 3px rgba(34, 211, 238, 0.3),
+    0 0 18px rgba(34, 211, 238, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.cv-workflow-overlay .cv-skill-selection__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Mobile: bleibt volle Breite, kein horizontaler Overflow. */
+@media (max-width: 480px) {
+  .cv-workflow-overlay .cv-skill-selection__input {
+    height: 44px;
+    padding: 0 14px;
+    font-size: var(--text-sm);
+  }
+}

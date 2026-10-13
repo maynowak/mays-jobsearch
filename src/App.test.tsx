@@ -2615,3 +2615,108 @@ describe("SEARCH-SCROLL-REGRESSION-01: Scrollen auf /search", () => {
     await waitFor(() => expect(document.body.style.overflow).not.toBe("hidden"));
   });
 });
+
+// ATS-SKILL-INPUT-POLISH-01: Das Skill-Eingabefeld wird auf volle Breite
+// gebracht (reines CSS). Die Funktion muss unveraendert bleiben: Enter
+// ergaenzt einen Skill, Auswahl/Bulk bleiben, ATS-Profil wird gespeichert.
+describe("ATS-SKILL-INPUT-POLISH-01: Skill-Eingabefeld verbreitert, Logik intakt", () => {
+  async function reachSkillStep() {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React", "TypeScript"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(["React Developer"], "cv.pdf", { type: "application/pdf" });
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    // Speichern -> Zielauswahl -> Ziel ausfuehren -> Skill-Step
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Ziel ausführen" }));
+    await waitFor(() => expect(document.getElementById("cv-skill-selection-title")).toBeTruthy());
+  }
+
+  it("ergaenzt einen eigenen Skill per Enter (Auswahl wird dadurch akzeptiert)", async () => {
+    await reachSkillStep();
+
+    const addInput = screen.getByLabelText("Skill hinzufügen") as HTMLInputElement;
+    expect(addInput.placeholder).toBe("Skill eingeben und Enter drücken");
+
+    // Ohne Auswahl erscheint die Hinweismeldung …
+    fireEvent.click(screen.getByRole("button", { name: "Alle abwählen" }));
+    await waitFor(() =>
+      expect(document.querySelector(".cv-skill-selection__error")).toBeTruthy()
+    );
+
+    // … und Enter im Eingabefeld hebt sie wieder auf (Skill ist ausgewaehlt).
+    fireEvent.change(addInput, { target: { value: "GraphQL" } });
+    fireEvent.keyDown(addInput, { key: "Enter" });
+
+    await waitFor(() =>
+      expect(document.querySelector(".cv-skill-selection__error")).toBeNull()
+    );
+    // Fortfahren ist jetzt moeglich
+    expect(
+      (screen.getByRole("button", { name: /Mit ausgewählten Skills fortfahren/ }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false);
+    // Der getippte Text wird nicht in das Feld uebernommen
+    expect(addInput.value).toBe("");
+  });
+
+  it("behaelt Bulk-Auswahl (alle auswaehlen / abwaehlen)", async () => {
+    await reachSkillStep();
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle auswählen" }));
+    expect((screen.getByRole("checkbox", { name: "React" }) as HTMLInputElement).checked).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle abwählen" }));
+    expect((screen.getByRole("checkbox", { name: "React" }) as HTMLInputElement).checked).toBe(false);
+  });
+
+  it("haelt die Layout-Invarianten des Eingabefeldes ein (volle Breite, kein Overflow)", async () => {
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const idx = css.indexOf("ATS-SKILL-INPUT-POLISH-01");
+    expect(idx).toBeGreaterThan(-1);
+    const section = css.slice(idx);
+
+    const inputRule = section.match(/\.cv-workflow-overlay \.cv-skill-selection__input\s*\{([^}]*)\}/);
+    expect(inputRule, "Regel fuer das Skill-Eingabefeld nicht gefunden").toBeTruthy();
+    const body = inputRule![1];
+    expect(body).toMatch(/width:\s*100%/);
+    expect(body).toMatch(/box-sizing:\s*border-box/);
+    expect(body).toMatch(/min-width:\s*0/);
+    expect(body).toMatch(/height:\s*44px/);
+    expect(body).toMatch(/border-radius:\s*14px/);
+    expect(body).toMatch(/backdrop-filter:\s*blur/);
+
+    // Sichtbarer tuerkiser Fokuszustand
+    expect(section).toMatch(/\.cv-workflow-overlay \.cv-skill-selection__input:focus\s*\{[^}]*box-shadow/);
+    expect(section).toMatch(/rgba\(34,\s*211,\s*238/);
+
+    // Container ebenfalls volle Breite
+    expect(section).toMatch(/\.cv-workflow-overlay \.cv-skill-selection__add\s*\{[^}]*width:\s*100%/);
+  });
+
+  it("verwendet den geforderten Platzhalter in beiden Sprachen", () => {
+    const i18n = require("node:fs").readFileSync(resolve(process.cwd(), "src/i18n.tsx"), "utf8");
+    expect(i18n).toContain('"cv.skillSelectPlaceholder": "Skill eingeben und Enter drücken"');
+    expect(i18n).toContain('"cv.skillSelectPlaceholder": "Type a skill and press Enter"');
+  });
+});
