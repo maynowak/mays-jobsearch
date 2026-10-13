@@ -27,6 +27,7 @@ export interface CvAtsProfileEntry {
   savedAt: number;
   targetRoles: string[];
   skills: string[];
+  searchProfileId?: string | null;
 }
 
 export interface CvProfileLists {
@@ -115,7 +116,8 @@ export function saveCvAtsProfile(
   hash: string | null | undefined,
   name: string,
   skills: string[],
-  targetRoles: string[]
+  targetRoles: string[],
+  searchProfileId: string | null = null
 ): CvAtsProfileEntry | null {
   if (!hash) return null;
   const now = Date.now();
@@ -124,8 +126,8 @@ export function saveCvAtsProfile(
   // CV-UPLOAD-UX-08: Ueberschreiben bei gleichem Namen (wie Suchprofile)
   const existing = bucket.atsProfiles.find((e) => e.name === finalName);
   const entry: CvAtsProfileEntry = existing
-    ? { ...existing, savedAt: now, skills, targetRoles }
-    : { id: generateEntryId(), name: finalName, savedAt: now, targetRoles, skills };
+    ? { ...existing, savedAt: now, skills, targetRoles, searchProfileId }
+    : { id: generateEntryId(), name: finalName, savedAt: now, targetRoles, skills, searchProfileId };
   bucket.atsProfiles = [
     entry,
     ...bucket.atsProfiles.filter((e) => e.id !== entry.id),
@@ -154,4 +156,19 @@ export function purgeLegacyCvListsFromLocalStorage(): number {
     /* noop */
   }
   return removed;
+}
+
+export function assignCvAtsProfileToSearchProfile(
+  hash: string | null | undefined,
+  atsId: string,
+  searchProfileId: string | null
+): boolean {
+  if (!hash) return false;
+  const now = Date.now();
+  const bucket = getOrCreateBucket(hash, now);
+  const entry = bucket.atsProfiles.find((e) => e.id === atsId);
+  if (!entry) return false;
+  entry.searchProfileId = searchProfileId;
+  buckets.set(hash, bucket);
+  return true;
 }

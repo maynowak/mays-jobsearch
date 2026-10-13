@@ -37,7 +37,7 @@ import Principles from "./components/Principles";
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
 import CvProfilesOverlay from "./components/CvProfilesOverlay";
-import { saveCvAtsProfile, saveCvSearchProfile, purgeLegacyCvListsFromLocalStorage, readCvProfileLists, resetCvProfileLists, findSavedSearchProfile } from "./lib/cvProfileStore";
+import { saveCvAtsProfile, saveCvSearchProfile, purgeLegacyCvListsFromLocalStorage, readCvProfileLists, resetCvProfileLists, findSavedSearchProfile, assignCvAtsProfileToSearchProfile } from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
@@ -830,12 +830,27 @@ export default function App() {
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
       let savedName: string | null = null;
       if (doc?.hash) {
+        // Rule: Every new ATS profile belongs to exactly one search profile.
+        if (!selectedSavedSearchId) {
+          setStatus({ type: "error", message: t("cv.errorNoSearchProfileSelected") });
+          return;
+        }
+
+        // Rule: Max 5 ATS profiles per search profile.
+        const currentLists = readCvProfileLists(doc.hash);
+        const assignedCount = currentLists.atsProfiles.filter(e => e.searchProfileId === selectedSavedSearchId).length;
+        if (assignedCount >= 5) {
+          setStatus({ type: "error", message: t("cv.errorTooManyAtsProfiles") });
+          return;
+        }
+
         savedName =
           saveCvAtsProfile(
             doc.hash,
             atsProfileName,
             cvState.selectedSkills,
-            cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? []
+            cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
+            selectedSavedSearchId
           )?.name ?? null;
       }
       setCvState((prev) => ({
@@ -1283,7 +1298,9 @@ export default function App() {
   const listSourceDoc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0] ?? null;
   const listSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
   const activeAtsEntry =
-    listSourceLists.atsProfiles.find((e) => e.id === activeAtsEntryId) ?? null;
+    listSourceLists.atsProfiles.find(
+      (e) => e.id === activeAtsEntryId && (e.searchProfileId === selectedSavedSearchId || !e.searchProfileId)
+    ) ?? null;
   const listSourceDocId = listSourceDoc?.id ?? null;
   // ATS-PROFILE-INVESTIGATION-01 (Befund a): beim Wechsel des Quelldokuments
   // zeigen bestehende Auswahl-IDs auf fremde Listen -> Auswahl zuruecksetzen.
@@ -1320,7 +1337,20 @@ export default function App() {
                   <select
                     id="cv-saved-search-profile"
                     value={selectedSavedSearchId ?? ""}
-                    onChange={(e) => setSelectedSavedSearchId(e.target.value || null)}
+                    onChange={(e) => {
+                      const newId = e.target.value || null;
+                      setSelectedSavedSearchId(newId);
+                      // Rule 4: Reset ATS selection if the current ATS profile 
+                      // no longer belongs to the newly selected search profile.
+                      if (activeAtsEntryId) {
+                        const atsEntry = listSourceLists.atsProfiles.find(
+                          (entry) => entry.id === activeAtsEntryId
+                        );
+                        if (atsEntry && atsEntry.searchProfileId !== newId) {
+                          setActiveAtsEntryId(null);
+                        }
+                      }
+                    }}
                     disabled={cvState.isProcessing}
                   >
                     <option value="">{t("cv.choosePlaceholder")}</option>
@@ -1348,15 +1378,30 @@ export default function App() {
                   <select
                     id="cv-saved-ats-profile"
                     value={activeAtsEntryId ?? ""}
-                    onChange={(e) => setActiveAtsEntryId(e.target.value || null)}
+                    onChange={(e) => {
+                      const newId = e.target.value || null;
+                      setActiveAtsEntryId(newId);
+                      // Rule 7: Safe assignment for unassigned profiles.
+                      if (newId && selectedSavedSearchId) {
+                        const entry = listSourceLists.atsProfiles.find(ev => ev.id === newId);
+                        if (entry && !entry.searchProfileId) {
+                          assignCvAtsProfileToSearchProfile(listSourceDoc?.hash, newId, selectedSavedSearchId);
+                        }
+                      }
+                    }}
                     disabled={cvState.isProcessing}
                   >
                     <option value="">{t("cv.choosePlaceholder")}</option>
-                    {listSourceLists.atsProfiles.map((entry) => (
-                      <option key={entry.id} value={entry.id}>
-                        {entry.name}
-                      </option>
-                    ))}
+                    {listSourceLists.atsProfiles
+                      .filter(
+                        (entry) =>
+                          entry.searchProfileId === selectedSavedSearchId ||
+                          !entry.searchProfileId
+                      )
+                      .map((entry) => (
+                        <option key={entry.id} value={entry.id}>
+                          {entry.name}{!entry.searchProfileId ? ` ${t("cv.atsUnassigned")}` : ""}</option>
+                      ))}
                   </select>
                   <button
                     type="button"
