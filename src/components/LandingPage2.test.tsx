@@ -71,6 +71,14 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     expect(within(bar).getByText("Login")).toBeTruthy();
   });
 
+  it("LP-LOGIN-01: Login ist ein klickbarer Link auf /anmelden", () => {
+    renderPage();
+    const login = screen.getByRole("link", { name: "Login" });
+    expect(login.getAttribute("href")).toBe("/anmelden");
+    // Kein deaktivierter Prototyp-Button mehr
+    expect(document.querySelector('button[aria-disabled="true"].lp2-login')).toBeNull();
+  });
+
   it("TOP-MENU-01: Landingpage zeigt nur Suche, Benachrichtigungen ist ausgeblendet", () => {
     renderPage();
     const bar = document.querySelector(".lp2-bar") as HTMLElement;

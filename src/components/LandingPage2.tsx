@@ -146,10 +146,14 @@ export default function LandingPage2(): React.ReactElement {
                   </a>
                 ))}
               </nav>
-              {/* Login noch ohne Funktion (Prototype) */}
-              <button type="button" className="lp2-login" aria-disabled="true">
+              {/* Login fuehrt zur Cognito-Anmeldung (/anmelden). Bewusst ein
+                  Link und kein useAuth()-Aufruf: Die Landingpage wird in
+                  main.tsx AUSSERHALB des AuthProvider gerendert, ein OIDC-Call
+                  waere hier also nicht verfuegbar. Der Zielpfad entspricht dem
+                  nicht angemeldeten Login-Link der Navbar. */}
+              <a className="lp2-login" href="/anmelden">
                 Login
-              </button>
+              </a>
             </div>
           </div>
         </header>
