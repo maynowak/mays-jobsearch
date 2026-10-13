@@ -1411,7 +1411,13 @@ export default function App() {
   // Inline bleiben:
   // - document-selected (CV-Liste): sie ist der Einstiegspunkt und bleibt ohne
   //   Backdrop sichtbar, damit der bestehende Upload-/Schnellsuch-Pfad
-  //   (CvUpload -> "Profil übernehmen und Jobs finden") ungestört funktioniert.
+  //   (CvUpload -> "Speichern") ungestoert funktioniert.
+  // ATS-HOLOGRAPHIC-STUDIO-01: Button-Text ist jetzt "Speichern" (i18n cv.confirm).
+  // FUNKTION BEIBEHALTEN (dokumentiert): cv.confirm -> onConfirm in App.tsx
+  // speichert das Suchprofil (saveCvSearchProfile) und wechselt anschliessend
+  // auf step "goal-selection". Die Jobsuche wird NICHT automatisch gestartet —
+  // sie laeuft erst ueber den Goal-Step (executeGoal -> Suche). "Speichern"
+  // beschreibt das Verhalten damit korrekt.
   // - consent-required im geschlossenen Zustand (ausstehend + "Einwilligung anzeigen").
   // - ats-complete (ATSModal ist selbst ein Overlay — kein verschachtelter Modal-Stack).
   const cvOverlayActive =

@@ -69,7 +69,7 @@ const en: Dict = {
   "cv.experienceLevel": "Experience level",
   "cv.targetRoles": "Target role",
   "cv.location": "City or ZIP",
-  "cv.confirm": "Use profile and find jobs",
+  "cv.confirm": "Save",
 
   "cv.documentListTitle": "Your CVs",
   "cv.noDocuments": "No CVs uploaded yet",
@@ -549,7 +549,7 @@ const de: Dict = {
   "cv.experienceLevel": "Erfahrungslevel",
   "cv.targetRoles": "Zielrolle",
   "cv.location": "Stadt oder PLZ",
-  "cv.confirm": "Profil übernehmen und Jobs finden",
+  "cv.confirm": "Speichern",
 
   "cv.documentListTitle": "Deine Lebensläufe",
   "cv.noDocuments": "Noch keine Lebensläufe hochgeladen",

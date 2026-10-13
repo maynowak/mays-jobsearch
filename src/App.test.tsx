@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Job, MatchResponse, ModelsResponse, JobsResponse, SuggestedProfile } from "./types";
@@ -182,7 +184,7 @@ afterEach(() => {
     const card = document.querySelector(".cv-processing-card") as HTMLElement;
     fireEvent.click(
       Array.from(card.querySelectorAll("button")).find((b) =>
-        b.textContent?.includes("Profil übernehmen und Jobs finden")
+        b.textContent?.includes("Speichern")
       ) as HTMLButtonElement
     );
   }
@@ -773,7 +775,7 @@ describe("CV workflow", () => {
     const card = document.querySelector(".cv-processing-card") as HTMLElement;
     fireEvent.click(
       Array.from(card.querySelectorAll("button")).find(
-        (b) => b.textContent?.includes("Profil übernehmen und Jobs finden")
+        (b) => b.textContent?.includes("Speichern")
       ) as HTMLButtonElement
     );
 
@@ -912,7 +914,7 @@ describe("CV workflow", () => {
     // zurück zur Liste zeigt das erhaltene Dokument
     const card = document.querySelector(".cv-processing-card") as HTMLElement;
     fireEvent.click(
-      Array.from(card.querySelectorAll("button")).find((b) => b.textContent?.includes("Profil übernehmen und Jobs finden")) as HTMLButtonElement
+      Array.from(card.querySelectorAll("button")).find((b) => b.textContent?.includes("Speichern")) as HTMLButtonElement
     );
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
   });
@@ -2424,5 +2426,92 @@ describe("CV-MODAL-ISOLATION-01: Dialog isoliert von Navbar, Hero und Search Wor
         (panel?.contains(document.activeElement) ?? false) ||
         document.activeElement === panel
     ).toBe(true);
+  });
+});
+
+// ATS-HOLOGRAPHIC-STUDIO-01: Optik des CV-/ATS-Dialogs. Funktional wird
+// NICHTS geaendert — der Button-Text lautet jetzt "Speichern", die
+// Kette (Profil speichern -> goal-selection -> Suche) bleibt identisch.
+describe("ATS-HOLOGRAPHIC-STUDIO-01: Dialog-Optik ohne Workflow-Aenderung", () => {
+  async function openProfileResult() {
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["React"],
+      experienceLevel: "Senior",
+      targetRoles: ["Frontend"],
+      location: "Berlin",
+    } as SuggestedProfile);
+    renderApp();
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(
+      ["React Developer with five years of experience in Berlin"],
+      "cv.pdf",
+      { type: "application/pdf" }
+    );
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    await waitFor(() =>
+      expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() =>
+      expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy()
+    );
+  }
+
+  it("zeigt den Primaer-Button als 'Speichern' und startet KEINE Jobsuche", async () => {
+    await openProfileResult();
+
+    const saveBtn = screen.getByRole("button", { name: "Speichern" });
+    expect(saveBtn).toBeTruthy();
+
+    vi.mocked(fetchJobs).mockClear();
+    vi.mocked(fetchMatches).mockClear();
+    fireEvent.click(saveBtn);
+
+    // Workflow unveraendert: naechster Schritt ist die Goal-Auswahl …
+    await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
+    // … und die Jobsuche startet NICHT automatisch.
+    expect(vi.mocked(fetchJobs)).not.toHaveBeenCalled();
+    expect(vi.mocked(fetchMatches)).not.toHaveBeenCalled();
+  });
+
+  it("rendert den Process-Stepper im Dialog mit Statusklassen", async () => {
+    await openProfileResult();
+
+    const steps = document.querySelectorAll(".cv-processing-steps__item");
+    expect(steps.length).toBeGreaterThan(0);
+    expect(document.querySelectorAll(".cv-processing-steps__item.completed").length).toBeGreaterThan(0);
+    expect(document.querySelectorAll(".cv-processing-steps__item.current").length).toBe(1);
+    expect(document.querySelectorAll(".cv-processing-steps__item.pending").length).toBeGreaterThan(0);
+    expect(document.querySelector(".cv-processing-steps__connector.completed")).toBeTruthy();
+  });
+
+  it("haelt die Hologramm-Invarianten im CSS ein (Chips umbrechen, kein Overflow)", async () => {
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const idx = css.indexOf("ATS-HOLOGRAPHIC-STUDIO-01");
+    expect(idx).toBeGreaterThan(-1);
+    const section = css.slice(idx);
+
+    // Skill-Chips: umbrechende Zeile, Auswahlzustand, Fokus
+    expect(section).toMatch(/\.cv-skill-selection__list\s*\{[^}]*flex-wrap:\s*wrap/);
+    expect(section).toMatch(/\.cv-skill-selection__item\.selected\s*\{/);
+    expect(section).toMatch(/cv-skill-selection__checkbox:focus-visible/);
+
+    // Stepper: Tuerkis fuer erledigt, Ring fuer aktiv, neutral fuer pending
+    expect(section).toMatch(/\.cv-processing-steps__item\.completed \.cv-processing-steps__marker/);
+    expect(section).toMatch(/\.cv-processing-steps__item\.current \.cv-processing-steps__marker/);
+
+    // Portal / Fokus / Escape / Scroll-Lock des vorigen Gates bleiben erhalten
+    expect(css).toMatch(/role="dialog"|\.cv-workflow-overlay/);
   });
 });
