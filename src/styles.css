@@ -6011,3 +6011,138 @@ body {
     }
   }
 }
+
+/* =====================================================================
+   HOLOGRAPHIC-WORKSPACE-VISUAL-POLISH-01: visuelle Verfeinerung von
+   /search. Reine CSS-Harmonisierung — die futuristische Job-Lobby
+   (search-world__background, Bilddatei) bleibt unveraendert erhalten,
+   ebenso Hero-Inhalte, Filter-/Alert-/Result-Logik, Modellwahl, ATS,
+   CV-Verarbeitung, Auth und API-Vertraege.
+
+   Ursachen (Explorer):
+   A) Getrennte Welten: `.hero` hat eigenes Bild + harte 1px-Border-Bottom
+      und endet nicht in der Welt-Farbe (#f8fafc) -> sichtbare Schnittnaht.
+   B) Unterschiedliche Panel-Proportionen: Filter-Panel 24px Padding,
+      Notification-Panel 20/22px + eigene max-width/Top-Padding -> linke
+      Kante und Kopfzeile nicht auf einer Linie.
+   C) Grosser hellblauer Leerraum: Section-Mindesthoehe
+      `clamp(880px, 116vh, 1380px)` reserviert bei kurzen Seiten viel
+      Flaeche; Uebergaenge results->columns/deck sind zu weit.
+   D) AI/MATCH/ATS/INTELLIGENCE kaum sichtbar: Opacity 0.72 (Columns),
+      Label-Alpha 0.34, Micro-Labels 0.22, Panel-Border 0.22.
+   ===================================================================== */
+
+/* --- A) Hero -> Job-Lobby: weiche Naht statt harter Kante ------------- */
+.hero {
+  border-bottom: none;
+}
+
+/* Sanftes Auslaufen des Hero-Bildes in die Welt-Farbe (kein Bild-Tausch,
+   kein Content-Verlust: nur ein 120px-Band am unteren Rand). */
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 120px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0) 0%, #f8fafc 100%);
+  pointer-events: none;
+}
+
+/* Hero-Text bleibt ueber dem Blend-Band (SEO-Text unveraendert). */
+.hero-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Der bestehende Uebergangs-Layer `.search-world::before`
+   (SEARCH-BG-STATE-01, startet bereits exakt in #f8fafc) bleibt
+   unveraendert — die Naht wird ausschliesslich im Hero entschaerft. */
+
+/* --- B) Panel-Alignment: gemeinsame Proportion ------------------------- */
+/* Gleiche Innenabstaende wie die Filter Console (24px). */
+.alert-card {
+  padding: 24px;
+}
+
+.alert-card .field {
+  margin-bottom: 14px;
+}
+
+.alert-hint {
+  margin-bottom: 14px;
+}
+
+/* Desktop-Grid: Notification-Panel buendig zur linken Kante und auf
+   Hoehe der Results-Spalte ausrichten (keine neue Layout-Architektur). */
+@media (min-width: 900px) {
+  .alerts-section {
+    padding: 0;
+  }
+
+  .alerts-section .card {
+    max-width: none;
+    margin: 0;
+  }
+}
+
+/* --- C) Leerflaeche reduzieren (Inhalte bleiben erhalten) -------------- */
+.search-world {
+  min-height: clamp(760px, 100vh, 1160px);
+}
+
+.search-world__columns {
+  margin-top: clamp(16px, 1.5vh, 28px);
+  height: clamp(170px, 18vh, 250px);
+}
+
+.search-world__fade {
+  height: clamp(48px, 4.5vh, 80px);
+}
+
+/* --- D) Kontrast der Intelligence-Grafiken erhoehen -------------------- */
+/* Rein dekorativ (aria-hidden, pointer-events: none) — keine Inhalte,
+   keine neuen Animationen. */
+.intelligence-column {
+  opacity: 0.9;
+  color: rgba(11, 92, 122, 0.78);
+}
+
+.search-world__chip,
+.search-world__label {
+  color: rgba(13, 110, 145, 0.55);
+}
+
+.search-world__chip {
+  border-color: rgba(34, 211, 238, 0.38);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.search-world__micro {
+  color: rgba(13, 110, 145, 0.4);
+}
+
+.search-world__panel {
+  border-color: rgba(125, 211, 252, 0.32);
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.1) 55%,
+    rgba(34, 211, 238, 0.09) 100%
+  );
+}
+
+.search-world__panel--d {
+  opacity: 0.85;
+}
+
+.search-world__connector {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.55), rgba(34, 211, 238, 0));
+}
+
+.search-world__intelligence::before,
+.search-world__particles {
+  /* Gultiger Kontrast-Boost (kein ungueltiges opacity > 1). */
+  filter: brightness(1.08) saturate(1.05);
+}
