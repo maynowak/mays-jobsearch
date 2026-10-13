@@ -450,3 +450,83 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
     expect(landing.querySelector(".search-world")).toBeNull();
   });
 });
+
+// ATS-HOLOGRAPHIC-LAYER-FIX-01: Ebenentrennung Overlay <-> Dekoration.
+describe("ATS-HOLOGRAPHIC-LAYER-FIX-01: Popup liegt sauber ueber der Dekoration", () => {
+  beforeEach(() => {
+    localStorage.setItem("mj-lang", "de");
+    window.history.pushState({}, "", "/search");
+    __resetModelsCacheForTests();
+    vi.mocked(fetchModels).mockResolvedValue(singleModel);
+    vi.mocked(fetchJobs).mockResolvedValue({
+      jobs: [job],
+      meta: { totalScanned: 1, totalFiltered: 1 },
+    } as JobsResponse);
+    vi.mocked(fetchMatches).mockResolvedValue({
+      matches: [{ score: 90, why: "passt", prepare: "Frage", job }],
+      meta: { evaluated: 1, totalFound: 1, displayedInitially: 5 },
+    } as MatchResponse);
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("Deko-Ebenen und ihre Kinder sind pointer-events: none", async () => {
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const start = css.indexOf("ATS-HOLOGRAPHIC-LAYER-FIX-01");
+    expect(start).toBeGreaterThan(-1);
+    const section = css.slice(start);
+
+    for (const sel of [
+      "search-world__background",
+      "search-world__top-light",
+      "search-world__columns",
+      "search-world__intelligence",
+      "search-world__floor",
+      "search-world__fade",
+      "search-world__chip",
+      "search-world__micro",
+      "search-world__panel",
+      "intelligence-column",
+    ]) {
+      const m = section.match(new RegExp(`\\.${sel}[\\s,]`));
+      expect(m, `${sel} nicht in Fix-Sektion gelistet`).toBeTruthy();
+    }
+    expect(section).toMatch(/pointer-events:\s*none/);
+  });
+
+  it("Modal-Backdrop ist deckend genug, Deko bleibt hinter dem Popup unsichtbar", async () => {
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const idx = css.lastIndexOf("\n.modal {");
+    expect(idx).toBeGreaterThan(-1);
+    const rule = css.slice(idx, css.indexOf("}", idx));
+    expect(rule).toMatch(/background:\s*rgba\(9,\s*17,\s*28,\s*0\.8/);
+  });
+
+  it("Modal behaelt z-index 50 (keine pauschalen Extremwerte)", async () => {
+    const css = await readFile(resolve(process.cwd(), "src/styles.css"), "utf8");
+    const idx = css.indexOf("\n.modal {");
+    const rule = css.slice(idx, css.indexOf("}", idx));
+    expect(rule).toMatch(/position:\s*fixed/);
+    expect(rule).toMatch(/z-index:\s*50/);
+  });
+
+  it("Intelligence-Deko bleibt aria-hidden und enthaelt weiterhin AI/MATCH/ATS", () => {
+    const { container } = render(
+      <LangProvider>
+        <App />
+      </LangProvider>
+    );
+
+    const columns = container.querySelector(".search-world__columns");
+    const deck = container.querySelector(".search-world__intelligence");
+    expect(columns?.getAttribute("aria-hidden")).toBe("true");
+    expect(deck?.getAttribute("aria-hidden")).toBe("true");
+    expect(columns?.querySelector(".intelligence-column--ai")?.textContent).toBe("AI");
+    expect(columns?.querySelector(".intelligence-column--match")?.textContent).toBe("MATCH");
+    expect(columns?.querySelector(".intelligence-column--ats")?.textContent).toBe("ATS");
+    expect(deck?.querySelector(".search-world__label")?.textContent).toBe("INTELLIGENCE");
+  });
+});

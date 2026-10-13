@@ -6146,3 +6146,114 @@ body {
   /* Gultiger Kontrast-Boost (kein ungueltiges opacity > 1). */
   filter: brightness(1.08) saturate(1.05);
 }
+
+/* =====================================================================
+   ATS-HOLOGRAPHIC-LAYER-FIX-01: Ebenentrennung Overlay <-> Dekoration
+   und Aufwertung der Intelligence-Grafiken.
+
+   Root Cause (Explorer, im CSS verifiziert):
+   1) `.modal` (ATS-Overlay/Popup, position: fixed, z-index 50) hatte einen
+      nur 55 % deckenden Backdrop `rgba(15,23,42,.55)`. Die dekorativen
+      AI/MATCH/ATS-Elemente der Search World liegen darunter und blieben
+      dadurch — nach dem Kontrast-Boost des Vor-Gates deutlich sichtbar —
+      durch das Popup hindurch lesbar ("ATS-Beschriftung ueber dem Popup").
+      Die Stapel-Reihenfolge selbst war korrekt (Modal z-index 50 > Welt
+      z-index 3/4/5 > Content z-index 10; Navbar 40).
+   2) Alle dekorativen Ebenen besitzen bereits `pointer-events: none`;
+      hier wird das explizit konsolidiert (Defense in Depth), damit Deko
+      keine Klicks abfaengt — inkl. Kindelementen (Chips, Panels, Lines,
+      Particles, Micro-Labels).
+   Keine extrem hohen z-index-Werte, keine neuen Animationen,
+   Job-Lobby-Bild und Positionierung unveraendert.
+   ===================================================================== */
+
+/* --- 2) LAYERING FIX: Popup-Backdrop trennt sauber von der Deko ------- */
+.modal {
+  background: rgba(9, 17, 28, 0.84);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Dekorative Ebenen (und ihre Kinder) fangen keine Zeiger Ereignisse ab. */
+.search-world__background,
+.search-world__top-light,
+.search-world__columns,
+.search-world__intelligence,
+.search-world__floor,
+.search-world__fade,
+.search-world__chip,
+.search-world__connector,
+.search-world__label,
+.search-world__micro,
+.search-world__panel,
+.search-world__lines,
+.search-world__particles,
+.intelligence-column {
+  pointer-events: none;
+}
+
+/* --- 3) HOLOGRAPHIC INTELLIGENCE STYLE ------------------------------- */
+/* Milchglas + tuerkise/eisblaue Lichtkontur + harmonischer Schatten.
+   Inhalte (AI / MATCH / ATS / INTELLIGENCE / PROFILE / SKILLS / JOBS)
+   und die Scroll-Motion (--sw-progress) bleiben unveraendert. */
+.intelligence-column {
+  opacity: 0.92;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.54) 0%,
+    rgba(226, 242, 250, 0.34) 38%,
+    rgba(190, 224, 242, 0.24) 72%,
+    rgba(176, 211, 234, 0.1) 100%
+  );
+  border: 1px solid rgba(125, 211, 252, 0.55);
+  border-radius: 18px 18px 0 0;
+  box-shadow:
+    0 0 40px rgba(34, 211, 238, 0.28),
+    0 10px 24px rgba(2, 6, 23, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 0 26px rgba(255, 255, 255, 0.24);
+  color: rgba(11, 92, 122, 0.82);
+}
+
+.search-world__chip {
+  color: rgba(13, 110, 145, 0.72);
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.24));
+  box-shadow:
+    0 0 18px rgba(34, 211, 238, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.search-world__label {
+  color: rgba(13, 110, 145, 0.68);
+}
+
+.search-world__micro {
+  color: rgba(13, 110, 145, 0.5);
+}
+
+/* Panel--c ist bewusst eine 1px-Trennlinie und wird nicht ueberschrieben. */
+.search-world__panel:not(.search-world__panel--c) {
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  border-radius: 20px;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(255, 255, 255, 0.14) 55%,
+    rgba(34, 211, 238, 0.12) 100%
+  );
+  box-shadow:
+    0 8px 22px rgba(2, 6, 23, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.search-world__panel--d {
+  opacity: 0.9;
+}
+
+/* --- 5) Responsive: keine ueberlaufenden Beschriftungen -------------- */
+@media (max-width: 640px) {
+  .search-world__micro {
+    display: none;
+  }
+}
