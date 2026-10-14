@@ -28,8 +28,60 @@ const PREFERRED_KEYWORDS = [
 const EXPERIENCE_PATTERN = /(\d+)\s*(\+)?\s*years?\s*(experience)?/i;
 
 function normalizeSkill(text) {
+  if (!text) return "";
+  // 1. Basic cleanup: lowercase and trim
+  let normalized = text.toLowerCase().trim();
+  
+  // 2. Handle common punctuation artifacts (e.g., "architect-", "skill,")
+  // Remove trailing punctuation that is likely a tokenization artifact
+  normalized = normalized.replace(/[.,;:\-]$/, "");
+  
+  // 3. Standardize separators: replace hyphens/underscores with spaces for semantic matching
+  // but keep them if they are part of a known technical term (handled by ALIASES)
+  // For general normalization, we treat "cloud-architect" and "cloud architect" as same.
+  
+  // 4. Aliases for common technical terms
+  return SKILL_ALIASES.get(normalized) || normalized;
+}
+
+// Helper for semantic equivalence that doesn't destroy technical terms
+function areSkillsEquivalent(s1, s2) {
+  if (!s1 || !s2) return false;
+  
+  const n1 = normalizeSkill(s1);
+  const n2 = normalizeSkill(s2);
+  
+  if (n1 === n2) return true;
+  
+  // Semantic equivalence: "cloud-architect" vs "cloud architect"
+  const clean = (s) => s.replace(/[-_]/g, " ").replace(/\s+/g, " ").trim();
+  return clean(n1) === clean(n2);
+}
+
+// Metadata patterns to exclude from being treated as skills
+const METADATA_PATTERNS = [
+  /\(m\/w\/d\)/i,
+  /\(w\/m\/d\)/i,
+  /\b(full-time|part-time|vollzeit|teilzeit)\b/i,
+  /\b(senior|junior|lead|principal|staff)\b/i,
+  /\b(software|engineer|developer|architect)\b/i, // These are roles, not specific tech skills
+];
+
+function isTechnicalSkill(text) {
   const lower = text.toLowerCase().trim();
-  return SKILL_ALIASES.get(lower) || lower;
+  if (lower.length <= 2 && !["c", "r"].includes(lower)) return false;
+  
+  // Rule: Job metadata/gender markers are NOT skills
+  if (METADATA_PATTERNS.some(pattern => pattern.test(lower))) {
+    // Only exclude if it's JUST metadata or contains metadata
+    // But "Senior Java Developer" -> "Java" is a skill, "Senior" is a role.
+    // Since we tokenize, if the token is "senior", it's not a tech skill.
+    if (METADATA_PATTERNS.some(p => p.test(lower) && lower.length < 15)) {
+       // If it's a short token matching metadata, it's likely not a tech skill.
+       return false;
+    }
+  }
+  return true;
 }
 
 function extractSkillsFromText(text, source = "description") {
@@ -38,6 +90,9 @@ function extractSkillsFromText(text, source = "description") {
 
   for (const token of tokens) {
     if (token.length > 2) {
+      // New: Filter out non-technical metadata tokens
+      if (!isTechnicalSkill(token)) continue;
+
       const normalized = normalizeSkill(token);
       if (normalized !== token || REQUIRED_KEYWORDS.includes(token)) {
         skills.push({
@@ -164,13 +219,15 @@ function createRequirement(id, text, category, source) {
   };
 }
 
-export function extractRequirementsFromJob(job) {
+function extractRequirementsFromJob(job) {
   const requirements = [];
 
   if (job.title) {
     const tokens = tokenize(job.title);
     for (const token of tokens) {
       if (token.length > 2) {
+        // Filter out metadata/roles from the title to prevent them from becoming Gaps
+        if (!isTechnicalSkill(token)) continue;
         requirements.push(createRequirement(
           `title_${requirements.length}`,
           token,
@@ -183,6 +240,8 @@ export function extractRequirementsFromJob(job) {
 
   if (job.tags && job.tags.length > 0) {
     for (const tag of job.tags) {
+      // Only add tags as requirements if they are technical skills
+      if (!isTechnicalSkill(tag)) continue;
       requirements.push(createRequirement(
         `tag_${requirements.length}`,
         tag,
@@ -309,18 +368,20 @@ export function extractRequirementsFromJob(job) {
 }
 
 export function matchRequirement(req, cvSkills, cvData) {
-  const normalizedReq = req.normalized.toLowerCase();
-  const cvSkillsLower = (cvSkills || []).map((s) => s.toLowerCase());
+  const normalizedReq = normalizeSkill(req.normalized);
+  const cvSkillsNormalized = (cvSkills || []).map((s) => normalizeSkill(s));
 
-  if (cvSkillsLower.includes(normalizedReq)) {
+  if (cvSkillsNormalized.includes(normalizedReq)) {
     return {
       status: "MATCHED",
       confidence: "HIGH",
     };
   }
 
-  const isPartial = cvSkillsLower.some((s) =>
-    s.includes(normalizedReq) || normalizedReq.includes(s)
+  const isPartial = cvSkillsNormalized.some((s) =>
+    // Use semantic equivalence for partials to avoid "Java" matching "JavaScript"
+    // but allow "Cloud Architect" to match "Cloud-Architect"
+    areSkillsEquivalent(s, normalizedReq) || (s.length > 3 && normalizedReq.includes(s)) || (normalizedReq.length > 3 && s.includes(normalizedReq))
   );
   if (isPartial) {
     return {
