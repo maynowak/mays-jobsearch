@@ -37,7 +37,16 @@ import Principles from "./components/Principles";
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
 import CvProfilesOverlay from "./components/CvProfilesOverlay";
-import { saveCvAtsProfile, saveCvSearchProfile, purgeLegacyCvListsFromLocalStorage, readCvProfileLists, resetCvProfileLists, findSavedSearchProfile, assignCvAtsProfileToSearchProfile } from "./lib/cvProfileStore";
+import { 
+  saveCvAtsProfile, 
+  saveCvSearchProfile, 
+  purgeLegacyCvListsFromLocalStorage, 
+  readCvProfileLists, 
+  resetCvProfileLists, 
+  findSavedSearchProfile, 
+  assignCvAtsProfileToSearchProfile,
+  updateCvAtsProfileSkills
+} from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 
@@ -2567,6 +2576,34 @@ export default function App() {
                   : profile
               }
               onClose={() => setAtsJob(null)}
+              cvHash={listSourceDoc?.hash}
+              activeAtsId={activeAtsEntryId}
+              activeSearchId={selectedSavedSearchId}
+              onSkillAdded={async (skill) => {
+                if (!listSourceDoc?.hash || !activeAtsEntryId || !selectedSavedSearchId) {
+                  setStatus({ type: "error", message: t("cv.errorProfileMissing") });
+                  return;
+                }
+                const currentSkills = activeAtsEntry?.skills ?? [];
+                const normalizedNew = skill.trim();
+                if (currentSkills.some(s => s.toLowerCase() === normalizedNew.toLowerCase())) {
+                  return; // Idempotent
+                }
+                const updatedSkills = [...currentSkills, normalizedNew];
+                const success = updateCvAtsProfileSkills(
+                  listSourceDoc.hash,
+                  activeAtsEntryId,
+                  selectedSavedSearchId,
+                  updatedSkills
+                );
+                if (!success) {
+                  throw new Error(t("cv.errorStoreUpdateFailed"));
+                }
+                // Force re-render by triggering a state update in a nearby component or 
+                // simply relying on the fact that the next analyzeATS call reads from store.
+                // To make the UI reactive, we can set a dummy state or just let the 
+                // Modal's internal re-analysis handle it as it calls the API which reads from the server/store.
+              }}
             />
           )}
 

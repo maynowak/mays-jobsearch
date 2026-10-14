@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import type { Job, Profile, ModelOption } from "../types";
 import { analyzeATS, type AtsAnalysisResponse, fetchModels } from "../api";
+import type { Job, Profile, ModelOption } from "../types";
 import { useLang } from "../i18n";
 import { ConsentGate } from "./ConsentGate";
 import { PrivacyNotice } from "./PrivacyNotice";
@@ -14,6 +14,11 @@ interface Props {
   profile: Profile | null;
   onClose: () => void;
   onAtsAnalyzed?: (result: AtsAnalysisResponse) => void;
+  // Added for skill reconciliation
+  cvHash?: string | null;
+  activeAtsId?: string | null;
+  activeSearchId?: string | null;
+  onSkillAdded?: (skill: string) => Promise<void>;
 }
 
 const STATUS_LABEL_MAP: Record<string, string> = {
@@ -31,7 +36,7 @@ function getUserFacingStatus(status: string): string {
   return key ? key : status;
 }
 
-export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Props) {
+export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSkillAdded }: Props) {
   const { t } = useLang();
   const [analysis, setAnalysis] = useState<AtsAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +47,9 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
   const [aiError, setAiError] = useState("");
   const [models, setModels] = useState<ModelOption[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [reanalyzing, setReanalyzing] = useState(false);
+  const [previousScore, setPreviousScore] = useState<number | null>(null);
+
 
   useEffect(() => {
     if (!profile || !profile.skills || !profile.skills.trim()) {
@@ -106,6 +114,39 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
       setAiLoading(false);
     }
   };
+
+  const handleSkillConfirm = async (skill: string) => {
+    if (!onSkillAdded) return;
+    try {
+      await onSkillAdded(skill);
+      // Re-analyze automatically
+      await triggerReanalysis();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || t("match.analysisError"));
+    }
+  };
+
+  const triggerReanalysis = async () => {
+    if (!profile) return;
+    setReanalyzing(true);
+    setPreviousScore(analysis?.analysis?.score ?? null);
+    try {
+      const profileForAts = { skills: profile.skills };
+      const result = await analyzeATS(
+        { title: job.title, tags: job.tags, slug: job.slug },
+        profileForAts,
+        { enabled: false }
+      );
+      setAnalysis(result);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || t("match.analysisError"));
+    } finally {
+      setReanalyzing(false);
+    }
+  };
+
 
   const handleConsent = () => {
     setConsentGiven(true);
@@ -223,13 +264,27 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
 
   const renderScore = () => {
     if (!analysis) return null;
+    const currentScore = Math.round(analysis.analysis?.score ?? 0);
+    const hasPrevious = previousScore !== null;
+    const delta = hasPrevious ? currentScore - previousScore : 0;
+
     return renderSection(
       "ats.section.score.title",
       "ats.section.score.annotation",
       (
         <div className="ats-score">
           <div className="ats-score-value">
-            {Math.round(analysis.analysis?.score ?? 0)}/100
+            {currentScore}/100
+            {hasPrevious && (
+              <span style={{ 
+                fontSize: '0.75rem', 
+                marginLeft: '8px', 
+                color: delta >= 0 ? 'var(--green)' : 'var(--red)',
+                fontWeight: 'bold'
+              }}>
+                {delta >= 0 ? `+${delta}` : delta}
+              </span>
+            )}
           </div>
           <div className="ats-score-label">
             Keyword Coverage:{' '}
@@ -319,21 +374,36 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed }: Pro
       "ats.section.gaps.annotation",
       (
         <div className="ats-gaps-list">
-          {allGapItems.map(({ req, type }, idx: number) => (
-            <div key={`${type}-${req.id || idx}`} className="ats-gap-item" style={{
-              borderLeftColor: type === "gap" ? 'var(--red)' : 'var(--muted)',
-              background: type === "gap" ? 'rgba(220, 38, 38, 0.1)' : 'rgba(107, 98, 85, 0.1)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
-                <span className="ats-gap-text">{req.text}</span>
-                <span className="ats-requirement-status" style={{
-                  color: type === "gap" ? 'var(--red)' : 'var(--muted)'
-                }}>
-                  {t(getUserFacingStatus(type === "gap" ? "GAP" : "UNKNOWN"))}
-                </span>
+          {allGapItems.map(({ req, type }, idx: number) => {
+            const isReanalyzing = reanalyzing;
+            return (
+              <div key={`${type}-${req.id || idx}`} className="ats-gap-item" style={{
+                borderLeftColor: type === "gap" ? 'var(--red)' : 'var(--muted)',
+                background: type === "gap" ? 'rgba(220, 38, 38, 0.1)' : 'rgba(107, 98, 85, 0.1)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+                  <span className="ats-gap-text">{req.text}</span>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {!isReanalyzing && (
+                      <button 
+                        type="button" 
+                        className="btn-ghost" 
+                        style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                        onClick={() => handleSkillConfirm(req.text)}
+                      >
+                        {t("ats.skill.confirmPresent")}
+                      </button>
+                    )}
+                    <span className="ats-requirement-status" style={{
+                      color: type === "gap" ? 'var(--red)' : 'var(--muted)'
+                    }}>
+                      {t(getUserFacingStatus(type === "gap" ? "GAP" : "UNKNOWN"))}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ),
       true

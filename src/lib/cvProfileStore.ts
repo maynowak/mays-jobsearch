@@ -209,6 +209,37 @@ export function assignCvAtsProfileToSearchProfile(
   return true;
 }
 
+export function updateCvAtsProfileSkills(
+  hash: string | null | undefined,
+  atsId: string,
+  searchProfileId: string | null,
+  newSkills: string[]
+): boolean {
+  if (!hash) return false;
+  const now = Date.now();
+  const bucket = getOrCreateBucket(hash, now);
+  const entry = bucket.atsProfiles.find((e) => e.id === atsId);
+  if (!entry) return false;
+
+  // Rule: Must belong to the provided searchProfileId (Integrity)
+  if (entry.searchProfileId !== searchProfileId) return false;
+
+  // Rule: SearchProfile must exist in this context
+  if (searchProfileId && !bucket.searchProfiles.some(sp => sp.id === searchProfileId)) {
+    return false;
+  }
+
+  // Rule: Idempotent update - only save if skills actually changed
+  const sortedCurrent = [...(entry.skills || [])].sort().join(",");
+  const sortedNew = [...newSkills].sort().join(",");
+  if (sortedCurrent === sortedNew) return true;
+
+  entry.skills = newSkills;
+  entry.savedAt = now;
+  buckets.set(hash, bucket);
+  return true;
+}
+
 export function resolveSearchProfileFromAtsProfile(
   hash: string | null | undefined,
   atsProfileId: string | null | undefined
