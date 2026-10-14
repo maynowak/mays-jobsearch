@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { analyzeATS, type AtsAnalysisResponse, fetchModels } from "../api";
 import type { Job, Profile, ModelOption } from "../types";
 import { useLang } from "../i18n";
@@ -49,32 +49,60 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [previousScore, setPreviousScore] = useState<number | null>(null);
+  // ATS-RECONCILIATION-UI-POLISH-01: per-skill reconciliation states
+  const [addedSkillKeys, setAddedSkillKeys] = useState<Set<string>>(new Set());
+  const [recError, setRecError] = useState("");
+  const [recNotice, setRecNotice] = useState("");
+  // Effektive Skill-Liste für API-Aufrufe: beginnt mit dem Prop-Wert und wird
+  // durch bestätigte Skills lokal erweitert (der Parent rendert erst beim
+  // Schließen des Overlays neu — der Ref verhindert veraltete Payloads).
+  const effectiveSkillsRef = useRef(profile?.skills ?? "");
 
+  // Nur der Skill-STRING ist für die Analyse relevant. Die Objekt-Identität
+  // des Profils ändert sich bei jedem Parent-Render — als Effect-Dependency
+  // würde sie jedes Reconciliation-Badge löschen und Folgeanfragen auslösen.
+  const skillsForAts = profile?.skills ?? "";
 
   useEffect(() => {
-    if (!profile || !profile.skills || !profile.skills.trim()) {
+    // Neuer Job-/Profil-Kontext: Reconciliation-State zurücksetzen.
+    setAddedSkillKeys(new Set());
+    setRecError("");
+    setRecNotice("");
+    setPreviousScore(null);
+    setReanalyzing(false);
+    effectiveSkillsRef.current = skillsForAts;
+
+    if (!skillsForAts.trim()) {
       setLoading(false);
       setError(t("match.noProfile"));
       return;
     }
 
-    const profileForAts = { skills: profile.skills };
+    let cancelled = false;
+    setLoading(true);
+    setError("");
     analyzeATS(
       { title: job.title, tags: job.tags, slug: job.slug },
-      profileForAts,
+      { skills: skillsForAts },
       { enabled: false }
     )
       .then((result) => {
+        if (cancelled) return;
         setAnalysis(result);
         onAtsAnalyzed?.(result);
-        setLoading(false);
       })
       .catch((err: unknown) => {
+        if (cancelled) return;
         const message = err instanceof Error ? err.message : String(err);
         setError(message || t("match.analysisError"));
-        setLoading(false);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
-  }, [job, profile, t, onAtsAnalyzed]);
+    return () => {
+      cancelled = true;
+    };
+  }, [job, skillsForAts, t, onAtsAnalyzed]);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -98,7 +126,8 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
     setAiError("");
 
     try {
-      const profileForAts = { skills: profile.skills };
+      // Nutzt die effektiven Skills (inkl. bestätigter Ergänzungen).
+      const profileForAts = { skills: effectiveSkillsRef.current };
       const refreshed = await analyzeATS(
         { title: job.title, tags: job.tags, slug: job.slug },
         profileForAts,
@@ -115,33 +144,59 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
     }
   };
 
-  const handleSkillConfirm = async (skill: string) => {
-    if (!onSkillAdded) return;
+  // ATS-RECONCILIATION-UI-POLISH-01: Bestätigung + automatische Neubewertung.
+  // Der Skill ist nach onSkillAdded bereits im ATS-Profil gespeichert —
+  // schlägt nur die Neubewertung fehl, darf das NICHT als "nicht gespeichert"
+  // dargestellt werden.
+  const handleSkillConfirm = async (req: Requirement, key: string) => {
+    if (!onSkillAdded || reanalyzing || addedSkillKeys.has(key)) return;
+    const skill = String(req.text ?? "").trim();
+    if (!skill) return;
+
     try {
       await onSkillAdded(skill);
-      // Re-analyze automatically
-      await triggerReanalysis();
     } catch (err: unknown) {
+      // Speicher-/Validierungsfehler: keine Erfolgsmeldung, Ergebnis bleibt sichtbar.
       const message = err instanceof Error ? err.message : String(err);
-      setError(message || t("match.analysisError"));
+      setRecError(message || t("cv.errorStoreUpdateFailed"));
+      setRecNotice("");
+      return;
     }
+
+    setAddedSkillKeys((prev) => new Set(prev).add(key));
+    setRecError("");
+    await runReevaluation(skill);
   };
 
-  const triggerReanalysis = async () => {
-    if (!profile) return;
+  // Erneuter deterministischer ATS-Lauf mit lokal erweiterter Skill-Liste.
+  const runReevaluation = async (addedSkill: string) => {
+    const currentTokens = effectiveSkillsRef.current
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const isDuplicate = currentTokens.some(
+      (s) => s.toLowerCase() === addedSkill.toLowerCase()
+    );
+    const mergedSkills = (
+      isDuplicate ? currentTokens : [...currentTokens, addedSkill]
+    ).join(", ");
+    effectiveSkillsRef.current = mergedSkills;
+
     setReanalyzing(true);
+    setRecNotice(t("ats.skill.reevaluating"));
     setPreviousScore(analysis?.analysis?.score ?? null);
     try {
-      const profileForAts = { skills: profile.skills };
       const result = await analyzeATS(
         { title: job.title, tags: job.tags, slug: job.slug },
-        profileForAts,
+        { skills: mergedSkills },
         { enabled: false }
       );
       setAnalysis(result);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message || t("match.analysisError"));
+      setRecNotice(t("ats.skill.added"));
+    } catch {
+      // Skill ist gespeichert — nur die Neubewertung schlug fehl.
+      setRecError(t("ats.skill.reevalFailed"));
+      setRecNotice(t("ats.skill.added"));
     } finally {
       setReanalyzing(false);
     }
@@ -296,6 +351,49 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
     );
   };
 
+  // ATS-RECONCILIATION-UI-POLISH-01: Hilfsfunktion für die Aktionsschaltfläche
+  // nur für technische Skills (keine Erfahrung, Rollen, Metadaten)
+  const renderGapAction = (req: Requirement, key: string) => {
+    // Culling: Action nur für eigentliche Skills anbieten
+    if (!["skill", "keyword"].includes(req.category) || !onSkillAdded) return null;
+    if (addedSkillKeys.has(key)) {
+      return (
+        <span className="ats-skill-badge" aria-label={t("ats.skill.alreadyPresent")}>
+          <span aria-hidden="true">✓</span> {t("ats.skill.alreadyPresent")}
+        </span>
+      );
+    }
+    return (
+      <button
+        type="button"
+        className="ats-skill-add"
+        disabled={reanalyzing}
+        onClick={() => void handleSkillConfirm(req, key)}
+      >
+        <span aria-hidden="true">+</span> {t("ats.skill.confirmPresent")}
+      </button>
+    );
+  };
+
+  // Status-Bereich für Reconciliation-Ansagen (aria-live für Screenreader)
+  const renderReconcileStatus = () => {
+    const needs = reanalyzing || !!recError || !!recNotice;
+    if (!needs) return null;
+    return (
+      <div
+        className={`ats-reconcile-status ${recError ? "has-error" : ""}`}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {reanalyzing && <span className="ats-spinner ats-spinner--sm" aria-hidden="true" />}
+        <span>
+          {reanalyzing ? t("ats.skill.reevaluating") : recError || recNotice}
+        </span>
+      </div>
+    );
+  };
+
   const renderDeterministicLabel = () => {
     if (!analysis) return null;
     return (
@@ -375,32 +473,21 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
       (
         <div className="ats-gaps-list">
           {allGapItems.map(({ req, type }, idx: number) => {
-            const isReanalyzing = reanalyzing;
+            const key = `${type}-${req.id || idx}`;
             return (
-              <div key={`${type}-${req.id || idx}`} className="ats-gap-item" style={{
-                borderLeftColor: type === "gap" ? 'var(--red)' : 'var(--muted)',
-                background: type === "gap" ? 'rgba(220, 38, 38, 0.1)' : 'rgba(107, 98, 85, 0.1)'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+              <div
+                key={key}
+                className={`ats-gap-item ${type === "gap" ? "is-gap" : "is-unknown"}`}
+              >
+                <div className="ats-gap-row">
                   <span className="ats-gap-text">{req.text}</span>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {!isReanalyzing && (
-                      <button 
-                        type="button" 
-                        className="btn-ghost" 
-                        style={{ fontSize: '0.75rem', padding: '4px 8px' }}
-                        onClick={() => handleSkillConfirm(req.text)}
-                      >
-                        {t("ats.skill.confirmPresent")}
-                      </button>
-                    )}
-                    <span className="ats-requirement-status" style={{
-                      color: type === "gap" ? 'var(--red)' : 'var(--muted)'
-                    }}>
-                      {t(getUserFacingStatus(type === "gap" ? "GAP" : "UNKNOWN"))}
-                    </span>
-                  </div>
+                  <span
+                    className={`ats-requirement-status ${type === "gap" ? "is-gap" : "is-unknown"}`}
+                  >
+                    {t(getUserFacingStatus(type === "gap" ? "GAP" : "UNKNOWN"))}
+                  </span>
                 </div>
+                <div className="ats-gap-action">{renderGapAction(req, key)}</div>
               </div>
             );
           })}
@@ -602,6 +689,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
           <div className="ats-module">
             {renderDeterministicLabel()}
             {renderScore()}
+            {renderReconcileStatus()}
             {renderRequirements()}
             {renderMatches()}
             {renderGaps()}

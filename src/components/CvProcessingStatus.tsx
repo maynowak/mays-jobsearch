@@ -18,6 +18,7 @@ const STEP_MESSAGES: Record<string, string> = {
   "goal-selection": "cv.statusGoalSelection",
   "ats-processing": "cv.statusATSProcessing",
   "ai-searching": "cv.statusAISearching",
+  "skill-selection": "cv.statusSkillSelect", // ATS-RECONCILIATION-UI-POLISH-01
   "success": "cv.statusSuccess",
   "error": "cv.statusError",
 };

@@ -5166,8 +5166,93 @@ body {
   animation: spin 1s linear infinite;
 }
 
+.ats-spinner--sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  border-color: rgba(13, 148, 136, 0.2);
+  border-top-color: var(--brand);
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ATS-RECONCILIATION-UI-POLISH-01: Skill reconciliation styling */
+.ats-gap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ats-gap-row .ats-gap-text {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.ats-gap-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ats-skill-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--brand);
+  background: rgba(13, 148, 136, 0.1);
+  border: 1px solid rgba(13, 148, 136, 0.45);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ats-skill-add:hover:not(:disabled) {
+  background: rgba(13, 148, 136, 0.2);
+  border-color: var(--brand);
+}
+
+.ats-skill-add:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.ats-skill-add:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.ats-skill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--green);
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.4);
+  border-radius: var(--radius);
+}
+
+.ats-reconcile-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.ats-reconcile-status.has-error {
+  color: var(--red);
 }
 
 @media (max-width: 680px) {

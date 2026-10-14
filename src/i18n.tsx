@@ -95,6 +95,9 @@ const en: Dict = {
   "cv.statusSuccess": "Processing complete",
   "cv.statusError": "Processing error",
   "cv.statusProcessing": "Processing...",
+  // ATS-RECONCILIATION-UI-POLISH-01: skill-selection is not a processing phase
+  "cv.statusTitleSkillSelection": "Prepare ATS profile",
+  "cv.statusSkillSelect": "Select skills",
   "cv.processingStep1": "Document",
   "cv.processingStep2": "Consent",
   "cv.processingStep3": "Model",
@@ -191,6 +194,12 @@ const en: Dict = {
   "cv.startSearch": "Find Jobs",
   "cv.startSearchHint": "Select a CV profile first to start the search.",
   "cv.startSearchMissing": "Saved profile not found. Please select it again.",
+  // ATS-RECONCILIATION-UI-POLISH-01: profile hierarchy error texts (previously raw keys)
+  "cv.errorNoSearchProfileSelected": "Please select a search profile first.",
+  "cv.errorTooManyAtsProfiles": "This search profile already has 5 ATS profiles. Edit an existing one instead.",
+  "cv.errorProfileMissing": "Select a search profile and one of its ATS profiles first.",
+  "cv.errorStoreUpdateFailed": "The ATS profile could not be updated.",
+  "cv.atsUnassigned": "(unassigned)",
   "cv.workflowClose": "Close workflow",
   "cv.continue": "Continue",
   "cv.continueProcessing": "Processing…",
@@ -388,6 +397,12 @@ const en: Dict = {
   "ats.label.deterministic": "Deterministic ATS Evaluation",
   "ats.label.ai": "AI-Formulated Explanation",
   "ats.aiNotice": "This explanation was formulated by AI based on the ATS analysis.",
+  // ATS-RECONCILIATION-UI-POLISH-01: skill reconciliation in the ATS overlay
+  "ats.skill.confirmPresent": "Add to ATS profile",
+  "ats.skill.added": "Skill added",
+  "ats.skill.reevaluating": "Re-evaluating…",
+  "ats.skill.reevalFailed": "Re-evaluation failed",
+  "ats.skill.alreadyPresent": "Already in ATS profile",
 
   "modal.close": "Close",
   "ats.consentTitle": "Enable AI Optimization",
@@ -575,6 +590,9 @@ const de: Dict = {
   "cv.statusSuccess": "Verarbeitung abgeschlossen",
   "cv.statusError": "Verarbeitungsfehler",
   "cv.statusProcessing": "Wird verarbeitet...",
+  // ATS-RECONCILIATION-UI-POLISH-01: Skill-Auswahl ist keine Verarbeitungsphase
+  "cv.statusTitleSkillSelection": "ATS-Profil vorbereiten",
+  "cv.statusSkillSelect": "Skills auswählen",
   "cv.processingStep1": "Dokument",
   "cv.processingStep2": "Einwilligung",
   "cv.processingStep3": "Modell",
@@ -671,6 +689,12 @@ const de: Dict = {
   "cv.startSearch": "Jobs Finden",
   "cv.startSearchHint": "Wähle zuerst ein CV-Profil, um die Suche zu starten.",
   "cv.startSearchMissing": "Gespeichertes Profil nicht gefunden. Bitte erneut auswählen.",
+  // ATS-RECONCILIATION-UI-POLISH-01: Fehlermeldungen der Profilhierarchie (zuvor rohe Keys)
+  "cv.errorNoSearchProfileSelected": "Bitte wähle zuerst ein Suchprofil aus.",
+  "cv.errorTooManyAtsProfiles": "Dieses Suchprofil hat bereits 5 ATS-Profile. Bearbeite stattdessen ein vorhandenes Profil.",
+  "cv.errorProfileMissing": "Wähle zuerst ein Suchprofil und eines seiner ATS-Profile aus.",
+  "cv.errorStoreUpdateFailed": "Das ATS-Profil konnte nicht aktualisiert werden.",
+  "cv.atsUnassigned": "(nicht zugeordnet)",
   "cv.workflowClose": "Workflow schließen",
   "cv.continue": "Weiter",
   "cv.continueProcessing": "Wird verarbeitet…",
@@ -869,6 +893,12 @@ const de: Dict = {
   "ats.label.deterministic": "Deterministische ATS-Bewertung",
   "ats.label.ai": "KI-formulierte Erläuterung",
   "ats.aiNotice": "Diese Erläuterung wurde anhand der ATS-Analyse formuliert.",
+  // ATS-RECONCILIATION-UI-POLISH-01: Skill-Reconciliation im ATS-Overlay
+  "ats.skill.confirmPresent": "Zum ATS-Profil hinzufügen",
+  "ats.skill.added": "Skill hinzugefügt",
+  "ats.skill.reevaluating": "Wird erneut bewertet…",
+  "ats.skill.reevalFailed": "Erneute Bewertung fehlgeschlagen",
+  "ats.skill.alreadyPresent": "Im ATS-Profil vorhanden",
 
   "modal.close": "Schließen",
   "ats.consentTitle": "KI-Optimierung aktivieren",

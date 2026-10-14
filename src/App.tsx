@@ -1568,7 +1568,9 @@ export default function App() {
       aria-labelledby="cv-processing-title"
     >
       <div className="cv-processing-card__head">
-        <h2 id="cv-processing-title" className="cv-processing-title">{t("cv.statusTitle")}</h2>
+        <h2 id="cv-processing-title" className="cv-processing-title">{cvState.step === "skill-selection" && cvState.processingGoal === "ats"
+          ? t("cv.statusTitleSkillSelection")
+          : t("cv.statusTitle")}</h2>
         {/* CV-UPLOAD-UX-09: Schliessen in jedem Overlay-Step */}
         {cvDialogOpen && (
           <button
@@ -2580,29 +2582,25 @@ export default function App() {
               activeAtsId={activeAtsEntryId}
               activeSearchId={selectedSavedSearchId}
               onSkillAdded={async (skill) => {
-                if (!listSourceDoc?.hash || !activeAtsEntryId || !selectedSavedSearchId) {
-                  setStatus({ type: "error", message: t("cv.errorProfileMissing") });
-                  return;
+                if (!listSourceDoc?.hash || !activeAtsEntryId || !selectedSavedSearchId || !activeAtsEntry) {
+                  throw new Error(t("cv.errorProfileMissing"));
                 }
-                const currentSkills = activeAtsEntry?.skills ?? [];
+                const currentSkills = activeAtsEntry.skills ?? [];
                 const normalizedNew = skill.trim();
                 if (currentSkills.some(s => s.toLowerCase() === normalizedNew.toLowerCase())) {
-                  return; // Idempotent
+                  return; // Idempotent, bereits vorhanden
                 }
-                const updatedSkills = [...currentSkills, normalizedNew];
                 const success = updateCvAtsProfileSkills(
                   listSourceDoc.hash,
                   activeAtsEntryId,
                   selectedSavedSearchId,
-                  updatedSkills
+                  [...currentSkills, normalizedNew]
                 );
                 if (!success) {
                   throw new Error(t("cv.errorStoreUpdateFailed"));
                 }
-                // Force re-render by triggering a state update in a nearby component or 
-                // simply relying on the fact that the next analyzeATS call reads from store.
-                // To make the UI reactive, we can set a dummy state or just let the 
-                // Modal's internal re-analysis handle it as it calls the API which reads from the server/store.
+                // Erfolg: Statusmeldung für den Dialog nachschließen
+                setStatus({ type: "info", message: t("ats.skill.added") });
               }}
             />
           )}
