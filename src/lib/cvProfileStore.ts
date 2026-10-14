@@ -123,8 +123,29 @@ export function saveCvAtsProfile(
   const now = Date.now();
   const bucket = getOrCreateBucket(hash, now);
   const finalName = name.trim() || targetRoles[0] || skills[0] || "ATS-Profil";
-  // CV-UPLOAD-UX-08: Ueberschreiben bei gleichem Namen (wie Suchprofile)
+
+  // Rule: Prevent accidental re-assignment of an already assigned profile
   const existing = bucket.atsProfiles.find((e) => e.name === finalName);
+  if (existing && existing.searchProfileId !== null && existing.searchProfileId !== searchProfileId) {
+    return null; // Block re-assignment via name-overwrite
+  }
+
+  // Rule: SearchProfile must actually exist in this CV context
+  if (searchProfileId && !bucket.searchProfiles.some(sp => sp.id === searchProfileId)) {
+    return null;
+  }
+
+  // Rule: Max 5 ATS profiles per search profile
+  if (searchProfileId) {
+    const assignedCount = bucket.atsProfiles.filter(e => e.searchProfileId === searchProfileId).length;
+    const isChangingAssignment = existing && existing.searchProfileId !== searchProfileId;
+    
+    // If it's a new profile for this searchProfile, check cap
+    if (!existing || isChangingAssignment) {
+      if (assignedCount >= 5) return null;
+    }
+  }
+
   const entry: CvAtsProfileEntry = existing
     ? { ...existing, savedAt: now, skills, targetRoles, searchProfileId }
     : { id: generateEntryId(), name: finalName, savedAt: now, targetRoles, skills, searchProfileId };
@@ -168,7 +189,33 @@ export function assignCvAtsProfileToSearchProfile(
   const bucket = getOrCreateBucket(hash, now);
   const entry = bucket.atsProfiles.find((e) => e.id === atsId);
   if (!entry) return false;
+
+  // Rule: Idempotent assignment
+  if (entry.searchProfileId === searchProfileId) return true;
+
+  // Rule: SearchProfile must actually exist in this CV context
+  if (searchProfileId && !bucket.searchProfiles.some(sp => sp.id === searchProfileId)) {
+    return false;
+  }
+
+  // Rule: Max 5 ATS profiles per search profile (for new assignment)
+  if (searchProfileId) {
+    const assignedCount = bucket.atsProfiles.filter(e => e.searchProfileId === searchProfileId).length;
+    if (assignedCount >= 5) return false;
+  }
+
   entry.searchProfileId = searchProfileId;
   buckets.set(hash, bucket);
   return true;
+}
+
+export function resolveSearchProfileFromAtsProfile(
+  hash: string | null | undefined,
+  atsProfileId: string | null | undefined
+): CvSearchProfileEntry | null {
+  if (!hash || !atsProfileId) return null;
+  const lists = readCvProfileLists(hash);
+  const atsEntry = lists.atsProfiles.find(e => e.id === atsProfileId);
+  if (!atsEntry || !atsEntry.searchProfileId) return null;
+  return findSavedSearchProfile(lists, atsEntry.searchProfileId);
 }
