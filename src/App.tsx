@@ -153,6 +153,7 @@ export default function App() {
     matchImpactJob: null,
     selectedSkills: [],
     cvProfile: null,
+    inferredSkills: [],
   });
 
   const {
@@ -558,6 +559,7 @@ export default function App() {
       matchImpactJob: null,
       selectedSkills: [],
       cvProfile: null,
+      inferredSkills: [],
     });
   };
 

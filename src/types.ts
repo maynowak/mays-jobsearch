@@ -48,6 +48,14 @@ export interface Profile {
   employmentTypes: EmploymentType[];
 }
 
+export type SkillSource = "explicit" | "context";
+
+export interface InferableSkill {
+  skill: string;
+  evidence: string;
+  importance: 1 | 2 | 3;
+}
+
 export interface SuggestedProfile {
   skills: string[];
   experienceLevel: string;
@@ -368,4 +376,6 @@ export interface CvProcessingState {
   matchImpactJob: Job | null;
   selectedSkills: string[];
   cvProfile: Profile | null;
+  // ATS-RECENT-01: Implizite Skills aus Kontext-Inferenz (nicht automatisch gespeichert)
+  inferredSkills: InferableSkill[];
 }
