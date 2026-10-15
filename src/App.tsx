@@ -2602,8 +2602,7 @@ export default function App() {
                 if (!success) {
                   throw new Error(t("cv.errorStoreUpdateFailed"));
                 }
-                // Erfolg: Statusmeldung für den Dialog nachschließen
-                setStatus({ type: "info", message: t("ats.skill.added") });
+                // Erfolg wird bereits im AtsOverlay via runReevaluation() aktualisiert
               }}
             />
           )}
