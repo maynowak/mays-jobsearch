@@ -22,9 +22,10 @@ function renderHtmlContent(html: string, lang?: string) {
 interface Props {
   job: Job;
   onAtsEvaluate?: (job: Job) => void;
+  analyzing?: boolean;
 }
 
-export default function RemainingCard({ job, onAtsEvaluate }: Props) {
+export default function RemainingCard({ job, onAtsEvaluate, analyzing }: Props) {
   const { t, lang } = useLang();
   const [expanded, setExpanded] = useState(false);
   const [detailJob, setDetailJob] = useState<Job | null>(null);
@@ -98,6 +99,7 @@ export default function RemainingCard({ job, onAtsEvaluate }: Props) {
           </span>
         ))}
         {contractLabel && <span className="badge badge-contract">{contractLabel}</span>}
+        {analyzing && <span className="badge badge-analyzing" title={t("match.analyzing")}>🔍</span>}
         <SourceBadge sources={job.source} />
       </div>
 

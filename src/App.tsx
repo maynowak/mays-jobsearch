@@ -2510,6 +2510,7 @@ export default function App() {
                       foundJobs={foundJobs}
                       onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
                       onAtsEvaluate={(job) => setAtsJob(job)}
+                      analyzingJobSlug={atsJob?.slug ?? null}
                     />
                   </section>
                 ) : (

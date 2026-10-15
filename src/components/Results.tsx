@@ -12,9 +12,10 @@ interface Props {
   foundJobs: Job[];
   onGenerateLetter: (job: Job, prepare: string) => void;
   onAtsEvaluate?: (job: Job) => void;
+  analyzingJobSlug?: string | null; // Job currently being analyzed in ATS overlay
 }
 
-export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEvaluate }: Props) {
+export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEvaluate, analyzingJobSlug }: Props) {
   const { t } = useLang();
   const [expanded, setExpanded] = useState(false);
   const [moreOpen, setMoreOpen] = useState<boolean>(() => matches.length === 0);
@@ -66,15 +67,20 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
 
       {matches.length > 0 && (
         <ol className="match-list">
-          {visible.map((match, index) => (
-            <MatchCard
-              key={match.job?.slug ?? index}
-              match={match}
-              index={index}
-              onGenerateLetter={onGenerateLetter}
-              onAtsEvaluate={onAtsEvaluate}
-            />
-          ))}
+          {visible.map((match, index) => {
+            const matchJobSlug = match.job?.slug;
+            const isAnalyzing = matchJobSlug === analyzingJobSlug;
+            return (
+              <MatchCard
+                key={matchJobSlug ?? index}
+                match={match}
+                index={index}
+                onGenerateLetter={onGenerateLetter}
+                onAtsEvaluate={onAtsEvaluate}
+                analyzing={isAnalyzing}
+              />
+            );
+          })}
         </ol>
       )}
 
@@ -109,7 +115,12 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
           {moreOpen && (
             <ol id="remaining-jobs" className="remaining-list">
               {remainingJobs.map((job) => (
-                <RemainingCard key={job.slug} job={job} onAtsEvaluate={onAtsEvaluate} />
+                <RemainingCard 
+                  key={job.slug} 
+                  job={job} 
+                  onAtsEvaluate={onAtsEvaluate}
+                  analyzing={job.slug === analyzingJobSlug}
+                />
               ))}
             </ol>
           )}

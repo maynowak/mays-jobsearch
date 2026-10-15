@@ -10,13 +10,14 @@ interface Props {
   index: number;
   onGenerateLetter: (job: Job, prepare: string) => void;
   onAtsEvaluate?: (job: Job) => void;
+  analyzing?: boolean;
 }
 
 function renderHtmlContent(html: string) {
   return renderSanitizedHtml(html);
 }
 
-export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluate }: Props) {
+export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluate, analyzing }: Props) {
   const { t } = useLang();
   const job = match.job ?? ({} as Partial<Job>);
   const m = (job as Job) || {};
@@ -25,8 +26,9 @@ export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluat
     formatGermanLocation(m.location ?? []) || (m.remote ? t("match.remote") : t("match.locationNotStated"));
 
   return (
-    <li className="match-card">
+    <li className={`match-card${analyzing ? " match-card--analyzing" : ""}`}>
       <span className="rank">#{index + 1}</span>
+      {analyzing && <span className="match-analyzing-badge" title={t("match.analyzing")}>🔍</span>}
       <ScoreBadge score={match.score} />
 
       <div className="match-body">

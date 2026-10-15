@@ -218,11 +218,12 @@ export function updateCvAtsProfileSkills(
   if (!hash) return false;
   const now = Date.now();
   const bucket = getOrCreateBucket(hash, now);
-  const entry = bucket.atsProfiles.find((e) => e.id === atsId);
-  if (!entry) return false;
+  const entryIndex = bucket.atsProfiles.findIndex((e) => e.id === atsId);
+  if (entryIndex === -1) return false;
 
   // Rule: Must belong to the provided searchProfileId (Integrity)
-  if (entry.searchProfileId !== searchProfileId) return false;
+  const existingEntry = bucket.atsProfiles[entryIndex];
+  if (existingEntry.searchProfileId !== searchProfileId) return false;
 
   // Rule: SearchProfile must exist in this context
   if (searchProfileId && !bucket.searchProfiles.some(sp => sp.id === searchProfileId)) {
@@ -230,12 +231,17 @@ export function updateCvAtsProfileSkills(
   }
 
   // Rule: Idempotent update - only save if skills actually changed
-  const sortedCurrent = [...(entry.skills || [])].sort().join(",");
+  const sortedCurrent = [...(existingEntry.skills || [])].sort().join(",");
   const sortedNew = [...newSkills].sort().join(",");
   if (sortedCurrent === sortedNew) return true;
 
-  entry.skills = newSkills;
-  entry.savedAt = now;
+  // Create new entry to preserve reference semantics (avoid React re-render issues)
+  const newEntry: CvAtsProfileEntry = {
+    ...existingEntry,
+    skills: [...newSkills],
+    savedAt: now,
+  };
+  bucket.atsProfiles[entryIndex] = newEntry;
   buckets.set(hash, bucket);
   return true;
 }

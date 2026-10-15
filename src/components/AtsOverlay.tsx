@@ -102,7 +102,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
     return () => {
       cancelled = true;
     };
-  }, [job, skillsForAts, t, onAtsAnalyzed]);
+  }, [job, t, onAtsAnalyzed]);
 
   useEffect(() => {
     const loadModels = async () => {
