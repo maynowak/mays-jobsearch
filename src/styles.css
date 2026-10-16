@@ -5105,6 +5105,17 @@ body {
   background: rgba(107, 98, 85, 0.05);
 }
 
+/* ATS-TABLE-LAYOUT-01: Anforderungstext links, Status rechts.
+   Ohne dieses Flex-Wrapper laufen beide Inline-Spalten ohne Abstand
+   zusammen ("devopsPasst"). Gilt fuer alle Anforderungs-Tabellen. */
+.ats-requirement-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .ats-requirement-text {
   font-size: 0.9rem;
   color: var(--text);

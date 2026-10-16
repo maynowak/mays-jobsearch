@@ -426,7 +426,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
                 key={req.id || idx}
                 className={`ats-requirement ${status.toLowerCase()}`}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="ats-requirement-row">
                   <span className="ats-requirement-text">{req.text}</span>
                   <span className={`ats-requirement-status ${status.toLowerCase()}`}>
                     {userStatus}
@@ -449,9 +449,14 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
       (
         <div className="ats-criteria">
           {matchedRequirements.map((req, idx) => (
-            <div key={req.id || idx} className="ats-requirement matched" style={{ borderLeftColor: 'var(--green)', background: 'rgba(22, 163, 74, 0.05)' }}>
-              <span className="ats-requirement-text">{req.text}</span>
-              <span className="ats-requirement-status matched">{t("ats.status.matched")}</span>
+            // ATS-TABLE-LAYOUT-01: ohne Flex-Wrapper fallen Text und Status
+            // als Inline-Elemente ohne Abstand zusammen ("devopsPasst").
+            // Gleiche Zeilen-Struktur wie renderRequirements().
+            <div key={req.id || idx} className="ats-requirement matched">
+              <div className="ats-requirement-row">
+                <span className="ats-requirement-text">{req.text}</span>
+                <span className="ats-requirement-status matched">{t("ats.status.matched")}</span>
+              </div>
             </div>
           ))}
         </div>

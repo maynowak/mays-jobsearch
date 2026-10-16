@@ -309,3 +309,89 @@ describe("ATS-UI-DATA-01: Keyword Coverage ist Prozent, kein Ratio", () => {
     cleanup();
   });
 });
+
+describe("ATS-TABLE-LAYOUT-01: Anforderungs-Tabellen trennen Text und Status", () => {
+  // Regression: In "Was bereits passt" lagen Text und Status als direkte
+  // Inline-Children in einem Block-Container. Sie liefen ohne Abstand
+  // zusammen ("devopsPasst"). Beide Tabellen brauchen denselben
+  // Flex-Wrapper .ats-requirement-row.
+  const layoutAnalysis = createMockAnalysis({
+    analysis: {
+      score: 90,
+      keywordCoverage: { overall: 90 },
+      criticalGaps: [],
+      requirements: [
+        { id: "req-devops", text: "devops", category: "skill", importance: "high" },
+        { id: "req-engineer", text: "engineer", category: "skill", importance: "high" },
+        { id: "req-cloud", text: "cloud-architect", category: "skill", importance: "high" },
+      ],
+      matches: [
+        { requirementId: "req-devops", status: "MATCHED", confidence: "HIGH" },
+        { requirementId: "req-engineer", status: "MATCHED", confidence: "HIGH" },
+        { requirementId: "req-cloud", status: "MATCHED", confidence: "HIGH" },
+      ],
+    },
+  });
+
+  async function renderLayout() {
+    vi.mocked(analyzeATS).mockResolvedValue(layoutAnalysis);
+    const { container } = render(
+      <LangProvider>
+        <AtsOverlay job={baseJob} profile={baseProfile} onClose={vi.fn()} />
+      </LangProvider>
+    );
+    await screen.findByText("ATS-Bewertung");
+    return container;
+  }
+
+  it("rendert Anforderungstext und Status als getrennte Elemente", async () => {
+    await renderLayout();
+
+    // Wichtig: textContent ist hier KEIN gueltiger Indikator. Adjazente
+    // Elemente werden dort immer verkettet ("devopsPasst") - unabhaengig
+    // vom CSS-Layout. Der Bug war rein visuell (Inline-Elemente ohne
+    // Abstand). Nachweis daher ueber getrennte Element-Knoten:
+    // getByText("devops") matcht nur ein Element mit EXAKT diesem Text.
+    // Waere der Text mit dem Status verschmolzen, schlaegt das fehl.
+    expect(screen.getAllByText("devops").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("engineer").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("cloud-architect").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Passt").length).toBeGreaterThan(0);
+    cleanup();
+  });
+
+  it("gibt jeder Anforderungszeile einen Flex-Wrapper (.ats-requirement-row)", async () => {
+    const container = await renderLayout();
+
+    // Jede Zeile in BEIDEN Tabellen nutzt dieselbe Wrapper-Klasse.
+    // Ohne Wrapper stehen Text und Status als Inline-Elemente direkt
+    // nebeneinander und laufen optisch zusammen.
+    const rows = container.querySelectorAll(".ats-requirement-row");
+    expect(rows.length).toBeGreaterThanOrEqual(6); // 3 Anforderungen + 3 Matches
+
+    // Wrapper beinhaltet getrennte Text- und Status-Spalten.
+    const first = rows[0];
+    expect(first?.querySelector(".ats-requirement-text")).not.toBeNull();
+    expect(first?.querySelector(".ats-requirement-status")).not.toBeNull();
+    cleanup();
+  });
+
+  it("nutzt in BEIDEN Tabellen die identische Zeilen-Struktur", async () => {
+    const container = await renderLayout();
+
+    // "Anforderungen der Stelle" und "Was bereits passt" muessen beide
+    // ueber .ats-requirement-row verfuegen - genau das war der Unterschied,
+    // durch den nur die untere Tabelle fehlerhaft rendete.
+    const requirementRows = container.querySelectorAll(
+      ".ats-requirement .ats-requirement-row"
+    );
+    expect(requirementRows.length).toBeGreaterThanOrEqual(6);
+
+    // Keine Anforderungszeile darf ohne Wrapper auskommen.
+    const orphanRows = Array.from(
+      container.querySelectorAll(".ats-requirement")
+    ).filter((row) => !row.querySelector(".ats-requirement-row"));
+    expect(orphanRows).toHaveLength(0);
+    cleanup();
+  });
+});
