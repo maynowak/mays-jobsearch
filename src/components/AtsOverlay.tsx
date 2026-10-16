@@ -353,10 +353,12 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
 
   // ATS-RECONCILIATION-UI-POLISH-01: Hilfsfunktion für die Aktionsschaltfläche
   // nur für technische Skills (keine Erfahrung, Rollen, Metadaten)
-  const renderGapAction = (req: Requirement, key: string) => {
+  const renderGapAction = (req: Requirement, key: string, isAlreadyAdded: boolean = false) => {
     // Culling: Action nur für eigentliche Skills anbieten
     if (!["skill", "keyword"].includes(req.category) || !onSkillAdded) return null;
-    if (addedSkillKeys.has(key)) {
+    
+    // Ensure we don't add the same skill twice - check both state and already-added flag
+    if (addedSkillKeys.has(key) || isAlreadyAdded) {
       return (
         <span className="ats-skill-badge" aria-label={t("ats.skill.alreadyPresent")}>
           <span aria-hidden="true">✓</span> {t("ats.skill.alreadyPresent")}
@@ -473,7 +475,9 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
       (
         <div className="ats-gaps-list">
           {allGapItems.map(({ req, type }, idx: number) => {
-            const key = `${type}-${req.id || idx}`;
+            // Use req.id exclusively for key to avoid duplicates when same text appears
+            const key = req.id || `gap_${idx}`;
+            const isAdded = addedSkillKeys.has(key);
             return (
               <div
                 key={key}
@@ -487,7 +491,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
                     {t(getUserFacingStatus(type === "gap" ? "GAP" : "UNKNOWN"))}
                   </span>
                 </div>
-                <div className="ats-gap-action">{renderGapAction(req, key)}</div>
+                <div className="ats-gap-action">{renderGapAction(req, key, isAdded)}</div>
               </div>
             );
           })}
