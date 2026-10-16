@@ -7,77 +7,57 @@
 
 ## Aktueller Git-Status
 - **Branch:** `main`
-- **HEAD:** `6025309`
+- **HEAD:** `7d79a35`
 - **Remote:** Synchronisiert mit `origin/main`
 
 ## Audit-Umfang
-- Fix für das Problem: "ATS-Vergleich schließt sich nach Skill-Hinzufügung"
-- Betroffene Komponenten: `src/App.tsx`, `src/components/AtsOverlay.tsx`, `src/lib/cvProfileStore.ts`
+- Fix für das Problem: "ATS-Vergleich schließt beim Klick auf Ergebnis"
+- Fix für das Problem: "Mehrere Skills werden hinzugefügt"
+- Betroffene Komponenten: `src/components/AtsOverlay.tsx`, `src/App.tsx`, `src/lib/cvProfileStore.ts`
 
 ## Durchgeführte Änderungen
 
-### 1. Root-Cause-Bestimmung
-- `updateCvAtsProfileSkills` mutierte das Array direkt: `entry.skills = newSkills`
-- `setStatus` in `onSkillAdded` löste unnötigen Re-render aus
-- `AtsOverlay` hatte `skillsForAts` als useEffect-Dependency
+### 1. `src/App.tsx` - Entfernt setStatus
+- Die `setStatus` Call in `onSkillAdded` wurde entfernt
+- Das Overlay behandelt Status intern via `runReevaluation`
 
-### 2. Implementierte Fixes
+### 2. `src/lib/cvProfileStore.ts` - Array-Kopie statt Mutation
+- `skills: [...newSkills]` statt `entry.skills = newSkills`
 
-#### Datei: `src/lib/cvProfileStore.ts` (Zeile 238)
-```
-BEFORE: entry.skills = newSkills; // direkte Mutation
-AFTER:  entry.skills = [...newSkills]; // Kopie
-```
+### 3. `src/components/AtsOverlay.tsx` - Modal-Backdrop-Pattern
 
-#### Datei: `src/components/AtsOverlay.tsx` (Zeile 66)
-```
-BEFORE: }, [job, skillsForAts, t, onAtsAnalyzed]);
-AFTER:  }, [job, t, onAtsAnalyzed]);
-```
+#### 3.1 Key-Generierung verbessert
+- Verwendet jetzt `req.id || idx` statt `${type}-${req.id || idx}`
+- Das minimiert Duplikate bei Requirements mit gleichem Text
 
-#### Datei: `src/App.tsx` (Zeile 2605)
-```
-BEFORE: setStatus({ type: "info", message: t("ats.skill.added") });
-AFTER:  // Entfernt - AtsOverlay behandelt Status intern via runReevaluation
-```
+#### 3.2 renderGapAction Parameter erweitert
+- Neuer Parameter `isAlreadyAdded` für bessere Status-Bestimmung
+- Prüft sowohl `addedSkillKeys` als auch `isAlreadyAdded`
 
-### 3. Testergebnisse
+### 4. `src/styles.css` - Neue CSS-Klassen
+- `.modal-backdrop` = Backdrop mit Klick-to-close
+- `.modal` = Inhalt (Kompatibilität)
+
+## Testergebnisse
 ```
 Test Files  68 passed | 3 skipped (71)
 Tests  791 passed | 5 skipped (796)
 Build:    ✓ erfolgreich
 ```
 
-### 4. Git-Status
+## Git-History
 ```
-git status: clean
-git log --oneline -2:
+7d79a35 fix(ATS): improve skill key generation and action handling
+933502a fix(ATS-modal): use backdrop pattern for click-to-close
+d71b7d3 docs: add execution log for ATS overlay persistence fix
 6025309 fix(ATS): remove setStatus from onSkillAdded to prevent modal remount
 8ac72b4 feat(ATS): live update for skill addition in comparison view
 ```
 
-### 5. Verifizierte Anforderungen
-
-| Anforderung | Status |
-|------------|--------|
-| ATS-Vergleich bleibt offen nach Skill-Hinzufügung | ✅ |
-| Score wird live aktualisiert | ✅ |
-| Keine doppelten Skills entstehen | ✅ |
-| Keine neue KI-Engine | ✅ |
-| Keine zusätzlichen API-Aufrufe | ✅ |
-
-## Dateien geändert
-- `src/App.tsx` (1 Zeile geändert)
-- `src/components/AtsOverlay.tsx` (1 Zeile geändert)
-- `src/lib/cvProfileStore.ts` (1 Zeile geändert)
-- `src/components/MatchCard.tsx` (neue Prop `analyzing` hinzugefügt)
-- `src/components/Results.tsx` (neue Prop `analyzingJobSlug` hinzugefügt)
-- `src/components/RemainingCard.tsx` (neue Prop `analyzing` hinzugefügt)
-
-## Commit
-- SHA: `6025309`
-- Nachricht: "fix(ATS): remove setStatus from onSkillAdded to prevent modal remount"
-- PUSH: Nach `origin/main` verifiziert
+## Status
+- **Implementierung:** ABGESCHLOSSEN
+- **Tests:** BESTANDEN
+- **Build:** ERFOLGREICH
 
 ---
 AI-AUDITLOG-Ende
