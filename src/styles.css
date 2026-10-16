@@ -4786,6 +4786,21 @@ body {
 
 /* Modal */
 
+/* Backdrop wrapper - handles click-to-close */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 17, 28, 0.84);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+/* Modal content box */
 .modal {
   position: fixed;
   inset: 0;

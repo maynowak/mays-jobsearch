@@ -625,8 +625,8 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
 
   if (loading) {
     return (
-      <div className="modal" onClick={onClose} role="dialog" aria-modal="true" aria-label={t("ats.overlayTitle")}>
-        <div className="modal-box">
+      <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label={t("ats.overlayTitle")}>
+        <div className="modal-box" onClick={(e) => e.stopPropagation()}>
           <div className="modal-head">
             <h3>{t("ats.loading")}</h3>
             <button
@@ -645,8 +645,8 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
 
   if (error || !analysis) {
     return (
-      <div className="modal" onClick={onClose} role="dialog" aria-modal="true" aria-label={t("ats.overlayTitle")}>
-        <div className="modal-box">
+      <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label={t("ats.overlayTitle")}>
+        <div className="modal-box" onClick={(e) => e.stopPropagation()}>
           <div className="modal-head">
             <h3>{t("ats.error")}</h3>
             <button
@@ -666,8 +666,8 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
 
   return (
     <>
-      <div className="modal" onClick={onClose} role="dialog" aria-modal="true" aria-label={t("ats.overlayTitle")}>
-        <div className="modal-box">
+      <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label={t("ats.overlayTitle")}>
+        <div className="modal-box" onClick={(e) => e.stopPropagation()}>
           <div className="modal-head">
             <div>
               <h3>{t("ats.overlayTitle")}</h3>
