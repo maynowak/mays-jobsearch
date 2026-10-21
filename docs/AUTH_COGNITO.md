@@ -8,9 +8,13 @@ No new auth libraries were introduced. Existing `src/lib/oidcConfig.ts` is the s
 File: `src/lib/oidcConfig.ts`
 
 ```ts
+const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
+const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID || 'eu-central-1_ojbmoiYGM';
+const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '24qns4st861fc72bk7cucjc375';
+
 export const oidcConfig = {
-  authority: 'https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ojbmoiYGM',
-  client_id: '24qns4st861fc72bk7cucjc375',
+  authority: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`,
+  client_id: CLIENT_ID,
   redirect_uri: 'https://www.mays-job-matcher.app/auth/callback',
   post_logout_redirect_uri: 'https://www.mays-job-matcher.app/',
   response_type: 'code',
@@ -18,14 +22,16 @@ export const oidcConfig = {
 };
 ```
 
-* Authority: `https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ojbmoiYGM`
+* Authority: `https://cognito-idp.${VITE_AWS_REGION}.amazonaws.com/${VITE_COGNITO_USER_POOL_ID}`
+* Client ID: `VITE_COGNITO_CLIENT_ID`
 * Scopes: `openid email profile`
 * Redirect URI: `https://www.mays-job-matcher.app/auth/callback`
 * Post logout redirect: `https://www.mays-job-matcher.app/`
 
 ## Client IDs
-* **Jobsearch frontend**: `24qns4st861fc72bk7cucjc375` – used in `oidcConfig.ts` and `AuthProvider`.
-* **Human Login client for Mays-RIS**: `7ldhihlpdgsgcl3puvu4oi7ksv` – **do not use in frontend**. Reserved for Mays-RIS Human Login flows.
+* **Jobsearch frontend**: `VITE_COGNITO_CLIENT_ID` – konfiguriert in Vercel, aktuell `7ldhihlpdgsgcl3puvu4oi7ksv`
+* **Fallback / Historisch**: `24qns4st861fc72bk7cucjc375`
+* **Human Login client for Mays-RIS**: `7ldhihlpdgsgcl3puvu4oi7ksv` – war bisher reserviert, wird nun für Jobsearch via Env Var verwendet. Dokumentation anpassen falls RIS-Client ebenfalls genutzt wird.
 
 ## Flow & Safety
 * Authorization Code Flow with PKCE is enforced by `react-oidc-context` + `oidc-client-ts` for response_type `code`.
