@@ -9,7 +9,7 @@ File: `src/lib/oidcConfig.ts`
 
 ```ts
 export const oidcConfig = {
-  authority: 'https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_IfucuxPC1',
+  authority: 'https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ojbmoiYGM',
   client_id: '24qns4st861fc72bk7cucjc375',
   redirect_uri: 'https://www.mays-job-matcher.app/auth/callback',
   post_logout_redirect_uri: 'https://www.mays-job-matcher.app/',
@@ -18,7 +18,7 @@ export const oidcConfig = {
 };
 ```
 
-* Authority: `https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_IfucuxPC1`
+* Authority: `https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ojbmoiYGM`
 * Scopes: `openid email profile`
 * Redirect URI: `https://www.mays-job-matcher.app/auth/callback`
 * Post logout redirect: `https://www.mays-job-matcher.app/`

@@ -19,7 +19,7 @@ Verbinden der bestehenden Login-Oberfläche mit bereits vorbereitetem AWS Cognit
 ### Auth-Komponenten
 - `src/main.tsx` — `AuthProvider {...oidcConfig}` wraps `<App />`
 - `src/lib/oidcConfig.ts` — OIDC Konfiguration
-  - authority: `https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_IfucuxPC1`
+  - authority: `https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ojbmoiYGM`
   - client_id: `24qns4st861fc72bk7cucjc375`
   - redirect_uri: `https://www.mays-job-matcher.app/auth/callback`
   - post_logout_redirect_uri: `https://www.mays-job-matcher.app/`
@@ -47,7 +47,7 @@ Verbinden der bestehenden Login-Oberfläche mit bereits vorbereitetem AWS Cognit
 
 Aus Repository-Konfiguration und bisherigen Berichten:
 - **Jobsearch Frontend Client:** `24qns4st861fc72bk7cucjc375`
-  - Authority: `https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_IfucuxPC1`
+  - Authority: `https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ojbmoiYGM`
   - Redirect URI (registriert): `https://www.mays-job-matcher.app/auth/callback`
   - Logout URI (registriert): `https://www.mays-job-matcher.app/`
   - Scopes: `openid email profile`

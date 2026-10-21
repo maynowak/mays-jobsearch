@@ -20,8 +20,8 @@
 
 ## 3. Cognito Configuration
 - Region eu-central-1
-- User Pool eu-central-1_IfucuxPC1
-- Authority https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_IfucuxPC1
+- User Pool eu-central-1_ojbmoiYGM
+- Authority https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ojbmoiYGM
 - Client ID 24qns4st861fc72bk7cucjc375
 - Callback https://www.mays-job-matcher.app/auth/callback
 - Logout https://www.mays-job-matcher.app/
