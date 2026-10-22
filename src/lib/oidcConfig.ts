@@ -1,6 +1,6 @@
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
 const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID || 'eu-central-1_ojbmoiYGM';
-const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '24qns4st861fc72bk7cucjc375';
+const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '7ldhihlpdgsgcl3puvu4oi7ksv';
 
 export const oidcConfig = {
   authority: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`,
