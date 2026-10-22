@@ -24,6 +24,7 @@ import { useSearchWorldMotion } from "./hooks/useSearchWorldMotion";
 import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
 import AuthCallback from "./components/AuthCallback";
+import EmailConfirmation from "./components/EmailConfirmation";
 import ProfilePage from "./components/Profile";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
@@ -83,6 +84,8 @@ export default function App() {
     // REGISTRATION-UI-01: reine GUI-Routen (kein Backend, keine Session).
     if (path === "/registrieren") return "register";
     if (path === "/anmelden") return "login";
+    // JOBMATCHER-RIS-COGNITO-INTEGRATION-04: E-Mail-Bestätigung nach SignUp.
+    if (path === "/email-bestaetigen") return "emailconfirm";
     return path === "/search" ? "matcher" : "landing";
   })();
   const isAuthCallback = window.location.pathname === "/auth/callback";
@@ -2453,9 +2456,11 @@ export default function App() {
         <main className="container legal-main">
           <Imprint />
         </main>
-      ) : route === "register" || route === "login" ? (
+      ) : route === "register" || route === "login" || route === "emailconfirm" ? (
         // REGISTRATION-UI-01: Auth-Masken als reine GUI (kein Backend,
         // keine Session, keine Gast-State-Berührung).
+        // JOBMATCHER-RIS-COGNITO-INTEGRATION-04: emailconfirm =
+        // E-Mail-Bestätigung nach SignUp (ConfirmSignUp/ResendConfirmationCode).
         // NEURAL-GATEWAY-01: dreistufiger Hintergrund für Auth-Seiten —
         // Layer 1: statisches Bild, Layer 2: SVG-Lichtbahnen, Layer 3: Karte.
         <main className="container legal-main auth-main">
@@ -2481,7 +2486,13 @@ export default function App() {
             <div className="auth-gateway__glow" />
           </div>
           <div className="auth-page">
-            {route === "register" ? <RegisterForm /> : <LoginForm />}
+            {route === "register" ? (
+              <RegisterForm />
+            ) : route === "emailconfirm" ? (
+              <EmailConfirmation />
+            ) : (
+              <LoginForm />
+            )}
           </div>
         </main>
       ) : (

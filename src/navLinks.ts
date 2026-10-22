@@ -22,7 +22,7 @@
 // Beide nutzen denselben Key-Namensraum ("nav.search", "nav.alerts").
 
 /** Routen, für die ein Link freigeschaltet werden kann. */
-export type NavRoute = "landing" | "matcher" | "impressum" | "register" | "login";
+export type NavRoute = "landing" | "matcher" | "impressum" | "register" | "login" | "emailconfirm";
 
 /**
  * Verhalten, wenn der Link bereits auf seiner Ziel-Route zeigt

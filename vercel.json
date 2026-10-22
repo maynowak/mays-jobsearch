@@ -38,6 +38,10 @@
     {
       "source": "/impressum",
       "destination": "/index.html"
+    },
+    {
+      "source": "/email-bestaetigen",
+      "destination": "/index.html"
     }
   ]
 }

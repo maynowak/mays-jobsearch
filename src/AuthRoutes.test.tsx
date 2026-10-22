@@ -63,12 +63,12 @@ describe("AUTH-UI-01: Routen Login ↔ Registrierung ↔ Job Matcher mit Cognito
     ).toBe("/search");
   });
 
-  it("/registrieren rendert Registrierungsmaske mit Navigationen, ohne Passwortfelder", () => {
+  it("/registrieren rendert Registrierungsmaske mit Pflichtfeldern Benutzername/E-Mail/Passwort (INTEGRATION-04)", () => {
     renderAt("/registrieren");
     expect(screen.getByRole("heading", { name: "Konto erstellen" })).toBeTruthy();
-    expect(screen.queryByLabelText("E-Mail-Adresse")).toBeNull();
-    expect(screen.queryByLabelText("Passwort")).toBeNull();
-    expect(screen.queryByLabelText("Passwort wiederholen")).toBeNull();
+    expect(screen.getByLabelText("Benutzername")).toBeTruthy();
+    expect(screen.getByLabelText("E-Mail-Adresse")).toBeTruthy();
+    expect(screen.getByLabelText("Passwort")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Bereits registriert? Anmelden" }).getAttribute("href")
     ).toBe("/anmelden");
