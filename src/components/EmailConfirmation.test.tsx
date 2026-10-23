@@ -35,8 +35,8 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function renderConfirm(username = "testuser") {
-  window.history.replaceState({}, "", `/email-bestaetigen?username=${username}`);
+function renderConfirm(email = "test@example.com") {
+  window.history.replaceState({}, "", `/email-bestaetigen?email=${email}`);
   return render(
     <LangProvider>
       <EmailConfirmation />
@@ -57,7 +57,7 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: E-Mail-Bestätigung", () => {
     ).toBeTruthy();
   });
 
-  it("ohne username-Parameter → klarer Hinweis statt stiller Abbruch", () => {
+  it("ohne email-Parameter → klarer Hinweis statt stiller Abbruch", () => {
     window.history.replaceState({}, "", "/email-bestaetigen");
     render(
       <LangProvider>
@@ -70,6 +70,16 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: E-Mail-Bestätigung", () => {
     expect(
       screen.getByRole("link", { name: "Noch kein Konto? Registrieren" })
     ).toBeTruthy();
+  });
+
+  it("unterstützt alte username-Links als Fallback", () => {
+    window.history.replaceState({}, "", "/email-bestaetigen?username=legacy@example.com");
+    render(
+      <LangProvider>
+        <EmailConfirmation />
+      </LangProvider>
+    );
+    expect(screen.getByLabelText("Bestätigungscode")).toBeTruthy();
   });
 
   it("leeres Code-Feld → Fehlermeldung, kein API-Call", async () => {
@@ -86,7 +96,7 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: E-Mail-Bestätigung", () => {
   it("gültiger Code → ConfirmSignUp-Aufruf, Erfolgs-Anzeige, Link zur Anmeldung", async () => {
     const mockConfirm = cognitoConfirmSignUp as ReturnType<typeof vi.fn>;
     mockConfirm.mockResolvedValueOnce(undefined);
-    renderConfirm("confirmuser");
+    renderConfirm("confirm@example.com");
     fireEvent.change(screen.getByLabelText("Bestätigungscode"), {
       target: { value: "123456" },
     });
@@ -95,7 +105,7 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: E-Mail-Bestätigung", () => {
     );
     await waitFor(() => expect(mockConfirm).toHaveBeenCalledTimes(1));
     expect(mockConfirm).toHaveBeenCalledWith({
-      username: "confirmuser",
+      username: "confirm@example.com",
       code: "123456",
     });
     expect(
@@ -143,12 +153,12 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: E-Mail-Bestätigung", () => {
   it("ResendConfirmationCode → Bestätigungsnachricht", async () => {
     const mockResend = cognitoResendConfirmationCode as ReturnType<typeof vi.fn>;
     mockResend.mockResolvedValueOnce(undefined);
-    renderConfirm("resenduser");
+    renderConfirm("resend@example.com");
     fireEvent.click(
       screen.getByRole("button", { name: "Code erneut senden" })
     );
     await waitFor(() => expect(mockResend).toHaveBeenCalledTimes(1));
-    expect(mockResend).toHaveBeenCalledWith({ username: "resenduser" });
+    expect(mockResend).toHaveBeenCalledWith({ username: "resend@example.com" });
     expect(
       await screen.findByText(/Ein neuer Code wurde an deine E-Mail-Adresse gesendet/i)
     ).toBeTruthy();

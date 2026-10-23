@@ -7,9 +7,10 @@ import {
 } from "../lib/cognitoAuthApi";
 
 /**
- * JOBMATCHER-RIS-COGNITO-INTEGRATION-04 — Registrierung mit lokalem Formular.
+ * EMAIL-ONLY-REGISTRATION-01 — Registrierung mit lokalem Formular.
  *
- * Pflichtfelder: Benutzername, E-Mail, Passwort. Frontend-Validierung
+ * Pflichtfelder: E-Mail, Passwort. Die E-Mail-Adresse ist der Cognito-Username;
+ * ein separates Benutzername-Feld gibt es nicht mehr. Frontend-Validierung
  * (Pflichtfelder, E-Mail-Format, Cognito-Passwort-Policy: min. 8 Zeichen,
  * Groß-/Kleinbuchstaben, Zahlen). Nach erfolgreichem SignUp (UNCONFIRMED)
  * Weiterleitung zur E-Mail-Bestätigung (/email-bestaetigen). Passwort wird
@@ -23,7 +24,6 @@ function meetsPasswordPolicy(pw: string): boolean {
 
 export default function RegisterForm() {
   const { t } = useLang();
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -32,7 +32,6 @@ export default function RegisterForm() {
 
   function validate(): boolean {
     const errors: Record<string, string> = {};
-    if (!username.trim()) errors.username = t("auth.errorRequired");
     if (!email.trim()) errors.email = t("auth.errorEmailRequired");
     else if (!EMAIL_RE.test(email.trim())) errors.email = t("auth.errorEmailInvalid");
     if (!password) errors.password = t("auth.errorPasswordRequired");
@@ -66,10 +65,10 @@ export default function RegisterForm() {
     setServerError(null);
     if (!validate()) return;
     setSubmitting(true);
+    const normalizedEmail = email.trim();
     try {
       const result = await cognitoSignUp({
-        username: username.trim(),
-        email: email.trim(),
+        email: normalizedEmail,
         password,
       });
       // Cognito-Standard nach SignUp: UNCONFIRMED → E-Mail-Bestätigung.
@@ -78,7 +77,7 @@ export default function RegisterForm() {
       // bestätigte Accounts antwortet mit einem klaren Hinweis.)
       void result;
       window.location.assign(
-        `/email-bestaetigen?username=${encodeURIComponent(username.trim())}`
+        `/email-bestaetigen?email=${encodeURIComponent(normalizedEmail)}`
       );
     } catch (err) {
       const cae = err instanceof CognitoAuthError ? err : new CognitoAuthError("unknown", "");
@@ -98,23 +97,6 @@ export default function RegisterForm() {
         </p>
       )}
       <form onSubmit={handleSubmit} noValidate>
-        <div className="auth-field">
-          <label htmlFor="register-username">{t("auth.username")}</label>
-          <input
-            id="register-username"
-            type="text"
-            autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            aria-invalid={Boolean(fieldErrors.username)}
-            aria-describedby={fieldErrors.username ? "register-username-error" : undefined}
-          />
-          {fieldErrors.username && (
-            <p id="register-username-error" className="auth-error" role="alert">
-              {fieldErrors.username}
-            </p>
-          )}
-        </div>
         <div className="auth-field">
           <label htmlFor="register-email">{t("auth.email")}</label>
           <input

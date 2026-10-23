@@ -110,12 +110,14 @@ export interface SignUpResult {
 }
 
 export async function cognitoSignUp(input: {
-  username: string;
-  password: string;
   email: string;
+  password: string;
 }): Promise<SignUpResult> {
+  // EMAIL-ONLY-REGISTRATION-01: Die E-Mail-Adresse ist der Cognito-Username.
+  // Es gibt kein separates Benutzername-Feld mehr. Cognito bekommt die E-Mail
+  // sowohl als `Username` als auch als `email`-Attribut.
   const result = await cognitoRpc<{ UserSub?: string; UserConfirmed?: boolean }>("SignUp", {
-    Username: input.username,
+    Username: input.email,
     Password: input.password,
     UserAttributes: [{ Name: "email", Value: input.email }],
   });

@@ -44,7 +44,7 @@ export const oidcConfig = {
 * Components use `useAuth()` from `react-oidc-context`:
   * `Navbar.tsx` – shows Login / Logout, calls `signoutRedirect` with correct `post_logout_redirect_uri`.
   * `LoginForm.tsx` – `auth.signinRedirect()`.
-  * `RegisterForm.tsx` – `auth.signinRedirect({ extraQueryParams: { screen_hint: "signup" } })`.
+  * `RegisterForm.tsx` – lokales Formular mit E-Mail + Passwort (kein separates Benutzername-Feld). Die E-Mail-Adresse wird als Cognito-Username (`Username`) und als `email`-Attribut an `SignUp` übergeben; danach Weiterleitung nach `/email-bestaetigen?email=…`.
   * `Profile.tsx` – displays claims, handles loading / error / unauthenticated states.
   * `AuthCallback.tsx` – loading → error → redirect to `/profil` on success.
 * Anonymous search stays functional. Auth is optional for Jobsuche, ATS-Vergleich, CV-Upload.
@@ -56,6 +56,14 @@ For future server-side RIS integration:
 * Serverless functions only, via `process.env.RIS_API_KEY`.
 * Any RIS API calls must be performed in `api/**/*.mjs` and return only non-sensitive data to frontend.
 * No AWS changes may be made without explicit approval. Do not modify Mays-RIS repo.
+
+## Registration: Email as Username (EMAIL-ONLY-REGISTRATION-01)
+* The registration form has exactly two fields: email address and password.
+* There is no separate username field.
+* `cognitoSignUp({ email, password })` sends the email as Cognito `Username` and as the `email` user attribute.
+* After a successful `SignUp`, the app redirects to `/email-bestaetigen?email=<email>`.
+* `EmailConfirmation` reads `email` and falls back to the legacy `username` query parameter for older links.
+* Cognito still requires the RPC field `Username`; internally it contains the email address.
 
 ## Verification Checklist
 * [x] `oidcConfig.ts` uses correct client ID, issuer, redirect URIs, scopes, response_type code.

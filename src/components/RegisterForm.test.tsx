@@ -4,10 +4,10 @@ import { LangProvider } from "../i18n";
 import RegisterForm from "./RegisterForm";
 import { CognitoAuthError } from "../lib/cognitoAuthApi";
 
-// JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Registrierung mit lokalem Formular
-// (Benutzername/E-Mail/Passwort) + Cognito SignUp via unauthentifizierte
-// Operation (cognitoAuthApi.ts). Kein Passwortfeld mehr "bewusst abwesend" —
-// der bisherige Hosted-UI-Only-Ansatz (REGISTRATION-UI-01) wurde ersetzt.
+// EMAIL-ONLY-REGISTRATION-01: Registrierung mit lokalem Formular
+// (E-Mail/Passwort). Die E-Mail-Adresse ist der Cognito-Username;
+// ein separates Benutzername-Feld existiert nicht mehr. Cognito SignUp
+// läuft über die unauthentifizierte Operation in cognitoAuthApi.ts.
 
 vi.mock("../lib/cognitoAuthApi", () => ({
   CognitoAuthError: class extends Error {
@@ -42,10 +42,7 @@ function renderForm() {
   );
 }
 
-function fillForm(username: string, email: string, password: string) {
-  fireEvent.change(screen.getByLabelText("Benutzername"), {
-    target: { value: username },
-  });
+function fillForm(email: string, password: string) {
   fireEvent.change(screen.getByLabelText("E-Mail-Adresse"), {
     target: { value: email },
   });
@@ -54,13 +51,14 @@ function fillForm(username: string, email: string, password: string) {
   });
 }
 
-describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Registrierung mit lokalem Formular", () => {
-  it("rendert Pflichtfelder Benutzername, E-Mail und Passwort", () => {
-    renderForm();
+describe("EMAIL-ONLY-REGISTRATION-01: Registrierung mit E-Mail und Passwort", () => {
+  it("rendert nur die Pflichtfelder E-Mail und Passwort", () => {
+    const { container } = renderForm();
     expect(screen.getByRole("heading", { name: "Konto erstellen" })).toBeTruthy();
-    expect(screen.getByLabelText("Benutzername")).toBeTruthy();
     expect(screen.getByLabelText("E-Mail-Adresse")).toBeTruthy();
     expect(screen.getByLabelText("Passwort")).toBeTruthy();
+    expect(screen.queryByLabelText("Benutzername")).toBeNull();
+    expect(container.querySelectorAll("form input")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Konto erstellen" })).toBeTruthy();
   });
 
@@ -77,13 +75,14 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Registrierung mit lokalem Formu
   it("Pflichtfeld-Validierung: leere Felder → Fehlermeldungen, kein SignUp", async () => {
     renderForm();
     fireEvent.submit(screen.getByRole("button", { name: "Konto erstellen" }).closest("form")!);
-    expect(await screen.findByText("Dieses Feld ist erforderlich.")).toBeTruthy();
+    expect(await screen.findByText("Bitte gib deine E-Mail-Adresse ein.")).toBeTruthy();
+    expect(await screen.findByText("Bitte gib ein Passwort ein.")).toBeTruthy();
     expect(cognitoSignUp).not.toHaveBeenCalled();
   });
 
   it("E-Mail-Format-Validierung → Fehlermeldung", async () => {
     renderForm();
-    fillForm("testuser", "not-an-email", "Testpass1");
+    fillForm("not-an-email", "Testpass1");
     fireEvent.submit(screen.getByRole("button", { name: "Konto erstellen" }).closest("form")!);
     expect(await screen.findByText(/Bitte gib eine gültige E-Mail-Adresse ein/i)).toBeTruthy();
     expect(cognitoSignUp).not.toHaveBeenCalled();
@@ -91,7 +90,7 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Registrierung mit lokalem Formu
 
   it("Passwort-Policy-Validierung (zu kurz, keine Zahl) → Fehlermeldung", async () => {
     renderForm();
-    fillForm("testuser", "test@example.com", "abc");
+    fillForm("test@example.com", "abc");
     fireEvent.submit(screen.getByRole("button", { name: "Konto erstellen" }).closest("form")!);
     expect(
       await screen.findByText(/mindestens 8 Zeichen lang sein sowie Groß- und Kleinbuchstaben und eine Zahl enthalten/i)
@@ -99,15 +98,14 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Registrierung mit lokalem Formu
     expect(cognitoSignUp).not.toHaveBeenCalled();
   });
 
-  it("gültige Eingabe → SignUp wird aufgerufen mit korrekten Daten", async () => {
+  it("gültige Eingabe → SignUp wird mit E-Mail als Username aufgerufen", async () => {
     const mockSignUp = cognitoSignUp as ReturnType<typeof vi.fn>;
     mockSignUp.mockResolvedValueOnce({ userSub: "test-sub", confirmed: false });
     renderForm();
-    fillForm("testuser", "test@example.com", "Testpass1A");
+    fillForm("test@example.com", "Testpass1A");
     fireEvent.submit(screen.getByRole("button", { name: "Konto erstellen" }).closest("form")!);
     await waitFor(() => expect(mockSignUp).toHaveBeenCalledTimes(1));
     expect(mockSignUp).toHaveBeenCalledWith({
-      username: "testuser",
       email: "test@example.com",
       password: "Testpass1A",
     });
@@ -119,7 +117,7 @@ describe("JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Registrierung mit lokalem Formu
       new CognitoAuthError("user-exists", "User already exists")
     );
     renderForm();
-    fillForm("existinguser", "test@example.com", "Testpass1A");
+    fillForm("test@example.com", "Testpass1A");
     fireEvent.submit(screen.getByRole("button", { name: "Konto erstellen" }).closest("form")!);
     expect(
       await screen.findByText(/bereits registriert/i)

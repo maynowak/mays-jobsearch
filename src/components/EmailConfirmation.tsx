@@ -17,7 +17,10 @@ import {
 export default function EmailConfirmation() {
   const { t } = useLang();
   const params = new URLSearchParams(window.location.search);
-  const username = params.get("username") || "";
+  // EMAIL-ONLY-REGISTRATION-01: Die E-Mail ist der Cognito-Username.
+  // `email` ist der neue Parameter; `username` bleibt als Fallback für
+  // bereits versendete/alte Links erhalten.
+  const email = params.get("email") || params.get("username") || "";
   const [code, setCode] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -55,7 +58,7 @@ export default function EmailConfirmation() {
     }
     setSubmitting(true);
     try {
-      await cognitoConfirmSignUp({ username, code: code.trim() });
+      await cognitoConfirmSignUp({ username: email, code: code.trim() });
       setConfirmed(true);
     } catch (err) {
       const cae = err instanceof CognitoAuthError ? err : new CognitoAuthError("unknown", "");
@@ -70,7 +73,7 @@ export default function EmailConfirmation() {
     setNotice(null);
     setResending(true);
     try {
-      await cognitoResendConfirmationCode({ username });
+      await cognitoResendConfirmationCode({ username: email });
       setNotice(t("auth.confirmResent"));
     } catch (err) {
       const cae = err instanceof CognitoAuthError ? err : new CognitoAuthError("unknown", "");
@@ -80,11 +83,11 @@ export default function EmailConfirmation() {
     }
   }
 
-  if (!username) {
+  if (!email) {
     return (
       <AuthCard label={t("auth.confirmTitle")}>
         <h2>{t("auth.confirmTitle")}</h2>
-        <p className="auth-error" role="alert">{t("auth.errorMissingUsername")}</p>
+        <p className="auth-error" role="alert">{t("auth.errorMissingEmail")}</p>
         <nav className="auth-links" aria-label={t("auth.confirmTitle")}>
           <a href="/registrieren">{t("auth.toRegister")}</a>
         </nav>
