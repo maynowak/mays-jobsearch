@@ -1,8 +1,8 @@
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
-const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID || 'eu-central-1_ojbmoiYGM';
-const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '7ldhihlpdgsgcl3puvu4oi7ksv';
-const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'http://localhost:5173/auth/callback';
-const POST_LOGOUT_REDIRECT_URI = import.meta.env.VITE_POST_LOGOUT_REDIRECT_URI || 'http://localhost:5173/';
+const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID || 'eu-central-1_ZURSMpD2O';
+const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '5hb3f6dj5ialg77jf4blur9g6g';
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'https://www.mays-job-matcher.app/auth/callback';
+const POST_LOGOUT_REDIRECT_URI = import.meta.env.VITE_POST_LOGOUT_REDIRECT_URI || 'https://www.mays-job-matcher.app/';
 
 // JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Region + Client-ID für die
 // Cognito-Self-Service-API (cognitoAuthApi.ts) — gleiche Quelle, kein Drift.
