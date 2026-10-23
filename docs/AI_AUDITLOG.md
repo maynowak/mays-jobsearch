@@ -1,3 +1,12 @@
+
+2026-10-23 · JOBMATCHER-LOGOUT-FIX-01
+- Typ: Fix/Auth
+- Status: Done
+- Scope: Cognito logout corrected with logout_uri + post_logout_redirect_uri via extraQueryParams (Navbar/Profile/oidcConfig)
+- Files: src/components/Navbar.tsx, src/components/Profile.tsx, src/lib/oidcConfig.ts
+- Tests: Build (tsc+vite), node --check api/**/*.mjs, vitest run (69 passed | 3 skipped, 807 passed | 5 skipped)
+- AI-/Privacy-/Data-Flow impact: none.
+- Log: docs/reports/07-01-LOGOUT-FIX-01-EXECUTION_LOG.md
 =================================================
 EXECUTION LOG / CRASH RECOVERY — MANDATORY
 =================================================

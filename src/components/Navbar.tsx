@@ -170,7 +170,7 @@ export default function Navbar({ route }: Props) {
                 <button
                   type="button"
                   className="nav-login"
-                  onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}
+                  onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/", extraQueryParams: { logout_uri: "https://www.mays-job-matcher.app/" } })}
                 >
                   Logout
                 </button>
@@ -209,7 +209,7 @@ export default function Navbar({ route }: Props) {
                 <button
                   type="button"
                   className="nav-login"
-                  onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}
+                  onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/", extraQueryParams: { logout_uri: "https://www.mays-job-matcher.app/" } })}
                 >
                   Logout
                 </button>
@@ -261,7 +261,7 @@ export default function Navbar({ route }: Props) {
                   Anmeldung läuft …
                 </span>
               ) : auth?.isAuthenticated ? (
-                <button className="nav-login" onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}>
+                <button className="nav-login" onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/", extraQueryParams: { logout_uri: "https://www.mays-job-matcher.app/" } })}>
                   Logout
                 </button>
               ) : (

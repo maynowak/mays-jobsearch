@@ -15,4 +15,7 @@ export const oidcConfig = {
   post_logout_redirect_uri: POST_LOGOUT_REDIRECT_URI,
   response_type: 'code',
   scope: 'openid email profile',
+  extraQueryParams: {
+    logout_uri: POST_LOGOUT_REDIRECT_URI,
+  },
 };

@@ -47,7 +47,7 @@ export default function Profile() {
       </dl>
       <button
         type="button"
-        onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}
+        onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/", extraQueryParams: { logout_uri: "https://www.mays-job-matcher.app/" } })}
       >
         {t("auth.logout")}
       </button>
