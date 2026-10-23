@@ -162,7 +162,11 @@ export default function Navbar({ route }: Props) {
                   </a>
                 )}
               </div>
-              {auth?.isAuthenticated ? (
+              {auth?.isLoading ? (
+                <span className="nav-login" aria-busy="true">
+                  Anmeldung läuft …
+                </span>
+              ) : auth?.isAuthenticated ? (
                 <button
                   type="button"
                   className="nav-login"
@@ -192,9 +196,28 @@ export default function Navbar({ route }: Props) {
                   {t(link.labelKey)}
                 </a>
               ))}
-              <a href="/anmelden" className="nav-login">
-                Login
-              </a>
+              {auth?.isAuthenticated && (
+                <a href="/profil" className="nav-link">
+                  Profil
+                </a>
+              )}
+              {auth?.isLoading ? (
+                <span className="nav-login" aria-busy="true">
+                  Anmeldung läuft …
+                </span>
+              ) : auth?.isAuthenticated ? (
+                <button
+                  type="button"
+                  className="nav-login"
+                  onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}
+                >
+                  Logout
+                </button>
+              ) : (
+                <a href="/anmelden" className="nav-login">
+                  Login
+                </a>
+              )}
             </div>
           </>
         )}
@@ -233,7 +256,11 @@ export default function Navbar({ route }: Props) {
                   Profil
                 </a>
               )}
-              {auth?.isAuthenticated ? (
+              {auth?.isLoading ? (
+                <span className="nav-login" aria-busy="true">
+                  Anmeldung läuft …
+                </span>
+              ) : auth?.isAuthenticated ? (
                 <button className="nav-login" onClick={() => auth.signoutRedirect({ post_logout_redirect_uri: "https://www.mays-job-matcher.app/" })}>
                   Logout
                 </button>

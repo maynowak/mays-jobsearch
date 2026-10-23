@@ -71,3 +71,15 @@ CHANGE RECORD — PRODUCTION REDIRECT (REFERENCE)
 - Browser-Test (Playwright): authorize sendet korrekten redirect_uri, Cognito zeigt /login
 - AI-/Privacy-/Data-Flow impact: none.
 - Log: docs/reports/05-01-PRODUCTION-REDIRECT-FIX-01-EXECUTION_LOG.md
+
+=================================================
+CHANGE RECORD — AUTH SESSION UI (REFERENCE)
+=================================================
+
+2026-10-23 · JOBMATCHER-AUTH-SESSION-UI-01
+- Change: Navbar nutzt Auth-State in allen Modi (Glass + Non-Glass).
+- Zustände: nicht angemeldet → Login, lädt → "Anmeldung läuft …", angemeldet → "Profil" + "Logout" (signoutRedirect), mobile entsprechend.
+- Keine Cognito/AWS-Änderungen, keine neuen Auth-Libs.
+- Tests: Navbar 7/7, Full Suite 807 passed.
+- AI-/Privacy-/Data-Flow impact: none.
+- Log: docs/reports/06-01-AUTH-SESSION-UI-01-EXECUTION_LOG.md
