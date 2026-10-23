@@ -1,8 +1,8 @@
 # 02-01 — REGISTRATION EMAIL-ONLY — EXECUTION LOG
 
-- **Current Status:** COMPLETE (lokale Implementierung GREEN; Browser-/Cognito-E2E ausstehend)
+- **Current Status:** COMPLETE (lokal committet; Browser-/Cognito-E2E ausstehend)
 - **Date/Time:** 2026-10-23T09:40:29+02:00 (Europe/Berlin), Validierung 2026-10-23T09:43:52+02:00
-- **Git Branch + HEAD:** `feature/registration-email-only`, Basis `4ef3934`
+- **Git Branch + HEAD:** `feature/registration-email-only`, Basis `4ef3934`, Implementierungs-Commit `f752789`
 - **Scope:** Registrierung auf zwei Felder (E-Mail, Passwort) reduzieren; E-Mail als Cognito-Username transportieren; separates Benutzername-Feld entfernen; Tests, i18n und Dokumentation nachziehen.
 - **Mode:** Implementierung auf Feature-Branch. Kein Merge, kein Rebase, kein Deployment.
 
@@ -24,6 +24,7 @@
 - Die E-Mail-Adresse wird als Cognito-`Username` und als `email`-Attribut gesendet.
 - Der Bestätigungslink nutzt jetzt `?email=…`; alte `?username=…`-Links funktionieren weiterhin.
 - Die i18n-Keys `auth.username`, `auth.usernamePh`, `auth.errorRequired` und `auth.errorMissingUsername` wurden entfernt bzw. ersetzt.
+- Dieser Report supersediert die Drei-Feld-Beschreibung in `docs/reports/JOBMATCHER-RIS-COGNITO-INTEGRATION-04.md`.
 
 ## Evidence / File References
 
@@ -58,7 +59,7 @@ Nicht anwendbar. Keine AWS-/Terraform-Änderungen. Keine AWS-Zugriffe durchgefü
 
 ## Git Status
 
-Feature-Branch `feature/registration-email-only` mit 8 modifizierten Dateien und einem neuen Report. Zusätzlich bestehen die bereits bekannten Untracked-Dateien aus dem vorherigen Audit; diese wurden nicht verändert.
+Feature-Branch `feature/registration-email-only` mit lokalem Commit `f752789` (9 Dateien: 8 geändert, 1 neu). Zusätzlich bestehen die bereits bekannten Untracked-Dateien aus dem vorherigen Audit; diese wurden nicht verändert. Kein Push, kein Merge, kein Deployment.
 
 ## Files Changed
 
@@ -85,11 +86,11 @@ Feature-Branch `feature/registration-email-only` mit 8 modifizierten Dateien und
 
 ## Recommended Next Actions
 
-1. Änderungen auf dem Feature-Branch committen (Commit-Typ: `feat(auth):`).
+1. Feature-Branch nach Freigabe pushen (`git push -u origin feature/registration-email-only`).
 2. Cognito-Pool-Konfiguration (`UsernameAttributes`/`AliasAttributes`) read-only prüfen, bevor Production-E2E.
 3. Browser-E2E auf Preview durchführen: Registrierung mit E-Mail + Passwort, E-Mail-Bestätigung, Login.
 4. Production-Deploy nur nach expliziter Freigabe.
 
 ## Current Resume Point
 
-Implementierung und lokale Validierung abgeschlossen. Nächster Schritt: Commit auf `feature/registration-email-only`, danach Cognito-Pool- und Preview-E2E-Prüfung.
+Implementierung und lokale Validierung abgeschlossen und lokal committet (`f752789`). Branch ist nicht gepusht. Nächster Schritt nach Freigabe: Push, Cognito-Pool- und Preview-E2E-Prüfung.

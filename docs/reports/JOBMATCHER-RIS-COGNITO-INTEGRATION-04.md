@@ -1,5 +1,7 @@
 # JOBMATCHER-RIS-COGNITO-INTEGRATION-04 — Bericht
 
+> **Superseded (2026-10-23):** Die Registrierung verwendet jetzt nur noch E-Mail + Passwort; die E-Mail-Adresse ist der Cognito-Username. Die hier dokumentierte Drei-Feld-Registrierung (Benutzername/E-Mail/Passwort) ist historisch. Aktueller Stand: `docs/reports/02-01-REGISTRATION-EMAIL-ONLY-EXECUTION_LOG.md`.
+
 ## Status
 **GREEN (lokale Implementierung)** — Gesamte Integration (reale Registrierung/Login) erst GREEN nach produktivem Browser-Test.
 
