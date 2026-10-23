@@ -120,3 +120,13 @@ CHANGE RECORD — AUTH SESSION UI (REFERENCE)
 - Tests: Build, node --check, vitest run (71 passed | 3 skipped, 814 passed | 5 skipped). HTTP: /login sauber → 200, korrupter Shape → 400; Logout → 302 zu Startseite.
 - AI-/Privacy-/Data-Flow impact: none.
 - Log: docs/reports/09-01-OIDC-LOGIN-PARAMETER-FIX-01-EXECUTION_LOG.md
+
+2026-10-23 · JOBMATCHER-OIDC-AUTH-RELEASE-01
+- Typ: Release/Deploy + E2E
+- Status: Partial (Deployment GREEN, ein Akzeptanzkriterium RED)
+- Scope: Production-Deploy von fb88729 (OIDC Login/Logout-Parametertrennung). Deployment dpl_GfCXj8oe8jevyuGM7Fzbe3nYuwfj, Bundle index-BhWwxOIS.js.
+- Ergebnis: Login → Cognito /login HTTP 200 (client_id 1x, kein logout_uri, PKCE S256); Logout → /logout 302 zur Startseite, Navbar Login, Session bereinigt; Re-Login OK. FAIL: /profil rendert Landing-Hero statt Profilseite (vorbestehender Routing-Defekt in src/App.tsx: Route-Mapping + Landing-Early-Return). Kein Code-Fix ohne Freigabe, kein zweites Deployment.
+- Files: nur docs (Deployment + Dokumentation)
+- Tests: Build/Tests aus vorherigem Commit; Browser-E2E gegen Production (Playwright)
+- AI-/Privacy-/Data-Flow impact: none. Keine Tokens/Cookies in Reports; synthetische Platzhalter-Session.
+- Log: docs/reports/10-01-OIDC-AUTH-RELEASE-01-EXECUTION_LOG.md
