@@ -102,3 +102,12 @@ CHANGE RECORD — AUTH SESSION UI (REFERENCE)
 - HTTP-Evidence: logout with client_id+logout_uri → 302 to https://www.mays-job-matcher.app/ (no /login)
 - AI-/Privacy-/Data-Flow impact: none.
 - Log: docs/reports/07-02-LOGOUT-FIX-02-EXECUTION_LOG.md
+
+2026-10-23 · JOBMATCHER-LOGOUT-RELEASE-02
+- Typ: Release/Deploy
+- Status: Done
+- Scope: Production deploy of tested commit 8bcf294 (logout fix)
+- Files: (deployment only)
+- Tests: Verified bundle/hash + Cognito logout HTTP (302 -> https://www.mays-job-matcher.app/)
+- AI-/Privacy-/Data-Flow impact: none.
+- Log: docs/reports/08-01-LOGOUT-RELEASE-02-EXECUTION_LOG.md
