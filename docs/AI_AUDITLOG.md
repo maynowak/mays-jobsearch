@@ -43,3 +43,19 @@ At the end, finalize the log with the complete audit summary.
 IMPORTANT:
 The execution log itself is part of the audit workflow and must be
 kept accurate even if the audit remains completely read-only.
+
+=================================================
+CHANGE RECORD — AUTH / COGNITO (REFERENCE)
+=================================================
+
+2026-10-23 · JOBMATCHER-COGNITO-IDP-FIX-01
+- Change: App Client `5hb3f6dj5ialg77jf4blur9g6g` (User Pool
+  `eu-central-1_ZURSMpD2O`) — `SupportedIdentityProviders` = `["COGNITO"]`.
+- Only field changed: `SupportedIdentityProviders` (plus `LastModifiedDate`).
+  User Pool, Client-ID, Domains, Branding, Callback-/Logout-URLs,
+  OAuth-Flows/-Scopes unchanged (verified by before/after describe).
+- AI-/Privacy-/Data-Flow impact: none. No new resources, no new data flows,
+  no additional personal data, no secrets recorded.
+- Verification: `/oauth2/authorize` 302 -> `/login` HTTP 200 with email and
+  password fields; unregistered redirect_uri still rejected.
+- Log: docs/reports/04-03-COGNITO-IDP-FIX-01-EXECUTION_LOG.md
