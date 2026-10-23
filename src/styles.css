@@ -6726,3 +6726,126 @@ body {
   margin: 12px 0;
   font-size: 0.9rem;
 }
+
+/* JOBMATCHER-REGISTRATION-VISUAL-UPGRADE-01 */
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.auth-field label {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.auth-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.auth-card .auth-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 44px 10px 14px;
+  font-size: var(--text-base);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.auth-card .auth-field input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.auth-card .auth-field input:focus {
+  outline: none;
+  border-color: rgba(45, 212, 191, 0.9);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
+  background: #ffffff;
+}
+
+.auth-card .auth-field input[aria-invalid="true"] {
+  border-color: rgba(220, 38, 38, 0.8);
+}
+
+.auth-card .auth-field input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+
+.auth-card .auth-field .auth-input-wrap > input {
+  padding-right: 44px;
+}
+
+.auth-toggle-password {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.auth-toggle-password:hover {
+  color: var(--brand-dark);
+  background: rgba(13, 148, 136, 0.08);
+}
+
+.auth-toggle-password:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.auth-card .auth-error {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--red);
+}
+
+.auth-card .auth-submit {
+  margin-top: 6px;
+  width: 100%;
+  min-height: 52px;
+  font-size: var(--text-base);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 480px) {
+  .auth-card form {
+    gap: 16px;
+  }
+  .auth-card .auth-field input {
+    min-height: 48px;
+  }
+  .auth-card .auth-submit {
+    min-height: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-card .auth-field input,
+  .auth-toggle-password,
+  .auth-card .auth-submit {
+    transition: none;
+  }
+}
