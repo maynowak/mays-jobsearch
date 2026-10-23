@@ -12,10 +12,11 @@ export const oidcConfig = {
   authority: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`,
   client_id: CLIENT_ID,
   redirect_uri: REDIRECT_URI,
-  post_logout_redirect_uri: POST_LOGOUT_REDIRECT_URI,
+  post_logout_redirect_uri: undefined,
   response_type: 'code',
   scope: 'openid email profile',
   extraQueryParams: {
+    client_id: CLIENT_ID,
     logout_uri: POST_LOGOUT_REDIRECT_URI,
   },
 };

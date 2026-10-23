@@ -92,3 +92,13 @@ CHANGE RECORD — AUTH SESSION UI (REFERENCE)
 - Tests: Navbar 7/7, Full Suite 807 passed.
 - AI-/Privacy-/Data-Flow impact: none.
 - Log: docs/reports/06-01-AUTH-SESSION-UI-01-EXECUTION_LOG.md
+
+2026-10-23 · JOBMATCHER-LOGOUT-FIX-02
+- Typ: Fix/Auth
+- Status: Done
+- Scope: Cognito logout uses client_id + logout_uri only (no post_logout_redirect_uri/id_token_hint conflict)
+- Files: src/components/Navbar.tsx, src/components/Profile.tsx, src/lib/oidcConfig.ts
+- Tests: Build (tsc+vite), node --check api/**/*.mjs, vitest run (69 passed | 3 skipped, 807 passed | 5 skipped)
+- HTTP-Evidence: logout with client_id+logout_uri → 302 to https://www.mays-job-matcher.app/ (no /login)
+- AI-/Privacy-/Data-Flow impact: none.
+- Log: docs/reports/07-02-LOGOUT-FIX-02-EXECUTION_LOG.md
