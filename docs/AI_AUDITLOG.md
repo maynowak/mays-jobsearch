@@ -59,3 +59,15 @@ CHANGE RECORD — AUTH / COGNITO (REFERENCE)
 - Verification: `/oauth2/authorize` 302 -> `/login` HTTP 200 with email and
   password fields; unregistered redirect_uri still rejected.
 - Log: docs/reports/04-03-COGNITO-IDP-FIX-01-EXECUTION_LOG.md
+
+=================================================
+CHANGE RECORD — PRODUCTION REDIRECT (REFERENCE)
+=================================================
+
+2026-10-23 · JOBMATCHER-PRODUCTION-REDIRECT-FIX-01
+- Status: Kein Fix erforderlich. Produktion korrekt konfiguriert.
+- Vercel Production: VITE_REDIRECT_URI=https://www.mays-job-matcher.app/auth/callback
+- Gebautes Bundle: redirect_uri=https://www.mays-job-matcher.app/auth/callback
+- Browser-Test (Playwright): authorize sendet korrekten redirect_uri, Cognito zeigt /login
+- AI-/Privacy-/Data-Flow impact: none.
+- Log: docs/reports/05-01-PRODUCTION-REDIRECT-FIX-01-EXECUTION_LOG.md
