@@ -50,10 +50,10 @@ All keys server-side only. Key vars:
 - Run single test file: `npx vitest run src/components/Foo.test.tsx`
 - CI runs `npm ci`, `npm run build`, `node --check` on all `api/**/*.mjs`, then `npm test -- --run`.
 
-## Development workflow constraints
-- Feature branches: `feature/<name>` from `main`. `main` is integration/release.
-- Each feature requires a recovery report `docs/reports/FEATURE_<NAME>.md` with step matrix. After each step: update report, `npm test`, `git status`, `git diff --check`, secret audit, commit, push.
-- No rebase/merge/rewrite without explicit release step. Production deploy is `vercel --prod` from `main` only.
+## Development workflow
+- Work directly on `main` unless explicitly asked to use a branch.
+- Keep commits small and clear.
+- Production deploy is `vercel --prod` from `main` only.
 - Deployment identity must match: Vercel deployment commit == footer Build SHA. Do not assume Git HEAD equals deployed artifact.
 
 ## Error handling & UX specifics
