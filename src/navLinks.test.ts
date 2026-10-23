@@ -3,7 +3,7 @@ import { NAV_LINKS, navLinksFor } from "./navLinks";
 import type { NavRoute } from "./navLinks";
 
 // TOP-MENU-01: Regression des zentralen Top-Menü-Link-Moduls.
-const ALL_ROUTES: NavRoute[] = ["landing", "matcher", "impressum", "register", "login"];
+const ALL_ROUTES: NavRoute[] = ["landing", "matcher", "profil", "impressum", "register", "login"];
 
 describe("navLinks (TOP-MENU-01)", () => {
   it("hat stabile IDs, vollstaendige Hrefs und Zielrouten", () => {

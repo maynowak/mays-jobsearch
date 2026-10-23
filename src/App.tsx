@@ -86,6 +86,10 @@ export default function App() {
     if (path === "/anmelden") return "login";
     // JOBMATCHER-RIS-COGNITO-INTEGRATION-04: E-Mail-Bestätigung nach SignUp.
     if (path === "/email-bestaetigen") return "emailconfirm";
+    // JOBMATCHER-PROFILE-ROUTING-FIX-01: /profil ist eine eigene Route.
+    // Vorher fiel der Pfad auf "landing" zurück und wurde vom
+    // Landing-Early-Return abgefangen -> Profilseite nie erreichbar.
+    if (path === "/profil") return "profil";
     return path === "/search" ? "matcher" : "landing";
   })();
   const isAuthCallback = window.location.pathname === "/auth/callback";
@@ -1298,7 +1302,9 @@ export default function App() {
 
   const hasResults = matches.length > 0 || foundJobs.length > 0;
 
-  if (route === "landing" && !isSearching) {
+  // JOBMATCHER-PROFILE-ROUTING-FIX-01: Der Landing-Early-Return darf die
+  // Profilseite nicht abfangen (Defensiv-Guard zusätzlich zur Route oben).
+  if (route === "landing" && !isSearching && !isProfile) {
     return (
       <div className="landing">
         <Navbar route="landing" />

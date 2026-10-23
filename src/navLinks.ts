@@ -22,7 +22,14 @@
 // Beide nutzen denselben Key-Namensraum ("nav.search", "nav.alerts").
 
 /** Routen, für die ein Link freigeschaltet werden kann. */
-export type NavRoute = "landing" | "matcher" | "impressum" | "register" | "login" | "emailconfirm";
+export type NavRoute =
+  | "landing"
+  | "matcher"
+  | "profil"
+  | "impressum"
+  | "register"
+  | "login"
+  | "emailconfirm";
 
 /**
  * Verhalten, wenn der Link bereits auf seiner Ziel-Route zeigt
@@ -60,8 +67,8 @@ export const NAV_LINKS: readonly NavLink[] = [
     href: "/search",
     targetRoute: "/search",
     inPage: "top",
-    // Bewusst überall sichtbar: Landingpage, Suchmaske, Impressum, Registrierung, Anmeldung.
-    visibleOn: ["landing", "matcher", "impressum", "register", "login"],
+    // Bewusst überall sichtbar: Landingpage, Suchmaske, Profil, Impressum, Registrierung, Anmeldung.
+    visibleOn: ["landing", "matcher", "profil", "impressum", "register", "login"],
   },
   {
     id: "alerts",
@@ -74,7 +81,7 @@ export const NAV_LINKS: readonly NavLink[] = [
     inPage: "alerts",
     // Auf der Landingpage ausgeblendet (User-Entscheidung TOP-MENU-01):
     // ohne Anmeldung nur ein Anker auf die Suchmaske, dort nicht nützlich.
-    visibleOn: ["matcher", "register", "login"],
+    visibleOn: ["matcher", "profil", "register", "login"],
   },
 ];
 
