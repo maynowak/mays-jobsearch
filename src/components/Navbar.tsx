@@ -5,6 +5,7 @@ import type { Lang } from "../i18n";
 import { navLinksFor } from "../navLinks";
 import type { NavRoute } from "../navLinks";
 import { useAuth } from "react-oidc-context";
+import { signOut } from "../lib/authFlow";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
 
 function LangToggle() {
@@ -170,7 +171,7 @@ export default function Navbar({ route }: Props) {
                 <button
                   type="button"
                   className="nav-login"
-                  onClick={() => auth.signoutRedirect({ extraQueryParams: { client_id: "5hb3f6dj5ialg77jf4blur9g6g", logout_uri: "https://www.mays-job-matcher.app/" } })}
+                  onClick={() => void signOut(auth)}
                 >
                   Logout
                 </button>
@@ -209,7 +210,7 @@ export default function Navbar({ route }: Props) {
                 <button
                   type="button"
                   className="nav-login"
-                  onClick={() => auth.signoutRedirect({ extraQueryParams: { client_id: "5hb3f6dj5ialg77jf4blur9g6g", logout_uri: "https://www.mays-job-matcher.app/" } })}
+                  onClick={() => void signOut(auth)}
                 >
                   Logout
                 </button>
@@ -261,7 +262,7 @@ export default function Navbar({ route }: Props) {
                   Anmeldung läuft …
                 </span>
               ) : auth?.isAuthenticated ? (
-                <button className="nav-login" onClick={() => auth.signoutRedirect({ extraQueryParams: { client_id: "5hb3f6dj5ialg77jf4blur9g6g", logout_uri: "https://www.mays-job-matcher.app/" } })}>
+                <button className="nav-login" onClick={() => void signOut(auth)}>
                   Logout
                 </button>
               ) : (

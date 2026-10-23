@@ -1,5 +1,6 @@
 import { useAuth } from "react-oidc-context";
 import { useLang } from "../i18n";
+import { signOut } from "../lib/authFlow";
 
 export default function Profile() {
   const { t } = useLang();
@@ -47,7 +48,7 @@ export default function Profile() {
       </dl>
       <button
         type="button"
-        onClick={() => auth.signoutRedirect({ extraQueryParams: { client_id: "5hb3f6dj5ialg77jf4blur9g6g", logout_uri: "https://www.mays-job-matcher.app/" } })}
+        onClick={() => void signOut(auth)}
       >
         {t("auth.logout")}
       </button>

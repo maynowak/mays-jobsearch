@@ -111,3 +111,12 @@ CHANGE RECORD — AUTH SESSION UI (REFERENCE)
 - Tests: Verified bundle/hash + Cognito logout HTTP (302 -> https://www.mays-job-matcher.app/)
 - AI-/Privacy-/Data-Flow impact: none.
 - Log: docs/reports/08-01-LOGOUT-RELEASE-02-EXECUTION_LOG.md
+
+2026-10-23 · JOBMATCHER-OIDC-LOGIN-PARAMETER-FIX-01
+- Typ: Fix/Auth/OIDC
+- Status: Done
+- Scope: Strikte Trennung Login/Logout-Parameter. Entfernt logout_uri/extraQueryParams aus globaler oidcConfig (verhindert doppelten client_id + HTTP 400 am /login). Login via signIn() ohne Logout-Parameter, Logout nur client_id+logout_uri. Neue Regressionstests.
+- Files: src/lib/oidcConfig.ts, src/lib/authFlow.ts, src/lib/oidcConfig.test.ts, src/lib/authFlow.test.ts, src/components/LoginForm.tsx, src/components/Navbar.tsx, src/components/Profile.tsx
+- Tests: Build, node --check, vitest run (71 passed | 3 skipped, 814 passed | 5 skipped). HTTP: /login sauber → 200, korrupter Shape → 400; Logout → 302 zu Startseite.
+- AI-/Privacy-/Data-Flow impact: none.
+- Log: docs/reports/09-01-OIDC-LOGIN-PARAMETER-FIX-01-EXECUTION_LOG.md

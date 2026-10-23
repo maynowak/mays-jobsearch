@@ -2,21 +2,23 @@ const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
 const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID || 'eu-central-1_ZURSMpD2O';
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '5hb3f6dj5ialg77jf4blur9g6g';
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'https://www.mays-job-matcher.app/auth/callback';
-const POST_LOGOUT_REDIRECT_URI = import.meta.env.VITE_POST_LOGOUT_REDIRECT_URI || 'https://www.mays-job-matcher.app/';
+
+// JOBMATCHER-OIDC-LOGIN-PARAMETER-FIX-01: Logout-Ziel getrennt von der
+// Login-Konfiguration. Darf NICHT in oidcConfig landen, sonst landen
+// logout_uri/client_id doppelt im /login-Request (Cognito antwortet mit 400).
+const POST_LOGOUT_REDIRECT_URI =
+  import.meta.env.VITE_POST_LOGOUT_REDIRECT_URI || 'https://www.mays-job-matcher.app/';
 
 // JOBMATCHER-RIS-COGNITO-INTEGRATION-04: Region + Client-ID für die
 // Cognito-Self-Service-API (cognitoAuthApi.ts) — gleiche Quelle, kein Drift.
-export { REGION, CLIENT_ID };
+export { REGION, CLIENT_ID, POST_LOGOUT_REDIRECT_URI };
 
+// Login-Flow: client_id genau einmal, redirect_uri, response_type=code,
+// scope + PKCE (von oidc-client-ts automatisch). Keine Logout-Parameter.
 export const oidcConfig = {
   authority: `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`,
   client_id: CLIENT_ID,
   redirect_uri: REDIRECT_URI,
-  post_logout_redirect_uri: undefined,
   response_type: 'code',
   scope: 'openid email profile',
-  extraQueryParams: {
-    client_id: CLIENT_ID,
-    logout_uri: POST_LOGOUT_REDIRECT_URI,
-  },
 };

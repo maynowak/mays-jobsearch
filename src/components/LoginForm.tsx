@@ -2,6 +2,7 @@ import { useLang } from "../i18n";
 import { useAuth } from "react-oidc-context";
 import { useState } from "react";
 import AuthCard from "./AuthCard";
+import { signIn } from "../lib/authFlow";
 
 // REGISTRATION-UI-01: minimale Login-Maske für Cognito Managed Login.
 // Keine lokale Passworteingabe, keine Validierung, keine Speicherung.
@@ -13,7 +14,7 @@ export default function LoginForm() {
   const handleSignIn = async () => {
     setError(null);
     try {
-      await auth.signinRedirect();
+      await signIn(auth);
     } catch (e: any) {
       setError(e?.message || "auth-redirect-failed");
     }
