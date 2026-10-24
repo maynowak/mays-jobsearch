@@ -13,7 +13,7 @@ export default function AuthCallback() {
       return;
     }
     if (auth.isAuthenticated) {
-      window.location.replace("/profil");
+      window.location.replace("/");
     }
   }, [auth.isLoading, auth.error, auth.isAuthenticated]);
 
