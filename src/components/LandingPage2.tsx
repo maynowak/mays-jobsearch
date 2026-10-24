@@ -154,6 +154,12 @@ export default function LandingPage2(): React.ReactElement {
               <a className="lp2-login" href="/anmelden">
                 Login
               </a>
+              <a className="lp2-profile" href="/profil">
+                Profil
+              </a>
+              <a className="lp2-logout" href="/logout">
+                Logout
+              </a>
             </div>
           </div>
         </header>
