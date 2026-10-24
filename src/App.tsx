@@ -1304,7 +1304,9 @@ export default function App() {
 
   // JOBMATCHER-PROFILE-ROUTING-FIX-01: Der Landing-Early-Return darf die
   // Profilseite nicht abfangen (Defensiv-Guard zusätzlich zur Route oben).
-  if (route === "landing" && !isSearching && !isProfile) {
+  // WICHTIG: /auth/callback muss vor diesem Early-Return behandelt werden,
+  // damit AuthCallback den OIDC-Flow abwickeln kann.
+  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback) {
     return (
       <div className="landing">
         <Navbar route="landing" />
