@@ -6849,3 +6849,325 @@ body {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   AURORA GLASS DASHBOARD (MAYS-AURORA-GLASS-DASHBOARD-01)
+   Modernes Dashboard mit Glassmorphismus-Effekten
+   ========================================================================== */
+
+.aurora-dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: linear-gradient(
+    180deg,
+    #f0f8ff 0%,
+    #e8f4f8 12%,
+    #e0eff0 35%,
+    #d9edf1 65%,
+    #d2e8f4 100%
+  );
+}
+
+/* Aurora Header - Hero Section mit Glass-Effekt */
+.aurora-header {
+  position: relative;
+  padding: clamp(60px, 12vh, 120px) clamp(24px, 6vw, 48px);
+  text-align: center;
+  color: #0b3b5e;
+}
+
+.aurora-header-content {
+  max-width: min(720px, 88vw);
+  margin: 0 auto;
+}
+
+.aurora-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  background: linear-gradient(90deg, #0ea5a6, #0d9488);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.aurora-subtitle {
+  margin: 0;
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+/* Aurora Content Grid */
+.aurora-content-grid {
+  display: grid;
+  gap: clamp(16px, 3vw, 32px);
+  padding: clamp(24px, 6vw, 48px);
+  max-width: min(1200px, 92vw);
+  margin: 0 auto;
+  flex: 1;
+}
+
+/* Aurora Card - Glassmorphism Design */
+.aurora-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(2, 130, 157, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: clamp(20px, 4vw, 32px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.aurora-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px rgba(2, 130, 157, 0.18);
+}
+
+.aurora-card:focus-within {
+  outline: 2px solid rgba(13, 185, 107, 0.5);
+  outline-offset: -2px;
+}
+
+/* Aurora Cards with stronger visual emphasis */
+.aurora-card-primary {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(240, 250, 252, 0.42) 45%,
+    rgba(230, 245, 255, 0.18) 100%
+  );
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  box-shadow: 0 12px 40px rgba(14, 165, 166, 0.15);
+}
+
+.aurora-section-title {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0b3b5e;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aurora-section-title::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+/* Profile Info */
+.aurora-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aurora-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aurora-info-item label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.aurora-info-value {
+  font-size: 1rem;
+  color: #0b3b5e;
+  font-weight: 600;
+}
+
+.user-id {
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+/* Status Grid */
+.aurora-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.aurora-status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: var(--radius-md);
+}
+
+.aurora-status-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(125, 211, 252, 0.3);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.aurora-status-label {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.aurora-status-value {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0b3b5e;
+}
+
+/* Feature List */
+.aurora-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aurora-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--accent);
+}
+
+.aurora-feature-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #0b3b5e;
+  background: rgba(233, 246, 255, 0.6);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* Aurora Buttons */
+.aurora-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.aurora-btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
+}
+
+.aurora-btn-primary:hover {
+  background: #2186a8;
+  box-shadow: 0 6px 20px rgba(34, 211, 238, 0.4);
+  transform: translateY(-1px);
+}
+
+.aurora-btn-primary:focus-visible {
+  outline: 3px solid rgba(34, 211, 238, 0.5);
+  outline-offset: 2px;
+}
+
+.aurora-btn-danger {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(238, 90, 90, 0.3);
+}
+
+.aurora-btn-danger:hover {
+  background: linear-gradient(135deg, #ff5252, #ff3838);
+  box-shadow: 0 6px 20px rgba(255, 100, 100, 0.4);
+  transform: translateY(-1px);
+}
+
+.aurora-btn-danger:focus-visible {
+  outline: 3px solid rgba(255, 100, 100, 0.5);
+  outline-offset: 2px;
+}
+
+/* Loading State */
+.aurora-dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+}
+
+.aurora-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(125, 211, 252, 0.3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: aurora-spin 1s linear infinite;
+}
+
+@keyframes aurora-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.aurora-dashboard-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+  padding: 24px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .aurora-content-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .aurora-header {
+    padding: 40px 16px 24px;
+  }
+
+  .aurora-title {
+    font-size: 1.6rem;
+  }
+
+  .aurora-card {
+    padding: 16px;
+  }
+}
