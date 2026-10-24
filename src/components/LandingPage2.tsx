@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "react-oidc-context";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 import JobStream from "./JobStream";
 import MatchPulse from "./MatchPulse";
@@ -73,6 +74,7 @@ function initialLang(): Lp2Lang {
 }
 
 export default function LandingPage2(): React.ReactElement {
+  const auth = useAuth();
   const [lang, setLang] = useState<Lp2Lang>(initialLang);
   // HERO-ANIMATION-03: Stream startet erst nach dem Opening (~1,4 s).
   const [streamLive, setStreamLive] = useState(false);
@@ -146,20 +148,32 @@ export default function LandingPage2(): React.ReactElement {
                   </a>
                 ))}
               </nav>
-              {/* Login fuehrt zur Cognito-Anmeldung (/anmelden). Bewusst ein
-                  Link und kein useAuth()-Aufruf: Die Landingpage wird in
-                  main.tsx AUSSERHALB des AuthProvider gerendert, ein OIDC-Call
-                  waere hier also nicht verfuegbar. Der Zielpfad entspricht dem
-                  nicht angemeldeten Login-Link der Navbar. */}
-              <a className="lp2-login" href="/anmelden">
-                Login
-              </a>
-              <a className="lp2-profile" href="/profil">
-                Profil
-              </a>
-              <a className="lp2-logout" href="/logout">
-                Logout
-              </a>
+              {/* Auth-aware navigation: Login/Register when not authenticated, Profil/Logout when authenticated */}
+              {auth.isAuthenticated ? (
+                <>
+                  <a className="lp2-profile" href="/profil">
+                    Profil
+                  </a>
+                  <button
+                    type="button"
+                    className="lp2-logout"
+                    onClick={() => {
+                      auth.signoutRedirect();
+                    }}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <a className="lp2-login" href="/anmelden">
+                    Login
+                  </a>
+                  <a className="lp2-register" href="/registrieren">
+                    Registrieren
+                  </a>
+                </>
+              )}
             </div>
           </div>
         </header>

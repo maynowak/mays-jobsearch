@@ -16,12 +16,12 @@ const rootComponent =
 
 createRoot(document.getElementById("root")!).render(
   <LangProvider>
-    {rootComponent === "landing2" ? (
-      <LandingPage2 />
-    ) : (
-      <AuthProvider {...oidcConfig}>
+    <AuthProvider {...oidcConfig}>
+      {rootComponent === "landing2" ? (
+        <LandingPage2 />
+      ) : (
         <App />
-      </AuthProvider>
-    )}
+      )}
+    </AuthProvider>
   </LangProvider>
 );

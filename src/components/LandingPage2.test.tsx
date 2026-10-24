@@ -3,6 +3,18 @@ import { cleanup, fireEvent, render, screen, within, act } from "@testing-librar
 import { LangProvider } from "../i18n";
 import LandingPage2 from "./LandingPage2";
 
+// Mock react-oidc-context for LandingPage2 tests
+vi.mock("react-oidc-context", () => ({
+  useAuth: () => ({
+    isLoading: false,
+    error: undefined,
+    isAuthenticated: false,
+    user: undefined,
+    signinRedirect: vi.fn(),
+    signoutRedirect: vi.fn(),
+  }),
+}));
+
 afterEach(() => {
   cleanup();
 });
