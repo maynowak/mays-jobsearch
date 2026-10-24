@@ -633,6 +633,78 @@
   outline-offset: 2px;
 }
 
+/* Profile link - shown when authenticated */
+.lp2-profile {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b3b5e;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.lp2-profile:hover {
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(11, 59, 94, 0.22);
+}
+
+.lp2-profile:focus-visible {
+  outline: 3px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+/* Register link - shown when not authenticated */
+.lp2-register {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b3b5e;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, box-shadow 0.15s;
+  margin-left: 0.5rem;
+}
+
+.lp2-register:hover {
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(11, 59, 94, 0.22);
+}
+
+.lp2-register:focus-visible {
+  outline: 3px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+/* Logout button - shown when authenticated */
+.lp2-logout {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b3b5e;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, box-shadow 0.15s;
+  margin-left: 0.5rem;
+}
+
 /* ---------- Hero-Content (§8–§14: absolut zentriert, top 47%) ---------- */
 .lp2-hero-content {
   position: absolute;
