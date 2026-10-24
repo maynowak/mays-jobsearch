@@ -1,0 +1,7 @@
+{
+  "BrandName": "May's Job Matcher",
+  "CSS": "@font-face {font-family: 'Inter', sans-serif;} :root {--brand: #0d9488;--brand-dark: #0f766e;--accent: #22d3ee;--background: #f8fafc;--surface: #ffffff;--muted: #6b6255;--text: #1b2333;}",
+  "SupportedIdentityProviders": [
+    "COGNITO"
+  ]
+}

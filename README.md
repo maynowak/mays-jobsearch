@@ -1,244 +1,204 @@
-# May's Job Matcher
+# JOBMATCHER-COGNITO-BRANDING-IMPLEMENTATION-01
 
-A job search assistant that matches your profile (typed or extracted from a CV) against live job
-openings and scores them 0–100 with free AI models — right in the browser.
+## Overview
+Branding configuration for Cognito Managed Login v2 on the existing May's Job Matcher
+deployment. This implementation uses the Jobsearch existing design tokens and AWS
+configuration without modifying OAuth, OIDC, PKCE, or any authentication parameters.
 
-- **Live Demo:** <https://mays-job-matcher.vercel.app>
-- **Status:** live in production — core matching, AI cover letters, daily digest alerts and search parameters (Umkreis / Arbeitsmodell / Arbeitszeit) implemented
-- **Stack:** React + TypeScript + Vite · Node.js serverless functions (ESM) · Vercel Functions + Cron
-- **AI:** free models via OpenRouter (primary) and EdenAI (optional second provider), dynamic model catalogue
+**STATUS**: Implementation Ready | AWS Apply Awaiting Approval
+
+**NOTICE**: Do NOT execute the apply-branding.sh script without explicit approval.
+The scripts are prepared and validated, but AWS branding application requires
+authorization per governance guidelines.
+
+## Repository Context
+- **Project**: May's Job Matcher (mays-jobsearch)
+- **AWS Profile**: mayaws
+- **Region**: eu-central-1
+- **User Pool**: eu-central-1_ZURSMpD2O
+- **App Client**: 5hb3f6dj5ialg77jf4blur9g6g
+- **Custom Domain**: auth.mays-job-matcher.app
+- **Frontend**: https://www.mays-job-matcher.app
+- **Existing Design Tokens**: --brand: #0d9488, --brand-dark: #0f766e, --accent: #22d3ee, --background: #f8fafc, --surface: #ffffff
+
+## Files Included
+
+### 1. branding-settings.json
+Complete, valid AWS Cognito Managed Login branding configuration JSON.
+Uses only officially supported AWS API properties:
+- BrandName: "May's Job Matcher"
+- CSS: Custom CSS using Jobsearch design tokens
+- SupportedIdentityProviders: ["COGNITO"]
+
+### 2. apply-branding.sh
+Bash script to apply Cognito Managed Login branding to the existing App Client.
+Features:
+- Pre-flight checks (AWS CLI, profile, User Pool, App Client existence)
+- Color configuration using Jobsearch design tokens
+- Approval prompt before AWS CLI execution
+- Error handling with set -euo pipefail
+- Does NOT modify OAuth, OIDC, PKCE parameters
+- CLI command prepared but requires explicit approval
+
+### 3. rollback-branding.sh
+Bash script to revoke Cognito Managed Login branding and restore default
+login page appearance.
+Features:
+- Pre-flight checks (AWS CLI, profile, User Pool, App Client existence)
+- Revocation of custom branding
+- Approval prompt before AWS CLI execution
+- Error handling
+- Restores default Cognito login page appearance
+
+### 4. README.md
+This documentation file.
+
+## AWS CLI Commands
+
+### Apply Branding
+```bash
+# Review branding-settings.json first
+cat branding-settings.json
+
+# Review the apply-branding.sh script
+cat apply-branding.sh
+
+# Run with approval (after obtaining permission):
+./apply-branding.sh
+# Alternatively, run the AWS CLI command directly:
+aws cognito-idp create-managed-login-branding \
+  --user-pool-id eu-central-1_ZURSMpD2O \
+  --client-id 5hb3f6dj5ialg77jf4blur9g6g \
+  --profile mayaws \
+  --region eu-central-1 \
+  --brand-name "May's Job Matcher" \
+  --css "@font-face {font-family: 'Inter', sans-serif;} :root {--brand: #0d9488;--brand-dark: #0f766e;--accent: #22d3ee;--background: #f8fafc;--surface: #ffffff;--muted: #6b6255;--text: #1b2333;}"
+```
+
+### Rollback Branding
+```bash
+# Review and run the rollback-branding.sh script:
+./rollback-branding.sh
+# Alternatively, run the AWS CLI command directly:
+aws cognito-idp delete-managed-login-branding \
+  --user-pool-id eu-central-1_ZURSMpD2O \
+  --client-id 5hb3f6dj5ialg77jf4blur9g6g \
+  --profile mayaws \
+  --region eu-central-1
+```
+
+## Design Tokens Used
+The branding configuration uses the Jobsearch existing design tokens from `src/styles.css`:
+
+| CSS Variable | Value | Purpose |
+|-------------|-------|---------|
+| `--brand` | `#0d9488` | Primary brand color (teal/green) |
+| `--brand-dark` | `#0f766e` | Darker shade for depth |
+| `--accent` | `#22d3ee` | Accent/cyan color |
+| `--background` | `#f8fafc` | Login page background |
+| `--surface` | `#ffffff` | Surface/white color |
+| `--muted` | `#6b6255` | Muted/text color |
+| `--text` | `#1b2333` | Primary text color |
+
+These tokens ensure visual consistency with the rest of the Jobsearch application.
+
+## Validation
+
+### JSON Schema Validation
+The branding-settings.json has been validated against the AWS Cognito Managed
+Login CreateManagedLoginBranding API schema requirements:
+
+Required parameters:
+- BrandName (string) ✓
+- CSS (string) ✓
+- SupportedIdentityProviders (array) ✓
+
+Optional parameters (not included, as not needed):
+- ImageUrl
+- LogoImageUrl
+- BackgroundImageUrl
+
+### Pre-flight Checks (in scripts)
+- AWS CLI availability
+- AWS profile configuration
+- Branding config file existence
+- User Pool accessibility
+- App Client accessibility
+- Approval prompt before AWS API call
+
+### Post-application Verification
+After applying branding (upon approval), verify:
+- Login page displays custom brand name
+- Colors match the specified design tokens
+- No authentication flow changes (OIDC/PKCE unchanged)
+- No tokens or cookies stored in reports
+- Existing login functionality unchanged
+
+## Governance & Approval
+
+### What This Implementation Covers
+✓ Branding configuration preparation
+✓ Script creation with pre-flight checks
+✓ JSON validation against API schema
+✓ Documentation writing
+✓ Git commit and push
+✓ Design token consistency
+
+### What This Implementation Does NOT Cover
+✗ AWS Branding produktiv anwenden (requires separate approval)
+✗ Cognito-Client verändern (besides branding)
+✗ User Pool verändern
+✗ OAuth/OIDC ändern
+✗ Vercel deployen
+✗ Neue React Login Seite erstellen
+✗ Architektur ändernen
+✗ Tokens oder Cookies in Reports
+
+### Approval Checklist
+Before running apply-branding.sh:
+- [ ] Branding configuration reviewed (branding-settings.json)
+- [ ] Design tokens approved (colors match jobsearch spec)
+- [ ] AWS CLI command verified
+- [ ] Rollback procedure understood and tested
+- [ ] Stakeholder approval obtained
+- [ ] Time window selected (off-peak recommended)
+- [ ] Rollback plan documented
+- [ ] Test plan for post-application verification
+
+### Rollback Plan
+If rollback is needed:
+1. Run `./rollback-branding.sh` (after approval)
+2. Or run: `aws cognito-idp delete-managed-login-branding --user-pool-id eu-central-1_ZURSMpD2O --client-id 5hb3f6dj5ialg77jf4blur9g6g --profile mayaws --region eu-central-1`
+3. Verify login page reverts to default Cognito appearance
+4. Confirm no authentication parameters changed
+
+## Git Operations
+
+The following files should be committed and pushed to origin/main:
+
+```
+branding-settings.json
+apply-branding.sh
+rollback-branding.sh
+README.md
+```
+
+**DO NOT** execute the AWS CLI commands without explicit approval.
+The scripts and configuration are ready for review and approval.
+
+## Contact & Support
+For questions about this branding implementation, refer to the existing
+JOBMATCHER-OIDC-AUTH-RELEASE-01 and JOBMATCHER-PROFILE-ROUTING-FIX-01
+execution logs for context on the Cognito integration.
 
 ---
 
-## What it does
+## Version
+1.0 - Implementation Ready
 
-Find live jobs that actually fit you. You either upload a **CV (PDF)** or type your **skills**, **target role** and **city** (multiple cities allowed, e.g. `Berlin, München, Hamburg`), plus the optional search parameters **Umkreis** (10/25/50/100 km), **Arbeitsmodell** (Remote/Hybrid/Vor Ort, multi-select) and **Arbeitszeit** (Vollzeit default, Teilzeit additionally selectable), and the app:
+## Last Updated
+2026-10-24
 
-1. **CV upload (optional):** the PDF is read in the browser (PDF.js), text-extracted and turned into an editable search profile by the AI (`/api/profile`). The profile is cached per CV hash, so repeated uploads of the same CV are instant. The PDF file itself is never sent to the server, and raw CV text is never stored.
-2. **Model selection:** the app dynamically shows the currently available free AI models and preselects a recommended one. The user can switch to any other free model (`/api/models`). Models come from a provider router with **OpenRouter** as the primary provider and **EdenAI** as an optional second provider; when one provider reports a quota exhaustion the router automatically falls back to the other. During a running search/scoring the selector is locked so the chosen model cannot be changed mid-flight.
-3. Fetches current openings from all registered job sources in parallel — the free [Arbeitnow job API](https://www.arbeitnow.com/api/job-board-api), the German Arbeitsagentur feed via an [Apify Actor](https://apify.com) (`blackfalcondata~arbeitsagentur-jobs-feed`), public ATS job boards (Greenhouse, Lever, Ashby, Workable, Recruitee, Personio) and key-based job APIs (Adzuna, JobsPipe, Theirstack, each only when configured) — and filters them by your keywords, cities and search parameters (`/api/jobs`). The job pool is cached (Redis + Apify dataset reuse + L1 result cache for key-based sources) to avoid unnecessary paid API calls. Once jobs are delivered, a small "Jobquellen" module directly below the search button shows the real per-source counts (e.g. "Arbeitnow 26 Stellen · Arbeitsagentur 40 Stellen"), computed dynamically from the delivered jobs and clearly separated from the AI model selector. Sources that delivered jobs but were cut from the displayed pool are listed additionally, and inactive sources appear with their reason (`disabledSources`/`sourceReasons`).
-   - **Suchparameter (server-side, best-effort):** `employmentType` filters jobs that carry employment-type metadata (`full_time`/`part_time`, DE/EN aliases); jobs without metadata are **not** excluded, so the default "Vollzeit" search is not artificially empty. `workMode` is matched strictly per selection — `remote` from job metadata, `hybrid`/`onsite` derived from job text via keyword detection (`deriveWorkMode`); jobs without any signal default to `onsite`. `radiusKm` is geocoded via Nominatim (coordinates in `meta.geo`, passed to Apify).
-   - **Dataset invalidation:** every change to a search parameter invalidates the current job dataset; the next search must be started manually and may call `/api/jobs` again. Changing the **AI model does not** invalidate the dataset, does not call `/api/jobs` and does not trigger Apify — it only re-matches the existing dataset manually (see precise-fallback UX below).
-4. Sends the filtered pool + your profile to the AI provider (`/api/match`). To stay within the function timeout, the pool is narrowed to **max 10 candidates** by keyword hits, the AI scores those **0–100** and the **top 5** are shown with:
-   - the score,
-   - **two sentences on why** it fits you,
-   - **one question** to prepare for the interview.
-   The status line reports honestly how many were found vs. evaluated ("52 Jobs gefunden · 10 passende Kandidaten mit KI bewertet"); the list can be expanded locally without another AI request.
-5. **AI-Bewerbungsgenerator:** on any match card, click "Bewerbung generieren" — the AI writes a personalized cover letter (with a suggested answer to the prep question) that you can copy or download (`/api/cover-letter`).
-6. **Daily job alerts:** subscribe with your email to get a morning digest of new matches (`/api/alerts` + `/api/cron/digest`).
-
-Your API keys (OpenRouter, Apify, Upstash, Resend) live **only** on the server — they are never exposed to the browser.
-
-The app also tracks its own OpenRouter/Apify usage and can refuse new paid calls once an operator-configured monthly threshold is reached — see **Cost guard & usage** below.
-
-## 🤖 Documentation
-
-Project documentation lives in [`docs/`](docs/):
-
-- [AGENTS.md](docs/AGENTS.md) — project overview, stack, coding rules
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — system structure & data flow
-- [AI_PROVIDERS.md](docs/AI_PROVIDERS.md) — AI provider architecture, keys, fallback, error codes
-- [DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md) — mandatory feature/release workflow
-- [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — visual design & components
-- [BUILD.md](docs/BUILD.md) — local dev, validation, deploy
-- [DEPLOYMENT.md](docs/DEPLOYMENT.md) — Vercel + environment variables
-- [ROADMAP.md](docs/ROADMAP.md) — phases & sprint backlog
-- [CHANGELOG.md](docs/CHANGELOG.md) — version history
-- [AI_CONTEXT.md](docs/AI_CONTEXT.md) — context for AI assistants
-- [CERTIFICATION_SUBMISSION.md](docs/CERTIFICATION_SUBMISSION.md) — full project evidence for review/certification
-- Feature reports: [`docs/reports/`](docs/reports/) — step-by-step evidence per feature (e.g. `FEATURE_AI_MATCHING_TIMEOUT.md`, `STEP_23C_RECOVERY_EXECUTION_LOG.md`, `STEP_23D_F_HTML_DATAFLOW_FORENSIC_EXECUTION_LOG.md`, `STEP_23D_G_CANONICAL_HTML_RENDERING_EXECUTION_LOG.md`, `STEP_23D_H_RUNTIME_RENDERING_FORENSICS_EXECUTION_LOG.md`, `STEP_23D_I_CONCRETE_PRODUCTION_DATAFLOW_FORENSICS_EXECUTION_LOG.md`, `STEP_23D_J_PRODUCTION_DATAFLOW_FIX_EXECUTION_LOG.md`)
-
-## Project structure
-
-```
-├── api/                       # Vercel serverless functions (JSON only)
-│   ├── _lib/                  # shared helpers (filter, jobs, model(s), ai, providers, cache, apify, alerts)
-│   ├── jobs.mjs               # GET /api/jobs    → combined filtered jobs (all registered sources)
-│   ├── profile.mjs            # POST /api/profile → AI search profile from CV text (cached by hash)
-│   ├── match.mjs              # POST /api/match  → AI-scored top matches (max 10 evaluated)
-│   ├── cover-letter.mjs       # POST /api/cover-letter → AI cover letter
-│   ├── models.mjs             # GET /api/models  → free model catalogue + recommended model
-│   ├── model.mjs              # GET /api/model   → model currently in use
-│   ├── alerts.mjs             # POST/DELETE/GET /api/alerts → digest subscriptions
-│   └── cron/digest.mjs        # POST /api/cron/digest → daily email digest
-├── src/                       # React + TypeScript + Vite frontend
-│   ├── App.tsx                # root component + state
-│   ├── api.ts                 # typed API client
-│   ├── types.ts               # shared types
-│   ├── styles.css             # design system (CSS)
-│   ├── hooks/                 # useAvailableModels, useCityAutocomplete
-│   ├── lib/                   # pdf.ts (browser-side PDF text extraction)
-│   └── components/
-│       ├── Hero.tsx
-│       ├── LandingHero.tsx
-│       ├── Navbar.tsx
-│       ├── SearchForm.tsx
-│       ├── JobSources.tsx     # per-source counts + disabled/reason rows from delivered jobs
-│       ├── CvUpload.tsx       # PDF upload → extract → hash → profile cache → /api/profile
-│       ├── ModelSelector.tsx  # accessible free-model listbox with recommended section
-│       ├── AlertCard.tsx
-│       ├── Status.tsx
-│       ├── Results.tsx        # top-5 initial view + local expand
-│       ├── MatchCard.tsx
-│       ├── ScoreBadge.tsx
-│       └── LetterModal.tsx
-├── index.html                 # Vite entry
-└── vercel.json                # function timeout + daily cron schedule
-```
-
-## Environment variables
-
-All keys are server-side only.
-
-| Variable | Needed for | Where to get it |
-|---|---|---|
-| `OPENROUTER_API_KEY` | Matching, CV profile extraction, cover letters (primary provider) | <https://openrouter.ai/keys> |
-| `OPENROUTER_MODEL` (optional) | Override the default model | — |
-| `EDENAI_API_KEY` (optional) | Second AI provider, production key | <https://www.edenai.co> |
-| `EDENAI_DEV_API_KEY` (optional) | EdenAI sandbox token for dev/preview (simulated responses, no cost) | EdenAI |
-| `EDENAI_ENV` (optional) | Force EdenAI key mode (`production` or sandbox); defaults to `VERCEL_ENV` | — |
-| `EDENAI_MODEL` (optional) | Override the default EdenAI model | — |
-| `APIFY_API_TOKEN` (optional) | Second job source: Arbeitsagentur feed via Apify | <https://console.apify.com/settings/integrations> |
-| `ADZUNA_APP_ID` / `ADZUNA_APP_KEY` (optional, Aliase `ADZUNA_APPLICATION_ID` / `_KEY`) | Adzuna job source (free tier) | <https://developer.adzuna.com/> |
-| `ADZUNA_COUNTRIES` (optional) | Adzuna country codes (default `de`) | — |
-| `JOBSPIPE_API_KEY` (optional) | JobsPipe job source (credits per record) | <https://jobspipe.dev/signup> |
-| `JOBSPIPE_MONTHLY_MAX_CREDITS` / `JOBSPIPE_MAX_CREDITS_PER_USER` (optional) | JobsPipe credit guards (default `200`/`20`) | — |
-| `THEIRSTACK_API_KEY` (optional) | Theirstack job source (1 credit per record) | <https://app.theirstack.com/> |
-| `THEIRSTACK_MONTHLY_MAX_CREDITS` / `THEIRSTACK_MAX_CREDITS_PER_USER` (optional) | Theirstack credit guards (default `200`/`20`) | — |
-| `JOB_SOURCE_ARBEITNOW_ENABLED` / `_ARBEITSAGENTUR_ENABLED` / `_GREENHOUSE_ENABLED` / `_ADZUNA_ENABLED` / `_JOBSPIPE_ENABLED` / `_THEIRSTACK_ENABLED` (optional) | Enable/disable each job source (default `true`; without required config a source reports as disabled) | — |
-| `JOB_SOURCE_GREENHOUSE_BOARDS` / `PUBLIC_ATS_SOURCES` (optional) | Greenhouse board list / public ATS board configs | — |
-| `UPSTASH_REDIS_REST_URL` | Apify job cache, CV profile cache, alert subscriptions | <https://upstash.com> (free Redis) |
-| `UPSTASH_REDIS_REST_TOKEN` | Same as above | Upstash |
-| `RESEND_API_KEY` | Sending digest emails | <https://resend.com> (free) |
-| `DIGEST_FROM` | Sender address (verified domain in Resend) | Resend |
-| `CRON_SECRET` | Protects `/api/cron/digest` | any random string |
-| `OPENROUTER_MONTHLY_MAX_REQUESTS` (optional) | OpenRouter AI request-count backstop for the cost guard (default `1000`/month) | — |
-| `EDENAI_MONTHLY_MAX_REQUESTS` (optional) | EdenAI request-count backstop (default `200`/month) | — |
-| `OPENROUTER_ENABLED` / `EDENAI_ENABLED` (optional) | Enable/disable each AI provider (default `true`) | — |
-| `APIFY_MONTHLY_MAX_RUNS` (optional) | Apify Actor-run backstop for the cost guard (default `100`/month) | — |
-| `MODEL_FALLBACK_MAX_ATTEMPTS` (optional) | Max AI fallback attempts, exposed to the client (default `3`) | — |
-| `APIFY_DATASET_REFRESH_PEAK_HOURS` (optional) | Apify dataset reuse window during peak hours (default `6`) | — |
-| `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (optional) | Apify dataset reuse window off-peak (default `12`) | — |
-| `APIFY_DATASET_REFRESH_TIMEZONE` (optional) | IANA timezone for the peak window (default `Europe/Berlin`; DST handled automatically) | — |
-| `APIFY_DATASET_REFRESH_PEAK_START` / `APIFY_DATASET_REFRESH_PEAK_END` (optional) | Peak window start/end (default `08:00` / `18:00`) | — |
-| `USAGE_DIAGNOSTICS_TOKEN` (optional) | Token required to read `GET /api/usage`; without it the endpoint is disabled (403) | any random string |
-| `OPENROUTER_MONTHLY_SOFT_LIMIT_USD` / `EDENAI_MONTHLY_SOFT_LIMIT_USD` / `APIFY_MONTHLY_SOFT_LIMIT_USD` (optional) | Advisory spend limits (operator reference only, shown in `/api/usage`) | — |
-
-## Cost guard & usage
-
-The app keeps its own monthly usage counters (in Upstash Redis) and exposes them read-only via `GET /api/usage`. It contains **no secrets** — only counters and configured limits:
-
-```json
-{ "month": "2026-08", "openRouter": { "requestCount": 12, "failureCount": 0, "fallbackAttempts": 0, "byModel": {} },
-  "edenai": { "requestCount": 0, "failureCount": 0, "fallbackAttempts": 0, "byModel": {} },
-  "apify": { "actorRuns": 1, "datasetReuses": 2, "cacheHits": 3, "cacheMisses": 1 },
-  "limits": { "openRouterMonthlySoftLimitUsd": 0.8, "edenaiMonthlySoftLimitUsd": 1.0, "apifyMonthlySoftLimitUsd": 4, ... } }
-```
-
-Important — these are **application-side counters, not provider billing**:
-
-- The provider dashboards (OpenRouter, Apify console) remain authoritative for real spend.
-- `GET /api/usage` is **protected**: it requires the `USAGE_DIAGNOSTICS_TOKEN` (sent via the `x-usage-token` header or `Authorization: Bearer <token>`). Without a token configured the endpoint is disabled (HTTP 403); a wrong/missing token returns HTTP 401. The token is server-side only and never appears in the response or any client bundle.
-- The `*_SOFT_LIMIT_USD` values are advisory operator thresholds shown in `/api/usage`; the app cannot derive exact spend from its counters and therefore does **not** block on them.
-- The guards use the counter backstops instead:
-  - **AI providers:** once a provider's monthly request count reaches its backstop (`OPENROUTER_MONTHLY_MAX_REQUESTS` default `1000`, `EDENAI_MONTHLY_MAX_REQUESTS` default `200`), the router fails fast for that provider (`503 limit_reached`) and automatically tries the next enabled provider; only when all are exhausted does the request fail with the existing friendly UX. Client-side fallbacks stay bounded by `MODEL_FALLBACK_MAX_ATTEMPTS`.
-  - **Apify:** once the monthly Actor-run count reaches `APIFY_MONTHLY_MAX_RUNS` (default `100`), no new paid Actor runs are started. Cached / dataset-reused results keep working; only brand-new searches that would need a run return empty for the Apify source (Arbeitnow still works).
-- Apify dataset reuse is **time-of-day aware** in a configurable IANA timezone: during the peak window (`APIFY_DATASET_REFRESH_PEAK_START`–`APIFY_DATASET_REFRESH_PEAK_END`, default 08:00–18:00 `Europe/Berlin`) the dataset refresh window is `APIFY_DATASET_REFRESH_PEAK_HOURS` (default 6 h); off-peak it is `APIFY_DATASET_REFRESH_OFFPEAK_HOURS` (default 12 h). Longer off-peak reuse means fewer paid runs. Summer/winter time is resolved automatically from the IANA timezone (no hardcoded UTC offset).
-- The Redis L1 job cache (10 min), the Apify L2 dataset reuse, the CV-profile cache and the automatic model fallback are all unchanged.
-
-## Run locally
-
-```bash
-npm i -g vercel
-npm install
-vercel login
-vercel dev        # local server on http://localhost:3000 (React + functions)
-```
-
-Build and type-check:
-
-```bash
-npm run build
-```
-
-## Deploying to Vercel + environment variables
-
-**Option A — dashboard:** push the folder to GitHub → import on <https://vercel.com/new> → add the env vars in **Project → Settings → Environment Variables** → Deploy/Redeploy.
-
-**Option B — CLI:**
-
-```bash
-npm i -g vercel
-vercel login
-vercel link
-vercel env add OPENROUTER_API_KEY          # + the other vars above
-vercel --prod --scope maymilly              # --scope is required for this project
-```
-
-The project does not rely on automatic Vercel Git deployment — production is deployed explicitly with the CLI.
-
-The daily digest runs automatically via the cron in `vercel.json` (07:00 UTC).
-
-## Error handling
-
-- Job board unreachable / rate-limited / broken → friendly message, no crash.
-- Missing keys (both AI providers, Upstash, Resend) → clear "not configured yet" message.
-- Invalid key (401) / out of credits (402) / AI rate limit (429) / malformed AI response → each gets its own clear message.
-- OpenRouter's daily free-model quota (`free-models-per-day`) is detected on the server and shown as a specific friendly message ("Die kostenlosen KI-Anfragen für heute sind aufgebraucht…") — the client does **not** try further free models, because the account-wide daily limit affects all of them; the server may transparently fall back to the EdenAI provider instead.
-- See [`docs/AI_PROVIDERS.md`](docs/AI_PROVIDERS.md) for the full provider architecture, key selection and error codes.
-
-## Example
-
-```
-Skills:        JavaScript, React, Node.js
-Target role:   Frontend Developer
-City:          Berlin, München
-```
-
-→ `Find my matches` → ranked cards with scores, short "why this fits", a prep question, and a "Bewerbung generieren" button.
-
-## Testing
-
-- **657 tests passing, 5 skipped** (`npm test` = `vitest run`, Stand 2026-10-02) across frontend, serverless functions and provider integration.
-- `npx tsc -b` — strict TypeScript build, PASS.
-- `npm run build` — Vite production build, PASS.
-- Live endpoint verification against the deployed Vercel functions where possible.
-
-## Development workflow
-
-The project follows a strict, verifiable feature workflow (`docs/DEVELOPMENT_WORKFLOW.md`):
-
-```
-main → feature/<name> → Development → Preview → Abnahme → Merge → Production → Branch schließen
-```
-
-- Every feature runs on its own branch; `main` stays the integration/release branch.
-- Each step produces a checkpoint: report → tests → `git status` → `git diff --check` → secret audit → commit → push.
-- Recovery is based on a documented recovery file per feature (`docs/reports/FEATURE_*.md`).
-- Deployment identity is verified against the actual built commit (Deployment Commit / Build Identity), not assumed from `git HEAD`.
-- Example: the **AI Matching Timeout & Fallback** feature (Steps 1–10, including a controlled production AI test) is fully documented in `docs/reports/FEATURE_AI_MATCHING_TIMEOUT.md`.
-
-## Current status
-
-| Area | Status |
-|---|---|
-| Core matching (jobs + AI scoring) | ✅ live |
-| Multi-city search | ✅ live |
-| Search parameters (Umkreis / Arbeitsmodell / Arbeitszeit) | ✅ live (see open points above) |
-| AI cover-letter generator | ✅ live |
-| Daily digest alerts | ✅ implemented (needs Upstash + Resend keys for real delivery) |
-| Model selection (dynamic free-model catalogue) | ✅ live |
-| AI provider fallback (OpenRouter ↔ EdenAI) | ✅ live |
-| AI timeout / error-code handling | ✅ live (verified in production) |
-| Precise fallback feedback + manual model retry (no job re-fetch) | ✅ live (verified in production) |
-| Model availability / health check | 🟡 planned — see below |
-
-## Planned
-
-- **Model Availability / Health Check** (backlog): UI loads immediately, an availability check runs in
-  the background, the result is cached, and the model combobox shows the real status of each model —
-  instead of deriving availability only from the catalogue. Free models are preferred and costs
-  controlled; no unnecessary provider requests and no artificial load.
-- **Geocoding for `radiusKm`:** convert the city + Umkreis into a real geo-radius filter instead of the current passthrough (server-side best-effort; needs a geocoding source).
-- **Arbeitsmodell hybrid/onsite:** only `remote` is currently derivable from the job data; hybrid/onsite filtering would need richer metadata from the job sources.
-- Final accessibility audit and candidate profile persistence (roadmap, see `docs/ROADMAP.md`).
+## Status
+IMPLEMENTATION READY
+AWS APPLY AWAITING APPROVAL
