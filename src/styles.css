@@ -7171,3 +7171,175 @@ body {
     padding: 16px;
   }
 }
+
+/* ==========================================================================
+   AURORA DASHBOARD - SIDEBAR & LAYOUT (MAYS-AURORA-GLASS-DASHBOARD-03B)
+   ========================================================================== */
+
+/* Dev Badge */
+.aurora-dev-badge {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+}
+
+/* Content Wrapper with Sidebar Layout */
+.aurora-content-wrapper {
+  display: flex;
+  gap: clamp(24px, 4vw, 48px);
+  padding: clamp(24px, 6vw, 48px);
+  max-width: min(1400px, 94vw);
+  margin: 0 auto;
+  flex: 1;
+}
+
+/* Sidebar */
+.aurora-sidebar {
+  flex: 0 0 240px;
+  min-width: 220px;
+}
+
+.aurora-sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aurora-sidebar-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0b3b5e;
+  margin-bottom: 16px;
+}
+
+.aurora-sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aurora-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.15s ease;
+}
+
+.aurora-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.aurora-sidebar-item.aurora-sidebar-active {
+  background: rgba(125, 211, 252, 0.4);
+  font-weight: 600;
+}
+
+.aurora-sidebar-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.aurora-sidebar-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(233, 246, 255, 0.7);
+  color: #0b3b5e;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  margin-right: 8px;
+}
+
+.aurora-demo-note {
+  background: rgba(255, 248, 237, 0.8);
+  border: 1px solid rgba(245, 208, 178, 0.5);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  font-size: 0.85rem;
+  color: #92400e;
+  backdrop-filter: blur(8px);
+}
+
+.aurora-sidebar-logout {
+  margin-top: 8px;
+  justify-content: center;
+}
+
+/* Content Grid Adjustments */
+.aurora-content-grid {
+  display: grid;
+  gap: clamp(16px, 3vw, 32px);
+}
+
+/* Desktop: 2-column grid for cards */
+@media (min-width: 900px) {
+  .aurora-content-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+/* Tablet: Sidebar becomes compact */
+@media (min-width: 768px) and (max-width: 900px) {
+  .aurora-content-wrapper {
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .aurora-sidebar {
+    flex: 0 0 200px;
+    min-width: 180px;
+  }
+}
+
+/* Mobile: Sidebar collapses, content takes full width */
+@media (max-width: 767px) {
+  .aurora-content-wrapper {
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px;
+  }
+  
+  .aurora-sidebar {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .aurora-content-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .aurora-dev-badge {
+    position: sticky;
+    top: 12px;
+    right: 12px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-sidebar-item {
+    transition: none;
+  }
+}

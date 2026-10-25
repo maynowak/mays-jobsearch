@@ -419,3 +419,72 @@ JOBMATCHER-PRODUCTION-CONNECTION-INCIDENT-01
 - AI-/Privacy-/Data-Flow impact: Keine (Diagnose, keine Änderungen)
 - Log: Dieser Eintrag
 
+
+================================================================================
+MAYS-AURORA-GLASS-LOCAL-PREVIEW-02
+================================================================================
+
+2026-10-25 · MAYS-AURORA-GLASS-LOCAL-PREVIEW-02
+- Typ: Routing-Fix für /dev/dashboard
+- Status: IMPLEMENTED (NUR lokale Verifikation möglich)
+- Scope: Routing-Problem behoben - `/dev/dashboard` fällt jetzt nicht mehr
+  auf den Landingpage-Fallback
+- Ergebnis:
+  - `/dev/dashboard` wird jetzt korrekt mit DashboardDevPreview gerendert
+  - Problem: `/dev/dashboard` fiel auf "landing" zurück und wurde vom
+    Early-Return abgefangen
+  - Fix: `isDevDashboard` Variable hinzugefügt und Early-Return erweitert
+- Files: src/App.tsx (Route-Logik aktualisiert)
+- Tests: Build ✅, npx vitest run ✅ (821 passed | 5 skipped)
+- AI-/Privacy-/Data-Flow impact: Keine (Routing-Änderung nur)
+- Browser-Test: NOT VERIFIED (keine Möglichkeit in dieser Umgebung)
+  - _ muss in echtem Browser getestet werden: http://localhost:5173/dev/dashboard
+  - Erwartet: Aurora-Glass-Dashboard mit Demo-Badge
+- NEXT: Benutzer muss Route in echtem Browser verifizieren
+- Log: commit ac9bbc1
+
+
+================================================================================
+MAYS-AURORA-GLASS-LOCAL-PREVIEW-03
+================================================================================
+
+2026-10-25 · MAYS-AURORA-GLASS-LOCAL-PREVIEW-03
+- Typ: UI-Korrektur (Duplication Fix)
+- Status: IMPLEMENTED
+- Scope: Entfernte doppelte Navbar aus Dashboard-Komponente
+- Ergebnis:
+  - Dashboard hatte eigene Navbar → führte zu 2 Navbar-Komponenten
+  - App.tsx renderte bereits Navbar für /dev/dashboard Route
+  - Fix: Navbar-Import und -Verwendung aus Dashboard.tsx entfernt
+- Files: src/components/Dashboard.tsx (Navbar-Import entfernt)
+- Tests: Build ✅, npx vitest run ✅ (821 passed | 5 skipped)
+- AI-/Privacy-/Data-Flow: Keine (UI-Korrektur)
+- Browser-Test: NOT VERIFIED
+- NEXT: Benutzer muss http://localhost:5173/dev/dashboard verifizieren
+- Log: commit 33f212b
+
+
+================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-03B
+================================================================================
+
+2026-10-25 · MAYS-AURORA-GLASS-DASHBOARD-03B
+- Typ: Layout-Implementierung (Sidebar, Desktop-Grid)
+- Status: IMPLEMENTED
+- Scope: Dashboard-Layout mit Sidebar und responsivem Grid
+- Ergebnis:
+  - Dashboard-Header kompakt (kein großer Abstand)
+  - Sidebar mit Navigation (Übersicht, Profil, CV, Bewerbungen, Präferenzen, Einstellungen)
+  - In Vorbereitung-Tags für nicht verfügbare Funktionen
+  - Feature-Grid für Karten (2-spaltig auf Desktop)
+  - Dev-Modus-Badge sichtbar bei Demo-Nutzung
+  - Demo-Status statt echter Authentifizierung angezeigt
+  - Responsives Layout (Desktop 1400px, Tablet, Mobile)
+- Files:
+  - src/components/Dashboard.tsx (vollständig umstrukturiert)
+  - src/styles.css (Sidebar + Layout-Styles)
+- Tests: Build ✅, npx vitest run ✅ (821 passed | 5 skipped)
+- Browser-Test: NOT VERIFIED (lokaler Test erforderlich)
+- NEXT: Benutzer muss http://localhost:5173/dev/dashboard verifizieren
+- Log: commit (noch zu erstellen)
+
