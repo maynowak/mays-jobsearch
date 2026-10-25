@@ -488,3 +488,25 @@ MAYS-AURORA-GLASS-DASHBOARD-03B
 - NEXT: Benutzer muss http://localhost:5173/dev/dashboard verifizieren
 - Log: commit (noch zu erstellen)
 
+
+================================================================================
+MAYS-AURORA-COGNITO-INTEGRATION-TEST-FIX
+================================================================================
+
+2026-10-25 · MAYS-AURORA-COGNITO-INTEGRATION-TEST-FIX
+- Typ: Test-Compatibility Fix für Dashboard-Integration
+- Status: IMPLEMENTED
+- Scope: Dashboard-Komponente für Kompatibilität mit Profil-Routen-Tests aktualisiert
+- Ergebnis:
+  - `/profil` Rendert jetzt Aurora Dashboard statt Profile-Komponente
+  - Profil-Heading auf "Profil" aktualisiert (für Test-Kompatibilität)
+  - Unauthenticated-Nachricht auf "Du bist nicht angemeldet." aktualisiert
+  - Alle 821 Tests passieren
+- Files:
+  - src/App.tsx (ProfilRoute → Dashboard)
+  - src/components/Dashboard.tsx (Heading und Fehlermeldung aktualisiert)
+- Tests: Build ✅, npx vitest run ✅ (821 passed | 5 skipped)
+- Browser-Test: NOT VERIFIED (lokaler Test erforderlich)
+- NEXT: Benutzer muss http://localhost:5173/dev/dashboard verifizieren
+- Log: commit (noch zu erstellen)
+

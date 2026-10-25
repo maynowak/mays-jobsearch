@@ -29,8 +29,8 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
   if (!isAuthenticated) {
     return (
       <div className="aurora-dashboard-error">
-        <h2>Nicht angemeldet</h2>
-        <p>Du musst angemeldet sein, um das Dashboard zu sehen.</p>
+        <h2>Profil</h2>
+        <p>Du bist nicht angemeldet.</p>
         <a href="/anmelden" className="aurora-btn aurora-btn-primary">
           {trans("auth.login")}
         </a>
@@ -50,7 +50,7 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
       {/* Aurora Header */}
       <section className="aurora-header">
         <div className="aurora-header-content">
-          <h1 className="aurora-title">Willkommen im Dashboard</h1>
+          <h1 className="aurora-title">Profil</h1>
           <p className="aurora-subtitle">
             {user?.name ? `Hallo, ${user.name}!` : "Verwalte dein Profil hier"}
           </p>

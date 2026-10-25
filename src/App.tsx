@@ -25,8 +25,7 @@ import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
 import AuthCallback from "./components/AuthCallback";
 import EmailConfirmation from "./components/EmailConfirmation";
-import ProfilePage from "./components/Profile";
-import { DashboardDevPreview } from "./components/Dashboard";
+import Dashboard, { DashboardDevPreview } from "./components/Dashboard";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -2457,7 +2456,7 @@ export default function App() {
       >
         <Navbar route={route} />
         <main className="container legal-main">
-          <ProfilePage />
+          <Dashboard />
         </main>
       </ErrorBoundary>
     );
