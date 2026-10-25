@@ -95,6 +95,7 @@ export default function App() {
   })();
   const isAuthCallback = window.location.pathname === "/auth/callback";
   const isProfile = window.location.pathname === "/profil";
+  const isDevDashboard = window.location.pathname === "/dev/dashboard";
   const isPrivacy = window.location.pathname === "/datenschutz";
   const isPrinciples = window.location.pathname === "/datenschutzprinzipien";
   const [phase, setPhase] = useState<Phase>("idle");
@@ -1307,7 +1308,7 @@ export default function App() {
   // Profilseite nicht abfangen (Defensiv-Guard zusätzlich zur Route oben).
   // WICHTIG: /auth/callback muss vor diesem Early-Return behandelt werden,
   // damit AuthCallback den OIDC-Flow abwickeln kann.
-  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback) {
+  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isDevDashboard) {
     return (
       <div className="landing">
         <Navbar route="landing" />
@@ -2432,7 +2433,7 @@ export default function App() {
   }
 
   // Dev-only dashboard preview (only in development mode)
-  if (import.meta.env.DEV && window.location.pathname === "/dev/dashboard") {
+  if (isDevDashboard) {
     return (
       <ErrorBoundary
         title={t("error.boundaryTitle")}
