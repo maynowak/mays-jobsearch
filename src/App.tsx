@@ -26,6 +26,7 @@ import LoginForm from "./components/LoginForm";
 import AuthCallback from "./components/AuthCallback";
 import EmailConfirmation from "./components/EmailConfirmation";
 import ProfilePage from "./components/Profile";
+import { DashboardDevPreview } from "./components/Dashboard";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -2428,6 +2429,22 @@ export default function App() {
 
   if (isAuthCallback) {
     return <AuthCallback />;
+  }
+
+  // Dev-only dashboard preview (only in development mode)
+  if (import.meta.env.DEV && window.location.pathname === "/dev/dashboard") {
+    return (
+      <ErrorBoundary
+        title={t("error.boundaryTitle")}
+        message={t("error.boundaryMessage")}
+        reloadLabel={t("error.boundaryReload")}
+      >
+        <Navbar route="profil" />
+        <main className="container legal-main">
+          <DashboardDevPreview />
+        </main>
+      </ErrorBoundary>
+    );
   }
 
   if (isProfile) {

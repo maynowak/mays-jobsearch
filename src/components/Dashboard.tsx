@@ -4,9 +4,18 @@ import { signOut } from "../lib/authFlow";
 import Navbar from "./Navbar";
 
 // Aurora Glass Dashboard - Modernes Dashboard mit Glassmorphismus
-export default function Dashboard() {
+export interface DashboardProps {
+  /** Override user profile - for testing/dev only */
+  user?: { sub: string; email: string; name: string };
+}
+
+export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
   const auth = useAuth();
   const { t: trans } = useLang();
+
+  // Allow override for testing/dev mode
+  const user = overrideUser || auth.user?.profile;
+  const isAuthenticated = !!overrideUser || auth.isAuthenticated;
 
   if (auth.isLoading) {
     return (
@@ -17,7 +26,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <div className="aurora-dashboard-error">
         <h2>Nicht angemeldet</h2>
@@ -28,8 +37,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  const user = auth.user?.profile;
 
   return (
     <div className="aurora-dashboard">
@@ -55,7 +62,7 @@ export default function Dashboard() {
                 <label>E-Mail</label>
                 <span className="aurora-info-value">{user?.email || "-"}</span>
               </div>
-              <div className="aurora-info-item">
+              <div className=" Aurora-info-item">
                 <label>Benutzer-ID</label>
                 <span className="aurora-info-value user-id">{user?.sub || "-"}</span>
               </div>
@@ -120,5 +127,17 @@ export default function Dashboard() {
         </section>
       </main>
     </div>
+  );
+}
+// Export a dev-only wrapper
+export function DashboardDevPreview() {
+  const mockUser = {
+    sub: "dev-demo-user-123",
+    email: "dev@example.com", 
+    name: "Dev Demo User",
+  };
+
+  return (
+    <Dashboard user={mockUser} />
   );
 }
