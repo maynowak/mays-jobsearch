@@ -1,7 +1,6 @@
 import { useAuth } from "react-oidc-context";
 import { useLang } from "../i18n";
 import { signOut } from "../lib/authFlow";
-import Navbar from "./Navbar";
 
 // Aurora Glass Dashboard - Modernes Dashboard mit Glassmorphismus
 export interface DashboardProps {
@@ -40,7 +39,6 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
 
   return (
     <div className="aurora-dashboard">
-      <Navbar route="profil" />
       <main className="aurora-dashboard-main">
         {/* Aurora Header */}
         <section className="aurora-header">
