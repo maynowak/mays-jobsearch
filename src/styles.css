@@ -6869,72 +6869,10 @@ body {
   );
 }
 
-
-/* Professional Dashboard Optimizations */
-.aurora-header {
-  padding: clamp(30px, 6vh, 60px) clamp(16px, 4vw, 32px);
-}
-
-.aurora-title {
-  font-size: clamp(1.4rem, 2.8vw, 2rem);
-  margin-bottom: 6px;
-}
-
-.aurora-subtitle {
-  font-size: clamp(0.85rem, 2vw, 1rem);
-  opacity: 0.75;
-}
-
-/* Content wrapper - optimized spacing */
-.aurora-content-wrapper {
-  gap: clamp(16px, 3vw, 32px);
-  padding: clamp(18px, 4vw, 36px);
-}
-
-/* Grid optimizations */
-.aurora-content-grid {
-  gap: clamp(14px, 2.5vw, 24px);
-  padding: clamp(14px, 3vw, 28px);
-}
-
-/* Card optimizations */
-.aurora-card {
-  padding: clamp(16px, 3vw, 24px);
-  background: rgba(255, 255, 255, 0.68);
-}
-
-/* Sidebar item optimizations */
-.aurora-sidebar-item {
-  padding: 6px 10px;
-  gap: 8px;
-}
-
-.aurora-sidebar-icon {
-  width: 18px;
-  height: 18px;
-  font-size: 0.8rem;
-}
-
-/* Text handling */
-.aurora-info-value {
-  word-break: break-word;
-  hyphens: auto;
-}
-
-.user-id {
-  opacity: 0.6;
-  font-size: 0.85rem;
-}
-
-.aurora-section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
 /* Aurora Header - Hero Section mit Glass-Effekt */
 .aurora-header {
   position: relative;
-  padding: clamp(60px, 12vh, 120px) clamp(24px, 6vw, 48px);
+  padding: clamp(40px, 8vh, 80px) clamp(16px, 4vw, 32px);
   text-align: center;
   color: #0b3b5e;
 }
@@ -6969,11 +6907,13 @@ body {
   max-width: min(1200px, 92vw);
   margin: 0 auto;
   flex: 1;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 /* Aurora Card - Glassmorphism Design */
 .aurora-card {
   background: rgba(255, 255, 255, 0.72);
+  min-width: 0;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius);
   box-shadow: 0 8px 32px rgba(2, 130, 157, 0.12);
@@ -7048,6 +6988,8 @@ body {
   font-size: 1rem;
   color: #0b3b5e;
   font-weight: 600;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .user-id {
@@ -7403,5 +7345,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .aurora-sidebar-item {
     transition: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .aurora-content-grid {
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
   }
 }
