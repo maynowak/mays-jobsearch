@@ -99,14 +99,16 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
               </div>
             )}
 
-            {/* Logout Button */}
-            <button
-              type="button"
-              className="aurora-btn aurora-btn-danger aurora-sidebar-logout"
-              onClick={() => void signOut(auth)}
-            >
-              Logout
-            </button>
+            {/* Logout Button - nur in echtem Modus anzeigen */}
+            {!overrideUser && (
+              <button
+                type="button"
+                className="aurora-btn aurora-btn-danger aurora-sidebar-logout"
+                onClick={() => void signOut(auth)}
+              >
+                Logout
+              </button>
+            )}
           </div>
         </aside>
 
@@ -156,7 +158,7 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
             </div>
 
             {/* Future Features Card */}
-            <div className="aurora-card">
+            <div className="aurora-card aurora-card--features">
               <h2 className="aurora-section-title">Zukünftige Funktionen</h2>
               <div className="aurora-feature-grid">
                 <div className="aurora-feature-item">

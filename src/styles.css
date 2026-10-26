@@ -6907,7 +6907,7 @@ body {
   max-width: min(1200px, 92vw);
   margin: 0 auto;
   flex: 1;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: 1fr 1fr;
 }
 
 /* Aurora Card - Glassmorphism Design */
@@ -6946,6 +6946,11 @@ body {
 }
 
 .aurora-section-title {
+/* Features card spans full width */
+.aurora-card--features {
+  grid-column: 1 / -1;
+}
+
   margin: 0 0 20px;
   font-size: 1.25rem;
   font-weight: 700;
@@ -7350,6 +7355,19 @@ body {
 
 @media (min-width: 1024px) {
   .aurora-content-grid {
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .aurora-card--features {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  
+  /* Features card content should also handle text overflow */
+  .aurora-feature-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
   }
 }
