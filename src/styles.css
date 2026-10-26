@@ -6869,6 +6869,68 @@ body {
   );
 }
 
+
+/* Professional Dashboard Optimizations */
+.aurora-header {
+  padding: clamp(30px, 6vh, 60px) clamp(16px, 4vw, 32px);
+}
+
+.aurora-title {
+  font-size: clamp(1.4rem, 2.8vw, 2rem);
+  margin-bottom: 6px;
+}
+
+.aurora-subtitle {
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  opacity: 0.75;
+}
+
+/* Content wrapper - optimized spacing */
+.aurora-content-wrapper {
+  gap: clamp(16px, 3vw, 32px);
+  padding: clamp(18px, 4vw, 36px);
+}
+
+/* Grid optimizations */
+.aurora-content-grid {
+  gap: clamp(14px, 2.5vw, 24px);
+  padding: clamp(14px, 3vw, 28px);
+}
+
+/* Card optimizations */
+.aurora-card {
+  padding: clamp(16px, 3vw, 24px);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+/* Sidebar item optimizations */
+.aurora-sidebar-item {
+  padding: 6px 10px;
+  gap: 8px;
+}
+
+.aurora-sidebar-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 0.8rem;
+}
+
+/* Text handling */
+.aurora-info-value {
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.user-id {
+  opacity: 0.6;
+  font-size: 0.85rem;
+}
+
+.aurora-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
 /* Aurora Header - Hero Section mit Glass-Effekt */
 .aurora-header {
   position: relative;

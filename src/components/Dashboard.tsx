@@ -47,12 +47,12 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
         </div>
       )}
 
-      {/* Aurora Header */}
+      {/* Aurora Header - Professional */}
       <section className="aurora-header">
         <div className="aurora-header-content">
           <h1 className="aurora-title">Profil</h1>
           <p className="aurora-subtitle">
-            {user?.name ? `Hallo, ${user.name}!` : "Verwalte dein Profil hier"}
+            Willkommen! Verwalte dein Konto.
           </p>
         </div>
       </section>
@@ -116,7 +116,7 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
             {/* Profile Card */}
             <div className="aurora-card aurora-card-primary">
               <h2 className="aurora-section-title">Persönliche Daten</h2>
-              <div className="aurora-profile-info">
+              <div className="aurora-profile-info aurora-compact">
                 <div className="aurora-info-item">
                   <label>E-Mail</label>
                   <span className="aurora-info-value">{user?.email || "-"}</span>
