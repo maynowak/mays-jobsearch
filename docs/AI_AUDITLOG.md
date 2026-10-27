@@ -910,3 +910,63 @@ Erwartete Kartenbreiten (Content-Box): ~855px @1440-Viewport -> 3 Spalten
 IMPLEMENTED - VISUAL VERIFICATION PENDING
 Kein Produktionsdeploy, keine AWS/Cognito/DNS/Aenderungen.
 
+
+================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-07-R – MINIMAL REGRESSION RECOVERY
+================================================================================
+
+2026-10-27 · Breitenregression aus DASHBOARD-07 behoben (nur src/styles.css)
+
+- Typ: Minimaler CSS-Regressionsfix (kein Auth-, kein Cognito-, kein AWS-Change)
+- Preflight: Branch main, HEAD c9119b4 (wie analysiert), Working-Tree getrackt
+  sauber, Diff geg. 18312ad = ausschliesslich DASHBOARD-07 (styles.css + Auditlog)
+- Referenz fuer Dashboard-Breiten: 18312ad
+
+## Nachgewiesene Ursache (READ-ONLY-Analyse davor, empirisch belegt)
+`.aurora-card--features { container-type: inline-size }` koppelte die
+intrinsische Breite der Features-Karte ab (Inline-Size-Containment: Inhalt
+traegt nicht zu min/max-content bei). Da .aurora-dashboard-main KEINE
+CSS-Regel hat (flex: 0 1 auto, kein Grow) und .aurora-content-wrapper
+`margin: 0 auto` traegt (kein Cross-Axis-Stretch), schrumpfte der Wrapper
+auf fit-content: 1048.2 px statt 1353.6 px bei 1440-Viewport
+(96 Padding + 240 Sidebar + 48 Gap + 664.2 dashmain). Folgekaskade:
+Karten 420.8 -> 268.1 px, Features-Karte 873.6 -> 568.2 px, und die
+@container-Schwellen 560/800 px feuerten nie mehr -> Kacheln gestapelt.
+
+## Aenderung (nur src/styles.css, +10/-27)
+1. container-type-Regel + Container-Query-Kommentar an
+   .aurora-card--features entfernt.
+2. Beide @container-Bloecke (560/800) entfernt.
+3. .aurora-feature-grid: grid+minmax -> display:flex; flex-wrap:wrap;
+   gap:12px (Umlage orientiert sich an tatsaechlicher Kartenbreite,
+   kein Viewport-/Containment-Bezug).
+4. .aurora-feature-item: flex: 1 1 240px ergaenzt. Erhalten:
+   min-width:0, hyphens:auto, overflow-wrap:anywhere.
+Unveraendert (Diff-verifiziert): Navbar, Root-Container, Dashboard.tsx,
+App.tsx, .aurora-content-grid, Sidebar, Auth/Demo/Logout, Vercel.
+
+## Verifikation (Headless-Chromium, DOM-treue Replik geg. Referenz-Harness)
+Breiten IDENTISCH zu 18312ad bei 1440/1280/1100/1024/768/390:
+wrapper 1353.6/1203.2/1034.0/962.5/721.9/366.6; grid 969.6/819.2/768.0/
+766.7/461.9/326.6. Akzeptanz:
+1 PASS Wrapper+Grid = Referenz (6 VP)
+2 PASS Hauptkarten nebeneinander ab 1024
+3 PASS Features-Karte = volle Grid-Breite ab 1024
+4 PASS @1440 drei gleiche Kacheln (261.2 px, 1 Reihe)
+5 PASS responsiver Umbruch (1024/1100/1280: 2 Zeilen; 768/390: 1 Spalte)
+6/7 Teilerfolg/BELEGT VORBESTEHEND: horizontale Scrollbar +33 px @1100
+   und +102 px @1024 — Werte und Overflow-Listen BYTE-IDENTISCH zur
+   Referenz 18312ad (Ursache: auto-fit minmax(320px)-Floor der
+   .aurora-content-grid + Sidebar-Content, seit 06). Bei 1440/1280/768/390
+   keine Scrollbar, keine Textueberlaeufe (auch nicht in den Kacheln).
+   Nicht durch 07-R verursacht, ausserhalb dieses Scopes dokumentiert.
+8 PASS Dashboard-Struktur intakt
+Screenshots: /tmp/opencode/dash07/shots/07R_{1440,390}.png
+TypeScript/Build: PASS (tsc -b && vite build)
+Tests: 821 passed | 5 skipped (72 Files) — keiner deaktiviert
+
+## Status
+REGRESSION RECOVERED — VISUAL VERIFIED fuer K1-K5/K8 (Browsermessung
+bestaetigt); K6/K7 vorbestehend und referenzidentisch (Restproblem).
+Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
+
