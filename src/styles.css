@@ -184,6 +184,9 @@ body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
+  /* DASHBOARD-08: Einheitliche Slide-Animation für top (0 ↔ -70px), damit
+     Ein- und Ausblenden beidseitig animiert statt einzuschnappen. */
+  transition: top 0.2s ease;
 }
 
 /* Small hamburger button that appears when scrolled down */
@@ -219,21 +222,21 @@ body {
   background: rgba(255, 255, 255, 0.9);
 }
 
-/* Scrolled state (added via JS) – compact navbar vanishes, only small button remains */
+/* DASHBOARD-08 (Reparatur der bisher toten Regel): Die Klasse `scrolled`
+   wird per JS nur noch auf Dashboard-Routen gesetzt (Navbar hideOnScroll).
+   WICHTIG: bewusst position: sticky (NICHT fixed wie früher) — die Navbar
+   verlässt so niemals den Dokumenten-Flow, es gibt keinen Layout-Sprung
+   beim Ein-/Ausblenden. top: -70px schiebt die 61px hohe Navbar
+   (inkl. 1px Rahmen) vollständig über den Viewport-Rand hinaus; beim
+   Zurückscrollen unter 50px fällt sie über denselben Schwellwert wieder
+   ein. Dadurch überlagert die sticky Navbar die Dashboard-Überschrift
+   beim Scrollen nie (Überschrift beginnt erst 72px unter der Navbar). */
 .navbar.scrolled {
-  position: fixed;
-  top: -60px;
-  transition: top 0.2s ease;
+  top: -70px;
 }
 
 .navbar.scrolled .hamburger-small {
   display: block;
-}
-
-.navbar.scrolled .nav-links,
-.navbar.scrolled .lang-toggle,
-.navbar.scrolled .navbar-title {
-  display: none;
 }
 
 /* Compact navbar visible at top (no .scrolled class) */
@@ -7073,7 +7076,8 @@ body {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex: 1 1 240px;
+  /* DASHBOARD-08: flex: 1 1 240px entfiel mit dem Grid-Umbau — die
+     Grid-Spur (minmax(240px, 1fr)) liefert die Kachelbreite. */
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-md);
@@ -7084,12 +7088,15 @@ body {
    Container-Query-Lösung (container-type: inline-size an der Karte)
    koppelte die intrinsische Breite der Features-Karte ab → Wrapper
    schrumpfte auf fit-content (1048 px statt 1354 px bei 1440-Viewport).
-   Zurück zu flex-wrap: gleiche Spaltenbreiten über flex-grow,
-   Umlage orientiert sich an der TATSÄCHLICH verfügbaren Kartenbreite
-   (kein Viewport-, kein Containment-Bezug). */
+   MAYS-AURORA-GLASS-DASHBOARD-08: Statt flex-wrap jetzt CSS-Grid mit
+   auto-fit/minmax(240px, 1fr): die Spaltenzahl rechnet sich aus der
+   TATSÄCHLICH verfügbaren Kartenbreite (kein Viewport-, kein
+   Containment-Bezug, kein container-type), alle Kacheln einer Reihe
+   behalten gleiche Breite (kein aufgeblähter Allein-Drittel in Reihe 2
+   wie bei flex-grow). Keine erneute Einführung von container-type. */
 .aurora-feature-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
 }
 
@@ -7248,6 +7255,28 @@ body {
   max-width: min(1400px, 94vw);
   margin: 0 auto;
   flex: 1;
+  /* DASHBOARD-08: Explizite Breite statt fit-content. Als Flex-Item im
+     Column-Container .aurora-dashboard mit margin: 0 auto (Auto-Margen im
+     Cross-Axis deaktivieren Stretch) wurde die Wrapper-Breite sonst aus der
+     intrinsischen Größe der Kinder berechnet und kollabierte bei
+     veränderter Content-Intrinsik auf 1048px statt 1353px (1440-Viewport).
+     width: 100% + max-width liefert unabhängig von Intrinsik immer genau
+     min(1400px, 94vw) — identisch zu DASHBOARD-07-R bei allen Viewports. */
+  width: 100%;
+}
+
+/* DASHBOARD-08: Die Karten-Spalte füllt den verfügbaren Platz und darf
+   unter die intrinsische Mindestbreite schrumpfen. Vorher (flex: 0 1 auto,
+   min-width: auto) floored die Grid-Min-Content-Breite (2×320px + Gap +
+   Padding ≈ 768px) das Element auf 766–768px → horizontaler Überlauf
+   (+102px bei 1024, +33px bei 1100) in DASHBOARD-07-R/Referenz.
+   flex: 1 1 0% → exakt der verfügbare Platz (969.6px bei 1440 = 07-R);
+   min-width: 0 → bei 901–1199px Viewport darf die Spalte auf den
+   tatsächlichen Platz schrumpfen, das auto-fit-Grid zählt dort danach
+   planmäßig 1 Spalte (Design-Intention: ≥320px pro Spalte oder 1 Spalte). */
+.aurora-dashboard-main {
+  flex: 1 1 0%;
+  min-width: 0;
 }
 
 /* Sidebar */
@@ -7283,10 +7312,29 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  /* DASHBOARD-08: Tag ("IN VORBEREITUNG") + Label passten bei 240px
+     Sidebar nicht nebeneinander (ScrollWidth-Überlauf 13–53px auf allen
+     Viewports). Umbruch statt Überlauf: das Label rutscht bei Bedarf in
+     die zweite Zeile; Schriftgrößen bleiben unverändert. */
+  flex-wrap: wrap;
   padding: 10px 12px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.4);
   transition: background 0.15s ease;
+}
+
+/* DASHBOARD-08: Das Label-Span (klassenlos, z. B. "Übersicht") hat als
+   Flex-Kind keine Umbruchregel und min-width: auto → ein unbrechbares
+   Kompositum (lange deutsche Zusammensetzung) wuchs auf min-content
+   (606px gemessen) und ragte aus der 240px-Sidebar in den Kartenbereich
+   bzw. bei 390px über den Viewport hinaus (+301px Dokument-Überlauf).
+   overflow-wrap: anywhere + min-width: 0 hält das Label in der Sidebar;
+   hyphens: auto für freundlichere deutsche Silbentrennung. Wirkung nur
+   bei tatsächlich zu langen Werten — kurze Labels bleiben unverändert. */
+.aurora-sidebar-item > span:not([class]) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .aurora-sidebar-item:hover {
@@ -7343,6 +7391,14 @@ body {
 /* Desktop: 2-column grid for cards */
 @media (min-width: 900px) {
   .aurora-content-grid {
+    /* DASHBOARD-08: minmax(320px, 1fr) bleibt unverändert (07-R-Regel).
+       Der frühere Überlauf bei 901–1199px kam NICHT von dieser Regel,
+       sondern davon, dass .aurora-dashboard-main als Flex-Item
+       min-width: auto = Grid-Min-Content (≈768px) floored und nicht
+       schrumpfen durfte → siehe .aurora-dashboard-main oben. Bei zu
+       wenig Platz zählt auto-fit jetzt planmäßig 1 Spalte statt zu
+       überlaufen (Design-Intention: ≥320px pro Spalte oder 1 Spalte,
+       siehe @media min-width 1200px). */
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
 

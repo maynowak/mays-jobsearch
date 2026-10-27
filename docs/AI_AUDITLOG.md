@@ -970,3 +970,128 @@ REGRESSION RECOVERED — VISUAL VERIFIED fuer K1-K5/K8 (Browsermessung
 bestaetigt); K6/K7 vorbestehend und referenzidentisch (Restproblem).
 Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
 
+================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
+================================================================================
+
+2026-10-27 · Vier Dashboard-Layout-Probleme behoben
+(src/App.tsx, src/components/Navbar.tsx, src/styles.css; +95/-20)
+
+- Typ: UI-Layout-/CSS-Fix. KEIN Auth-, KEIN Cognito-, KEIN AWS-Change,
+  keine API-Aenderung (api/** diff-unberuehrt), keine neuen npm-Abhaengigkeiten,
+  keine neuen Env-Vars, kein container-type: inline-size.
+- AI-Auswirkung: KEINE — Provider-Router, Prompting, Model-/Score-Pipeline
+  und Nutzungsguards unberuehrt; keine AI-/Privacy-Registrierung noetig.
+- Privacy/Data-Flow: KEINE — kein neuer Datenfluss, keine neue Speicherung
+  (weder localStorage noch Redis noch Third-Party); CV-Hash-/Profil-Cache-
+  Pfade und Job-Quellen unveraendert; Footer rendert nur bestehende Links.
+- Preflight: Branch main, HEAD 185f76a (07-R, Referenz-HEAD fuer 08),
+  getrackter Working-Tree vor Aenderung sauber; untracked User-Files
+  unangetastet und NICHT committet.
+
+## Nachgewiesene Ursachen (Aufgabe 1, READ-ONLY-Analyse + empirische Baseline)
+1. Navbar-Ueberlagerung: .navbar sticky (top:0, z-index:40, Glas) + die
+   CSS-Regel .navbar.scrolled (position:fixed; top:-60px) war TOT —
+   git log -S 'scrolled': die Klasse war seit 5d75e12 NIE auf <header>,
+   Navbar.tsx setzte sie nie. Baseline 1440: Ueberlappung 28px@scrollY100,
+   54px@200/400, titleUnderNav=true, navClass blieb "navbar".
+2. Fehlender Footer: beide fruehen Dashboard-Returns in App.tsx
+   (isDevDashboard Z.2435, isProfile Z.2450) renderten nur Navbar+main,
+   kein <Footer /> (existente Komponente, sonst nur Default-Return Z.2653).
+3. Textueberlaeufe: (a) .aurora-sidebar-item ohne flex-wrap — Tag+Label
+   nebeneinander, ScrollWidth +13..53px auf allen Viewports;
+   (b) Label-Span (klassenlos) ohne Umbruchregel/min-width:0 — ein
+   unbrechbares 70-Zeichen-Kompositum erreichte min-content 606px, wuchs
+   aus der 240px-Sidebar in den Kartenbereich und gab bei 390px +301px
+   Dokument-Ueberlauf (Long-Value-Test, reproduzierbar).
+4. Horizontale Ueberlaeufe K6/K7 (in Referenz 18312ad vorbestehend, fuer 08
+   uebernommen): .aurora-dashboard-main hatte KEINE CSS-Regel (flex:0 1 auto,
+   min-width:auto = Grid-Min-Content 2x320+Gap+Padding = 766.7/768px) und
+   durfte nicht schrumpfen → +102px@1024, +33px@1100. Zusaetzlich war
+   .aurora-content-wrapper fit-content-abhaengig (margin:0 auto im
+   Cross-Axis des Column-Flex .aurora-dashboard deaktiviert Stretch) —
+   jede Reduktion der Content-Intrinsik kollabierte den Wrapper auf
+   1048.2px statt 1353.6px (erster Fixversuch reproduzierte das genau).
+5. Feature-Kacheln: flex-Wrap-Verteilung erzeugte bei 1280/1100/1024 einen
+   aufgeblahten Allein-Drittel in Reihe 2 (z.B. 322.6/322.6/657.2) —
+   inkonsistente Spaltenbreiten.
+
+## Aenderungen
+App.tsx: <Navbar hideOnScroll /> + <Footer /> nach </main> in BEIDEN
+  Dashboard-Returns (Demo- und auth-Route); Kommentar ergaenzt.
+Navbar.tsx: Props hideOnScroll?: boolean (Default false); "scrolled"-Klasse
+  nur bei hideOnScroll && isScrolled; Initial-Check window.scrollY beim
+  Mount (Browser-Scrollrestauration/Direktsprung).
+styles.css:
+  - .navbar: transition: top 0.2s ease (beidseitige Animation).
+  - .navbar.scrolled: position:fixed → sticky top:-70px (Navbar verlaesst
+    nie den Flow → kein Layout-Sprung; 61px+1px Rahmen vollstaendig
+    ausserhalb). display:none-Regeln fuer nav-links/lang-toggle/navbar-title
+    entfernt (waehrend Slide sonst leere Glasleiste); toter fixed-Kommentar
+    ersetzt.
+  - .aurora-content-wrapper: width:100% — Breite unabhaengig von Intrinsik
+    immer min(1400px,94vw) (07-R-Identitaet, kein Fit-Content-Collapse).
+  - NEU .aurora-dashboard-main: flex:1 1 0%; min-width:0 — fuellt bei
+    >900px exakt den Platz, kein Min-Content-Floor → K6/K7 weg; bei
+    901–1199px planmaessig 1 Spalte statt Ueberlauf.
+  - .aurora-sidebar-item: flex-wrap:wrap; NEU .aurora-sidebar-item >
+    span:not([class]): min-width:0 + overflow-wrap:anywhere + hyphens:auto
+    (nur wirksam bei zu langen Werten).
+  - .aurora-feature-grid: flex-wrap → CSS-Grid auto-fit minmax(240px,1fr);
+    .aurora-feature-item: flex:1 1 240px entfernt (Grid-Spur liefert die
+    Breite). Kein container-type eingefuehrt.
+  - .aurora-content-grid (min-900): NUR Kommentar aktualisiert, Regel
+    unveraendert (minmax(320px,1fr) wie 07-R).
+Unveraendert (Diff-verifiziert): api/**, Auth/Cognito/AWS, Provider-Router,
+Job-Quellen, Vercel-Config, alle anderen Routen-Returns, Schriftgroessen,
+bestehende Footer-Nutzung auf anderen Seiten.
+
+## Verifikation (Headless-Chromium gegen die ECHTE App, Vite :5173)
+6 Viewports (1440/1280/1100/1024/768/390) auf /dev/dashboard:
+- Kein horizontaler Dokument-Ueberlauf (scrollWidth==innerWidth) —
+  VORHER +33px@1100 und +102px@1024 (K6/K7).
+- wrapper 1353.6/1203.2/1034.0/962.5/721.9/366.6 = 07-R-Referenz EXAKT
+  (Delta 0.0 auf allen 6).
+- grid 969.6/819.2/654.0/585.6/461.9/326.6; 1440/1280/768/390 identisch
+  zur 07-R-Baseline; 1100/1024 jetzt 1 Spalte (Referenz dort 2 Spalten
+  MIT Ueberlauf — "kein horizontaler Ueberlauf" gewinnt; dokumentierte,
+  beabsichtigte Abweichung).
+- Feature-Kacheln: 1440 3x261.2 (1 Reihe, = Baseline), 1280 3x322.6
+  (2+1 gleich breit statt gedehnt), 1100 2x240+240, 1024/768/390 1 Spalte
+  → "drei gleichmaessige / zwei-oder-eins / eine" erfuellt.
+- Scrolltest 1440+390 (runter 0→51→60→72→100→200→400, hoch
+  400→200→100→60→51→49→0, je 320ms Settle > 0.2s Transition):
+  sichtbare Navbar/Headline-Ueberlappung = 0px an JEDER Position;
+  scrolled ab 51px, ab 72px top=-70 komplett ausserhalb, Rueckkehr unter
+  50px, navClass am Top "navbar".
+- Footer: auf /dev/dashboard UND /profil vorhanden, compareDocumentPosition
+  NACH main, keine Intersection mit Karten. /profil pre-auth ("Du bist
+  nicht angemeldet") rendert Navbar+Footer.
+- Navbar-Regression: /suche, /impressum, /datenschutz, /login — navClass
+  bleibt "navbar" und sticky top:0 bei scrollY=200 (hideOnScroll nicht
+  gesetzt → kein Verhalten geschaendet). Landingpage / nutzt eigenes
+  .lp2-header (kein .navbar-Komponenten-Header).
+- Long-Value-Test (89-Zeichen-E-Mail, 66-Zeichen-Cognito-ID,
+  70-Zeichen-Kompositum in Info-Values, Feature-Labels, Sidebar-Labels):
+  0 Befunde auf 1440/1100/768/390 (Viewport-Überlauf, Container-Kette,
+  Kind-entweicht-Elternbox); Umbruch mit Silbentrennung, Schriftgroessen
+  unveraendert (kein blanket font-size).
+- Kein container-type: inline-size, kein container-query-Block neu
+  (Diff-verifiziert).
+Screenshots: /tmp/opencode/dash08/shots/ — final_1440_full.png,
+  final_390_full.png, final_1440_scroll200.png, final_390_scroll200.png,
+  final_profil_full.png, final_suche_scroll200.png,
+  longvals2_{1440,1100,768,390}.png (+ Baseline-Vergleich base_*.png).
+TypeScript/Build: PASS (tsc -b && vite build)
+Tests: 821 passed | 5 skipped (72 Files) — identisch zur Baseline,
+  keiner deaktiviert.
+API-Syntax: api/** unveraendert (Diff-verifiziert, node --check noetig).
+
+## Status
+IMPLEMENTED + BROWSER VERIFIED — alle 6 Viewports, Scrolltests,
+Long-Values, Footer auf beiden Routen und Nicht-Dashboard-Regression
+messbar bestaetigt.
+Einschraenkung: /profil mit echtem Cognito-Login ohne Zugangsdaten nicht
+testbar; pre-auth-Render (Navbar+Footer) verifiziert, /dev/dashboard ist
+die volle Layout-Entsprechung.
+Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.

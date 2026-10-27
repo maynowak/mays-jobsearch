@@ -2439,10 +2439,14 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-        <Navbar route="profil" />
+        {/* DASHBOARD-08: Navbar blendet beim Scrollen aus (hideOnScroll) und
+            der vorhandene Seiten-Footer erscheint NACH dem Dashboard-Inhalt —
+            identische Struktur wie der Default-Return weiter unten. */}
+        <Navbar route="profil" hideOnScroll />
         <main className="container legal-main layout-dashboard">
           <DashboardDevPreview />
         </main>
+        <Footer />
       </ErrorBoundary>
     );
   }
@@ -2454,10 +2458,11 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-        <Navbar route={route} />
+        <Navbar route={route} hideOnScroll />
         <main className="container legal-main layout-dashboard">
           <Dashboard />
         </main>
+        <Footer />
       </ErrorBoundary>
     );
   }

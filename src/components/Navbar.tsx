@@ -33,9 +33,13 @@ export type NavbarRoute = NavRoute;
 
 interface Props {
   route: NavbarRoute;
+  /** DASHBOARD-08: Auf Dashboard-Routen beim Scrollen nach unten ausblenden
+      (versteckt die Überschrift nicht hinter der sticky Navbar). Andere
+      Routen bleiben unverändert, da die Klasse dort nie angewendet wird. */
+  hideOnScroll?: boolean;
 }
 
-export default function Navbar({ route }: Props) {
+export default function Navbar({ route, hideOnScroll = false }: Props) {
   const { t } = useLang();
   const auth = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -85,6 +89,14 @@ export default function Navbar({ route }: Props) {
       }
     };
 
+    // DASHBOARD-08: Bei geladener/restoreter Scrollposition (z. B. Browser-
+    // Scrollrestauration oder Direktsprung) sofort den passenden Zustand
+    // setzen — sonst bliebe die Navbar bis zum ersten echten Scroll-event
+    // sichtbar und könnte die Überschrift überlagern.
+    if (window.scrollY > threshold) {
+      setIsScrolled(true);
+    }
+
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
@@ -128,7 +140,9 @@ export default function Navbar({ route }: Props) {
   const isGlass = route === "matcher" || route === "register" || route === "login";
 
   return (
-    <header className={`navbar${isGlass ? " navbar-glass" : ""}`}>
+    <header
+      className={`navbar${isGlass ? " navbar-glass" : ""}${hideOnScroll && isScrolled ? " scrolled" : ""}`}
+    >
       {/* TOP-MENU-02: Reihenfolge
           Glass-Mode (/search): Brand links, rechte Gruppe mit EN/DE zuerst,
           dann Links, dann Login. EN/DE hat margin-left:auto.
