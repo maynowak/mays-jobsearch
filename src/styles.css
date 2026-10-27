@@ -1606,6 +1606,19 @@ body {
   padding: 24px 20px 60px;
 }
 
+/* MAYS-AURORA-GLASS-DASHBOARD-06 (ROOT CONTAINER FIX): Das Aurora-Dashboard
+   wurde von der generischen .container-Basisklasse (820 px Deckel) gekappt —
+   Sidebar 240 px + Gaps liessen für das Content-Grid nur ~530 px übrig, die
+   1400-px-Regel der .aurora-content-wrapper wirkte nicht (toter Code).
+   Gleiche Fehlerklasse wie SEARCH-WORLD-07. Der Deckel wird ausschließlich
+   für die beiden Dashboard-Routen (/profil, /dev/dashboard) angehoben;
+   alle anderen Seiten behalten .container (820 px) unverändert. */
+.container.layout-dashboard {
+  width: 100%;
+  max-width: 1400px;
+  padding: 0;
+}
+
 /* Persistent search workspace for matcher */
 .container.layout-search {
   /* SEARCH-WORLD-07: Ursache der schmalen Results-Komposition war dieser
@@ -6858,6 +6871,7 @@ body {
 .aurora-dashboard {
   display: flex;
   flex-direction: column;
+  width: 100%;
   min-height: 100dvh;
   background: linear-gradient(
     180deg,
@@ -7058,10 +7072,37 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-md);
   border-left: 3px solid var(--accent);
+}
+
+/* ROOT CONTAINER FIX: Basisregel fehlte bisher (nur in der Desktop-
+   Media-Query vorhanden) — daher waren die Kacheln unterhalb von
+   1024 px immer vertikal gestapelt. */
+.aurora-feature-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 700px) {
+  .aurora-feature-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+.aurora-feature-item p {
+  margin: 0;
+  font-weight: 500;
+  color: #0b3b5e;
+  /* Lange Komposita wie "Bewerbungsverwaltung" dürfen nicht überlaufen */
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 .aurora-feature-tag {
@@ -7307,6 +7348,12 @@ body {
   .aurora-content-grid {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
+
+  /* Features-Karte belegt immer beide Spalten (unschädlich in 1-Spalten-
+     Konfiguration, wirksam sobald auto-fit 2 Spalten erzeugt). */
+  .aurora-card--features {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Tablet: Sidebar becomes compact */
@@ -7353,16 +7400,14 @@ body {
   }
 }
 
-@media (min-width: 1024px) {
+/* Exakt 2 Spalten erst ab 1200 px: Bei 1024 px ergäben Sidebar + Gaps
+   nur ~260 px pro Spalte (zu schmale Karten). Darunter greift auto-fit
+   mit minmax(320px) — garantiert entweder ≥320 px pro Spalte oder 1 Spalte. */
+@media (min-width: 1200px) {
   .aurora-content-grid {
     grid-template-columns: 1fr 1fr;
   }
-  
-  .aurora-card--features {
-    grid-column: 1 / -1;
-    grid-row: auto;
-  }
-  
+
   /* Features card content should also handle text overflow */
   .aurora-feature-grid {
     display: flex;

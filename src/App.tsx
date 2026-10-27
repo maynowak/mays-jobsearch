@@ -2440,7 +2440,7 @@ export default function App() {
         reloadLabel={t("error.boundaryReload")}
       >
         <Navbar route="profil" />
-        <main className="container legal-main">
+        <main className="container legal-main layout-dashboard">
           <DashboardDevPreview />
         </main>
       </ErrorBoundary>
@@ -2455,7 +2455,7 @@ export default function App() {
         reloadLabel={t("error.boundaryReload")}
       >
         <Navbar route={route} />
-        <main className="container legal-main">
+        <main className="container legal-main layout-dashboard">
           <Dashboard />
         </main>
       </ErrorBoundary>

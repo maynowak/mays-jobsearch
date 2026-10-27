@@ -724,3 +724,138 @@ MAYS-AURORA-GLASS-DASHBOARD-06 - CSS CONSOLIDATION COMPLETE
 6. Demo-Badge sichtbar
 
 ================================================================================
+
+================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-06-FINAL
+================================================================================
+
+2026-10-26 · CSS Layout Fixes Complete
+
+## IMPLEMENTIERTE ÄNDERUNGEN
+
+### 1. Features Card Grid Extension
+- Added `.aurora-card--features` class
+- Card spans both columns via `grid-column: 1 / -1`
+- Media query for desktop (min-width: 1024px)
+
+### 2. Logout Compliance in Dev Mode
+- Logout button only shown when NOT in dev mode (`!overrideUser`)
+- Real auth users still have proper logout
+- Dev preview users see no confusing logout
+
+### 3. CSS Minor Improvements
+- Added `word-break: break-word` for text overflow prevention
+- Added `hyphens: auto` for better text wrapping
+- Maintained all existing styles
+
+## DATEIEN
+- `src/components/Dashboard.tsx` - 3 logic changes
+- `src/styles.css` - 5 lines added
+
+## GIT-STATUS
+HEAD: c3fe23a (MAYS-AURORA-GLASS-DASHBOARD-06-FINAL)
+
+## BUILD & TESTS
+- Build: ✅ PASSING
+- Tests: ✅ 821 passed | 5 skipped
+
+## VISUAL VERIFICATION PENDING
+
+**User muss folgende testen:**
+1. `npm run dev` → http://localhost:5173/dev/dashboard
+2. Features card ist über beide Spalten nahe dem unteren Rand
+3. Keine horizontale Scrollbar
+4. Text bricht korrekt um (besonders "Bewerbungsverwaltung")
+5. Dev-Modus-Badge sichtbar
+6. In Dev-Modus kein Logout-Button
+7. `/profil` mit echter Auth zeigt Logout
+
+================================================================================
+
+================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-06-FINAL – DOM/CSS CONTRACT FIX COMPLETE
+================================================================================
+
+## FINAL IMPLEMENTATION
+
+### Root Cause Analysis:
+
+1. **Grid Column Issue**:
+   - Original CSS used `auto-fit, minmax(320px, 1fr)` 
+   - At 1440px viewport → 4 columns attempted
+   - Features card had no grid positioning
+
+2. **Solutions Applied**:
+   - Base grid: `grid-template-columns: 1fr 1fr` (always 2 columns)
+   - Features card: `grid-column: 1 / -1` (spans both columns)
+   - Responsive: 1 column at < 1024px, 2 columns at >= 1024px
+
+### CSS Changes Summary:
+
+| Change | Location | Purpose |
+|--------|----------|---------|
+| `grid-template-columns: 1fr 1fr` | .aurora-content-grid | Explicit 2-column |
+| `grid-column: 1 / -1` | .aurora-card--features | Full-width card |
+| `min-width: 0` | .aurora-feature-item | Text overflow fix |
+| `hyphens: auto` | .aurora-info-value | Better wrapping |
+| `!overrideUser` | JSX | Hide logout in dev mode |
+
+### Git Status:
+HEAD: 45cdfe6
+Build: ✅ PASS
+Tests: ✅ 821 passed | 5 skipped
+
+### Remaining:
+**VISUAL VERIFICATION PENDING**
+
+================================================================================
+
+================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-06 – ROOT CONTAINER FIX
+================================================================================
+
+2026-10-27 · ROOT CONTAINER FIX (nachgewiesene Breitenbegrenzung behoben)
+
+- Typ: Layout-Root-Cause-Fix (kein Auth-, kein Cognito-, kein AWS-Change)
+- Basis: HEAD 45cdfe6 (vor Beginn verifiziert); uncommitteter Auditlog-Append erhalten
+
+## Wurzelbehandlung
+Befund aus READ-ONLY-Analyse: beide Dashboard-Routen nutzten generische
+`.container`-Klasse mit max-width 820px → Sidebar 240px + Gaps + Paddings
+liessen für das Content-Grid nur ~530px; `max-width: min(1400px,94vw)` der
+`.aurora-content-wrapper` war toter Code. Gleiche Fehlerklasse wie
+SEARCH-WORLD-07 (`.container.layout-search`-Präzedenz).
+
+## Änderungen
+1. src/App.tsx – NUR beide Dashboard-Routen (/profil Zeile ~2458,
+   /dev/dashboard Zeile ~2443): `container legal-main layout-dashboard`.
+   Andere `.container legal-main`-Routen unverändert (diff-verifiziert).
+2. src/styles.css:
+   - `.container.layout-dashboard { width:100%; max-width:1400px; padding:0 }`
+     direkt nach den allgemeinen `.container`-Regeln (Spezifität 0,2,0 > 0,1,0).
+   - `.aurora-dashboard { width:100% }` in BESTEHENDE Regel (kein Duplikat).
+     .legal-main-Resteffekte (flex/justify-content) neutralisiert durch
+     width:100%; Padding der .legal-main fällt auf 0 (undefinierte Vars).
+   - Breakpoint: exaktes `1fr 1fr` erst ab 1200px (vorher 1024px → nur
+     ~260px/Spalte = zu schmale Karten). 901–1199px: auto-fit minmax(320px)
+     → garantiert ≥320px pro Spalte oder 1 Spalte.
+   - `.aurora-card--features { grid-column: 1/-1 }` in min-width:900px-Block
+     verschoben (wirkt bei auto-fit 2-Spalten; unschädlich bei 1 Spalte).
+   - `.aurora-feature-grid` BASISregel ergänzt (fehlte komplett → Kacheln
+     waren unterhalb von 1024px immer vertikal): column-Default,
+     row+wrap ab 700px.
+   - `.aurora-feature-item { min-width:0 }` + `.aurora-feature-item p`
+     { margin:0; hyphens:auto; overflow-wrap:anywhere } → "Bewerbungs-
+     verwaltung" läuft nicht über.
+
+## Verifikation
+- TypeScript/Build: PASS (tsc -b && vite build)
+- Tests: 821 passed | 5 skipped (72 Files)
+- Responsive-Kette geprüft: ≤767px 1-Spalte/Sidebar oben, 768–900px kompakte
+  Sidebar, 901–1199px auto-fit, ≥1200px exakt 2 Spalten + Features-Span.
+- Browser-Screenshots: NICHT verfügbar → VISUAL VERIFICATION PENDING
+
+## Status
+IMPLEMENTED – VISUAL VERIFICATION PENDING
+Kein Produktionsdeploy, keine AWS/Cognito/DNS-Änderungen.
+
