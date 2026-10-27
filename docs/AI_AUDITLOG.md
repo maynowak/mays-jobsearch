@@ -859,3 +859,54 @@ SEARCH-WORLD-07 (`.container.layout-search`-Präzedenz).
 IMPLEMENTED – VISUAL VERIFICATION PENDING
 Kein Produktionsdeploy, keine AWS/Cognito/DNS-Änderungen.
 
+
+================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-07 – FEATURE GRID POLISH
+================================================================================
+
+2026-10-27 · Feature-Grid-Polish (3 Kacheln gleichmaessig nebeneinander)
+
+- Typ: CSS-Layout-Feinschliff (kein Auth-, kein Cognito-, kein AWS-Change)
+- Basis: HEAD 18312ad (vor Beginn verifiziert)
+- Unveraendert: Dashboard-Breite/Root-Container, Sidebar, Header/Navbar,
+  Persoenliche Daten, Konto-Status, Cognito-Auth, Demo-Modus/Logout.
+  Keine CSS-Gesamtkonsolidierung.
+
+## Befund
+Kacheln standen in 2+1-Anordnung: .aurora-feature-grid war flex mit
+flex-wrap (Viewport-Media-Queries 700px/1200px) — passten die Kacheln
+nicht in die TATSACHLICH verfuegbare Kartenbreite, brachen sie um.
+Viewport-Breakpoints bildeten die reale Containerbreite (Karte = volle
+Grid-Breite, bei 1024-Viewport z.B. nur ~485 px Innenbreite) nicht ab.
+
+## Aenderung (nur src/styles.css)
+1. .aurora-feature-grid: flex -> CSS-Grid
+   Basis: grid-template-columns: minmax(0,1fr) (1 Spalte).
+   minmax(0,1fr) laesst Spalten unter Content-Breite schrumpfen ->
+   Text bricht um (overflow-wrap/prime), kein horizontaler Überlauf.
+2. .aurora-card--features: container-type: inline-size
+   + @container-Queries statt Viewport-Media-Queries (Repo-Präzedenz
+   existiert bereits, Zeile ~1695/1769):
+   - ab 800 px Kartenbreite: repeat(3, minmax(0,1fr)) -> 3 gleiche Spalten
+   - ab 560 px Kartenbreite: repeat(2, minmax(0,1fr))
+   - darunter: 1 Spalte (Basisregel)
+3. Viewport-Regeln fuer .aurora-feature-grid entfernt (tote/regressive
+   Kandidaten): @media(min-width:700px)-Block komplett und der
+   .aurora-feature-grid-Teil aus @media(min-width:1200px) — letzterer
+   haette display:flex gesetzt und das Grid ab 1200px abgeschaltet
+   (ursächliche 2+1-Quelle auf Desktop).
+4. .aurora-content-grid/1200px-Regel (1fr 1fr) und .aurora-card--features
+   grid-column:1/-1 (min-width:900px) blieben unveraendert.
+
+Erwartete Kartenbreiten (Content-Box): ~855px @1440-Viewport -> 3 Spalten
+(~270px/Kachel); ~650px @1200 -> 2 Spalten; ~485px @1024 -> 1 Spalte.
+
+## Verifikation
+- TypeScript/Build: PASS (tsc -b && vite build)
+- Tests: 821 passed | 5 skipped (72 Files) — unveraendert, keiner deaktiviert
+- Browser-Screenshots: NICHT verfuegbar -> VISUAL VERIFICATION PENDING
+
+## Status
+IMPLEMENTED - VISUAL VERIFICATION PENDING
+Kein Produktionsdeploy, keine AWS/Cognito/DNS/Aenderungen.
+

@@ -7079,20 +7079,34 @@ body {
   border-left: 3px solid var(--accent);
 }
 
-/* ROOT CONTAINER FIX: Basisregel fehlte bisher (nur in der Desktop-
-   Media-Query vorhanden) — daher waren die Kacheln unterhalb von
-   1024 px immer vertikal gestapelt. */
+/* MAYS-AURORA-GLASS-DASHBOARD-07 (FEATURE GRID POLISH): Die Kacheln
+   richten sich nach der TATSÄCHLICH verfügbaren Containerbreite —
+   Container-Queries der Features-Karte statt Viewport-Breakpoints.
+   Früher flex + Wrap: bei zu schmalem Platz 2+1 statt 3 nebeneinander. */
 .aurora-feature-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  /* minmax(0,1fr): Spalten dürfen unter die Content-Breite schrumpfen —
+     Text bricht um (overflow-wrap), kein horizontaler Überlauf. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
-@media (min-width: 700px) {
+/* Messebreite = Content-Box der Karte (container-type: inline-size).
+   Karten-Innenbreiten: ~855 px bei 1440-Viewport, ~650 px bei 1200,
+   ~485 px bei 1024 → 3 Spalten ab 800, 2 ab 560, sonst 1 Spalte. */
+.aurora-card--features {
+  container-type: inline-size;
+}
+
+@container (min-width: 560px) {
   .aurora-feature-grid {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 800px) {
+  .aurora-feature-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -7406,13 +7420,5 @@ body {
 @media (min-width: 1200px) {
   .aurora-content-grid {
     grid-template-columns: 1fr 1fr;
-  }
-
-  /* Features card content should also handle text overflow */
-  .aurora-feature-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
   }
 }
