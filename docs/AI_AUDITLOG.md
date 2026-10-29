@@ -1171,6 +1171,34 @@ MAYS-UI-S3 — PROFIL AN DASHBOARD-V2 ANBINDEN
 - S3 implementation commit: `0682f8f`; no push or deployment.
 
 ================================================================================
+MAYS-UI-S4 — FEINSCHLIFF UND TECHNISCHE ABNAHME
+================================================================================
+
+2026-10-29 · S4 implementation complete; profile replacement intentionally stopped
+
+- Demo status corrected to neutral `Demo` in DE/EN; authenticated status is
+  only shown for real auth state. Unsupported Modality/Online row removed.
+- Coming-soon navigation entries are disabled and vertically arranged; long
+  labels wrap. Footer separators/spacing are responsive and mobile-safe.
+- Footer now displays build version, environment, branch and short SHA.
+  `buildInfo.ts` provenance was verified; stale screenshot SHA was a frozen
+  old dev/preview artifact, not hardcoded source.
+- Bundle comparison: baseline `30916de` CSS 122,940 B / JS 952,837 B;
+  target `5edb171` CSS 123,180 B / JS 953,132 B.
+- Focused S4 tests PASS (16); current working-tree full suite PASS (838 passed
+  | 5 skipped); build/API syntax/diff checks PASS.
+- Browser DE/EN 390/768/1440 PASS: demo/auth previews, focus, zoom smoke,
+  reduced motion, no overflow/raw keys, one Footer and regression routes.
+- Clean checkout build/API syntax PASS, but clean suite has three pre-existing
+  baseline failures: two Imprint tests depend on ignored `VITE_CONTACT_EMAIL`,
+  and committed SourcesInfo test/dictionary language mismatch. Not hidden or
+  attributed to S4.
+- Real Cognito E2E: NOT VERIFIED; no real session available.
+- Evidence: `docs/evidence/mays-ui-s4/`.
+- S4 report: `docs/reports/17-01-MAYS-UI-S4-FEINSCHLIFF.md`.
+- `/profil` was not replaced; stop before product selection/replacement.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 
