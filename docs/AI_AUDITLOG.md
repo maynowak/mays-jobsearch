@@ -1,3 +1,12 @@
+2026-10-29 · PROFILE-HIERARCHY-06
+- Typ: Audit/Product-Concept/UI/Data-Flow-Gate
+- Status: COMPLETE (documentation-only; no implementation)
+- Scope: Recorded the proposed CV → SearchProfile → ATSSearchProfile hierarchy and future ATS/tag-analysis behavior for unregistered session users.
+- Current-vs-target finding: current session-memory/hash buckets and current SearchProfile-only search remain unchanged. Parent-linked ATS entries and CV-tab filtering exist for the current GUI, but ATS-driven general job search, tag scoring, durable ownership, and the target 2/5 capacity enforcement are not claimed as implemented by this concept report.
+- AI-/Privacy-/Data-Flow impact: no current flow changed. Future job-tag/ATS analysis is explicitly gated because its fields, provider/model use, scoring, explanations, and data handling remain undecided. Session-only data is not described as durable user persistence.
+- Tests/validation: documentation-only comparison against `PROFILE-HIERARCHY-04`, `PROFILE-HIERARCHY-05`, and `JOBMATCHER-ATS-PROFILE-INTEGRITY-01`; no code tests/build started; Terraform not applicable; no deployment/push.
+- Log: `docs/reports/PROFILE-HIERARCHY-06-EXECUTION_LOG.md`
+
 2026-10-29 · MAYS-UI-S5.2-A-R3-ATS-PARENT-FILTER
 - Typ: Fix/UI/Data-Flow/Privacy
 - Status: COMPLETE (full validation green)
