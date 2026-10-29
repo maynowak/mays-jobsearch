@@ -1010,7 +1010,10 @@ body {
 }
 
 @media (max-width: 767px) {
-  .navbar:not(.scrolled) .nav-links {
+  /* Keep both top and scrolled dashboard nav states compact; the burger is
+     the mobile navigation and the inline links must not widen the document. */
+  .navbar:not(.scrolled) .nav-links,
+  .navbar.scrolled .nav-links {
     display: none;
   }
   .burger {

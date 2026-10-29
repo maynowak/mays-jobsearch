@@ -24,6 +24,14 @@ S5.2-A — 2026-10-29
   no new API or durable storage.
 - Added DE/EN CV dashboard labels and two-CV isolation tests.
 
+S5.2-A-R1 — 2026-10-29
+
+- Fixed repeated “Weitere CVs hochladen” by keeping one stable file input
+  mounted across empty and populated states.
+- Removed invalid nested input/button markup; preserved append, validation,
+  cancellation and input-reset behavior.
+- Added regression coverage for first/second upload and same-input reuse.
+
 1.0
 
 Initial Project — core job matching.

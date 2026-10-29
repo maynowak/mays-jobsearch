@@ -1258,6 +1258,30 @@ MAYS-UI-S5.2-A — VORHANDENE CV-PROFILE IM DASHBOARD
 - Report: `docs/reports/19-01-MAYS-UI-S5.2-A-CV-DASHBOARD.md`.
 
 ================================================================================
+MAYS-UI-S5.2-A-R1 — WEITEREN CV HOCHLADEN REPARIEREN
+================================================================================
+
+2026-10-29 · Implementation complete; Chromium verified; Firefox NOT VERIFIED
+
+- Preflight HEAD `7495dc5`; user changes preserved and not staged. `/profil`
+  unchanged.
+- Root cause: empty and populated states used different input lifecycles, and
+  the add-more hidden file input was nested inside a button. The stable-input
+  fix removes the invalid nesting and keeps one ref/input mounted.
+- `App.handleAddCvFiles` append behavior, ten-CV limit, validation, cancellation
+  semantics and input value reset were retained. No API, parser, consent,
+  model, storage or persistence change.
+- Chromium synthetic-PDF sequence passed: first add, second add, review switch,
+  remove, dialog cancel and re-add; 390px overflow false. Existing App
+  second-upload regression and new CvDocumentList regression passed.
+- Full suite: 841 passed | 5 skipped; build/API syntax/diff checks PASS.
+- Firefox `/usr/bin/firefox` launch was attempted but Playwright failed with
+  `Could not find profile folder`; Firefox remains NOT VERIFIED.
+- Upload/list evidence is explicitly separated from parser/API processing; Vite
+  was not used as an API verification claim.
+- Report: `docs/reports/20-01-MAYS-UI-S5.2-A-R1-WEITERER-CV-UPLOAD.md`.
+
+================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================
 

@@ -64,6 +64,20 @@ export default function CvDocumentList({
 
   return (
     <div className="cv-document-list">
+      {/* Keep one stable input mounted for both the empty state and "add more".
+          This avoids invalid nested interactive controls and makes repeated
+          selections reliable in Firefox as well as Chromium. */}
+      <div className="cv-document-list__actions cv-document-list__input-host" aria-hidden="true">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf,.pdf"
+          multiple
+          onChange={handleFileSelect}
+          disabled={disabled}
+          className="visually-hidden"
+        />
+      </div>
       <div className="cv-document-list__header">
         <h3 className="cv-document-list__title">{t("cv.documentListTitle")}</h3>
         {documents.length > 0 && (
@@ -88,18 +102,14 @@ export default function CvDocumentList({
       {documents.length === 0 ? (
         <div className="cv-document-list__empty">
           <p>{t("cv.noDocuments")}</p>
-          <label className="cv-file-input-label" htmlFor="cv-file-input">
+          <button
+            type="button"
+            className="cv-file-input-label"
+            onClick={() => inputRef.current?.click()}
+            disabled={disabled}
+          >
             <span className="cv-file-input-label__text">{t("cv.documentSelect")}</span>
-            <input
-              id="cv-file-input"
-              type="file"
-              accept="application/pdf,.pdf"
-              multiple
-              onChange={(e) => handleFileSelect(e as React.ChangeEvent<HTMLInputElement>)}
-              disabled={disabled}
-              className="visually-hidden"
-            />
-          </label>
+          </button>
         </div>
       ) : (
         <>
@@ -166,14 +176,6 @@ export default function CvDocumentList({
                 disabled={disabled}
               >
                 <span className="cv-file-input-label__text">{t("cv.addMore")}</span>
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  multiple
-                  onChange={(e) => handleFileSelect(e as React.ChangeEvent<HTMLInputElement>)}
-                  disabled={disabled}
-                  className="visually-hidden"
-                />
               </button>
             )}
             <button

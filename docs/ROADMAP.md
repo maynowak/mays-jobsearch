@@ -146,6 +146,20 @@ Dashboard-V2 remains a DEV/preview foundation and `/profil` remains unchanged.
   NOT VERIFIED.
 - Report: `docs/reports/19-01-MAYS-UI-S5.2-A-CV-DASHBOARD.md`.
 
+### S5.2-A-R1 — repeated CV upload
+
+✅ **Implemented; Chromium verified; Firefox runtime unavailable**
+
+- `CvDocumentList` now uses one stable hidden file input for empty and
+  add-more states; invalid nested input/button markup was removed.
+- Existing append, ten-CV limit, validation, cancellation and value-reset
+  behavior remains intact.
+- Regression coverage verifies first upload, second upload and same-input
+  re-selection. Chromium covered add, switch, remove, cancel and re-add with
+  synthetic PDFs. Firefox launch failed in the environment and remains
+  NOT VERIFIED.
+- Report: `docs/reports/20-01-MAYS-UI-S5.2-A-R1-WEITERER-CV-UPLOAD.md`.
+
 Recommended order: S5.1 → S5.4 → S5.5 → S5.2 → S5.3. Independent contract
 investigations may run in parallel; one integrator owns the shared types,
 i18n, states and privacy wording. Detailed scope, classifications, acceptance

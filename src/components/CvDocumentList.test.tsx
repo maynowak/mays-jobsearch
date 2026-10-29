@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import CvDocumentList from "./CvDocumentList";
 import type { CvDocument } from "../types";
@@ -47,6 +47,45 @@ describe("BROWSER-BUG-08: Weitere CVs hochladen", () => {
     const docs = Array.from({ length: 10 }, (_, i) => makeDoc(`cv-${i}`));
     renderList(docs);
     expect(screen.queryByText("Weitere CVs hochladen")).toBeNull();
+  });
+
+  it("verarbeitet den ersten und zweiten Upload über denselben Input", () => {
+    const onAddFiles = vi.fn();
+    const first = new File(["first"], "first.pdf", { type: "application/pdf" });
+    const second = new File(["second"], "second.pdf", { type: "application/pdf" });
+    const props = {
+      documents: [] as CvDocument[],
+      onSelect: vi.fn(),
+      onRemove: vi.fn(),
+      onAddFiles,
+      onProcess: vi.fn(),
+      onSearch: vi.fn(),
+      onShowProfiles: vi.fn(),
+      onRemoveData: vi.fn(),
+      disabled: false,
+      processing: false,
+    };
+    const view = render(
+      <LangProvider>
+        <CvDocumentList {...props} />
+      </LangProvider>
+    );
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { files: [first] } });
+    expect(onAddFiles).toHaveBeenCalledTimes(1);
+    expect(input.value).toBe("");
+
+    view.rerender(
+      <LangProvider>
+        <CvDocumentList {...props} documents={[makeDoc("cv-1", first.name)]} />
+      </LangProvider>
+    );
+    const sameInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(sameInput).toBe(input);
+    fireEvent.change(sameInput, { target: { files: [second] } });
+    expect(onAddFiles).toHaveBeenCalledTimes(2);
+    expect(onAddFiles.mock.calls[1][0][0]).toBe(second);
   });
 });
 
