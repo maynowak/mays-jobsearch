@@ -33,13 +33,15 @@ export type NavbarRoute = NavRoute;
 
 interface Props {
   route: NavbarRoute;
+  /** Use the glass presentation on routes with a visual hero background. */
+  glass?: boolean;
   /** DASHBOARD-08: Auf Dashboard-Routen beim Scrollen nach unten ausblenden
       (versteckt die Überschrift nicht hinter der sticky Navbar). Andere
       Routen bleiben unverändert, da die Klasse dort nie angewendet wird. */
   hideOnScroll?: boolean;
 }
 
-export default function Navbar({ route, hideOnScroll = false }: Props) {
+export default function Navbar({ route, glass = false, hideOnScroll = false }: Props) {
   const { t } = useLang();
   const auth = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -136,8 +138,8 @@ export default function Navbar({ route, hideOnScroll = false }: Props) {
     close();
   };
 
-  // TOP-MENU-02: Glass-Look auf Suchmaske sowie Auth-Seiten für visuelle Konsistenz
-  const isGlass = route === "matcher" || route === "register" || route === "login";
+  // TOP-MENU-02: Glass-Look auf Suchmaske, Auth-Seiten und visuellen Hero-Routen
+  const isGlass = glass || route === "matcher" || route === "register" || route === "login";
 
   return (
     <header

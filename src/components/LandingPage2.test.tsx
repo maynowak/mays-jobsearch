@@ -74,18 +74,18 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
 
   it("Glass-Navigation: Brand, Links, EN/DE, Login (DE-Default)", () => {
     renderPage();
-    const bar = document.querySelector(".lp2-bar") as HTMLElement;
+    const bar = document.querySelector(".nav-inner") as HTMLElement;
     expect(bar).toBeTruthy();
-    expect(within(bar).getByText("May's Job Matcher")).toBeTruthy();
+    expect(within(bar).getByText("May’s Job Matcher")).toBeTruthy();
     expect(within(bar).getByText("Suche")).toBeTruthy();
     expect(within(bar).getByText("EN")).toBeTruthy();
     expect(within(bar).getByText("DE")).toBeTruthy();
-    expect(within(bar).getByText("Login")).toBeTruthy();
+    expect(within(bar).getByText("Anmelden")).toBeTruthy();
   });
 
   it("LP-LOGIN-01: Login ist ein klickbarer Link auf /anmelden", () => {
     renderPage();
-    const login = screen.getByRole("link", { name: "Login" });
+    const login = screen.getByRole("link", { name: "Anmelden" });
     expect(login.getAttribute("href")).toBe("/anmelden");
     // Kein deaktivierter Prototyp-Button mehr
     expect(document.querySelector('button[aria-disabled="true"].lp2-login')).toBeNull();
@@ -93,8 +93,8 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
 
   it("TOP-MENU-01: Landingpage zeigt nur Suche, Benachrichtigungen ist ausgeblendet", () => {
     renderPage();
-    const bar = document.querySelector(".lp2-bar") as HTMLElement;
-    const nav = bar.querySelector(".lp2-nav") as HTMLElement;
+    const bar = document.querySelector(".nav-inner") as HTMLElement;
+    const nav = bar.querySelector(".nav-links") as HTMLElement;
     expect(nav).toBeTruthy();
     // Ohne Anmeldung führt der Alerts-Link dort nur auf die Suchmaske.
     expect(within(nav).queryByText("Benachrichtigungen")).toBeNull();

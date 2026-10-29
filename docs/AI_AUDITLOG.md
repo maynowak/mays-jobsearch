@@ -1043,6 +1043,36 @@ Verification:
   `9cda9f8` and `475b57d` were pushed to `origin/main`; no deployment.
 
 ================================================================================
+MAYS-AUTH-NAVBAR-10 — LOGOUT + SHARED LANDING NAVBAR
+================================================================================
+
+2026-10-29 · Implementation and verification
+
+Root cause:
+- `LandingPage2` used a separate Logout button calling
+  `auth.signoutRedirect()` directly. This bypassed `signOut(auth)` and omitted
+  the established Cognito `client_id + logout_uri` parameters.
+- Search/Navbar and Profile already used `src/lib/authFlow.ts:signOut`; the
+  login-only `oidcConfig` and logout URI configuration were not changed.
+
+Changes:
+- Landingpage now uses the shared `Navbar` with explicit `glass` presentation
+  and `route="landing"`; duplicate custom auth/navigation markup was removed.
+- Central route navigation keeps Search on `/` and Alerts only on `/search`.
+- Shared translations and responsive/mobile behavior now apply consistently.
+
+AI-/Privacy-/Data-Flow impact: none. No AWS/Cognito/RIS/DNS changes, no new
+auth implementation, no deployment.
+
+Verification:
+- Full tests PASS: 822 passed | 5 skipped
+- Build, API syntax and diff checks PASS
+- Preview browser: `/` and `/search`, 390/1440px, DE/EN, no overflow;
+  landing has no Alerts link, search retains it.
+- Real Cognito logout E2E was not executable without a real account/session;
+  existing auth mocks and `authFlow` unit tests cover the local contract.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 

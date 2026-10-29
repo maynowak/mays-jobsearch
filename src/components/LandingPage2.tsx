@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 import JobStream from "./JobStream";
 import MatchPulse from "./MatchPulse";
 import Footer from "./Footer";
-import { navLinksFor } from "../navLinks";
+import Navbar from "./Navbar";
 import { useLang } from "../i18n";
 
 // ---------------------------------------------------------------------------
@@ -68,8 +67,7 @@ const STRINGS: Record<Lp2Lang, Record<string, string>> = {
 };
 
 export default function LandingPage2(): React.ReactElement {
-  const auth = useAuth();
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   // HERO-ANIMATION-03: Stream startet erst nach dem Opening (~1,4 s).
   const [streamLive, setStreamLive] = useState(false);
   useEffect(() => {
@@ -77,9 +75,6 @@ export default function LandingPage2(): React.ReactElement {
     return () => window.clearTimeout(id);
   }, []);
   const t = STRINGS[lang];
-  const switchLang = (next: Lp2Lang) => {
-    setLang(next);
-  };
   return (
     <div className="lp2">
       <section className="lp2-hero" aria-label="Visuelle Bühne">
@@ -100,72 +95,7 @@ export default function LandingPage2(): React.ReactElement {
         <div className={`job-stream-layer${streamLive ? " is-live" : ""}`} aria-hidden="true">
           <JobStream />
         </div>
-        <header className="lp2-header">
-          <div className="lp2-bar" role="navigation" aria-label="Landingpage 2">
-            <a className="lp2-brand" href="/">
-              May&apos;s Job Matcher
-            </a>
-            {/* TOP-MENU-02: Reihenfolge Landingpage = Brand → EN/DE → Suche → Login.
-                EN/DE mittig via Grid, rechte Gruppe rechts. */}
-            <div className="lp2-lang" role="group" aria-label="Language / Sprache">
-              <button
-                type="button"
-                className={lang === "en" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
-                aria-pressed={lang === "en"}
-                onClick={() => switchLang("en")}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                className={lang === "de" ? "lp2-lang-btn lp2-lang-active" : "lp2-lang-btn"}
-                aria-pressed={lang === "de"}
-                onClick={() => switchLang("de")}
-              >
-                DE
-              </button>
-            </div>
-            {/* TOP-MENU-01: Links aus dem zentralen Modul (sichtbar auf dieser
-                Route). "Benachrichtigungen" ist hier bewusst NICHT freigeschaltet:
-                ohne Anmeldung führt der Link nur auf die Suchmaske und ist nicht
-                nützlich — bleibt erhalten auf /search, /registrieren, /anmelden. */}
-            <div className="lp2-right">
-              <nav className="lp2-nav" aria-label="Bereiche">
-                {navLinksFor("landing").map((link) => (
-                  <a key={link.id} className="lp2-nav-link" href={link.href}>
-                    {t[link.labelKey]}
-                  </a>
-                ))}
-              </nav>
-              {/* Auth-aware navigation: Login/Register when not authenticated, Profil/Logout when authenticated */}
-              {auth.isAuthenticated ? (
-                <>
-                  <a className="lp2-profile" href="/profil">
-                    Profil
-                  </a>
-                  <button
-                    type="button"
-                    className="lp2-logout"
-                    onClick={() => {
-                      auth.signoutRedirect();
-                    }}
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <a className="lp2-login" href="/anmelden">
-                    Login
-                  </a>
-                  <a className="lp2-register" href="/registrieren">
-                    Registrieren
-                  </a>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
+        <Navbar route="landing" glass />
         <div className="lp2-hero-content">
           <p className="lp2-kicker">{t.eyebrow}</p>
           <h1 className="lp2-title">
