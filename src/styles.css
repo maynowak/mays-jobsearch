@@ -419,6 +419,212 @@ body {
   outline-offset: 3px;
 }
 
+/* MAYS-UI-S2: isolated Aurora dashboard comparison view. */
+.dashboard-v2 {
+  width: min(1180px, 94vw);
+  margin: 0 auto;
+  padding: var(--space-6) 0 var(--space-8);
+}
+
+.dashboard-v2__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.dashboard-v2__header h1,
+.dashboard-v2__header p {
+  margin: 0;
+}
+
+.dashboard-v2__header h1 {
+  margin-top: var(--space-2);
+  color: var(--text);
+}
+
+.dashboard-v2__header > div:first-child > p:last-child {
+  margin-top: var(--space-2);
+  color: var(--muted);
+}
+
+.dashboard-v2__demo-note {
+  max-width: 300px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: rgba(34, 211, 238, 0.08);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.dashboard-v2__demo-action {
+  display: block;
+  margin-top: var(--space-3);
+}
+
+.dashboard-v2__layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.32fr) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.dashboard-v2__navigation-card h2,
+.dashboard-v2__card-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-lg);
+}
+
+.dashboard-v2__main {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.dashboard-v2__profile-card,
+.dashboard-v2__features-card {
+  grid-column: 1 / -1;
+}
+
+.dashboard-v2__card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.dashboard-v2__details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-5) 0 0;
+}
+
+.dashboard-v2__details div {
+  min-width: 0;
+}
+
+.dashboard-v2__details dt,
+.dashboard-v2__status-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.dashboard-v2__details dd {
+  margin: var(--space-1) 0 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-v2__status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.dashboard-v2__status-grid > div {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.dashboard-v2__status-grid strong {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text);
+}
+
+.dashboard-v2__status-icon {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  font-weight: 800;
+}
+
+.dashboard-v2__features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.dashboard-v2__feature {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.dashboard-v2__feature h3 {
+  margin: var(--space-3) 0 0;
+  color: var(--text);
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-v2 button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .dashboard-v2 {
+    padding-top: var(--space-4);
+  }
+
+  .dashboard-v2__header,
+  .dashboard-v2__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-v2__header {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .dashboard-v2__demo-note {
+    max-width: none;
+  }
+
+  .dashboard-v2__main,
+  .dashboard-v2__details,
+  .dashboard-v2__status-grid,
+  .dashboard-v2__features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-v2,
+  .dashboard-v2 * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 @media (max-width: 767px) {
   .ui-components-preview {
     padding: var(--space-5) 0;

@@ -1124,6 +1124,28 @@ MAYS-UI-S1 — GEMEINSAME KOMPONENTEN AUF BESTEHENDER CSS-BASIS
 - S1 implementation commit: `680dc59`; no push or deployment.
 
 ================================================================================
+MAYS-UI-S2 — AURORA-DASHBOARD-VORSCHAU
+================================================================================
+
+2026-10-29 · S2 complete
+
+- Added DEV-only `/dev/dashboard-v2` using the S1 Card, Button, Badge and
+  DashboardNavigation basis. Existing `/profil` and `/dev/dashboard` remain
+  unchanged.
+- Reused identical demo values from `DashboardDevPreview`; rendered translated
+  greeting, navigation, personal data, account status and future features.
+- Added isolated `.dashboard-v2__*` styles with compact spacing, long-value
+  wrapping, focus handling and `prefers-reduced-motion` support.
+- Production Vite preview exposes neither `/dev/dashboard` nor
+  `/dev/dashboard-v2` demo content.
+- Full tests PASS: 831 passed | 5 skipped; build/API syntax/diff checks PASS.
+- Browser PASS: DE/EN at 390/768/1440px, no overflow/raw keys, navigation and
+  keyboard focus verified. Screenshots: `/tmp/opencode/mays-ui-s2/`.
+- Preview was frontend-only; no API behavior claimed. No packages,
+  Aceternity code, auth/provider, AWS/Cognito/RIS/DNS or deployment changes.
+- S2 report: `docs/reports/15-01-MAYS-UI-S2-AURORA-DASHBOARD.md`.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 
