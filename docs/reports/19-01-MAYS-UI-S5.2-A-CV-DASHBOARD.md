@@ -4,7 +4,7 @@
 - Date: 2026-10-29
 - Branch: `feature/ui-orchestrator-s0`
 - Preflight HEAD: `9e039a2`
-- Final implementation commit: pending at report creation
+- Implementation commit: `7c17934`; profile-list refresh fix: `d6db648`
 - Scope: DEV Dashboard-V2 previews only; no new API or durable storage
 
 ## Preflight and preserved changes
@@ -96,6 +96,7 @@ existing PDF upload entry. The session/12-hour boundary is visible in the UI.
 - `npm run build`: PASS.
 - `node --check api/**/*.mjs`: PASS.
 - `git diff --check`: PASS.
+- Final refresh fix was rebuilt and its focused test passed: 2 tests passed.
 
 ### Browser smoke
 
