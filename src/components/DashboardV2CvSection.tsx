@@ -119,6 +119,7 @@ const DashboardV2CvSection = ({
               <label htmlFor="dashboard-v2-search-profile">{t('cv.chooseSearchProfile')}</label>
               <select
                 id="dashboard-v2-search-profile"
+                key={`dashboard-search-profile-${activeDocument?.hash ?? 'none'}`}
                 value={selectedSearchProfile?.id ?? ''}
                 disabled={lists.searchProfiles.length === 0}
                 onChange={(event) => onSelectSearchProfile(event.target.value || null)}
@@ -133,6 +134,7 @@ const DashboardV2CvSection = ({
               <label htmlFor="dashboard-v2-ats-profile">{t('cv.chooseAtsProfile')}</label>
               <select
                 id="dashboard-v2-ats-profile"
+                key={`dashboard-ats-profile-${activeDocument?.hash ?? 'none'}-${selectedSearchProfileId ?? 'none'}`}
                 value={selectedAtsProfile?.id ?? ''}
                 disabled={visibleAtsProfiles.length === 0}
                 onChange={(event) => onSelectAtsProfile(event.target.value || null)}
