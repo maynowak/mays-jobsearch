@@ -25,7 +25,7 @@ import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
 import AuthCallback from "./components/AuthCallback";
 import EmailConfirmation from "./components/EmailConfirmation";
-import Dashboard, { DashboardDevPreview } from "./components/Dashboard";
+import { DashboardDevPreview } from "./components/Dashboard";
 import UiComponentsPreview from "./components/UiComponentsPreview";
 import DashboardV2, { DEMO_USER } from "./components/DashboardV2";
 import DashboardV2AuthenticatedPreview from "./components/DashboardV2AuthenticatedPreview";
@@ -2427,7 +2427,7 @@ export default function App() {
     : null;
 
   const cvProcessingUI = cvState.step !== "idle" && (
-    (isDevDashboardV2 || isDevDashboardV2Auth) && !cvDialogOpen
+    (isDevDashboardV2 || isDevDashboardV2Auth || isProfile) && !cvDialogOpen
       ? null
       : cvOverlayNode ?? cvProcessingCard
   );
@@ -2551,8 +2551,9 @@ export default function App() {
       >
         <Navbar route={route} hideOnScroll />
         <main className="container legal-main layout-dashboard">
-          <Dashboard />
+          <DashboardV2AuthenticatedPreview cvSection={dashboardCvSection} />
         </main>
+        {cvProcessingUI}
         <Footer />
       </ErrorBoundary>
     );
