@@ -430,6 +430,8 @@ const en: Dict = {
   "sources.info": "Data source info",
   "sources.infoTooltip": "May's Job Matcher processes job listings from multiple data sources and prepares them for search and display. The source of each job is shown directly in the job listing.",
 
+  "sources_info.label": "Datenquellen-Info",
+
 
   "score.title": "{score}/100 match",
 
@@ -532,8 +534,6 @@ const en: Dict = {
   "dashboard.upcomingFeatures": "Upcoming features",
   "dashboard.featureCv": "CV management",
   "dashboard.featureApplications": "Application management",
-  "sources_info.label": "Data source info",
-  "cv.improvementError": "Could not apply the improvement. Please try again.",
   "profile.title": "Profile",
   "profile.notAuthenticated": "You are not signed in.",
   "profile.sub": "User ID",
@@ -1081,7 +1081,6 @@ const de: Dict = {
   "dashboard.upcomingFeatures": "Zukünftige Funktionen",
   "dashboard.featureCv": "CV-Verwaltung",
   "dashboard.featureApplications": "Bewerbungsverwaltung",
-  "cv.improvementError": "Verbesserung konnte nicht angewendet werden. Bitte versuche es erneut.",
   "profile.title": "Profil",
   "profile.notAuthenticated": "Du bist nicht angemeldet.",
   "profile.sub": "Benutzer-ID",
