@@ -173,13 +173,13 @@ export default function Navbar({ route, hideOnScroll = false }: Props) {
                 ))}
                 {auth?.isAuthenticated && (
                   <a href="/profil" className="nav-link">
-                    Profil
+                    {t("profile.title")}
                   </a>
                 )}
               </div>
               {auth?.isLoading ? (
                 <span className="nav-login" aria-busy="true">
-                  Anmeldung läuft …
+                  {t("nav.signingIn")}
                 </span>
               ) : auth?.isAuthenticated ? (
                 <button
@@ -187,11 +187,11 @@ export default function Navbar({ route, hideOnScroll = false }: Props) {
                   className="nav-login"
                   onClick={() => void signOut(auth)}
                 >
-                  Logout
+                  {t("auth.logout")}
                 </button>
               ) : (
                 <a href="/anmelden" className="nav-login">
-                  Login
+                  {t("auth.loginTitle")}
                 </a>
               )}
             </div>
@@ -213,12 +213,12 @@ export default function Navbar({ route, hideOnScroll = false }: Props) {
               ))}
               {auth?.isAuthenticated && (
                 <a href="/profil" className="nav-link">
-                  Profil
+                  {t("profile.title")}
                 </a>
               )}
               {auth?.isLoading ? (
                 <span className="nav-login" aria-busy="true">
-                  Anmeldung läuft …
+                  {t("nav.signingIn")}
                 </span>
               ) : auth?.isAuthenticated ? (
                 <button
@@ -226,11 +226,11 @@ export default function Navbar({ route, hideOnScroll = false }: Props) {
                   className="nav-login"
                   onClick={() => void signOut(auth)}
                 >
-                  Logout
+                  {t("auth.logout")}
                 </button>
               ) : (
                 <a href="/anmelden" className="nav-login">
-                  Login
+                  {t("auth.loginTitle")}
                 </a>
               )}
             </div>
@@ -268,20 +268,20 @@ export default function Navbar({ route, hideOnScroll = false }: Props) {
               </div>
               {auth?.isAuthenticated && (
                 <a href="/profil" className="mobile-link" onClick={close}>
-                  Profil
+                  {t("profile.title")}
                 </a>
               )}
               {auth?.isLoading ? (
                 <span className="nav-login" aria-busy="true">
-                  Anmeldung läuft …
+                  {t("nav.signingIn")}
                 </span>
               ) : auth?.isAuthenticated ? (
                 <button className="nav-login" onClick={() => void signOut(auth)}>
-                  Logout
+                  {t("auth.logout")}
                 </button>
               ) : (
                 <a href="/anmelden" className="nav-login" onClick={close}>
-                  Login
+                  {t("auth.loginTitle")}
                 </a>
               )}
             </div>

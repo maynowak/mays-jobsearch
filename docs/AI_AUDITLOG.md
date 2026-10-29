@@ -971,6 +971,41 @@ bestaetigt); K6/K7 vorbestehend und referenzidentisch (Restproblem).
 Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
 
 ================================================================================
+MAYS-AURORA-GLASS-DASHBOARD-09 — IMPLEMENTATION COMPLETE
+================================================================================
+
+2026-10-29 · i18n implementation and verification
+
+Scope:
+- `src/components/Dashboard.tsx`: remaining fixed UI text replaced with existing
+  keys (`auth.logout`, profile labels, dashboard card/status/feature keys and
+  `dashboard.nav.jobPrefs`).
+- `src/components/Navbar.tsx`: `profile.title`, `nav.signingIn`, `auth.logout`
+  and `auth.loginTitle` applied in glass, standard and mobile render paths.
+- `src/components/Navbar.test.tsx`: expectation aligned with the existing German
+  value of `auth.loginTitle` (`Anmelden`).
+
+AI-/Privacy-/Data-Flow impact: none. No new keys, dependencies, data flows,
+AWS/Cognito/RIS/DNS changes, push or deployment.
+
+Verification:
+- `npm run build` PASS (existing large-chunk warning only)
+- `npm test -- --run` PASS (821 passed | 5 skipped; 72 passed | 3 skipped)
+- `node --check api/**/*.mjs` PASS
+- `git diff --check` PASS
+- Headless Chromium: `/dev/dashboard` at 390px and 1440px in DE and EN;
+  DE → EN → DE switch and `mj-lang`/`html[lang]` persistence verified;
+  no raw translation keys in rendered content.
+- Real Cognito-authenticated `/profil` browser flow not executed; no credentials
+  were used. Shared Dashboard rendering was verified through `/dev/dashboard`.
+
+Git:
+- Only task-related files staged; pre-existing `src/i18n.tsx`,
+  `src/components/SourcesInfo.test.tsx` and unrelated untracked files left
+  untouched and unstaged.
+- No push or deployment.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 

@@ -94,14 +94,14 @@ describe("TOP-MENU-02: Navbar Glass-Look auf Suchmaske und Auth-Seiten", () => {
     expect(linkNodes[1].href).toBe("/search#alerts");
 
     const login = document.querySelector(".nav-login") as HTMLAnchorElement;
-    expect(login?.textContent?.trim()).toBe("Login");
+    expect(login?.textContent?.trim()).toBe("Anmelden");
     expect(login?.getAttribute("href")).toBe("/anmelden");
   });
 
   it("andere Routen zeigen Benachrichtigungen je nach Modul-Freigabe", () => {
     expect(navLinks("impressum", "/impressum").map((l) => l.text)).toEqual([
       "Suche",
-      "Login",
+      "Anmelden",
     ]);
     // Glass Mode: Login ist außerhalb von .nav-links, daher nur Suche + Benachrichtigungen
     expect(navLinks("register", "/registrieren").map((l) => l.text)).toEqual([

@@ -10,7 +10,7 @@ export interface DashboardProps {
 
 export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
   const auth = useAuth();
-  const { t: trans } = useLang();
+  const { t } = useLang();
   const isDev = import.meta.env.DEV;
 
   // Allow override for testing/dev mode
@@ -21,7 +21,7 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
     return (
       <div className="aurora-dashboard-loading">
         <div className="aurora-spinner" />
-        <p>Lade Benutzerdaten...</p>
+        <p>{t("dashboard.loading")}</p>
       </div>
     );
   }
@@ -29,10 +29,10 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
   if (!isAuthenticated) {
     return (
       <div className="aurora-dashboard-error">
-        <h2>Profil</h2>
-        <p>Du bist nicht angemeldet.</p>
+        <h2>{t("profile.title")}</h2>
+        <p>{t("profile.notAuthenticated")}</p>
         <a href="/anmelden" className="aurora-btn aurora-btn-primary">
-          {trans("auth.login")}
+          {t("auth.loginTitle")}
         </a>
       </div>
     );
@@ -43,16 +43,16 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
       {/* Dev Mode Badge */}
       {isDev && overrideUser && (
         <div className="aurora-dev-badge">
-          DEV-MODUS: Demo-Daten
+          {t("dashboard.devBadge")}
         </div>
       )}
 
       {/* Aurora Header - Professional */}
       <section className="aurora-header">
         <div className="aurora-header-content">
-          <h1 className="aurora-title">Profil</h1>
+          <h1 className="aurora-title">{t("profile.title")}</h1>
           <p className="aurora-subtitle">
-            Willkommen! Verwalte dein Konto.
+            {t("dashboard.subtitle")}
           </p>
         </div>
       </section>
@@ -63,31 +63,31 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
         <aside className="aurora-sidebar">
           <div className="aurora-sidebar-content">
             <div className="aurora-sidebar-section">
-              <h3 className="aurora-sidebar-title">Navigieren</h3>
+              <h3 className="aurora-sidebar-title">{t("dashboard.sidebarTitle")}</h3>
               <ul className="aurora-sidebar-list">
                 <li className="aurora-sidebar-item aurora-sidebar-active">
                   <span className="aurora-sidebar-icon">✓</span>
-                  <span>Übersicht</span>
+                  <span>{t("dashboard.nav.overview")}</span>
                 </li>
                 <li className="aurora-sidebar-item">
                   <span className="aurora-sidebar-icon">👤</span>
-                  <span>Mein Profil</span>
+                  <span>{t("dashboard.nav.myProfile")}</span>
                 </li>
                 <li className="aurora-sidebar-item">
-                  <span className="aurora-sidebar-tag">In Vorbereitung</span>
-                  <span>Lebenslauf</span>
+                  <span className="aurora-sidebar-tag">{t("dashboard.soon")}</span>
+                  <span>{t("dashboard.nav.cv")}</span>
                 </li>
                 <li className="aurora-sidebar-item">
-                  <span className="aurora-sidebar-tag">In Vorbereitung</span>
-                  <span>Bewerbungen</span>
+                  <span className="aurora-sidebar-tag">{t("dashboard.soon")}</span>
+                  <span>{t("dashboard.nav.applications")}</span>
                 </li>
                 <li className="aurora-sidebar-item">
-                  <span className="aurora-sidebar-tag">In Vorbereitung</span>
-                  <span>Job-Präferenzen</span>
+                  <span className="aurora-sidebar-tag">{t("dashboard.soon")}</span>
+                  <span>{t("dashboard.nav.jobPrefs")}</span>
                 </li>
                 <li className="aurora-sidebar-item">
-                  <span className="aurora-sidebar-tag">In Vorbereitung</span>
-                  <span>Einstellungen</span>
+                  <span className="aurora-sidebar-tag">{t("dashboard.soon")}</span>
+                  <span>{t("dashboard.nav.settings")}</span>
                 </li>
               </ul>
             </div>
@@ -95,7 +95,7 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
             {/* Demo Status Note */}
             {isDev && overrideUser && (
               <div className="aurora-demo-note">
-                <strong>Hinweis:</strong> Demo-Status (nicht authentifiziert)
+                <strong>{t("dashboard.demoNote.title")}</strong> {t("dashboard.demoNote.text")}
               </div>
             )}
 
@@ -106,7 +106,7 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
                 className="aurora-btn aurora-btn-danger aurora-sidebar-logout"
                 onClick={() => void signOut(auth)}
               >
-                Logout
+                {t("auth.logout")}
               </button>
             )}
           </div>
@@ -117,18 +117,18 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
           <div className="aurora-content-grid">
             {/* Profile Card */}
             <div className="aurora-card aurora-card-primary">
-              <h2 className="aurora-section-title">Persönliche Daten</h2>
+              <h2 className="aurora-section-title">{t("dashboard.personalData")}</h2>
               <div className="aurora-profile-info aurora-compact">
                 <div className="aurora-info-item">
-                  <label>E-Mail</label>
+                  <label>{t("profile.email")}</label>
                   <span className="aurora-info-value">{user?.email || "-"}</span>
                 </div>
                 <div className="aurora-info-item">
-                  <label>Benutzer-ID</label>
+                  <label>{t("profile.sub")}</label>
                   <span className="aurora-info-value user-id">{user?.sub || "-"}</span>
                 </div>
                 <div className="aurora-info-item">
-                  <label>Name</label>
+                  <label>{t("profile.name")}</label>
                   <span className="aurora-info-value">{user?.name || "-"}</span>
                 </div>
               </div>
@@ -136,22 +136,22 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
 
             {/* Account Status Card */}
             <div className="aurora-card">
-              <h2 className="aurora-section-title">Konto-Status</h2>
+              <h2 className="aurora-section-title">{t("dashboard.accountStatus")}</h2>
               <div className="aurora-status-grid">
                 <div className="aurora-status-item">
                   <div className="aurora-status-icon">✓</div>
                   <div>
-                    <p className="aurora-status-label">Authentifiziert</p>
+                    <p className="aurora-status-label">{t("dashboard.authStatus")}</p>
                     <p className="aurora-status-value-demo">
-                      {isDev && overrideUser ? "Demo-Modus" : "Aktiv"}
+                      {isDev && overrideUser ? t("dashboard.demoMode") : t("dashboard.active")}
                     </p>
                   </div>
                 </div>
                 <div className="aurora-status-item">
                   <div className="aurora-status-icon">📅</div>
                   <div>
-                    <p className="aurora-status-label">Modalität</p>
-                    <p className="aurora-status-value">Online</p>
+                    <p className="aurora-status-label">{t("dashboard.modality")}</p>
+                    <p className="aurora-status-value">{t("dashboard.online")}</p>
                   </div>
                 </div>
               </div>
@@ -159,19 +159,19 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
 
             {/* Future Features Card */}
             <div className="aurora-card aurora-card--features">
-              <h2 className="aurora-section-title">Zukünftige Funktionen</h2>
+              <h2 className="aurora-section-title">{t("dashboard.upcomingFeatures")}</h2>
               <div className="aurora-feature-grid">
                 <div className="aurora-feature-item">
-                  <span className="aurora-feature-tag">In Vorbereitung</span>
-                  <p>CV-Verwaltung</p>
+                  <span className="aurora-feature-tag">{t("dashboard.soon")}</span>
+                  <p>{t("dashboard.featureCv")}</p>
                 </div>
                 <div className="aurora-feature-item">
-                  <span className="aurora-feature-tag">In Vorbereitung</span>
-                  <p>Bewerbungsverwaltung</p>
+                  <span className="aurora-feature-tag">{t("dashboard.soon")}</span>
+                  <p>{t("dashboard.featureApplications")}</p>
                 </div>
                 <div className="aurora-feature-item">
-                  <span className="aurora-feature-tag">In Vorbereitung</span>
-                  <p>Job-Präferenzen</p>
+                  <span className="aurora-feature-tag">{t("dashboard.soon")}</span>
+                  <p>{t("dashboard.nav.jobPrefs")}</p>
                 </div>
               </div>
             </div>
