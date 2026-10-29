@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  window.localStorage.removeItem("lp2-lang");
+  window.localStorage.setItem("mj-lang", "de");
 });
 
 function renderPage() {
@@ -33,7 +33,7 @@ function renderPage() {
 
 describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
   it("Hero-Textstruktur exakt nach Spec (EN)", () => {
-    window.localStorage.setItem("lp2-lang", "en");
+    window.localStorage.setItem("mj-lang", "en");
     renderPage();
     expect(screen.getByText("MAY'S JOB MATCHER")).toBeTruthy();
     expect(screen.getByText("Your next career move")).toBeTruthy();
@@ -45,7 +45,7 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
   });
 
   it("keine dritte Headline-Zeile, keine Hero-Card", () => {
-    window.localStorage.setItem("lp2-lang", "en");
+    window.localStorage.setItem("mj-lang", "en");
     renderPage();
     expect(screen.queryByText(/die zu dir passen/)).toBeNull();
     expect(screen.queryByText(/that truly fit you/)).toBeNull();
@@ -105,15 +105,23 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
 
   it("Links führen zur Suchmaske (TOP-MENU-01: /search statt /search)", () => {
     renderPage();
-    const els = screen.getAllByText("Zum Job-Matcher") as HTMLAnchorElement[];
+    const els = [screen.getByRole("link", { name: "Jobs finden →" })] as HTMLAnchorElement[];
     expect(els.length).toBeGreaterThan(0);
     for (const el of els) expect(el.href).toContain("/search");
     const jobs = screen.getByText("Jobs finden →") as HTMLAnchorElement;
     expect(jobs.href).toContain("/search");
   });
 
+  it("rendert den gemeinsamen Footer genau einmal mit Legal-Links", () => {
+    renderPage();
+    expect(document.querySelectorAll("footer.footer")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Impressum" })).toHaveAttribute("href", "/impressum");
+    expect(screen.getByRole("link", { name: "Datenschutz" })).toHaveAttribute("href", "/datenschutz");
+    expect(screen.getByRole("link", { name: "Datenschutzprinzipien" })).toHaveAttribute("href", "/datenschutzprinzipien");
+  });
+
   it("Match Pulse sitzt neben „mit KI\" (AI-MATCH-PULSE-01)", () => {
-    window.localStorage.setItem("lp2-lang", "en");
+    window.localStorage.setItem("mj-lang", "en");
     renderPage();
     const accent = screen.getByText("with AI");
     expect(accent).toBeTruthy();
@@ -145,10 +153,10 @@ describe("LandingPage2 (HERO-COMPOSITION-02)", () => {
     fireEvent.click(screen.getByText("EN"));
     expect(screen.getByText("Find jobs →")).toBeTruthy();
     expect(screen.getByText("Search")).toBeTruthy();
-    expect(window.localStorage.getItem("lp2-lang")).toBe("en");
+    expect(window.localStorage.getItem("mj-lang")).toBe("en");
     fireEvent.click(screen.getByText("DE"));
     expect(screen.getByText("Jobs finden →")).toBeTruthy();
     expect(screen.getByText("Suche")).toBeTruthy();
-    expect(window.localStorage.getItem("lp2-lang")).toBe("de");
+    expect(window.localStorage.getItem("mj-lang")).toBe("de");
   });
 });

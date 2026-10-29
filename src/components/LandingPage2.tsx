@@ -3,7 +3,9 @@ import { useAuth } from "react-oidc-context";
 import heroImage from "../assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png";
 import JobStream from "./JobStream";
 import MatchPulse from "./MatchPulse";
+import Footer from "./Footer";
 import { navLinksFor } from "../navLinks";
+import { useLang } from "../i18n";
 
 // ---------------------------------------------------------------------------
 // PRODUKTIONS-LANDINGPAGE — diese Komponente rendert "/" (Root-Domain).
@@ -21,7 +23,7 @@ import { navLinksFor } from "../navLinks";
 // LANDINGPAGE-02-HERO-COMPOSITION-02 — reines Hintergrundbild + darüber
 // positionierte HTML/CSS-Ebenen (Glass-Nav, zentrierter Hero-Content).
 // Kein Text im Bild; keine Zettel/Animation (folgen in LANDINGPAGE-03/04).
-// Sprache (EN/DE) bleibt komponentenlokal (lp2-lang), kein App-i18n-Eingriff.
+// Lokale Landing-Texte verwenden den globalen App-Sprachkontext.
 type Lp2Lang = "de" | "en";
 
 const STRINGS: Record<Lp2Lang, Record<string, string>> = {
@@ -65,17 +67,9 @@ const STRINGS: Record<Lp2Lang, Record<string, string>> = {
   },
 };
 
-function initialLang(): Lp2Lang {
-  try {
-    return window.localStorage.getItem("lp2-lang") === "en" ? "en" : "de";
-  } catch {
-    return "de";
-  }
-}
-
 export default function LandingPage2(): React.ReactElement {
   const auth = useAuth();
-  const [lang, setLang] = useState<Lp2Lang>(initialLang);
+  const { lang, setLang } = useLang();
   // HERO-ANIMATION-03: Stream startet erst nach dem Opening (~1,4 s).
   const [streamLive, setStreamLive] = useState(false);
   useEffect(() => {
@@ -85,11 +79,6 @@ export default function LandingPage2(): React.ReactElement {
   const t = STRINGS[lang];
   const switchLang = (next: Lp2Lang) => {
     setLang(next);
-    try {
-      window.localStorage.setItem("lp2-lang", next);
-    } catch {
-      /* ignore */
-    }
   };
   return (
     <div className="lp2">
@@ -218,10 +207,7 @@ export default function LandingPage2(): React.ReactElement {
         </section>
       </main>
 
-      <footer className="lp2-footer">
-        <span>{t.footer}</span>
-        <a href="/search">{t.cta}</a>
-      </footer>
+      <Footer />
     </div>
   );
 }

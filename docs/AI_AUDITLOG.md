@@ -1006,6 +1006,41 @@ Git:
 - Push completed to `origin/main`; no deployment.
 
 ================================================================================
+MAYS-DASHBOARD-09-R — TRANSLATIONS + LANDING FOOTER
+================================================================================
+
+2026-10-29 · Implementation and verification
+
+Preflight:
+- HEAD `88dceae` was equal to `origin/main` and is a descendant of
+  `041e7e7` (the previous Dashboard/Navbar implementation).
+- Existing user modifications were preserved. The modified `src/i18n.tsx`
+  contained the needed dashboard dictionary entries locally, but they were not
+  present in `git show HEAD:src/i18n.tsx`; the needed entries were staged as
+  task changes. Unrelated dictionary edits remained unstaged.
+
+Changes:
+- Added the existing Dashboard/Navbar key set to both committed EN/DE
+  dictionaries (`nav.signingIn` plus all 23 `dashboard.*` keys).
+- Root route `/` uses `LandingPage2`; it now consumes the existing `LangProvider`
+  context and renders the shared `Footer` exactly once. The former local footer
+  was removed, so legal links are available on the production landing page.
+- Landing tests now exercise the real `LangProvider`, shared Footer links,
+  exact footer count, and language persistence.
+
+AI-/Privacy-/Data-Flow impact: none. No new dependencies, AWS/Cognito/RIS/DNS
+changes, push or deployment at this gate.
+
+Verification:
+- Full tests PASS: 822 passed | 5 skipped (72 files passed | 3 skipped)
+- Build PASS; existing large-chunk warning only
+- API syntax PASS
+- Dictionary coverage PASS: 23 Dashboard keys, none missing in either language
+- Vite preview/headless Chromium PASS: `/` and `/dev/dashboard`, 390/1440px,
+  DE/EN, one Footer, no raw keys, no horizontal overflow, DE→EN→DE persistence
+- Clean-checkout verification is required after commit before final push.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 
