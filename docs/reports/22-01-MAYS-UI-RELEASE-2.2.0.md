@@ -5,7 +5,11 @@
 - Repository: `/home/dci-student/projects/Mays-Jobsearch`
 - Branch: `feature/ui-orchestrator-s0`
 - Preflight HEAD: `336f81e`
-- Main release HEAD: `ddbeeef`
+- Main release HEAD at last production check: `dc9fb6f`
+- **Identity rule:** the footer SHA always equals the commit Vercel deployed. A
+  documentation-only commit after the check produces a new deployment with a
+  newer SHA but identical application code, so this report pins the rule and the
+  verified check points rather than chasing every doc commit.
 - Version: `2.2.0`
 
 ## 1. Classification of the open local files
@@ -101,25 +105,45 @@ verified.
 - `origin/main` was fetched and was an ancestor of the feature branch.
 - Integration used a regular fast-forward; no merge/rebase rewrite or force
   push was used.
-- Main was first pushed at `2ba7463`; the release documentation closure was
-  then pushed at `ddbeeef`.
+- Main was first pushed at `2ba7463`; release documentation closures were then
+  pushed at `ddbeeef` and `dc9fb6f`.
 - Vercel Git deployment followed the main push automatically; no second manual
   deployment was started.
-- Final deployment: `dpl_7c1hRodZNWzEHyXESxKsnijd7jJw`, status `Ready`, target
-  `production`. The first code deployment was
-  `dpl_NDk33e26fNELGP62LfZ8tcU7vB3i`.
+- Final deployment at time of the browser check:
+  `dpl_9bm3G9hoPkv2HneKaLPXvEAuTyVR`, status `Ready`, target `production`.
+  Earlier code/documentation deployments were
+  `dpl_NDk33e26fNELGP62LfZ8tcU7vB3i` and
+  `dpl_7c1hRodZNWzEHyXESxKsnijd7jJw`.
 - Deployment URL:
-  `https://mays-job-matcher-36ci9di9n-maymilly.vercel.app`.
+  `https://mays-job-matcher-2hzghrcgx-maymilly.vercel.app`.
 - Production aliases include `https://www.mays-job-matcher.app` and
   `https://mays-job-matcher.app`.
-- Production footer on `/`, `/search` and `/profil` showed:
-  `Version 2.2.0 · production · main · ddbeeef`.
+- Production footer on `/`, `/search` and `/profil` matched the deployed main
+  commit at every check; last verified value:
+  `Version 2.2.0 · production · main · dc9fb6f`.
 - `/dev/dashboard-v2` returned `404` in production; no demo view was exposed.
 - Production browser smoke at 1440 px had no console errors on `/`, `/search`
   or `/profil`. `/profil` showed the signed-out state and no demo data.
 - Authenticated production Cognito E2E and real CV/API processing remain
   **NOT VERIFIED** because no real session/API test authorization was available.
 
-This report update itself is a documentation-only closure change. The feature
-branch remains intentionally retained and the current `main` push is followed
-by this release documentation commit.
+This report update itself is a documentation-only closure change. It changes no
+application code, so the deployed application behaviour stays identical to the
+verified check. The feature branch remains intentionally retained.
+
+## 7. Remaining local files (not published)
+
+All of the following stay in the working tree with a concrete reason and were
+never staged:
+
+| Path | Category | Reason kept local |
+|---|---|---|
+| `docs/reports/JOBMATCHER-RIS-COGNITO-INTEGRATION-01-EXECUTION_LOG.md` | F | Contains infrastructure identifiers of the auth provider; publishing needs separate approval. |
+| `docs/screenshotsfordev/AWS-CodeexampleCognito.md` | F | AWS/Cognito example with pool/client identifiers; internal reference only. |
+| `docs/mays_job_matcher_datenschutzerklaerung_1.0.txt` | F | Draft privacy text with responsible-person address/contact. |
+| `privacy_content.txt` | F | Byte-identical duplicate of the draft above. |
+| `docs/mays_job_matcher_datenschutzprinzipien.txt` | E | Byte-identical duplicate of the tracked `.md`. |
+| `main.tsx` | E | Stale root entry; real entry is `src/main.tsx`. |
+| `src/assets/images/Datenvielfalt-bgsicht.svg` | E | Unreferenced asset. |
+| `src/assets/images/Futuristische_Datenautobahn_im_Morgenlicht.png` | E | Unreferenced asset. |
+| `src/assets/images/Lupe.svg` | E | Unreferenced asset. |

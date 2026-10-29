@@ -1377,6 +1377,13 @@ MAYS-UI-RELEASE-2.2.0 — MAIN UND VERCEL ABNAHME
 - Feature branch remains retained. Sensitive/unreferenced local files remain
   uncommitted and unpublished.
 
+2026-10-29 · Final release identity
+
+- Final main HEAD `dc9fb6f`; final Vercel production deployment
+  `dpl_9bm3G9hoPkv2HneKaLPXvEAuTyVR` is Ready.
+- Final production footer: `Version 2.2.0 · production · main · dc9fb6f` on
+  `/`, `/search` and `/profil`; `/dev/dashboard-v2` returns 404.
+
 ================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================

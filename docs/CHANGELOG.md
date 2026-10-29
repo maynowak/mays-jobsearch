@@ -51,7 +51,7 @@ Release 2.2.0 — released 2026-10-29
 
 - Fast-forward integrated to `main` and published through the existing Vercel
   Git deployment path.
-- Production footer verified as `Version 2.2.0 · production · main · ddbeeef`.
+- Production footer verified as `Version 2.2.0 · production · main · dc9fb6f`.
 - `/dev/dashboard-v2` remains unavailable in production; real Cognito E2E is
   still explicitly not verified.
 
