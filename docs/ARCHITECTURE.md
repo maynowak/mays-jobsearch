@@ -17,7 +17,7 @@ Manual CV      CV Upload (PDF)
   │                │
   │          SHA-256 hash (crypto.subtle)
   │                │
-  │        Profile Cache (L1 localStorage + L2 Redis)
+  │        Profile Cache (server-side Redis)
   │                │
   │          /api/profile (only on cache miss → AI)
   │                │

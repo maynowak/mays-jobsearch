@@ -3,7 +3,7 @@
 - Status: COMPLETE (full validation green)
 - Scope: `api/profile.mjs` derives the CV profile cache key server-side from received text; `src/api.ts` retries timeout, network, and unusable-model-response failures; regression coverage added in `src/api.test.ts`.
 - Root cause: the server trusted a client-provided cache hash, and the frontend classified retryable model failures as terminal errors. The CV filename was verified to be UI-only and is not included in the model request body.
-- AI-/Privacy-/Data-Flow impact: positive. Cache access is bound to received text and model fallback can try another available model. No new destination, prompt, provider, dependency, or raw-CV persistence was added. The explicit non-anonymized option remains unchanged and can intentionally send names extracted from the CV.
+- AI-/Privacy-/Data-Flow impact: positive but with a documented retry trade-off. Cache access is bound to received text. On timeout, network error, or unusable model response, the same CV text may be sent to up to three model attempts, potentially across providers such as OpenRouter and EdenAI; this applies to anonymized text and, when explicitly selected, non-anonymized text. No new destination, prompt, provider, dependency, or raw-CV persistence was added. The explicit non-anonymized option remains unchanged and can intentionally send names extracted from the CV.
 - Tests: targeted `npx vitest run src/api.test.ts src/lib/anonymize.test.ts src/App.test.tsx` (111 passed); `npm test -- --run` (846 passed, 5 skipped); `npm run build` (PASS); all `api/**/*.mjs` syntax checks (PASS); `git diff --check` (PASS).
 - Log: `docs/reports/JOBMATCHER-CV-PRIVACY-MODEL-FIX-01-EXECUTION_LOG.md`
 

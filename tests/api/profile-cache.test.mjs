@@ -91,6 +91,31 @@ describe("/api/profile CV profile cache", () => {
     expect(value.experienceLevel).toBe("Senior");
   });
 
+  it("ignoriert einen fremden Client-Hash beim Cache-Lookup", async () => {
+    const text = "React isolated CV text";
+    const textHash = hashText(text);
+    const foreignProfile = { ...cachedProfile, targetRoles: ["Foreign"] };
+    vi.mocked(cacheGet).mockImplementation(async (key) =>
+      key === `cv-profile:${HASH}` ? foreignProfile : null
+    );
+    vi.mocked(chat).mockResolvedValue(
+      JSON.stringify({
+        skills: ["React"],
+        experienceLevel: "Mid",
+        targetRoles: ["Frontend"],
+        location: "Berlin",
+      })
+    );
+    const res = makeRes();
+
+    await handler(makeReq({ text, hash: HASH }), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.targetRoles).toEqual(["Frontend"]);
+    expect(vi.mocked(cacheGet)).toHaveBeenCalledWith(`cv-profile:${textHash}`);
+    expect(vi.mocked(chat)).toHaveBeenCalledTimes(1);
+  });
+
   it("Cache-Miss ohne verwertbares AI-Ergebnis -> 502, nichts wird gecacht", async () => {
     vi.mocked(chat).mockResolvedValue("this is not json");
     const res = makeRes();

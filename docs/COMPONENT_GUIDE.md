@@ -73,7 +73,7 @@ Behavior
 - validates file type and size (max 10 MB)
 - reads the PDF in the browser with PDF.js (`src/lib/pdf.ts`)
 - normalizes the extracted text and computes a SHA-256 hash (`crypto.subtle`)
-- checks the profile cache (localStorage L1, then `/api/profile` with the hash → Redis L2)
+- checks the server-side profile cache via `/api/profile`; the server derives the cache key from the received text
 - on cache hit the stored profile is shown; on miss the AI builds one
 - `EditableProfile` lets the user edit skills, experience level, target roles and city (with autocomplete) before confirming
 

@@ -23,7 +23,7 @@ Compact, repo-specific guidance for OpenCode sessions. Only keep what changes be
 ## Architecture quirks
 - Provider router: `api/_lib/providers/index.mjs` aggregates free models from OpenRouter (primary) and EdenAI (optional). Provider-level fallback on quota exhaustion only; model-level errors propagate.
 - Model selection is locked while search/scoring runs (`ModelSelector` disables during phase).
-- CV upload: PDF processed in-browser with `pdfjs-dist`. PDF never uploaded. Text hashed via `crypto.subtle`, profile cached L1 `localStorage` 30d + L2 Upstash Redis `cv-profile:<hash>` 30d. `POST /api/profile` only on cache miss.
+- CV upload: PDF processed in-browser with `pdfjs-dist`. PDF never uploaded. Text is normalized and hashed via `crypto.subtle`; the profile is cached server-side in Upstash Redis under a server-derived `cv-profile:<hash>` key for 30d. `POST /api/profile` only on cache miss.
 - Job sources: modular registry `api/_lib/sources/`. Enabled via `JOB_SOURCE_*_ENABLED`. Default sources: Arbeitnow, Arbeitsagentur via Apify Actor `blackfalcondata~arbeitsagentur-jobs-feed`.
 - Apify cache: L1 Redis `job-source:<sourceId>:<query>|<location>` TTL 600s. L2 dataset reuse metadata with time-of-day window: peak 08:00-18:00 Europe/Berlin → reuse `APIFY_DATASET_REFRESH_PEAK_HOURS` default 6h, off-peak default 12h. Refresh only on dataset 404/410.
 - Matching pipeline: `/api/jobs` → keyword preselection → max 10 candidates → `/api/match` AI scores. Frontend shows top 5 initially, expands locally without re-request.

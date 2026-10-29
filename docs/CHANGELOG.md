@@ -140,7 +140,7 @@ Model selection, CV upload and second job source.
 - Dynamic OpenRouter free-model selection: `/api/models` exposes the current free-model catalogue (determined from OpenRouter pricing/metadata, not hardcoded) plus `defaultModel`, `fallbackModel` and `recommendedModel`; `/api/model` returns the resolved default.
 - Accessible model selector: custom listbox with ARIA semantics, keyboard navigation, recommended-model section, popover that flips upward when space is tight.
 - CV upload + profile extraction: browser-side PDF.js text extraction, normalized text → SHA-256 hash → profile cache lookup → `/api/profile` (AI) on miss → editable structured profile → matching. The PDF file is never uploaded and raw CV text is never stored.
-- CV profile caching: two layers (browser `localStorage` L1 + Upstash Redis L2), keyed by CV hash, TTL 30 days; repeated identical CVs hit the cache instead of re-running the AI.
+- CV profile caching: server-side Upstash Redis only, keyed by a server-derived CV-text hash, TTL 30 days; repeated identical CVs hit the cache instead of re-running the AI. This supersedes the earlier browser-localStorage layer.
 - Apify Arbeitsagentur source: job pool now combines Arbeitnow and the Apify Actor `blackfalcondata~arbeitsagentur-jobs-feed`; source metadata is preserved per job and cross-source dedup is active.
 - Redis Apify cache: L1 job-record cache (`apify-jobs:<query>|<location>`, 600 s) + L2 Apify dataset reuse (`apify-dataset:<query>|<location>`, 24 h freshness) to avoid unnecessary paid Actor runs.
 - Apify async run/polling: the Actor's `run-sync` returned an empty body, so runs are started asynchronously and polled to completion before reading the dataset.
