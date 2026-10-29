@@ -1348,6 +1348,26 @@ MAYS-UI-RELEASE-2.2.0 — RELEASE PREPARATION
 - Main integration and Vercel publication remain pending explicit release gates.
 
 ================================================================================
+MAYS-UI-RELEASE-2.2.0 — MAIN UND VERCEL ABNAHME
+================================================================================
+
+2026-10-29 · Released
+
+- Feature branch was integrated into `main` by fast-forward from `529bc84` to
+  `2ba7463`; no force push, rebase or history rewrite.
+- Main push succeeded. Existing Git deployment path created Vercel production
+  deployment `dpl_NDk33e26fNELGP62LfZ8tcU7vB3i`, status Ready.
+- Production aliases: `www.mays-job-matcher.app`, `mays-job-matcher.app` and
+  the corresponding Vercel aliases. Footer on `/`, `/search` and `/profil`:
+  `Version 2.2.0 · production · main · 2ba7463`.
+- Production `/dev/dashboard-v2` returned 404. Landing, Search and Profile
+  smoke checks had no console errors; `/profil` showed signed-out state and no
+  demo values.
+- Real authenticated Cognito E2E and external CV/API processing remain NOT
+  VERIFIED. No real CV was sent to an external model.
+- Release report: `docs/reports/22-01-MAYS-UI-RELEASE-2.2.0.md`.
+
+================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================
 

@@ -1,11 +1,11 @@
 # MAYS-UI-RELEASE-2.2.0 — Klassifizierung und Release
 
-- Status: **RELEASE PREPARATION; FEATURE BRANCH NOT YET MERGED**
+- Status: **RELEASED TO MAIN AND VERCEL; REAL AUTH E2E NOT VERIFIED**
 - Date: 2026-10-29
 - Repository: `/home/dci-student/projects/Mays-Jobsearch`
 - Branch: `feature/ui-orchestrator-s0`
 - Preflight HEAD: `336f81e`
-- Current implementation HEAD: `db49225`
+- Main release HEAD before this closure documentation: `2ba7463`
 - Version: `2.2.0`
 
 ## 1. Classification of the open local files
@@ -96,5 +96,28 @@ verified.
 - `776ea4a` — `feat: promote dashboard v2 to profile route`
 - `db49225` — `fix: type test-only Vite definitions`
 
-Feature branch remains intentionally retained. Main integration and Vercel
-publication are the next release gates.
+## 6. Main and Vercel result
+
+- `origin/main` was fetched and was an ancestor of the feature branch.
+- Integration used a regular fast-forward; no merge/rebase rewrite or force
+  push was used.
+- Main was pushed at `2ba7463`.
+- Vercel Git deployment followed the main push automatically; no second manual
+  deployment was started.
+- Deployment: `dpl_NDk33e26fNELGP62LfZ8tcU7vB3i`, status `Ready`, target
+  `production`.
+- Deployment URL:
+  `https://mays-job-matcher-36ci9di9n-maymilly.vercel.app`.
+- Production aliases include `https://www.mays-job-matcher.app` and
+  `https://mays-job-matcher.app`.
+- Production footer on `/`, `/search` and `/profil` showed:
+  `Version 2.2.0 · production · main · 2ba7463`.
+- `/dev/dashboard-v2` returned `404` in production; no demo view was exposed.
+- Production browser smoke at 1440 px had no console errors on `/`, `/search`
+  or `/profil`. `/profil` showed the signed-out state and no demo data.
+- Authenticated production Cognito E2E and real CV/API processing remain
+  **NOT VERIFIED** because no real session/API test authorization was available.
+
+This report update itself is a documentation-only closure change. The feature
+branch remains intentionally retained and the current `main` push is followed
+by this release documentation commit.

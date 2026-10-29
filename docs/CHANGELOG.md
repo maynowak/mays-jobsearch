@@ -47,6 +47,14 @@ Release 2.2.0 preparation — 2026-10-29
 - Classified local files; sensitive Cognito/AWS and personal-data files remain
   uncommitted and unpublished.
 
+Release 2.2.0 — released 2026-10-29
+
+- Fast-forward integrated to `main` and published through the existing Vercel
+  Git deployment path.
+- Production footer verified as `Version 2.2.0 · production · main · 2ba7463`.
+- `/dev/dashboard-v2` remains unavailable in production; real Cognito E2E is
+  still explicitly not verified.
+
 1.0
 
 Initial Project — core job matching.
