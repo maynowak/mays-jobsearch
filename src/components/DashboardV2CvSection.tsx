@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { CvDocument } from '../types';
 import { useLang } from '../i18n';
 import { readCvProfileLists } from '../lib/cvProfileStore';
@@ -43,10 +43,7 @@ const DashboardV2CvSection = ({
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
   const activeDocument = documents.find((document) => document.id === selectedDocumentId) ?? documents[0] ?? null;
-  const lists = useMemo(
-    () => readCvProfileLists(activeDocument?.hash ?? null),
-    [activeDocument?.hash]
-  );
+  const lists = readCvProfileLists(activeDocument?.hash ?? null);
   const selectedSearchProfile = lists.searchProfiles.find((entry) => entry.id === selectedSearchProfileId) ?? null;
   const selectedAtsProfile = lists.atsProfiles.find((entry) => entry.id === selectedAtsProfileId) ?? null;
 
