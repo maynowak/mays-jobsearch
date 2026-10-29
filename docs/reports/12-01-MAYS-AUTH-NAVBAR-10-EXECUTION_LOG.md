@@ -1,6 +1,6 @@
 # MAYS-AUTH-NAVBAR-10 — Execution Log
 
-- Status: IMPLEMENTATION COMPLETE; VERIFICATION COMPLETE; COMMIT PENDING
+- Status: IMPLEMENTATION COMPLETE; VERIFICATION COMPLETE; COMMITTED; NO PUSH/DEPLOYMENT
 - Date: 2026-10-29
 - Branch: `main`
 - Preflight HEAD: `4a4b289`, equal to `origin/main`.
@@ -50,5 +50,6 @@ Cognito configuration mismatch could not be tested without credentials.
 
 ## Scope protection
 
-- No AWS, Cognito, RIS, DNS, API, CSS redesign or deployment changes.
+- No AWS, Cognito, RIS, DNS, API, CSS redesign or deployment changes. Commit:
+  `35ac935` (`fix: unify auth navbar and logout flow`). No push performed.
 - Existing user changes remain unstaged; only task files are to be committed.
