@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import type { EmploymentType, Profile, WorkMode } from "../types";
 import { EMPLOYMENT_TYPES, RADIUS_KM_OPTIONS, WORK_MODES } from "../types";
@@ -24,6 +24,7 @@ interface Props {
   // CV-Workflow (Pfad B, Overlay) weiter — Modellwahl/Consent/Profil-Erstellung
   // laufen dort; die Suchmaske braucht keine Modell- und CV-Listen-Props mehr.
   onWorkflowStart: (file: File) => void;
+  openCvUpload?: boolean;
 }
 
 type Mode = "manual" | "cv";
@@ -38,9 +39,13 @@ export default function SearchForm({
   hasJobs = false,
   rematch,
   onWorkflowStart,
+  openCvUpload = false,
 }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
+  useEffect(() => {
+    if (openCvUpload) setMode("cv");
+  }, [openCvUpload]);
   const { skills: rawSkills, targetRoles } = value;
   // Rohtext-State: Der angezeigte Text wird nicht bei jedem Tastenschlag
   // normalisiert, damit Leerzeichen in Multi-Word-Skills (z. B. "Spring Boot")

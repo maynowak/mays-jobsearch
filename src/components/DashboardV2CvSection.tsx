@@ -20,6 +20,7 @@ interface Props {
   onRemoveData: () => void;
   onSelectSearchProfile: (id: string | null) => void;
   onSelectAtsProfile: (id: string | null) => void;
+  onOpenCvUpload: () => void;
 }
 
 const DashboardV2CvSection = ({
@@ -37,13 +38,17 @@ const DashboardV2CvSection = ({
   onRemoveData,
   onSelectSearchProfile,
   onSelectAtsProfile,
+  onOpenCvUpload,
 }: Props) => {
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
   const activeDocument = documents.find((document) => document.id === selectedDocumentId) ?? documents[0] ?? null;
   const lists = readCvProfileLists(activeDocument?.hash ?? null);
   const selectedSearchProfile = lists.searchProfiles.find((entry) => entry.id === selectedSearchProfileId) ?? null;
-  const selectedAtsProfile = lists.atsProfiles.find((entry) => entry.id === selectedAtsProfileId) ?? null;
+  const visibleAtsProfiles = selectedSearchProfileId
+    ? lists.atsProfiles.filter((entry) => entry.searchProfileId === selectedSearchProfileId)
+    : [];
+  const selectedAtsProfile = visibleAtsProfiles.find((entry) => entry.id === selectedAtsProfileId) ?? null;
 
   return (
     <section className="dashboard-v2__cv-section" aria-labelledby="dashboard-v2-cv-title">
@@ -51,6 +56,9 @@ const DashboardV2CvSection = ({
         <div>
           <h2 id="dashboard-v2-cv-title">{t('dashboard.nav.cv')}</h2>
           <p>{t('dashboard.cvDescription')}</p>
+          <button type="button" className="btn-ghost" onClick={onOpenCvUpload}>
+            {t('cv.openUpload')}
+          </button>
         </div>
         <span className="ui-badge ui-badge-soon">{t('dashboard.cvSession')}</span>
       </div>
@@ -126,13 +134,13 @@ const DashboardV2CvSection = ({
               <select
                 id="dashboard-v2-ats-profile"
                 value={selectedAtsProfile?.id ?? ''}
-                disabled={lists.atsProfiles.length === 0}
+                disabled={visibleAtsProfiles.length === 0}
                 onChange={(event) => onSelectAtsProfile(event.target.value || null)}
               >
                 <option value="">
-                  {lists.atsProfiles.length > 0 ? t('cv.choosePlaceholder') : t('cv.noAtsProfiles')}
+                  {visibleAtsProfiles.length > 0 ? t('cv.choosePlaceholder') : t('cv.noAtsProfiles')}
                 </option>
-                {lists.atsProfiles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+                {visibleAtsProfiles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
               </select>
             </div>
           </div>

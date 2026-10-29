@@ -135,6 +135,7 @@ export default function App() {
   // Zustimmung zu erteilen. Der Consent bleibt dann ausstehend und kann über
   // "Einwilligung anzeigen" erneut geöffnet werden.
   const [consentDismissed, setConsentDismissed] = useState(false);
+  const [, setNavigationVersion] = useState(0);
   // BUG-19: aktiven CV-Step fokussieren (Scroll-Handling siehe Effekt unten)
   const cvWorkflowRef = useRef<HTMLElement | null>(null);
   const [dataset, setDataset] = useState<JobDataset | null>(null);
@@ -172,6 +173,19 @@ export default function App() {
     cvProfile: null,
     inferredSkills: [],
   });
+
+  useEffect(() => {
+    const handlePopState = () => setNavigationVersion((version) => version + 1);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const navigateInApp = (href: string) => {
+    if (window.location.pathname + window.location.search === href) return;
+    window.history.pushState({}, "", href);
+    setNavigationVersion((version) => version + 1);
+    window.scrollTo(0, 0);
+  };
 
   const {
     state: modelsState,
@@ -705,6 +719,12 @@ export default function App() {
   };
 
   const handleDashboardAtsProfileSelect = (id: string | null) => {
+    if (id) {
+      const valid = listSourceLists.atsProfiles.some(
+        (entry) => entry.id === id && entry.searchProfileId === selectedSavedSearchId
+      );
+      if (!valid) return;
+    }
     setActiveAtsEntryId(id);
   };
 
@@ -1358,7 +1378,7 @@ export default function App() {
   if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isDevDashboard && !isDevUiComponents && !isDevDashboardV2 && !isDevDashboardV2Auth) {
     return (
       <div className="landing">
-        <Navbar route="landing" />
+        <Navbar route="landing" onNavigate={navigateInApp} />
         <LandingHero />
       </div>
     );
@@ -1401,6 +1421,7 @@ export default function App() {
         hasJobs={hasFoundJobs}
         rematch={canRematch}
         onWorkflowStart={handleCvUploadStart}
+        openCvUpload={new URLSearchParams(window.location.search).get("cv") === "upload"}
       />
       {/* CV-UPLOAD-UX-08: Box fuer gespeicherte Profile UNTER dem
           CV-Upload-Bereich (Suchmaske): Suchprofil + ATS-Profil waehlen,
@@ -2494,6 +2515,7 @@ export default function App() {
       onRemoveData={handleCvRemoveData}
       onSelectSearchProfile={handleDashboardSearchProfileSelect}
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
+      onOpenCvUpload={() => navigateInApp("/search?cv=upload")}
     />
   );
 
@@ -2523,7 +2545,7 @@ export default function App() {
         {/* DASHBOARD-08: Navbar blendet beim Scrollen aus (hideOnScroll) und
             der vorhandene Seiten-Footer erscheint NACH dem Dashboard-Inhalt —
             identische Struktur wie der Default-Return weiter unten. */}
-        <Navbar route="profil" hideOnScroll />
+          <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
           <DashboardDevPreview />
         </main>
@@ -2539,7 +2561,7 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-        <Navbar route="matcher" />
+          <Navbar route="matcher" onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
           <UiComponentsPreview />
         </main>
@@ -2555,7 +2577,7 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-        <Navbar route="profil" hideOnScroll />
+          <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
           <DashboardV2 user={DEMO_USER} isDemo cvSection={dashboardCvSection} />
         </main>
@@ -2572,7 +2594,7 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-        <Navbar route="profil" hideOnScroll />
+          <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
           <DashboardV2AuthenticatedPreview cvSection={dashboardCvSection} />
         </main>
@@ -2589,7 +2611,7 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-        <Navbar route={route} hideOnScroll />
+          <Navbar route={route} hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
           <DashboardV2AuthenticatedPreview cvSection={dashboardCvSection} />
         </main>
@@ -2605,7 +2627,7 @@ export default function App() {
       message={t("error.boundaryMessage")}
       reloadLabel={t("error.boundaryReload")}
     >
-      <Navbar route={route} />
+      <Navbar route={route} onNavigate={navigateInApp} />
       {isPrinciples ? (
         <main className="container legal-main">
           <Principles />

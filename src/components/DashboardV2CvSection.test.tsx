@@ -40,6 +40,7 @@ const renderSection = (documents: CvDocument[]) => {
         onRemoveData={vi.fn()}
         onSelectSearchProfile={onSelectSearchProfile}
         onSelectAtsProfile={onSelectAtsProfile}
+        onOpenCvUpload={vi.fn()}
       />
     </LangProvider>
   );
@@ -93,7 +94,8 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
           onSearch={vi.fn()}
           onRemoveData={vi.fn()}
           onSelectSearchProfile={view.onSelectSearchProfile}
-          onSelectAtsProfile={view.onSelectAtsProfile}
+           onSelectAtsProfile={view.onSelectAtsProfile}
+           onOpenCvUpload={vi.fn()}
         />
       </LangProvider>
     );
@@ -165,6 +167,7 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
           onRemoveData={vi.fn()}
           onSelectSearchProfile={view.onSelectSearchProfile}
           onSelectAtsProfile={view.onSelectAtsProfile}
+          onOpenCvUpload={vi.fn()}
         />
       </LangProvider>
     );

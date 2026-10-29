@@ -1,3 +1,12 @@
+2026-10-29 · MAYS-UI-S5.2-A-R3-PROFILE-CV-LINK
+- Typ: Fix/UI/Routing/Data-Flow/Privacy
+- Status: COMPLETE (full validation green)
+- Scope: Profile and Searchpage now keep the same in-memory App CV state during internal `/profil` ↔ `/search` navigation. Profile offers `Im CV-Upload öffnen`, which opens `/search?cv=upload` and activates the existing CV tab without processing. ATS dashboard options are filtered and validated by active CV hash plus selected search profile.
+- Root cause: navigation used full-page anchors, which discarded the App-local session CV inventory; the profile dashboard had no explicit handoff to the Searchpage CV tab. ATS display also did not enforce the selected search-profile parent.
+- AI-/Privacy-/Data-Flow impact: no new AI/API/storage/infrastructure flow. Navigation and selection are local only and cannot start a model/API request. Existing session-only CV state, hash-keyed profile lists, TTL, consent, and processing routines remain in use. Direct reload still intentionally loses session-only CV files.
+- Tests: targeted Dashboard/Navbar/ProfileRoute tests (17 passed); `npm test -- --run` (850 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS). Browser 390/1440 and Firefox were not run.
+- Log: `docs/reports/MAYS-UI-S5.2-A-R3-PROFILE-CV-LINK-EXECUTION_LOG.md`
+
 2026-10-29 · MAYS-UI-S5.2-A-R3
 - Typ: Fix/UI/Data-Flow/Privacy
 - Status: COMPLETE (full validation green)

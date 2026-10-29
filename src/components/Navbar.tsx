@@ -39,9 +39,10 @@ interface Props {
       (versteckt die Überschrift nicht hinter der sticky Navbar). Andere
       Routen bleiben unverändert, da die Klasse dort nie angewendet wird. */
   hideOnScroll?: boolean;
+  onNavigate?: (href: string) => void;
 }
 
-export default function Navbar({ route, glass = false, hideOnScroll = false }: Props) {
+export default function Navbar({ route, glass = false, hideOnScroll = false, onNavigate }: Props) {
   const { t } = useLang();
   const auth = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -126,6 +127,12 @@ export default function Navbar({ route, glass = false, hideOnScroll = false }: P
   };
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>, href: string, inPage?: string) => {
+    if (onNavigate && (href === "/search" || href === "/profil")) {
+      event.preventDefault();
+      onNavigate(href);
+      close();
+      return;
+    }
     const onTargetPage = window.location.pathname === href.split("#")[0];
     if (inPage === "top" && onTargetPage) {
       event.preventDefault();
@@ -174,7 +181,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = false }: P
                   </a>
                 ))}
                 {auth?.isAuthenticated && (
-                  <a href="/profil" className="nav-link">
+                  <a href="/profil" className="nav-link" onClick={(event) => handleClick(event, "/profil")}>
                     {t("profile.title")}
                   </a>
                 )}
@@ -214,7 +221,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = false }: P
                 </a>
               ))}
               {auth?.isAuthenticated && (
-                <a href="/profil" className="nav-link">
+                <a href="/profil" className="nav-link" onClick={(event) => handleClick(event, "/profil")}>
                   {t("profile.title")}
                 </a>
               )}
@@ -269,7 +276,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = false }: P
                 <LangToggle />
               </div>
               {auth?.isAuthenticated && (
-                <a href="/profil" className="mobile-link" onClick={close}>
+                <a href="/profil" className="mobile-link" onClick={(event) => handleClick(event, "/profil")}>
                   {t("profile.title")}
                 </a>
               )}
