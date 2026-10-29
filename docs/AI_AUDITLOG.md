@@ -1147,6 +1147,29 @@ MAYS-UI-S2 — AURORA-DASHBOARD-VORSCHAU
 - S2 implementation commit: `3d00a54`; no push or deployment.
 
 ================================================================================
+MAYS-UI-S3 — PROFIL AN DASHBOARD-V2 ANBINDEN
+================================================================================
+
+2026-10-29 · S3 complete
+
+- Durable S2 comparison evidence copied to `docs/evidence/mays-ui-s2/`.
+  Screenshots contain only fixed demo values; no real PII.
+- `DashboardV2` is now presentational and accepts demo or auth/profile claims.
+- Added DEV-only `/dev/dashboard-v2-auth` using the existing AuthProvider,
+  `signIn(auth)` and `signOut(auth)` helpers. Loading, error, signed-out,
+  signed-in and missing-attribute states are covered.
+- `/dev/dashboard-v2` remains the clearly marked demo route; `/profil` and
+  `/dev/dashboard` remain unchanged. Navbar/Footer are each rendered once.
+- Full tests PASS: 836 passed | 5 skipped (77 files passed | 3 skipped).
+- Build, API syntax and diff checks PASS; existing large-chunk warning only.
+- Browser PASS: auth preview DE/EN at 390/768/1440px, no raw keys/overflow;
+  production preview exposes no new DEV views.
+- Real Cognito authenticated E2E: NOT VERIFIED; no real session available.
+- Technical S4 acceptance: preview checks GREEN; Dashboard-V2 recommended as
+  candidate, but `/profil` remains unchanged pending explicit comparison choice.
+- S3 report: `docs/reports/16-01-MAYS-UI-S3-PROFIL-ANBINDUNG.md`.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 

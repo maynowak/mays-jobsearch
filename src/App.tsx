@@ -27,7 +27,8 @@ import AuthCallback from "./components/AuthCallback";
 import EmailConfirmation from "./components/EmailConfirmation";
 import Dashboard, { DashboardDevPreview } from "./components/Dashboard";
 import UiComponentsPreview from "./components/UiComponentsPreview";
-import DashboardV2 from "./components/DashboardV2";
+import DashboardV2, { DEMO_USER } from "./components/DashboardV2";
+import DashboardV2AuthenticatedPreview from "./components/DashboardV2AuthenticatedPreview";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -100,6 +101,7 @@ export default function App() {
   const isDevDashboard = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/dashboard";
   const isDevUiComponents = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/ui-components";
   const isDevDashboardV2 = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/dashboard-v2";
+  const isDevDashboardV2Auth = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/dashboard-v2-auth";
   const isPrivacy = window.location.pathname === "/datenschutz";
   const isPrinciples = window.location.pathname === "/datenschutzprinzipien";
   const [phase, setPhase] = useState<Phase>("idle");
@@ -1312,7 +1314,7 @@ export default function App() {
   // Profilseite nicht abfangen (Defensiv-Guard zusätzlich zur Route oben).
   // WICHTIG: /auth/callback muss vor diesem Early-Return behandelt werden,
   // damit AuthCallback den OIDC-Flow abwickeln kann.
-  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isDevDashboard && !isDevUiComponents && !isDevDashboardV2) {
+  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isDevDashboard && !isDevUiComponents && !isDevDashboardV2 && !isDevDashboardV2Auth) {
     return (
       <div className="landing">
         <Navbar route="landing" />
@@ -2481,7 +2483,23 @@ export default function App() {
       >
         <Navbar route="profil" hideOnScroll />
         <main className="container legal-main layout-dashboard">
-          <DashboardV2 />
+          <DashboardV2 user={DEMO_USER} isDemo />
+        </main>
+        <Footer />
+      </ErrorBoundary>
+    );
+  }
+
+  if (isDevDashboardV2Auth) {
+    return (
+      <ErrorBoundary
+        title={t("error.boundaryTitle")}
+        message={t("error.boundaryMessage")}
+        reloadLabel={t("error.boundaryReload")}
+      >
+        <Navbar route="profil" hideOnScroll />
+        <main className="container legal-main layout-dashboard">
+          <DashboardV2AuthenticatedPreview />
         </main>
         <Footer />
       </ErrorBoundary>

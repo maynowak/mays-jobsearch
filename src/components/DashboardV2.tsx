@@ -5,13 +5,25 @@ import Button from './ui/Button';
 import Card from './ui/Card';
 import DashboardNavigation, { type DashboardNavigationItem } from './ui/DashboardNavigation';
 
-const DEMO_USER = {
+export interface DashboardUser {
+  sub?: string;
+  email?: string;
+  name?: string;
+}
+
+export interface DashboardV2Props {
+  user: DashboardUser;
+  isDemo: boolean;
+  onLogout?: () => void;
+}
+
+export const DEMO_USER: DashboardUser = {
   sub: 'dev-demo-user-123',
   email: 'dev@example.com',
   name: 'Dev Demo User',
 };
 
-const DashboardV2 = () => {
+const DashboardV2 = ({ user, isDemo, onLogout }: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState('overview');
   const navigationItems: readonly DashboardNavigationItem[] = [
@@ -27,12 +39,16 @@ const DashboardV2 = () => {
     <div className="dashboard-v2" aria-labelledby="dashboard-v2-title">
       <header className="dashboard-v2__header">
         <div>
-          <Badge tone="neutral">{t('dashboard.devBadge')}</Badge>
+          {isDemo ? <Badge tone="neutral">{t('dashboard.devBadge')}</Badge> : <Badge tone="active">{t('dashboard.active')}</Badge>}
           <h1 id="dashboard-v2-title">{t('profile.title')}</h1>
           <p>{t('dashboard.subtitle')}</p>
         </div>
-        <div className="dashboard-v2__demo-note">
-          <strong>{t('dashboard.demoNote.title')}</strong> {t('dashboard.demoNote.text')}
+        <div className="dashboard-v2__header-actions">
+          {isDemo ? (
+            <div className="dashboard-v2__demo-note">
+              <strong>{t('dashboard.demoNote.title')}</strong> {t('dashboard.demoNote.text')}
+            </div>
+          ) : null}
           <Button variant="ghost" className="dashboard-v2__demo-action" onClick={() => setActiveId('overview')}>
             {t('dashboard.nav.overview')}
           </Button>
@@ -54,20 +70,25 @@ const DashboardV2 = () => {
           <Card variant="primary" className="dashboard-v2__profile-card">
             <div className="dashboard-v2__card-heading">
               <h2>{t('dashboard.personalData')}</h2>
-              <Badge tone="active">{t('dashboard.active')}</Badge>
+              <div className="dashboard-v2__heading-actions">
+                <Badge tone="active">{t('dashboard.active')}</Badge>
+                {!isDemo && onLogout ? (
+                  <Button variant="danger" onClick={onLogout}>{t('auth.logout')}</Button>
+                ) : null}
+              </div>
             </div>
             <dl className="dashboard-v2__details">
               <div>
                 <dt>{t('profile.email')}</dt>
-                <dd>{DEMO_USER.email}</dd>
+                <dd>{user.email || '-'}</dd>
               </div>
               <div>
                 <dt>{t('profile.sub')}</dt>
-                <dd>{DEMO_USER.sub}</dd>
+                <dd>{user.sub || '-'}</dd>
               </div>
               <div>
                 <dt>{t('profile.name')}</dt>
-                <dd>{DEMO_USER.name}</dd>
+                <dd>{user.name || '-'}</dd>
               </div>
             </dl>
           </Card>
@@ -82,7 +103,7 @@ const DashboardV2 = () => {
                 <span className="dashboard-v2__status-icon" aria-hidden="true">✓</span>
                 <div>
                   <p>{t('dashboard.authStatus')}</p>
-                  <strong>{t('dashboard.demoMode')}</strong>
+                  <strong>{isDemo ? t('dashboard.demoMode') : t('dashboard.active')}</strong>
                 </div>
               </div>
               <div>

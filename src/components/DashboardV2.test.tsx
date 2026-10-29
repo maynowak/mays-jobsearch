@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { LangProvider } from '../i18n';
-import DashboardV2 from './DashboardV2';
+import DashboardV2, { DEMO_USER } from './DashboardV2';
 
 const renderDashboard = () =>
   render(
     <LangProvider>
-      <DashboardV2 />
+      <DashboardV2 user={DEMO_USER} isDemo />
     </LangProvider>
   );
 
@@ -36,5 +36,34 @@ describe('MAYS-UI-S2: Aurora dashboard preview', () => {
     const navigation = screen.getByRole('navigation', { name: 'Navigieren' });
     fireEvent.click(screen.getByRole('button', { name: 'Mein Profil' }));
     expect(navigation.querySelector('[aria-current="page"]')).toHaveTextContent('Mein Profil');
+  });
+
+  it('renders supplied authenticated claims and invokes logout without demo markers', () => {
+    const onLogout = () => undefined;
+    render(
+      <LangProvider>
+        <DashboardV2
+          user={{ email: 'person@example.invalid', sub: 'subject-123', name: 'Realistic Test User' }}
+          isDemo={false}
+          onLogout={onLogout}
+        />
+      </LangProvider>
+    );
+
+    expect(screen.getByText('person@example.invalid')).toBeTruthy();
+    expect(screen.getByText('subject-123')).toBeTruthy();
+    expect(screen.getByText('Realistic Test User')).toBeTruthy();
+    expect(screen.queryByText('DEV-MODUS: Demo-Daten')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Logout' })).toBeTruthy();
+  });
+
+  it('renders a neutral fallback for missing claims', () => {
+    render(
+      <LangProvider>
+        <DashboardV2 user={{}} isDemo={false} />
+      </LangProvider>
+    );
+
+    expect(screen.getAllByText('-')).toHaveLength(3);
   });
 });
