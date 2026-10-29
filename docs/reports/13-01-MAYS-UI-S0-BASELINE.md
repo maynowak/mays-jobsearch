@@ -97,10 +97,13 @@ was made in S0.
 ## Integration decision
 
 1. **Do not install packages in S0.**
-2. **shadcn/ui:** technically suitable as a source-level foundation, but do not
-   add the full catalog or a Tailwind migration. S1 should first prototype only
-   the minimum required primitive(s), with dependency and license notices
-   explicitly reviewed.
+2. **shadcn/ui:** the prior `FOUNDATION-01-FOLLOW-UP-EXECUTION_LOG.md`
+   concluded that the existing CSS token architecture was sufficient and that
+   no primitive layer was needed; it also identified Tailwind as a requirement
+   and shadcn as unsuitable for that baseline. Therefore do not add the full
+   catalog or a Tailwind migration. If S1 still requires a component, prototype
+   only the minimum source-level primitive after a fresh need test and explicit
+   dependency/license review.
 3. **Aceternity Aurora:** defer copying the Aurora component until its free
    component license/source-distribution terms are explicitly accepted for
    this public AGPL repository. The technical Tailwind requirement and current
