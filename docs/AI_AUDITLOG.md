@@ -1071,7 +1071,8 @@ Verification:
   landing has no Alerts link, search retains it.
 - Real Cognito logout E2E was not executable without a real account/session;
   existing auth mocks and `authFlow` unit tests cover the local contract.
-- Implementation committed as `35ac935`; no push or deployment performed.
+- Implementation commit `35ac935` and documentation commit `396d8d8` were pushed
+  to `origin/main`; no deployment performed.
 
 ================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
