@@ -130,6 +130,22 @@ Dashboard-V2 remains a DEV/preview foundation and `/profil` remains unchanged.
 | S5.4 | Job-Präferenzen: reuse `Profile`/SearchForm without duplicate storage | P2 | transient/CV/account precedence |
 | S5.5 | Einstellungen: language first; unsupported account functions explicit | P2 | storage scope; API-key decision open |
 
+### S5.2-A — CV dashboard integration
+
+✅ **Implemented locally; DEV preview only**
+
+- `DashboardV2CvSection` reuses the existing `CvDocumentList`,
+  `CvProfilesOverlay`, parser `CvDocument.skills` and hash-scoped
+  `cvProfileStore`.
+- CV navigation is enabled in the supplied Dashboard-V2 previews; selection is
+  exclusive and dependent search/ATS selectors are reset on CV change.
+- No new parser, consent, model request, API, durable storage or `/profil`
+  replacement was added.
+- Two-hash isolation and no-analysis-on-selection tests are in
+  `src/components/DashboardV2CvSection.test.tsx`; real Cognito E2E remains
+  NOT VERIFIED.
+- Report: `docs/reports/19-01-MAYS-UI-S5.2-A-CV-DASHBOARD.md`.
+
 Recommended order: S5.1 → S5.4 → S5.5 → S5.2 → S5.3. Independent contract
 investigations may run in parallel; one integrator owns the shared types,
 i18n, states and privacy wording. Detailed scope, classifications, acceptance

@@ -612,6 +612,101 @@ body {
   overflow-wrap: anywhere;
 }
 
+.dashboard-v2__cv-section {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.dashboard-v2__cv-section h3,
+.dashboard-v2__cv-section h4 {
+  color: var(--text);
+}
+
+.dashboard-v2__cv-section h3 {
+  margin: 0;
+}
+
+.dashboard-v2__cv-section h4 {
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.dashboard-v2__cv-section .dashboard-v2__card-heading p {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+}
+
+.dashboard-v2__cv-boundary {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.dashboard-v2__cv-picker,
+.dashboard-v2__cv-selectors {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.dashboard-v2__cv-picker {
+  max-width: 32rem;
+  margin-bottom: var(--space-4);
+}
+
+.dashboard-v2__cv-selectors {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-5);
+}
+
+.dashboard-v2__cv-section select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-v2__cv-details {
+  margin-top: var(--space-5);
+}
+
+.dashboard-v2__cv-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-v2__cv-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.dashboard-v2__cv-profile-summary {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.dashboard-v2__cv-profile-summary h4,
+.dashboard-v2__cv-profile-summary p {
+  margin: 0;
+}
+
+.dashboard-v2__cv-profile-summary p + p {
+  margin-top: var(--space-1);
+}
+
 .dashboard-v2 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
@@ -660,6 +755,10 @@ body {
   .dashboard-v2__details,
   .dashboard-v2__status-grid,
   .dashboard-v2__features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-v2__cv-selectors {
     grid-template-columns: 1fr;
   }
 }

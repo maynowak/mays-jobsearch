@@ -29,6 +29,7 @@ import Dashboard, { DashboardDevPreview } from "./components/Dashboard";
 import UiComponentsPreview from "./components/UiComponentsPreview";
 import DashboardV2, { DEMO_USER } from "./components/DashboardV2";
 import DashboardV2AuthenticatedPreview from "./components/DashboardV2AuthenticatedPreview";
+import DashboardV2CvSection from "./components/DashboardV2CvSection";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -499,6 +500,17 @@ export default function App() {
       selectedDocumentIds: selected
         ? [...prev.selectedDocumentIds, id]
         : prev.selectedDocumentIds.filter((docId) => docId !== id),
+      step: "document-selected",
+    }));
+  };
+
+  const handleDashboardCvSelect = (id: string) => {
+    setSelectedSavedSearchId(null);
+    setActiveAtsEntryId(null);
+    setCvState((prev) => ({
+      ...prev,
+      documents: prev.documents.map((doc) => ({ ...doc, selected: doc.id === id })),
+      selectedDocumentIds: [id],
       step: "document-selected",
     }));
   };
@@ -2423,6 +2435,26 @@ export default function App() {
     ? (cvState.documents.find((d) => d.id === profilesDocId) ?? null)
     : null;
 
+  const dashboardCvSection = (
+    <DashboardV2CvSection
+      documents={cvState.documents}
+      selectedDocumentId={cvState.selectedDocumentIds[0] ?? null}
+      selectedSearchProfileId={selectedSavedSearchId}
+      selectedAtsProfileId={activeAtsEntryId}
+      processing={cvState.isProcessing}
+      searching={isSearching}
+      onSelectDocument={handleDashboardCvSelect}
+      onSelectDocumentForProcessing={handleSelectCvDocument}
+      onRemoveDocument={handleRemoveCvDocument}
+      onAddFiles={handleAddCvFiles}
+      onProcess={handleCvProcess}
+      onSearch={startSearchWithSavedProfile}
+      onRemoveData={handleCvRemoveData}
+      onSelectSearchProfile={setSelectedSavedSearchId}
+      onSelectAtsProfile={setActiveAtsEntryId}
+    />
+  );
+
 // SEARCH-WORLD-09: Das halbrunde Podium (bisher `.search-world__floor`) ist der
   // LETZTE visuelle Abschluss der Future Search World und liegt hinter dem Footer.
   // Es wird deshalb nicht mehr im World-Fluss gefuehrt, sondern zusammen mit dem
@@ -2483,7 +2515,7 @@ export default function App() {
       >
         <Navbar route="profil" hideOnScroll />
         <main className="container legal-main layout-dashboard">
-          <DashboardV2 user={DEMO_USER} isDemo />
+          <DashboardV2 user={DEMO_USER} isDemo cvSection={dashboardCvSection} />
         </main>
         <Footer />
       </ErrorBoundary>
@@ -2499,7 +2531,7 @@ export default function App() {
       >
         <Navbar route="profil" hideOnScroll />
         <main className="container legal-main layout-dashboard">
-          <DashboardV2AuthenticatedPreview />
+          <DashboardV2AuthenticatedPreview cvSection={dashboardCvSection} />
         </main>
         <Footer />
       </ErrorBoundary>

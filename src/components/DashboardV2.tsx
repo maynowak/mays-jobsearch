@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useLang } from '../i18n';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
@@ -15,6 +16,7 @@ export interface DashboardV2Props {
   user: DashboardUser;
   isDemo: boolean;
   onLogout?: () => void;
+  cvSection?: ReactNode;
 }
 
 export const DEMO_USER: DashboardUser = {
@@ -23,13 +25,13 @@ export const DEMO_USER: DashboardUser = {
   name: 'Dev Demo User',
 };
 
-const DashboardV2 = ({ user, isDemo, onLogout }: DashboardV2Props) => {
+const DashboardV2 = ({ user, isDemo, onLogout, cvSection }: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState('overview');
   const navigationItems: readonly DashboardNavigationItem[] = [
     { id: 'overview', label: t('dashboard.nav.overview') },
     { id: 'profile', label: t('dashboard.nav.myProfile') },
-    { id: 'cv', label: t('dashboard.nav.cv'), badge: t('dashboard.soon'), disabled: true },
+    { id: 'cv', label: t('dashboard.nav.cv'), badge: cvSection ? undefined : t('dashboard.soon'), disabled: !cvSection },
     { id: 'applications', label: t('dashboard.nav.applications'), badge: t('dashboard.soon'), disabled: true },
     { id: 'preferences', label: t('dashboard.nav.jobPrefs'), badge: t('dashboard.soon'), disabled: true },
     { id: 'settings', label: t('dashboard.nav.settings'), badge: t('dashboard.soon'), disabled: true },
@@ -67,6 +69,8 @@ const DashboardV2 = ({ user, isDemo, onLogout }: DashboardV2Props) => {
         </Card>
 
         <main className="dashboard-v2__main">
+          {activeId === 'cv' && cvSection ? cvSection : (
+            <>
           <Card variant="primary" className="dashboard-v2__profile-card">
             <div className="dashboard-v2__card-heading">
               <h2>{t('dashboard.personalData')}</h2>
@@ -123,6 +127,8 @@ const DashboardV2 = ({ user, isDemo, onLogout }: DashboardV2Props) => {
               ))}
             </div>
           </Card>
+            </>
+          )}
         </main>
       </div>
     </div>

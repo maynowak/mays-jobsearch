@@ -2,9 +2,14 @@ import { useAuth } from 'react-oidc-context';
 import { useLang } from '../i18n';
 import { signIn, signOut } from '../lib/authFlow';
 import DashboardV2, { type DashboardUser } from './DashboardV2';
+import type { ReactNode } from 'react';
 import Button from './ui/Button';
 
-const DashboardV2AuthenticatedPreview = () => {
+interface Props {
+  cvSection?: ReactNode;
+}
+
+const DashboardV2AuthenticatedPreview = ({ cvSection }: Props) => {
   const auth = useAuth();
   const { t } = useLang();
 
@@ -42,7 +47,7 @@ const DashboardV2AuthenticatedPreview = () => {
           : undefined,
   };
 
-  return <DashboardV2 user={user} isDemo={false} onLogout={() => void signOut(auth)} />;
+  return <DashboardV2 user={user} isDemo={false} onLogout={() => void signOut(auth)} cvSection={cvSection} />;
 };
 
 export default DashboardV2AuthenticatedPreview;

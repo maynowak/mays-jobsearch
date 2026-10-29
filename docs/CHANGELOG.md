@@ -16,6 +16,14 @@ S5 planning — 2026-10-29
 - No feature logic, persistence, package, API, `/profil`, infrastructure or
   deployment changes.
 
+S5.2-A — 2026-10-29
+
+- Integrated existing CV documents, parser skills and hash-scoped search/ATS
+  profile selectors into the DEV Dashboard-V2 previews.
+- Reused existing upload, processing, consent, profile-list and removal flows;
+  no new API or durable storage.
+- Added DE/EN CV dashboard labels and two-CV isolation tests.
+
 1.0
 
 Initial Project — core job matching.

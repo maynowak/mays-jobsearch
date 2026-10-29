@@ -1231,6 +1231,33 @@ MAYS-UI-S5 — FACHBEREICHE ALS ARBEITSPAKETE
   gates only; no new data flow was introduced.
 
 ================================================================================
+MAYS-UI-S5.2-A — VORHANDENE CV-PROFILE IM DASHBOARD
+================================================================================
+
+2026-10-29 · Implementation complete locally; DEV preview only
+
+- Preflight HEAD `9e039a2` on `feature/ui-orchestrator-s0`; pre-existing user
+  changes preserved and not staged. `/profil` remains unchanged.
+- Reused `CvUpload`, `CvDocumentList`, `CvProfilesOverlay`, `App.tsx` CV state,
+  browser parser/anonymization/consent workflow and hash-scoped in-memory
+  `cvProfileStore` with its existing 12-hour lazy TTL. No new API, persistence,
+  parser, model request or account storage was introduced.
+- Dashboard CV navigation is enabled only for the supplied DEV Dashboard-V2
+  section. CV switching is exclusive; dependent search/ATS selections are
+  cleared and lists are read only for the selected document hash.
+- Global ATS analysis is deliberately not displayed as CV-specific because the
+  existing state has no document-hash association; this prevents cross-CV data
+  mixing.
+- Added DE/EN labels and `DashboardV2CvSection` isolation tests. Full suite:
+  840 passed | 5 skipped; build/API syntax/diff checks PASS.
+- Browser smoke at 390/768/1440: CV section, empty/upload state and no overflow
+  verified. Real two-PDF browser fixture and real Cognito E2E remain NOT VERIFIED.
+- AI/privacy/data-flow impact: existing CV flow is surfaced in another DEV
+  view; no new external data flow or storage was created. Consent and browser
+  processing boundaries remain unchanged.
+- Report: `docs/reports/19-01-MAYS-UI-S5.2-A-CV-DASHBOARD.md`.
+
+================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================
 
