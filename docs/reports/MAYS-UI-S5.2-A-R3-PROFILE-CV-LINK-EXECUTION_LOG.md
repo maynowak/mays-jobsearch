@@ -37,9 +37,9 @@
 
 ## Git state
 
-- Scoped changes are ready for one targeted commit. Unrelated untracked user files remain untouched and unstaged.
+- Scoped changes are committed in `841ab85`; unrelated untracked user files remain untouched and unstaged.
 - No push or deployment, per instruction.
 
 ## Resume point
 
-- Commit scoped changes only; update this log with the commit hash. Push/deploy requires separate explicit approval.
+- No further action in this correction step. Push/deploy requires separate explicit approval.
