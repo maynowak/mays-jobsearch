@@ -1101,6 +1101,28 @@ MAYS-UI-ORCHESTRATOR-01 — S0 BESTAND UND EIGNUNG
 - AI-/Privacy-/Data-Flow impact: none; documentation-only stage.
 
 ================================================================================
+MAYS-UI-S1 — GEMEINSAME KOMPONENTEN AUF BESTEHENDER CSS-BASIS
+================================================================================
+
+2026-10-29 · S1 complete
+
+- Added minimal source components for Card, Button, Badge and Dashboard
+  Navigation under `src/components/ui/`, using existing Aurora classes/tokens.
+- Added the DEV-only local reference composition at `/dev/ui-components`.
+- Added a shared `isDevOnlyRoute` guard for `/dev/dashboard` and the new
+  preview. Production Vite preview rendered neither demo view.
+- No packages, Tailwind, shadcn or Aceternity source added. No `/profil`
+  replacement, global CSS cleanup, auth/provider, API or data-flow change.
+- Tests: full suite PASS (829 passed | 5 skipped); component/guard tests PASS.
+- Build, API syntax and diff checks PASS. Existing Vite large-chunk warning only.
+- Headless browser PASS: DEV preview DE/EN at 390/1440px, interactions and no
+  overflow; `/`, `/search`, `/profil` smoke checks no overflow, one Navbar and
+  one Footer.
+- Vite preview was used only for frontend checks; no API behavior claimed.
+- AI-/Privacy-/Data-Flow impact: none.
+- S1 report: `docs/reports/14-01-MAYS-UI-S1-COMPONENTS.md`.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 

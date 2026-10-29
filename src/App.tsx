@@ -26,6 +26,7 @@ import LoginForm from "./components/LoginForm";
 import AuthCallback from "./components/AuthCallback";
 import EmailConfirmation from "./components/EmailConfirmation";
 import Dashboard, { DashboardDevPreview } from "./components/Dashboard";
+import UiComponentsPreview from "./components/UiComponentsPreview";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -50,6 +51,7 @@ import {
 } from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
+import { isDevOnlyRoute } from "./lib/devRoute";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
 
@@ -94,7 +96,8 @@ export default function App() {
   })();
   const isAuthCallback = window.location.pathname === "/auth/callback";
   const isProfile = window.location.pathname === "/profil";
-  const isDevDashboard = window.location.pathname === "/dev/dashboard";
+  const isDevDashboard = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/dashboard";
+  const isDevUiComponents = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/ui-components";
   const isPrivacy = window.location.pathname === "/datenschutz";
   const isPrinciples = window.location.pathname === "/datenschutzprinzipien";
   const [phase, setPhase] = useState<Phase>("idle");
@@ -1307,7 +1310,7 @@ export default function App() {
   // Profilseite nicht abfangen (Defensiv-Guard zusätzlich zur Route oben).
   // WICHTIG: /auth/callback muss vor diesem Early-Return behandelt werden,
   // damit AuthCallback den OIDC-Flow abwickeln kann.
-  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isDevDashboard) {
+  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isDevDashboard && !isDevUiComponents) {
     return (
       <div className="landing">
         <Navbar route="landing" />
@@ -2445,6 +2448,22 @@ export default function App() {
         <Navbar route="profil" hideOnScroll />
         <main className="container legal-main layout-dashboard">
           <DashboardDevPreview />
+        </main>
+        <Footer />
+      </ErrorBoundary>
+    );
+  }
+
+  if (isDevUiComponents) {
+    return (
+      <ErrorBoundary
+        title={t("error.boundaryTitle")}
+        message={t("error.boundaryMessage")}
+        reloadLabel={t("error.boundaryReload")}
+      >
+        <Navbar route="matcher" />
+        <main className="container legal-main layout-dashboard">
+          <UiComponentsPreview />
         </main>
         <Footer />
       </ErrorBoundary>

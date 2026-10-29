@@ -321,6 +321,114 @@ body {
   }
 }
 
+/* MAYS-UI-S1: isolated local component reference view. */
+.ui-components-preview {
+  width: min(1100px, 94vw);
+  margin: 0 auto;
+  padding: var(--space-8) 0;
+}
+
+.ui-components-preview__heading {
+  margin-bottom: var(--space-6);
+  padding: var(--space-6);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.ui-components-preview__heading h1,
+.ui-components-preview__heading p {
+  margin: 0;
+}
+
+.ui-components-preview__heading h1 {
+  margin-top: var(--space-2);
+  color: var(--text);
+}
+
+.ui-components-preview__heading > p:last-child {
+  margin-top: var(--space-2);
+  color: var(--muted);
+}
+
+.ui-components-preview__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.ui-components-preview__badges,
+.ui-components-preview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.ui-components-preview__selection {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.ui-badge-soon {
+  border-color: var(--amber-border);
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.ui-badge-active {
+  border-color: var(--brand);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+}
+
+.ui-dashboard-navigation__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-dashboard-navigation__button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .ui-components-preview {
+    padding: var(--space-5) 0;
+  }
+
+  .ui-components-preview__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .nav-links a {
   text-decoration: none;
   color: var(--text);
