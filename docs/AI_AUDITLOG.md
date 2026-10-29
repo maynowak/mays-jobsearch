@@ -1,3 +1,12 @@
+2026-10-29 · JOBMATCHER-CV-HEADER-MODEL-REQUEST-FIX-02
+- Typ: Fix/Privacy/AI-Data-Flow
+- Status: COMPLETE (full validation green)
+- Scope: `src/lib/anonymize.ts` now masks all-caps names in CV headers such as `MAY NOWAK · PROFESSIONAL CV`; `api/_lib/providers/openrouter.mjs` sends `response_format` only to models whose catalogue metadata supports it; regression tests added.
+- Root cause: the existing name matcher only recognized mixed-case names, and free OpenRouter text models could receive an unsupported structured-output parameter, causing repeated `502 model_unavailable` responses.
+- AI-/Privacy-/Data-Flow impact: positive. The observed name is replaced before the model boundary. OpenRouter request compatibility is improved without adding a provider, destination, dependency, or persistence path. Existing retries may still send the anonymized text to fallback models when needed.
+- Tests: targeted `npx vitest run src/lib/anonymize.test.ts tests/api/openrouter-provider.test.mjs` (10 passed); `npm test -- --run` (849 passed, 5 skipped); `npm run build` (PASS); all `api/**/*.mjs` syntax checks (PASS); `git diff --check` (PASS).
+- Log: `docs/reports/JOBMATCHER-CV-HEADER-MODEL-REQUEST-FIX-02-EXECUTION_LOG.md`
+
 2026-10-29 · JOBMATCHER-CV-PRIVACY-MODEL-FIX-01
 - Typ: Fix/Privacy/Data-Flow/Model-Fallback
 - Status: COMPLETE (full validation green)

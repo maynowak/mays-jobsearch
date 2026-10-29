@@ -217,6 +217,16 @@ export function countAttempt() {
 
 export async function chat({ system, prompt, json, temperature, maxTokens, model, attempt }) {
   const apiKey = requireApiKey();
+  let supportsStructured = false;
+  if (json && model) {
+    try {
+      const models = await getModels();
+      supportsStructured = Boolean(models.find((candidate) => candidate.id === model)?.structured);
+    } catch {
+      // The prompt still requests JSON; do not fail a request only because the
+      // optional catalogue metadata is temporarily unavailable.
+    }
+  }
   // Safety observation: emit event based on current environment before provider request
   if (safetyObserver) {
     const isProduction = String(process.env.OPENROUTER_ENV || "").trim().toLowerCase() === "production";
@@ -251,7 +261,7 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
         ],
         temperature,
         max_tokens: maxTokens,
-        ...(json ? { response_format: { type: "json_object" } } : {}),
+        ...(json && supportsStructured ? { response_format: { type: "json_object" } } : {}),
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });

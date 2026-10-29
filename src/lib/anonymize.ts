@@ -6,6 +6,13 @@ const NAME_PATTERNS = [
 
 const GENERIC_NAME_PATTERN = /\b\p{Lu}[\p{Ll}]+ \p{Lu}[\p{Ll}]+\b/gu;
 
+// CV headers often use all capitals (for example "MAY NOWAK · PROFESSIONAL
+// CV"). Only treat an all-caps pair as a name when it starts a line/header and
+// is immediately followed by a visual separator. This avoids replacing normal
+// all-caps labels such as "PROFESSIONAL CV" throughout the document.
+const ALL_CAPS_HEADER_NAME_PATTERN =
+  /(^|[\r\n])([ \t]*)([A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’-]{1,}\s+[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’-]{1,})(?=\s*[·|•–—-])/gm;
+
 // Protect complete, known role phrases before applying the generic name
 // matcher. A word allowlist is not safe here: names such as "Cloud Schmidt"
 // and "Data Müller" must not be retained merely because their first word is
@@ -77,7 +84,11 @@ function anonymizeNames(text: string): string {
     protectedText
   );
 
-  const anonymized = titledNamesRemoved.replace(GENERIC_NAME_PATTERN, "[NAME]");
+  const headerNamesRemoved = titledNamesRemoved.replace(
+    ALL_CAPS_HEADER_NAME_PATTERN,
+    "$1$2[NAME]"
+  );
+  const anonymized = headerNamesRemoved.replace(GENERIC_NAME_PATTERN, "[NAME]");
   return anonymized.replace(/\u0000ROLE_(\d+)\u0000/g, (_, index: string) => protectedPhrases[Number(index)]);
 }
 

@@ -19,4 +19,10 @@ describe("anonymizeText", () => {
       "[NAME], Software Engineer"
     );
   });
+
+  it("anonymizes all-caps names in CV headers", () => {
+    expect(anonymizeText("MAY NOWAK · PROFESSIONAL CV\nArchitect")) .toBe(
+      "[NAME] · PROFESSIONAL CV\nArchitect"
+    );
+  });
 });

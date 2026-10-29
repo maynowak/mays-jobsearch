@@ -81,6 +81,23 @@ describe("OpenRouter chat", () => {
     expect(body.model).toBe("dots-studio/dots-3-note-preview:free");
   });
 
+  it("sendet response_format nur an Modelle mit Structured-Output-Unterstützung", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse(OPENROUTER_MODELS))
+      .mockResolvedValueOnce(jsonResponse({ choices: [{ message: { content: '{"skills":[]}' } }] }));
+
+    await chat({
+      system: "sys",
+      prompt: "prompt",
+      json: true,
+      model: "cohere/north-mini-code:free",
+    });
+
+    const [, opts] = vi.mocked(fetch).mock.calls[1];
+    const body = JSON.parse(opts.body);
+    expect(body.response_format).toBeUndefined();
+  });
+
   it("mappt einen Timeout (AbortSignal) auf timeout statt model_unavailable", async () => {
     const timeoutErr = new Error("The operation was aborted");
     timeoutErr.name = "TimeoutError";
