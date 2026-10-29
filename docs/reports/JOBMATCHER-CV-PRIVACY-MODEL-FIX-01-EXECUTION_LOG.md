@@ -4,7 +4,7 @@
 - Date: 2026-10-29
 - Branch: `main`
 - HEAD at audit start: `19e7a04 docs: record CV anonymizer review`
-- Current HEAD at last committed validation: `9c9ba0d docs: finalize CV audit execution state`
+- Current HEAD at last committed validation: `76725a5 docs: record final audit commit`
 - Current Git status: scoped files committed and pushed; unrelated untracked files remain and are intentionally not staged.
 - Scope: verify that CV filenames are not sent to the model, protect the server-side CV profile cache key, and make model fallback retry transient/model-response failures.
 
