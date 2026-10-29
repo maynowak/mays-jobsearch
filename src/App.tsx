@@ -1384,13 +1384,22 @@ export default function App() {
     );
   }
 
-  // CV-UPLOAD-UX-07/08: Quelle der gespeicherten Listen = erstes ausgewaehltes
-  // Dokument (Fallback: erstes Dokument); Zuordnung ueber Inhalts-Hash.
-  const listSourceDoc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0] ?? null;
+  // CV-UPLOAD-UX-07/08: Use the same explicit active-document ID as the
+  // Dashboard. The boolean `document.selected` is still kept for Searchpage
+  // multi-selection, but must not decide which profile lists are displayed.
+  const listSourceDoc =
+    cvState.documents.find((document) => document.id === cvState.selectedDocumentIds[0]) ??
+    cvState.documents[0] ??
+    null;
   const listSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
+  const visibleAtsProfiles = selectedSavedSearchId
+    ? listSourceLists.atsProfiles.filter(
+        (entry) => entry.searchProfileId === selectedSavedSearchId
+      )
+    : [];
   const activeAtsEntry =
     listSourceLists.atsProfiles.find(
-      (e) => e.id === activeAtsEntryId && (e.searchProfileId === selectedSavedSearchId || !e.searchProfileId)
+      (e) => e.id === activeAtsEntryId && e.searchProfileId === selectedSavedSearchId
     ) ?? null;
   const listSourceDocId = listSourceDoc?.id ?? null;
   // Keep selections only while they still belong to the active CV/hash. A
@@ -1437,6 +1446,7 @@ export default function App() {
                 <div className="cv-saved-profiles__row">
                   <select
                     id="cv-saved-search-profile"
+                    key={`search-profile-${listSourceDoc.hash}`}
                     value={selectedSavedSearchId ?? ""}
                     onChange={(e) => {
                       const newId = e.target.value || null;
@@ -1472,12 +1482,13 @@ export default function App() {
                 </div>
               </div>
             )}
-            {listSourceLists.atsProfiles.length > 0 && (
+            {visibleAtsProfiles.length > 0 && (
               <div className="field cv-saved-profiles__field">
                 <label htmlFor="cv-saved-ats-profile">{t("cv.chooseAtsProfile")}</label>
                 <div className="cv-saved-profiles__row">
                   <select
                     id="cv-saved-ats-profile"
+                    key={`ats-profile-${listSourceDoc.hash}-${selectedSavedSearchId ?? "none"}`}
                     value={activeAtsEntryId ?? ""}
                     onChange={(e) => {
                       const newId = e.target.value || null;
@@ -1493,13 +1504,7 @@ export default function App() {
                     disabled={cvState.isProcessing}
                   >
                     <option value="">{t("cv.choosePlaceholder")}</option>
-                    {listSourceLists.atsProfiles
-                      .filter(
-                        (entry) =>
-                          entry.searchProfileId === selectedSavedSearchId ||
-                          !entry.searchProfileId
-                      )
-                      .map((entry) => (
+                     {visibleAtsProfiles.map((entry) => (
                         <option key={entry.id} value={entry.id}>
                           {entry.name}{!entry.searchProfileId ? ` ${t("cv.atsUnassigned")}` : ""}</option>
                       ))}

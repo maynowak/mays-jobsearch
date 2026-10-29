@@ -1,3 +1,21 @@
+2026-10-29 · MAYS-UI-S5.2-A-R3-ATS-PARENT-FILTER
+- Typ: Fix/UI/Data-Flow/Privacy
+- Status: COMPLETE (full validation green)
+- Scope: Searchpage and Profile Dashboard ATS comboboxes now derive their options exclusively from the selected CV hash and selected parent search-profile ID; native selects are remounted on CV/parent changes.
+- Root cause: the Searchpage still displayed ATS entries from the whole active CV list, and the App source resolver used a different active-CV rule than the Dashboard. This allowed stale or unrelated ATS options to remain visible during a CV switch.
+- AI-/Privacy-/Data-Flow impact: none beyond local selection/rendering. No model/API/storage/infrastructure flow changed; selecting a CV, search profile, or ATS profile does not issue a network request. Profile hierarchy remains CV → search profile → ATS profile.
+- Tests: targeted ATS/CV tests (29 passed, 69 skipped); full `npm test -- --run` (850 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS).
+- Log: `docs/reports/MAYS-UI-S5.2-A-R3-PROFILE-SELECT-SOURCE-FIX-EXECUTION_LOG.md`
+
+2026-10-29 · MAYS-UI-S5.2-A-R3-PROFILE-SELECT-SOURCE-FIX
+- Typ: Fix/UI/Data-Flow/Privacy
+- Status: COMPLETE (targeted validation green; full suite/build previously green)
+- Scope: Profile/Searchpage profile-list lookup now uses the explicit active CV ID (`selectedDocumentIds[0]`) consistently with the Dashboard, instead of independently resolving the first `document.selected` flag. Native profile selects are keyed by active CV hash and parent search-profile ID so their options are replaced on CV changes.
+- Root cause: the Dashboard and App used two active-CV resolution rules. During a CV switch, the old profile IDs could be evaluated for one render against the wrong source list; existing isolated tests did not cover the full App state transition.
+- AI-/Privacy-/Data-Flow impact: none beyond local rendering/state validation. No model, API, storage, or persistence flow changed; profile data remains hash-scoped and selection causes no network request.
+- Tests: targeted `npx vitest run src/components/DashboardV2CvSection.test.tsx src/App.test.tsx -t "MAYS-UI-S5.2-A|CV-PROFILE-LISTS|CV workflow"` (35 passed, 63 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS).
+- Log: `docs/reports/MAYS-UI-S5.2-A-R3-PROFILE-SELECT-SOURCE-FIX-EXECUTION_LOG.md`
+
 2026-10-29 · MAYS-UI-S5.2-A-R3-PROFILE-CV-LINK
 - Typ: Fix/UI/Routing/Data-Flow/Privacy
 - Status: COMPLETE (full validation green)
