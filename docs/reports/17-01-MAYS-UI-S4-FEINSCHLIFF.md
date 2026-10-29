@@ -65,21 +65,21 @@ over 500 kB remains unchanged in category.
   no new raw keys; `/profil` was not replaced.
 - Fresh production Vite preview: all new DEV routes render no demo/auth view.
 - Updated comparison screenshots with fixed demo data are in
-  `docs/evidence/mays-ui-s4/`.
+  `docs/evidence/mays-ui-s4/`; regenerated from final HEAD `e3b0d9b`.
 
 ## Clean-checkout gate
 
 An isolated checkout at final code commit `0820537` was built successfully
 with a fresh temporary `npm ci --ignore-scripts` installation. API syntax also
-passed. The clean full suite was **NOT GREEN** for three pre-existing baseline
+passed. The clean full suite was **NOT GREEN** for two pre-existing baseline
 tests:
 
 1. Two `Imprint.test.tsx` assertions require `VITE_CONTACT_EMAIL`, which is
    intentionally supplied only by the ignored local `.env.local` and is absent
    from a clean checkout. No secret was copied or committed.
-2. The committed `SourcesInfo.test.tsx` expects the old German label while the
-   committed dictionary contains `Data source info`; the current working-tree
-   English test correction is a pre-existing user change and was not committed.
+2. The current working-tree English `SourcesInfo.test.tsx` correction remains
+   a pre-existing user change and was not committed; it is intentionally not
+   part of the clean-checkout gate.
 
 Result: S4 UI checks are GREEN, but the clean-checkout suite has this explicit
 baseline blocker. It is not caused by the Dashboard-V2 changes and must be

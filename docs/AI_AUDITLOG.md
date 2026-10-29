@@ -1202,6 +1202,8 @@ MAYS-UI-S4 — FEINSCHLIFF UND TECHNISCHE ABNAHME
 - Final clean checkout at `0820537`: build/API syntax PASS; full suite had 836
   passed | 5 skipped and only the two pre-existing Imprint environment tests
   failed because ignored `VITE_CONTACT_EMAIL` was absent.
+- S4 comparison screenshots were regenerated from final HEAD `e3b0d9b` with
+  fresh build identity; no real user data included.
 
 ================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
