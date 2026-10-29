@@ -55,6 +55,7 @@ import {
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 import { isDevOnlyRoute } from "./lib/devRoute";
+import { buildCvSearchProfile } from "./lib/cvSearchConfig";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
 
@@ -698,16 +699,29 @@ export default function App() {
   // CV-UPLOAD-UX-08/10: Jobsuche startet nur mit einem gewaehlten
   // gespeicherten Suchprofil (kein Start mit leerer Auswahl).
   const startSearchWithSavedProfile = () => {
-    const doc = cvState.documents.find((d) => d.selected) ?? cvState.documents[0];
+    const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]) ?? cvState.documents[0];
     const lists = readCvProfileLists(doc?.hash ?? null);
-    const entry = findSavedSearchProfile(lists, selectedSavedSearchId);
-    if (!entry) {
+    const searchEntry = findSavedSearchProfile(lists, selectedSavedSearchId);
+    if (!searchEntry) {
       // Kein stiller Abbruch: der Klick muss immer eine sichtbare Reaktion haben
       setStatus({ type: "error", message: t("cv.startSearchMissing") });
       return;
     }
-    handleProfileChange(entry.profile);
-    handleSubmit(entry.profile);
+
+    // MAYS-CV-LINK-AND-ATS-SEARCH-01: ATS is an exclusive search
+    // configuration. Keep the parent's location/radius/work filters, but
+    // replace its skills and target roles with the selected child variant.
+    const atsEntry = selectedSavedSearchId
+      ? lists.atsProfiles.find(
+          (entry) =>
+            entry.id === activeAtsEntryId &&
+            entry.searchProfileId === selectedSavedSearchId
+        )
+      : null;
+    const searchProfile = buildCvSearchProfile(searchEntry.profile, atsEntry);
+
+    handleProfileChange(searchProfile);
+    handleSubmit(searchProfile);
   };
 
   const handleDashboardSearchProfileSelect = (id: string | null) => {

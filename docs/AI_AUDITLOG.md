@@ -1,3 +1,13 @@
+2026-10-29 · MAYS-CV-LINK-AND-ATS-SEARCH-01
+- Typ: Fix/Feature/UI/Data-Flow
+- Status: COMPLETE (full validation green)
+- Scope: Existing Profile → CV-upload navigation is retained; the saved-profile search handler now applies a valid selected ATS profile as an exclusive content override through the existing SearchProfile `/api/jobs` path.
+- Root cause: no general ATS-driven search handler existed; `activeAtsEntryId` was previously consumed only by per-job ATS analysis. The implementation gap was confirmed against current code and recent hierarchy reports.
+- Field priority: ATS `skills`/`targetRoles` replace the parent values; parent `city`, `radiusKm`, `workModes`, and `employmentTypes` remain. SearchProfile-only behavior is unchanged. Exactly one search submission occurs; per-job ATS analysis remains separate.
+- AI-/Privacy-/Data-Flow impact: local profile composition only; no new AI call, API, storage, provider, or infrastructure. Selection alone makes no network request. Existing CV-hash and parent checks prevent foreign ATS configuration use.
+- Tests: pure field-priority fixtures added; targeted ATS/CV/App tests (29 passed, 69 skipped); `npm test -- --run` (852 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS).
+- Log: `docs/reports/MAYS-CV-LINK-AND-ATS-SEARCH-01-EXECUTION_LOG.md`
+
 2026-10-29 · PROFILE-HIERARCHY-06
 - Typ: Audit/Product-Concept/UI/Data-Flow-Gate
 - Status: COMPLETE (documentation-only; no implementation)
