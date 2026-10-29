@@ -2,10 +2,10 @@
 
 - Status: COMPLETE — GREEN for scoped changes; YELLOW only for unrelated pre-existing untracked workspace files
 - Date: 2026-10-29
-- Branch: `feature/cv-privacy-model-fallback`
+- Branch: `main`
 - HEAD at audit start: `19e7a04 docs: record CV anonymizer review`
-- Current HEAD before audit-correction commit: `b094b91 fix: protect CV profile cache and retry model failures`
-- Current Git status before audit-correction commit: scoped files committed; unrelated untracked files remain and were not staged.
+- Current HEAD: `84157c5 docs: complete CV privacy audit trail`
+- Current Git status: scoped files committed and pushed; unrelated untracked files remain and are intentionally not staged.
 - Scope: verify that CV filenames are not sent to the model, protect the server-side CV profile cache key, and make model fallback retry transient/model-response failures.
 
 ## Findings
@@ -60,4 +60,4 @@
 
 ## Resume point
 
-- After the audit-correction commit, update this log's current HEAD/status once more, push the feature branch, fast-forward `main` only with explicit approval, and do not deploy.
+- Resume point: none. Audit corrections are on `main` and `origin/main`; no deployment was performed.
