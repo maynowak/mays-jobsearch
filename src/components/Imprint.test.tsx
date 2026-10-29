@@ -4,6 +4,8 @@ import { LangProvider } from "../i18n";
 import Imprint from "./Imprint";
 import { legalConfig, getContactEmailDisplay } from "../config/legal";
 
+const TEST_CONTACT_EMAIL = "test-contact@example.invalid";
+
 beforeEach(() => {
   localStorage.setItem("mj-lang", "de");
   // Reset environment mock
@@ -38,8 +40,8 @@ describe("LEGAL-IMPRINT-01: Imprint page", () => {
     expect(screen.getByText("Kontakt")).toBeInTheDocument();
     expect(screen.getByText("E-Mail")).toBeInTheDocument();
     // E-Mail wird als Link gerendert
-    const emailLink = screen.getByRole("link", { name: /maysjobsearchinfos@gmail.com/i });
-    expect(emailLink).toHaveAttribute("href", "mailto:maysjobsearchinfos@gmail.com");
+    const emailLink = screen.getByRole("link", { name: TEST_CONTACT_EMAIL });
+    expect(emailLink).toHaveAttribute("href", `mailto:${TEST_CONTACT_EMAIL}`);
   });
 
   it("zeigt Entwicklungs-Hinweis zur fehlenden Anschrift", () => {

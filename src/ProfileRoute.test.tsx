@@ -93,8 +93,8 @@ describe("PROFILE-ROUTING-FIX-01: /profil rendert die Profilseite", () => {
     authState.isAuthenticated = false;
     const { container } = renderAt("/profil");
     expect(container.querySelector(".landing")).toBeNull();
-    expect(screen.getByRole("heading", { name: "Profil" })).toBeTruthy();
     expect(screen.getByText("Du bist nicht angemeldet.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Anmelden" })).toBeTruthy();
     expect(screen.queryByText("profil@example.invalid")).toBeNull();
     expect(screen.queryByText("Benutzer-ID")).toBeNull();
     expect(screen.queryByRole("button", { name: "Logout" })).toBeNull();

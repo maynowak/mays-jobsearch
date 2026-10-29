@@ -33,7 +33,8 @@ describe("STEP 37G-1 - SourcesInfo", () => {
         <SourcesInfo />
       </LangProvider>
     );
-    expect(screen.getByLabelText("Datenquellen-Info")).toBeTruthy();
+    // Test in default English
+    expect(screen.getByLabelText("Data source info")).toBeTruthy();
   });
 
   it("has title attribute for tooltip", () => {
