@@ -29,10 +29,10 @@ const DashboardV2 = ({ user, isDemo, onLogout }: DashboardV2Props) => {
   const navigationItems: readonly DashboardNavigationItem[] = [
     { id: 'overview', label: t('dashboard.nav.overview') },
     { id: 'profile', label: t('dashboard.nav.myProfile') },
-    { id: 'cv', label: t('dashboard.nav.cv'), badge: t('dashboard.soon') },
-    { id: 'applications', label: t('dashboard.nav.applications'), badge: t('dashboard.soon') },
-    { id: 'preferences', label: t('dashboard.nav.jobPrefs'), badge: t('dashboard.soon') },
-    { id: 'settings', label: t('dashboard.nav.settings'), badge: t('dashboard.soon') },
+    { id: 'cv', label: t('dashboard.nav.cv'), badge: t('dashboard.soon'), disabled: true },
+    { id: 'applications', label: t('dashboard.nav.applications'), badge: t('dashboard.soon'), disabled: true },
+    { id: 'preferences', label: t('dashboard.nav.jobPrefs'), badge: t('dashboard.soon'), disabled: true },
+    { id: 'settings', label: t('dashboard.nav.settings'), badge: t('dashboard.soon'), disabled: true },
   ];
 
   return (
@@ -71,7 +71,7 @@ const DashboardV2 = ({ user, isDemo, onLogout }: DashboardV2Props) => {
             <div className="dashboard-v2__card-heading">
               <h2>{t('dashboard.personalData')}</h2>
               <div className="dashboard-v2__heading-actions">
-                <Badge tone="active">{t('dashboard.active')}</Badge>
+                <Badge tone={isDemo ? 'neutral' : 'active'}>{isDemo ? t('dashboard.demo') : t('dashboard.authStatus')}</Badge>
                 {!isDemo && onLogout ? (
                   <Button variant="danger" onClick={onLogout}>{t('auth.logout')}</Button>
                 ) : null}
@@ -96,21 +96,14 @@ const DashboardV2 = ({ user, isDemo, onLogout }: DashboardV2Props) => {
           <Card className="dashboard-v2__status-card">
             <div className="dashboard-v2__card-heading">
               <h2>{t('dashboard.accountStatus')}</h2>
-              <Badge tone="active">{t('dashboard.authStatus')}</Badge>
+              <Badge tone={isDemo ? 'neutral' : 'active'}>{isDemo ? t('dashboard.demo') : t('dashboard.authStatus')}</Badge>
             </div>
             <div className="dashboard-v2__status-grid">
               <div>
                 <span className="dashboard-v2__status-icon" aria-hidden="true">✓</span>
                 <div>
-                  <p>{t('dashboard.authStatus')}</p>
+                  <p>{isDemo ? t('dashboard.demo') : t('dashboard.authStatus')}</p>
                   <strong>{isDemo ? t('dashboard.demoMode') : t('dashboard.active')}</strong>
-                </div>
-              </div>
-              <div>
-                <span className="dashboard-v2__status-icon" aria-hidden="true">⌁</span>
-                <div>
-                  <p>{t('dashboard.modality')}</p>
-                  <strong>{t('dashboard.online')}</strong>
                 </div>
               </div>
             </div>

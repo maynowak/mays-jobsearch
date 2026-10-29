@@ -8,7 +8,7 @@ interface Props {
 
 export default function Footer({ info = {} }: Props) {
   const { t } = useLang();
-  const { version, env, commitSha } = { ...appInfo, ...info };
+  const { version, env, commitSha, branch } = { ...appInfo, ...info };
 
   return (
     <footer className="footer">
@@ -31,7 +31,7 @@ export default function Footer({ info = {} }: Props) {
         {t("footer.post")}
       </p>
       <p className="footer-version">
-        {t("footer.version")} {version} · {env} · {commitSha}
+        {t("footer.version")} {version} · {env} · {branch} · {commitSha}
       </p>
     </footer>
   );

@@ -2,6 +2,7 @@ export interface DashboardNavigationItem {
   id: string;
   label: string;
   badge?: string;
+  disabled?: boolean;
 }
 
 interface DashboardNavigationProps {
@@ -18,9 +19,13 @@ const DashboardNavigation = ({ items, activeId, ariaLabel, onSelect }: Dashboard
         <li key={item.id} className={`aurora-sidebar-item${item.id === activeId ? ' aurora-sidebar-active' : ''}`}>
           <button
             type="button"
-            className="ui-dashboard-navigation__button"
+            className={`ui-dashboard-navigation__button${item.disabled ? ' ui-dashboard-navigation__button--disabled' : ''}`}
             aria-current={item.id === activeId ? 'page' : undefined}
-            onClick={() => onSelect(item.id)}
+            aria-disabled={item.disabled || undefined}
+            disabled={item.disabled}
+            onClick={() => {
+              if (!item.disabled) onSelect(item.id);
+            }}
           >
             <span>{item.label}</span>
             {item.badge ? <span className="aurora-sidebar-tag">{item.badge}</span> : null}

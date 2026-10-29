@@ -11,7 +11,7 @@ const UiComponentsPreview = () => {
   const items: readonly DashboardNavigationItem[] = [
     { id: 'overview', label: t('dashboard.nav.overview') },
     { id: 'profile', label: t('dashboard.nav.myProfile') },
-    { id: 'cv', label: t('dashboard.nav.cv'), badge: t('dashboard.soon') },
+    { id: 'cv', label: t('dashboard.nav.cv'), badge: t('dashboard.soon'), disabled: true },
   ];
 
   return (

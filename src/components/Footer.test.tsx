@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import Footer from "./Footer";
+import { appInfo } from "../lib/appInfo";
 
 beforeEach(() => {
   localStorage.setItem("mj-lang", "de");
@@ -68,5 +69,18 @@ describe("LEGAL-IMPRINT-01: Footer mit Legal-Links", () => {
     expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/datenschutz");
     expect(screen.getByRole("link", { name: "Privacy principles" })).toHaveAttribute("href", "/datenschutzprinzipien");
     expect(screen.getByRole("navigation", { name: "Legal links" })).toBeInTheDocument();
+  });
+
+  it("zeigt die eingefrorene Build-Identität aus appInfo", () => {
+    render(
+      <LangProvider>
+        <Footer />
+      </LangProvider>
+    );
+
+    const version = screen.getByText(new RegExp(appInfo.version));
+    expect(version).toBeInTheDocument();
+    expect(version.closest('.footer-version')).toHaveTextContent(appInfo.branch);
+    expect(version.closest('.footer-version')).toHaveTextContent(appInfo.commitSha);
   });
 });
