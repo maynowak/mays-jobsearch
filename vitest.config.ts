@@ -4,7 +4,7 @@ import { buildInfo } from "./buildInfo.ts";
 
 export default defineConfig(({ mode }) => {
   const buildDefinitions = buildInfo();
-  const testDefinitions = mode === "test"
+  const testDefinitions: Record<string, string> = mode === "test"
     ? { "import.meta.env.VITE_CONTACT_EMAIL": JSON.stringify("test-contact@example.invalid") }
     : {};
   const definitions = { ...buildDefinitions, ...testDefinitions };
