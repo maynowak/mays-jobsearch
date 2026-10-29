@@ -1,9 +1,34 @@
 const NAME_PATTERNS = [
-  /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g,
   /\b[A-Z][a-z]+ [A-Z]\. [A-Z][a-z]+\b/g,
   /\bDR\.? [A-Z][a-z]+ [A-Z][a-z]+\b/gi,
   /\bPROF\.? [A-Z][a-z]+ [A-Z][a-z]+\b/gi,
 ];
+
+const GENERIC_NAME_PATTERN = /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g;
+const JOB_RELEVANT_WORDS = new Set([
+  "analyst",
+  "architect",
+  "berater",
+  "cloud",
+  "consultant",
+  "data",
+  "designer",
+  "developer",
+  "devops",
+  "engineer",
+  "entwickler",
+  "frontend",
+  "full",
+  "ingenieur",
+  "manager",
+  "backend",
+  "product",
+  "project",
+  "react",
+  "scientist",
+  "software",
+  "stack",
+]);
 
 const EMAIL_PATTERN = /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
 
@@ -38,6 +63,18 @@ function replaceAllPatterns(text: string, patterns: RegExp | RegExp[], placehold
   return patternArray.reduce((acc, pattern) => replaceWithPlaceholder(acc, pattern, placeholder), text);
 }
 
+function anonymizeNames(text: string): string {
+  const titledNamesRemoved = NAME_PATTERNS.reduce(
+    (result, pattern) => replaceWithPlaceholder(result, pattern, "[NAME]"),
+    text
+  );
+
+  return titledNamesRemoved.replace(GENERIC_NAME_PATTERN, (candidate) => {
+    const words = candidate.toLowerCase().split(" ");
+    return words.some((word) => JOB_RELEVANT_WORDS.has(word)) ? candidate : "[NAME]";
+  });
+}
+
 export function anonymizeText(text: string): string {
   let result = text;
 
@@ -50,7 +87,7 @@ export function anonymizeText(text: string): string {
   result = replaceAllPatterns(result, XING_PATTERN, "[XING]");
   result = replaceAllPatterns(result, GITHUB_PATTERN, "[GITHUB]");
 
-  result = replaceAllPatterns(result, NAME_PATTERNS, "[NAME]");
+  result = anonymizeNames(result);
 
   return result;
 }

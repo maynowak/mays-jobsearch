@@ -1,3 +1,12 @@
+2026-10-29 · JOBMATCHER-CV-ANONYMIZER-ROLE-PHRASES-01
+- Typ: Fix/Privacy/Data-Flow
+- Status: COMPLETE (targeted regression, full test suite, build and API syntax checks green)
+- Scope: `src/lib/anonymize.ts` preserves capitalized job-relevant role/skill phrases while continuing to anonymize ordinary and titled names; `src/lib/anonymize.test.ts` adds regression coverage.
+- Root cause: the generic two-capitalized-words name pattern blindly replaced phrases such as `React Developer` and `Software Engineer`, which could leave `/api/profile` without usable roles or skills.
+- AI-/Privacy-/Data-Flow impact: privacy protection remains active for ordinary names; preserved role/skill text improves the existing client-side CV parsing flow and the quality of existing AI profile/matching input. No new data destination, prompt, model, provider, API, or dependency was added.
+- Tests: `npx vitest run src/lib/anonymize.test.ts` (3 passed); `npm test` (845 passed, 5 skipped); `npm run build` (PASS); `find api -name '*.mjs' -print0 | xargs -0 -n1 node --check` (PASS); `git diff --check` (PASS).
+- Log: `docs/reports/FEATURE_CV_ANONYMIZER_ROLE_PHRASES.md`
+
 
 2026-10-23 · JOBMATCHER-LOGOUT-FIX-01
 - Typ: Fix/Auth

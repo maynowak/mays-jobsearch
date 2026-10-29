@@ -1,5 +1,11 @@
 # Changelog
 
+Unreleased — 2026-10-29
+
+- Fixed CV anonymization over-capturing capitalized role/skill phrases such as
+  `React Developer` and `Software Engineer`, while retaining ordinary-name
+  anonymization and adding regression coverage.
+
 2.2.0 — 2026-10-29
 
 - Aurora Dashboard V2 technical preview and shared CSS component basis.
