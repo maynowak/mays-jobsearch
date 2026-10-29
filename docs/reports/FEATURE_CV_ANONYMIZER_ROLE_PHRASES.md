@@ -1,34 +1,44 @@
-# CV anonymizer role-phrase fix
+# CV anonymizer role-phrase and model-boundary fix
 
 ## Goal
 
-Prevent CV anonymization from removing job-relevant phrases such as `React
-Developer` and `Software Engineer`, while continuing to mask ordinary names.
+Ensure the selected anonymized CV mode transforms extracted text before the
+`createProfile`/`POST /api/profile` model call. Preserve job-relevant phrases
+such as `Machine Learning Engineer`, `Human Resources Specialist`, and
+`Customer Success Manager`, while continuing to mask ordinary names.
 
 ## Recovery checkpoint
 
 | Step | Topic | Status | Commit |
 | --- | --- | --- | --- |
 | 1 | Bestandsanalyse | COMPLETE | — |
-| 2 | Implementierung + Regressionstests | COMPLETE | d9598c2 |
-| 3 | Build and targeted validation | COMPLETE | d9598c2 |
+| 2 | Implementierung + Regressionstests | COMPLETE | pending |
+| 3 | Build and targeted validation | COMPLETE | pending |
 
 ## Verified findings
 
-- `src/lib/anonymize.ts` previously replaced every two-word sequence beginning
-  with two capitalized words.
-- This matched role/skill phrases before `/api/profile` could parse the CV,
-  leaving no usable roles or skills in affected CVs.
-- The fix keeps title/name masking and makes the generic replacement preserve
-  two-word phrases containing recognized job-relevant terms.
+- The prior word allowlist preserved any capitalized pair containing terms such
+  as `cloud` or `data`, which could let names such as `Cloud Schmidt` or `Data
+  Müller` reach the model.
+- The anonymizer now protects only explicit, complete role phrases before a
+  Unicode-aware generic name matcher runs.
+- `src/App.tsx` snapshots the selected anonymization mode before asynchronous
+  PDF extraction and passes only the resulting text to `createProfile`.
+- The App regression uploads/extracts a synthetic CV, verifies names are absent
+  from the model-bound text, and verifies all three multi-word role phrases are
+  retained.
+- `/profil` is the authenticated UI route; CV extraction/profile AI uses the
+  separate `POST /api/profile` endpoint. This change affects the latter flow,
+  not the `/profil` route.
 - No API contract, upload path, persistence, or dependency changed.
 
 ## AI / privacy / data-flow assessment
 
-- Privacy impact: positive. Ordinary names remain replaced with `[NAME]`.
-- Data-flow impact: positive and limited. Job-relevant CV text now survives
-  the client-side anonymization step and can be parsed into the existing
-  profile flow; no new destination or data category was introduced.
+- Privacy impact: positive. Ordinary names, including Unicode names and
+  ambiguous pairs such as `Cloud Schmidt`, remain replaced with `[NAME]`.
+- Data-flow impact: positive and limited. The selected anonymized mode is now
+  explicitly bound to the extracted text before the existing `POST /api/profile`
+  flow; no new destination or data category was introduced.
 - AI impact: positive and limited. The existing profile/matching AI receives
   usable role and skill text instead of anonymization placeholders. No prompt,
   model, provider, or API behavior changed.
@@ -36,14 +46,16 @@ Developer` and `Software Engineer`, while continuing to mask ordinary names.
 
 ## Validation
 
-Verified results: targeted test 3 passed; full suite 845 passed and 5
-skipped; build passed; all `api/**/*.mjs` syntax checks passed; `git diff
---check` passed. No deployment performed.
+Validation: targeted `src/lib/anonymize.test.ts` and `src/App.test.tsx` passed
+(98 tests); full suite passed (845 passed, 5 skipped); `npm run build` passed;
+all `api/**/*.mjs` syntax checks passed; `git diff --check` passed. No
+deployment performed.
 
 ## Git state
 
 - Branch: `fix/cv-anonymizer-role-phrases`
-- Fix commit: `d9598c2`
+- Previous fix commit: `d9598c2`
+- Final implementation commit: pending
 - Existing unrelated untracked files were preserved and not modified.
 - Changed by this task: `src/lib/anonymize.ts`,
   `src/lib/anonymize.test.ts`, `docs/AI_AUDITLOG.md`,

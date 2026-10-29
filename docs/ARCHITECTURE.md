@@ -129,7 +129,11 @@ Frontend behavior:
 - Automatic fallback (`withModelFallback` in `src/api.ts`): if the selected model fails with `model_unavailable`, the same operation is retried with up to two other eligible free models (deterministic order: selected → recommended → remaining catalogue order). The attempt cap defaults to 3 and is configurable via `MODEL_FALLBACK_MAX_ATTEMPTS`, which `/api/models` exposes as `fallbackMaxAttempts` (no source edit needed). A subtle notice is shown when a fallback was used; the user's selection is never permanently changed. Applies to `/api/profile`, `/api/match` and `/api/cover-letter`. The catalogue's presence of a model only means "currently eligible per metadata" — availability is discovered at runtime.
 - The model selector displays "Provider · Model name" (e.g. "OpenRouter · GPT-OSS 20B" / "EdenAI · Gemma") so users can see which provider a model belongs to.
 
-## CV upload + profile extraction
+## CV upload + CV profile extraction (`POST /api/profile`)
+
+This CV flow is separate from the authenticated `/profil` UI route. `/profil`
+renders the user-facing profile/dashboard view; it does not describe the CV
+text extraction or AI profile-creation endpoint.
 
 PDF → browser-side PDF.js → text extraction → normalized text → SHA-256 hash → profile cache lookup → (on miss) `/api/profile` → AI → structured editable search profile → user confirms/edits → matching flow.
 

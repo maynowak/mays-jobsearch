@@ -1,34 +1,32 @@
 const NAME_PATTERNS = [
-  /\b[A-Z][a-z]+ [A-Z]\. [A-Z][a-z]+\b/g,
-  /\bDR\.? [A-Z][a-z]+ [A-Z][a-z]+\b/gi,
-  /\bPROF\.? [A-Z][a-z]+ [A-Z][a-z]+\b/gi,
+  /\b\p{Lu}[\p{Ll}]+ \p{Lu}\. \p{Lu}[\p{Ll}]+\b/gu,
+  /\bDR\.? \p{Lu}[\p{Ll}]+ \p{Lu}[\p{Ll}]+\b/giu,
+  /\bPROF\.? \p{Lu}[\p{Ll}]+ \p{Lu}[\p{Ll}]+\b/giu,
 ];
 
-const GENERIC_NAME_PATTERN = /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g;
-const JOB_RELEVANT_WORDS = new Set([
-  "analyst",
-  "architect",
-  "berater",
-  "cloud",
-  "consultant",
-  "data",
-  "designer",
-  "developer",
-  "devops",
-  "engineer",
-  "entwickler",
-  "frontend",
-  "full",
-  "ingenieur",
-  "manager",
-  "backend",
-  "product",
-  "project",
-  "react",
-  "scientist",
-  "software",
-  "stack",
-]);
+const GENERIC_NAME_PATTERN = /\b\p{Lu}[\p{Ll}]+ \p{Lu}[\p{Ll}]+\b/gu;
+
+// Protect complete, known role phrases before applying the generic name
+// matcher. A word allowlist is not safe here: names such as "Cloud Schmidt"
+// and "Data Müller" must not be retained merely because their first word is
+// also common in job descriptions.
+const JOB_RELEVANT_PHRASES = [
+  "React Developer",
+  "Software Engineer",
+  "Machine Learning Engineer",
+  "Human Resources Specialist",
+  "Customer Success Manager",
+  "Data Scientist",
+  "Cloud Engineer",
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "DevOps Engineer",
+  "Product Manager",
+  "Project Manager",
+  "UX Designer",
+  "Business Analyst",
+];
 
 const EMAIL_PATTERN = /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
 
@@ -64,15 +62,23 @@ function replaceAllPatterns(text: string, patterns: RegExp | RegExp[], placehold
 }
 
 function anonymizeNames(text: string): string {
+  const protectedPhrases: string[] = [];
+  const protectedText = JOB_RELEVANT_PHRASES.reduce((result, phrase) => {
+    const pattern = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\b`, "giu");
+    return result.replace(pattern, (candidate) => {
+      const marker = `\u0000ROLE_${protectedPhrases.length}\u0000`;
+      protectedPhrases.push(candidate);
+      return marker;
+    });
+  }, text);
+
   const titledNamesRemoved = NAME_PATTERNS.reduce(
     (result, pattern) => replaceWithPlaceholder(result, pattern, "[NAME]"),
-    text
+    protectedText
   );
 
-  return titledNamesRemoved.replace(GENERIC_NAME_PATTERN, (candidate) => {
-    const words = candidate.toLowerCase().split(" ");
-    return words.some((word) => JOB_RELEVANT_WORDS.has(word)) ? candidate : "[NAME]";
-  });
+  const anonymized = titledNamesRemoved.replace(GENERIC_NAME_PATTERN, "[NAME]");
+  return anonymized.replace(/\u0000ROLE_(\d+)\u0000/g, (_, index: string) => protectedPhrases[Number(index)]);
 }
 
 export function anonymizeText(text: string): string {

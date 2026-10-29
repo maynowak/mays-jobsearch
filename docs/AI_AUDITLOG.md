@@ -1,10 +1,10 @@
-2026-10-29 · JOBMATCHER-CV-ANONYMIZER-ROLE-PHRASES-01
+2026-10-29 · JOBMATCHER-CV-ANONYMIZER-ROLE-PHRASES-02
 - Typ: Fix/Privacy/Data-Flow
 - Status: COMPLETE (targeted regression, full test suite, build and API syntax checks green)
-- Scope: `src/lib/anonymize.ts` preserves capitalized job-relevant role/skill phrases while continuing to anonymize ordinary and titled names; `src/lib/anonymize.test.ts` adds regression coverage.
-- Root cause: the generic two-capitalized-words name pattern blindly replaced phrases such as `React Developer` and `Software Engineer`, which could leave `/api/profile` without usable roles or skills.
-- AI-/Privacy-/Data-Flow impact: privacy protection remains active for ordinary names; preserved role/skill text improves the existing client-side CV parsing flow and the quality of existing AI profile/matching input. No new data destination, prompt, model, provider, API, or dependency was added.
-- Tests: `npx vitest run src/lib/anonymize.test.ts` (3 passed); `npm test` (845 passed, 5 skipped); `npm run build` (PASS); `find api -name '*.mjs' -print0 | xargs -0 -n1 node --check` (PASS); `git diff --check` (PASS).
+- Scope: `src/lib/anonymize.ts` now protects explicit complete role phrases and uses Unicode-aware name matching; `src/App.tsx` snapshots the selected mode before extraction; `src/App.test.tsx` verifies model-bound text.
+- Root cause: the prior word allowlist could preserve names such as `Data Müller` or `Cloud Schmidt`; the model-boundary test also needed to cover extraction, selection, and the actual `createProfile` call together.
+- AI-/Privacy-/Data-Flow impact: privacy protection is stricter for ambiguous and accented names while role/skill evidence is preserved. The selected anonymized text is sent through the existing `POST /api/profile` flow; no new destination, prompt, model, provider, API, or dependency was added. `/profil` remains the UI route and is unrelated to CV profile extraction.
+- Tests: targeted `npx vitest run src/lib/anonymize.test.ts src/App.test.tsx` (98 passed); `npm test` (845 passed, 5 skipped); `npm run build` (PASS); `find api -name '*.mjs' -print0 | xargs -0 -n1 node --check` (PASS); `git diff --check` (PASS).
 - Log: `docs/reports/FEATURE_CV_ANONYMIZER_ROLE_PHRASES.md`
 
 

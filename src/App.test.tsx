@@ -968,7 +968,9 @@ describe("CV workflow", () => {
 
   it("Privacy Boundary: Consent-Pflicht vor AI-Call; PII wird vorher anonymisiert", async () => {
     vi.mocked(extractPdfText).mockResolvedValueOnce(
-      "Max Mustermann, max.mustermann@example.com, +49 170 1234567. React Developer in Berlin."
+      "Max Mustermann, max.mustermann@example.com, +49 170 1234567. " +
+        "Data Müller and Cloud Schmidt. Machine Learning Engineer, " +
+        "Human Resources Specialist, Customer Success Manager."
     );
     vi.mocked(createProfile).mockResolvedValue({
       skills: ["React"],
@@ -995,8 +997,13 @@ describe("CV workflow", () => {
     expect(sentText).not.toContain("max.mustermann@example.com");
     expect(sentText).not.toContain("Max Mustermann");
     expect(sentText).not.toContain("+49 170 1234567");
+    expect(sentText).not.toContain("Data Müller");
+    expect(sentText).not.toContain("Cloud Schmidt");
     expect(sentText).toContain("[E-MAIL]");
     expect(sentText).toContain("[NAME]");
+    expect(sentText).toContain("Machine Learning Engineer");
+    expect(sentText).toContain("Human Resources Specialist");
+    expect(sentText).toContain("Customer Success Manager");
   });
 
   it("BROWSER-BUG-22: ATS Model-unavailable -> Recovery am ATS-Punkt -> anderes Modell -> nur ATS erneut", async () => {

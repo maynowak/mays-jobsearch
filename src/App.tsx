@@ -733,6 +733,10 @@ export default function App() {
   };
 
   const createProfileFromPdf = async (doc: CvDocument) => {
+    // Snapshot the selected mode before any asynchronous extraction work. The
+    // model-bound text must follow the choice made in the options step, never
+    // a later/default state value.
+    const selectedAnonymizationMode = cvState.anonymizationMode;
     setCvState((prev) => ({
       ...prev,
       step: "anonymizing",
@@ -755,7 +759,7 @@ export default function App() {
 
       // Apply anonymization if selected
       let processedText = text;
-      if (cvState.anonymizationMode === "anonymized") {
+      if (selectedAnonymizationMode === "anonymized") {
         processedText = anonymizeText(text);
       }
 

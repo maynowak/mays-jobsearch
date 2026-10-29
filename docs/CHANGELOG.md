@@ -2,9 +2,12 @@
 
 Unreleased — 2026-10-29
 
-- Fixed CV anonymization over-capturing capitalized role/skill phrases such as
-  `React Developer` and `Software Engineer`, while retaining ordinary-name
-  anonymization and adding regression coverage.
+- Fixed CV anonymization so the selected anonymized text is always used for the
+  `POST /api/profile` model call. Explicit multi-word roles such as `Machine
+  Learning Engineer`, `Human Resources Specialist`, and `Customer Success
+  Manager` are preserved, while ambiguous names such as `Data Müller` and
+  `Cloud Schmidt` are anonymized. Added an upload/extraction/model-boundary
+  regression test. (`/profil` remains the separate authenticated UI route.)
 
 2.2.0 — 2026-10-29
 
