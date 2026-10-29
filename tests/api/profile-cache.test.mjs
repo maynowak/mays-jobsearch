@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../api/_lib/ai.mjs", () => ({ chat: vi.fn() }));
@@ -16,6 +17,7 @@ import { cacheGet, cacheSet } from "../../api/_lib/cache.mjs";
 import handler from "../../api/profile.mjs";
 
 const HASH = "a".repeat(64);
+const hashText = (text) => createHash("sha256").update(text, "utf8").digest("hex");
 const cachedProfile = {
   skills: ["React"],
   experienceLevel: "Senior",
@@ -84,7 +86,7 @@ describe("/api/profile CV profile cache", () => {
     expect(vi.mocked(chat)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(cacheSet)).toHaveBeenCalledTimes(1);
     const [key, value] = vi.mocked(cacheSet).mock.calls[0];
-    expect(key).toBe(`cv-profile:${HASH}`);
+    expect(key).toBe(`cv-profile:${hashText("React Senior Berlin CV text")}`);
     expect(value.skills).toEqual(["React"]);
     expect(value.experienceLevel).toBe("Senior");
   });

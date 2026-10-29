@@ -139,8 +139,8 @@ PDF → browser-side PDF.js → text extraction → normalized text → SHA-256 
 
 - `src/lib/pdf.ts` extracts text with `pdfjs-dist` entirely in the browser. **The PDF is never uploaded as a file.**
 - `src/components/CvUpload.tsx` normalizes the extracted text, computes a SHA-256 hash via `crypto.subtle`, and looks up the profile cache.
-- Cache hit (local or server) → the stored profile is shown immediately, no AI call.
-- Cache miss → `POST /api/profile` with `{ text, hash }` → `api/profile.mjs` runs the AI extraction (`chat` with a JSON shape contract) and returns a `SuggestedProfile` (`skills[]`, `experienceLevel`, `targetRoles[]`, `location`).
+- Cache hit (server) → the stored profile is shown immediately, no AI call.
+- Cache miss → `POST /api/profile` with `{ text, hash }` → `api/profile.mjs` derives the cache key from the received text, runs the AI extraction (`chat` with a JSON shape contract), and returns a `SuggestedProfile` (`skills[]`, `experienceLevel`, `targetRoles[]`, `location`).
 - The user edits/confirms the proposed profile (`EditableProfile`) before the search runs.
 
 Privacy behavior:
@@ -150,10 +150,9 @@ Privacy behavior:
 
 ### CV profile cache
 
-Two layers, both keyed by the CV hash (`cv-profile:<hash>`):
+One server-side layer keyed by the SHA-256 of the received CV text (`cv-profile:<hash>`):
 
-- L1 — browser `localStorage` (`mj-cv-profile:<hash>`, TTL 30 days).
-- L2 — Upstash Redis (`cv-profile:<hash>`, TTL 30 days), set by `api/profile.mjs` (`CV_PROFILE_CACHE_TTL_SEC = 30 * 24 * 60 * 60`).
+- Upstash Redis (`cv-profile:<hash>`, TTL 30 days), set by `api/profile.mjs` (`CV_PROFILE_CACHE_TTL_SEC = 30 * 24 * 60 * 60`). The server derives this key itself; a client hash is not trusted for cache access.
 
 The key contains only the hash; it does **not** include a prompt or model version. The cache avoids repeated paid AI profile parsing for identical CV content.
 

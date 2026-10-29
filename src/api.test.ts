@@ -77,7 +77,7 @@ describe("withModelFallback", () => {
     expect(attempts).toEqual(["a"]);
   });
 
-  it("fällt bei timeout NICHT zurück (kein weiterer Request)", async () => {
+  it("fällt bei timeout auf ein anderes Modell zurück", async () => {
     const attempts: (string | null)[] = [];
     await expect(
       withModelFallback({
@@ -86,15 +86,16 @@ describe("withModelFallback", () => {
         recommendedModel: null,
         request: async (model) => {
           attempts.push(model);
-          throw new ApiError("timeout", 504, "timeout");
+          if (model === "a") throw new ApiError("timeout", 504, "timeout");
+          return { ok: true };
         },
       })
-    ).rejects.toMatchObject({ code: "timeout" });
+    ).resolves.toMatchObject({ usedFallback: true });
 
-    expect(attempts).toEqual(["a"]);
+    expect(attempts).toEqual(["a", "b"]);
   });
 
-  it("fällt bei network_error NICHT zurück (kein weiterer Request)", async () => {
+  it("fällt bei network_error auf ein anderes Modell zurück", async () => {
     const attempts: (string | null)[] = [];
     await expect(
       withModelFallback({
@@ -103,12 +104,31 @@ describe("withModelFallback", () => {
         recommendedModel: null,
         request: async (model) => {
           attempts.push(model);
-          throw new ApiError("net", 502, "network_error");
+          if (model === "a") throw new ApiError("net", 502, "network_error");
+          return { ok: true };
         },
       })
-    ).rejects.toMatchObject({ code: "network_error" });
+    ).resolves.toMatchObject({ usedFallback: true });
 
-    expect(attempts).toEqual(["a"]);
+    expect(attempts).toEqual(["a", "b"]);
+  });
+
+  it("fällt bei einer unbrauchbaren Modellantwort auf ein anderes Modell zurück", async () => {
+    const attempts: (string | null)[] = [];
+    await expect(
+      withModelFallback({
+        initialModel: "a",
+        availableModels: ["b"],
+        recommendedModel: null,
+        request: async (model) => {
+          attempts.push(model);
+          if (model === "a") throw new ApiError("bad response", 502, "bad_ai_response");
+          return { ok: true };
+        },
+      })
+    ).resolves.toMatchObject({ usedFallback: true });
+
+    expect(attempts).toEqual(["a", "b"]);
   });
 
   it("wirft bei Erfolg im späteren Versuch kein Fallback-Note-Ergebnis zurück (usedFallback=true)", async () => {
