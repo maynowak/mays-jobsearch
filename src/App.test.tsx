@@ -823,7 +823,7 @@ describe("CV workflow", () => {
     expect(screen.getByText("cv.pdf")).toBeTruthy();
 
     // Wieder rein: Consent erteilt -> Optionen -> Modell -> X schliesst auch da
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählte CVs verarbeiten" }));
     await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
@@ -1017,7 +1017,7 @@ describe("CV workflow", () => {
     await uploadCvAndOpenList("ats-recovery.pdf");
     // CV-UPLOAD-UX-01: Einwilligung wurde bereits beim Upload im Overlay erteilt;
     // das hochgeladene Dokument bleibt ausgewaehlt -> direkt zu den Optionen
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählte CVs verarbeiten" }));
     // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> Verarbeitung
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
@@ -1054,7 +1054,7 @@ describe("CV workflow", () => {
 
     // CV-UPLOAD-UX-01: Consent wurde beim Upload im Overlay erteilt; Dokument
     // bleibt ausgewaehlt -> Verarbeiten geht direkt zu den Optionen
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählte CVs verarbeiten" }));
     // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> Verarbeitung
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
@@ -1091,7 +1091,7 @@ describe("CV workflow", () => {
     await uploadCvAndOpenList();
     // CV-UPLOAD-UX-01: Dokument blieb nach dem Upload ausgewaehlt; Consent
     // wurde beim Upload im Overlay erteilt -> Verarbeiten -> Optionen-Step
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählte CVs verarbeiten" }));
     await waitFor(() => {
       expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
     });
@@ -1107,7 +1107,7 @@ describe("CV workflow", () => {
     expect(screen.getByText("Deine Lebensläufe")).toBeTruthy();
 
     // Wieder vor -> Consent bleibt erteilt, Optionen-Step direkt
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählte CVs verarbeiten" }));
     await waitFor(() => {
       expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
     });
@@ -1119,7 +1119,7 @@ describe("CV workflow", () => {
   it("BROWSER-BUG-10: 'Weiter' in model-selection startet die Profil-Erstellung ohne React-Fehler", async () => {
     await uploadCvAndOpenList();
     // CV-UPLOAD-UX-01: Consent bereits beim Upload erteilt, Dokument ausgewaehlt
-    fireEvent.click(screen.getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ausgewählte CVs verarbeiten" }));
     // Consent erteilt -> direkt creating-profile (Optionen, CV-UPLOAD-UX-03)
     await waitFor(() => {
       expect(screen.queryByText("CV-Verarbeitung erlauben?")).toBeNull();
@@ -2642,8 +2642,7 @@ describe("MAYS-UI-S5.2-A-R2: Dashboard CV workflow dialog", () => {
       target: { files: [file] },
     });
     await screen.findByTitle("dashboard-cv.pdf");
-    fireEvent.click(screen.getByRole("checkbox", { name: "PDF auswählen" }));
-    fireEvent.click(within(document.querySelector(".cv-document-list") as HTMLElement).getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+    fireEvent.click(within(document.querySelector(".cv-document-list") as HTMLElement).getByRole("button", { name: "Diesen CV verarbeiten" }));
 
     expect(await screen.findByRole("dialog", { name: "CV-Verarbeitung erlauben?" })).toBeTruthy();
     expect(document.body.style.overflow).toBe("hidden");

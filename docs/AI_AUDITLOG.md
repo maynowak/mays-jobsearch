@@ -1,3 +1,12 @@
+2026-10-29 · MAYS-UI-S5.2-A-R3
+- Typ: Fix/UI/Data-Flow/Privacy
+- Status: COMPLETE (full validation green)
+- Scope: Dashboard CV selection now uses one active native CV select and “Diesen CV verarbeiten”; Dashboard checkboxes/select-all are removed while Searchpage multi-selection remains. Hash-scoped search/ATS profile selects validate and refresh without network calls.
+- Root cause: the Dashboard reused multi-selection controls alongside a separate review-CV select; `selectedDocumentIds` could duplicate IDs; non-reactive session-store mutations and unconditional document-change resets made profile selections appear stale or cross-associated.
+- AI-/Privacy-/Data-Flow impact: no new AI/API/storage/infrastructure flow. Selection alone performs local state/store work only and cannot start a search or model/API request. Existing session-memory storage, 12-hour TTL, consent, and limits remain unchanged. Profile lists remain bound to the active CV hash.
+- Tests: targeted Dashboard/CV/store tests (20 passed); targeted App workflow regression (2 passed); `npm test -- --run` (850 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS). Synthetic fixtures are separate from real processing; browser matrix/Firefox and preview were not run.
+- Log: `docs/reports/MAYS-UI-S5.2-A-R3-EXECUTION_LOG.md`
+
 2026-10-29 · JOBMATCHER-CV-HEADER-MODEL-REQUEST-FIX-02
 - Typ: Fix/Privacy/AI-Data-Flow
 - Status: COMPLETE (full validation green)

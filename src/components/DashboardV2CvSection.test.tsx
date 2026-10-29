@@ -33,7 +33,6 @@ const renderSection = (documents: CvDocument[]) => {
         processing={false}
         searching={false}
         onSelectDocument={onSelectDocument}
-        onSelectDocumentForProcessing={vi.fn()}
         onRemoveDocument={vi.fn()}
         onAddFiles={vi.fn()}
         onProcess={vi.fn()}
@@ -77,7 +76,7 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
     expect(screen.getByRole('option', { name: 'A Suche' })).toBeTruthy();
     expect(screen.queryByRole('option', { name: 'B Suche' })).toBeNull();
 
-    fireEvent.change(screen.getByLabelText('CV zur Durchsicht'), { target: { value: 'cv-b' } });
+    fireEvent.change(document.getElementById('dashboard-v2-cv-picker')!, { target: { value: 'cv-b' } });
     view.rerender(
       <LangProvider>
         <DashboardV2CvSection
@@ -88,7 +87,6 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
           processing={false}
           searching={false}
           onSelectDocument={view.onSelectDocument}
-          onSelectDocumentForProcessing={vi.fn()}
           onRemoveDocument={vi.fn()}
           onAddFiles={vi.fn()}
           onProcess={vi.fn()}
@@ -115,9 +113,63 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
     saveCvAtsProfile('hash-a', 'A ATS', ['TypeScript'], ['Frontend']);
     const { onSelectSearchProfile, onSelectAtsProfile } = renderSection([cvA]);
 
-    fireEvent.change(screen.getByLabelText('CV-Profil (Suchprofil)'), { target: { value: 'entry-ignored' } });
-    fireEvent.change(screen.getByLabelText('ATS-Profil'), { target: { value: 'entry-ignored' } });
+    fireEvent.change(screen.getByLabelText('Suchprofil dieses Lebenslaufs'), { target: { value: 'entry-ignored' } });
+    fireEvent.change(screen.getByLabelText('ATS-Profil dieses Lebenslaufs'), { target: { value: 'entry-ignored' } });
     expect(onSelectSearchProfile).toHaveBeenCalledTimes(1);
     expect(onSelectAtsProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows only the active CV profiles and has no dashboard checkboxes', () => {
+    const cvA = makeDocument('cv-a', 'A', 'hash-a', ['TypeScript']);
+    const cvB = makeDocument('cv-b', 'B', 'hash-b', ['Python']);
+    const searchA1 = saveCvSearchProfile('hash-a', 'A Suche 1', {
+      skills: 'TypeScript', targetRoles: ['Frontend'], city: 'Berlin', radiusKm: null,
+      workModes: [], employmentTypes: ['full_time'],
+    });
+    saveCvSearchProfile('hash-a', 'A Suche 2', {
+      skills: 'TypeScript, React', targetRoles: ['Full Stack'], city: 'Berlin', radiusKm: null,
+      workModes: [], employmentTypes: ['full_time'],
+    });
+    saveCvAtsProfile('hash-a', 'A ATS 1', ['TypeScript'], ['Frontend'], searchA1?.id ?? null);
+    saveCvAtsProfile('hash-a', 'A ATS 2', ['React'], ['Full Stack'], searchA1?.id ?? null);
+    saveCvSearchProfile('hash-b', 'B Suche 1', {
+      skills: 'Python', targetRoles: ['Backend'], city: 'Hamburg', radiusKm: null,
+      workModes: [], employmentTypes: ['full_time'],
+    });
+    saveCvSearchProfile('hash-b', 'B Suche 2', {
+      skills: 'Python, Django', targetRoles: ['API'], city: 'Hamburg', radiusKm: null,
+      workModes: [], employmentTypes: ['full_time'],
+    });
+
+    const view = renderSection([cvA, cvB]);
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Diesen CV verarbeiten' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'A Suche 1' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'A Suche 2' })).toBeTruthy();
+
+    fireEvent.change(document.getElementById('dashboard-v2-cv-picker')!, { target: { value: 'cv-b' } });
+    view.rerender(
+      <LangProvider>
+        <DashboardV2CvSection
+          documents={[cvA, cvB]}
+          selectedDocumentId="cv-b"
+          selectedSearchProfileId={null}
+          selectedAtsProfileId={null}
+          processing={false}
+          searching={false}
+          onSelectDocument={view.onSelectDocument}
+          onRemoveDocument={vi.fn()}
+          onAddFiles={vi.fn()}
+          onProcess={vi.fn()}
+          onSearch={vi.fn()}
+          onRemoveData={vi.fn()}
+          onSelectSearchProfile={view.onSelectSearchProfile}
+          onSelectAtsProfile={view.onSelectAtsProfile}
+        />
+      </LangProvider>
+    );
+    expect(screen.getByRole('option', { name: 'B Suche 1' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'B Suche 2' })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: 'A Suche 1' })).toBeNull();
   });
 });

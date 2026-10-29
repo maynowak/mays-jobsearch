@@ -13,10 +13,9 @@ interface Props {
   processing: boolean;
   searching: boolean;
   onSelectDocument: (id: string) => void;
-  onSelectDocumentForProcessing: (id: string, selected: boolean) => void;
   onRemoveDocument: (id: string) => void;
   onAddFiles: (files: FileList | File[]) => void;
-  onProcess: () => void;
+  onProcess: (id: string) => void;
   onSearch: () => void;
   onRemoveData: () => void;
   onSelectSearchProfile: (id: string | null) => void;
@@ -31,7 +30,6 @@ const DashboardV2CvSection = ({
   processing,
   searching,
   onSelectDocument,
-  onSelectDocumentForProcessing,
   onRemoveDocument,
   onAddFiles,
   onProcess,
@@ -79,13 +77,16 @@ const DashboardV2CvSection = ({
 
       <CvDocumentList
         documents={documents}
-        onSelect={onSelectDocumentForProcessing}
         onRemove={onRemoveDocument}
         onAddFiles={onAddFiles}
-        onProcess={onProcess}
+        onProcess={() => {
+          if (activeDocument) onProcess(activeDocument.id);
+        }}
         onSearch={onSearch}
         onShowProfiles={setProfilesDocumentId}
         onRemoveData={onRemoveData}
+        selectionMode="single"
+        activeDocumentId={selectedDocumentId}
         disabled={processing}
         processing={processing}
         searching={searching}
@@ -111,9 +112,12 @@ const DashboardV2CvSection = ({
               <select
                 id="dashboard-v2-search-profile"
                 value={selectedSearchProfile?.id ?? ''}
+                disabled={lists.searchProfiles.length === 0}
                 onChange={(event) => onSelectSearchProfile(event.target.value || null)}
               >
-                <option value="">{t('cv.choosePlaceholder')}</option>
+                <option value="">
+                  {lists.searchProfiles.length > 0 ? t('cv.choosePlaceholder') : t('cv.noSearchProfiles')}
+                </option>
                 {lists.searchProfiles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
               </select>
             </div>
@@ -122,9 +126,12 @@ const DashboardV2CvSection = ({
               <select
                 id="dashboard-v2-ats-profile"
                 value={selectedAtsProfile?.id ?? ''}
+                disabled={lists.atsProfiles.length === 0}
                 onChange={(event) => onSelectAtsProfile(event.target.value || null)}
               >
-                <option value="">{t('cv.choosePlaceholder')}</option>
+                <option value="">
+                  {lists.atsProfiles.length > 0 ? t('cv.choosePlaceholder') : t('cv.noAtsProfiles')}
+                </option>
                 {lists.atsProfiles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
               </select>
             </div>
@@ -134,7 +141,10 @@ const DashboardV2CvSection = ({
             <div className="dashboard-v2__cv-profile-summary" aria-live="polite">
               <h4>{t('cv.detailTitleSearch', { name: selectedSearchProfile.name })}</h4>
               <p>{selectedSearchProfile.profile.skills || '—'}</p>
+              <p>{selectedSearchProfile.profile.targetRoles.join(', ') || '—'}</p>
               <p>{selectedSearchProfile.profile.city || '—'}</p>
+              <p>{selectedSearchProfile.profile.workModes.join(', ') || '—'}</p>
+              <p>{selectedSearchProfile.profile.employmentTypes.join(', ') || '—'}</p>
             </div>
           )}
           {selectedAtsProfile && (

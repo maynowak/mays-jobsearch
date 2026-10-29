@@ -4,11 +4,11 @@ import type { CvDocument } from "../types";
 
 interface Props {
   documents: CvDocument[];
-  onSelect: (id: string, selected: boolean) => void;
+  onSelect?: (id: string, selected: boolean) => void;
   onRemove: (id: string) => void;
   onAddFiles: (files: FileList | File[]) => void;
   onProcess: () => void;
-  onSearch: () => void;
+  onSearch?: () => void;
   // CV-PROFILE-LISTS-01: Oeffnet das Profil-Overlay (Suchprofile/ATS-Profile)
   // fuer das jeweilige CV-Dokument.
   onShowProfiles: (id: string) => void;
@@ -20,6 +20,8 @@ interface Props {
   processing: boolean;
   // Laufende App-Suche/Matching (Anfragerunner + Lock, wie Start-Button)
   searching?: boolean;
+  selectionMode?: "multiple" | "single";
+  activeDocumentId?: string | null;
 }
 
 export default function CvDocumentList({
@@ -34,13 +36,19 @@ export default function CvDocumentList({
   disabled,
   processing,
   searching = false,
+  selectionMode = "multiple",
+  activeDocumentId = null,
 }: Props): React.ReactElement {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
   // CV-PROFILE-LISTS-04: lokale Bestaetigungs-Anzeige fuer "CV-Daten entfernen"
   const [removeDataConfirmOpen, setRemoveDataConfirmOpen] = useState(false);
 
-  const hasSelection = documents.some((d) => d.selected);
+  const isSingleSelection = selectionMode === "single";
+  const resolvedActiveDocumentId = activeDocumentId ?? documents[0]?.id ?? null;
+  const hasSelection = isSingleSelection
+    ? documents.some((document) => document.id === resolvedActiveDocumentId)
+    : documents.some((d) => d.selected);
   const allSelected = documents.length > 0 && documents.every((d) => d.selected);
   const selectedCount = documents.filter((d) => d.selected).length;
 
@@ -56,9 +64,9 @@ export default function CvDocumentList({
 
   const handleSelectAll = () => {
     if (allSelected) {
-      documents.forEach((doc) => onSelect(doc.id, false));
+      documents.forEach((doc) => onSelect?.(doc.id, false));
     } else {
-      documents.forEach((doc) => onSelect(doc.id, true));
+      documents.forEach((doc) => onSelect?.(doc.id, true));
     }
   };
 
@@ -80,7 +88,7 @@ export default function CvDocumentList({
       </div>
       <div className="cv-document-list__header">
         <h3 className="cv-document-list__title">{t("cv.documentListTitle")}</h3>
-        {documents.length > 0 && (
+        {documents.length > 0 && !isSingleSelection && (
           <button
             type="button"
             className="cv-document-list__select-all"
@@ -93,7 +101,7 @@ export default function CvDocumentList({
         )}
       </div>
 
-      {documents.length > 0 && (
+      {documents.length > 0 && !isSingleSelection && (
         <div className="cv-document-list__selection-info">
           {selectedCount > 0 ? t("cv.selectedCount", { count: selectedCount }) : t("cv.noneSelected")}
         </div>
@@ -117,18 +125,20 @@ export default function CvDocumentList({
             {documents.map((doc) => (
               <li
                 key={doc.id}
-                className={`cv-document-list__item${doc.selected ? " selected" : ""}`}
+                className={`cv-document-list__item${(isSingleSelection ? doc.id === resolvedActiveDocumentId : doc.selected) ? " selected" : ""}`}
                 role="listitem"
               >
                 <div className="cv-document-list__item-main">
-                  <input
-                    type="checkbox"
-                    checked={doc.selected}
-                    onChange={(e) => onSelect(doc.id, e.target.checked)}
-                    disabled={disabled}
-                    className="cv-document-list__checkbox"
-                    aria-label={t("cv.documentSelect")}
-                  />
+                  {!isSingleSelection && (
+                    <input
+                      type="checkbox"
+                      checked={doc.selected}
+                      onChange={(e) => onSelect?.(doc.id, e.target.checked)}
+                      disabled={disabled}
+                      className="cv-document-list__checkbox"
+                      aria-label={t("cv.documentSelect")}
+                    />
+                  )}
                   <div className="cv-document-list__info">
                     {/* BUG-09: vollständiger Dateiname bei Hover über den Namen */}
                     <span className="cv-document-list__name" title={doc.name}>{doc.name}</span>
@@ -181,12 +191,12 @@ export default function CvDocumentList({
             <button
               type="button"
               className="cv-process-btn"
-              onClick={onProcess}
+              onClick={() => onProcess()}
               disabled={disabled || processing || !hasSelection}
             >
-              {t("cv.processFiles")}
+              {isSingleSelection ? t("cv.processDocument") : t("cv.processFiles")}
             </button>
-            <button
+            {!isSingleSelection && onSearch && <button
               type="button"
               className="cv-search-btn"
               onClick={onSearch}
@@ -194,7 +204,7 @@ export default function CvDocumentList({
             >
               <span className="btn-label">{searching ? t("search.searching") : t("cv.startSearch")}</span>
               {searching && <span className="spinner" />}
-            </button>
+            </button>}
           </div>
           {/* CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — mit
               Bestaetigung und Hinweis auf erneutes Hochladen. */}

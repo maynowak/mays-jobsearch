@@ -126,6 +126,7 @@ export default function App() {
   // CV-UPLOAD-UX-07: aktiv gewaehltes ATS-Profil (Liste des CVs) — wird bei
   // der per-Job-ATS-Analyse (AtsOverlay) als Profil verwendet.
   const [activeAtsEntryId, setActiveAtsEntryId] = useState<string | null>(null);
+  const [, setCvProfileStoreVersion] = useState(0);
   // CV-UPLOAD-UX-08: gewaehltes gespeichertes Suchprofil + Edit-Kontext
   // (prefill Name beim Edit-Sprung; gleicher Name ueberschreibt beim Speichern)
   const [selectedSavedSearchId, setSelectedSavedSearchId] = useState<string | null>(null);
@@ -498,7 +499,7 @@ export default function App() {
         doc.id === id ? { ...doc, selected } : doc
       ),
       selectedDocumentIds: selected
-        ? [...prev.selectedDocumentIds, id]
+        ? [...new Set([...prev.selectedDocumentIds, id])]
         : prev.selectedDocumentIds.filter((docId) => docId !== id),
       step: "document-selected",
     }));
@@ -519,15 +520,47 @@ export default function App() {
     setCvState((prev) => {
       const remaining = prev.documents.filter((doc) => doc.id !== id);
       const wasSelected = prev.selectedDocumentIds.includes(id);
+      const remainingSelectedIds = prev.selectedDocumentIds.filter((docId) => docId !== id);
+      const selectedDocumentIds =
+        wasSelected && remainingSelectedIds.length === 0 && remaining.length > 0
+          ? [remaining[0].id]
+          : remainingSelectedIds;
       return {
         ...prev,
-        documents: remaining,
-        selectedDocumentIds: wasSelected
-          ? prev.selectedDocumentIds.filter((docId) => docId !== id)
-          : prev.selectedDocumentIds,
+        documents: remaining.map((doc) => ({ ...doc, selected: selectedDocumentIds.includes(doc.id) })),
+        selectedDocumentIds,
         step: remaining.length > 0 ? "document-selected" : "idle",
       };
     });
+  };
+
+  const handleCvProcess = (documentId?: string) => {
+    const selectedDocs = documentId
+      ? cvState.documents.filter((document) => document.id === documentId)
+      : cvState.documents.filter(
+          (document) => document.selected || cvState.selectedDocumentIds.includes(document.id)
+        );
+    if (!selectedDocs.length && !documentId && cvState.documents.length === 1) {
+      selectedDocs.push(cvState.documents[0]);
+    }
+    if (!selectedDocs.length) return;
+
+    if (documentId) {
+      setCvState((prev) => ({
+        ...prev,
+        documents: prev.documents.map((document) => ({ ...document, selected: document.id === documentId })),
+        selectedDocumentIds: [documentId],
+      }));
+    }
+
+    // First-Use Recognition: Check if consent already given
+    if (!cvState.consentGiven) {
+      setConsentDismissed(false);
+      setCvState((prev) => ({ ...prev, step: "consent-required" }));
+      return;
+    }
+
+    setCvState((prev) => ({ ...prev, step: "creating-profile", isProcessing: false }));
   };
 
   // CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — Session-Listen
@@ -553,6 +586,7 @@ export default function App() {
     setSelectedSavedSearchId(null);
     setActiveAtsEntryId(null);
     setEditingSearchName(null);
+    setCvProfileStoreVersion((version) => version + 1);
     setConsentDismissed(false);
     if (manualShowsRemovedProfile) {
       setProfile({ ...INITIAL_MANUAL_PROFILE });
@@ -662,26 +696,16 @@ export default function App() {
     handleSubmit(entry.profile);
   };
 
-  const handleCvProcess = () => {
-    const selectedDocs = cvState.documents.filter((d) => d.selected);
-    if (!selectedDocs.length) return;
-
-    // First-Use Recognition: Check if consent already given
-    if (!cvState.consentGiven) {
-      setConsentDismissed(false);
-      setCvState((prev) => ({
-        ...prev,
-        step: "consent-required",
-      }));
-      return;
+  const handleDashboardSearchProfileSelect = (id: string | null) => {
+    setSelectedSavedSearchId(id);
+    if (activeAtsEntryId) {
+      const atsEntry = listSourceLists.atsProfiles.find((entry) => entry.id === activeAtsEntryId);
+      if (atsEntry && atsEntry.searchProfileId !== id) setActiveAtsEntryId(null);
     }
+  };
 
-    // Consent already given - proceed to creating-profile step (user selects options)
-    setCvState((prev) => ({
-      ...prev,
-      step: "creating-profile",
-      isProcessing: false,
-    }));
+  const handleDashboardAtsProfileSelect = (id: string | null) => {
+    setActiveAtsEntryId(id);
   };
 
   const handleSearchWithSelectedCvs = () => {
@@ -894,6 +918,7 @@ export default function App() {
             cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
             selectedSavedSearchId
           )?.name ?? null;
+        setCvProfileStoreVersion((version) => version + 1);
       }
       setCvState((prev) => ({
         ...prev,
@@ -1348,12 +1373,21 @@ export default function App() {
       (e) => e.id === activeAtsEntryId && (e.searchProfileId === selectedSavedSearchId || !e.searchProfileId)
     ) ?? null;
   const listSourceDocId = listSourceDoc?.id ?? null;
-  // ATS-PROFILE-INVESTIGATION-01 (Befund a): beim Wechsel des Quelldokuments
-  // zeigen bestehende Auswahl-IDs auf fremde Listen -> Auswahl zuruecksetzen.
+  // Keep selections only while they still belong to the active CV/hash. A
+  // valid selection survives a store refresh (for example after saving an
+  // edited profile); a removed or expired entry is cleared.
   useEffect(() => {
-    setSelectedSavedSearchId(null);
-    setActiveAtsEntryId(null);
-  }, [listSourceDocId]);
+    const searchProfileIsValid = listSourceLists.searchProfiles.some(
+      (entry) => entry.id === selectedSavedSearchId
+    );
+    const atsProfileIsValid = listSourceLists.atsProfiles.some(
+      (entry) =>
+        entry.id === activeAtsEntryId &&
+        (entry.searchProfileId === selectedSavedSearchId || !entry.searchProfileId)
+    );
+    if (selectedSavedSearchId && !searchProfileIsValid) setSelectedSavedSearchId(null);
+    if (activeAtsEntryId && !atsProfileIsValid) setActiveAtsEntryId(null);
+  }, [listSourceDocId, listSourceLists, selectedSavedSearchId, activeAtsEntryId]);
 
   const searchCard = (
     <section className="card search-card">
@@ -1810,7 +1844,10 @@ export default function App() {
             const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
             if (doc?.hash) {
               const saved = saveCvSearchProfile(doc.hash, profileName, profile);
-              if (saved) setSelectedSavedSearchId(saved.id);
+              if (saved) {
+                setSelectedSavedSearchId(saved.id);
+                setCvProfileStoreVersion((version) => version + 1);
+              }
             }
             setEditingSearchName(null);
             setCvState((prev) => ({
@@ -2450,14 +2487,13 @@ export default function App() {
       processing={cvState.isProcessing}
       searching={isSearching}
       onSelectDocument={handleDashboardCvSelect}
-      onSelectDocumentForProcessing={handleSelectCvDocument}
       onRemoveDocument={handleRemoveCvDocument}
       onAddFiles={handleAddCvFiles}
-      onProcess={handleCvProcess}
+      onProcess={(id) => handleCvProcess(id)}
       onSearch={startSearchWithSavedProfile}
       onRemoveData={handleCvRemoveData}
-      onSelectSearchProfile={setSelectedSavedSearchId}
-      onSelectAtsProfile={setActiveAtsEntryId}
+      onSelectSearchProfile={handleDashboardSearchProfileSelect}
+      onSelectAtsProfile={handleDashboardAtsProfileSelect}
     />
   );
 
@@ -2739,6 +2775,7 @@ export default function App() {
                 if (!success) {
                   throw new Error(t("cv.errorStoreUpdateFailed"));
                 }
+                setCvProfileStoreVersion((version) => version + 1);
                 // Erfolg wird bereits im AtsOverlay via runReevaluation() aktualisiert
               }}
             />
