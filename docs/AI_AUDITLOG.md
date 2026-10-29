@@ -1206,6 +1206,31 @@ MAYS-UI-S4 — FEINSCHLIFF UND TECHNISCHE ABNAHME
   fresh build identity; no real user data included.
 
 ================================================================================
+MAYS-UI-S5 — FACHBEREICHE ALS ARBEITSPAKETE
+================================================================================
+
+2026-10-29 · Planning complete; no feature implementation
+
+- Preflight: branch `feature/ui-orchestrator-s0`, HEAD `bd94cdc`, version
+  `2.2.0`; existing user changes were preserved and not staged.
+- Inspected Dashboard-V2/shared CSS UI, AuthProvider/OIDC claims, legacy
+  `/profil`, CV upload/parser/anonymization/consent/ATS/improvement flow,
+  SearchForm/Profile, application-related types/APIs, settings/language/storage,
+  privacy text and documented contracts.
+- Findings are classified IMPLEMENTED, VERIFIED, PLANNED and NOT VERIFIED in
+  `docs/reports/18-01-MAYS-UI-S5-FACHBEREICHE-ARBEITSPAKETE.md`.
+- Five contract-first work packages defined: S5.1 profile, S5.2 CV, S5.3
+  applications, S5.4 job preferences and S5.5 settings. No new Fachlogik,
+  storage, API, package, AWS/Cognito/RIS/DNS change or `/profil` replacement.
+- Explicit open decisions cover profile ownership, CV retention/consent,
+  application persistence, preference precedence, alert ownership, API-key
+  handling, and deletion/export. User model API keys are not stored or solved.
+- Recommendation: S5.1 → S5.4 → S5.5 → S5.2 → S5.3; parallel investigations
+  are allowed, with one integrator for shared types/i18n/privacy wording.
+- AI/privacy/data-flow impact: documentation records existing flows and future
+  gates only; no new data flow was introduced.
+
+================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================
 

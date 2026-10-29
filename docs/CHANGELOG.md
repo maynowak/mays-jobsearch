@@ -7,6 +7,15 @@
 - Dashboard status, responsive sidebar, footer spacing and build identity
   refinements.
 
+S5 planning — 2026-10-29
+
+- Added contract-first Dashboard-V2 work packages for profile, CV, applications,
+  job preferences and settings.
+- Documented existing implementation evidence, data flows, storage boundaries,
+  open decisions, acceptance criteria, tests, estimates and follow-up prompts.
+- No feature logic, persistence, package, API, `/profil`, infrastructure or
+  deployment changes.
+
 1.0
 
 Initial Project — core job matching.

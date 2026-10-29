@@ -114,3 +114,24 @@ Feature-/Analyse-Branch umzusetzen.
 - Follow the rules in `docs/PROJECT_RULES.md` and `docs/AI_CONTEXT.md`.
 - Keep serverless functions dependency-free.
 - After each sprint update, summarize modified files in `docs/CHANGELOG.md` and verify endpoints.
+
+---
+
+## MAYS-UI-S5 — Dashboard-V2 work packages (planning complete)
+
+Status: **PLANNED — documentation only; no feature logic or persistence added**.
+Dashboard-V2 remains a DEV/preview foundation and `/profil` remains unchanged.
+
+| ID | Work package | Priority | Gate |
+|---|---|---:|---|
+| S5.1 | Mein Profil: claims, editable application fields, validation/feedback | P1 | ownership/write contract; e-mail separate |
+| S5.2 | Lebenslauf: reuse upload, browser processing, consent and status UI | P1 | privacy/retention and API contract |
+| S5.3 | Bewerbungen: list/detail/filter/status tracker | P3 | new authenticated data model/API first |
+| S5.4 | Job-Präferenzen: reuse `Profile`/SearchForm without duplicate storage | P2 | transient/CV/account precedence |
+| S5.5 | Einstellungen: language first; unsupported account functions explicit | P2 | storage scope; API-key decision open |
+
+Recommended order: S5.1 → S5.4 → S5.5 → S5.2 → S5.3. Independent contract
+investigations may run in parallel; one integrator owns the shared types,
+i18n, states and privacy wording. Detailed scope, classifications, acceptance
+criteria, tests, estimates and follow-up prompts are in
+`docs/reports/18-01-MAYS-UI-S5-FACHBEREICHE-ARBEITSPAKETE.md`.
