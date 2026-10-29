@@ -1121,6 +1121,7 @@ MAYS-UI-S1 — GEMEINSAME KOMPONENTEN AUF BESTEHENDER CSS-BASIS
 - Vite preview was used only for frontend checks; no API behavior claimed.
 - AI-/Privacy-/Data-Flow impact: none.
 - S1 report: `docs/reports/14-01-MAYS-UI-S1-COMPONENTS.md`.
+- S1 implementation commit: `680dc59`; no push or deployment.
 
 ================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
