@@ -1,5 +1,12 @@
 # Changelog
 
+2.2.0 — 2026-10-29
+
+- Aurora Dashboard V2 technical preview and shared CSS component basis.
+- Authenticated DEV preview with existing AuthProvider and logout flow.
+- Dashboard status, responsive sidebar, footer spacing and build identity
+  refinements.
+
 1.0
 
 Initial Project — core job matching.

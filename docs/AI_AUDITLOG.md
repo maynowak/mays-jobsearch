@@ -1206,6 +1206,21 @@ MAYS-UI-S4 — FEINSCHLIFF UND TECHNISCHE ABNAHME
   fresh build identity; no real user data included.
 
 ================================================================================
+MAYS-UI-S4 — VERSION 2.2.0
+================================================================================
+
+2026-10-29 · Version bump complete
+
+- Central version source raised from `2.1.0` to `2.2.0` in `package.json`.
+- `package-lock.json` root metadata synchronized to `2.2.0` (no dependency
+  installation or dependency graph change).
+- `buildInfo.ts`/`appInfo.ts` remain the sole build-identity mechanism; Footer
+  reads the central values and does not hardcode a version.
+- Changelog and README version metadata updated.
+- Build and Footer checks performed on Landingpage, Searchpage and Dashboard;
+  no `/profil` replacement, push, deployment or infrastructure change.
+
+================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
 ================================================================================
 
