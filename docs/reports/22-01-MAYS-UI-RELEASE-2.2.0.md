@@ -5,7 +5,7 @@
 - Repository: `/home/dci-student/projects/Mays-Jobsearch`
 - Branch: `feature/ui-orchestrator-s0`
 - Preflight HEAD: `336f81e`
-- Main release HEAD before this closure documentation: `2ba7463`
+- Main release HEAD: `ddbeeef`
 - Version: `2.2.0`
 
 ## 1. Classification of the open local files
@@ -101,17 +101,19 @@ verified.
 - `origin/main` was fetched and was an ancestor of the feature branch.
 - Integration used a regular fast-forward; no merge/rebase rewrite or force
   push was used.
-- Main was pushed at `2ba7463`.
+- Main was first pushed at `2ba7463`; the release documentation closure was
+  then pushed at `ddbeeef`.
 - Vercel Git deployment followed the main push automatically; no second manual
   deployment was started.
-- Deployment: `dpl_NDk33e26fNELGP62LfZ8tcU7vB3i`, status `Ready`, target
-  `production`.
+- Final deployment: `dpl_7c1hRodZNWzEHyXESxKsnijd7jJw`, status `Ready`, target
+  `production`. The first code deployment was
+  `dpl_NDk33e26fNELGP62LfZ8tcU7vB3i`.
 - Deployment URL:
   `https://mays-job-matcher-36ci9di9n-maymilly.vercel.app`.
 - Production aliases include `https://www.mays-job-matcher.app` and
   `https://mays-job-matcher.app`.
 - Production footer on `/`, `/search` and `/profil` showed:
-  `Version 2.2.0 · production · main · 2ba7463`.
+  `Version 2.2.0 · production · main · ddbeeef`.
 - `/dev/dashboard-v2` returned `404` in production; no demo view was exposed.
 - Production browser smoke at 1440 px had no console errors on `/`, `/search`
   or `/profil`. `/profil` showed the signed-out state and no demo data.

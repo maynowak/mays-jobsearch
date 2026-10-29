@@ -1367,6 +1367,16 @@ MAYS-UI-RELEASE-2.2.0 — MAIN UND VERCEL ABNAHME
   VERIFIED. No real CV was sent to an external model.
 - Release report: `docs/reports/22-01-MAYS-UI-RELEASE-2.2.0.md`.
 
+2026-10-29 · Release documentation closure
+
+- Release documentation was pushed to `main` at `ddbeeef`; the existing Git
+  deployment path produced final Ready deployment
+  `dpl_7c1hRodZNWzEHyXESxKsnijd7jJw`.
+- Final production footer: `Version 2.2.0 · production · main · ddbeeef` on
+  `/`, `/search` and `/profil`; production `/dev/dashboard-v2` returned 404.
+- Feature branch remains retained. Sensitive/unreferenced local files remain
+  uncommitted and unpublished.
+
 ================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================
