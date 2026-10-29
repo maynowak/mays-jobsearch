@@ -10,8 +10,8 @@ Developer` and `Software Engineer`, while continuing to mask ordinary names.
 | Step | Topic | Status | Commit |
 | --- | --- | --- | --- |
 | 1 | Bestandsanalyse | COMPLETE | — |
-| 2 | Implementierung + Regressionstests | COMPLETE | pending |
-| 3 | Build and targeted validation | COMPLETE | pending |
+| 2 | Implementierung + Regressionstests | COMPLETE | d9598c2 |
+| 3 | Build and targeted validation | COMPLETE | d9598c2 |
 
 ## Verified findings
 
@@ -43,7 +43,7 @@ skipped; build passed; all `api/**/*.mjs` syntax checks passed; `git diff
 ## Git state
 
 - Branch: `fix/cv-anonymizer-role-phrases`
-- HEAD at validation: `4c4cd8733265ae696f014deb731d0f103fe7ed08`
+- Fix commit: `d9598c2`
 - Existing unrelated untracked files were preserved and not modified.
 - Changed by this task: `src/lib/anonymize.ts`,
   `src/lib/anonymize.test.ts`, `docs/AI_AUDITLOG.md`,
