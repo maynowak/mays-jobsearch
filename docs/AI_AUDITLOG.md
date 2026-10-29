@@ -1308,6 +1308,46 @@ MAYS-UI-S5.2-A-R2 — CV-VERARBEITUNG BLOCKIERT SCROLLEN
 - Report: `docs/reports/21-01-MAYS-UI-S5.2-A-R2-CV-WORKFLOW-DIALOG.md`.
 
 ================================================================================
+MAYS-UI-RELEASE-2.2.0 — KLASSIFIZIERUNG UND TESTFIXTURE
+================================================================================
+
+2026-10-29 · Release preparation
+
+- Open files were classified before staging. Only the modified language test,
+  release-relevant execution reports, and the manual inference test were
+  eligible for project commits. Duplicate privacy text, unused root entry and
+  unused image assets remain local; Cognito/AWS example material and files with
+  personal data were not staged.
+- Vitest now injects the non-production fixture
+  `test-contact@example.invalid` only in `mode === "test"`; production builds
+  continue to read `VITE_CONTACT_EMAIL` from their actual environment.
+- Imprint tests use that fixture instead of a production contact address.
+- No secret, personal address, token, domain or infrastructure configuration was
+  added to the release commits.
+
+================================================================================
+MAYS-UI-RELEASE-2.2.0 — RELEASE PREPARATION
+================================================================================
+
+2026-10-29 · Classification and feature-branch preparation complete
+
+- Open files were classified in `docs/reports/22-01-MAYS-UI-RELEASE-2.2.0.md`.
+  No blanket staging was used. A/B/C files were committed selectively; E/F
+  files remain local and were not published.
+- Dashboard-V2 is now the authenticated `/profil` view via the existing
+  AuthProvider/signIn/signOut wrapper. No demo data is passed to `/profil`.
+- Test-only `VITE_CONTACT_EMAIL=test-contact@example.invalid` is defined only
+  for Vitest mode; production builds remain environment-driven.
+- Release checks with `env -u VITE_CONTACT_EMAIL`: build PASS, API syntax PASS,
+  full tests 842 passed | 5 skipped, diff check PASS.
+- Release commits before main integration: `d53d0e8`, `0972cba`, `776ea4a`,
+  `db49225`.
+- AI/privacy/data-flow impact: profile route now surfaces existing authenticated
+  CV workflow only; no new storage or external data flow. Sensitive AWS/Cognito
+  examples and personal-data drafts were not staged.
+- Main integration and Vercel publication remain pending explicit release gates.
+
+================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================
 

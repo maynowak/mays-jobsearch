@@ -39,6 +39,14 @@ S5.2-A-R2 — 2026-10-29
 - Preserved existing focus handling, consent gates, internal dialog scrolling
   and scroll-lock cleanup; added Dashboard workflow regression coverage.
 
+Release 2.2.0 preparation — 2026-10-29
+
+- Promoted the authenticated Dashboard-V2 view to `/profil`; demo routes remain
+  DEV-only and no demo data is used on the profile route.
+- Added a test-only contact fixture for reproducible clean-checkout tests.
+- Classified local files; sensitive Cognito/AWS and personal-data files remain
+  uncommitted and unpublished.
+
 1.0
 
 Initial Project — core job matching.
