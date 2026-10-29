@@ -4,6 +4,7 @@
 - Date: 2026-10-29
 - Branch: `main`
 - HEAD at audit start: `f0e44e4 fix: anonymize CV headers and support free models`
+- Final scoped commit: `4f3bdeb fix: simplify dashboard CV selection`
 - Scope: simplify Dashboard CV selection to one active document, keep Searchpage multi-selection, and make hash-scoped search/ATS profile lists refresh and validate without network calls.
 - Terraform: not applicable; no Terraform or infrastructure change.
 
@@ -41,9 +42,9 @@
 
 ## Git state
 
-- Scoped tracked changes are ready for one targeted commit; unrelated untracked files remain unmodified and unstaged.
+- Scoped tracked changes are committed in `4f3bdeb`; unrelated untracked files remain unmodified and unstaged.
 - No push or deployment performed, per task instruction.
 
 ## Resume point
 
-- Commit the scoped changes only. Re-run status after commit. Push/deploy require a separate explicit instruction.
+- No further action in this correction step. Push/deploy require a separate explicit instruction.
