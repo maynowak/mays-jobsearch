@@ -4,7 +4,7 @@
 - Date: 2026-10-29
 - Branch: `feature/ui-orchestrator-s0`
 - Preflight HEAD: `30916de`
-- Implementation commit: `5edb171`
+- Implementation commit: `5edb171`; final code commit: `0820537`
 
 ## Corrections
 
@@ -30,10 +30,10 @@
 4. `VERCEL_GIT_COMMIT_REF`, otherwise current Git branch
 
 The old screenshot hash was a stale frozen dev/preview artifact from an older
-process/build, not a hardcoded Dashboard value. A fresh build at `5edb171`
+process/build, not a hardcoded Dashboard value. A fresh build at `0820537`
 displayed:
 
-`Version 2.1.0 · development · feature/ui-orchestrator-s0 · 5edb171`
+`Version 2.1.0 · development · feature/ui-orchestrator-s0 · 0820537`
 
 No hosting or production configuration was changed.
 
@@ -44,7 +44,7 @@ Comparable `npm run build` measurements, CSS and JS only:
 | Build | CSS | JS | Delta |
 |---|---:|---:|---:|
 | Baseline `30916de` | 122,940 B | 952,837 B | — |
-| Target `5edb171` | 123,180 B | 953,132 B | +240 B / +295 B |
+| Target `0820537` | 123,180 B | 953,132 B | +240 B / +295 B |
 
 Relative increase: CSS +0.20%, JS +0.03%. Existing Vite warning about chunks
 over 500 kB remains unchanged in category.
@@ -69,7 +69,7 @@ over 500 kB remains unchanged in category.
 
 ## Clean-checkout gate
 
-An isolated checkout at implementation commit `5edb171` was built successfully
+An isolated checkout at final code commit `0820537` was built successfully
 with a fresh temporary `npm ci --ignore-scripts` installation. API syntax also
 passed. The clean full suite was **NOT GREEN** for three pre-existing baseline
 tests:
@@ -96,4 +96,5 @@ repository gate.
   product selection.
 
 No packages, Tailwind, shadcn, Aceternity, AWS, Cognito, RIS, DNS, push or
-deployment changes were made.
+deployment changes were made. Final code/evidence commits: `5edb171`,
+`0820537`, and the S4 documentation/evidence commit follows.

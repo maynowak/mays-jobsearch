@@ -1197,6 +1197,11 @@ MAYS-UI-S4 — FEINSCHLIFF UND TECHNISCHE ABNAHME
 - Evidence: `docs/evidence/mays-ui-s4/`.
 - S4 report: `docs/reports/17-01-MAYS-UI-S4-FEINSCHLIFF.md`.
 - `/profil` was not replaced; stop before product selection/replacement.
+- Implementation commit `5edb171` was followed by `0820537`, which restored
+  pre-existing unrelated dictionary edits without staging user worktree files.
+- Final clean checkout at `0820537`: build/API syntax PASS; full suite had 836
+  passed | 5 skipped and only the two pre-existing Imprint environment tests
+  failed because ignored `VITE_CONTACT_EMAIL` was absent.
 
 ================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
