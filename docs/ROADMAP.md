@@ -160,6 +160,19 @@ Dashboard-V2 remains a DEV/preview foundation and `/profil` remains unchanged.
   NOT VERIFIED.
 - Report: `docs/reports/20-01-MAYS-UI-S5.2-A-R1-WEITERER-CV-UPLOAD.md`.
 
+### S5.2-A-R2 — Dashboard CV workflow dialog
+
+✅ **Implemented; Chromium verified; Firefox NOT VERIFIED**
+
+- Dashboard-V2 early returns now render the existing CV workflow portal, so
+  consent/model/processing steps are visible instead of leaving only a scroll
+  lock active.
+- Existing focus management, portal stacking, internal dialog scrolling,
+  consent boundary and scroll-lock cleanup are reused.
+- Dashboard-only duplicate inline CV lists are suppressed while a dialog is
+  active; `/search` behavior remains unchanged.
+- Report: `docs/reports/21-01-MAYS-UI-S5.2-A-R2-CV-WORKFLOW-DIALOG.md`.
+
 Recommended order: S5.1 → S5.4 → S5.5 → S5.2 → S5.3. Independent contract
 investigations may run in parallel; one integrator owns the shared types,
 i18n, states and privacy wording. Detailed scope, classifications, acceptance

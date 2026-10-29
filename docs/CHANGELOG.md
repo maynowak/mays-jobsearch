@@ -32,6 +32,13 @@ S5.2-A-R1 — 2026-10-29
   cancellation and input-reset behavior.
 - Added regression coverage for first/second upload and same-input reuse.
 
+S5.2-A-R2 — 2026-10-29
+
+- Fixed Dashboard-V2 CV processing so the existing consent/workflow portal is
+  rendered in the early dashboard routes.
+- Preserved existing focus handling, consent gates, internal dialog scrolling
+  and scroll-lock cleanup; added Dashboard workflow regression coverage.
+
 1.0
 
 Initial Project — core job matching.

@@ -2427,7 +2427,9 @@ export default function App() {
     : null;
 
   const cvProcessingUI = cvState.step !== "idle" && (
-    cvOverlayNode ?? cvProcessingCard
+    (isDevDashboardV2 || isDevDashboardV2Auth) && !cvDialogOpen
+      ? null
+      : cvOverlayNode ?? cvProcessingCard
   );
 
   // CV-PROFILE-LISTS-01: Zum Profil-Overlay gehoeriges Dokument aufloesen
@@ -2517,6 +2519,7 @@ export default function App() {
         <main className="container legal-main layout-dashboard">
           <DashboardV2 user={DEMO_USER} isDemo cvSection={dashboardCvSection} />
         </main>
+        {cvProcessingUI}
         <Footer />
       </ErrorBoundary>
     );
@@ -2533,6 +2536,7 @@ export default function App() {
         <main className="container legal-main layout-dashboard">
           <DashboardV2AuthenticatedPreview cvSection={dashboardCvSection} />
         </main>
+        {cvProcessingUI}
         <Footer />
       </ErrorBoundary>
     );

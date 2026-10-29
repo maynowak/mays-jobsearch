@@ -2616,6 +2616,38 @@ describe("SEARCH-SCROLL-REGRESSION-01: Scrollen auf /search", () => {
   });
 });
 
+describe("MAYS-UI-S5.2-A-R2: Dashboard CV workflow dialog", () => {
+  beforeEach(() => {
+    __resetBodyScrollLockForTests();
+  });
+
+  afterEach(() => {
+    __resetBodyScrollLockForTests();
+  });
+
+  it("renders the existing consent dialog in Dashboard-V2 and releases the lock on close", async () => {
+    window.history.pushState({}, "", "/dev/dashboard-v2");
+    renderApp();
+    fireEvent.click(screen.getByRole("button", { name: "Lebenslauf" }));
+
+    const file = new File(["dashboard cv"], "dashboard-cv.pdf", { type: "application/pdf" });
+    fireEvent.change(document.querySelector('.cv-document-list__actions input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByTitle("dashboard-cv.pdf");
+    fireEvent.click(screen.getByRole("checkbox", { name: "PDF auswählen" }));
+    fireEvent.click(within(document.querySelector(".cv-document-list") as HTMLElement).getByRole("button", { name: "Ausgewählten CV verarbeiten" }));
+
+    expect(await screen.findByRole("dialog", { name: "CV-Verarbeitung erlauben?" })).toBeTruthy();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "CV-Verarbeitung erlauben?" })).toBeNull());
+    expect(document.body.style.overflow).not.toBe("hidden");
+    expect(document.documentElement.style.overflow).not.toBe("hidden");
+  });
+});
+
 // ATS-SKILL-INPUT-POLISH-01: Das Skill-Eingabefeld wird auf volle Breite
 // gebracht (reines CSS). Die Funktion muss unveraendert bleiben: Enter
 // ergaenzt einen Skill, Auswahl/Bulk bleiben, ATS-Profil wird gespeichert.

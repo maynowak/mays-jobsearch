@@ -1282,6 +1282,32 @@ MAYS-UI-S5.2-A-R1 — WEITEREN CV HOCHLADEN REPARIEREN
 - Report: `docs/reports/20-01-MAYS-UI-S5.2-A-R1-WEITERER-CV-UPLOAD.md`.
 
 ================================================================================
+MAYS-UI-S5.2-A-R2 — CV-VERARBEITUNG BLOCKIERT SCROLLEN
+================================================================================
+
+2026-10-29 · Implementation complete; Chromium verified; Firefox NOT VERIFIED
+
+- Preflight HEAD `9ac5a22`; branch unchanged; user files preserved. `/profil`
+  unchanged.
+- Root cause proven in `src/App.tsx`: Dashboard-V2 early returns omitted
+  `cvProcessingUI`, while the `cvDialogOpen` effect still acquired the central
+  html/body scroll-lock. Existing Searchpage rendered the same node correctly.
+- Repair renders the existing workflow portal in both Dashboard-V2 branches and
+  suppresses only the duplicate non-dialog inline document list on those routes.
+  Consent, parser, anonymization, model choice, API boundaries, focus handling,
+  portal z-index and scroll-lock implementation were reused.
+- Dashboard regression test confirms visible consent dialog, active lock,
+  cancel and complete lock release. Full suite: 842 passed | 5 skipped;
+  build/API syntax/diff checks PASS.
+- Chromium at 390/1440 verified visible dialog, focus, internal overflow,
+  cancellation, no console errors and `/search` scroll regression. Firefox
+  launch failed with `Could not find profile folder`: NOT VERIFIED.
+- Real API/profile processing was not claimed; Vite-only browser check was
+  separated from mocked App tests because no local API server/credentials were
+  available.
+- Report: `docs/reports/21-01-MAYS-UI-S5.2-A-R2-CV-WORKFLOW-DIALOG.md`.
+
+================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
 ================================================================================
 
