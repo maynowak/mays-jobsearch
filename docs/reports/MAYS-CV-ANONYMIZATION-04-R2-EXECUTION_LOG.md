@@ -31,6 +31,9 @@ explicit `under the author name ...` context, and technical negatives.
 - Preserve the existing all-caps header, apostrophe, product-name, contact,
   date-range, and technical-phrase behavior.
 - No isolated `May`/`Nowak` replacement and no global capitalized-pair rule.
+- R3 follow-up: all-caps header candidates now seed exact, case-insensitive
+  full-name replacement across the document, covering the following mixed-case
+  repeat without replacing individual words.
 
 ## Synthetic before/after matrix
 
@@ -45,8 +48,8 @@ explicit `under the author name ...` context, and technical negatives.
 
 ## Verification
 
-- `npx vitest run src/lib/anonymize.test.ts` — PASS (10 tests)
-- `npm test -- --run` — PASS (863 passed, 5 skipped)
+- `npx vitest run src/lib/anonymize.test.ts` — PASS (11 tests)
+- `npm test -- --run` — PASS (864 passed, 5 skipped)
 - `npm run build` — PASS
 - All API syntax checks — PASS
 - `git diff --check` — PASS

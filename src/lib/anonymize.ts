@@ -137,7 +137,12 @@ function anonymizeNames(text: string): string {
     protectedText
   );
 
+  const knownNames = new Set<string>();
   const firstLineName = protectedText.match(FIRST_LINE_NAME_PATTERN)?.[1] ?? null;
+  if (firstLineName) knownNames.add(firstLineName);
+  for (const match of protectedText.matchAll(ALL_CAPS_HEADER_NAME_PATTERN)) {
+    if (match[3]) knownNames.add(match[3]);
+  }
 
   const contextualNamesRemoved = titledNamesRemoved
     .replace(LABELLED_NAME_PATTERN, "[NAME]")
@@ -148,12 +153,10 @@ function anonymizeNames(text: string): string {
       match.replace(/:\s*\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}$/u, ": [NAME]")
     );
 
-  const repeatedHeaderNameRemoved = firstLineName
-    ? contextualNamesRemoved.replace(
-        new RegExp(`\\b${firstLineName.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\b`, "gu"),
-        "[NAME]"
-      )
-    : contextualNamesRemoved;
+  const repeatedHeaderNameRemoved = [...knownNames].reduce((result, name) => {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return result.replace(new RegExp(`\\b${escaped}\\b`, "giu"), "[NAME]");
+  }, contextualNamesRemoved);
 
   const apostropheNamesRemoved = APOSTROPHE_NAME_PATTERNS.reduce(
     (result, pattern) => replaceWithPlaceholder(result, pattern, "[NAME]"),

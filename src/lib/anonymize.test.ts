@@ -43,6 +43,12 @@ describe("anonymizeText", () => {
     );
   });
 
+  it("uses an all-caps header name to mask the following mixed-case repeat", () => {
+    expect(
+      anonymizeText("MAY NOWAK · PROFESSIONAL CV 1\nMay Nowak\nSenior Software Architect")
+    ).toBe("[NAME] · PROFESSIONAL CV 1\n[NAME]\nSenior Software Architect");
+  });
+
   it("does not mask the modal or month by itself", () => {
     expect(anonymizeText("May apply in May 2026.")) .toBe("May apply in May 2026.");
   });
