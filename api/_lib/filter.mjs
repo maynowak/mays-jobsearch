@@ -11,21 +11,40 @@ export function splitQuotedPhrases(input) {
   // counts as ONE token, remaining text splits on whitespace.
   // Stray quotes are dropped. Contract shared with src/lib/skills.ts.
   const tokens = [];
-  for (const segment of String(input ?? "").split(/[,;\n]+/)) {
-    const seg = segment.trim();
-    if (!seg) continue;
-    const re = /"([^"]*)"|[^\s"]+/g;
-    let m;
-    let matched = false;
-    while ((m = re.exec(seg)) !== null) {
-      matched = true;
-      const token = (m[1] !== undefined ? m[1] : m[0]).trim();
-      if (token) tokens.push(token);
+  const inputText = String(input ?? "");
+  const segments = [];
+  let current = "";
+  let quote = false;
+  const groups = [];
+  const opens = new Set(["(", "[", "{"]);
+  const closes = new Map([["(", ")"], ["[", "]"], ["{", "}"]]);
+  for (const char of inputText) {
+    if (char === '"') quote = !quote;
+    if (!quote && opens.has(char)) groups.push(char);
+    if (!quote && closes.has(groups.at(-1)) && closes.get(groups.at(-1)) === char) groups.pop();
+    if (!quote && groups.length === 0 && /[,;\n]/.test(char)) {
+      segments.push(current);
+      current = "";
+    } else current += char;
+  }
+  segments.push(current);
+  for (const segment of segments) {
+    let token = "";
+    quote = false;
+    groups.length = 0;
+    const flush = () => {
+      const cleaned = token.trim().replace(/^"(.*)"$/s, "$1").trim();
+      if (cleaned) tokens.push(cleaned);
+      token = "";
+    };
+    for (const char of segment.trim()) {
+      if (char === '"') quote = !quote;
+      if (!quote && opens.has(char)) groups.push(char);
+      if (!quote && closes.has(groups.at(-1)) && closes.get(groups.at(-1)) === char) groups.pop();
+      if (!quote && groups.length === 0 && /\s/.test(char)) flush();
+      else token += char;
     }
-    if (!matched) {
-      const fallback = seg.replace(/"/g, "").trim();
-      if (fallback) tokens.push(fallback);
-    }
+    flush();
   }
   return tokens;
 }

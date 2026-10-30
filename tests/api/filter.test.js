@@ -31,8 +31,22 @@ describe("API filter - quoted-phrase tokenization", () => {
     expect(splitQuotedPhrases('"Spring Boot", React')).toEqual(["Spring Boot", "React"]);
   });
 
-  it("drops a stray unterminated quote instead of swallowing text", () => {
-    expect(tokenize('"Spring Boot')).toEqual(["spring", "boot"]);
+  it("keeps a stray unterminated quote as one lossless phrase", () => {
+    expect(tokenize('"Spring Boot')).toEqual(['"spring boot']);
+  });
+
+  it("keeps bracket groups and technical terms intact", () => {
+    expect(tokenize("Senior DevOps Engineer (P4 Cloud), C++, C#, .NET, CI/CD, TCP/IP")).toEqual([
+      "senior",
+      "devops",
+      "engineer",
+      "(p4 cloud)",
+      "c++",
+      "c#",
+      ".net",
+      "ci/cd",
+      "tcp/ip",
+    ]);
   });
 });
 

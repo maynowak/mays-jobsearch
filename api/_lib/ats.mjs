@@ -414,7 +414,7 @@ export function analyzeJobForAts(job, profile) {
     low: 1,
   };
 
-  const cvSkills = profile?.skills?.split(",")?.map((s) => s.trim()) || [];
+  const cvSkills = tokenize(profile?.skills);
   const cvSkillsLower = cvSkills.map((s) => s.toLowerCase());
 
   const requirements = extractRequirementsFromJob(job);

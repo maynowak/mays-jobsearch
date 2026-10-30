@@ -1,5 +1,5 @@
 import { fetchAllJobs } from "./_lib/jobs.mjs";
-import { HttpError } from "./_lib/filter.mjs";
+import { HttpError, splitQuotedPhrases } from "./_lib/filter.mjs";
 import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
 
 function parseArrayParam(value, delimiters = /[,;]+/) {
@@ -19,7 +19,15 @@ function parseArrayParam(value, delimiters = /[,;]+/) {
 
 // Skills can be space-separated (from URL-encoded +), comma-separated, or JSON array
 function parseSkillsParam(value) {
-  return parseArrayParam(value, /[\s,;]+/);
+  if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
+  const str = String(value ?? "").trim();
+  if (str.startsWith("[") && str.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(str);
+      if (Array.isArray(parsed)) return parsed.map(v => String(v).trim()).filter(Boolean);
+    } catch { /* fall through */ }
+  }
+  return splitQuotedPhrases(str);
 }
 
 function parseNumberParam(value) {

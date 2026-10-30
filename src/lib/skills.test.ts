@@ -31,8 +31,40 @@ describe("skills - quoted-phrase tokenization", () => {
     expect(parseSkills("")).toEqual([]);
   });
 
-  it("ignores an unterminated quote instead of swallowing the rest", () => {
-    expect(parseSkills('"Spring Boot')).toEqual(["Spring", "Boot"]);
+  it("keeps an unterminated quote as one lossless term", () => {
+    expect(parseSkills('"Spring Boot')).toEqual(['"Spring Boot']);
+  });
+
+  it("keeps bracket groups and technical terms intact", () => {
+    expect(parseSkills("Senior DevOps Engineer (P4 Cloud), C++, C#, .NET, CI/CD, TCP/IP")).toEqual([
+      "Senior",
+      "DevOps",
+      "Engineer",
+      "(P4 Cloud)",
+      "C++",
+      "C#",
+      ".NET",
+      "CI/CD",
+      "TCP/IP",
+    ]);
+  });
+
+  it("keeps delimiters inside groups and quoted roles", () => {
+    expect(parseSkills("AWS (P4; Cloud), \"Machine Learning\", [ISO 27001]")).toEqual([
+      "AWS",
+      "(P4; Cloud)",
+      "Machine Learning",
+      "[ISO 27001]",
+    ]);
+    expect(parseTargetRoles('"Senior DevOps Engineer (P4 Cloud)", Cloud Architect')).toEqual([
+      "Senior DevOps Engineer (P4 Cloud)",
+      "Cloud Architect",
+    ]);
+  });
+
+  it("keeps nested and unclosed groups losslessly", () => {
+    expect(parseSkills("AWS (P4 [Cloud])")).toEqual(["AWS", "(P4 [Cloud])"]);
+    expect(parseSkills("AWS (P4 Cloud")).toEqual(["AWS", "(P4 Cloud"]);
   });
 });
 

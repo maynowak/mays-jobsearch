@@ -10,25 +10,70 @@ function pushToken(result: string[], seen: Set<string>, token: string): void {
   }
 }
 
+const OPEN_GROUPS = new Set(["(", "[", "{"]);
+const CLOSE_GROUPS = new Map([["(", ")"], ["[", "]"], ["{", "}"]]);
+
+function splitListSegments(input: string): string[] {
+  const segments: string[] = [];
+  let current = "";
+  let quote = false;
+  const groups: string[] = [];
+
+  for (const char of input) {
+    if (char === '"') quote = !quote;
+    if (!quote && OPEN_GROUPS.has(char)) groups.push(char);
+    if (!quote && groups.length > 0) {
+      const expected = CLOSE_GROUPS.get(groups.at(-1) ?? "");
+      if (expected === char) groups.pop();
+    }
+    if (!quote && groups.length === 0 && (char === "," || char === ";" || char === "\n")) {
+      segments.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  segments.push(current);
+  return segments;
+}
+
+function tokenizeSegment(segment: string): string[] {
+  const tokens: string[] = [];
+  let current = "";
+  let quote = false;
+  const groups: string[] = [];
+
+  const flush = () => {
+    if (current.trim()) tokens.push(current.trim());
+    current = "";
+  };
+
+  for (const char of segment.trim()) {
+    if (char === '"') {
+      quote = !quote;
+      current += char;
+      continue;
+    }
+    if (!quote && OPEN_GROUPS.has(char)) groups.push(char);
+    if (!quote && groups.length > 0) {
+      const expected = CLOSE_GROUPS.get(groups.at(-1) ?? "");
+      if (expected === char) groups.pop();
+    }
+    if (!quote && groups.length === 0 && /\s/.test(char)) flush();
+    else current += char;
+  }
+  flush();
+  return tokens;
+}
+
 export function parseSkills(input: string): string[] {
   if (!input?.trim()) return [];
 
   const seen = new Set<string>();
   const result: string[] = [];
 
-  // Split by comma/semicolon first; within each segment a "..." quoted
-  // phrase counts as ONE token, the rest splits on whitespace.
-  for (const segment of input.split(/[,;]+/)) {
-    const seg = segment.trim();
-    if (!seg) continue;
-    const re = /"([^"]*)"|[^\s"]+/g;
-    let m: RegExpExecArray | null;
-    let matched = false;
-    while ((m = re.exec(seg)) !== null) {
-      matched = true;
-      pushToken(result, seen, m[1] !== undefined ? m[1] : m[0]);
-    }
-    if (!matched) pushToken(result, seen, seg);
+  for (const segment of splitListSegments(input)) {
+    for (const token of tokenizeSegment(segment)) pushToken(result, seen, token);
   }
 
   return result;
@@ -49,10 +94,10 @@ export function formatSkills(skills: string[]): string {
 
 export function parseTargetRoles(input: string): string[] {
   if (!input?.trim()) return [];
-  return input
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const segment of splitListSegments(input)) pushToken(result, seen, segment);
+  return result;
 }
 
 export function formatTargetRoles(roles: string[]): string {

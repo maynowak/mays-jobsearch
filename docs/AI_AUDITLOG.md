@@ -1,3 +1,12 @@
+2026-10-30 · MAYS-ATS-TOKENIZATION-01
+- Typ: Fix/Privacy/Data-Flow/Parsing
+- Status: COMPLETE (full validation green; browser runtime NOT VERIFIED)
+- Scope: Bracket-/quote-aware parsing for ATS skill/role list strings in the frontend and existing API paths; structured arrays remain intact.
+- Root cause: `src/lib/skills.ts` split unquoted strings on whitespace, while `api/jobs.mjs` split legacy skills on `/[\s,;]+/`; ATS analysis also duplicated parsing with `.split(',')`. Bracket groups therefore produced `(P4` and `Cloud)`.
+- AI-/Privacy-/Data-Flow impact: no new AI/API/storage/provider flow. The fix preserves existing structured model arrays and changes only local/legacy list normalization. No factual skill/role classification is inferred; corrupted prior session entries are not reconstructed.
+- Tests: `npm test -- --run` (856 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS). Browser synthetic-data runtime is NOT VERIFIED.
+- Log: `docs/reports/MAYS-ATS-TOKENIZATION-01-EXECUTION_LOG.md`
+
 2026-10-30 · PROFILE-HIERARCHY-FINAL-VERIFICATION
 - Typ: Verification/Final-Report/AI-Privacy-Data-Flow
 - Status: COMPLETE (code/build/tests green; browser matrix partially NOT VERIFIED)
