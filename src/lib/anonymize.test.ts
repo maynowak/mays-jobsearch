@@ -25,4 +25,14 @@ describe("anonymizeText", () => {
       "[NAME] · PROFESSIONAL CV\nArchitect"
     );
   });
+
+  it("masks apostrophe names without masking the product name", () => {
+    expect(anonymizeText("May's CV\nO'Connor and O’Connor\nMay's Job Matcher\nMay’s Job Matcher")) .toBe(
+      "[NAME] CV\n[NAME] and [NAME]\nMay's Job Matcher\nMay’s Job Matcher"
+    );
+  });
+
+  it("does not mask the modal or month by itself", () => {
+    expect(anonymizeText("May apply in May 2026.")) .toBe("May apply in May 2026.");
+  });
 });

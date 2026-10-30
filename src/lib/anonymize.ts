@@ -4,6 +4,11 @@ const NAME_PATTERNS = [
   /\bPROF\.? \p{Lu}[\p{Ll}]+ \p{Lu}[\p{Ll}]+\b/giu,
 ];
 
+const APOSTROPHE_NAME_PATTERNS = [
+  /\b\p{Lu}[\p{Ll}]+['’]\p{Ll}+\b/gu,
+  /\b\p{Lu}[\p{Ll}]*['’]\p{Lu}[\p{Ll}]+\b/gu,
+];
+
 const GENERIC_NAME_PATTERN = /\b\p{Lu}[\p{Ll}]+ \p{Lu}[\p{Ll}]+\b/gu;
 
 // CV headers often use all capitals (for example "MAY NOWAK · PROFESSIONAL
@@ -34,6 +39,11 @@ const JOB_RELEVANT_PHRASES = [
   "UX Designer",
   "Business Analyst",
 ];
+
+// This is the product name, not a candidate name. Protect it before the
+// apostrophe-name patterns run; ordinary "May's" occurrences remain subject
+// to the existing name heuristic.
+const PROTECTED_PRODUCT_PHRASES = ["May's Job Matcher", "May’s Job Matcher"];
 
 const EMAIL_PATTERN = /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
 
@@ -70,7 +80,7 @@ function replaceAllPatterns(text: string, patterns: RegExp | RegExp[], placehold
 
 function anonymizeNames(text: string): string {
   const protectedPhrases: string[] = [];
-  const protectedText = JOB_RELEVANT_PHRASES.reduce((result, phrase) => {
+  const protectedText = [...JOB_RELEVANT_PHRASES, ...PROTECTED_PRODUCT_PHRASES].reduce((result, phrase) => {
     const pattern = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\b`, "giu");
     return result.replace(pattern, (candidate) => {
       const marker = `\u0000ROLE_${protectedPhrases.length}\u0000`;
@@ -84,7 +94,12 @@ function anonymizeNames(text: string): string {
     protectedText
   );
 
-  const headerNamesRemoved = titledNamesRemoved.replace(
+  const apostropheNamesRemoved = APOSTROPHE_NAME_PATTERNS.reduce(
+    (result, pattern) => replaceWithPlaceholder(result, pattern, "[NAME]"),
+    titledNamesRemoved
+  );
+
+  const headerNamesRemoved = apostropheNamesRemoved.replace(
     ALL_CAPS_HEADER_NAME_PATTERN,
     "$1$2[NAME]"
   );

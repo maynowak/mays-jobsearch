@@ -137,6 +137,7 @@ export default function App() {
   // "Einwilligung anzeigen" erneut geöffnet werden.
   const [consentDismissed, setConsentDismissed] = useState(false);
   const [, setNavigationVersion] = useState(0);
+  const cvOperationRef = useRef<string | null>(null);
   // BUG-19: aktiven CV-Step fokussieren (Scroll-Handling siehe Effekt unten)
   const cvWorkflowRef = useRef<HTMLElement | null>(null);
   const [dataset, setDataset] = useState<JobDataset | null>(null);
@@ -459,6 +460,7 @@ export default function App() {
   // Beim Schliessen/Abbrechen des Consents bleibt das Dokument in der Liste
   // unter der Suchmaske erhalten (consentDismissed -> Inline-Karte).
   const handleCvUploadStart = (file: File) => {
+    cvOperationRef.current = null;
     const doc: CvDocument = {
       id: generateDocumentId(),
       name: file.name,
@@ -508,6 +510,7 @@ export default function App() {
   };
 
   const handleSelectCvDocument = (id: string, selected: boolean) => {
+    cvOperationRef.current = null;
     setCvState((prev) => ({
       ...prev,
       documents: prev.documents.map((doc) =>
@@ -521,6 +524,7 @@ export default function App() {
   };
 
   const handleDashboardCvSelect = (id: string) => {
+    cvOperationRef.current = null;
     setSelectedSavedSearchId(null);
     setActiveAtsEntryId(null);
     setCvState((prev) => ({
@@ -532,6 +536,7 @@ export default function App() {
   };
 
   const handleRemoveCvDocument = (id: string) => {
+    cvOperationRef.current = null;
     setCvState((prev) => {
       const remaining = prev.documents.filter((doc) => doc.id !== id);
       const wasSelected = prev.selectedDocumentIds.includes(id);
@@ -795,6 +800,9 @@ export default function App() {
     // model-bound text must follow the choice made in the options step, never
     // a later/default state value.
     const selectedAnonymizationMode = cvState.anonymizationMode;
+    const operationToken = `${doc.id}:${Date.now()}:${Math.random()}`;
+    cvOperationRef.current = operationToken;
+    const isCurrentOperation = () => cvOperationRef.current === operationToken;
     setCvState((prev) => ({
       ...prev,
       step: "anonymizing",
@@ -805,6 +813,7 @@ export default function App() {
     try {
       // Extract text from PDF
       const text = await extractPdfText(doc.file);
+      if (!isCurrentOperation()) return;
       if (text.replace(/\s/g, "").length < 20) {
         setCvState((prev) => ({
           ...prev,
@@ -823,6 +832,7 @@ export default function App() {
 
       const normalized = normalizeText(processedText);
       const hash = await sha256Hex(normalized);
+      if (!isCurrentOperation()) return;
 
       // CV-PROFILE-LISTS-01: Hash am Dokument merken — Schluessel fuer die
       // benannten Profil-Listen (Suchprofile/ATS-Profile) dieses CVs.
@@ -842,6 +852,8 @@ export default function App() {
         request: (m, attempt) => createProfile(normalized, m, hash ?? undefined, attempt),
       });
 
+      if (!isCurrentOperation()) return;
+
       setCvState((prev) => ({
         ...prev,
         suggestedProfile,
@@ -850,6 +862,7 @@ export default function App() {
         fallbackNote: usedFallback,
       }));
     } catch (err) {
+      if (!isCurrentOperation()) return;
       // CV-UPLOAD-UX-01: model_not_free/model_invalid (nicht transient, werden
       // von withModelFallback nicht intern weitergereicht) fuehren ebenfalls
       // zur Modellauswahl-Recovery am Ort — kein Ruecksprung zum Dokument.
@@ -1607,6 +1620,10 @@ export default function App() {
   // der Suchmaske (bzw. idle, wenn keine Dokumente). Im Consent-Step zaehlt
   // Schliessen als "ausstehend" (wieder oeffnbar, wie Abbrechen).
   const handleCvWorkflowClose = () => {
+    // Invalidate extraction/hash/model continuations. The current File may be
+    // reopened later, but a closed workflow must not be resurrected by a late
+    // async result from its previous run.
+    cvOperationRef.current = null;
     setEditingSearchName(null);
     if (cvState.step === "consent-required") {
       // Im Consent-Step zaehlt Schliessen als "ausstehend" (wieder oeffnbar
@@ -1617,6 +1634,7 @@ export default function App() {
     setCvState((prev) => ({
       ...prev,
       step: prev.documents.length > 0 ? "document-selected" : "idle",
+      isProcessing: false,
     }));
   };
 

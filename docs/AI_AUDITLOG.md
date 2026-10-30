@@ -7,6 +7,15 @@
 - Tests: `npm test -- --run` (856 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS). Browser synthetic-data runtime is NOT VERIFIED.
 - Log: `docs/reports/MAYS-ATS-TOKENIZATION-01-EXECUTION_LOG.md`
 
+2026-10-30 · MAYS-CV-CONTEXT-AND-ANONYMIZATION-02
+- Typ: Fix/Privacy/Data-Flow/Async-Context
+- Status: IMPLEMENTED (targeted validation green; full validation pending)
+- Scope: document-scoped CV operation tokens ignore late extraction/hash/model results after selection/removal/close; anonymizer handles straight/typographic apostrophe names and protects the product name.
+- Root causes: async PDF/model continuations were not invalidated on workflow close or context changes; existing name patterns did not match apostrophe names. The product phrase `May's/May’s Job Matcher` is protected to avoid a known false positive.
+- AI-/Privacy-/Data-Flow impact: positive and local. No new destination/API/storage/model flow; stale results are suppressed before rendering/profile binding, and existing anonymization remains before the model boundary. Complete anonymity is not claimed.
+- Tests: targeted anonymizer/skills tests (16 passed); `npm test -- --run` (858 passed, 5 skipped); build/API syntax/diff checks passed; browser synthetic-PDF matrix NOT VERIFIED.
+- Log: `docs/reports/MAYS-CV-CONTEXT-AND-ANONYMIZATION-02-EXECUTION_LOG.md`
+
 2026-10-30 · PROFILE-HIERARCHY-FINAL-VERIFICATION
 - Typ: Verification/Final-Report/AI-Privacy-Data-Flow
 - Status: COMPLETE (code/build/tests green; browser matrix partially NOT VERIFIED)
