@@ -1,3 +1,12 @@
+2026-10-30 · PROFILE-HIERARCHY-FINAL-VERIFICATION
+- Typ: Verification/Final-Report/AI-Privacy-Data-Flow
+- Status: COMPLETE (code/build/tests green; browser matrix partially NOT VERIFIED)
+- Scope: Verification of commit `ef10bd8` against the Profile/CV/ATS hierarchy and saved-search behavior; no code changes.
+- Results: Full suite 852 passed/5 skipped; build and API syntax green; Chromium route smoke passed at 390/1440; full authenticated two-CV browser flow, Firefox, DE/EN full matrix, and live provider checks remain explicitly NOT VERIFIED.
+- AI-/Privacy-/Data-Flow impact: no new flow and no real CV/provider data used. Existing session-only storage, 12h TTL, hash/parent validation, SearchProfile-only path, ATS field override, and separate per-job ATS analysis were verified/documented.
+- Capacity result: CV 10 enforced; ATS 5 per parent enforced; SearchProfile current list capacity remains 50, while product target is 2 and is not claimed implemented. Tag ranking/weighting/variants comparison are not implemented.
+- Log: `docs/reports/PROFILE-HIERARCHY-FINAL-VERIFICATION-EXECUTION_LOG.md`
+
 2026-10-29 · MAYS-CV-LINK-AND-ATS-SEARCH-01
 - Typ: Fix/Feature/UI/Data-Flow
 - Status: COMPLETE (full validation green)
