@@ -1,6 +1,6 @@
 # MAYS-CV-ANONYMIZATION-04-R3 — Execution Log
 
-- Status: COMPLETE — full validation green; browser PDF matrix NOT VERIFIED
+- Status: COMPLETE — full validation green; Chromium browser verification passed; Firefox NOT VERIFIED
 - Date: 2026-10-30
 - Branch: `main`
 - HEAD at audit start: `c9716fd`
@@ -49,8 +49,12 @@ under the author name [NAME].
 - `npm run build` — PASS
 - All API syntax checks — PASS
 - `git diff --check` — PASS
-- Browser multi-page synthetic PDF with intercepted request: NOT VERIFIED
-- Online deployment: not performed; online behavior not verified in this task.
+- Chromium browser: PASS at 390 and 1440 px. A synthetic three-page PDF was
+  uploaded through `/search?cv=upload`; the intercepted `/api/profile` payload
+  contained `[NAME]`, retained `Senior Software Architect`, and contained no
+  `Anna Beispiel`/`ANNA BEISPIEL`.
+- Firefox: NOT VERIFIED because the Playwright Firefox binary/juggler was not
+  available. Online deployment: not performed; online behavior not verified.
 
 ## Boundaries
 

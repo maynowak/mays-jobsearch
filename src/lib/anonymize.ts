@@ -27,7 +27,7 @@ const GERMAN_AUTHOR_NAME_PATTERN =
 // is immediately followed by a visual separator. This avoids replacing normal
 // all-caps labels such as "PROFESSIONAL CV" throughout the document.
 const ALL_CAPS_HEADER_NAME_PATTERN =
-  /(^|[\r\n])([ \t]*)([A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’-]{1,}\s+[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’-]{1,})(?=\s*[·|•–—-])/gm;
+  /(^|[\r\n])([ \t]*)([A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’-]{1,}\s+[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ'’-]{1,})(?=\s*[·|•´’–—-])/gm;
 
 // Protect complete, known role phrases before applying the generic name
 // matcher. A word allowlist is not safe here: names such as "Cloud Schmidt"

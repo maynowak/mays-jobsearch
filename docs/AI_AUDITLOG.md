@@ -13,7 +13,7 @@
 - Scope: Persist full names found in first-line/all-caps headers as exact case-insensitive candidates and mask repeated occurrences; explicit author-name context remains supported.
 - Root cause: the R1 all-caps header replacement masked the header but discarded the candidate, so the following mixed-case main name had no contextual signal after the global name-pair rule was removed.
 - AI-/Privacy-/Data-Flow impact: local pre-model masking only; no new destination/API/storage/model flow. Technical phrases remain protected and no single-word global replacement was introduced.
-- Tests: `npm test -- --run` (864 passed, 5 skipped); build/API syntax/diff checks PASS; browser multi-page synthetic PDF matrix NOT VERIFIED.
+- Tests: `npm test -- --run` (864 passed, 5 skipped); build/API syntax/diff checks PASS; Chromium synthetic 3-page PDF request verification passed at 390/1440; Firefox NOT VERIFIED.
 - Log: `docs/reports/MAYS-CV-ANONYMIZATION-04-R3-EXECUTION_LOG.md`
 
 2026-10-30 · MAYS-CV-ANONYMIZATION-04-R2
