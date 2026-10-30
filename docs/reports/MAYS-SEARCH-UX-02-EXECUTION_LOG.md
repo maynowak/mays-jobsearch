@@ -6,6 +6,7 @@
 - Preflight baseline: `151f2db` (`origin/main` was in sync)
 - Commit: `7cbc988` (`feat: improve search profile and source visibility UX`)
 - Documentation follow-up: `bcd9fc4` (commit/push status)
+- Final report record: `fc54f0d` (latest `origin/main`)
 - Pre-existing untracked files: left untouched and unstaged
 
 ## 1. Saved search profile selection
