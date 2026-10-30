@@ -7,6 +7,15 @@
 - Tests: `npm test -- --run` (856 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS). Browser synthetic-data runtime is NOT VERIFIED.
 - Log: `docs/reports/MAYS-ATS-TOKENIZATION-01-EXECUTION_LOG.md`
 
+2026-10-30 · MAYS-CV-ANONYMIZATION-04-R2
+- Typ: Fix/Privacy/PII-Detection
+- Status: COMPLETE (full validation green; browser reference-PDF matrix NOT VERIFIED)
+- Scope: Capture the mixed-case first-line person name consistently at repeated occurrences and mask explicit author/pen-name contexts, while retaining technical/qualification/contact/date protections.
+- Root cause: R1's first-line lookahead did not reliably span the rest of a multi-page document, and no author-context rule existed. The former global capitalized-pair matcher remains removed to avoid technical overmasking.
+- AI-/Privacy-/Data-Flow impact: local pre-model anonymization only; no new destination/API/storage/model flow. Synthetic App payload tests remain the request-boundary evidence. No full anonymity claim.
+- Tests: `npm test -- --run` (863 passed, 5 skipped); build/API syntax/diff checks PASS; browser original-PDF matrix NOT VERIFIED because the personal reference PDF is unavailable in checkout.
+- Log: `docs/reports/MAYS-CV-ANONYMIZATION-04-R2-EXECUTION_LOG.md`
+
 2026-10-30 · MAYS-CV-ANONYMIZATION-04-R1
 - Typ: Fix/Privacy/PII-Detection/AI-Boundary
 - Status: COMPLETE (full validation green; browser reference-PDF matrix NOT VERIFIED)

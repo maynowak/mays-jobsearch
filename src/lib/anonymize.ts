@@ -16,7 +16,11 @@ const APOSTROPHE_NAME_PATTERNS = [
 const LABELLED_NAME_PATTERN =
   /\b(?:Name|NAME|Candidate|CANDIDATE|Applicant|APPLICANT|Author(?:\s+name)?|AUTHOR(?:\s+NAME)?)\s*:\s*\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}/gu;
 const FIRST_LINE_NAME_PATTERN =
-  /^\s*\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}\s*(?=(?:[·|•—-].*)?$)/u;
+  /^\s*(\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2})\s*(?=(?:[·|•—-].*)?(?:\r?\n|$))/u;
+const AUTHOR_NAME_PATTERN =
+  /\b(?:under\s+the\s+)?(?:author|Author|AUTHOR|pen|Pen|PEN)\s+name\s+(\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2})/gu;
+const GERMAN_AUTHOR_NAME_PATTERN =
+  /\b(?:Autorenname|autorenname|Künstlername|künstlername)\s*:\s*(\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2})/gu;
 
 // CV headers often use all capitals (for example "MAY NOWAK · PROFESSIONAL
 // CV"). Only treat an all-caps pair as a name when it starts a line/header and
@@ -133,13 +137,27 @@ function anonymizeNames(text: string): string {
     protectedText
   );
 
+  const firstLineName = protectedText.match(FIRST_LINE_NAME_PATTERN)?.[1] ?? null;
+
   const contextualNamesRemoved = titledNamesRemoved
     .replace(LABELLED_NAME_PATTERN, "[NAME]")
-    .replace(FIRST_LINE_NAME_PATTERN, "[NAME]");
+    .replace(AUTHOR_NAME_PATTERN, (match) =>
+      match.replace(/\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}$/u, "[NAME]")
+    )
+    .replace(GERMAN_AUTHOR_NAME_PATTERN, (match) =>
+      match.replace(/:\s*\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}$/u, ": [NAME]")
+    );
+
+  const repeatedHeaderNameRemoved = firstLineName
+    ? contextualNamesRemoved.replace(
+        new RegExp(`\\b${firstLineName.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\b`, "gu"),
+        "[NAME]"
+      )
+    : contextualNamesRemoved;
 
   const apostropheNamesRemoved = APOSTROPHE_NAME_PATTERNS.reduce(
     (result, pattern) => replaceWithPlaceholder(result, pattern, "[NAME]"),
-    contextualNamesRemoved
+    repeatedHeaderNameRemoved
   );
 
   const headerNamesRemoved = apostropheNamesRemoved.replace(

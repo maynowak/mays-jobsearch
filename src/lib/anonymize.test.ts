@@ -32,6 +32,17 @@ describe("anonymizeText", () => {
     );
   });
 
+  it("masks the first-line name at repeated headers and explicit author context", () => {
+    const result = anonymizeText(
+      "May Nowak\nSenior Software Architect\n\nMAY NOWAK · PROFESSIONAL CV\n" +
+        "under the author name Maymilly Nowak. Professional Training."
+    );
+    expect(result).toBe(
+      "[NAME]\nSenior Software Architect\n\n[NAME] · PROFESSIONAL CV\n" +
+        "under the author name [NAME]. Professional Training."
+    );
+  });
+
   it("does not mask the modal or month by itself", () => {
     expect(anonymizeText("May apply in May 2026.")) .toBe("May apply in May 2026.");
   });
