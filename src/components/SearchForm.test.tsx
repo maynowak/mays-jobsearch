@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import type { Profile } from "../types";
+import type { ManualSearchProfile } from "../lib/manualSearchProfiles";
 import { LangProvider } from "../i18n";
 import SearchForm from "./SearchForm";
 
@@ -124,9 +125,78 @@ describe("SearchForm is a controlled component", () => {
   });
 });
 
+describe("MAYS-SEARCH-UX-02: saved profiles and optional fields", () => {
+  const manualProfile: ManualSearchProfile = {
+    id: "manual-1",
+    schemaVersion: 1,
+    name: "AWS Cloud Engineer",
+    origin: "manual",
+    searchConfig: baseProfile({
+      skills: 'AWS, Terraform, "Cloud Architecture"',
+      targetRoles: ["Cloud Engineer"],
+      city: "Darmstadt",
+    }),
+    matchingPreferences: { requiredSkills: [], preferredSkills: [], excludedTerms: [] },
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  it("shows saved profiles only when authenticated and selection only prefills the form", () => {
+    const onChange = vi.fn();
+    const onSubmit = vi.fn();
+    const { rerender } = render(
+      <LangProvider>
+        <SearchForm
+          phase="idle"
+          value={empty}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          onWorkflowStart={() => undefined}
+          manualProfiles={[manualProfile]}
+          authenticated={false}
+        />
+      </LangProvider>
+    );
+    expect(screen.queryByLabelText("Profil")).toBeNull();
+
+    rerender(
+      <LangProvider>
+        <SearchForm
+          phase="idle"
+          value={empty}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          onWorkflowStart={() => undefined}
+          manualProfiles={[manualProfile]}
+          authenticated
+        />
+      </LangProvider>
+    );
+    fireEvent.change(screen.getByLabelText("Profil"), { target: { value: "manual-1" } });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      skills: 'AWS, Terraform, "Cloud Architecture"',
+      targetRoles: ["Cloud Engineer"],
+      city: "Darmstadt",
+    }));
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("starts compact and keeps optional values when collapsed", () => {
+    renderForm(empty, vi.fn(), vi.fn());
+    const toggle = screen.getByRole("button", { name: "Such-Einstellungen anzeigen" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(screen.getByLabelText("Zielrolle")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Zielrolle"), { target: { value: "Engineer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Such-Einstellungen ausblenden" }));
+    expect(screen.getByText("Filter aktiv")).toBeTruthy();
+  });
+});
+
 describe("Eingabefeld löschen (×-Button)", () => {
   it("zeigt ein rotes × pro befülltem Eingabefeld", () => {
     renderForm(baseProfile({ skills: "aws", targetRoles: ["Frontend"], city: "Berlin" }), vi.fn(), vi.fn());
+    fireEvent.click(screen.getByRole("button", { name: "Such-Einstellungen anzeigen" }));
     expect(screen.getAllByRole("button", { name: "Eingabe löschen" })).toHaveLength(3);
   });
 
@@ -137,6 +207,7 @@ describe("Eingabefeld löschen (×-Button)", () => {
 
   it("Klick auf × leert Skills, Zielrolle und Stadt", () => {
     render(<StatefulForm initial={baseProfile({ skills: "aws", targetRoles: ["Frontend"], city: "Berlin" })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Such-Einstellungen anzeigen" }));
     const clears = screen.getAllByRole("button", { name: "Eingabe löschen" });
     expect(clears).toHaveLength(3);
     clears.forEach((btn) => fireEvent.click(btn));

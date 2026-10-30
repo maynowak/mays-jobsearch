@@ -8,6 +8,7 @@ import CvUpload from "./CvUpload";
 import FieldClear from "./FieldClear";
 import { parseSkills, formatSkills } from "../lib/skills";
 import { parseTargetRoles, formatTargetRoles } from "../lib/skills";
+import type { ManualSearchProfile } from "../lib/manualSearchProfiles";
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
 
@@ -25,6 +26,8 @@ interface Props {
   // laufen dort; die Suchmaske braucht keine Modell- und CV-Listen-Props mehr.
   onWorkflowStart: (file: File) => void;
   openCvUpload?: boolean;
+  manualProfiles?: ManualSearchProfile[];
+  authenticated?: boolean;
 }
 
 type Mode = "manual" | "cv";
@@ -40,6 +43,8 @@ export default function SearchForm({
   rematch,
   onWorkflowStart,
   openCvUpload = false,
+  manualProfiles = [],
+  authenticated = false,
 }: Props) {
   const { t } = useLang();
   const [mode, setMode] = useState<Mode>("manual");
@@ -47,6 +52,7 @@ export default function SearchForm({
     if (openCvUpload) setMode("cv");
   }, [openCvUpload]);
   const { skills: rawSkills, targetRoles } = value;
+  const [showAdvanced, setShowAdvanced] = useState(false);
   // Rohtext-State: Der angezeigte Text wird nicht bei jedem Tastenschlag
   // normalisiert, damit Leerzeichen in Multi-Word-Skills (z. B. "Spring Boot")
   // normal eingegeben werden können. Tokenisierung passiert erst beim Lesen /
@@ -55,8 +61,14 @@ export default function SearchForm({
   const parsedSkills = parseSkills(skillsText);
   const [targetRolesText, setTargetRolesText] = useState<string>(() => formatTargetRoles(targetRoles ?? []));
   const parsedTargetRoles = parseTargetRoles(targetRolesText);
+  const [selectedManualProfileId, setSelectedManualProfileId] = useState("");
+  useEffect(() => {
+    if (!authenticated || !manualProfiles.some((profile) => profile.id === selectedManualProfileId)) {
+      setSelectedManualProfileId("");
+    }
+  }, [authenticated, manualProfiles, selectedManualProfileId]);
   const {
-    city,
+    city: cityValue,
     suggestions,
     open,
     loading,
@@ -65,7 +77,10 @@ export default function SearchForm({
     handleChange: handleCityChange,
     handleKeyDown: handleCityKeyDown,
     select: selectCity,
-  } = useCityAutocomplete(value.city, (city) => onChange({ ...value, city }));
+  } = useCityAutocomplete(value.city, (city) => {
+    setSelectedManualProfileId("");
+    onChange({ ...value, city });
+  });
 
   const busy = phase !== "idle" || matching;
   const isMatching = matching;
@@ -76,7 +91,7 @@ export default function SearchForm({
         ? t("search.scoring")
         : isMatching
           ? t("search.matching")
-            : rematch
+          : rematch
             ? t("search.buttonRematch")
             : t("search.button");
 
@@ -94,7 +109,7 @@ export default function SearchForm({
   // Externe Profil-Änderungen (z. B. aus dem CV-Flow) in das Textfeld
   // übernehmen. Eigene Eingaben sind daran erkennbar, dass der Parent-Wert
   // dem lokalen Text entspricht — dann darf nichts zurückgeschrieben werden,
-  // sonst würden getippte Leerzeichen wieder entfernt.
+  // sonst würden getipfte Leerzeichen wieder entfernt.
   const [prevRawSkills, setPrevRawSkills] = useState(rawSkills);
   const [prevTargetRoles, setPrevTargetRoles] = useState(targetRoles ?? []);
   if (rawSkills !== prevRawSkills) {
@@ -112,21 +127,42 @@ export default function SearchForm({
 
   const handleSkillsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSkillsText(e.target.value);
+    setSelectedManualProfileId("");
     onChange({ ...value, skills: e.target.value });
   };
 
   const clearSkills = () => {
     setSkillsText("");
+    setSelectedManualProfileId("");
     onChange({ ...value, skills: "" });
   };
 
   const clearTargetRoles = () => {
     setTargetRolesText("");
+    setSelectedManualProfileId("");
     onChange({ ...value, targetRoles: [] });
   };
 
   const clearCity = () => {
+    setSelectedManualProfileId("");
     handleCityChange("");
+  };
+
+  const handleProfileSelect = (profile: ManualSearchProfile) => {
+    const searchConfig = profile.searchConfig;
+    setSelectedManualProfileId(profile.id);
+    setSkillsText(searchConfig.skills ?? "");
+    setTargetRolesText(formatTargetRoles(searchConfig.targetRoles ?? []));
+    setShowAdvanced(Boolean(searchConfig.targetRoles?.length || searchConfig.city?.trim() || searchConfig.radiusKm !== null));
+    onChange({
+      ...value,
+      skills: searchConfig.skills ?? "",
+      targetRoles: [...searchConfig.targetRoles],
+      city: searchConfig.city ?? "",
+      radiusKm: searchConfig.radiusKm,
+      workModes: searchConfig.workModes ?? [],
+      employmentTypes: searchConfig.employmentTypes ?? ["full_time"],
+    });
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -135,7 +171,7 @@ export default function SearchForm({
     onSubmit({
       skills: formatSkills(parsedSkills),
       targetRoles: parsedTargetRoles,
-      city: city.trim(),
+      city: cityValue.trim(),
       radiusKm: value.radiusKm,
       workModes: value.workModes,
       employmentTypes: value.employmentTypes,
@@ -145,6 +181,33 @@ export default function SearchForm({
   return (
     <form id="search-form" onSubmit={handleSubmit} noValidate>
       <h2 className="step-heading">{t("search.step")}</h2>
+
+      {/* MAYS-SEARCH-UX-02: Profile dropdown */}
+      {authenticated && manualProfiles.length > 0 && (
+        <div className="field">
+          <label htmlFor="manual-profile">{t("search.profileLabel")}</label>
+          <div className="field-input-wrap">
+            <select
+              id="manual-profile"
+              value={selectedManualProfileId}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const profile = manualProfiles.find(p => p.id === e.target.value);
+                  if (profile) handleProfileSelect(profile);
+                }
+              }}
+              disabled={busy}
+            >
+              <option value="">{t("search.profilePlaceholder")}</option>
+              {manualProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="cv-mode-switch" role="tablist" aria-label={t("cv.modeLabel")}>
         <button
@@ -194,106 +257,128 @@ export default function SearchForm({
           </div>
         </div>
 
-        <div className="field-row">
-          <div className="field">
-            <label htmlFor="targetRole">{t("search.targetRole")}</label>
-            <div className="field-input-wrap">
-              <input
-                id="targetRole"
-                type="text"
-                placeholder={t("search.targetRolePh")}
-                value={targetRolesText}
-                onChange={(e) => {
+        {/* MAYS-SEARCH-UX-02: Collapsible target role and city fields */}
+        <div className="field-collapsible">
+          <h3 className="field-collapsible-title">
+            <span>{t("search.moreOptions")}</span>
+            <button
+              type="button"
+              className={`field-collapsible-toggle${showAdvanced ? " open" : ""}`}
+              aria-expanded={showAdvanced}
+              aria-controls="search-optional-fields"
+              aria-label={showAdvanced ? t("search.collapsible.collapse") : t("search.collapsible.expand")}
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              <span className="field-collapsible-icon">{showAdvanced ? "−" : "+"}</span>
+              <span className="field-collapsible-text">{showAdvanced ? t("search.collapsible.collapse") : t("search.collapsible.expand")}</span>
+            </button>
+          </h3>
+          {!showAdvanced && (targetRolesText.trim() || cityValue.trim() || value.radiusKm !== null) && (
+            <span className="field-hint search-options-active">{t("search.optionsActive")}</span>
+          )}
+          <div id="search-optional-fields" className={`field-collapsible-content${showAdvanced ? " open" : ""}`} hidden={!showAdvanced}>
+            <div className="field">
+              <label htmlFor="targetRole">{t("search.targetRole")}</label>
+              <div className="field-input-wrap">
+                <input
+                  id="targetRole"
+                  type="text"
+                  placeholder={t("search.targetRolePh")}
+                  value={targetRolesText}
+                  onChange={(e) => {
                   setTargetRolesText(e.target.value);
-                  onChange({ ...value, targetRoles: parseTargetRoles(e.target.value) });
+                  setSelectedManualProfileId("");
+                    onChange({ ...value, targetRoles: parseTargetRoles(e.target.value) });
+                  }}
+                  disabled={busy}
+                  autoComplete="off"
+                />
+                <FieldClear
+                  visible={targetRolesText.trim().length > 0}
+                  disabled={busy}
+                  label={t("field.clear")}
+                  onClear={clearTargetRoles}
+                />
+              </div>
+            </div>
+
+            <div className="field city-field" ref={boxRef}>
+              <label htmlFor="city">{t("search.city")}</label>
+              <div className="field-input-wrap">
+                <input
+                  id="city"
+                  type="text"
+                  placeholder={t("search.cityPh")}
+                  value={cityValue}
+                  onChange={(e) => {
+                    setShowAdvanced(true);
+                    setSelectedManualProfileId("");
+                    handleCityChange(e.target.value);
+                  }}
+                  onKeyDown={handleCityKeyDown}
+                  disabled={busy}
+                  autoComplete="off"
+                  role="combobox"
+                  aria-expanded={open}
+                  aria-controls="city-suggestions"
+                  aria-activedescendant={active >= 0 ? `city-option-${active}` : undefined}
+                />
+                <FieldClear
+                  visible={cityValue.trim().length > 0}
+                  disabled={busy}
+                  label={t("field.clear")}
+                  onClear={clearCity}
+                />
+              </div>
+              <p className="field-hint">{t("search.cityHelp")}</p>
+              {open && (
+                <ul id="city-suggestions" className="city-suggestions" role="listbox">
+                  {loading && <li className="city-suggestion-status">{t("search.citySearching")}</li>}
+                  {suggestions.map((s, i) => (
+                    <li key={s.key}>
+                      <button
+                        type="button"
+                        id={`city-option-${i}`}
+                        role="option"
+                        aria-selected={i === active}
+                        className={`city-suggestion${i === active ? " active" : ""}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setSelectedManualProfileId("");
+                          selectCity(s);
+                        }}
+                      >
+                        <span className="city-plz">{s.postalCode}</span>
+                        <span className="city-name">{s.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {!loading && suggestions.length === 0 && (
+                    <li className="city-suggestion-status" role="status">
+                      {t("search.noLocations")}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+
+            <div className="field">
+              <label htmlFor="radius">{t("search.radius")}</label>
+              <select
+                id="radius"
+                value={value.radiusKm ?? ""}
+                onChange={(e) => {
+                  setShowAdvanced(true);
+                  setSelectedManualProfileId("");
+                  onChange({ ...value, radiusKm: e.target.value === "" ? null : Number(e.target.value) });
                 }}
                 disabled={busy}
-                autoComplete="off"
-              />
-              <FieldClear
-                visible={targetRolesText.trim().length > 0}
-                disabled={busy}
-                label={t("field.clear")}
-                onClear={clearTargetRoles}
-              />
+              >
+                <option value="">{t("search.radiusNone")}</option>
+                {RADIUS_KM_OPTIONS.map((km) => <option key={km} value={km}>{t("search.radiusOption", { km })}</option>)}
+              </select>
             </div>
           </div>
-          <div className="field city-field" ref={boxRef}>
-            <label htmlFor="city">{t("search.city")}</label>
-            <div className="field-input-wrap">
-              <input
-                id="city"
-                type="text"
-                placeholder={t("search.cityPh")}
-                value={city}
-                onChange={(e) => handleCityChange(e.target.value)}
-                onKeyDown={handleCityKeyDown}
-                disabled={busy}
-                autoComplete="off"
-                role="combobox"
-                aria-expanded={open}
-                aria-controls="city-suggestions"
-                aria-activedescendant={active >= 0 ? `city-option-${active}` : undefined}
-              />
-              <FieldClear
-                visible={city.trim().length > 0}
-                disabled={busy}
-                label={t("field.clear")}
-                onClear={clearCity}
-              />
-            </div>
-            <p className="field-hint">{t("search.cityHelp")}</p>
-            {open && (
-              <ul id="city-suggestions" className="city-suggestions" role="listbox">
-                {loading && <li className="city-suggestion-status">{t("search.citySearching")}</li>}
-                {suggestions.map((s, i) => (
-                  <li key={s.key}>
-                    <button
-                      type="button"
-                      id={`city-option-${i}`}
-                      role="option"
-                      aria-selected={i === active}
-                      className={`city-suggestion${i === active ? " active" : ""}`}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        selectCity(s);
-                      }}
-                    >
-                      <span className="city-plz">{s.postalCode}</span>
-                      <span className="city-name">{s.name}</span>
-                    </button>
-                  </li>
-                ))}
-                {!loading && suggestions.length === 0 && (
-                  <li className="city-suggestion-status" role="status">
-                    {t("search.noLocations")}
-                  </li>
-                )}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        <div className="field">
-          <label htmlFor="radius">{t("search.radius")}</label>
-          <select
-            id="radius"
-            value={value.radiusKm ?? ""}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                radiusKm: e.target.value === "" ? null : Number(e.target.value),
-              })
-            }
-            disabled={busy}
-          >
-            <option value="">{t("search.radiusNone")}</option>
-            {RADIUS_KM_OPTIONS.map((km) => (
-              <option key={km} value={km}>
-                {t("search.radiusOption", { km })}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div className="field">
@@ -304,7 +389,10 @@ export default function SearchForm({
                 <input
                   type="checkbox"
                   checked={value.workModes.includes(mode)}
-                  onChange={() => onChange({ ...value, workModes: toggleIn(value.workModes, mode) })}
+                  onChange={() => {
+                    setSelectedManualProfileId("");
+                    onChange({ ...value, workModes: toggleIn(value.workModes, mode) });
+                  }}
                   disabled={busy}
                 />
                 <span>{t(`workMode.${mode}`)}</span>
@@ -321,12 +409,13 @@ export default function SearchForm({
                 <input
                   type="checkbox"
                   checked={value.employmentTypes.includes(type)}
-                  onChange={() =>
+                  onChange={() => {
+                    setSelectedManualProfileId("");
                     onChange({
                       ...value,
                       employmentTypes: toggleEmployment(value.employmentTypes, type),
-                    })
-                  }
+                    });
+                  }}
                   disabled={busy}
                 />
                 <span>{t(`employmentType.${type}`)}</span>

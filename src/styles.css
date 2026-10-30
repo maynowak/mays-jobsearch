@@ -2421,6 +2421,59 @@ body {
   box-shadow: 0 0 0 3px rgba(201, 178, 138, 0.3);
 }
 
+/* MAYS-SEARCH-UX-02: compact optional search fields. */
+.search-profile-picker {
+  margin-bottom: var(--space-3);
+}
+
+.field-collapsible {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.field-collapsible-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-base);
+}
+
+.field-collapsible-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.field-collapsible-toggle:hover,
+.field-collapsible-toggle:focus-visible {
+  color: var(--text);
+}
+
+.field-collapsible-icon {
+  font-size: 1.25em;
+  line-height: 1;
+}
+
+.field-collapsible-content {
+  margin-top: var(--space-3);
+}
+
+.search-options-active {
+  display: inline-block;
+  margin-left: var(--space-2);
+}
+
 /* Clear (×) button inside text inputs, right side */
 .field-input-wrap {
   position: relative;

@@ -70,6 +70,7 @@ import type {
   ManualSearchProfileDraft,
   ManualSearchProfileRepository,
 } from "./lib/manualSearchProfiles";
+import { useAuth } from "react-oidc-context";
 
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
@@ -125,13 +126,6 @@ export default function App() {
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [foundJobs, setFoundJobs] = useState<Job[]>([]);
-  // Roh-Treffer je Source aus der letzten Suche (meta.sources) — damit auch
-  // Quellen sichtbar bleiben, die geliefert haben, aber aus dem 50er-Anzeige-Pool fielen
-  const [foundSources, setFoundSources] = useState<Partial<Record<string, number>> | null>(null);
-  // Inaktive Quellen + Laufzeit-Gründe der letzten Suche (meta.disabledSources /
-  // meta.sourceReasons) — JOB-SOURCES-01: fehlende Quellen nicht kommentarlos fehlen lassen
-  const [foundDisabledSources, setFoundDisabledSources] = useState<string[] | null>(null);
-  const [foundSourceReasons, setFoundSourceReasons] = useState<Partial<Record<string, string | null>> | null>(null);
   const [profile, setProfile] = useState<Profile>({ ...INITIAL_MANUAL_PROFILE });
   const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
   const [atsJob, setAtsJob] = useState<Job | null>(null);
@@ -159,6 +153,13 @@ export default function App() {
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
 
+  // MAYS-SEARCH-UX-02: Auth state for admin visibility control
+  // The production tree supplies AuthProvider. Tests and embedded previews may
+  // render App without it; treat that context as a guest rather than exposing
+  // session profiles.
+  const auth = useAuth() ?? { isAuthenticated: false, user: undefined };
+  const isAuth = auth.isAuthenticated;
+
   // MAYS-SEARCH-PROFILE-MANUAL-01: unabhaengige manuelle Suchprofile.
   // In-Memory-Repository nur fuer die laufende Sitzung (kein localStorage,
   // kein Backend, kein CV-Bezug). Ein Reload beendet die Sammlung.
@@ -169,6 +170,18 @@ export default function App() {
   const [manualProfiles, setManualProfiles] = useState<ManualSearchProfile[]>(() =>
     manualProfileStoreRef.current ? manualProfileStoreRef.current.list() : []
   );
+  const authProfileKey = isAuth ? String(auth.user?.profile?.sub ?? "authenticated") : null;
+  const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const previous = previousAuthProfileKeyRef.current;
+    if (previous !== undefined && previous !== authProfileKey) {
+      const store = manualProfileStoreRef.current;
+      store?.list().forEach((entry) => store.delete(entry.id));
+      setManualProfiles([]);
+      setProfile({ ...INITIAL_MANUAL_PROFILE });
+    }
+    previousAuthProfileKeyRef.current = authProfileKey;
+  }, [authProfileKey]);
 
   // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
   const [cvState, setCvState] = useState<CvProcessingState>({
@@ -338,9 +351,6 @@ export default function App() {
     setModelExhausted(false);
     setDataset(null);
     setFoundJobs([]);
-    setFoundSources(null);
-    setFoundDisabledSources(null);
-    setFoundSourceReasons(null);
     setMatches([]);
 
     const hasTargetRoles = Array.isArray(submitted.targetRoles) && submitted.targetRoles.length > 0;
@@ -368,9 +378,6 @@ export default function App() {
       const nextDataset: JobDataset = { jobs: board.jobs, profile: submitted };
       setDataset(nextDataset);
       setFoundJobs(board.jobs);
-      setFoundSources(board.meta?.sources ?? null);
-      setFoundDisabledSources(board.meta?.disabledSources ?? null);
-      setFoundSourceReasons(board.meta?.sourceReasons ?? null);
     } catch (err) {
       setStatus({ type: "error", message: describeError(err) });
     } finally {
@@ -397,9 +404,6 @@ export default function App() {
     setModelExhausted(false);
     setDataset(null);
     setFoundJobs([]);
-    setFoundSources(null);
-    setFoundDisabledSources(null);
-    setFoundSourceReasons(null);
     setMatches([]);
 
     setPhase("searching");
@@ -420,9 +424,6 @@ export default function App() {
       const nextDataset: JobDataset = { jobs: board.jobs, profile: submitted };
       setDataset(nextDataset);
       setFoundJobs(board.jobs);
-      setFoundSources(board.meta?.sources ?? null);
-      setFoundDisabledSources(board.meta?.disabledSources ?? null);
-      setFoundSourceReasons(board.meta?.sourceReasons ?? null);
     } catch (err) {
       console.error("[runCvSearch] error:", err);
       setStatus({ type: "error", message: describeError(err) });
@@ -1078,10 +1079,7 @@ export default function App() {
         keywords: jobsResponse.meta?.keywords,
         sources: jobsResponse.meta?.sources,
         sourceCounts: jobsResponse.meta?.sourceCounts,
-        disabledSources: jobsResponse.meta?.disabledSources,
-        sourceDetails: jobsResponse.meta?.sourceDetails,
         jobsCombined: jobsResponse.meta?.jobsCombined,
-        apify: jobsResponse.meta?.apify,
         evaluated: matchResult.meta?.evaluated,
         note: matchResult.meta?.note,
         totalFound: matchResult.meta?.totalFound,
@@ -1554,6 +1552,8 @@ export default function App() {
         rematch={canRematch}
         onWorkflowStart={handleCvUploadStart}
         openCvUpload={new URLSearchParams(window.location.search).get("cv") === "upload"}
+        manualProfiles={manualProfiles}
+        authenticated={isAuth}
       />
       {/* CV-UPLOAD-UX-08: Box fuer gespeicherte Profile UNTER dem
           CV-Upload-Bereich (Suchmaske): Suchprofil + ATS-Profil waehlen,
@@ -1663,7 +1663,7 @@ export default function App() {
             )}
           </div>
         )}
-      <JobSources jobs={foundJobs} deliveredCounts={foundSources} disabledSources={foundDisabledSources} sourceReasons={foundSourceReasons} />
+      <JobSources jobs={foundJobs} />
       <div className="model-divider" aria-hidden="true" />
       <ModelSelector
         state={modelsState}

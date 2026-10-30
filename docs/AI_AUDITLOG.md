@@ -1,3 +1,14 @@
+2026-10-30 · MAYS-SEARCH-UX-02
+- Typ: Feature/Privacy/Data-Flow/UI/Security-Boundary
+- Status: IMPLEMENTED (full tests/build/API syntax green; Chromium 1440/390 smoke green; Firefox and live authenticated flow NOT VERIFIED)
+- Scope: Auswahl bestehender manueller Session-Suchprofile in der Suchmaske ohne automatische Suche; kompakte Disclosure fuer optionale Zielrolle/Stadt/Umkreis; oeffentliche Jobquellenanzeige auf tatsächlich gelieferte/angezeigte Quellen begrenzt.
+- Search-profile data flow: `ManualSearchProfileRepository` bleibt die einzige Quelle. Auswahl kopiert nur den bestehenden `Profile`-`searchConfig` in den kontrollierten Suchzustand. Kein `/api/jobs`, kein Modell, kein CV/ATS-Aufruf durch die Auswahl. Bearbeitungen loesen die Auswahlmarkierung, damit keine unveraenderte Speicherung behauptet wird. Auth-Identitaetswechsel leert die In-Memory-Sammlung.
+- Optional fields: Bestehendes OpenPLZ-Autocomplete und bestehender Profile/API-Vertrag bleiben erhalten. Keine Pflichtvalidierung, keine zweite Geocoding-Implementierung und keine unbelegte Radiusgenauigkeit.
+- AI-/Privacy-/Data-Flow impact: keine neue KI-/Provider-Strecke und keine neue Speicherung. Der oeffentliche `/api/jobs`-Handler entfernt `sourceReasons`, `disabledSources`, `sourceDetails` und `apify`-Diagnostik aus der Client-Antwort. Quellen-/Jobdaten selbst bleiben unveraendert.
+- Admin boundary: Es wurde kein serverseitig verifizierter Cognito-/OIDC-Admin- oder Gruppenvertrag gefunden. Deshalb keine unsichere Frontend-Adminfreigabe, kein E-Mail-Allowlist-/localStorage-Flag und keine neue Admin-UI. Eine geschuetzte Admin-Diagnostik bleibt als separater Umsetzungspunkt offen.
+- Tests: `npm test -- --run` (928 passed, 5 skipped); `npx tsc --noEmit -p tsconfig.app.json`; `npm run build`; alle API-`node --check`; `git diff --check` (PASS). Chromium 1440/390 PASS ohne Overflow/Konsolenfehler; Firefox/live auth NOT VERIFIED.
+- Log: `docs/reports/MAYS-SEARCH-UX-02-EXECUTION_LOG.md`
+
 2026-10-30 · MAYS-SEARCH-PROFILE-MANUAL-01
 - Typ: Feature/Privacy/Data-Flow/UI
 - Status: COMPLETE (tests/build green; Chromium smoke 1440/390 green; Firefox/WebKit und authentifizierter Live-Flow NOT VERIFIED)

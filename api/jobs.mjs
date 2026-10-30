@@ -81,7 +81,11 @@ export default async function handler(req, res) {
       identity,
     });
 
-    return res.status(200).json(result);
+    // Source diagnostics are operational data. No server-verified admin
+    // authorization contract exists yet, so the public endpoint deliberately
+    // strips disabled-source/provider-reason details before returning JSON.
+    const { sourceReasons: _sourceReasons, disabledSources: _disabledSources, sourceDetails: _sourceDetails, apify: _apify, ...publicMeta } = result.meta ?? {};
+    return res.status(200).json({ ...result, meta: publicMeta });
   } catch (err) {
     if (err instanceof HttpError) {
       return res.status(err.status).json({ error: err.message, code: err.code });

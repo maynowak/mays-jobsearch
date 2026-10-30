@@ -121,7 +121,6 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
 
   const arbeitnowResult = results.find((result) => result.sourceId === arbeitnow.SOURCE_ID);
   const apifyResult = results.find((result) => result.sourceId === "arbeitsagentur");
-
   return {
     jobs: searchStrategyResult.jobs,
     meta: {

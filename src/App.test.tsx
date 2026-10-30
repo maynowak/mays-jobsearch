@@ -230,7 +230,7 @@ describe("Explizites AI-Matching nach Jobsuche (Step 22)", () => {
       expect(screen.getByText("Java Engineer")).toBeTruthy();
     });
 
-    it("liefernde, aber herausgefilterte Quellen bleiben in der Jobquellen-Box sichtbar", async () => {
+    it("zeigt technische Angaben zu herausgefilterten Quellen nicht öffentlich", async () => {
       const sourcedJob: Job = { ...job, source: ["arbeitnow"] };
       vi.mocked(fetchJobs).mockResolvedValue({
         jobs: [sourcedJob],
@@ -242,8 +242,8 @@ describe("Explizites AI-Matching nach Jobsuche (Step 22)", () => {
       fireEvent.click(screen.getByText("Meine Treffer finden"));
 
       await screen.findByText("AWS Engineer");
-      expect(screen.getByText("JobsPipe")).toBeTruthy();
-      expect(screen.getByText(/nicht angezeigt/)).toBeTruthy();
+      expect(screen.queryByText("JobsPipe")).toBeNull();
+      expect(screen.queryByText(/nicht angezeigt/)).toBeNull();
     });
   });
 

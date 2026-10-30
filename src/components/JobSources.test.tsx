@@ -65,7 +65,7 @@ describe("JobSources", () => {
     expect(container.querySelector(".job-sources")).toBeNull();
   });
 
-  it("zeigt liefernde, aber herausgefilterte Quellen zusätzlich an", () => {
+  it("zeigt technische Angaben zu gelieferten, aber nicht angezeigten Treffern nicht öffentlich", () => {
     const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
     render(
       <LangProvider>
@@ -73,10 +73,8 @@ describe("JobSources", () => {
       </LangProvider>
     );
     expect(screen.getByText("Arbeitnow")).toBeTruthy();
-    expect(screen.getByText("JobsPipe")).toBeTruthy();
-    const cutRow = document.querySelector(".job-sources-row--cut");
-    expect(cutRow?.textContent).toContain("25 Stellen");
-    expect(cutRow?.textContent).toContain("nicht angezeigt");
+    expect(screen.queryByText("JobsPipe")).toBeNull();
+    expect(document.querySelector(".job-sources-row--cut")).toBeNull();
     expect(screen.queryByText("Greenhouse")).toBeNull();
   });
 
@@ -97,21 +95,20 @@ describe("JobSources", () => {
     expect(document.querySelector(".job-sources-row--cut")).toBeNull();
   });
 
-  it("JOB-SOURCES-01: deaktivierte Quellen erscheinen als inaktive Zeilen", () => {
+  it("zeigt deaktivierte Quellen nicht in der öffentlichen Quellenliste", () => {
     const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
     render(
       <LangProvider>
         <JobSources jobs={jobs} disabledSources={["adzuna", "jobspipe"]} />
       </LangProvider>
     );
-    expect(screen.getByText("Adzuna")).toBeTruthy();
-    expect(screen.getByText("JobsPipe")).toBeTruthy();
+    expect(screen.queryByText("Adzuna")).toBeNull();
+    expect(screen.queryByText("JobsPipe")).toBeNull();
     const inactiveRows = document.querySelectorAll(".job-sources-row--inactive");
-    expect(inactiveRows.length).toBe(2);
-    expect(inactiveRows[0]?.textContent).toContain("inaktiv");
+    expect(inactiveRows.length).toBe(0);
   });
 
-  it("JOB-SOURCES-01: Quellengründe werden gemappt angezeigt, liefernde Quellen nicht doppelt", () => {
+  it("zeigt technische Quellengründe nicht öffentlich", () => {
     const jobs = Array.from({ length: 10 }, (_, i) => makeJob(`a${i}`, "arbeitnow"));
     render(
       <LangProvider>
@@ -122,13 +119,12 @@ describe("JobSources", () => {
         />
       </LangProvider>
     );
-    // adzuna nur einmal (disabled gewinnt über reason), theirstack/jobspipe mit gemapptem Grund
-    expect(document.querySelectorAll(".job-sources-row--inactive").length).toBe(3);
-    expect(screen.getByText("Theirstack")).toBeTruthy();
+    expect(document.querySelectorAll(".job-sources-row--inactive").length).toBe(0);
+    expect(screen.queryByText("Theirstack")).toBeNull();
     const rows = document.querySelector(".job-sources")?.textContent ?? "";
-    expect(rows).toContain("inaktiv");
-    expect(rows).toContain("nicht konfiguriert");
-    expect(rows).toContain("Limit erreicht");
+    expect(rows).not.toContain("inaktiv");
+    expect(rows).not.toContain("nicht konfiguriert");
+    expect(rows).not.toContain("Limit erreicht");
     // arbeitnow liefert und steht genau einmal drin
     expect(screen.getAllByText("Arbeitnow").length).toBe(1);
   });
