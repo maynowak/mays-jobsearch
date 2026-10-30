@@ -35,6 +35,19 @@
   product name. The modal `May` and month-like text are not globally replaced.
 - Name matching remains heuristic and does not claim complete anonymity.
 
+## Contact-data follow-up
+
+- Email detection now tolerates PDF whitespace around `@` and dots, plus
+  subdomains/plus-addresses, while retaining an email-shaped requirement.
+- German street + house-number + PLZ/city blocks are masked across line breaks;
+  city continuation stays on the same line to avoid consuming following CV
+  content. Isolated numbers/places are not treated as addresses.
+- Targeted protection retains technical phrases such as `Spring Boot`, `AWS
+  Solutions Architect`, and `Bachelor of Science` before the existing name
+  heuristic. This is not a complete name/PII classifier.
+- The App model-boundary test checks synthetic spaced email/address values and
+  confirms technical terms remain in the sent text.
+
 ## Regression coverage
 
 - Synthetic name tests cover straight/typographic apostrophes, inner-
@@ -49,8 +62,8 @@
 
 ## Verification
 
-- `npx vitest run src/lib/anonymize.test.ts src/lib/skills.test.ts` — PASS (16)
-- `npm test -- --run` — PASS (859 passed, 5 skipped)
+- `npx vitest run src/lib/anonymize.test.ts src/lib/skills.test.ts` — PASS (18)
+- `npm test -- --run` — PASS (861 passed, 5 skipped)
 - `npm run build` — PASS
 - All API syntax checks — PASS
 - `git diff --check` — PASS
@@ -65,5 +78,4 @@
 
 ## Resume point
 
-- Run full suite, update this report/audit entry with final counts, then commit
-  only scoped files. Do not push or deploy.
+- Full validation is complete; commit only scoped files. Do not push or deploy.

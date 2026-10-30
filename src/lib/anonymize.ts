@@ -38,6 +38,16 @@ const JOB_RELEVANT_PHRASES = [
   "Project Manager",
   "UX Designer",
   "Business Analyst",
+  "Senior DevOps Engineer",
+  "Spring Boot",
+  "Software Architect",
+  "Generative AI",
+  "Retrieval Augmented Generation",
+  "AWS Solutions Architect",
+  "HashiCorp Terraform Associate",
+  "Event-Driven Architecture",
+  "Bachelor of Science",
+  "Amazon Web Services",
 ];
 
 // This is the product name, not a candidate name. Protect it before the
@@ -45,7 +55,11 @@ const JOB_RELEVANT_PHRASES = [
 // to the existing name heuristic.
 const PROTECTED_PRODUCT_PHRASES = ["May's Job Matcher", "May’s Job Matcher"];
 
-const EMAIL_PATTERN = /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
+// PDF extraction can insert whitespace around @ or dots. Keep the match
+// deliberately email-shaped so prose such as "E-Mail" or "@Override" is not
+// treated as a personal address.
+const EMAIL_PATTERN =
+  /\b[a-zA-Z0-9.!#$%&'*+\/?^_`{|}~-]+\s*@\s*[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\s*\.\s*[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\s*\.\s*[a-zA-Z]{2,}(?=$|[^\p{L}\p{N}_])/gu;
 
 const PHONE_PATTERNS = [
   /\+?\d[\d\s\-()]{8,}\d/g,
@@ -56,6 +70,7 @@ const PHONE_PATTERNS = [
 const ADDRESS_PATTERNS = [
   /\b\d{1,5}\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,?\s+[A-Z]{2}\s+\d{5}(?:-\d{4})?/g,
   /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s+[A-Z]{2}\s+\d{5}/g,
+  /\b[\p{L}][\p{L}.'’-]*(?:straße|strasse|str\.|weg|allee|platz|gasse|ring|ufer|damm|chaussee)\s+\d{1,5}\s*[a-zA-Z]?(?:\s*[-/]\s*\d{1,5}\s*[a-zA-Z]?)?\s*,?\s+\d{5}\s+[\p{L}][\p{L}.'’-]*(?:[ \t]+[\p{L}][\p{L}.'’-]*){0,2}(?=$|[\r\n,.;])/giu,
 ];
 
 const DATE_PATTERNS = [

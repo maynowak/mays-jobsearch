@@ -969,8 +969,10 @@ describe("CV workflow", () => {
   it("Privacy Boundary: Consent-Pflicht vor AI-Call; PII wird vorher anonymisiert", async () => {
     vi.mocked(extractPdfText).mockResolvedValueOnce(
       "Max Mustermann, max.mustermann@example.com, +49 170 1234567. " +
+        "bewerbung.test @ example.com. Beispielstraße 12b\n12345 Musterstadt. " +
         "Data Müller and Cloud Schmidt. Machine Learning Engineer, " +
-        "Human Resources Specialist, Customer Success Manager."
+        "Human Resources Specialist, Customer Success Manager, Spring Boot, " +
+        "AWS Solutions Architect, Bachelor of Science."
     );
     vi.mocked(createProfile).mockResolvedValue({
       skills: ["React"],
@@ -997,6 +999,9 @@ describe("CV workflow", () => {
     expect(sentText).not.toContain("max.mustermann@example.com");
     expect(sentText).not.toContain("Max Mustermann");
     expect(sentText).not.toContain("+49 170 1234567");
+    expect(sentText).not.toContain("bewerbung.test @ example.com");
+    expect(sentText).not.toContain("Beispielstraße 12b");
+    expect(sentText).not.toContain("12345 Musterstadt");
     expect(sentText).not.toContain("Data Müller");
     expect(sentText).not.toContain("Cloud Schmidt");
     expect(sentText).toContain("[E-MAIL]");
@@ -1004,6 +1009,9 @@ describe("CV workflow", () => {
     expect(sentText).toContain("Machine Learning Engineer");
     expect(sentText).toContain("Human Resources Specialist");
     expect(sentText).toContain("Customer Success Manager");
+    expect(sentText).toContain("Spring Boot");
+    expect(sentText).toContain("AWS Solutions Architect");
+    expect(sentText).toContain("Bachelor of Science");
   });
 
   it("BROWSER-BUG-22: ATS Model-unavailable -> Recovery am ATS-Punkt -> anderes Modell -> nur ATS erneut", async () => {

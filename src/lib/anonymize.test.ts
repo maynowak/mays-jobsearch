@@ -35,4 +35,24 @@ describe("anonymizeText", () => {
   it("does not mask the modal or month by itself", () => {
     expect(anonymizeText("May apply in May 2026.")) .toBe("May apply in May 2026.");
   });
+
+  it("masks PDF-spaced email variants as complete addresses", () => {
+    const result = anonymizeText(
+      "anna.beispiel@example.com; anna.beispiel @example.com; " +
+        "anna.beispiel@ example.com; anna+jobs@mail.example.com; " +
+        "anna.beispiel @ example.com"
+    );
+    expect(result).not.toMatch(/anna\.beispiel|@example|@mail/);
+    expect(result.match(/\[E-MAIL\]/g)).toHaveLength(5);
+  });
+
+  it("masks synthetic German street addresses across PDF line breaks", () => {
+    const result = anonymizeText(
+      "Beispielstraße 12b, 12345 Musterstadt\nBeispielstr. 12 B\n12345 Musterstadt"
+    );
+    expect(result).not.toContain("Beispielstraße");
+    expect(result).not.toContain("Beispielstr.");
+    expect(result).not.toContain("12345 Musterstadt");
+    expect(result.match(/\[ADRESSE\]/g)).toHaveLength(2);
+  });
 });

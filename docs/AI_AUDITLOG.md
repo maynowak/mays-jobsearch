@@ -13,7 +13,7 @@
 - Scope: document-scoped CV operation tokens ignore late extraction/hash/model results after selection/removal/close; anonymizer handles straight/typographic apostrophe names and protects the product name.
 - Root causes: async PDF/model continuations were not invalidated on workflow close or context changes; existing name patterns did not match apostrophe names. The product phrase `May's/May’s Job Matcher` is protected to avoid a known false positive.
 - AI-/Privacy-/Data-Flow impact: positive and local. No new destination/API/storage/model flow; stale results are suppressed before rendering/profile binding, and existing anonymization remains before the model boundary. Complete anonymity is not claimed.
-- Tests: targeted anonymizer/skills tests (16 passed); targeted `MAYS-CV-SELECTION-03` request-payload regression (1 passed); full suite/build/API syntax/diff checks recorded in the execution report; browser synthetic-PDF matrix NOT VERIFIED.
+- Tests: targeted anonymizer/skills/contact tests (18 passed); targeted `MAYS-CV-SELECTION-03` request-payload regression (1 passed); full suite/build/API syntax/diff checks recorded in the execution report; browser synthetic-PDF matrix NOT VERIFIED.
 - Log: `docs/reports/MAYS-CV-CONTEXT-AND-ANONYMIZATION-02-EXECUTION_LOG.md`
 
 2026-10-30 · PROFILE-HIERARCHY-FINAL-VERIFICATION
