@@ -55,4 +55,19 @@ describe("anonymizeText", () => {
     expect(result).not.toContain("12345 Musterstadt");
     expect(result.match(/\[ADRESSE\]/g)).toHaveLength(2);
   });
+
+  it("preserves professional date ranges and technical qualifications", () => {
+    const result = anonymizeText(
+      "2023–2025 Senior Software Architect. 10/2019–07/2020 AWS Cloud Practitioner. " +
+        "Full-Stack Developer, Event-Driven Architecture, Professional Training, " +
+        "Language Skills, Information Systems, Data Warehouse."
+    );
+    expect(result).toContain("2023–2025");
+    expect(result).toContain("10/2019–07/2020");
+    expect(result).toContain("Senior Software Architect");
+    expect(result).toContain("AWS Cloud Practitioner");
+    expect(result).toContain("Full-Stack Developer");
+    expect(result).toContain("Event-Driven Architecture");
+    expect(result).not.toContain("[TELEFON]");
+  });
 });

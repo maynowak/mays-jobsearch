@@ -39,15 +39,27 @@ const JOB_RELEVANT_PHRASES = [
   "UX Designer",
   "Business Analyst",
   "Senior DevOps Engineer",
+  "Senior Software Architect",
+  "Full-Stack Developer",
+  "Event-Driven Architecture",
   "Spring Boot",
   "Software Architect",
   "Generative AI",
   "Retrieval Augmented Generation",
   "AWS Solutions Architect",
+  "AWS Solutions Architect - Associate",
   "HashiCorp Terraform Associate",
   "Event-Driven Architecture",
   "Bachelor of Science",
   "Amazon Web Services",
+  "AWS Cloud Practitioner",
+  "AWS Solutions Architect - Associate",
+  "Professional Training",
+  "Language Skills",
+  "Information Systems",
+  "Data Warehouse",
+  "Streams",
+  "Microservices",
 ];
 
 // This is the product name, not a candidate name. Protect it before the
@@ -77,6 +89,11 @@ const DATE_PATTERNS = [
   /\b\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2,4}\b/g,
   /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}\b/gi,
 ];
+
+// Employment ranges and page-style ranges are contextual document structure,
+// not contact data. Protect them before the broad phone matcher runs.
+const DATE_RANGE_PATTERN =
+  /\b(?:\d{1,2}[./]\d{4}|(?:19|20)\d{2})\s*[–—-]\s*(?:\d{1,2}[./]\d{4}|(?:19|20)\d{2})\b/g;
 
 const URL_PATTERN = /\bhttps?:\/\/[^\s]+/gi;
 
@@ -125,6 +142,13 @@ function anonymizeNames(text: string): string {
 export function anonymizeText(text: string): string {
   let result = text;
 
+  const protectedDateRanges: string[] = [];
+  result = result.replace(DATE_RANGE_PATTERN, (match) => {
+    const marker = `\u0000DATE_RANGE_${protectedDateRanges.length}\u0000`;
+    protectedDateRanges.push(match);
+    return marker;
+  });
+
   result = replaceAllPatterns(result, EMAIL_PATTERN, "[E-MAIL]");
   result = replaceAllPatterns(result, PHONE_PATTERNS, "[TELEFON]");
   result = replaceAllPatterns(result, ADDRESS_PATTERNS, "[ADRESSE]");
@@ -135,6 +159,8 @@ export function anonymizeText(text: string): string {
   result = replaceAllPatterns(result, GITHUB_PATTERN, "[GITHUB]");
 
   result = anonymizeNames(result);
+
+  result = result.replace(/\u0000DATE_RANGE_(\d+)\u0000/g, (_, index: string) => protectedDateRanges[Number(index)]);
 
   return result;
 }

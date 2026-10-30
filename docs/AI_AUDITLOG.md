@@ -7,6 +7,15 @@
 - Tests: `npm test -- --run` (856 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS). Browser synthetic-data runtime is NOT VERIFIED.
 - Log: `docs/reports/MAYS-ATS-TOKENIZATION-01-EXECUTION_LOG.md`
 
+2026-10-30 · MAYS-CV-ANONYMIZATION-03
+- Typ: Fix/Privacy/PII-Detection/Data-Flow
+- Status: IMPLEMENTED (targeted validation green; full validation pending)
+- Scope: PDF-spaced email and German address masking, date-range protection before phone matching, and targeted protection for technical roles/qualifications in the existing local anonymizer.
+- Root causes: phone regex accepted employment year ranges; broad capitalized-pair matching affected technical phrases; email/address patterns did not tolerate PDF whitespace/line breaks.
+- AI-/Privacy-/Data-Flow impact: positive at the existing pre-model boundary. No new destination/API/storage/model flow; actual model-boundary payload is covered by synthetic App tests. No complete anonymity claim.
+- Tests: targeted contact/privacy tests passed; `npm test -- --run` (862 passed, 5 skipped); build/API syntax/diff checks passed; browser PDF matrix NOT VERIFIED.
+- Log: `docs/reports/MAYS-CV-ANONYMIZATION-03-EXECUTION_LOG.md`
+
 2026-10-30 · MAYS-CV-CONTEXT-AND-ANONYMIZATION-02
 - Typ: Fix/Privacy/Data-Flow/Async-Context
 - Status: IMPLEMENTED (targeted validation green; full validation pending)

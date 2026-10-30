@@ -973,6 +973,7 @@ describe("CV workflow", () => {
         "Data Müller and Cloud Schmidt. Machine Learning Engineer, " +
         "Human Resources Specialist, Customer Success Manager, Spring Boot, " +
         "AWS Solutions Architect, Bachelor of Science."
+        + " 2023–2025 Senior Software Architect, AWS Cloud Practitioner."
     );
     vi.mocked(createProfile).mockResolvedValue({
       skills: ["React"],
@@ -1012,6 +1013,9 @@ describe("CV workflow", () => {
     expect(sentText).toContain("Spring Boot");
     expect(sentText).toContain("AWS Solutions Architect");
     expect(sentText).toContain("Bachelor of Science");
+    expect(sentText).toContain("2023–2025");
+    expect(sentText).toContain("Senior Software Architect");
+    expect(sentText).toContain("AWS Cloud Practitioner");
   });
 
   it("BROWSER-BUG-22: ATS Model-unavailable -> Recovery am ATS-Punkt -> anderes Modell -> nur ATS erneut", async () => {
