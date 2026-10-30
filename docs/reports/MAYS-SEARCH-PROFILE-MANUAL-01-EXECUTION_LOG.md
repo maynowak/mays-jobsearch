@@ -4,6 +4,7 @@
 - Date: 2026-10-30
 - Branch: `main`
 - Git baseline: `25f1826` (`fix: close repeated header name masking leak`), `origin/main` in sync (`0 0`)
+- Commit: `56b33ba` (`feat: add session-only manual search profiles`), pushed to `origin/main`, in sync after push
 - Related fix in this change set: `CV-FILESIZE-DISPLAY-01` (size display + 0-byte upload guard)
 
 ## Scope
@@ -161,6 +162,7 @@ Modified:
 
 ## Deploy / push side effects
 
-- Commit created on `main` only; no production deployment performed and no `vercel --prod` executed.
-- The project has no automatic Git deploy; pushing to `main` does not publish production.
+- Commit `56b33ba` created on `main` and pushed to `origin/main` (`0 0` afterwards).
+- No production deployment performed and no `vercel --prod` executed.
+- The project has no automatic Git deploy; the push does not publish production.
 - No secrets, no `.env`, no generated build artifacts committed.
