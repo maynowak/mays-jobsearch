@@ -56,6 +56,21 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 import { isDevOnlyRoute } from "./lib/devRoute";
 import { buildCvSearchProfile } from "./lib/cvSearchConfig";
+import { partitionCvFiles, validateCvFile } from "./lib/cvFileValidation";
+import ManualSearchProfilesSection from "./components/ManualSearchProfilesSection";
+import {
+  applyManualSearchProfileDraft,
+  createManualSearchProfile,
+  createManualSearchProfileRepository,
+  duplicateManualSearchProfile,
+  toSearchProfile,
+} from "./lib/manualSearchProfiles";
+import type {
+  ManualSearchProfile,
+  ManualSearchProfileDraft,
+  ManualSearchProfileRepository,
+} from "./lib/manualSearchProfiles";
+
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
 
@@ -143,6 +158,17 @@ export default function App() {
   const [dataset, setDataset] = useState<JobDataset | null>(null);
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
+
+  // MAYS-SEARCH-PROFILE-MANUAL-01: unabhaengige manuelle Suchprofile.
+  // In-Memory-Repository nur fuer die laufende Sitzung (kein localStorage,
+  // kein Backend, kein CV-Bezug). Ein Reload beendet die Sammlung.
+  const manualProfileStoreRef = useRef<ManualSearchProfileRepository | null>(null);
+  if (!manualProfileStoreRef.current) {
+    manualProfileStoreRef.current = createManualSearchProfileRepository();
+  }
+  const [manualProfiles, setManualProfiles] = useState<ManualSearchProfile[]>(() =>
+    manualProfileStoreRef.current ? manualProfileStoreRef.current.list() : []
+  );
 
   // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
   const [cvState, setCvState] = useState<CvProcessingState>({
@@ -460,6 +486,15 @@ export default function App() {
   // Beim Schliessen/Abbrechen des Consents bleibt das Dokument in der Liste
   // unter der Suchmaske erhalten (consentDismissed -> Inline-Karte).
   const handleCvUploadStart = (file: File) => {
+    // Defense-in-depth: auch der Quick-Upload akzeptiert keine leeren Dateien.
+    const rejection = validateCvFile(file);
+    if (rejection) {
+      setStatus({
+        type: "error",
+        message: t(rejection === "empty" ? "cv.emptyFile" : rejection === "too-large" ? "cv.tooLarge" : "cv.notPdf"),
+      });
+      return;
+    }
     cvOperationRef.current = null;
     const doc: CvDocument = {
       id: generateDocumentId(),
@@ -482,7 +517,20 @@ export default function App() {
   };
 
   const handleAddCvFiles = (files: FileList | File[], skills?: string[]) => {
-    const newDocuments: CvDocument[] = Array.from(files).map((file) => ({
+    // CV-FILESIZE-DISPLAY-01: Mehrfach-Uploads laufen durch dieselbe Validierung
+    // wie der Single-Upload. 0-Byte-Dateien gelten nicht als verarbeitungsbereit;
+    // Dateityp- und 10-MB-Limit bleiben unveraendert.
+    const { accepted, rejected } = partitionCvFiles(files);
+    if (rejected.length > 0) {
+      const hasNonEmptyRejection = rejected.some((entry) => entry.reason !== "empty");
+      setStatus({
+        type: accepted.length > 0 ? "warn" : "error",
+        message: t(hasNonEmptyRejection ? "cv.invalidFilesSkipped" : "cv.emptyFilesSkipped"),
+      });
+    }
+    if (accepted.length === 0) return;
+
+    const newDocuments: CvDocument[] = accepted.map((file) => ({
       id: generateDocumentId(),
       name: file.name,
       size: file.size,
@@ -1385,6 +1433,54 @@ export default function App() {
     } else {
       void runSearch(submitted);
     }
+  };
+
+  // MAYS-SEARCH-PROFILE-MANUAL-01: CRUD fuer manuelle Suchprofile.
+  // Alle Aktionen sind rein lokal (Session-Speicher) und loesen KEINEN
+  // Modellaufruf, keine CV-Verarbeitung und keine Jobsuche aus.
+  const refreshManualProfiles = () => {
+    const store = manualProfileStoreRef.current;
+    if (store) setManualProfiles(store.list());
+  };
+
+  const handleSaveManualProfile = (draft: ManualSearchProfileDraft, existingId: string | null) => {
+    const store = manualProfileStoreRef.current;
+    if (!store) return;
+    if (existingId) {
+      const existing = store.get(existingId);
+      if (!existing) return;
+      // id + createdAt bleiben stabil, updatedAt wird erneuert.
+      store.save(applyManualSearchProfileDraft(existing, draft));
+    } else {
+      store.save(createManualSearchProfile(draft));
+    }
+    refreshManualProfiles();
+  };
+
+  const handleDeleteManualProfile = (id: string) => {
+    const store = manualProfileStoreRef.current;
+    if (!store) return;
+    if (store.delete(id)) refreshManualProfiles();
+  };
+
+  const handleDuplicateManualProfile = (id: string) => {
+    const store = manualProfileStoreRef.current;
+    if (!store) return;
+    const source = store.get(id);
+    if (!source) return;
+    store.save(duplicateManualSearchProfile(source, `${source.name} ${t("manualProfiles.copySuffix")}`));
+    refreshManualProfiles();
+  };
+
+  // Uebernimmt die Profilkonfiguration in die bestehende Suchmaske und startet
+  // GENAU EINE Suche ueber den vorhandenen /api/jobs-Pfad: kein zweiter
+  // Endpunkt, keine parallele Suche, kein CV, kein Modellaufruf durch die
+  // Profilaktion selbst.
+  const handleSearchWithManualProfile = (profile: ManualSearchProfile) => {
+    const searchProfile = toSearchProfile(profile);
+    handleProfileChange(searchProfile);
+    handleSubmit(searchProfile);
+    navigateInApp("/search");
   };
 
   // SEARCH-WORLD-04: schreibt beim Scrollen nur die CSS-Property
@@ -2544,6 +2640,7 @@ export default function App() {
       selectedAtsProfileId={activeAtsEntryId}
       processing={cvState.isProcessing}
       searching={isSearching}
+      message={status}
       onSelectDocument={handleDashboardCvSelect}
       onRemoveDocument={handleRemoveCvDocument}
       onAddFiles={handleAddCvFiles}
@@ -2553,6 +2650,18 @@ export default function App() {
       onSelectSearchProfile={handleDashboardSearchProfileSelect}
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
       onOpenCvUpload={() => navigateInApp("/search?cv=upload")}
+    />
+  );
+
+  // MAYS-SEARCH-PROFILE-MANUAL-01: "Job-Praferenzen" im Dashboard.
+  const dashboardPreferencesSection = (
+    <ManualSearchProfilesSection
+      profiles={manualProfiles}
+      busy={isSearching || isMatching}
+      onSave={handleSaveManualProfile}
+      onDelete={handleDeleteManualProfile}
+      onDuplicate={handleDuplicateManualProfile}
+      onSearch={handleSearchWithManualProfile}
     />
   );
 
@@ -2616,7 +2725,12 @@ export default function App() {
       >
           <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
-          <DashboardV2 user={DEMO_USER} isDemo cvSection={dashboardCvSection} />
+          <DashboardV2
+            user={DEMO_USER}
+            isDemo
+            cvSection={dashboardCvSection}
+            preferencesSection={dashboardPreferencesSection}
+          />
         </main>
         {cvProcessingUI}
         <Footer />
@@ -2633,7 +2747,10 @@ export default function App() {
       >
           <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
-          <DashboardV2AuthenticatedPreview cvSection={dashboardCvSection} />
+          <DashboardV2AuthenticatedPreview
+            cvSection={dashboardCvSection}
+            preferencesSection={dashboardPreferencesSection}
+          />
         </main>
         {cvProcessingUI}
         <Footer />
@@ -2650,7 +2767,10 @@ export default function App() {
       >
           <Navbar route={route} hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
-          <DashboardV2AuthenticatedPreview cvSection={dashboardCvSection} />
+          <DashboardV2AuthenticatedPreview
+            cvSection={dashboardCvSection}
+            preferencesSection={dashboardPreferencesSection}
+          />
         </main>
         {cvProcessingUI}
         <Footer />

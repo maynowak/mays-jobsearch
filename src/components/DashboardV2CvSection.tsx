@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { CvDocument } from '../types';
+import type { CvDocument, StatusMessage } from '../types';
 import { useLang } from '../i18n';
 import { readCvProfileLists } from '../lib/cvProfileStore';
 import CvDocumentList from './CvDocumentList';
 import CvProfilesOverlay from './CvProfilesOverlay';
+import Status from './Status';
 
 interface Props {
   documents: CvDocument[];
@@ -12,6 +13,9 @@ interface Props {
   selectedAtsProfileId: string | null;
   processing: boolean;
   searching: boolean;
+  // CV-FILESIZE-DISPLAY-01: Upload-/Workflow-Rueckmeldungen (z. B. abgelehnte
+  // 0-Byte-Datei) muessen auch im Dashboard sichtbar sein.
+  message?: StatusMessage | null;
   onSelectDocument: (id: string) => void;
   onRemoveDocument: (id: string) => void;
   onAddFiles: (files: FileList | File[]) => void;
@@ -30,6 +34,7 @@ const DashboardV2CvSection = ({
   selectedAtsProfileId,
   processing,
   searching,
+  message,
   onSelectDocument,
   onRemoveDocument,
   onAddFiles,
@@ -66,6 +71,8 @@ const DashboardV2CvSection = ({
       <div className="dashboard-v2__cv-boundary" role="note">
         {t('dashboard.cvSessionNote')}
       </div>
+
+      <Status status={message ?? null} />
 
       {documents.length > 0 && (
         <div className="field dashboard-v2__cv-picker">

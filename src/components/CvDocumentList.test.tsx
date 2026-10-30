@@ -104,3 +104,44 @@ describe("BROWSER-BUG-09: vollständiger Dateiname", () => {
     expect(nameEl.getAttribute("title")).toBe("Gregor_Nowak_2026-08-14_EN.pdf");
   });
 });
+
+// CV-FILESIZE-DISPLAY-01: Dateigroessen-Anzeige.
+describe("CV-Dateigroessen werden einheitenkorrekt angezeigt", () => {
+  function docWithSize(size: number): CvDocument {
+    return {
+      id: `cv-${size}`,
+      name: `datei-${size}.pdf`,
+      size,
+      selected: false,
+      file: new File([new Uint8Array(Math.min(size, 8))], `datei-${size}.pdf`, {
+        type: "application/pdf",
+      }),
+    };
+  }
+
+  it.each([
+    [0, "0 B"],
+    [850, "850 B"],
+    [25_600, "25,0 KB"],
+    [524_288, "512,0 KB"],
+    [1_572_864, "1,5 MB"],
+  ])("zeigt %i Bytes als %s", (size, expected) => {
+    renderList([docWithSize(size)]);
+    expect(screen.getByText(expected)).toBeTruthy();
+    expect(screen.queryByText("0.0 MB")).toBeNull();
+  });
+
+  it("zeigt die Groesse unabhaengig vom Verarbeitungsstatus", () => {
+    const processed = docWithSize(25_600);
+    processed.hash = "hash-1";
+    processed.skills = ["AWS"];
+    renderList([processed]);
+    expect(screen.getByText("25,0 KB")).toBeTruthy();
+  });
+
+  it("formatiert die Groesse in der englischen Oberflaeche mit Punkt", () => {
+    localStorage.setItem("mj-lang", "en");
+    renderList([docWithSize(1_572_864)]);
+    expect(screen.getByText("1.5 MB")).toBeTruthy();
+  });
+});

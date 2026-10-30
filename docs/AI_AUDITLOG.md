@@ -1,3 +1,21 @@
+2026-10-30 · MAYS-SEARCH-PROFILE-MANUAL-01
+- Typ: Feature/Privacy/Data-Flow/UI
+- Status: COMPLETE (tests/build green; Chromium smoke 1440/390 green; Firefox/WebKit und authentifizierter Live-Flow NOT VERIFIED)
+- Scope: Unabhaengige, manuell definierbare Suchprofile im Dashboard ("Job-Praferenzen") ohne CV, ohne CV-Hash und ohne Modellaufruf; Sitzungsspeicherung im Arbeitsspeicher.
+- Abgrenzung: Die bestehende Hierarchie `CV -> SearchProfile -> ATSSearchProfile` bleibt unveraendert; manuelle Profile sind eine separate Session-Sammlung ohne Migration und ohne CV-Bezug. Suchparameter nutzen den bestehenden `Profile`-Vertrag und den bestehenden `/api/jobs`-Pfad (genau eine Anfrage, keine zweite Job-API, kein Auto-Matching).
+- AI-/Privacy-/Data-Flow impact: kein neuer Provider, Endpunkt, Speicherort oder Modellaufruf. Profil-CRUD bleibt lokal (React-State), kein CV-Inhalt/CV-Hash wird erzeugt oder uebertragen, keine Kontopersistenz. Die UI kommuniziert "Nur diese Sitzung". Deterministische Kriterienpruefung (`evaluateManualProfileMatch`) ist bewusst NICHT in die Trefferfilterung oder ATS-Bewertung verdrahtet und erzeugt keine Prozentwerte.
+- Tests: `npm test -- --run` (925 passed, 5 skipped); `npx tsc --noEmit -p tsconfig.app.json` und `tsc -b` ueber `npm run build` (PASS); `git diff --check` (PASS); Chromium-Smoke 1440/390 ohne Konsolenfehler, ohne API-Aufrufe ausser `GET /api/models` beim App-Start.
+- Log: `docs/reports/MAYS-SEARCH-PROFILE-MANUAL-01-EXECUTION_LOG.md`
+
+2026-10-30 · CV-FILESIZE-DISPLAY-01
+- Typ: Fix/UI/Upload-Validation
+- Status: COMPLETE (tests/build green; Chromium-Smoke green; Firefox/WebKit NOT VERIFIED)
+- Scope: Einheitenkorrekte CV-Dateigroessenanzeige (B/KB/MB, locale-korrekt) und gemeinsame Upload-Validierung fuer Einzel- und Mehrfach-Upload inklusive Ablehnung 0-Byte-PDFs.
+- Root cause: `CvDocumentList` rechnete hart in MB mit einer Nachkommastelle (`0.0 MB` unter ~50 KB); der Mehrfach-Upload in `App.handleAddCvFiles` validierte weder Typ noch Groesse noch leere Dateien.
+- AI-/Privacy-/Data-Flow impact: keine neue Datenfluss-Strecke, kein Modellaufruf, kein API-/Storage-Wechsel. Abgelehnte Dateien gelangen nicht in die Dokumentliste und damit nicht in Extraktion, Anonymisierung oder Profilerstellung. Das 10-MB-Limit und der PDF-Typcheck bleiben unveraendert.
+- Tests: `src/lib/fileSize.test.ts`, `src/lib/cvFileValidation.test.ts`, `CvDocumentList.test.tsx`, Upload-Integrationstests; Gesamtsuite 925 passed/5 skipped; Build/TS/diff checks PASS.
+- Log: `docs/reports/CV-FILESIZE-DISPLAY-01-EXECUTION_LOG.md`
+
 2026-10-30 · MAYS-ATS-TOKENIZATION-01
 - Typ: Fix/Privacy/Data-Flow/Parsing
 - Status: COMPLETE (full validation green; browser runtime NOT VERIFIED)

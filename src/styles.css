@@ -712,6 +712,126 @@ body {
   outline-offset: 3px;
 }
 
+/* MAYS-SEARCH-PROFILE-MANUAL-01: manuelle Suchprofile ("Job-Praferenzen").
+   Bewusst auf den bestehenden Aurora-Klassen/Tokens aufgebaut — keine neue
+   UI-Library, kein Tailwind. */
+.dashboard-v2__manual-profiles {
+  grid-column: 1 / -1;
+}
+
+.dashboard-v2__manual-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.dashboard-v2__manual-toolbar .field-hint {
+  margin: 0;
+}
+
+.dashboard-v2__manual-notice {
+  margin: var(--space-3) 0 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.dashboard-v2__manual-form {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.dashboard-v2__manual-form h3 {
+  margin: 0 0 var(--space-3);
+}
+
+.dashboard-v2__manual-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.dashboard-v2__manual-form-grid > .field--full {
+  grid-column: 1 / -1;
+}
+
+.dashboard-v2__manual-form-grid select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-v2__manual-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.dashboard-v2__manual-form .field-error {
+  margin-top: var(--space-3);
+}
+
+.dashboard-v2__manual-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-v2__manual-item {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.dashboard-v2__manual-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.dashboard-v2__manual-item-head h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-v2__manual-item-head p {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.dashboard-v2__manual-summary {
+  margin: var(--space-1) 0 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-v2__manual-summary strong {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.dashboard-v2__manual-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.dashboard-v2__manual-actions .field-hint {
+  margin: 0;
+}
+
 .dashboard-v2-state {
   display: grid;
   place-items: center;
@@ -759,6 +879,10 @@ body {
   }
 
   .dashboard-v2__cv-selectors {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-v2__manual-form-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -2264,6 +2388,34 @@ body {
 }
 
 .field input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(201, 178, 138, 0.3);
+}
+
+/* MAYS-SEARCH-PROFILE-MANUAL-01: mehrzeilige Begriffslisten (ein Begriff pro Zeile) */
+.field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 5.5rem;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  border: 1px solid var(--border-form);
+  border-radius: var(--radius-md);
+  background: var(--surface-form);
+  color: var(--text);
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field textarea::placeholder {
+  color: var(--text-placeholder);
+}
+
+.field textarea:focus {
   outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(201, 178, 138, 0.3);

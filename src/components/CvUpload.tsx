@@ -1,8 +1,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, KeyboardEvent } from "react";
 import { useLang } from "../i18n";
-
-const MAX_PDF_SIZE = 10 * 1024 * 1024;
+import { validateCvFile } from "../lib/cvFileValidation";
 
 interface Props {
   onManual: () => void;
@@ -23,14 +22,19 @@ export default function CvUpload({ onManual, onWorkflowStart }: Props) {
 
   const handleFile = (file: File) => {
     setError(null);
-    const mimeOk = file.type === "application/pdf" || file.type === "";
-    const extOk = file.name.toLowerCase().endsWith(".pdf");
-    if (!mimeOk || !extOk) {
+    // CV-FILESIZE-DISPLAY-01: gemeinsame Validierung (Typ, 10-MB-Limit und
+    // 0-Byte-Dateien). Eine kleine, aber gueltige PDF bleibt zulaessig.
+    const rejection = validateCvFile(file);
+    if (rejection === "not-pdf") {
       setError(t("cv.notPdf"));
       return;
     }
-    if (file.size > MAX_PDF_SIZE) {
+    if (rejection === "too-large") {
       setError(t("cv.tooLarge"));
+      return;
+    }
+    if (rejection === "empty") {
+      setError(t("cv.emptyFile"));
       return;
     }
     // Uebergabe an Pfad B: App legt das Dokument an, waehlt es aus und

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type { CvDocument } from "../types";
+import { fileSizeLocale, formatFileSize } from "../lib/fileSize";
 
 interface Props {
   documents: CvDocument[];
@@ -39,7 +40,7 @@ export default function CvDocumentList({
   selectionMode = "multiple",
   activeDocumentId = null,
 }: Props): React.ReactElement {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
   // CV-PROFILE-LISTS-04: lokale Bestaetigungs-Anzeige fuer "CV-Daten entfernen"
   const [removeDataConfirmOpen, setRemoveDataConfirmOpen] = useState(false);
@@ -143,7 +144,7 @@ export default function CvDocumentList({
                     {/* BUG-09: vollständiger Dateiname bei Hover über den Namen */}
                     <span className="cv-document-list__name" title={doc.name}>{doc.name}</span>
                     <span className="cv-document-list__size">
-                      {(doc.size / 1024 / 1024).toFixed(1)} MB
+                      {formatFileSize(doc.size, fileSizeLocale(lang))}
                     </span>
                     {/* BROWSER-BUG-21A: Readiness-Status je Dokument */}
                     <span className="cv-document-list__status">{t("cv.readyForProcessing")}</span>

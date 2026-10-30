@@ -92,12 +92,24 @@ export function formatSkills(skills: string[]): string {
     .join(", ");
 }
 
-export function parseTargetRoles(input: string): string[] {
+/**
+ * MAYS-SEARCH-PROFILE-MANUAL-01: Phrase-preserving list parser.
+ *
+ * Trennt ausschliesslich an Komma/Semikolon/Zeilenumbruch (ausserhalb von
+ * Quotes/Klammern) und behandelt jedes Segment als EINEN Begriff. Damit bleiben
+ * manuell erfasste Begriffe wie "Cloud Architecture" oder "ISO 27001" zusammen,
+ * ohne dass der bestehende `parseSkills`-Whitespace-Vertrag geaendert wird.
+ */
+export function parsePhraseList(input: string): string[] {
   if (!input?.trim()) return [];
   const seen = new Set<string>();
   const result: string[] = [];
   for (const segment of splitListSegments(input)) pushToken(result, seen, segment);
   return result;
+}
+
+export function parseTargetRoles(input: string): string[] {
+  return parsePhraseList(input);
 }
 
 export function formatTargetRoles(roles: string[]): string {

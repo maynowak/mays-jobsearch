@@ -17,6 +17,8 @@ export interface DashboardV2Props {
   isDemo: boolean;
   onLogout?: () => void;
   cvSection?: ReactNode;
+  // MAYS-SEARCH-PROFILE-MANUAL-01: "Job-Praferenzen" (manuelle Suchprofile).
+  preferencesSection?: ReactNode;
 }
 
 export const DEMO_USER: DashboardUser = {
@@ -25,7 +27,7 @@ export const DEMO_USER: DashboardUser = {
   name: 'Dev Demo User',
 };
 
-const DashboardV2 = ({ user, isDemo, onLogout, cvSection }: DashboardV2Props) => {
+const DashboardV2 = ({ user, isDemo, onLogout, cvSection, preferencesSection }: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState('overview');
   const navigationItems: readonly DashboardNavigationItem[] = [
@@ -33,7 +35,12 @@ const DashboardV2 = ({ user, isDemo, onLogout, cvSection }: DashboardV2Props) =>
     { id: 'profile', label: t('dashboard.nav.myProfile') },
     { id: 'cv', label: t('dashboard.nav.cv'), badge: cvSection ? undefined : t('dashboard.soon'), disabled: !cvSection },
     { id: 'applications', label: t('dashboard.nav.applications'), badge: t('dashboard.soon'), disabled: true },
-    { id: 'preferences', label: t('dashboard.nav.jobPrefs'), badge: t('dashboard.soon'), disabled: true },
+    {
+      id: 'preferences',
+      label: t('dashboard.nav.jobPrefs'),
+      badge: preferencesSection ? undefined : t('dashboard.soon'),
+      disabled: !preferencesSection,
+    },
     { id: 'settings', label: t('dashboard.nav.settings'), badge: t('dashboard.soon'), disabled: true },
   ];
 
@@ -69,7 +76,7 @@ const DashboardV2 = ({ user, isDemo, onLogout, cvSection }: DashboardV2Props) =>
         </Card>
 
         <main className="dashboard-v2__main">
-          {activeId === 'cv' && cvSection ? cvSection : (
+          {activeId === 'cv' && cvSection ? cvSection : activeId === 'preferences' && preferencesSection ? preferencesSection : (
             <>
           <Card variant="primary" className="dashboard-v2__profile-card">
             <div className="dashboard-v2__card-heading">
@@ -119,7 +126,7 @@ const DashboardV2 = ({ user, isDemo, onLogout, cvSection }: DashboardV2Props) =>
               <Badge tone="soon">{t('dashboard.soon')}</Badge>
             </div>
             <div className="dashboard-v2__features-grid">
-              {[t('dashboard.featureCv'), t('dashboard.featureApplications'), t('dashboard.nav.jobPrefs')].map((feature) => (
+              {[t('dashboard.featureCv'), t('dashboard.featureApplications')].map((feature) => (
                 <div className="dashboard-v2__feature" key={feature}>
                   <Badge tone="soon">{t('dashboard.soon')}</Badge>
                   <h3>{feature}</h3>

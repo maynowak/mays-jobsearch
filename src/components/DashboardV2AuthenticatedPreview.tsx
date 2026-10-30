@@ -7,9 +7,10 @@ import Button from './ui/Button';
 
 interface Props {
   cvSection?: ReactNode;
+  preferencesSection?: ReactNode;
 }
 
-const DashboardV2AuthenticatedPreview = ({ cvSection }: Props) => {
+const DashboardV2AuthenticatedPreview = ({ cvSection, preferencesSection }: Props) => {
   const auth = useAuth();
   const { t } = useLang();
 
@@ -47,7 +48,15 @@ const DashboardV2AuthenticatedPreview = ({ cvSection }: Props) => {
           : undefined,
   };
 
-  return <DashboardV2 user={user} isDemo={false} onLogout={() => void signOut(auth)} cvSection={cvSection} />;
+  return (
+    <DashboardV2
+      user={user}
+      isDemo={false}
+      onLogout={() => void signOut(auth)}
+      cvSection={cvSection}
+      preferencesSection={preferencesSection}
+    />
+  );
 };
 
 export default DashboardV2AuthenticatedPreview;
