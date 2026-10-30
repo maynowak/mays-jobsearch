@@ -4,6 +4,7 @@
 - Date: 2026-10-30
 - Branch: `main`
 - Preflight baseline: `151f2db` (`origin/main` was in sync)
+- Commit: `7cbc988` (`feat: improve search profile and source visibility UX`)
 - Pre-existing untracked files: left untouched and unstaged
 
 ## 1. Saved search profile selection
@@ -66,5 +67,5 @@ Existing CV, ATS and model pathways were not architecturally changed. The full r
 ## 6. Git and deployment
 
 - Relevant files are the only intended commit scope; unrelated pre-existing untracked files remain untouched and are not staged.
-- Commit and push are pending final review/approval gate.
+- Commit `7cbc988` was created after final validation; push is pending the final remote synchronization gate.
 - No `vercel --prod` was run. No production deployment was performed.
