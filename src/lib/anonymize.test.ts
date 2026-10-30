@@ -9,7 +9,7 @@ describe("anonymizeText", () => {
   });
 
   it("still anonymizes ordinary two-word names", () => {
-    expect(anonymizeText("Max Mustermann worked as a React Developer.")).toBe(
+    expect(anonymizeText("Name: Max Mustermann worked as a React Developer.")).toBe(
       "[NAME] worked as a React Developer."
     );
   });

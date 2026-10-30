@@ -63,6 +63,12 @@ synthetic, structurally equivalent values.
 - Name detection remains heuristic. Ambiguous names, employer names, public
   project names, and locations follow the existing mask scope and are not
   globally classified as personal names.
+- The follow-up reference analysis found the remaining overmasking source:
+  the old global capitalized-pair matcher. It was replaced in the subsequent
+  anonymization fix by contextual name signals (explicit name labels, title/
+  header context, apostrophe-name forms) plus protected product/technical
+  phrases; arbitrary technical word pairs are no longer globally treated as
+  names.
 - No new storage, API, model, provider, consent, selection, hash, or search
   behavior was introduced.
 

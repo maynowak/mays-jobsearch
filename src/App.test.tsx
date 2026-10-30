@@ -968,9 +968,9 @@ describe("CV workflow", () => {
 
   it("Privacy Boundary: Consent-Pflicht vor AI-Call; PII wird vorher anonymisiert", async () => {
     vi.mocked(extractPdfText).mockResolvedValueOnce(
-      "Max Mustermann, max.mustermann@example.com, +49 170 1234567. " +
+      "Name: Max Mustermann, max.mustermann@example.com, +49 170 1234567. " +
         "bewerbung.test @ example.com. Beispielstraße 12b\n12345 Musterstadt. " +
-        "Data Müller and Cloud Schmidt. Machine Learning Engineer, " +
+        "Name: Data Müller and Name: Cloud Schmidt. Machine Learning Engineer, " +
         "Human Resources Specialist, Customer Success Manager, Spring Boot, " +
         "AWS Solutions Architect, Bachelor of Science."
         + " 2023–2025 Senior Software Architect, AWS Cloud Practitioner."

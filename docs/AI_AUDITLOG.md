@@ -7,6 +7,15 @@
 - Tests: `npm test -- --run` (856 passed, 5 skipped); `npm run build` (PASS); all API syntax checks (PASS); `git diff --check` (PASS). Browser synthetic-data runtime is NOT VERIFIED.
 - Log: `docs/reports/MAYS-ATS-TOKENIZATION-01-EXECUTION_LOG.md`
 
+2026-10-30 · MAYS-CV-ANONYMIZATION-04-R1
+- Typ: Fix/Privacy/PII-Detection/AI-Boundary
+- Status: COMPLETE (full validation green; browser reference-PDF matrix NOT VERIFIED)
+- Scope: Replace global capitalized-pair name masking with contextual name signals; preserve date ranges and technical roles/certifications; retain contact masking and actual model-boundary tests.
+- Root cause: global generic name matching directly masked arbitrary technical/qualification word pairs; phone matching ran on unprotected date-range digit sequences. The personal reference PDF was not available in checkout, so no personal values were logged or reconstructed.
+- AI-/Privacy-/Data-Flow impact: positive at the existing local pre-model boundary; no new destination, API, storage, provider, or model flow. Synthetic payload tests verify masked contacts and retained technical content. Complete anonymity is not claimed.
+- Tests: `npm test -- --run` (862 passed, 5 skipped); build/API syntax/diff checks PASS; browser multi-page synthetic-PDF matrix NOT VERIFIED.
+- Log: `docs/reports/MAYS-CV-ANONYMIZATION-04-R1-EXECUTION_LOG.md`
+
 2026-10-30 · MAYS-CV-ANONYMIZATION-03
 - Typ: Fix/Privacy/PII-Detection/Data-Flow
 - Status: IMPLEMENTED (targeted validation green; full validation pending)

@@ -9,7 +9,14 @@ const APOSTROPHE_NAME_PATTERNS = [
   /\b\p{Lu}[\p{Ll}]*['’]\p{Lu}[\p{Ll}]+\b/gu,
 ];
 
-const GENERIC_NAME_PATTERN = /\b\p{Lu}[\p{Ll}]+ \p{Lu}[\p{Ll}]+\b/gu;
+// A generic capitalized-pair matcher overmasks CV content (for example
+// "Computer Science" or "Software Development"). Names are therefore only
+// detected by strong local context here: an explicit name label, a title, or
+// the document's first header line.
+const LABELLED_NAME_PATTERN =
+  /\b(?:Name|NAME|Candidate|CANDIDATE|Applicant|APPLICANT|Author(?:\s+name)?|AUTHOR(?:\s+NAME)?)\s*:\s*\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}/gu;
+const FIRST_LINE_NAME_PATTERN =
+  /^\s*\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}\s*(?=(?:[·|•—-].*)?$)/u;
 
 // CV headers often use all capitals (for example "MAY NOWAK · PROFESSIONAL
 // CV"). Only treat an all-caps pair as a name when it starts a line/header and
@@ -126,17 +133,20 @@ function anonymizeNames(text: string): string {
     protectedText
   );
 
+  const contextualNamesRemoved = titledNamesRemoved
+    .replace(LABELLED_NAME_PATTERN, "[NAME]")
+    .replace(FIRST_LINE_NAME_PATTERN, "[NAME]");
+
   const apostropheNamesRemoved = APOSTROPHE_NAME_PATTERNS.reduce(
     (result, pattern) => replaceWithPlaceholder(result, pattern, "[NAME]"),
-    titledNamesRemoved
+    contextualNamesRemoved
   );
 
   const headerNamesRemoved = apostropheNamesRemoved.replace(
     ALL_CAPS_HEADER_NAME_PATTERN,
     "$1$2[NAME]"
   );
-  const anonymized = headerNamesRemoved.replace(GENERIC_NAME_PATTERN, "[NAME]");
-  return anonymized.replace(/\u0000ROLE_(\d+)\u0000/g, (_, index: string) => protectedPhrases[Number(index)]);
+  return headerNamesRemoved.replace(/\u0000ROLE_(\d+)\u0000/g, (_, index: string) => protectedPhrases[Number(index)]);
 }
 
 export function anonymizeText(text: string): string {
