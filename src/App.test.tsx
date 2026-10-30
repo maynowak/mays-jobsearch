@@ -1149,6 +1149,38 @@ describe("CV workflow", () => {
     // beide Dokumente haben Checkboxen
     expect(document.querySelectorAll(".cv-document-list__checkbox").length).toBe(2);
   });
+
+  it("MAYS-CV-SELECTION-03: verarbeitet nach A nur den ausdrücklich ausgewählten CV B", async () => {
+    vi.mocked(extractPdfText).mockImplementation(async (file: File) =>
+      file.name === "cv-a.pdf"
+        ? "HANDOVER-A-ONLY-UNIQUE-TEST-CONTENT"
+        : "RESUME-B-ONLY-UNIQUE-TEST-CONTENT"
+    );
+    vi.mocked(createProfile).mockResolvedValue({
+      skills: ["B Skill"],
+      experienceLevel: "Senior",
+      targetRoles: ["B Role"],
+      location: "Berlin",
+    } as SuggestedProfile);
+
+    await uploadCvAndOpenList("cv-a.pdf");
+    // Quick-upload B while A remains in the list: the new document is the
+    // explicit active/first processing context, without auto-search.
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(["B"], "cv-b.pdf", { type: "application/pdf" })] },
+    });
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await screen.findByRole("button", { name: "Weiter" });
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
+    await waitFor(() => expect(vi.mocked(createProfile)).toHaveBeenCalled());
+
+    const requestText = vi.mocked(createProfile).mock.calls.at(-1)?.[0] ?? "";
+    expect(requestText).toContain("RESUME-B-ONLY-UNIQUE-TEST-CONTENT");
+    expect(requestText).not.toContain("HANDOVER-A-ONLY-UNIQUE-TEST-CONTENT");
+  });
 });
 
 describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {

@@ -472,7 +472,7 @@ export default function App() {
     setCvState((prev) => ({
       ...prev,
       documents: [...prev.documents, doc].slice(0, 10),
-      selectedDocumentIds: [...prev.selectedDocumentIds, doc.id],
+      selectedDocumentIds: [doc.id, ...prev.selectedDocumentIds],
       // Consent bereits erteilt (Sitzung): direkt zu den Optionen; sonst
       // zuerst die Einwilligung im Overlay (Consent vor jedem AI-Call).
       step: prev.consentGiven ? "creating-profile" : "consent-required",
@@ -517,7 +517,7 @@ export default function App() {
         doc.id === id ? { ...doc, selected } : doc
       ),
       selectedDocumentIds: selected
-        ? [...new Set([...prev.selectedDocumentIds, id])]
+        ? [id, ...prev.selectedDocumentIds.filter((docId) => docId !== id)]
         : prev.selectedDocumentIds.filter((docId) => docId !== id),
       step: "document-selected",
     }));

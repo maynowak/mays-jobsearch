@@ -43,11 +43,14 @@
 - Existing App/CV workflow tests cover selection, consent, close, and saved
   profile paths. The operation-token race path is guarded in code but browser
   timing verification is not yet executed.
+- `MAYS-CV-SELECTION-03` App regression uses synthetic A/B text, starts B after
+  A remains in the list, and asserts the intercepted `createProfile` payload
+  contains only B's text.
 
 ## Verification
 
 - `npx vitest run src/lib/anonymize.test.ts src/lib/skills.test.ts` — PASS (16)
-- `npm test -- --run` — PASS (858 passed, 5 skipped)
+- `npm test -- --run` — PASS (859 passed, 5 skipped)
 - `npm run build` — PASS
 - All API syntax checks — PASS
 - `git diff --check` — PASS
