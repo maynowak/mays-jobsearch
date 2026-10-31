@@ -1,22 +1,11 @@
-import { createHash } from "node:crypto";
 import { HttpError } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
-import { cacheGet, cacheSet } from "./_lib/cache.mjs";
 
 const MAX_TEXT_LENGTH = 30000;
-const CV_PROFILE_CACHE_TTL_SEC = 30 * 24 * 60 * 60;
 
-function profileCacheKey(hash) {
-  return `cv-profile:${hash}`;
-}
-
-function hashText(text) {
-  return createHash("sha256").update(text, "utf8").digest("hex");
-}
-
-function isHash(value) {
-  return typeof value === "string" && /^[a-f0-9]{32,128}$/.test(value);
-}
+// JM-SEARCH-PARAMETERS-PRIORITY-03: CV profile caching in Redis is retired as
+// a product function. Every profile request is processed by the AI; a client
+// CV hash is neither required nor used for a server-side cache lookup.
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -86,7 +75,6 @@ export default async function handler(req, res) {
     const attempt = Number.parseInt(req.headers["x-mj-attempt"] ?? "", 10) || 0;
     const body = req.body || (await readBody(req));
     const text = typeof body.text === "string" ? body.text.trim() : "";
-    const clientHash = isHash(body.hash) ? body.hash.toLowerCase() : "";
 
     if (!text) {
       return res.status(400).json({
@@ -99,21 +87,6 @@ export default async function handler(req, res) {
         error: "The extracted text is too long. Please use a shorter document.",
         code: "text_too_long",
       });
-    }
-
-    // The cache key must be derived from the text received by this endpoint.
-    // Never trust a client-supplied hash for cache reads: otherwise a known hash
-    // could expose an unrelated user's derived profile.
-    const hash = hashText(text);
-    if (clientHash && clientHash !== hash) {
-      console.warn("[/api/profile] ignoring mismatched client hash");
-    }
-
-    if (hash) {
-      const cached = await cacheGet(profileCacheKey(hash));
-      if (cached && typeof cached === "object" && !Array.isArray(cached)) {
-        return res.status(200).json(cached);
-      }
     }
 
     const system =
@@ -148,10 +121,6 @@ ${text}`;
         error: "The AI didn't return a usable profile. Please try again in a moment.",
         code: "bad_ai_response",
       });
-    }
-
-    if (hash) {
-      await cacheSet(profileCacheKey(hash), profile, CV_PROFILE_CACHE_TTL_SEC);
     }
 
     return res.status(200).json(profile);

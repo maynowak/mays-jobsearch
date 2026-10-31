@@ -62,7 +62,8 @@ export async function geocodeCity(city) {
     }
     return result;
   } catch (err) {
-    console.error("[geo] Geocoding failed for city:", name, err?.message || err);
+    // Privacy: do not log the user-entered city or raw request data.
+    console.error("[geo] Geocoding failed:", err?.message || err);
     return null;
   } finally {
     clearTimeout(timeout);

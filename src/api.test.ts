@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { ApiError, isFreeQuotaExceeded, setFallbackMaxAttempts, withModelFallback } from "./api";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ApiError, createProfile, isFreeQuotaExceeded, setFallbackMaxAttempts, withModelFallback } from "./api";
 
 const unavailable = () => new ApiError("unavailable", 502, "model_unavailable");
 
@@ -224,5 +224,29 @@ describe("free_quota_exceeded (OpenRouter 429 free-models-per-day)", () => {
     ).rejects.toMatchObject({ code: "free_quota_exceeded" });
 
     expect(attempts).toEqual(["a"]);
+  });
+});
+
+
+describe("createProfile request boundary", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sendet keinen CV-Hash und keinen Cache-Schlüssel an /api/profile", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ skills: ["React"], experienceLevel: "", targetRoles: ["Frontend"], location: "" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await createProfile("CV text", "model-x", 2);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/profile");
+    expect(options.headers["x-mj-attempt"]).toBe("2");
+    const body = JSON.parse(options.body);
+    expect(body).toEqual({ text: "CV text", model: "model-x" });
+    expect(body).not.toHaveProperty("hash");
   });
 });

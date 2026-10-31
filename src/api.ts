@@ -271,15 +271,16 @@ export async function fetchModel(): Promise<string> {
 export async function createProfile(
   text: string,
   model?: string | null,
-  hash?: string,
   attempt?: number
 ): Promise<SuggestedProfile> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (attempt && attempt > 1) headers["x-mj-attempt"] = String(attempt);
+  // JM-SEARCH-PARAMETERS-PRIORITY-03: no server-side CV profile cache and no
+  // CV hash in the request. The hash remains a browser-only session key.
   return apiFetch<SuggestedProfile>("/api/profile", {
     method: "POST",
     headers,
-    body: JSON.stringify({ text, ...(hash ? { hash } : {}), ...(model ? { model } : {}) }),
+    body: JSON.stringify({ text, ...(model ? { model } : {}) }),
   });
 }
 

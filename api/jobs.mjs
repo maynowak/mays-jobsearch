@@ -90,9 +90,25 @@ export default async function handler(req, res) {
     if (err instanceof HttpError) {
       return res.status(err.status).json({ error: err.message, code: err.code });
     }
-    console.error("[/api/jobs] unexpected:", err);
-    console.error("[/api/jobs] error stack:", err?.stack);
-    console.error("[/api/jobs] request query:", req.query);
+    // Privacy: log only error metadata, never raw search values or messages
+    // that could embed user input.
+    console.error("[/api/jobs] unexpected:", {
+      name: err?.name || "Error",
+      code: err?.code,
+    });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[/api/jobs] error stack:", err?.stack);
+    }
+    // Log only which known parameters were present, without their contents.
+    const diagnosticKeys = ["skills", "targetRole", "city", "radiusKm", "workMode", "employmentType"];
+    const presentParams = diagnosticKeys.filter((key) => {
+      const value = req.query?.[key];
+      return value !== undefined && value !== "";
+    });
+    console.error("[/api/jobs] request diagnostics:", {
+      method: req.method,
+      presentParams,
+    });
     return res.status(500).json({
       error: "Something went wrong on our end. Please try again in a moment.",
       code: "internal",

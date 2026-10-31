@@ -941,7 +941,7 @@ export default function App() {
         initialModel: modelToUse,
         availableModels: models.map((m) => m.id),
         recommendedModel,
-        request: (m, attempt) => createProfile(normalized, m, hash ?? undefined, attempt),
+        request: (m, attempt) => createProfile(normalized, m, attempt),
       });
 
       if (!isCurrentOperation()) return;

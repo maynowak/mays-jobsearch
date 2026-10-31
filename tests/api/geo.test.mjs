@@ -65,6 +65,16 @@ describe("geo - geocodeCity (Nominatim)", () => {
     expect(await geocodeCity("Berlin")).toBeNull();
   });
 
+  it("does not log the user-entered city on network failure", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    globalThis.fetch = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    expect(await geocodeCity("SecretCity")).toBeNull();
+    expect(JSON.stringify(errorSpy.mock.calls)).not.toContain("SecretCity");
+    errorSpy.mockRestore();
+  });
+
   it("rejects out-of-range coordinates", async () => {
     mockNominatim([{ lat: "999", lon: "999" }]);
     expect(await geocodeCity("Berlin")).toBeNull();
