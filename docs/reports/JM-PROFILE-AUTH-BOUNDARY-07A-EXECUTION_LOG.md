@@ -72,5 +72,6 @@ identity. This contradicted the documented `iss + sub` contract.
 
 ## Git
 
-- Commit and push are recorded after final validation.
+- Implementation commit: `07f18dd`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
