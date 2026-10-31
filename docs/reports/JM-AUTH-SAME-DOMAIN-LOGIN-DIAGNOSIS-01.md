@@ -155,7 +155,7 @@ fehlender MFA-/Testkonto-Verifikation gestoppt.
 ## 10. Git
 
 - Keine Codeänderung.
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `6673d20`
 - Remote-Synchronität: nach Push geprüft.
 - Kein AWS-/Vercel-Deployment.
 
