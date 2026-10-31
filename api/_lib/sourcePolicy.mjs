@@ -10,13 +10,22 @@ export const GUEST_FREE_SOURCE_IDS = new Set(["arbeitnow", "greenhouse", "adzuna
 /** Explicit product exception: Arbeitsagentur via the existing Apify adapter. */
 export const GUEST_APIFY_SOURCE_IDS = new Set(["arbeitsagentur"]);
 
+// Explicit free public-ATS adapter prefixes. Do not allow arbitrary future
+// `provider === "ats"` / `provider === "direct-api"` sources implicitly.
+const GUEST_PUBLIC_ATS_PREFIXES = [
+  "greenhouse:",
+  "lever:",
+  "ashby:",
+  "workable:",
+  "recruitee:",
+  "personio:",
+];
+
 export function isGuestAllowedSource(source) {
   if (!source) return false;
   if (GUEST_FREE_SOURCE_IDS.has(source.id)) return true;
   if (GUEST_APIFY_SOURCE_IDS.has(source.id)) return true;
-  // Public ATS feeds (Greenhouse/Lever/Personio/... via factory) and the
-  // direct Arbeitnow API are free. Adzuna is explicitly listed above.
-  return source.provider === "ats" || source.provider === "direct-api";
+  return GUEST_PUBLIC_ATS_PREFIXES.some((prefix) => String(source.id).startsWith(prefix));
 }
 
 export function guestAllowedSources(sources) {

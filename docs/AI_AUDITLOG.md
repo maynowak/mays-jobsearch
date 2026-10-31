@@ -1,3 +1,12 @@
+2026-10-31 · JM-GUEST-MODEL-A-RELEASE-PREFLIGHT-01
+- Typ: Release-Preflight/Audit/Security
+- Status: PREFLIGHT COMPLETE — deployment NOT approved
+- Access matrix confirmed: free sources + Adzuna + Arbeitsagentur Apify search/details allowed; TheirStack/JobsPipe/other Apify blocked. Policy hardened: no implicit `provider === "ats"`/`"direct-api"` allowance; only explicit free IDs and public-ATS adapter prefixes.
+- Apify: cache-first, single-flight, atomic global run slot (default 100/month), fail-closed on Redis outage, conservative unknown billing, no guest cookie. Soft USD limit is advisory only. Production values NOT VERIFIED.
+- Privacy: no public text changed; DE/EN drafts for cookie-free guest search, optional IP-HMAC and Apify processing added. Legal review pending. Full-site cookieless not claimed.
+- Tests: full suite 1030 passed/5 skipped; TypeScript/Build/diff, budget/IP/lock/REST Redis, guest E2E 1440/390 PASS. Live Vercel/production Apify NOT VERIFIED.
+- Log: `docs/reports/JM-GUEST-MODEL-A-RELEASE-PREFLIGHT-01.md`
+
 2026-10-31 · JM-GUEST-MODEL-A-APIFY-EXCEPTION-REPAIR-01
 - Typ: Fix/Product-Decision/Cost-Control/Privacy
 - Status: IMPLEMENTED / VERIFIED (deployment NOT approved)

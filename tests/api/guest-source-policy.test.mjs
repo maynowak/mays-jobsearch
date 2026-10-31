@@ -20,6 +20,8 @@ describe("JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01: guest source policy", () => {
     expect(isGuestAllowedSource(source("arbeitsagentur", "apify"))).toBe(true);
     expect(isGuestAllowedSource(source("other-apify", "apify"))).toBe(false);
     expect(isGuestAllowedSource(source("unknown-paid", "job-api"))).toBe(false);
+    expect(isGuestAllowedSource(source("future-paid-ats", "ats"))).toBe(false);
+    expect(isGuestAllowedSource(source("future-paid-direct", "direct-api"))).toBe(false);
   });
 
   it("filters paid sources out of the guest registry view", () => {
