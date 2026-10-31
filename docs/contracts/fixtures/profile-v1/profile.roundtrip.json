@@ -1,0 +1,8 @@
+{
+  "skills": "AWS, Terraform, \"Cloud Architecture\", \"Machine Learning\"",
+  "targetRoles": ["Cloud Engineer", "Solutions Architect"],
+  "city": "",
+  "radiusKm": null,
+  "workModes": ["remote", "hybrid"],
+  "employmentTypes": ["full_time", "part_time"]
+}

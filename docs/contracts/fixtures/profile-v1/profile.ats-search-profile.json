@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "atsSearchProfileId": "ats_01EXAMPLE",
+  "searchProfileId": "sp_01EXAMPLE",
+  "name": "DevOps ATS variant",
+  "targetRoles": ["DevOps Engineer"],
+  "skills": ["Terraform", "Kubernetes", "Cloud Architecture"],
+  "criteria": {
+    "schemaVersion": 1,
+    "requiredSkills": ["Terraform"],
+    "preferredSkills": ["Kubernetes"],
+    "excludedTerms": ["night shift"]
+  },
+  "createdAt": "2026-10-31T12:00:00Z",
+  "updatedAt": "2026-10-31T12:00:00Z",
+  "version": 1
+}

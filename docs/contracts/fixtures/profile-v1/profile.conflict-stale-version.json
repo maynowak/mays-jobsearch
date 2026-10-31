@@ -1,0 +1,11 @@
+{
+  "name": "Concurrent edit",
+  "searchConfig": {
+    "skills": "AWS, Terraform",
+    "targetRoles": ["Cloud Engineer"],
+    "city": "Darmstadt",
+    "radiusKm": 25,
+    "workModes": ["remote"],
+    "employmentTypes": ["full_time"]
+  }
+}

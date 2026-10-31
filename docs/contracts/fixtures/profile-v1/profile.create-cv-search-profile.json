@@ -1,0 +1,11 @@
+{
+  "name": "Created Cloud Search",
+  "searchConfig": {
+    "skills": "AWS, \"Cloud Architecture\"",
+    "targetRoles": ["Cloud Engineer"],
+    "city": "",
+    "radiusKm": null,
+    "workModes": [],
+    "employmentTypes": ["full_time"]
+  }
+}

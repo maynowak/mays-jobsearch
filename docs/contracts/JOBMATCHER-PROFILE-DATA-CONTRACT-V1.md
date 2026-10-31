@@ -28,10 +28,18 @@ User
 - Matching results, AI scores, explanations and ATS analysis results are not
   persistence objects in v1.
 
-The stated capacities are product targets. Current frontend enforcement is
-different: CV state is capped at 10, CV profile buckets currently allow up to
-50 entries, and ATS assignment enforces 5 per parent. The target of 2 CV
-search profiles is **not implemented**.
+Product capacity contract:
+
+- one user may own at most **10 CV documents**;
+- one CV may own at most **2 CV search profiles**;
+- one CV search profile may own at most **5 ATS search profiles**;
+- the maximum number of independent manual profiles is **OPEN**.
+
+These are backend-enforced product targets, not claims about the current
+frontend. Current frontend enforcement is different: CV state is capped at 10,
+CV profile buckets currently allow up to 50 entries, and ATS assignment
+enforces 5 per parent. The target of 2 CV search profiles is **not
+implemented**. Atomic enforcement belongs to the persistence backend.
 
 ## 2. Common value types
 
@@ -152,15 +160,30 @@ interface ATSSearchProfileV1 {
   name: string;
   targetRoles: string[];
   skills: string[];           // structured phrases, not a whitespace string
-  criteria?: Record<string, unknown>; // reserved, versioned extension point
+  criteria?: ATSCriteriaV1;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
   version: number;
 }
 ```
 
-`criteria` is not an invitation to persist ATS results. It represents
-user/profile configuration only; its schema must be versioned before use.
+V1 `criteria` is deliberately restrictive:
+
+```typescript
+interface ATSCriteriaV1 {
+  schemaVersion: 1;
+  requiredSkills?: string[];
+  preferredSkills?: string[];
+  excludedTerms?: string[];
+}
+```
+
+Only these three phrase lists are allowed. The object is optional, but when
+present it must contain `schemaVersion: 1` and no additional properties.
+ATS requirements, evidence, scores, matching results, explanations, prompts,
+model responses and arbitrary extension data are not valid V1 `criteria` and
+must not be persisted there. A future criteria shape requires a new schema
+version.
 
 ### ManualSearchProfileV1
 
@@ -234,3 +257,25 @@ used to represent `['remote', 'hybrid']` without an agreed lossy policy.
 ```
 
 The identifier in examples is synthetic only. No real user data is included.
+
+## 6. Roundtrip guarantee
+
+For every supported `Profile` value the adapter MUST satisfy:
+
+```text
+Profile → SearchConfigurationV1 → Profile
+```
+
+with deep equality for `skills`, `targetRoles`, `city`, `radiusKm`,
+`workModes` and `employmentTypes`. In particular:
+
+- `Cloud Architecture` remains one phrase;
+- quoted skills remain semantically equivalent after JSON transport;
+- `radiusKm: null` remains `null`;
+- multiple work modes remain multiple values;
+- multiple employment types remain multiple values;
+- no `remoteOnly` reduction is permitted in the Job Matcher contract.
+
+The fixture `profile.roundtrip.json` and the contract test matrix are the
+authoritative synthetic examples for this guarantee. Backend/RIS mapping
+roundtrips are separate and remain NOT VERIFIED.

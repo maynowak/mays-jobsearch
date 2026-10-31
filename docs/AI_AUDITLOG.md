@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-CONTRACT-02
+- Typ: Contract/Validation/Privacy/Data-Flow
+- Status: SPECIFIED / VERIFIED (JSON Schema and synthetic fixture validation green; no application/RIS/AWS implementation)
+- Scope: Konsolidierung des Job-Matcher-V1-Profilvertrags, maschinenprüfbare Ressourcen-/Payload-Schemas, synthetische positive/negative Fixtures, Kapazitätsziele und Roundtrip-Regeln.
+- Contract boundary: UserProfile, CVDocument, CVSearchProfile, ATSSearchProfile und ManualSearchProfile bleiben getrennte Objekte. `ManualSearchProfile` hat keinen CV-Parent und keinen CV-Hash. `File`, S3-Referenzen, Presigned URLs, Tokens und serverseitige IDs sind nicht Teil der frei beschreibbaren Domain-Payloads.
+- ATS boundary: V1-`criteria` ist auf `schemaVersion: 1` plus required/preferred/excluded phrase lists beschränkt. Matching-Ergebnisse, Scores, Evidence, Prompts und Modellantworten sind ausdrücklich ungültig.
+- AI-/Privacy-/Data-Flow impact: keine neue Route, Speicherung, Authentifizierung, Provider- oder Modellstrecke. Fixtures enthalten ausschließlich synthetische Werte. Backend-only Regeln (Ownership, Parent-Existenz, Kapazität, atomare Writes, Versionskonflikte) werden nicht als lokal verifiziert behauptet.
+- Tests: vorhandenes Python-`jsonschema` validierte 15 positive Ressourcen-/Create-/Update-/Patch-Fixtures und zwei strukturell negative Fixtures; zwei semantische Backend-Fixtures blieben erwartungsgemäß NOT LOCALLY VERIFIABLE. Der Runtime-Adapter-Roundtrip ist noch nicht implementiert; die lossless JSON-/Schemaform ist geprüft. `git diff --check` PASS. Anwendungstests/Build/API-Syntax NOT RUN, da nur Contract-Artefakte geändert wurden.
+- Log: `docs/reports/JM-PROFILE-CONTRACT-02-EXECUTION_LOG.md`
+
 2026-10-31 · MAYS-JOBSEARCH-PROFILE-API-01A
 - Typ: Contract/Architecture/Privacy/Data-Flow/RIS-Handoff
 - Status: SPECIFIED / PROPOSED (Job Matcher-only documentation; RIS capabilities and reachability NOT VERIFIED; no application implementation or deployment)

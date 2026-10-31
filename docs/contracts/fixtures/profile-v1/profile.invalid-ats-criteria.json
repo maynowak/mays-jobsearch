@@ -1,0 +1,10 @@
+{
+  "name": "Invalid ATS criteria",
+  "targetRoles": ["DevOps Engineer"],
+  "skills": ["Terraform"],
+  "criteria": {
+    "schemaVersion": 1,
+    "overallScore": 91,
+    "modelExplanation": "must never be persisted"
+  }
+}

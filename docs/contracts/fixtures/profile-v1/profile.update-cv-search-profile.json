@@ -1,0 +1,11 @@
+{
+  "description": "Updated description",
+  "searchConfig": {
+    "skills": "AWS, Terraform",
+    "targetRoles": ["DevOps Engineer"],
+    "city": "Berlin",
+    "radiusKm": 50,
+    "workModes": ["hybrid"],
+    "employmentTypes": ["full_time", "part_time"]
+  }
+}

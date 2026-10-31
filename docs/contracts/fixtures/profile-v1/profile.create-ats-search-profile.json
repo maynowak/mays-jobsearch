@@ -1,0 +1,11 @@
+{
+  "name": "Created ATS Variant",
+  "targetRoles": ["Cloud Engineer"],
+  "skills": ["AWS", "Cloud Architecture"],
+  "criteria": {
+    "schemaVersion": 1,
+    "requiredSkills": ["AWS"],
+    "preferredSkills": [],
+    "excludedTerms": []
+  }
+}

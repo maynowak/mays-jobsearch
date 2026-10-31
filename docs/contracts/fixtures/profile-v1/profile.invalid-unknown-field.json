@@ -1,0 +1,17 @@
+{
+  "name": "Invalid manual profile",
+  "searchConfig": {
+    "skills": "AWS",
+    "targetRoles": ["Cloud Engineer"],
+    "city": "",
+    "radiusKm": null,
+    "workModes": [],
+    "employmentTypes": ["full_time"]
+  },
+  "matchingPreferences": {
+    "requiredSkills": [],
+    "preferredSkills": [],
+    "excludedTerms": []
+  },
+  "unexpectedPersistedField": "must be rejected"
+}

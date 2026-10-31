@@ -99,6 +99,75 @@ interface ManualSearchProfileRepositoryV1 {
 }
 ```
 
+## 3a. Concrete input contracts
+
+The following payloads are the only client-writable fields in V1. Resource IDs,
+parent IDs, `userId`, `tenantId`, timestamps and `version` are server-owned.
+
+```typescript
+interface UserProfilePatchV1 {
+  nickname?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface CreateCVInputV1 {
+  documentId: string;
+  filename: string;
+  contentType: 'application/pdf';
+  sizeBytes: number;
+}
+
+interface UpdateCVInputV1 {
+  filename?: string;
+}
+
+interface CreateCVSearchProfileInputV1 {
+  name: string;
+  description?: string;
+  searchConfig: SearchConfigurationV1;
+}
+
+interface UpdateCVSearchProfileInputV1 {
+  name?: string;
+  description?: string;
+  searchConfig?: SearchConfigurationV1;
+}
+
+interface CreateATSProfileInputV1 {
+  name: string;
+  targetRoles: string[];
+  skills: string[];
+  criteria?: ATSCriteriaV1;
+}
+
+interface UpdateATSProfileInputV1 {
+  name?: string;
+  targetRoles?: string[];
+  skills?: string[];
+  criteria?: ATSCriteriaV1;
+}
+
+interface CreateManualSearchProfileInputV1 {
+  name: string;
+  description?: string;
+  searchConfig: SearchConfigurationV1;
+  matchingPreferences: MatchingPreferencesV1;
+}
+
+interface UpdateManualSearchProfileInputV1 {
+  name?: string;
+  description?: string;
+  searchConfig?: SearchConfigurationV1;
+  matchingPreferences?: MatchingPreferencesV1;
+}
+```
+
+The JSON Schema bundle in `schemas/JOBMATCHER-PROFILE-V1.schema.json` is the
+machine-readable form of these types. `PUT` updates are represented by the
+complete update input plus `expectedVersion`; `PATCH` is reserved for the
+partial `UserProfile` operation in this V1 contract.
+
 `UserProfileV1`, `CVDocumentV1`, `CVSearchProfileV1`,
 `ATSSearchProfileV1`, `ManualSearchProfileV1` and input types are defined in
 `JOBMATCHER-PROFILE-DATA-CONTRACT-V1.md`. Inputs exclude server-owned IDs,

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "manualSearchProfileId": "msp_01EXAMPLE",
+  "name": "Independent Cloud Search",
+  "description": "No CV required",
+  "origin": "manual",
+  "searchConfig": {
+    "skills": "AWS, Terraform, \"Cloud Architecture\"",
+    "targetRoles": ["Cloud Engineer"],
+    "city": "",
+    "radiusKm": null,
+    "workModes": ["remote", "hybrid"],
+    "employmentTypes": ["full_time", "part_time"]
+  },
+  "matchingPreferences": {
+    "requiredSkills": ["AWS"],
+    "preferredSkills": ["Cloud Architecture"],
+    "excludedTerms": ["Schichtarbeit"]
+  },
+  "createdAt": "2026-10-31T12:00:00Z",
+  "updatedAt": "2026-10-31T12:00:00Z",
+  "version": 1
+}

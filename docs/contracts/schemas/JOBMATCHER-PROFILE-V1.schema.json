@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.mays-job-matcher.invalid/jobmatcher-profile-v1.schema.json",
+  "$comment": "PROPOSED Job Matcher Profile Contract v1. Select a named $defs entry when validating a resource or payload.",
+  "x-capacity-contract": {
+    "CVDocumentV1": { "maxPerUser": 10 },
+    "CVSearchProfileV1": { "maxPerCv": 2 },
+    "ATSSearchProfileV1": { "maxPerSearchProfile": 5 },
+    "ManualSearchProfileV1": { "maxPerUser": null, "status": "OPEN" }
+  },
+  "$defs": {
+    "ISODateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "OpaqueId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "Name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "Phrase": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "PhraseList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Phrase" },
+      "uniqueItems": true
+    },
+    "WorkMode": {
+      "type": "string",
+      "enum": ["remote", "hybrid", "onsite"]
+    },
+    "EmploymentType": {
+      "type": "string",
+      "enum": ["full_time", "part_time"]
+    },
+    "SearchConfigurationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skills", "targetRoles", "city", "radiusKm", "workModes", "employmentTypes"],
+      "properties": {
+        "skills": { "type": "string", "maxLength": 4000 },
+        "targetRoles": { "$ref": "#/$defs/PhraseList" },
+        "city": { "type": "string", "maxLength": 200 },
+        "radiusKm": { "type": ["integer", "null"], "enum": [10, 25, 50, 100, null] },
+        "workModes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/WorkMode" },
+          "uniqueItems": true
+        },
+        "employmentTypes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EmploymentType" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "MatchingPreferencesV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requiredSkills", "preferredSkills", "excludedTerms"],
+      "properties": {
+        "requiredSkills": { "$ref": "#/$defs/PhraseList" },
+        "preferredSkills": { "$ref": "#/$defs/PhraseList" },
+        "excludedTerms": { "$ref": "#/$defs/PhraseList" }
+      }
+    },
+    "ATSCriteriaV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "requiredSkills": { "$ref": "#/$defs/PhraseList" },
+        "preferredSkills": { "$ref": "#/$defs/PhraseList" },
+        "excludedTerms": { "$ref": "#/$defs/PhraseList" }
+      }
+    },
+    "VersionFields": {
+      "type": "object",
+      "required": ["schemaVersion", "createdAt", "updatedAt", "version"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "updatedAt": { "$ref": "#/$defs/ISODateTime" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "UserProfileV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "userId", "status", "createdAt", "updatedAt", "version"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "userId": { "$ref": "#/$defs/OpaqueId" },
+        "tenantId": { "$ref": "#/$defs/OpaqueId" },
+        "nickname": { "type": "string", "maxLength": 200 },
+        "firstName": { "type": "string", "maxLength": 200 },
+        "lastName": { "type": "string", "maxLength": 200 },
+        "email": { "type": "string", "format": "email", "maxLength": 320 },
+        "status": { "type": "string", "enum": ["active", "disabled", "pending"] },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "updatedAt": { "$ref": "#/$defs/ISODateTime" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "CVDocumentV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "cvId", "documentId", "filename", "contentType", "sizeBytes", "processingStatus", "createdAt", "updatedAt", "version"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "cvId": { "$ref": "#/$defs/OpaqueId" },
+        "documentId": { "$ref": "#/$defs/OpaqueId" },
+        "filename": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "contentType": { "const": "application/pdf" },
+        "sizeBytes": { "type": "integer", "minimum": 1 },
+        "processingStatus": { "type": "string", "enum": ["pending", "ready", "failed", "deleted"] },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "updatedAt": { "$ref": "#/$defs/ISODateTime" },
+        "version": { "type": "integer", "minimum": 1 },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pageCount": { "type": "integer", "minimum": 1 },
+            "language": { "type": "string", "minLength": 2, "maxLength": 20 }
+          }
+        }
+      }
+    },
+    "CVSearchProfileV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "searchProfileId", "cvId", "name", "origin", "searchConfig", "createdAt", "updatedAt", "version"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "searchProfileId": { "$ref": "#/$defs/OpaqueId" },
+        "cvId": { "$ref": "#/$defs/OpaqueId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "origin": { "const": "cv" },
+        "searchConfig": { "$ref": "#/$defs/SearchConfigurationV1" },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "updatedAt": { "$ref": "#/$defs/ISODateTime" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "ATSSearchProfileV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "atsSearchProfileId", "searchProfileId", "name", "targetRoles", "skills", "createdAt", "updatedAt", "version"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "atsSearchProfileId": { "$ref": "#/$defs/OpaqueId" },
+        "searchProfileId": { "$ref": "#/$defs/OpaqueId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "targetRoles": { "$ref": "#/$defs/PhraseList" },
+        "skills": { "$ref": "#/$defs/PhraseList" },
+        "criteria": { "$ref": "#/$defs/ATSCriteriaV1" },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "updatedAt": { "$ref": "#/$defs/ISODateTime" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "ManualSearchProfileV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "manualSearchProfileId", "name", "origin", "searchConfig", "matchingPreferences", "createdAt", "updatedAt", "version"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "manualSearchProfileId": { "$ref": "#/$defs/OpaqueId" },
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "origin": { "const": "manual" },
+        "searchConfig": { "$ref": "#/$defs/SearchConfigurationV1" },
+        "matchingPreferences": { "$ref": "#/$defs/MatchingPreferencesV1" },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "updatedAt": { "$ref": "#/$defs/ISODateTime" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "UserProfilePatchV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "nickname": { "type": "string", "maxLength": 200 },
+        "firstName": { "type": "string", "maxLength": 200 },
+        "lastName": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "CreateCVInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentId", "filename", "contentType", "sizeBytes"],
+      "properties": {
+        "documentId": { "$ref": "#/$defs/OpaqueId" },
+        "filename": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "contentType": { "const": "application/pdf" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "UpdateCVInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "filename": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    },
+    "CreateCVSearchProfileInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "searchConfig"],
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "searchConfig": { "$ref": "#/$defs/SearchConfigurationV1" }
+      }
+    },
+    "UpdateCVSearchProfileInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "searchConfig": { "$ref": "#/$defs/SearchConfigurationV1" }
+      }
+    },
+    "CreateATSProfileInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "targetRoles", "skills"],
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "targetRoles": { "$ref": "#/$defs/PhraseList" },
+        "skills": { "$ref": "#/$defs/PhraseList" },
+        "criteria": { "$ref": "#/$defs/ATSCriteriaV1" }
+      }
+    },
+    "UpdateATSProfileInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "targetRoles": { "$ref": "#/$defs/PhraseList" },
+        "skills": { "$ref": "#/$defs/PhraseList" },
+        "criteria": { "$ref": "#/$defs/ATSCriteriaV1" }
+      }
+    },
+    "CreateManualSearchProfileInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "searchConfig", "matchingPreferences"],
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "searchConfig": { "$ref": "#/$defs/SearchConfigurationV1" },
+        "matchingPreferences": { "$ref": "#/$defs/MatchingPreferencesV1" }
+      }
+    },
+    "UpdateManualSearchProfileInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "name": { "$ref": "#/$defs/Name" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "searchConfig": { "$ref": "#/$defs/SearchConfigurationV1" },
+        "matchingPreferences": { "$ref": "#/$defs/MatchingPreferencesV1" }
+      }
+    }
+  }
+}
