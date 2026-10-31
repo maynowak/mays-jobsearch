@@ -1,3 +1,12 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02B-02B-PREFLIGHT-01
+- Typ: Preflight/Security-Verification/Cookie-Migration
+- Status: PREFLIGHT COMPLETE — cutover NOT approved; `mj_session` unchanged
+- Verified: active IP-flag control flow (trusted IP, missing IP, missing secret, IP limit, Redis outage), cache-first single-flight unit behavior, lock/IP/budget Redis primitives, full suite 1014 passed/5 skipped, TypeScript/Build/guest E2E.
+- Not verified: ten parallel full API requests against isolated Upstash-compatible Redis; live Vercel IP headers; product IP limits. Global budgets remain the hard cost cap; no exactly-once claim across lock TTL.
+- Session inventory: jobs/match/job-details issue `mj_session`; TheirStack/JobsPipe use session credits; Apify details use session + legacy untrusted `clientIp`; OIDC auth unchanged. Cutover plan and rollback are documented; privacy text needs legal review.
+- Decision: BLOCKED for cookie removal until Vercel verification, IP limit approval, HMAC secret/rotation, privacy review and a ten-request distributed test are complete.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02B-02B-PREFLIGHT-01-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02B-02A-REPAIR-01
 - Typ: Fix/Cost-Control/Single-Flight/Concurrency
 - Status: IMPLEMENTED / VERIFIED (unit + isolated Redis primitives; 10-request browser concurrency and live Vercel IP headers NOT VERIFIED)

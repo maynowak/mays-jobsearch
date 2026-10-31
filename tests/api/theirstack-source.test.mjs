@@ -147,6 +147,39 @@ describe("Theirstack Source Adapter", () => {
       delete process.env.IP_QUOTA_ENABLED;
     });
 
+    it("allows a paid call with an active IP quota and settles it", async () => {
+      process.env.IP_QUOTA_ENABLED = "true";
+      vi.mocked(cacheEval).mockResolvedValue(1);
+      setupFetchMock(() => okResponse({ data: [sampleTheirstackJob], metadata: {} }));
+      const identity = { sessionId: "abc123", ip: "1.2.3.4", ipScope: "a".repeat(32) };
+      const result = await fetchJobs({ skills: "python", targetRoles: [], city: "", identity });
+      expect(result.jobs.length).toBe(1);
+      expect(vi.mocked(settleProviderBudget)).toHaveBeenCalled();
+      delete process.env.IP_QUOTA_ENABLED;
+    });
+
+    it("blocks a paid call without a trusted IP when IP quota is enabled", async () => {
+      process.env.IP_QUOTA_ENABLED = "true";
+      setupFetchMock(() => {
+        throw new Error("fetch must not be called without a trusted IP");
+      });
+      const result = await fetchJobs({ skills: "python", targetRoles: [], city: "" });
+      expect(result.meta.reason).toBe("quota_unavailable");
+      delete process.env.IP_QUOTA_ENABLED;
+    });
+
+    it("blocks a paid call when IP quota Redis is unavailable", async () => {
+      process.env.IP_QUOTA_ENABLED = "true";
+      vi.mocked(cacheEval).mockResolvedValue(null);
+      setupFetchMock(() => {
+        throw new Error("fetch must not be called when IP quota is unavailable");
+      });
+      const identity = { sessionId: "abc123", ip: "1.2.3.4", ipScope: "a".repeat(32) };
+      const result = await fetchJobs({ skills: "python", targetRoles: [], city: "", identity });
+      expect(result.meta.reason).toBe("quota_unavailable");
+      delete process.env.IP_QUOTA_ENABLED;
+    });
+
     it("returns empty result without query terms (protects credits)", async () => {
       setupFetchMock(() => {
         throw new Error("fetch must not be called without query");
