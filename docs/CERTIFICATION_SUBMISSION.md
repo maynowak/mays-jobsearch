@@ -36,7 +36,7 @@ Aus der Beobachtung entstand das abgeschlossene Feature **AI Matching Timeout & 
   Ergebnisdarstellung, Bewerbungsgenerator und Alert-Anmeldung.
 - **Backend:** Node.js serverless functions (ESM, `.mjs`) auf Vercel Functions.
 - **Daten:** Job-Pool aus Arbeitnow (öffentliche API) und Arbeitsagentur-Feed (Apify Actor),
-  gecacht in Upstash Redis (L1-Jobs, L2-Dataset-Reuse, CV-Profil-Cache).
+  gecacht in Upstash Redis (L1-Jobs, L2-Dataset-Reuse). Ein CV-Profil-Cache existiert nicht.
 - **Cron:** täglicher E-Mail-Digest (`/api/cron/digest`, 07:00 UTC).
 - **Frontend→Backend:** Same-Origin fetch; alle Endpunkte liefern JSON.
 

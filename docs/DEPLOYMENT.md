@@ -80,7 +80,7 @@ Live URL: https://mays-job-matcher.vercel.app
 | `APIFY_API_TOKEN` (optional) | Apify authentication for Apify-based job sources (currently Arbeitsagentur) | `api/_lib/sources/apify/client.mjs` | Optional — without it only Arbeitnow is used | Yes |
 | `JOB_SOURCE_ARBEITNOW_ENABLED` (optional) | Enable/disable the Arbeitnow job source (default `true`) | `api/_lib/config.mjs` | Optional (safe default) | No |
 | `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` (optional) | Enable/disable the Arbeitsagentur job source (default `true`) | `api/_lib/config.mjs` | Optional (safe default) | No |
-| `UPSTASH_REDIS_REST_URL` | Upstash REST endpoint for Apify job cache, CV profile cache and alert subscriptions | `api/_lib/cache.mjs`, `api/_lib/alerts.mjs` | Required for caching and alerts | Credentials — server-side only |
+| `UPSTASH_REDIS_REST_URL` | Upstash REST endpoint for job-source/detail caches, cost counters and alert subscriptions | `api/_lib/cache.mjs`, `api/_lib/alerts.mjs` | Required for caching and alerts | Credentials — server-side only |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash REST token (same uses as above) | `api/_lib/cache.mjs`, `api/_lib/alerts.mjs` | Required for caching and alerts | Yes |
 | `RESEND_API_KEY` | Resend authentication for the daily digest emails | `api/cron/digest.mjs` | Required for digest emails | Yes |
 | `DIGEST_FROM` | Sender address (verified Resend domain) | `api/cron/digest.mjs` | Required for digest emails | No |

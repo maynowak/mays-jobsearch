@@ -135,31 +135,22 @@ This CV flow is separate from the authenticated `/profil` UI route. `/profil`
 renders the user-facing profile/dashboard view; it does not describe the CV
 text extraction or AI profile-creation endpoint.
 
-PDF → browser-side PDF.js → text extraction → normalized text → SHA-256 hash → profile cache lookup → (on miss) `/api/profile` → AI → structured editable search profile → user confirms/edits → matching flow.
+PDF → browser-side PDF.js → text extraction → normalized text → SHA-256 hash (browser session lists only) → `/api/profile` → AI → structured editable search profile → user confirms/edits → matching flow.
 
 - `src/lib/pdf.ts` extracts text with `pdfjs-dist` entirely in the browser. **The PDF is never uploaded as a file.**
-- `src/components/CvUpload.tsx` normalizes the extracted text, computes a SHA-256 hash via `crypto.subtle`, and looks up the profile cache.
-- Cache hit (server) → the stored profile is shown immediately, no AI call.
-- Cache miss → `POST /api/profile` with `{ text, hash }` → `api/profile.mjs` derives the cache key from the received text, runs the AI extraction (`chat` with a JSON shape contract), and returns a `SuggestedProfile` (`skills[]`, `experienceLevel`, `targetRoles[]`, `location`).
+- `src/components/CvUpload.tsx` normalizes the extracted text and computes a SHA-256 hash via `crypto.subtle` for browser-session CV profile lists.
+- Every profile request calls `POST /api/profile` with `{ text, model? }`; `api/profile.mjs` runs the AI extraction (`chat` with a JSON shape contract) and returns a `SuggestedProfile` (`skills[]`, `experienceLevel`, `targetRoles[]`, `location`).
 - The user edits/confirms the proposed profile (`EditableProfile`) before the search runs.
 
 Privacy behavior:
 
-- Raw CV text is never stored anywhere — only the hash and the derived structured profile are cached.
+- Raw CV text is not stored server-side.
+- No derived CV profile is cached in Redis. The former server-side `cv-profile:<hash>` cache is retired as a product function.
 - The server never receives the PDF file, only the extracted text (which is used once and discarded).
 
-### CV profile cache
+### CV profile generation (no cache)
 
-One server-side layer keyed by the SHA-256 of the received CV text (`cv-profile:<hash>`):
-
-- Upstash Redis (`cv-profile:<hash>`, TTL 30 days), set by `api/profile.mjs` (`CV_PROFILE_CACHE_TTL_SEC = 30 * 24 * 60 * 60`). The server derives this key itself; a client hash is not trusted for cache access.
-
-The key contains only the hash; it does **not** include a prompt or model version. The cache avoids repeated paid AI profile parsing for identical CV content.
-
-Observed verification (not guaranteed performance):
-
-- Uncached AI request ≈ 11.7 s.
-- Repeated request with the same CV (hash cache hit) ≈ 0.3 s.
+There is no server-side CV profile cache. Every `/api/profile` request runs the AI extraction. Redis is retained only for job-source/detail caches, geocoding and cost-control counters.
 
 ## Job sources
 
@@ -338,7 +329,6 @@ Redis serves multiple, distinct purposes with different TTLs — do not treat th
 |---|---|---|
 | Apify job-record cache (L1) | `job-source:<sourceId>:<query>\|<location>` | Redis TTL 600 s (10 min) |
 | Apify dataset reuse metadata (L2) | `job-source:<sourceId>:dataset:<query>\|<location>` | Redis TTL + application freshness window: peak 6 h / off-peak 12 h (configurable, timezone-aware via `Europe/Berlin`) |
-| CV profile cache | `cv-profile:<hash>` | Redis TTL 30 days |
 | Alert subscriptions | `alerts` (hash) | persistent (no TTL) |
 | Usage counters (monthly) | `mj-usage:<name>:<YYYY-MM>` (+ `mj-usage:openrouter:model:<YYYY-MM>` and `mj-usage:ai:edenai:model:<YYYY-MM>` hashes) | Redis TTL 62 days; month-scoped, reset by month rollover |
 | Job source usage (monthly) | `mj-usage:jobs:<sourceId>:<counter>:<YYYY-MM>` | Redis TTL 62 days; month-scoped |

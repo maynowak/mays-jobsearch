@@ -52,8 +52,8 @@ Hinweis: `GET /api/alerts` liefert nur `{ count }` und wird vom Frontend nicht v
 - Errors: 400 `bad_request`/`invalid_slug`, 429 `quota_exceeded`/`apify_limit_reached`, 503 `quota_unavailable`/`missing_config`, 404 `source_not_found`, 502 Fallback, 500 `internal`.
 
 ### `POST /api/profile`
-- Body: `{ text (Pflicht, ≤ 30000 Zeichen), hash?, model? }`; Header `x-mj-attempt` optional.
-- 200 → `SuggestedProfile` flach: `{ skills[], experienceLevel, targetRoles[], location }`. Bei `hash`: Upstash-Cache (TTL 30 Tage).
+- Body: `{ text (Pflicht, ≤ 30000 Zeichen), model? }`; Header `x-mj-attempt` optional. Ein CV-Hash ist weder erforderlich noch wird er für einen Server-Cache verwendet.
+- 200 → `SuggestedProfile` flach: `{ skills[], experienceLevel, targetRoles[], location }`. Kein CV-Profil-Cache; jede Anfrage ruft die AI auf.
 - Errors: 400 `missing_text` / `text_too_long`, 502 `bad_ai_response`, AI-Provider-Codes, 500 `internal`.
 
 ### `POST /api/cover-letter`

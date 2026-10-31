@@ -1,3 +1,14 @@
+2026-10-31 · JM-SEARCH-PARAMETERS-PRIORITY-03
+- Typ: Suchprofile/Datenschutz/Redis-Grenzen/Logging
+- Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
+- Änderung: CV-Profil-Cache in Redis als Produktfunktion entfernt. `api/profile.mjs` liest/schreibt kein `cv-profile:*` mehr; `src/api.ts` sendet keinen CV-Hash mehr an `/api/profile`; jede Profilerstellung ruft die AI auf. CV-Hash bleibt nur Browser-Session-Schlüssel für CV-Listen.
+- Suchprofile: `SearchConfigurationV1`/`MatchingPreferencesV1` unverändert; manuelle Profile weiter in-memory, ohne CV/Hash, ohne Modellaufruf; „Damit suchen“ nutzt den bestehenden `/api/jobs`-Pfad.
+- Redis: Job-Source-/Detail-/Geo-/Usage-Caches unverändert; keine neue Suchprofil-Persistenz. Job-Source-Keys enthalten Query/Location weiterhin im Klartext (600s TTL); eine spätere Hash-Key-Strategie ist nur dokumentiert, nicht umgesetzt.
+- Logging: `/api/jobs` loggt keine rohe `req.query` mehr, nur bekannte Parameternamen und Fehler-Metadaten; `geo` loggt keine Stadt mehr. Keine neuen Nutzerkennungen.
+- Risiko/Kosten: Wiederholte CV-Verarbeitung kostet erneut AI-Aufrufe; globale Budgets bleiben wirksam. Alte `cv-profile:*`-Keys laufen per TTL aus, kein Purge.
+- Tests: 1033 passed/5 skipped; TypeScript/Build/diff, Budget-/IP-/Lock-/REST-Redis, Gast-CV-E2E 1440/390 PASS. Kein Live-Deployment.
+- Log: `docs/reports/JM-SEARCH-PARAMETERS-PRIORITY-03.md`
+
 2026-10-31 · JM-AUTH-COGNITO-CUSTOM-DOMAIN-REGRESSION-01
 - Typ: Auth-Regression/Infrastruktur-Ursache/Security
 - Status: URSACHE IDENTIFIZIERT — keine Codeänderung, kein AWS-/Terraform-/Vercel-Deployment
