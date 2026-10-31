@@ -12,7 +12,7 @@ import {
   refundApifyRunSlot,
   reserveApifyRunSlot,
 } from "../../usage.mjs";
-import { startApifyRun, waitForRun, readDataset } from "./client.mjs";
+import { startApifyRun, waitForRun, readDataset, startErrorDefinitelyNotStarted } from "./client.mjs";
 
 const APIFY_SYNC_TIMEOUT_SEC = 50;
 const APIFY_CACHE_TTL_SEC = 600;
@@ -98,7 +98,11 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
       if (slot.error) return emptyResult("quota_unavailable");
       const started = await startApifyRun(apiToken, actor.actorId, input);
       if (started.error) {
-        await refundApifyRunSlot();
+        // Refund only when the response proves the run never started. Network,
+        // unreadable and 5xx responses are unknown and keep the reservation.
+        if (startErrorDefinitelyNotStarted(started.error)) {
+          await refundApifyRunSlot();
+        }
         return emptyResult(started.error);
       }
       await countJobSourceRun(actor.sourceId);

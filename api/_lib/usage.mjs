@@ -199,8 +199,18 @@ local reserved = 0
 local now = tonumber(ARGV[4])
 for i = 1, #all, 2 do
   local value = all[i + 1]
-  local max, exp = string.match(value, '^(%d+):(%d+):(.+)$')
-  if max and exp and tonumber(exp) < now then
+  local max, exp, month = string.match(value, '^(%d+):(%d+):(.+)$')
+  if max and exp and tonumber(exp) <= now then
+    -- Unknown/abandoned reservation: charge the maximum conservatively instead
+    -- of silently freeing budget. It is removed only after this charge.
+    local target = KEYS[1]
+    if month ~= ARGV[8] then
+      target = KEYS[3]
+    else
+      used = used + tonumber(max)
+    end
+    redis.call('INCRBY', target, tonumber(max))
+    redis.call('EXPIRE', target, tonumber(ARGV[7]))
     redis.call('HDEL', KEYS[2], all[i])
   elseif max then
     reserved = reserved + tonumber(max)
@@ -214,24 +224,31 @@ return 1
 `;
 
 const SETTLE_SCRIPT = `
-local value = redis.call('HGET', KEYS[3], ARGV[1])
+local month = string.match(ARGV[1], '^(%d%d%d%d%-%d%d):')
+if not month then return -2 end
+local resKey = KEYS[4]
+local usedKey = KEYS[2]
+if month == ARGV[3] then
+  resKey = KEYS[3]
+  usedKey = KEYS[1]
+end
+local value = redis.call('HGET', resKey, ARGV[1])
 if not value then return -1 end
-local max, exp, month = string.match(value, '^(%d+):(%d+):(.+)$')
-redis.call('HDEL', KEYS[3], ARGV[1])
+local max, exp = string.match(value, '^(%d+):(%d+):(.+)$')
+redis.call('HDEL', resKey, ARGV[1])
 local actual = tonumber(ARGV[2])
 if not actual or actual < 0 then actual = 0 end
 if actual > tonumber(max) then actual = tonumber(max) end
-local key = KEYS[1]
-if month ~= ARGV[4] then key = KEYS[2] end
 if actual > 0 then
-  redis.call('INCRBY', key, actual)
-  redis.call('EXPIRE', key, tonumber(ARGV[5]))
+  redis.call('INCRBY', usedKey, actual)
+  redis.call('EXPIRE', usedKey, tonumber(ARGV[4]))
 end
 return actual
 `;
 
 const RELEASE_SCRIPT = `
 local removed = redis.call('HDEL', KEYS[1], ARGV[1])
+removed = removed + redis.call('HDEL', KEYS[2], ARGV[1])
 return removed
 `;
 
@@ -258,25 +275,32 @@ function previousMonth() {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-function reservationHashKey(provider) {
-  return `mj-budget:${provider}:reservations:${currentMonth()}`;
+function reservationHashKey(provider, month = currentMonth()) {
+  return `mj-budget:${provider}:reservations:${month}`;
 }
 
 /**
  * Reserve the maximum possible cost before a paid provider call.
  * Returns { ok, id } | { error: "exceeded" | "unavailable" }.
+ * The reservation id carries the billing month so settlement/release work
+ * across a month boundary.
  */
 export async function reserveProviderBudget(provider, maximumCost) {
   const budget = budgetProvider(provider);
   if (!budget) return { error: "unavailable" };
   const max = Math.floor(Number(maximumCost));
   if (!Number.isFinite(max) || max <= 0) return { error: "unavailable" };
-  const id = randomBytes(16).toString("hex");
   const month = currentMonth();
+  const id = `${month}:${randomBytes(16).toString("hex")}`;
+  const nowSec = Math.floor(Date.now() / 1000);
   const result = await cacheEval(
     RESERVE_SCRIPT,
-    [`${budget.usedBase}:${month}`, reservationHashKey(provider)],
-    [max, budget.limit, id, Date.now(), RESERVATION_TTL_SEC, month, BUDGET_TTL_SEC]
+    [
+      `${budget.usedBase}:${month}`,
+      reservationHashKey(provider, month),
+      `${budget.usedBase}:${previousMonth()}`,
+    ],
+    [max, budget.limit, id, nowSec, RESERVATION_TTL_SEC, month, BUDGET_TTL_SEC, month]
   );
   if (result === null) return { error: "unavailable" };
   if (result === -1) return { error: "exceeded" };
@@ -297,21 +321,28 @@ export async function settleProviderBudget(provider, id, actualCost) {
     [
       `${budget.usedBase}:${month}`,
       `${budget.usedBase}:${previousMonth()}`,
-      reservationHashKey(provider),
+      reservationHashKey(provider, month),
+      reservationHashKey(provider, previousMonth()),
     ],
-    [id, actual, month, month, BUDGET_TTL_SEC]
+    [id, actual, month, BUDGET_TTL_SEC]
   );
   if (result === null) return { error: "unavailable" };
   if (result === -1) return { error: "missing" };
+  if (result === -2) return { error: "invalid_id" };
   return { ok: true, actual: Number(result) };
 }
 
-/** Release a reservation without charging it. Idempotent. */
+/** Release a reservation without charging it. Idempotent across a month boundary. */
 export async function releaseProviderBudget(provider, id) {
   if (!budgetProvider(provider)) return { error: "unavailable" };
-  const result = await cacheEval(RELEASE_SCRIPT, [reservationHashKey(provider)], [id]);
+  const month = currentMonth();
+  const result = await cacheEval(
+    RELEASE_SCRIPT,
+    [reservationHashKey(provider, month), reservationHashKey(provider, previousMonth())],
+    [id]
+  );
   if (result === null) return { error: "unavailable" };
-  return result === 1 ? { ok: true } : { error: "missing" };
+  return result > 0 ? { ok: true } : { error: "missing" };
 }
 
 const THEIRSTACK_CREDIT_KEY = "mj-usage:theirstack:credits";

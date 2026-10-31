@@ -18,6 +18,12 @@ vi.mock("../../api/_lib/sources/apify/client.mjs", () => ({
   startApifyRun: vi.fn(async () => ({ run: { id: "run-1" } })),
   waitForRun: vi.fn(async () => ({ run: { id: "run-1", defaultDatasetId: "ds-1" } })),
   readDataset: vi.fn(async () => ({ records: [] })),
+  startErrorDefinitelyNotStarted: (error) => {
+    const match = /^upstream_(\d{3})$/.exec(String(error ?? ""));
+    if (!match) return false;
+    const status = Number(match[1]);
+    return status >= 400 && status < 500 && status !== 408;
+  },
 }));
 
 const { cacheGet, cacheSet, cacheReserveIncr, cacheDecrBy } = await import("../../api/_lib/cache.mjs");
@@ -222,13 +228,23 @@ describe("detailEnrich - enrichment flow", () => {
     expect(startApifyRun).not.toHaveBeenCalled();
   });
 
-  it("refunds quota and run slot when the run fails to start", async () => {
-    vi.mocked(startApifyRun).mockResolvedValue({ error: "upstream_500" });
+  it("refunds quota and run slot only when the run provably did not start", async () => {
+    vi.mocked(startApifyRun).mockResolvedValue({ error: "upstream_400" });
 
     const result = await enrichArbeitsagenturDetails([SLUG], ID);
 
-    expect(result.error).toBe("upstream_500");
+    expect(result.error).toBe("upstream_400");
     expect(cacheDecrBy).toHaveBeenCalled();
     expect(refundApifyRunSlot).toHaveBeenCalled();
+  });
+
+  it("keeps the reservation on unknown start status (network/5xx)", async () => {
+    vi.mocked(startApifyRun).mockResolvedValue({ error: "network" });
+
+    const result = await enrichArbeitsagenturDetails([SLUG], ID);
+
+    expect(result.error).toBe("network");
+    expect(cacheDecrBy).not.toHaveBeenCalled();
+    expect(refundApifyRunSlot).not.toHaveBeenCalled();
   });
 });

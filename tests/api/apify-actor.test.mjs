@@ -24,7 +24,7 @@ vi.mock("../../api/_lib/usage.mjs", () => ({
 }));
 
 const { cacheGet, cacheSet, cacheDel } = await import("../../api/_lib/cache.mjs");
-const { reserveApifyRunSlot } = await import("../../api/_lib/usage.mjs");
+const { reserveApifyRunSlot, refundApifyRunSlot } = await import("../../api/_lib/usage.mjs");
 const { fetchAllJobs } = await import("../../api/_lib/sources/index.mjs");
 
 const baseApifyRecord = {
@@ -136,6 +136,44 @@ describe("Apify Actor (arbeitsagentur)", () => {
     await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
     const fetchCalls = vi.mocked(globalThis.fetch).mock.calls.map((c) => String(c[0]));
     expect(fetchCalls.some((u) => u.includes("/v2/acts/"))).toBe(true);
+  });
+
+  it("classifies only definite 4xx start errors as not started", async () => {
+    const { startErrorDefinitelyNotStarted } = await import(
+      "../../api/_lib/sources/apify/client.mjs"
+    );
+    expect(startErrorDefinitelyNotStarted("upstream_400")).toBe(true);
+    expect(startErrorDefinitelyNotStarted("upstream_422")).toBe(true);
+    expect(startErrorDefinitelyNotStarted("upstream_408")).toBe(false);
+    expect(startErrorDefinitelyNotStarted("upstream_500")).toBe(false);
+    expect(startErrorDefinitelyNotStarted("network")).toBe(false);
+    expect(startErrorDefinitelyNotStarted("unreadable")).toBe(false);
+  });
+
+  it("refunds the run slot when the start request is definitely rejected", async () => {
+    setupApifyFlow();
+    globalThis.fetch = vi.fn(async (url) => {
+      const u = String(url);
+      if (u.includes("arbeitnow.com")) return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      if (u.includes("/v2/acts/")) return new Response("bad request", { status: 400 });
+      throw new Error(`unexpected fetch: ${u}`);
+    });
+    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    expect(result.meta.apify.reason).toBe("upstream_400");
+    expect(vi.mocked(refundApifyRunSlot)).toHaveBeenCalled();
+  });
+
+  it("keeps the run slot on an unknown start status (network)", async () => {
+    setupApifyFlow();
+    globalThis.fetch = vi.fn(async (url) => {
+      const u = String(url);
+      if (u.includes("arbeitnow.com")) return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      if (u.includes("/v2/acts/")) throw new Error("network down");
+      throw new Error(`unexpected fetch: ${u}`);
+    });
+    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    expect(result.meta.apify.reason).toBe("network");
+    expect(vi.mocked(refundApifyRunSlot)).not.toHaveBeenCalled();
   });
 
   it("K) Cost Guard verhindert neuen Apify Run", async () => {

@@ -1,3 +1,12 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02A-REPAIR-01
+- Typ: Fix/Cost-Control/Reliability/Security
+- Status: IMPLEMENTED / VERIFIED with mocked Redis (real Lua/TTL boundary NOT VERIFIED)
+- Fixed: reservation expiry used milliseconds plus seconds (expired after ~0.9 s); month rollover lost reservations at settlement; expired unknown-billing reservations were deleted without charge; Apify refunded every start error including network/5xx.
+- Corrections: seconds-based TTL (900 s), reservation IDs carry `<YYYY-MM>:<random>`, settle/release use current+previous month keys, expired reservations are charged at their maximum before removal, settle remains idempotent, and Apify refunds only definite 4xx start rejections (not 408/5xx/network/unreadable). Detail enrichment no longer refunds after a started run fails.
+- AI-/Privacy-/Data-Flow impact: no new cookie, no IP quota, no cache/TTL change, no provider change. Conservative charging may reduce available budget after abandoned requests; this is intentional.
+- Tests: budget contract, month keys, seconds TTL, Apify refund classification, detail-enrich refund semantics PASS; full suite 987 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS; guest E2E 1440/390 PASS. Real isolated Redis/Lua atomicity and 15-minute boundary NOT VERIFIED.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02A-REPAIR-01-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-IMPLEMENTATION-02A
 - Typ: Implementation/Cost-Control/Reliability
 - Status: IMPLEMENTED / VERIFIED (mocked Redis; real Redis atomicity NOT VERIFIED)

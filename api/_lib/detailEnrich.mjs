@@ -6,7 +6,12 @@ import {
   refundApifyRunSlot,
   countJobSourceRun,
 } from "./usage.mjs";
-import { startApifyRun, waitForRun, readDataset } from "./sources/apify/client.mjs";
+import {
+  startApifyRun,
+  waitForRun,
+  readDataset,
+  startErrorDefinitelyNotStarted,
+} from "./sources/apify/client.mjs";
 import { actorById, SOURCE_ID } from "./sources/apify/actors.mjs";
 
 const DETAIL_CACHE_PREFIX = "mj-detail:arbeitsagentur";
@@ -139,21 +144,25 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId }
   const input = actor.buildTargetedDetailInput(missing.map((m) => portalUrlForRefNr(m.refNr)));
   const started = await startApifyRun(apiToken, actor.actorId, input);
   if (started.error) {
-    await refundQuota(sessionKey, ipKey, n);
-    await refundApifyRunSlot();
+    // Refund only when the run provably never started. Unknown start status
+    // keeps the reservation and quotas (conservative cost handling).
+    if (startErrorDefinitelyNotStarted(started.error)) {
+      await refundQuota(sessionKey, ipKey, n);
+      await refundApifyRunSlot();
+    }
     return { error: started.error };
   }
   await countJobSourceRun(SOURCE_ID);
 
   const waited = await waitForRun(apiToken, started.run.id, DETAIL_SYNC_TIMEOUT_SEC * 1000);
   if (waited.error) {
-    await refundQuota(sessionKey, ipKey, n);
+    // The run was started; billing is unknown, so do not refund.
     return { error: waited.error };
   }
 
   const read = await readDataset(apiToken, waited.run.defaultDatasetId);
   if (read.error) {
-    await refundQuota(sessionKey, ipKey, n);
+    // The run was started; billing is unknown, so do not refund.
     return { error: read.error };
   }
 

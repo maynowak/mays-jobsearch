@@ -1,3 +1,15 @@
+/**
+ * True only when the provider response proves the run was not started.
+ * Network errors, unreadable/unexpected responses and 5xx are unknown and must
+ * not trigger an automatic refund.
+ */
+export function startErrorDefinitelyNotStarted(error) {
+  const match = /^upstream_(\d{3})$/.exec(String(error ?? ""));
+  if (!match) return false;
+  const status = Number(match[1]);
+  return status >= 400 && status < 500 && status !== 408;
+}
+
 export async function startApifyRun(apiToken, actorId, input) {
   let response;
   try {
