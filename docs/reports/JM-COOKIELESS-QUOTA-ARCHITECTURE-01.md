@@ -325,3 +325,7 @@ Each step needs its own acceptance criteria and approval.
 - `docs/contracts/JOBMATCHER-API-SESSION-BOUNDARY-01.md`
 
 No real provider calls, cookies, Redis data or user data were used.
+
+- Analysis commit: `37c315a`
+- Remote: `origin/main`, synchronized (`0 0`)
+- Production deployment: NOT DEPLOYED
