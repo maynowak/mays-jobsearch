@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import { createManualSearchProfile } from "../lib/manualSearchProfiles";
 import type { ManualSearchProfile } from "../lib/manualSearchProfiles";
@@ -54,7 +54,7 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
     vi.restoreAllMocks();
   });
 
-  it("creates a manual search profile without any CV and without network calls", () => {
+  it("creates a manual search profile without any CV and without network calls", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
     const { onSave } = renderSection();
@@ -96,7 +96,9 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
     });
     // Profilaktionen sind vollstaendig modell- und netzwerkfrei.
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(screen.getByRole("status").textContent).toContain("gespeichert");
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toContain("gespeichert");
+    });
   });
 
   it("keeps required, preferred and excluded semantically separate", () => {
@@ -171,18 +173,86 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
     expect(onSave.mock.calls[0][0].name).toBe("Renamed");
   });
 
-  it("duplicates, deletes (with confirmation) and searches", () => {
+  it("shows an error and no success notice when saving fails", async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error("save failed"));
+    render(
+      <LangProvider>
+        <ManualSearchProfilesSection profiles={[]} onSave={onSave} onDelete={vi.fn()} onDuplicate={vi.fn()} onSearch={vi.fn()} />
+      </LangProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Neues Suchprofil" }));
+    fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: "Fail" } });
+    fireEvent.change(screen.getByLabelText("Skills / Keywords"), { target: { value: "AWS" } });
+    fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toContain("konnte nicht gespeichert werden");
+    });
+    expect(screen.queryByText("Profil für diese Sitzung gespeichert.")).toBeNull();
+  });
+
+  it("keeps the form open and waits for a delayed save before reporting success", async () => {
+    let resolveSave!: () => void;
+    const onSave = vi.fn(
+      () => new Promise<void>((resolve) => {
+        resolveSave = resolve;
+      })
+    );
+    render(
+      <LangProvider>
+        <ManualSearchProfilesSection profiles={[]} onSave={onSave} onDelete={vi.fn()} onDuplicate={vi.fn()} onSearch={vi.fn()} />
+      </LangProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Neues Suchprofil" }));
+    fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: "Delayed" } });
+    fireEvent.change(screen.getByLabelText("Skills / Keywords"), { target: { value: "AWS" } });
+    fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
+
+    expect(screen.queryByText("Profil für diese Sitzung gespeichert.")).toBeNull();
+    expect(screen.getByLabelText("Profilname")).toBeTruthy();
+
+    resolveSave();
+    await waitFor(() => {
+      expect(screen.getByText("Profil für diese Sitzung gespeichert.")).toBeTruthy();
+    });
+    expect(screen.queryByLabelText("Profilname")).toBeNull();
+  });
+
+  it("ignores a second save while the first request is pending", async () => {
+    const onSave = vi.fn(() => new Promise<void>(() => undefined));
+    render(
+      <LangProvider>
+        <ManualSearchProfilesSection profiles={[]} onSave={onSave} onDelete={vi.fn()} onDuplicate={vi.fn()} onSearch={vi.fn()} />
+      </LangProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Neues Suchprofil" }));
+    fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: "Once" } });
+    fireEvent.change(screen.getByLabelText("Skills / Keywords"), { target: { value: "AWS" } });
+    const save = screen.getByRole("button", { name: "Für diese Sitzung speichern" });
+    fireEvent.click(save);
+    fireEvent.click(save);
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it("duplicates, deletes (with confirmation) and searches", async () => {
     const profile = sampleProfile();
     const { onDuplicate, onDelete, onSearch } = renderSection([profile]);
 
     fireEvent.click(screen.getByRole("button", { name: "Duplizieren" }));
     expect(onDuplicate).toHaveBeenCalledWith(profile.id);
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toContain("dupliziert");
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Löschen" }));
     expect(onDelete).not.toHaveBeenCalled();
     expect(screen.getByText("Dieses Profil löschen?")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Jetzt löschen" }));
     expect(onDelete).toHaveBeenCalledWith(profile.id);
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toContain("gelöscht");
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Damit suchen" }));
     expect(onSearch).toHaveBeenCalledWith(profile);

@@ -22,7 +22,7 @@ vi.mock("./api", async () => {
   };
 });
 
-const authState = { isAuthenticated: true };
+const authState = { isAuthenticated: true, sub: "profile-sub-123" };
 
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({
@@ -30,7 +30,7 @@ vi.mock("react-oidc-context", () => ({
     error: undefined,
     isAuthenticated: authState.isAuthenticated,
     user: authState.isAuthenticated
-      ? { profile: { sub: "profile-sub-123", email: "profil@example.invalid", name: "Test Person" } }
+      ? { profile: { sub: authState.sub, email: "profil@example.invalid", name: "Test Person" } }
       : undefined,
     signinRedirect: vi.fn(),
     signoutRedirect: vi.fn(),
@@ -83,7 +83,7 @@ function openPreferences() {
   fireEvent.click(screen.getByRole("button", { name: "Job-Präferenzen" }));
 }
 
-function fillAndSaveProfile(name = "AWS Cloud Engineer") {
+async function fillAndSaveProfile(name = "AWS Cloud Engineer") {
   fireEvent.click(screen.getByRole("button", { name: "Neues Suchprofil" }));
   fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: name } });
   fireEvent.change(screen.getByLabelText("Zielrollen"), {
@@ -97,6 +97,9 @@ function fillAndSaveProfile(name = "AWS Cloud Engineer") {
   });
   fireEvent.change(screen.getByLabelText("Stadt"), { target: { value: "Darmstadt" } });
   fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
+  await waitFor(() => {
+    expect(screen.getByText("Profil für diese Sitzung gespeichert.")).toBeTruthy();
+  });
 }
 
 beforeEach(async () => {
@@ -104,6 +107,7 @@ beforeEach(async () => {
   localStorage.removeItem("mj-lang");
   localStorage.setItem("mj-lang", "de");
   authState.isAuthenticated = true;
+  authState.sub = "profile-sub-123";
   await setup();
   Object.defineProperty(window, "scrollTo", { value: vi.fn(), configurable: true });
 });
@@ -124,7 +128,7 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Dashboard und Suchintegration", () => {
 
     await renderAt("/profil");
     openPreferences();
-    fillAndSaveProfile();
+    await fillAndSaveProfile();
 
     // Profil ist in der Session-Liste sichtbar.
     const list = document.querySelector(".dashboard-v2__manual-list") as HTMLElement;
@@ -133,7 +137,9 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Dashboard und Suchintegration", () => {
 
     // Duplizieren und Loeschen bleiben ebenfalls rein lokal.
     fireEvent.click(screen.getByRole("button", { name: "Duplizieren" }));
-    expect(screen.getByText("AWS Cloud Engineer (Kopie)")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText("AWS Cloud Engineer (Kopie)")).toBeTruthy();
+    });
 
     // Keine CV-Verarbeitung, kein Matching, kein Modellaufruf.
     expect(createProfile).not.toHaveBeenCalled();
@@ -149,7 +155,7 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Dashboard und Suchintegration", () => {
 
     await renderAt("/profil");
     openPreferences();
-    fillAndSaveProfile();
+    await fillAndSaveProfile();
 
     fireEvent.click(screen.getByRole("button", { name: "Damit suchen" }));
 
@@ -178,7 +184,7 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Dashboard und Suchintegration", () => {
 
     await renderAt("/profil");
     openPreferences();
-    fillAndSaveProfile();
+    await fillAndSaveProfile();
 
     // Kein CV-Bezug: die CV-Listen bleiben leer, es entsteht kein CV-Eintrag.
     expect(readCvProfileLists(null)).toEqual({ searchProfiles: [], atsProfiles: [] });
@@ -187,10 +193,38 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Dashboard und Suchintegration", () => {
     expect(screen.queryByText("AWS Cloud Engineer")).toBeNull();
   });
 
+  it("clears CV hash buckets when the authenticated identity changes", async () => {
+    const { readCvProfileLists, saveCvSearchProfile, resetCvProfileLists } = await import("./lib/cvProfileStore");
+    resetCvProfileLists();
+    const view = await renderAt("/profil");
+    saveCvSearchProfile("hash-user-a", "User A profile", {
+      skills: "AWS",
+      targetRoles: ["Cloud Engineer"],
+      city: "",
+      radiusKm: null,
+      workModes: [],
+      employmentTypes: ["full_time"],
+    });
+    expect(readCvProfileLists("hash-user-a").searchProfiles).toHaveLength(1);
+
+    authState.sub = "profile-sub-456";
+    const App = (await import("./App")).default;
+    const { LangProvider } = await import("./i18n");
+    view.rerender(
+      <LangProvider>
+        <App />
+      </LangProvider>
+    );
+
+    await waitFor(() => {
+      expect(readCvProfileLists("hash-user-a").searchProfiles).toHaveLength(0);
+    });
+  });
+
   it("drops the in-memory profiles on a fresh session (reload)", async () => {
     const first = await renderAt("/profil");
     openPreferences();
-    fillAndSaveProfile();
+    await fillAndSaveProfile();
     expect(document.querySelectorAll(".dashboard-v2__manual-item")).toHaveLength(1);
 
     first.unmount();

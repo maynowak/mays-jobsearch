@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-UI-HARDENING-05
+- Typ: Hardening/Async-Safety/Session-Isolation/UI
+- Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistence NOT IMPLEMENTED)
+- Scope: Manuelle Profil-CRUD, CV-Suchprofil- und ATS-Speicherung warten auf den Session-Adapter; Fehler werden sichtbar; Auth-Identitätswechsel löscht manuelle Profile, CV-Hash-Buckets, CV-Workflow-State und Auswahlreferenzen; Session-Epoch verhindert verspätete State-Updates.
+- Async safety: keine verschluckten Fehler mehr, kein Erfolgs-Notice vor Abschluss, Doppelklick-Schutz während pending, CV/ATS verwenden zurückgegebene Session-IDs statt synchronem Store-Re-Read.
+- AI-/Privacy-/Data-Flow impact: keine neue Netzwerk-, RIS-, AWS-, Modell- oder Persistenzstrecke. Keine dauerhafte Speicherung; 12h-TTL, 50er-Session-Kapazität und ATS-5er-Grenze bleiben unverändert. CV-Daten werden beim Benutzerwechsel nun zusätzlich aus dem React-/Session-Speicher entfernt.
+- Parent deletion: ATS-Kinder werden weiterhin nur detachiert; Entscheidungsvorlage A/B/C im Report, keine Kaskadenlöschung.
+- Tests: neue Async-/Fehler-/Race-/Auth-Reset-Tests PASS; gezielt 117 passed; Gesamtsuite 942 passed, 5 skipped; `npx tsc --noEmit -p tsconfig.app.json`; `npm run build`; `git diff --check` PASS. Chromium 1440/390 CRUD-Smoke PASS; authentifizierter Browser-Flow NOT VERIFIED.
+- Log: `docs/reports/JM-PROFILE-UI-HARDENING-05-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-UI-ADAPTER-04
 - Typ: Implementation/UI/Session-Privacy/Contract
 - Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistent storage NOT IMPLEMENTED)

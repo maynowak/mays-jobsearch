@@ -31,9 +31,9 @@ import Button from "./ui/Button";
 interface Props {
   profiles: readonly ManualSearchProfile[];
   busy?: boolean;
-  onSave: (draft: ManualSearchProfileDraft, existingId: string | null) => void;
-  onDelete: (id: string) => void;
-  onDuplicate: (id: string) => void;
+  onSave: (draft: ManualSearchProfileDraft, existingId: string | null) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onDuplicate: (id: string) => Promise<void>;
   onSearch: (profile: ManualSearchProfile) => void;
 }
 
@@ -101,6 +101,7 @@ export default function ManualSearchProfilesSection({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const restoreFocusRef = useRef(false);
 
   // Nach Speichern/Abbrechen liegt der Fokus sonst auf <body>, weil der
@@ -136,9 +137,9 @@ export default function ManualSearchProfilesSection({
     setForm(null);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form) return;
+    if (!form || pendingAction) return;
 
     const searchConfig: Profile = {
       skills: formatSkills(parsePhraseList(form.keywordsText)),
@@ -166,17 +167,47 @@ export default function ManualSearchProfilesSection({
       return;
     }
 
-    onSave(draft, form.id);
-    setError(null);
-    restoreFocusRef.current = true;
-    setForm(null);
-    setNotice(t("manualProfiles.notice.saved"));
+    setPendingAction("save");
+    try {
+      await onSave(draft, form.id);
+      setError(null);
+      restoreFocusRef.current = true;
+      setForm(null);
+      setNotice(t("manualProfiles.notice.saved"));
+    } catch {
+      setError(t("manualProfiles.error.save"));
+    } finally {
+      setPendingAction(null);
+    }
   };
 
-  const confirmDelete = (id: string) => {
-    onDelete(id);
-    setPendingDeleteId(null);
-    setNotice(t("manualProfiles.notice.deleted"));
+  const confirmDelete = async (id: string) => {
+    if (pendingAction) return;
+    setError(null);
+    setPendingAction(`delete:${id}`);
+    try {
+      await onDelete(id);
+      setPendingDeleteId(null);
+      setNotice(t("manualProfiles.notice.deleted"));
+    } catch {
+      setError(t("manualProfiles.error.delete"));
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const duplicateProfile = async (id: string) => {
+    if (pendingAction) return;
+    setError(null);
+    setPendingAction(`duplicate:${id}`);
+    try {
+      await onDuplicate(id);
+      setNotice(t("manualProfiles.notice.duplicated"));
+    } catch {
+      setError(t("manualProfiles.error.duplicate"));
+    } finally {
+      setPendingAction(null);
+    }
   };
 
   const panelTitle = form?.id ? t("manualProfiles.form.editTitle") : t("manualProfiles.form.newTitle");
@@ -202,7 +233,7 @@ export default function ManualSearchProfilesSection({
       </div>
 
       <div className="dashboard-v2__manual-toolbar">
-        <Button id={`${formId}-new`} onClick={startCreate} disabled={busy || Boolean(form)}>
+        <Button id={`${formId}-new`} onClick={startCreate} disabled={busy || pendingAction !== null || Boolean(form)}>
           {t("manualProfiles.new")}
         </Button>
         {!form && profiles.length > 0 && (
@@ -407,10 +438,10 @@ export default function ManualSearchProfilesSection({
           )}
 
           <div className="dashboard-v2__manual-form-actions">
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy || pendingAction === "save"}>
               {t("manualProfiles.saveSession")}
             </Button>
-            <Button variant="ghost" onClick={cancelForm} disabled={busy}>
+            <Button variant="ghost" onClick={cancelForm} disabled={busy || pendingAction === "save"}>
               {t("manualProfiles.cancel")}
             </Button>
           </div>
@@ -473,20 +504,17 @@ export default function ManualSearchProfilesSection({
                 </p>
 
                 <div className="dashboard-v2__manual-actions">
-                  <Button variant="ghost" onClick={() => startEdit(profile)} disabled={busy}>
+                  <Button variant="ghost" onClick={() => startEdit(profile)} disabled={busy || pendingAction !== null}>
                     {t("manualProfiles.edit")}
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() => {
-                      onDuplicate(profile.id);
-                      setNotice(t("manualProfiles.notice.duplicated"));
-                    }}
-                    disabled={busy}
+                    onClick={() => void duplicateProfile(profile.id)}
+                    disabled={busy || pendingAction !== null}
                   >
                     {t("manualProfiles.duplicate")}
                   </Button>
-                  <Button onClick={() => onSearch(profile)} disabled={busy}>
+                  <Button onClick={() => onSearch(profile)} disabled={busy || pendingAction !== null}>
                     {t("manualProfiles.search")}
                   </Button>
                   {pendingDeleteId === profile.id ? (
@@ -494,10 +522,10 @@ export default function ManualSearchProfilesSection({
                       <span className="field-hint" role="alert">
                         {t("manualProfiles.deleteConfirm")}
                       </span>
-                      <Button variant="danger" onClick={() => confirmDelete(profile.id)} disabled={busy}>
+                      <Button variant="danger" onClick={() => void confirmDelete(profile.id)} disabled={busy || pendingAction !== null}>
                         {t("manualProfiles.deleteConfirmButton")}
                       </Button>
-                      <Button variant="ghost" onClick={() => setPendingDeleteId(null)} disabled={busy}>
+                      <Button variant="ghost" onClick={() => setPendingDeleteId(null)} disabled={busy || pendingAction !== null}>
                         {t("manualProfiles.cancel")}
                       </Button>
                     </>
@@ -508,7 +536,7 @@ export default function ManualSearchProfilesSection({
                         setNotice(null);
                         setPendingDeleteId(profile.id);
                       }}
-                      disabled={busy}
+                      disabled={busy || pendingAction !== null}
                     >
                       {t("manualProfiles.delete")}
                     </Button>

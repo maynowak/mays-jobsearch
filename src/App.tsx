@@ -90,6 +90,38 @@ const INITIAL_MANUAL_PROFILE: Profile = {
   employmentTypes: ["full_time"],
 };
 
+// JM-PROFILE-UI-HARDENING-05: single reset target for auth identity changes.
+const createInitialCvState = (): CvProcessingState => ({
+  step: "idle",
+  documents: [],
+  selectedDocumentIds: [],
+  consentGiven: false,
+  anonymizationMode: "anonymized",
+  processingGoal: "ats",
+  error: null,
+  profile: null,
+  suggestedProfile: null,
+  fallbackNote: false,
+  isProcessing: false,
+  atsResult: null,
+  aiSearchResult: null,
+  improvementRecommendations: null,
+  selectedImprovementIds: [],
+  improvementResult: null,
+  originalProfile: null,
+  beforeAtsResult: null,
+  afterAtsResult: null,
+  reanalysisResult: null,
+  matchImpactBefore: null,
+  matchImpactAfter: null,
+  matchImpactDelta: null,
+  matchImpactChanges: null,
+  matchImpactJob: null,
+  selectedSkills: [],
+  cvProfile: null,
+  inferredSkills: [],
+});
+
 interface JobDataset {
   jobs: Job[];
   profile: Profile;
@@ -176,48 +208,33 @@ export default function App() {
   }
   const authProfileKey = isAuth ? String(auth.user?.profile?.sub ?? "authenticated") : null;
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
+  // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
+  // apply late results after a user switch/logout.
+  const sessionEpochRef = useRef(0);
   useEffect(() => {
     const previous = previousAuthProfileKeyRef.current;
     if (previous !== undefined && previous !== authProfileKey) {
+      sessionEpochRef.current += 1;
       const store = manualProfileStoreRef.current;
       store?.list().forEach((entry) => store.delete(entry.id));
       setManualProfiles([]);
       setProfile({ ...INITIAL_MANUAL_PROFILE });
+      // Temporary CV/profile data belongs to the previous identity. Clear the
+      // in-memory CV hash buckets and every active selection reference.
+      resetCvProfileLists();
+      setCvState(createInitialCvState());
+      setSelectedSavedSearchId(null);
+      setActiveAtsEntryId(null);
+      setProfilesDocId(null);
+      setAtsProfileName("");
+      setConsentDismissed(false);
+      setStatus(null);
     }
     previousAuthProfileKeyRef.current = authProfileKey;
   }, [authProfileKey]);
 
   // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
-  const [cvState, setCvState] = useState<CvProcessingState>({
-    step: "idle",
-    documents: [],
-    selectedDocumentIds: [],
-    consentGiven: false,
-    anonymizationMode: "anonymized",
-    processingGoal: "ats",
-    error: null,
-    profile: null,
-    suggestedProfile: null,
-    fallbackNote: false,
-    isProcessing: false,
-    atsResult: null,
-    aiSearchResult: null,
-    improvementRecommendations: null,
-    selectedImprovementIds: [],
-    improvementResult: null,
-    originalProfile: null,
-    beforeAtsResult: null,
-    afterAtsResult: null,
-    reanalysisResult: null,
-    matchImpactBefore: null,
-    matchImpactAfter: null,
-    matchImpactDelta: null,
-    matchImpactChanges: null,
-    matchImpactJob: null,
-    selectedSkills: [],
-    cvProfile: null,
-    inferredSkills: [],
-  });
+  const [cvState, setCvState] = useState<CvProcessingState>(createInitialCvState);
 
   useEffect(() => {
     const handlePopState = () => setNavigationVersion((version) => version + 1);
@@ -984,7 +1001,7 @@ export default function App() {
     setCvState((prev) => ({ ...prev, selectedSkills: skills }));
   };
 
-  const handleSkillSelectionConfirm = () => {
+  const handleSkillSelectionConfirm = async () => {
     if (cvState.selectedSkills.length === 0) {
       return;
     }
@@ -1010,19 +1027,29 @@ export default function App() {
           return;
         }
 
-          const repositories = profileRepositoriesRef.current;
-          if (repositories) {
-            void repositories.atsSearchProfiles.create(doc.hash, selectedSavedSearchId, {
-              name: atsProfileName,
-              skills: cvState.selectedSkills,
-              targetRoles: cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
-            }).catch(() => undefined);
+        const repositories = profileRepositoriesRef.current;
+        if (!repositories) {
+          setStatus({ type: "error", message: t("cv.errorAtsProfileSave") });
+          return;
+        }
+        const epoch = sessionEpochRef.current;
+        setCvState((prev) => ({ ...prev, isProcessing: true }));
+        try {
+          const created = await repositories.atsSearchProfiles.create(doc.hash, selectedSavedSearchId, {
+            name: atsProfileName,
+            skills: cvState.selectedSkills,
+            targetRoles: cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
+          });
+          if (sessionEpochRef.current !== epoch) return;
+          savedName = created.name;
+          setCvProfileStoreVersion((version) => version + 1);
+        } catch {
+          if (sessionEpochRef.current === epoch) {
+            setCvState((prev) => ({ ...prev, isProcessing: false }));
+            setStatus({ type: "error", message: t("cv.errorAtsProfileSave") });
           }
-          const atsTargetRoles = cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [];
-          const expectedAtsName = atsProfileName.trim() || atsTargetRoles[0] || cvState.selectedSkills[0] || "ATS-Profil";
-          const savedAts = readCvProfileLists(doc.hash).atsProfiles.find((entry) => entry.name === expectedAtsName);
-          savedName = savedAts?.name ?? null;
-        setCvProfileStoreVersion((version) => version + 1);
+          return;
+        }
       }
       setCvState((prev) => ({
         ...prev,
@@ -1456,38 +1483,44 @@ export default function App() {
     matchingPreferences: draft.matchingPreferences,
   });
 
-  const handleSaveManualProfile = (draft: ManualSearchProfileDraft, existingId: string | null) => {
+  const handleSaveManualProfile = async (draft: ManualSearchProfileDraft, existingId: string | null) => {
     const store = manualProfileStoreRef.current;
     const repositories = profileRepositoriesRef.current;
-    if (!store || !repositories) return;
+    if (!store || !repositories) throw new Error("profile repository unavailable");
+    const epoch = sessionEpochRef.current;
     const input = manualDraftToContractInput(draft);
     if (existingId) {
-      void repositories.manualSearchProfiles.update(existingId, input).catch(() => undefined);
+      await repositories.manualSearchProfiles.update(existingId, input);
     } else {
-      void repositories.manualSearchProfiles.create(input).catch(() => undefined);
+      await repositories.manualSearchProfiles.create(input);
     }
+    if (sessionEpochRef.current !== epoch) return;
     refreshManualProfiles();
   };
 
-  const handleDeleteManualProfile = (id: string) => {
+  const handleDeleteManualProfile = async (id: string) => {
     const repositories = profileRepositoriesRef.current;
-    if (!repositories) return;
-    void repositories.manualSearchProfiles.delete(id).catch(() => undefined);
+    if (!repositories) throw new Error("profile repository unavailable");
+    const epoch = sessionEpochRef.current;
+    await repositories.manualSearchProfiles.delete(id);
+    if (sessionEpochRef.current !== epoch) return;
     refreshManualProfiles();
   };
 
-  const handleDuplicateManualProfile = (id: string) => {
+  const handleDuplicateManualProfile = async (id: string) => {
     const store = manualProfileStoreRef.current;
     const repositories = profileRepositoriesRef.current;
-    if (!store || !repositories) return;
+    if (!store || !repositories) throw new Error("profile repository unavailable");
     const source = store.get(id);
-    if (!source) return;
-    void repositories.manualSearchProfiles.create({
+    if (!source) throw new Error("profile not found");
+    const epoch = sessionEpochRef.current;
+    await repositories.manualSearchProfiles.create({
       name: `${source.name} ${t("manualProfiles.copySuffix")}`,
       ...(source.description ? { description: source.description } : {}),
       searchConfig: source.searchConfig,
       matchingPreferences: source.matchingPreferences,
-    }).catch(() => undefined);
+    });
+    if (sessionEpochRef.current !== epoch) return;
     refreshManualProfiles();
   };
 
@@ -2017,30 +2050,40 @@ export default function App() {
             // CV-PROFILE-LISTS-01/08: Suchprofil unter seinem Namen an das CV
             // haengen (gleicher Name ueberschreibt den Eintrag).
             const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
-            if (doc?.hash) {
-              const repositories = profileRepositoriesRef.current;
-              if (repositories) {
-                void repositories.cvSearchProfiles.create(doc.hash, {
-                  name: profileName,
-                  searchConfig: profile,
-                }).catch(() => undefined);
+            const epoch = sessionEpochRef.current;
+            void (async () => {
+              if (doc?.hash) {
+                const repositories = profileRepositoriesRef.current;
+                if (!repositories) {
+                  setStatus({ type: "error", message: t("cv.errorProfileSave") });
+                  return;
+                }
+                try {
+                  const saved = await repositories.cvSearchProfiles.create(doc.hash, {
+                    name: profileName,
+                    searchConfig: profile,
+                  });
+                  if (sessionEpochRef.current !== epoch) return;
+                  setSelectedSavedSearchId(saved.sessionId);
+                  setCvProfileStoreVersion((version) => version + 1);
+                } catch {
+                  if (sessionEpochRef.current === epoch) {
+                    setStatus({ type: "error", message: t("cv.errorProfileSave") });
+                  }
+                  return;
+                }
               }
-              const expectedSearchName = profileName.trim() || profile.targetRoles?.[0] || "Suchprofil";
-              const saved = readCvProfileLists(doc.hash).searchProfiles.find((entry) => entry.name === expectedSearchName);
-              if (saved) {
-                setSelectedSavedSearchId(saved.id);
-                setCvProfileStoreVersion((version) => version + 1);
-              }
-            }
-            setEditingSearchName(null);
-            setCvState((prev) => ({
-              ...prev,
-              cvProfile: profile,
-              step: "goal-selection",
-              // suggestedProfile bleibt erhalten: der Skill-Auswahl-Step
-              // benötigt die extrahierten Skills (BUG-16).
-              fallbackNote: false,
-            }));
+              if (sessionEpochRef.current !== epoch) return;
+              setEditingSearchName(null);
+              setCvState((prev) => ({
+                ...prev,
+                cvProfile: profile,
+                step: "goal-selection",
+                // suggestedProfile bleibt erhalten: der Skill-Auswahl-Step
+                // benötigt die extrahierten Skills (BUG-16).
+                fallbackNote: false,
+              }));
+            })();
           }}
           onBack={() => {
             setEditingSearchName(null);
