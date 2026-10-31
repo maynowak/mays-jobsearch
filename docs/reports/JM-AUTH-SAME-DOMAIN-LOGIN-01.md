@@ -3,7 +3,7 @@
 **Art:** Auth-Architektur / Machbarkeitsprüfung
 **Baseline:** `175d477`
 **Status:** **BLOCKED — keine Implementierung**
-**Grund:** Die vorhandene Cognito-App-Client-Konfiguration erlaubt keinen direkten Login; eine AWS-Konfigurationsänderung wäre erforderlich.
+**Grund:** `USER_SRP_AUTH` ist konfigurationsseitig per Default verfügbar, aber die sichere SRP-/Token-Implementierung erfordert freigabepflichtige Abhängigkeiten, eine Storage-Entscheidung und ein Testkonto; sie ist nicht nachgewiesen.
 **AWS-Deployment:** keines
 **Vercel-Deployment:** keines
 
