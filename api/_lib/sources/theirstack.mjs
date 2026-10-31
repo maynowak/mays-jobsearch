@@ -4,9 +4,9 @@ import { cacheGet, cacheSet } from "../cache.mjs";
 import {
   countJobSourceCacheHit,
   countJobSourceCacheMiss,
-  countTheirstackCredits,
   countTheirstackUserCredits,
-  theirstackCreditLimitReached,
+  reserveProviderBudget,
+  settleProviderBudget,
   theirstackUserCreditLimitReached,
 } from "../usage.mjs";
 
@@ -77,17 +77,26 @@ export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, cit
     await countJobSourceCacheHit(SOURCE_ID);
   } else {
     await countJobSourceCacheMiss(SOURCE_ID);
-    if (await theirstackCreditLimitReached()) {
-      return emptyResult("limit_reached");
-    }
     // Per-user monthly guard (anonymous session = user, 20 credits default).
-    // Without identity there is nothing to attribute to — global guard above
-    // still applies.
     if (identity && (await theirstackUserCreditLimitReached(identity))) {
       return emptyResult("user_limit_reached");
     }
-    rawJobs = await fetchTheirstackUpstream(apiKey, body);
-    await countTheirstackCredits(rawJobs.length);
+    // Atomic global budget: reserve the maximum possible credits before the
+    // paid call. Redis outage fails closed.
+    const reservation = await reserveProviderBudget("theirstack", RESULTS_LIMIT);
+    if (reservation.error === "exceeded") return emptyResult("limit_reached");
+    if (reservation.error) return emptyResult("quota_unavailable");
+    try {
+      rawJobs = await fetchTheirstackUpstream(apiKey, body);
+    } catch (err) {
+      // Billing on a thrown/unknown provider response is not proven; keep the
+      // reservation until its TTL instead of refunding it unsafely.
+      throw err;
+    }
+    const settled = await settleProviderBudget("theirstack", reservation.id, rawJobs.length);
+    if (settled.error) {
+      console.warn("[theirstack] budget settlement failed:", settled.error);
+    }
     if (identity) await countTheirstackUserCredits(identity, rawJobs.length);
     if (rawJobs.length) await cacheSet(cacheKey, rawJobs, CACHE_TTL_SEC);
   }

@@ -2,15 +2,15 @@ import { tokenize, locationMatches, keywordHits } from "../../filter.mjs";
 import { cacheGet, cacheSet, cacheDel } from "../../cache.mjs";
 import { datasetRefreshMs } from "../../config.mjs";
 import {
-  apifyRunLimitReached,
   countApifyCacheHit,
   countApifyCacheMiss,
   countApifyDatasetReuse,
-  countApifyRun,
   countJobSourceCacheHit,
   countJobSourceCacheMiss,
   countJobSourceDatasetReuse,
   countJobSourceRun,
+  refundApifyRunSlot,
+  reserveApifyRunSlot,
 } from "../../usage.mjs";
 import { startApifyRun, waitForRun, readDataset } from "./client.mjs";
 
@@ -92,12 +92,15 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
     }
 
     if (!records) {
-      if (await apifyRunLimitReached()) {
-        return emptyResult("limit_reached");
-      }
+      // Atomic monthly run slot; Redis outage fails closed for this paid path.
+      const slot = await reserveApifyRunSlot();
+      if (slot.error === "exceeded") return emptyResult("limit_reached");
+      if (slot.error) return emptyResult("quota_unavailable");
       const started = await startApifyRun(apiToken, actor.actorId, input);
-      if (started.error) return emptyResult(started.error);
-      await countApifyRun();
+      if (started.error) {
+        await refundApifyRunSlot();
+        return emptyResult(started.error);
+      }
       await countJobSourceRun(actor.sourceId);
       const waited = await waitForRun(apiToken, started.run.id, APIFY_SYNC_TIMEOUT_SEC * 1000);
       if (waited.error) return emptyResult(waited.error);

@@ -12,7 +12,10 @@ vi.mock("../../api/_lib/cache.mjs", () => ({
 }));
 
 vi.mock("../../api/_lib/usage.mjs", () => ({
-  apifyRunLimitReached: vi.fn(async () => false),
+  reserveApifyRunSlot: vi.fn(async () => ({ ok: true })),
+  refundApifyRunSlot: vi.fn(async () => {}),
+  reserveProviderBudget: vi.fn(async () => ({ ok: true, id: "res-1" })),
+  settleProviderBudget: vi.fn(async () => ({ ok: true, actual: 0 })),
   countApifyCacheHit: vi.fn(async () => {}),
   countApifyCacheMiss: vi.fn(async () => {}),
   countApifyDatasetReuse: vi.fn(async () => {}),

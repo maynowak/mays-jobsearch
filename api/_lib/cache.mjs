@@ -46,6 +46,14 @@ export async function cacheDel(key) {
   await cacheCommand("DEL", key);
 }
 
+/**
+ * Atomic Lua helper. Returns the script result, or null when Redis is
+ * unavailable/errors. Callers must fail closed for paid paths on null.
+ */
+export async function cacheEval(script, keys = [], args = []) {
+  return cacheCommand("EVAL", script, keys.length, ...keys, ...args);
+}
+
 export async function cacheIncr(key, ttlSec) {
   const result = await cacheCommand("INCR", key);
   if (typeof result === "number" && result === 1 && ttlSec) {

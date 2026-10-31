@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { getConfig } from "./config.mjs";
 import { hashToken } from "./identity.mjs";
 import {
@@ -8,6 +9,7 @@ import {
   cacheIncrBy,
   cacheReserveIncr,
   cacheDecrBy,
+  cacheEval,
 } from "./cache.mjs";
 import { APIFY_ACTORS } from "./sources/apify/actors.mjs";
 import { SOURCE_ID as ARBEITNOW_SOURCE_ID } from "./sources/arbeitnow.mjs";
@@ -181,6 +183,135 @@ export async function reserveApifyRunSlot() {
 // Best-effort refund of a reserved run slot (e.g. when the run could not start).
 export async function refundApifyRunSlot() {
   await cacheDecrBy(monthScoped(APIFY_RUN_KEY), 1);
+}
+
+// ---------------------------------------------------------------------------
+// Atomic provider budgets (JM-COOKIELESS-QUOTA-IMPLEMENTATION-02A)
+// ---------------------------------------------------------------------------
+
+const BUDGET_TTL_SEC = MONTH_TTL_SEC;
+const RESERVATION_TTL_SEC = 15 * 60;
+
+const RESERVE_SCRIPT = `
+local used = tonumber(redis.call('GET', KEYS[1]) or '0')
+local all = redis.call('HGETALL', KEYS[2])
+local reserved = 0
+local now = tonumber(ARGV[4])
+for i = 1, #all, 2 do
+  local value = all[i + 1]
+  local max, exp = string.match(value, '^(%d+):(%d+):(.+)$')
+  if max and exp and tonumber(exp) < now then
+    redis.call('HDEL', KEYS[2], all[i])
+  elseif max then
+    reserved = reserved + tonumber(max)
+  end
+end
+local max = tonumber(ARGV[1])
+if used + reserved + max > tonumber(ARGV[2]) then return -1 end
+redis.call('HSET', KEYS[2], ARGV[3], tostring(max)..':'..tostring(now + tonumber(ARGV[5]))..':'..ARGV[6])
+redis.call('EXPIRE', KEYS[2], tonumber(ARGV[7]))
+return 1
+`;
+
+const SETTLE_SCRIPT = `
+local value = redis.call('HGET', KEYS[3], ARGV[1])
+if not value then return -1 end
+local max, exp, month = string.match(value, '^(%d+):(%d+):(.+)$')
+redis.call('HDEL', KEYS[3], ARGV[1])
+local actual = tonumber(ARGV[2])
+if not actual or actual < 0 then actual = 0 end
+if actual > tonumber(max) then actual = tonumber(max) end
+local key = KEYS[1]
+if month ~= ARGV[4] then key = KEYS[2] end
+if actual > 0 then
+  redis.call('INCRBY', key, actual)
+  redis.call('EXPIRE', key, tonumber(ARGV[5]))
+end
+return actual
+`;
+
+const RELEASE_SCRIPT = `
+local removed = redis.call('HDEL', KEYS[1], ARGV[1])
+return removed
+`;
+
+function budgetProvider(provider) {
+  const cfg = getConfig();
+  if (provider === "theirstack") {
+    return {
+      usedBase: "mj-usage:theirstack:credits",
+      limit: cfg.theirstackMonthlyMaxCredits,
+    };
+  }
+  if (provider === "jobspipe") {
+    return {
+      usedBase: "mj-usage:jobspipe:credits",
+      limit: cfg.jobspipeMonthlyMaxCredits,
+    };
+  }
+  return null;
+}
+
+function previousMonth() {
+  const now = new Date();
+  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function reservationHashKey(provider) {
+  return `mj-budget:${provider}:reservations:${currentMonth()}`;
+}
+
+/**
+ * Reserve the maximum possible cost before a paid provider call.
+ * Returns { ok, id } | { error: "exceeded" | "unavailable" }.
+ */
+export async function reserveProviderBudget(provider, maximumCost) {
+  const budget = budgetProvider(provider);
+  if (!budget) return { error: "unavailable" };
+  const max = Math.floor(Number(maximumCost));
+  if (!Number.isFinite(max) || max <= 0) return { error: "unavailable" };
+  const id = randomBytes(16).toString("hex");
+  const month = currentMonth();
+  const result = await cacheEval(
+    RESERVE_SCRIPT,
+    [`${budget.usedBase}:${month}`, reservationHashKey(provider)],
+    [max, budget.limit, id, Date.now(), RESERVATION_TTL_SEC, month, BUDGET_TTL_SEC]
+  );
+  if (result === null) return { error: "unavailable" };
+  if (result === -1) return { error: "exceeded" };
+  return { ok: true, id };
+}
+
+/**
+ * Settle a reservation with the actual billed amount. Missing reservations
+ * (double settlement or expiry) are a safe no-op. Redis failure is reported.
+ */
+export async function settleProviderBudget(provider, id, actualCost) {
+  const budget = budgetProvider(provider);
+  if (!budget) return { error: "unavailable" };
+  const actual = Math.max(0, Math.floor(Number(actualCost) || 0));
+  const month = currentMonth();
+  const result = await cacheEval(
+    SETTLE_SCRIPT,
+    [
+      `${budget.usedBase}:${month}`,
+      `${budget.usedBase}:${previousMonth()}`,
+      reservationHashKey(provider),
+    ],
+    [id, actual, month, month, BUDGET_TTL_SEC]
+  );
+  if (result === null) return { error: "unavailable" };
+  if (result === -1) return { error: "missing" };
+  return { ok: true, actual: Number(result) };
+}
+
+/** Release a reservation without charging it. Idempotent. */
+export async function releaseProviderBudget(provider, id) {
+  if (!budgetProvider(provider)) return { error: "unavailable" };
+  const result = await cacheEval(RELEASE_SCRIPT, [reservationHashKey(provider)], [id]);
+  if (result === null) return { error: "unavailable" };
+  return result === 1 ? { ok: true } : { error: "missing" };
 }
 
 const THEIRSTACK_CREDIT_KEY = "mj-usage:theirstack:credits";

@@ -17,19 +17,19 @@ vi.mock("../../api/_lib/cache.mjs", () => ({
 vi.mock("../../api/_lib/usage.mjs", () => ({
   countJobSourceCacheHit: vi.fn(async () => {}),
   countJobSourceCacheMiss: vi.fn(async () => {}),
-  countTheirstackCredits: vi.fn(async () => {}),
   countTheirstackUserCredits: vi.fn(async () => {}),
-  theirstackCreditLimitReached: vi.fn(async () => false),
   theirstackUserCreditLimitReached: vi.fn(async () => false),
+  reserveProviderBudget: vi.fn(async () => ({ ok: true, id: "res-1" })),
+  settleProviderBudget: vi.fn(async () => ({ ok: true, actual: 0 })),
 }));
 
 const { getConfig } = await import("../../api/_lib/config.mjs");
 const { cacheGet, cacheSet } = await import("../../api/_lib/cache.mjs");
 const {
-  countTheirstackCredits,
   countTheirstackUserCredits,
-  theirstackCreditLimitReached,
   theirstackUserCreditLimitReached,
+  reserveProviderBudget,
+  settleProviderBudget,
 } = await import("../../api/_lib/usage.mjs");
 const { fetchJobs, normalizeTheirstackJob } = await import("../../api/_lib/sources/theirstack.mjs");
 
@@ -86,8 +86,8 @@ beforeEach(() => {
   });
   vi.mocked(cacheGet).mockResolvedValue(null);
   vi.mocked(cacheSet).mockResolvedValue(undefined);
-  vi.mocked(theirstackCreditLimitReached).mockResolvedValue(false);
-  vi.mocked(countTheirstackCredits).mockResolvedValue(undefined);
+  vi.mocked(reserveProviderBudget).mockResolvedValue({ ok: true, id: "res-1" });
+  vi.mocked(settleProviderBudget).mockResolvedValue({ ok: true, actual: 0 });
 });
 
 describe("Theirstack Source Adapter", () => {
@@ -108,7 +108,7 @@ describe("Theirstack Source Adapter", () => {
     });
 
     it("returns empty result when credit contingent is exhausted", async () => {
-      vi.mocked(theirstackCreditLimitReached).mockResolvedValue(true);
+      vi.mocked(reserveProviderBudget).mockResolvedValue({ error: "exceeded" });
       setupFetchMock(() => {
         throw new Error("fetch must not be called when limit reached");
       });
@@ -116,6 +116,16 @@ describe("Theirstack Source Adapter", () => {
       expect(result.jobs).toEqual([]);
       expect(result.meta.enabled).toBe(false);
       expect(result.meta.reason).toBe("limit_reached");
+    });
+
+    it("fails closed on Redis outage before a paid call", async () => {
+      vi.mocked(reserveProviderBudget).mockResolvedValue({ error: "unavailable" });
+      setupFetchMock(() => {
+        throw new Error("fetch must not be called when budget is unavailable");
+      });
+      const result = await fetchJobs({ skills: "python", targetRoles: [], city: "" });
+      expect(result.jobs).toEqual([]);
+      expect(result.meta.reason).toBe("quota_unavailable");
     });
 
     it("returns empty result without query terms (protects credits)", async () => {
@@ -176,7 +186,7 @@ describe("Theirstack Source Adapter", () => {
     it("counts returned records as credits (1 per record)", async () => {
       setupFetchMock(() => okResponse({ data: [sampleTheirstackJob, sampleTheirstackJobMinimal], metadata: {} }));
       await fetchJobs({ skills: "", targetRoles: ["engineer"], city: "" });
-      expect(vi.mocked(countTheirstackCredits)).toHaveBeenCalledWith(2);
+      expect(vi.mocked(settleProviderBudget)).toHaveBeenCalledWith("theirstack", "res-1", 2);
     });
 
     it("counts user credits when identity is passed", async () => {
@@ -196,7 +206,7 @@ describe("Theirstack Source Adapter", () => {
       expect(result.jobs).toEqual([]);
       expect(result.meta.enabled).toBe(false);
       expect(result.meta.reason).toBe("user_limit_reached");
-      expect(vi.mocked(countTheirstackCredits)).not.toHaveBeenCalled();
+      expect(vi.mocked(settleProviderBudget)).not.toHaveBeenCalled();
     });
 
     it("skips user accounting without identity (global guard still applies)", async () => {
@@ -204,7 +214,7 @@ describe("Theirstack Source Adapter", () => {
       await fetchJobs({ skills: "python", targetRoles: [], city: "" });
       expect(vi.mocked(theirstackUserCreditLimitReached)).not.toHaveBeenCalled();
       expect(vi.mocked(countTheirstackUserCredits)).not.toHaveBeenCalled();
-      expect(vi.mocked(countTheirstackCredits)).toHaveBeenCalledWith(1);
+      expect(vi.mocked(settleProviderBudget)).toHaveBeenCalledWith("theirstack", "res-1", 1);
     });
 
     it("handles minimal job data (missing optional fields)", async () => {
@@ -316,7 +326,7 @@ describe("Theirstack Source Adapter", () => {
       const result = await fetchJobs({ skills: "python", targetRoles: [], city: "" });
       expect(result.jobs.length).toBe(1);
       expect(result.jobs[0].slug).toBe("ts-1234");
-      expect(vi.mocked(countTheirstackCredits)).not.toHaveBeenCalled();
+      expect(vi.mocked(settleProviderBudget)).not.toHaveBeenCalled();
     });
 
     it("stores fresh records under namespaced key after miss", async () => {

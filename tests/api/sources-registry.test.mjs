@@ -11,7 +11,10 @@ vi.mock("../../api/_lib/cache.mjs", () => ({
 }));
 
 vi.mock("../../api/_lib/usage.mjs", () => ({
-  apifyRunLimitReached: vi.fn(async () => false),
+  reserveApifyRunSlot: vi.fn(async () => ({ ok: true })),
+  refundApifyRunSlot: vi.fn(async () => {}),
+  reserveProviderBudget: vi.fn(async () => ({ ok: true, id: "res-1" })),
+  settleProviderBudget: vi.fn(async () => ({ ok: true, actual: 0 })),
   countApifyCacheHit: vi.fn(async () => {}),
   countApifyCacheMiss: vi.fn(async () => {}),
   countApifyDatasetReuse: vi.fn(async () => {}),
@@ -24,7 +27,6 @@ vi.mock("../../api/_lib/usage.mjs", () => ({
 }));
 
 const { cacheGet, cacheSet } = await import("../../api/_lib/cache.mjs");
-const { apifyRunLimitReached } = await import("../../api/_lib/usage.mjs");
 const { fetchAllJobs } = await import("../../api/_lib/sources/index.mjs");
 
 const baseArbeitnowJob = {
@@ -100,7 +102,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(cacheGet).mockResolvedValue(null);
   vi.mocked(cacheSet).mockResolvedValue(undefined);
-  vi.mocked(apifyRunLimitReached).mockResolvedValue(false);
   process.env.JOB_SOURCE_ARBEITNOW_ENABLED = "true";
   process.env.JOB_SOURCE_ARBEITSAGENTUR_ENABLED = "true";
   process.env.APIFY_API_TOKEN = "test-token";

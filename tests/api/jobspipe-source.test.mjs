@@ -18,10 +18,10 @@ vi.mock("../../api/_lib/cache.mjs", () => ({
 vi.mock("../../api/_lib/usage.mjs", () => ({
   countJobSourceCacheHit: vi.fn(async () => {}),
   countJobSourceCacheMiss: vi.fn(async () => {}),
-  countJobspipeCredits: vi.fn(async () => {}),
   countJobspipeUserCredits: vi.fn(async () => {}),
-  jobspipeCreditLimitReached: vi.fn(async () => false),
   jobspipeUserCreditLimitReached: vi.fn(async () => false),
+  reserveProviderBudget: vi.fn(async () => ({ ok: true, id: "res-1" })),
+  settleProviderBudget: vi.fn(async () => ({ ok: true, actual: 0 })),
 }));
 
 const { getConfig } = await import("../../api/_lib/config.mjs");

@@ -1,3 +1,12 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-IMPLEMENTATION-02A
+- Typ: Implementation/Cost-Control/Reliability
+- Status: IMPLEMENTED / VERIFIED (mocked Redis; real Redis atomicity NOT VERIFIED)
+- Scope: Atomare globale Provider-Budgets für TheirStack und JobsPipe (reserve/settle/release via Lua), Fail-Closed bei Redis-Ausfall, atomare Apify-Run-Slots für allgemeine Actor-Läufe.
+- Mechanism: `mj-budget:<provider>:reservations:<month>` hash with max/expiry/month; reserve checks used+active reservations+max <= limit atomically; settle clamps actual to max and increments existing monthly usage; missing reservation is idempotent; release never creates negative counters. Apify uses existing `reserveApifyRunSlot` and refunds only when the run did not start.
+- AI-/Privacy-/Data-Flow impact: no new cookie, no IP quota, no cache change, no provider change. Existing `mj_session` and per-session guards remain. Unknown provider billing is handled conservatively (reservation retained until 15-min expiry).
+- Tests: budget contract, fail-closed, settle/release, Apify limit/refund and existing provider suites PASS; full suite 982 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS; guest E2E 1440/390 PASS. Real isolated Redis/Lua atomicity NOT VERIFIED.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-IMPLEMENTATION-02A-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-ARCHITECTURE-01
 - Typ: Architecture/Cost-Control/Privacy/Audit
 - Status: ANALYSIS COMPLETE (no product code/cookie/Redis/API/AWS change)
