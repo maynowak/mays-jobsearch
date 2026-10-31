@@ -190,7 +190,7 @@ lesende Produktionsverbindung verwendet, keine Secrets ausgegeben).
 - Dokumentations-Commit: `dbfccb4`
 - Preview-Prüf-Commit (Runtime): `7c7e0dd`; Deployment-HEAD enthält zusätzlich
   `dbfccb4` (Dokumentation)
-- Remote-Synchronität: nach Push geprüft
+- Remote-Synchronität: `origin/main` = `0 0` nach Push
 - Kein Deployment
 
 ## 11. Offene Freigaben
