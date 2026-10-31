@@ -107,35 +107,41 @@ Aktueller App Client:
 | `RefreshTokenValidity` | 30 Tage |
 | Username-Attribut | E-Mail |
 
-Entscheidend: **`ExplicitAuthFlows` ist nicht gesetzt.** Die vorherigen Audits
-halten ausdrücklich fest, dass `InitiateAuth` bzw. direkte SDK-Logins damit
-nicht möglich sind und eine Ergänzung nötig wäre. Der Authorization-Code-Flow
-funktioniert; er ist aber genau der Flow, der den Browser auf die
-Cognito-Domain umleitet.
+**Präzisierung nach AWS-Dokumentation:** Wenn `ExplicitAuthFlows` nicht gesetzt
+ist, unterstützt der App Client standardmäßig
+`ALLOW_REFRESH_TOKEN_AUTH`, `ALLOW_USER_SRP_AUTH` und `ALLOW_CUSTOM_AUTH`.
+`USER_SRP_AUTH` ist damit der einzige direkte Login-Flow, der ohne Änderung der
+Cognito-Konfiguration plausibel verfügbar ist. `ALLOW_USER_PASSWORD_AUTH` und
+`ALLOW_USER_AUTH` sind **nicht** Default und nicht nachgewiesen.
+
+Die frühere Formulierung, direkter Login sei generell unmöglich, ist damit zu
+korrigieren: SRP ist konfigurationsseitig möglich, aber die sichere
+Implementierung (SRP-Bibliothek, Tokenvalidierung, Storage) ist nicht
+nachgewiesen.
 
 Eine erneute Live-AWS-Abfrage wurde in diesem Task nicht durchgeführt.
-Die Aussage stützt sich auf die letzte committete Read-only-Evidenz; eine
-aktuelle Live-Verifikation ist **NOT VERIFIED**.
+Die Aussage stützt sich auf die letzte committete Read-only-Evidenz und die
+AWS-Dokumentation; eine aktuelle Live-Verifikation ist **NOT VERIFIED**.
 
 ## 4. Bewertete Lösungswege
 
 | Lösung | Same-Origin | Sicherheit | Status |
 |---|---|---|---|
 | OIDC Code + PKCE (aktuell) | nein, Redirect zu Cognito | validiert, etabliert | funktioniert, erfüllt Ziel nicht |
-| `USER_SRP_AUTH` direkt | ja | Passwort verlässt Browser nicht im Klartext; SRP | **BLOCKED** — `ALLOW_USER_SRP_AUTH` fehlt |
-| `USER_PASSWORD_AUTH` direkt | ja | Passwort über TLS an Cognito; schwächer als SRP | **BLOCKED** — `ALLOW_USER_PASSWORD_AUTH` fehlt |
-| `USER_AUTH` direkt | ja | abhängig von Challenge-Konfiguration | **BLOCKED** — `ALLOW_USER_AUTH` fehlt |
+| `USER_SRP_AUTH` direkt | ja | Passwort verlässt Browser nicht im Klartext; SRP | **NICHT IMPLEMENTIERT** — Flow per Default verfügbar, aber SRP-/Validierungsabhängigkeit und Storage offen |
+| `USER_PASSWORD_AUTH` direkt | ja | Passwort über TLS an Cognito; schwächer als SRP | **BLOCKED** — `ALLOW_USER_PASSWORD_AUTH` nicht default/ nicht nachgewiesen |
+| `USER_AUTH` direkt | ja | abhängig von Challenge-Konfiguration | **BLOCKED** — `ALLOW_USER_AUTH` nicht default/ nicht nachgewiesen |
 | Cognito Managed Login im iframe | optisch ja | externe Login-Seite, Framing-/CSP-Risiko | verworfen |
 | Reverse-Proxy für Cognito | optisch ja | Cookie-/CSRF-/Origin-Komplexität | verworfen |
 | BFF mit HttpOnly-Session | ja | stärkere Tokenlagerung | außerhalb Scope; neue Architektur |
 
 ### `USER_SRP_AUTH`
 
-Benötigt `ALLOW_USER_SRP_AUTH` am App Client. Der Browser müsste SRP-Prove
-erzeugen. Das ist ohne getestete Bibliothek (z. B.
-`amazon-cognito-identity-js`) oder eine eigene, sicherheitskritische
-SRP-Implementierung nicht vertretbar. Eine neue npm-Abhängigkeit ist nach
-`AGENTS.md` freigabepflichtig.
+`ALLOW_USER_SRP_AUTH` ist bei nicht gesetztem `ExplicitAuthFlows` per Default
+aktiv. Der Browser müsste dennoch SRP-Prove erzeugen. Das ist ohne getestete
+Bibliothek (z. B. `amazon-cognito-identity-js`) oder eine eigene,
+sicherheitskritische SRP-Implementierung nicht vertretbar. Eine neue
+npm-Abhängigkeit ist nach `AGENTS.md` freigabepflichtig.
 
 Zusätzlich müssen behandelt werden:
 
@@ -148,16 +154,18 @@ Zusätzlich müssen behandelt werden:
 
 ### `USER_PASSWORD_AUTH`
 
-Würde `ALLOW_USER_PASSWORD_AUTH` erfordern. Der Aufruf wäre mit dem vorhandenen
-`cognitoRpc`-Muster per `fetch()` möglich. Das Passwort würde aber direkt an
-Cognito übertragen; AWS empfiehlt für Produktions-Clients SRP. Auch hier fehlen
-MFA-, New-Password-, Refresh-, Validierungs- und Storage-Konzept.
+Würde `ALLOW_USER_PASSWORD_AUTH` erfordern; dieser Flow ist nicht default und
+nicht nachgewiesen. Der Aufruf wäre mit dem vorhandenen `cognitoRpc`-Muster per
+`fetch()` möglich. Das Passwort würde aber direkt an Cognito übertragen; AWS
+empfiehlt für Produktions-Clients SRP. Auch hier fehlen MFA-, New-Password-,
+Refresh-, Validierungs- und Storage-Konzept.
 
 ### `USER_AUTH`
 
 Würde `ALLOW_USER_AUTH` und eine definierte Challenge-/Factor-Konfiguration
-erfordern. Dafür gibt es weder Konfigurationsnachweis noch Implementierung.
-Nicht empfohlen, solange SRP nicht sauber verfügbar ist.
+erfordern; beides ist nicht default und nicht nachgewiesen. Dafür gibt es weder
+Konfigurationsnachweis noch Implementierung. Nicht empfohlen, solange SRP nicht
+sauber implementiert ist.
 
 ## 5. Token- und Sessionanforderungen (falls später freigegeben)
 
@@ -182,56 +190,75 @@ Nicht empfohlen, solange SRP nicht sauber verfügbar ist.
 10. **Zielroute:** Nach erfolgreicher Anmeldung intern `/profil` ansteuern.
     Aktuell leitet `AuthCallback` auf `/` weiter.
 
-## 6. Erforderliche AWS-Änderungen (nicht ausgeführt)
+## 6. AWS-Konfiguration und Voraussetzungen
 
-Für den bevorzugten SRP-Weg:
+### Für `USER_SRP_AUTH`
+
+Nach AWS-Dokumentation ist `ALLOW_USER_SRP_AUTH` bei nicht gesetztem
+`ExplicitAuthFlows` standardmäßig aktiv. Für den SRP-Weg ist damit **keine
+AWS-Konfigurationsänderung zwingend erforderlich**.
+
+Optional – nur zur expliziten Dokumentation, nicht erforderlich:
 
 ```text
 ExplicitAuthFlows = ["ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 ```
 
-Alternativ, mit Sicherheitsabwägung:
+### Für `USER_PASSWORD_AUTH` / `USER_AUTH`
+
+Diese Flows sind nicht Default. Sie würden eine Änderung erfordern:
 
 ```text
 ExplicitAuthFlows = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 ```
 
-Für `USER_AUTH` zusätzlich:
+oder:
 
 ```text
 ExplicitAuthFlows = ["ALLOW_USER_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 ```
 
-Weitere Voraussetzungen:
+Diese Varianten wurden nicht gewählt: `USER_PASSWORD_AUTH` ist sicherheitlich
+schwächer als SRP; `USER_AUTH` ist nicht nachgewiesen und für den aktuellen
+Bedarf nicht erforderlich.
 
-- MFA-Konfiguration und Testkonto verifizieren.
+### Weitere Voraussetzungen vor einer Implementierung
+
+- Freigabe für eine SRP-Bibliothek (z. B. `amazon-cognito-identity-js`).
+- Freigabe für eine JWT-Validierungsbibliothek (z. B. `aws-jwt-verify`) oder
+  eine gleichwertige, nicht selbst entwickelte Validierung.
+- Entscheidung zur Token-/Session-Speicherung.
+- Testkonto für Login, falsches Passwort, MFA, New-Password und Passwortreset.
 - `EnableTokenRevocation=true` beibehalten (bereits gesetzt).
 - Public Client ohne Secret beibehalten.
-- Nach der Änderung: Read-only `describe-user-pool-client` und echter
-  E2E-Test mit Testkonto.
 - Keine Änderung an Pool, Domain, Callback-URLs oder RIS ohne separate Freigabe.
 
 **Es wurde keine AWS-Konfiguration geändert.**
 
 ## 7. Hard-Stop-Begründung
 
-Der Task verlangt den Stopp vor der Implementierung, wenn die vorhandene
-Cognito-Konfiguration den sicheren direkten Login nicht unterstützt. Das ist
-hier der Fall:
+Der Task verlangt den Stopp vor der Implementierung, wenn die sichere
+Tokenverwaltung nicht nachgewiesen ist. Das ist hier der Fall:
 
-1. `ALLOW_USER_SRP_AUTH`, `ALLOW_USER_PASSWORD_AUTH` und `ALLOW_USER_AUTH` sind
-   nicht nachgewiesen; `ExplicitAuthFlows` ist nicht gesetzt.
-2. Eine Änderung der Cognito-Konfiguration ist erforderlich.
-3. Die sichere Tokenverwaltung für einen direkten Flow ist nicht entschieden
-   und ohne Zusatzbibliothek bzw. BFF nicht nachgewiesen.
-4. MFA-, New-Password- und Passwortzurücksetzungs-Verhalten ist nicht
-   verifiziert.
-5. Eine neue Abhängigkeit wäre nach `AGENTS.md` freigabepflichtig.
+1. `USER_SRP_AUTH` ist konfigurationsseitig per Default verfügbar; die
+   Behauptung, der Flow sei generell gesperrt, war zu korrigieren.
+2. Die sichere SRP-Implementierung erfordert eine neue, freigabepflichtige
+   Bibliothek oder eine sicherheitskritische Eigenimplementierung.
+3. Die sichere Tokenvalidierung erfordert eine geeignete Bibliothek; die
+   aktuelle `oidc-client-ts`-Validierung validiert nur den Redirect-Callback,
+   nicht einen selbst erzeugten `User` aus einem direkten Login.
+4. Die Token-/Session-Speicherung ist offen. `amazon-cognito-identity-js` nutzt
+   standardmäßig `localStorage`; das wäre schwächer als die aktuelle
+   `sessionStorage`-Lösung. Eine HttpOnly-Cookie-Lösung würde einen BFF und
+   eine neue Session-Architektur erfordern.
+5. MFA-, `NEW_PASSWORD_REQUIRED`- und Passwortzurücksetzungs-Flows sind ohne
+   Testkonto nicht verifiziert.
+6. Eine neue Abhängigkeit ist nach `AGENTS.md` freigabepflichtig.
 
 Deshalb wurden **keine** Änderungen an `LoginForm`, `authFlow`, `oidcConfig`,
 `AuthCallback`, `Profile`, `Navbar`, `App` oder den Auth-Tests vorgenommen.
 Gastmodus, Apify, Redis, Budgets, Cookie-Freiheit, CV/ATS und 10/2/5 bleiben
-unverändert.
+unverändert. Es wurde keine AWS-Konfiguration geändert.
 
 ## 8. Testnachweise (Baseline, keine neue Implementierung)
 
@@ -249,17 +276,20 @@ unverändert.
 
 ## 9. Offene Freigaben
 
-1. AWS-App-Client um `ALLOW_USER_SRP_AUTH` + `ALLOW_REFRESH_TOKEN_AUTH`
-   erweitern (oder begründete Alternative).
-2. Entscheidung zur SRP-Bibliothek bzw. neuen Abhängigkeit.
+1. Freigabe für eine SRP-Bibliothek (z. B. `amazon-cognito-identity-js`).
+2. Freigabe für eine JWT-Validierungsbibliothek (z. B. `aws-jwt-verify`).
 3. Entscheidung zur Token-/Session-Speicherung (sessionStorage vs. BFF/HttpOnly).
 4. MFA-, New-Password- und Passwortzurücksetzungs-UX.
-5. Implementierungsfreigabe.
-6. Kein Deployment in diesem Task.
+5. Testkonto für echte Login-/Fehler-/MFA-Tests.
+6. Optional: `ExplicitAuthFlows` explizit dokumentieren; für SRP nicht
+   zwingend erforderlich.
+7. Implementierungsfreigabe.
+8. Kein Deployment in diesem Task.
 
 ## 10. Git
 
 - Keine Codeänderung.
-- Dokumentations-Commit: `e31a6da`
+- Erster Dokumentations-Commit: `e31a6da`
+- Korrektur-Commit (SRP-Default/Präzisierung): nach diesem Bericht.
 - Remote-Synchronität: `origin/main` = `0 0` nach Push
 - Kein AWS-/Vercel-Deployment.
