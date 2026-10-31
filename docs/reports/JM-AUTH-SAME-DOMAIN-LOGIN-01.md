@@ -290,6 +290,6 @@ unverändert. Es wurde keine AWS-Konfiguration geändert.
 
 - Keine Codeänderung.
 - Erster Dokumentations-Commit: `e31a6da`
-- Korrektur-Commit (SRP-Default/Präzisierung): nach diesem Bericht.
+- Korrektur-Commit (SRP-Default/Präzisierung): `db610de`
 - Remote-Synchronität: `origin/main` = `0 0` nach Push
 - Kein AWS-/Vercel-Deployment.
