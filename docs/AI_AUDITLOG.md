@@ -1,3 +1,13 @@
+2026-10-31 · JM-GUEST-CV-E2E-09
+- Typ: Test-Infrastructure/Browser-E2E/Privacy/Verification
+- Status: VERIFIED (mocked-backend browser E2E; RIS/persistence NOT IMPLEMENTED; authenticated flow NOT VERIFIED)
+- Scope: Synthetische textbasierte PDF-Fixture, pdfjs-Extraktionstest und vollständiger anonymer CV-Workflow in Chromium 1440/390 mit gemockten APIs.
+- Browser evidence: Consent vor Profilrequest (0 vor Zustimmung), genau 1 `/api/profile`, genau 1 `/api/jobs`, 0 `/api/match`, ATS-Override (Skills/Rollen) + Eltern-Standort, kein Login-Redirect, keine Console-Fehler, kein Overflow.
+- ATS recovery: Repository-/UI-/Dashboard-Tests verifizieren Unassigned-Liste, Wiederzuordnung, Kapazität, CV-Hash- und Generation-Isolation. Browser-Overlay mit geseedetem CV bleibt NOT VERIFIED (keine Lösch-UI/keine Testdaten-Injection).
+- AI-/Privacy-/Data-Flow impact: Fixture ausschließlich synthetisch; alle Modell-/Job-Endpunkte lokal gemockt, keine echten Provider-/Produktionsdaten. Keine neue Persistenz, Route oder Auth-Änderung. 50er-Session-Kapazität bleibt dokumentierte Abweichung vom 2er-Ziel.
+- Tests: `npm test -- --run` 967 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS; `npm run test:e2e:guest-cv` PASS auf 1440/390.
+- Log: `docs/reports/JM-GUEST-CV-E2E-09-EXECUTION_LOG.md`
+
 2026-10-31 · JM-ATS-OVERLAY-PARITY-08A
 - Typ: Fix/Integration/UI/Parity
 - Status: IMPLEMENTED / VERIFIED (session-only)

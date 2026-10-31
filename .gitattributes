@@ -1,0 +1,2 @@
+# Treat PDF fixtures as binary so whitespace checks do not inspect PDF bytes.
+*.pdf binary

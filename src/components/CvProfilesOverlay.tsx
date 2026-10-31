@@ -249,7 +249,11 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
                         type="button"
                         className="btn-ghost"
                         onClick={() => void assign(entry.id)}
-                        disabled={pendingAtsId !== null || !(assignTargets[entry.id] ?? "")}
+                        disabled={
+                          !onAssignUnassigned ||
+                          pendingAtsId !== null ||
+                          !(assignTargets[entry.id] ?? "")
+                        }
                       >
                         {t("cv.unassignedAssign")}
                       </button>

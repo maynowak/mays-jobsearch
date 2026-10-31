@@ -85,6 +85,20 @@ describe("JM-ATS-UNASSIGNED-UX-08: unassigned ATS recovery", () => {
     expect(screen.getByRole("heading", { name: "Nicht zugeordnete ATS-Profile" })).toBeTruthy();
   });
 
+  it("disables assignment when no callback is available", () => {
+    saveCvSearchProfile("cv-hash", "Parent profile", profile);
+    saveCvAtsProfile("cv-hash", "Orphan ATS", ["AWS"], ["Cloud Engineer"], null);
+    render(
+      <LangProvider>
+        <CvProfilesOverlay docName="cv.pdf" docHash="cv-hash" onClose={() => undefined} />
+      </LangProvider>
+    );
+
+    const select = screen.getByLabelText("Zuordnen zu") as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: select.options[1].value } });
+    expect(screen.getByRole("button", { name: "Zuordnen" })).toBeDisabled();
+  });
+
   it("asks for a parent search profile when none exists", () => {
     saveCvAtsProfile("cv-hash", "Orphan ATS", ["AWS"], ["Cloud Engineer"], null);
     render(
