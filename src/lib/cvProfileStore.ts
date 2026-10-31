@@ -15,6 +15,15 @@ export const CV_LISTS_TTL_MS = 12 * 60 * 60 * 1000; // 12 Stunden
 const LEGACY_STORE_PREFIX = "mj-cv-lists:"; // v1: localStorage (wird bereinigt)
 const MAX_ENTRIES_PER_LIST = 50;
 
+// JM-PROFILE-CAPACITY-02-LIMIT: product limit for CV search profiles.
+// ATS entries keep their separate per-parent limit (5) and list cap (50).
+export const MAX_SEARCH_PROFILES_PER_CV = 2;
+
+/** Grandfathering: existing entries may still be updated; new ones are blocked. */
+export function canCreateCvSearchProfile(existingCount: number, isExisting: boolean): boolean {
+  return isExisting || existingCount < MAX_SEARCH_PROFILES_PER_CV;
+}
+
 export interface CvSearchProfileEntry {
   id: string;
   name: string;
@@ -105,6 +114,9 @@ export function saveCvSearchProfile(
   // CV-UPLOAD-UX-08: gleicher Name -> vorhandener Eintrag wird ueberschrieben
   // (ID bleibt stabil; der Eintrag wandert nach vorn).
   const existing = bucket.searchProfiles.find((e) => e.name === finalName);
+  // JM-PROFILE-CAPACITY-02-LIMIT: block only genuinely new entries. Existing
+  // entries remain editable and are never auto-trimmed.
+  if (!canCreateCvSearchProfile(bucket.searchProfiles.length, Boolean(existing))) return null;
   const entry: CvSearchProfileEntry = existing
     ? { ...existing, savedAt: now, profile, ...(description === undefined ? {} : { description }) }
     : { id: generateEntryId(), name: finalName, savedAt: now, profile, ...(description === undefined ? {} : { description }) };

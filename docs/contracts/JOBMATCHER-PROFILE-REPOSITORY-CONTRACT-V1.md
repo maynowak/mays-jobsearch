@@ -178,8 +178,9 @@ timestamps, tenant IDs and versions.
 The session adapter wraps current behavior without pretending it is remote
 persistence:
 
-- `cvProfileStore.ts`: hash-keyed module `Map`, 12-hour lazy TTL, current
-  frontend capacity up to 50 search entries and 5 ATS assignments per parent.
+- `cvProfileStore.ts`: hash-keyed module `Map`, 12-hour lazy TTL, max 2 CV
+  search profiles per CV (existing entries are grandfathered and never
+  auto-trimmed) and max 5 ATS assignments per parent.
 - `manualSearchProfiles.ts`: App-owned in-memory `Map`, defensive copies,
   cleared on reload and auth identity change.
 - CV `File` objects and the active CV workflow remain React state.

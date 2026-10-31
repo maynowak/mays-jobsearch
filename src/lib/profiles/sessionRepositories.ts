@@ -9,6 +9,7 @@ import {
 } from '../manualSearchProfiles';
 import {
   assignCvAtsProfileToSearchProfile,
+  canCreateCvSearchProfile,
   deleteCvAtsProfile,
   deleteCvSearchProfile,
   readCvProfileLists,
@@ -155,6 +156,15 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
       async create(cvHash, input) {
         assertSessionCurrent(generation);
         validateCreateCVSearchProfile(input);
+        const lists = readCvProfileLists(cvHash);
+        const finalName = input.name.trim() || input.searchConfig.targetRoles[0] || 'Suchprofil';
+        const existing = lists.searchProfiles.find((candidate) => candidate.name === finalName);
+        if (!canCreateCvSearchProfile(lists.searchProfiles.length, Boolean(existing))) {
+          throw new ProfileValidationError(
+            'This CV already has the maximum of two search profiles',
+            'capacity_exceeded'
+          );
+        }
         const entry = saveCvSearchProfile(cvHash, input.name, profileFromSearchInput(input), input.description);
         if (!entry) throw new ProfileValidationError('CV hash is required for a session profile', 'invalid_parent');
         return cvSearchEntry(cvHash, entry.id);

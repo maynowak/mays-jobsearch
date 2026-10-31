@@ -253,6 +253,8 @@ export default function App() {
 
   // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
   const [cvState, setCvState] = useState<CvProcessingState>(createInitialCvState);
+  // JM-PROFILE-CAPACITY-02-LIMIT: inline feedback on the profile-ready step.
+  const [cvProfileSaveError, setCvProfileSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     const handlePopState = () => setNavigationVersion((version) => version + 1);
@@ -2070,6 +2072,7 @@ export default function App() {
           suggested={cvState.suggestedProfile}
           busy={cvState.isProcessing}
           loadingLabel={t("cv.savingProfile")}
+          error={cvProfileSaveError}
           // CV-PROFILE-LISTS-03/05 + CV-UPLOAD-UX-08: im Edit-Modus der
           // bestehende Name; sonst Vorschlag "<Zielrolle> - Profil<n>"
           defaultName={
@@ -2087,6 +2090,7 @@ export default function App() {
             // haengen (gleicher Name ueberschreibt den Eintrag).
             const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
             const epoch = sessionEpochRef.current;
+            setCvProfileSaveError(null);
             void (async () => {
               if (doc?.hash) {
                 const repositories = profileRepositoriesRef.current;
@@ -2105,12 +2109,17 @@ export default function App() {
                 } catch (error) {
                   if (error instanceof ProfileSessionEndedError) return;
                   if (sessionEpochRef.current === epoch) {
-                    setStatus({ type: "error", message: t("cv.errorProfileSave") });
+                    setCvProfileSaveError(
+                      (error as { code?: string })?.code === "capacity_exceeded"
+                        ? t("cv.errorProfileCapacity")
+                        : t("cv.errorProfileSave")
+                    );
                   }
                   return;
                 }
               }
               if (sessionEpochRef.current !== epoch) return;
+              setCvProfileSaveError(null);
               setEditingSearchName(null);
               setCvState((prev) => ({
                 ...prev,
@@ -2123,6 +2132,7 @@ export default function App() {
             })();
           }}
           onBack={() => {
+            setCvProfileSaveError(null);
             setEditingSearchName(null);
             setCvState((prev) => ({
               ...prev,

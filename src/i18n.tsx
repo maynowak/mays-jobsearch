@@ -214,6 +214,7 @@ const en: Dict = {
   // ATS-RECONCILIATION-UI-POLISH-01: profile hierarchy error texts (previously raw keys)
   "cv.errorNoSearchProfileSelected": "Please select a search profile first.",
   "cv.errorProfileSave": "The search profile could not be saved. Please try again.",
+  "cv.errorProfileCapacity": "You can save at most two search profiles for this CV. Edit or delete an existing profile.",
   "cv.errorAtsProfileSave": "The ATS profile could not be saved. Please try again.",
   "cv.errorTooManyAtsProfiles": "This search profile already has 5 ATS profiles. Edit an existing one instead.",
   "cv.errorProfileMissing": "Select a search profile and one of its ATS profiles first.",
@@ -858,6 +859,7 @@ const de: Dict = {
   // ATS-RECONCILIATION-UI-POLISH-01: Fehlermeldungen der Profilhierarchie (zuvor rohe Keys)
   "cv.errorNoSearchProfileSelected": "Bitte wähle zuerst ein Suchprofil aus.",
   "cv.errorProfileSave": "Das Suchprofil konnte nicht gespeichert werden. Bitte versuche es erneut.",
+  "cv.errorProfileCapacity": "Für diesen CV können maximal zwei Suchprofile gespeichert werden. Du kannst ein vorhandenes Profil bearbeiten oder eines löschen.",
   "cv.errorAtsProfileSave": "Das ATS-Profil konnte nicht gespeichert werden. Bitte versuche es erneut.",
   "cv.errorTooManyAtsProfiles": "Dieses Suchprofil hat bereits 5 ATS-Profile. Bearbeite stattdessen ein vorhandenes Profil.",
   "cv.errorProfileMissing": "Wähle zuerst ein Suchprofil und eines seiner ATS-Profile aus.",

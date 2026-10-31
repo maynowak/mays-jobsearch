@@ -16,6 +16,8 @@ interface Props {
   onBack: () => void;
   // CV-PROFILE-LISTS-03: Vorschlagsname (z. B. "Profil1", "Profil2", ...)
   defaultName?: string;
+  // JM-PROFILE-CAPACITY-02-LIMIT: inline save/capacity feedback.
+  error?: string | null;
 }
 
 export default function CvProfileResult({
@@ -25,6 +27,7 @@ export default function CvProfileResult({
   onConfirm,
   onBack,
   defaultName,
+  error,
 }: Props) {
   const { t } = useLang();
   const [parsedSkills, setParsedSkills] = useState<string[]>(() => suggested.skills);
@@ -224,6 +227,12 @@ export default function CvProfileResult({
           ))}
         </select>
       </div>
+
+      {error && (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="cv-result-actions">
         <button type="button" className="cv-confirm" onClick={confirm} disabled={busy}>

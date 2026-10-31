@@ -35,11 +35,11 @@ Product capacity contract:
 - one CV search profile may own at most **5 ATS search profiles**;
 - the maximum number of independent manual profiles is **OPEN**.
 
-These are backend-enforced product targets, not claims about the current
-frontend. Current frontend enforcement is different: CV state is capped at 10,
-CV profile buckets currently allow up to 50 entries, and ATS assignment
-enforces 5 per parent. The target of 2 CV search profiles is **not
-implemented**. Atomic enforcement belongs to the persistence backend.
+Current session enforcement: CV state is capped at 10, CV search profiles are
+capped at 2 per CV (grandfathering: existing entries are never auto-trimmed and
+may still be edited), and ATS assignment is capped at 5 per parent. Manual
+profile capacity remains OPEN. Atomic server-side enforcement still belongs to
+the persistence backend.
 
 ## 2. Common value types
 

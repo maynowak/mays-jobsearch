@@ -167,6 +167,33 @@ describe('JM-PROFILE-SESSION-ADAPTER-03: session repositories', () => {
     ).rejects.toMatchObject({ code: 'validation_error' });
   });
 
+  it('enforces the two-search-profile limit with capacity_exceeded', async () => {
+    const repositories = createSessionProfileRepositories();
+    await repositories.cvSearchProfiles.create('cv-limit', { name: 'One', searchConfig });
+    await repositories.cvSearchProfiles.create('cv-limit', { name: 'Two', searchConfig });
+
+    await expect(
+      repositories.cvSearchProfiles.create('cv-limit', { name: 'Three', searchConfig })
+    ).rejects.toMatchObject({ code: 'capacity_exceeded' });
+    expect(await repositories.cvSearchProfiles.list('cv-limit')).toHaveLength(2);
+
+    const existing = (await repositories.cvSearchProfiles.list('cv-limit'))[0];
+    await expect(
+      repositories.cvSearchProfiles.update('cv-limit', existing.sessionId, { name: 'One updated' })
+    ).resolves.toMatchObject({ sessionId: existing.sessionId });
+
+    const upsert = await repositories.cvSearchProfiles.create('cv-limit', {
+      name: 'One updated',
+      searchConfig,
+    });
+    expect(upsert.sessionId).toBe(existing.sessionId);
+
+    await repositories.cvSearchProfiles.delete('cv-limit', existing.sessionId);
+    await expect(
+      repositories.cvSearchProfiles.create('cv-limit', { name: 'Three', searchConfig })
+    ).resolves.toBeTruthy();
+  });
+
   it('does not expose reads from an ended session repository', async () => {
     const repositories = createSessionProfileRepositories();
     const created = await repositories.manualSearchProfiles.create({

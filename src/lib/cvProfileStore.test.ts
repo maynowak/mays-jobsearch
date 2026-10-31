@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CV_LISTS_TTL_MS,
+  MAX_SEARCH_PROFILES_PER_CV,
+  canCreateCvSearchProfile,
+  deleteCvSearchProfile,
   findSavedSearchProfile,
   purgeLegacyCvListsFromLocalStorage,
   readCvProfileLists,
@@ -124,6 +127,58 @@ describe("cvProfileStore (CV-PROFILE-LISTS-01/02)", () => {
     const entry = saveCvSearchProfile("h1", "Meins", profile);
     const lists = readCvProfileLists("h1");
     expect(findSavedSearchProfile(lists, entry!.id)).toEqual(entry);
+  });
+
+  it("JM-PROFILE-CAPACITY-02-LIMIT: allows two CV search profiles and blocks a third", () => {
+    expect(MAX_SEARCH_PROFILES_PER_CV).toBe(2);
+    expect(saveCvSearchProfile("h1", "Eins", profile)).not.toBeNull();
+    expect(saveCvSearchProfile("h1", "Zwei", profile)).not.toBeNull();
+    expect(saveCvSearchProfile("h1", "Drei", profile)).toBeNull();
+    expect(readCvProfileLists("h1").searchProfiles.map((entry) => entry.name)).toEqual([
+      "Zwei",
+      "Eins",
+    ]);
+  });
+
+  it("keeps same-name upsert and existing updates possible at the limit", () => {
+    const first = saveCvSearchProfile("h1", "Eins", profile)!;
+    saveCvSearchProfile("h1", "Zwei", profile);
+    const upserted = saveCvSearchProfile("h1", "Eins", { ...profile, city: "Hamburg" });
+    expect(upserted?.id).toBe(first.id);
+    expect(readCvProfileLists("h1").searchProfiles).toHaveLength(2);
+    expect(readCvProfileLists("h1").searchProfiles.find((e) => e.id === first.id)?.profile.city).toBe(
+      "Hamburg"
+    );
+  });
+
+  it("frees capacity after deleting a search profile", () => {
+    const first = saveCvSearchProfile("h1", "Eins", profile)!;
+    saveCvSearchProfile("h1", "Zwei", profile);
+    expect(saveCvSearchProfile("h1", "Drei", profile)).toBeNull();
+    deleteCvSearchProfile("h1", first.id);
+    expect(saveCvSearchProfile("h1", "Drei", profile)).not.toBeNull();
+    expect(readCvProfileLists("h1").searchProfiles).toHaveLength(2);
+  });
+
+  it("applies the limit per CV hash and keeps ATS entries independent", () => {
+    saveCvSearchProfile("h1", "Eins", profile);
+    saveCvSearchProfile("h1", "Zwei", profile);
+    expect(saveCvSearchProfile("h1", "Drei", profile)).toBeNull();
+    expect(saveCvSearchProfile("h2", "Eins", profile)).not.toBeNull();
+    expect(saveCvSearchProfile("h2", "Zwei", profile)).not.toBeNull();
+
+    const parent = readCvProfileLists("h1").searchProfiles[0];
+    saveCvAtsProfile("h1", "ATS 1", ["A"], ["R"], parent.id);
+    saveCvAtsProfile("h1", "ATS 2", ["B"], ["R"], parent.id);
+    saveCvAtsProfile("h1", "ATS 3", ["C"], ["R"], parent.id);
+    expect(readCvProfileLists("h1").atsProfiles).toHaveLength(3);
+  });
+
+  it("grandfathering allows updates but no new entries when a bucket has more than two", () => {
+    expect(canCreateCvSearchProfile(3, true)).toBe(true);
+    expect(canCreateCvSearchProfile(3, false)).toBe(false);
+    expect(canCreateCvSearchProfile(2, false)).toBe(false);
+    expect(canCreateCvSearchProfile(1, false)).toBe(true);
   });
 
   it("findSavedSearchProfile liefert null bei unbekannter ID / leerer Liste / null", () => {

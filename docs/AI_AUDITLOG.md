@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-CAPACITY-02-LIMIT
+- Typ: Feature/Capacity/Session-Integrity/UI
+- Status: IMPLEMENTED / VERIFIED (session-only; RIS persistence NOT IMPLEMENTED)
+- Scope: Produktgrenze von maximal zwei CV-Suchprofilen je CV wird im Store und im Session-Adapter durchgesetzt; ATS-Grenzen bleiben unverändert.
+- Retention: Bestandsschutz. Vorhandene Einträge werden nie automatisch gelöscht oder gekürzt; gleicher Name/Update bleibt erlaubt; neue dritte Einträge werden mit `capacity_exceeded` abgelehnt; nach Löschen ist wieder Platz.
+- UI: Inline-Fehlermeldung im Profil-Step (DE/EN), Workflow bleibt bei Kapazitätsfehler offen und zeigt keinen Erfolg. Kein Login-Zwang.
+- AI-/Privacy-/Data-Flow impact: keine neue Route, Persistenz, RIS-/AWS-/Cognito-Änderung oder Modellstrecke. 12h-TTL, ATS-Override und Unassigned-Semantik unverändert.
+- Tests: Store-/Adapter-/UI-Kapazitätstests, ATS-Unabhängigkeit, Grandfathering, Löschen/Freigeben PASS; Gesamtsuite 975 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS; Gast-E2E 1440/390 PASS. Authentifizierter Flow NOT VERIFIED.
+- Log: `docs/reports/JM-PROFILE-CAPACITY-02-LIMIT-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-V1-CONSOLIDATION-10
 - Typ: Consolidation/Audit/Verification/Privacy
 - Status: CONSOLIDATED (Profile V1 session-only; RIS persistence SPECIFIED, NOT IMPLEMENTED; authenticated browser flow NOT VERIFIED)
