@@ -120,5 +120,6 @@ timing flakiness; run them sequentially.
 
 ## Git
 
-- Commit and push are recorded after final validation.
+- Implementation commit: `68cbc44`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
