@@ -109,5 +109,6 @@ Historical reports were not rewritten; they remain evidence of their time.
 
 ## Git
 
-- Commit and push are recorded after final validation.
+- Implementation commit: `03322e7`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
