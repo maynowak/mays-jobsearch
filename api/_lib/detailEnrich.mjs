@@ -12,6 +12,7 @@ import {
   readDataset,
   startErrorDefinitelyNotStarted,
 } from "./sources/apify/client.mjs";
+import { ipQuotaConfig, releaseIpQuota, reserveIpQuota } from "./ipQuota.mjs";
 import { actorById, SOURCE_ID } from "./sources/apify/actors.mjs";
 
 const DETAIL_CACHE_PREFIX = "mj-detail:arbeitsagentur";
@@ -67,7 +68,7 @@ async function refundQuota(sessionKey, ipKey, amount) {
  *
  * @returns {Promise<{ jobs: Record<string, Job>, enrichedCount: number } | { error: string }>}
  */
-export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId } = {}) {
+export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, ipScope } = {}) {
   const actor = actorById(SOURCE_ID);
   if (!actor) return { error: "source_not_found" };
 
@@ -104,40 +105,61 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId }
   const ipKey = ipQuotaKey(clientIp);
   const n = missing.length;
 
-  // 2. Global monthly run backstop (atomic; race-safe).
-  const runSlot = await reserveApifyRunSlot();
-  if (runSlot.error === "exceeded") return { error: "apify_limit_reached" };
-  if (runSlot.error) return { error: "quota_unavailable" };
+  // 2. Optional trusted-IP quota (additional abuse brake).
+  let ipQuotaReserved = false;
+  if (ipQuotaConfig().enabled) {
+    if (!ipScope) return { error: "quota_unavailable" };
+    const ipQuota = await reserveIpQuota("apify-detail", ipScope);
+    if (ipQuota.status === "limit_reached") return { error: "quota_exceeded" };
+    if (ipQuota.status !== "allowed") return { error: "quota_unavailable" };
+    ipQuotaReserved = true;
+  }
 
-  // 3. Per-session quota (primary identity).
+  // 3. Global monthly run backstop (atomic; race-safe).
+  const runSlot = await reserveApifyRunSlot();
+  if (runSlot.error === "exceeded") {
+    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    return { error: "apify_limit_reached" };
+  }
+  if (runSlot.error) {
+    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    return { error: "quota_unavailable" };
+  }
+
+  // 4. Per-session quota (primary identity).
   const sessionReserved = await cacheReserveIncr(sessionKey, n, cfg.apifyDetailMaxPerUserPerDay, QUOTA_TTL_SEC);
   if (sessionReserved === null) {
     await refundApifyRunSlot();
+    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
     return { error: "quota_unavailable" };
   }
   if (sessionReserved === -1) {
     await refundApifyRunSlot();
+    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
     return { error: "quota_exceeded" };
   }
 
-  // 4. Per-IP backstop (anti-abuse; tolerates NAT via a higher limit).
+  // 5. Per-IP backstop (anti-abuse; tolerates NAT via a higher limit).
   const ipReserved = await cacheReserveIncr(ipKey, n, cfg.apifyDetailMaxPerIpPerDay, QUOTA_TTL_SEC);
   if (ipReserved === null) {
     await refundQuota(sessionKey, ipKey, n);
     await refundApifyRunSlot();
+    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
     return { error: "quota_unavailable" };
   }
   if (ipReserved === -1) {
     await refundQuota(sessionKey, ipKey, n);
     await refundApifyRunSlot();
+    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
     return { error: "quota_exceeded" };
   }
 
-  // 5. One batched targeted run.
+  // 6. One batched targeted run.
   const apiToken = process.env.APIFY_API_TOKEN;
   if (!apiToken) {
     await refundQuota(sessionKey, ipKey, n);
     await refundApifyRunSlot();
+    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
     return { error: "missing_config" };
   }
 

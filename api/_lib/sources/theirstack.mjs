@@ -9,6 +9,7 @@ import {
   settleProviderBudget,
   theirstackUserCreditLimitReached,
 } from "../usage.mjs";
+import { ipQuotaConfig, releaseIpQuota, reserveIpQuota } from "../ipQuota.mjs";
 
 const API_BASE = "https://api.theirstack.com/v1/jobs/search";
 // TheirStack bills 1 API credit per returned record: keep the page small.
@@ -81,11 +82,28 @@ export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, cit
     if (identity && (await theirstackUserCreditLimitReached(identity))) {
       return emptyResult("user_limit_reached");
     }
+    // Optional IP quota is an additional abuse brake; global budgets remain
+    // the hard cost boundary.
+    let ipReserved = false;
+    const ipScope = identity?.ipScope;
+    if (ipQuotaConfig().enabled) {
+      if (!ipScope) return emptyResult("quota_unavailable");
+      const ipResult = await reserveIpQuota(SOURCE_ID, ipScope);
+      if (ipResult.status === "limit_reached") return emptyResult("limit_reached");
+      if (ipResult.status !== "allowed") return emptyResult("quota_unavailable");
+      ipReserved = true;
+    }
     // Atomic global budget: reserve the maximum possible credits before the
     // paid call. Redis outage fails closed.
     const reservation = await reserveProviderBudget("theirstack", RESULTS_LIMIT);
-    if (reservation.error === "exceeded") return emptyResult("limit_reached");
-    if (reservation.error) return emptyResult("quota_unavailable");
+    if (reservation.error === "exceeded") {
+      if (ipReserved) await releaseIpQuota(SOURCE_ID, ipScope);
+      return emptyResult("limit_reached");
+    }
+    if (reservation.error) {
+      if (ipReserved) await releaseIpQuota(SOURCE_ID, ipScope);
+      return emptyResult("quota_unavailable");
+    }
     try {
       rawJobs = await fetchTheirstackUpstream(apiKey, body);
     } catch (err) {

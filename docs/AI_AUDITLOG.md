@@ -1,3 +1,14 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02B-01
+- Typ: Implementation/Cost-Control/Privacy/IP-Quota
+- Status: IMPLEMENTED / VERIFIED (unit + isolated Redis Lua; live Vercel IP headers NOT VERIFIED)
+- Scope: Trusted-IP resolver, HMAC-derived IP scopes, atomic window+daily IP quotas, integration with TheirStack/JobsPipe/Apify paid paths behind `IP_QUOTA_ENABLED` (default false).
+- Trust: on Vercel platform headers are trusted (`x-vercel-forwarded-for`, `x-real-ip`, `x-forwarded-for`); outside Vercel forwarded headers are ignored unless `MJ_TRUST_PROXY_IP=1`. Invalid first header is rejected without fallback. IPv4/IPv6 normalized, IPv6 grouped by /64, IPv4-mapped handled.
+- Privacy: only HMAC scope stored, no raw IP in keys/logs, 10-min window + 24-h daily TTLs. No public privacy text changed. Cookie-free guest search not claimed while `mj_session` remains.
+- Integration: IP reserve before global budget; compensation releases IP on global/slot failure or definite non-start; unknown billing keeps reservations. Existing global budgets remain authoritative.
+- Tests: IP resolver/quota unit tests PASS; TheirStack IP-limit block PASS; real Lua reserve/release/parallel/TTL PASS in isolated Redis; full suite 1004 passed, 5 skipped; TypeScript/Build/`git diff --check`/guest E2E/budget Redis PASS.
+- Cookie status: unchanged; `mj_session` still issued. 02B-02 not started.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02B-01-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02A-CLOSEOUT-02
 - Typ: Closeout/Verification/Cost-Control
 - Status: VERIFIED (UTC logic + real isolated Redis Lua verification; cookie removal NOT IMPLEMENTED)

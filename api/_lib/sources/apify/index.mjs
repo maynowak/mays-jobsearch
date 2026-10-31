@@ -13,6 +13,7 @@ import {
   reserveApifyRunSlot,
 } from "../../usage.mjs";
 import { startApifyRun, waitForRun, readDataset, startErrorDefinitelyNotStarted } from "./client.mjs";
+import { ipQuotaConfig, releaseIpQuota, reserveIpQuota } from "../../ipQuota.mjs";
 
 const APIFY_SYNC_TIMEOUT_SEC = 50;
 const APIFY_CACHE_TTL_SEC = 600;
@@ -32,7 +33,7 @@ export function emptyResult(reason) {
   };
 }
 
-export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, city, geo }) {
+export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, city, geo, identity }) {
   const apiToken = process.env.APIFY_API_TOKEN;
   if (!apiToken) {
     return emptyResult("missing_config");
@@ -92,16 +93,32 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
     }
 
     if (!records) {
+      let ipReserved = false;
+      const ipScope = identity?.ipScope;
+      if (ipQuotaConfig().enabled) {
+        if (!ipScope) return emptyResult("quota_unavailable");
+        const ipResult = await reserveIpQuota(actor.sourceId, ipScope);
+        if (ipResult.status === "limit_reached") return emptyResult("limit_reached");
+        if (ipResult.status !== "allowed") return emptyResult("quota_unavailable");
+        ipReserved = true;
+      }
       // Atomic monthly run slot; Redis outage fails closed for this paid path.
       const slot = await reserveApifyRunSlot();
-      if (slot.error === "exceeded") return emptyResult("limit_reached");
-      if (slot.error) return emptyResult("quota_unavailable");
+      if (slot.error === "exceeded") {
+        if (ipReserved) await releaseIpQuota(actor.sourceId, ipScope);
+        return emptyResult("limit_reached");
+      }
+      if (slot.error) {
+        if (ipReserved) await releaseIpQuota(actor.sourceId, ipScope);
+        return emptyResult("quota_unavailable");
+      }
       const started = await startApifyRun(apiToken, actor.actorId, input);
       if (started.error) {
         // Refund only when the response proves the run never started. Network,
         // unreadable and 5xx responses are unknown and keep the reservation.
         if (startErrorDefinitelyNotStarted(started.error)) {
           await refundApifyRunSlot();
+          if (ipReserved) await releaseIpQuota(actor.sourceId, ipScope);
         }
         return emptyResult(started.error);
       }

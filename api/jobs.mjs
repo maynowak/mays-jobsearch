@@ -1,6 +1,7 @@
 import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { HttpError, splitQuotedPhrases } from "./_lib/filter.mjs";
 import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
+import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
 
 function parseArrayParam(value, delimiters = /[,;]+/) {
   if (!value) return [];
@@ -68,7 +69,9 @@ export default async function handler(req, res) {
 
     // Anonymous session identity for per-user quotas (sources without
     // identity simply skip user accounting). Same pattern as /api/match.
-    const identity = anonymousIdentity(req);
+    const trustedIp = resolveTrustedClientIp(req);
+    const ipScope = trustedIp.status === "trusted-ip" ? deriveIpScope(trustedIp.group) : null;
+    const identity = { ...anonymousIdentity(req), ipScope };
     res.setHeader("Set-Cookie", sessionCookieHeader(identity.sessionId));
 
     const result = await fetchAllJobs({

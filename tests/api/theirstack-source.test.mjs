@@ -12,6 +12,7 @@ vi.mock("../../api/_lib/config.mjs", () => ({
 vi.mock("../../api/_lib/cache.mjs", () => ({
   cacheGet: vi.fn(async () => null),
   cacheSet: vi.fn(async () => undefined),
+  cacheEval: vi.fn(async () => 1),
 }));
 
 vi.mock("../../api/_lib/usage.mjs", () => ({
@@ -24,7 +25,7 @@ vi.mock("../../api/_lib/usage.mjs", () => ({
 }));
 
 const { getConfig } = await import("../../api/_lib/config.mjs");
-const { cacheGet, cacheSet } = await import("../../api/_lib/cache.mjs");
+const { cacheGet, cacheSet, cacheEval } = await import("../../api/_lib/cache.mjs");
 const {
   countTheirstackUserCredits,
   theirstackUserCreditLimitReached,
@@ -88,6 +89,8 @@ beforeEach(() => {
   vi.mocked(cacheSet).mockResolvedValue(undefined);
   vi.mocked(reserveProviderBudget).mockResolvedValue({ ok: true, id: "res-1" });
   vi.mocked(settleProviderBudget).mockResolvedValue({ ok: true, actual: 0 });
+  vi.mocked(cacheEval).mockResolvedValue(1);
+  delete process.env.IP_QUOTA_ENABLED;
 });
 
 describe("Theirstack Source Adapter", () => {
@@ -126,6 +129,19 @@ describe("Theirstack Source Adapter", () => {
       const result = await fetchJobs({ skills: "python", targetRoles: [], city: "" });
       expect(result.jobs).toEqual([]);
       expect(result.meta.reason).toBe("quota_unavailable");
+    });
+
+    it("blocks a paid call when the optional IP quota is exhausted", async () => {
+      process.env.IP_QUOTA_ENABLED = "true";
+      vi.mocked(cacheEval).mockResolvedValue(-1);
+      setupFetchMock(() => {
+        throw new Error("fetch must not be called when IP quota is exhausted");
+      });
+      const identity = { sessionId: "abc123", ip: "1.2.3.4", ipScope: "a".repeat(32) };
+      const result = await fetchJobs({ skills: "python", targetRoles: [], city: "", identity });
+      expect(result.jobs).toEqual([]);
+      expect(result.meta.reason).toBe("limit_reached");
+      delete process.env.IP_QUOTA_ENABLED;
     });
 
     it("returns empty result without query terms (protects credits)", async () => {

@@ -2,6 +2,7 @@ import { HttpError } from "./_lib/filter.mjs";
 import { computeMatch } from "./_lib/matching.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
+import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -74,7 +75,9 @@ export default async function handler(req, res) {
 
     const result = await computeMatch({ profile, jobs, model: body.model, attempt });
 
-    const identity = anonymousIdentity(req);
+    const trustedIp = resolveTrustedClientIp(req);
+    const ipScope = trustedIp.status === "trusted-ip" ? deriveIpScope(trustedIp.group) : null;
+    const identity = { ...anonymousIdentity(req), ipScope };
     res.setHeader("Set-Cookie", sessionCookieHeader(identity.sessionId));
     await enrichMatchedBAJobs(result.matches, identity);
 
