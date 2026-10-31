@@ -243,5 +243,5 @@ keine neuen Logs mit Nutzerdaten eingeführt.
 - Keine neue Profil-Datenbank.
 - Kein neuer Cookie.
 - Implementierungs-Commit: `049edda`
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `4eb836d`
 - Remote-Synchronität: nach Push geprüft.
