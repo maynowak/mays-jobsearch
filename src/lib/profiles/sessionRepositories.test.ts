@@ -94,6 +94,26 @@ describe('JM-PROFILE-SESSION-ADAPTER-03: session repositories', () => {
     ).rejects.toBeInstanceOf(ProfileSessionEndedError);
   });
 
+  it('does not expose reads from an ended session repository', async () => {
+    const repositories = createSessionProfileRepositories();
+    const created = await repositories.manualSearchProfiles.create({
+      name: 'Session A profile',
+      searchConfig,
+      matchingPreferences: { requiredSkills: [], preferredSkills: [], excludedTerms: [] },
+    });
+    const cv = await repositories.cvSearchProfiles.create('cv-hash-a', { name: 'CV A', searchConfig });
+    beginNewProfileSession();
+
+    await expect(repositories.manualSearchProfiles.list()).rejects.toBeInstanceOf(ProfileSessionEndedError);
+    await expect(repositories.manualSearchProfiles.get(created.sessionId)).rejects.toBeInstanceOf(
+      ProfileSessionEndedError
+    );
+    await expect(repositories.cvSearchProfiles.list('cv-hash-a')).rejects.toBeInstanceOf(ProfileSessionEndedError);
+    await expect(repositories.cvSearchProfiles.get('cv-hash-a', cv.sessionId)).rejects.toBeInstanceOf(
+      ProfileSessionEndedError
+    );
+  });
+
   it('does not manufacture persistent IDs or versions for session records', async () => {
     const repositories = createSessionProfileRepositories();
     const created = await repositories.cvSearchProfiles.create('hash-only', { name: 'Session', searchConfig });

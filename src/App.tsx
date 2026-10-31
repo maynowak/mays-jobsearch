@@ -73,6 +73,7 @@ import {
 import type { SessionProfileRepositories } from "./lib/profiles/repositoryTypes";
 import type { CreateManualSearchProfileInputV1 } from "./lib/profiles/contractTypes";
 import { useAuth } from "react-oidc-context";
+import { deriveAuthProfileKey, isVerifiedAuthProfileKey } from "./lib/authIdentity";
 
 
 type Phase = "idle" | "searching" | "scoring" | "matching";
@@ -210,16 +211,10 @@ export default function App() {
       manualRepository: manualProfileStoreRef.current,
     });
   }
-  const identityClaim =
-    typeof auth.user?.profile?.sub === "string" && auth.user.profile.sub
-      ? `sub:${auth.user.profile.sub}`
-      : typeof auth.user?.profile?.email === "string" && auth.user.profile.email
-        ? `email:${auth.user.profile.email}`
-        : null;
-  // An authenticated session without a verified stable claim must not silently
-  // share the same key with another such session. It is treated as a distinct
-  // unverified identity and still cleared on auth transitions.
-  const authProfileKey = isAuth ? identityClaim ?? "auth:unverified" : null;
+  // `iss` + `sub` is the stable identity combination. Email is not used as an
+  // identity fallback because identical addresses must not merge users.
+  const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
+  const identityVerified = isVerifiedAuthProfileKey(authProfileKey);
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
   // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
   // apply late results after a user switch/logout.
@@ -1633,7 +1628,7 @@ export default function App() {
         onWorkflowStart={handleCvUploadStart}
         openCvUpload={new URLSearchParams(window.location.search).get("cv") === "upload"}
         manualProfiles={manualProfiles}
-        authenticated={isAuth}
+        authenticated={isAuth && identityVerified}
       />
       {/* CV-UPLOAD-UX-08: Box fuer gespeicherte Profile UNTER dem
           CV-Upload-Bereich (Suchmaske): Suchprofil + ATS-Profil waehlen,

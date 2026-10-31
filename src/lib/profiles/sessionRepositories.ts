@@ -120,6 +120,7 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
   return {
     cvSearchProfiles: {
       async list(cvHash) {
+        assertSessionCurrent(generation);
         return readCvProfileLists(cvHash).searchProfiles.map((entry) => ({
           sessionId: entry.id,
           cvHash,
@@ -130,6 +131,7 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
         }));
       },
       async get(cvHash, sessionId) {
+        assertSessionCurrent(generation);
         const entry = readCvProfileLists(cvHash).searchProfiles.find((candidate) => candidate.id === sessionId);
         return entry ? cvSearchEntry(cvHash, entry.id) : null;
       },
@@ -157,11 +159,13 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
     },
     atsSearchProfiles: {
       async list(cvHash, searchProfileId) {
+        assertSessionCurrent(generation);
         const lists = readCvProfileLists(cvHash);
         if (!lists.searchProfiles.some((entry) => entry.id === searchProfileId)) return missing('ATS parent search profile was not found');
         return lists.atsProfiles.filter((entry) => entry.searchProfileId === searchProfileId).map((entry) => atsEntry(cvHash, searchProfileId, entry.id));
       },
       async get(cvHash, searchProfileId, sessionId) {
+        assertSessionCurrent(generation);
         const lists = readCvProfileLists(cvHash);
         if (!lists.searchProfiles.some((entry) => entry.id === searchProfileId)) return null;
         return lists.atsProfiles.some((entry) => entry.id === sessionId && entry.searchProfileId === searchProfileId) ? atsEntry(cvHash, searchProfileId, sessionId) : null;
@@ -194,9 +198,11 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
     },
     manualSearchProfiles: {
       async list() {
+        assertSessionCurrent(generation);
         return manualRepository.list().map(manualEntry);
       },
       async get(sessionId) {
+        assertSessionCurrent(generation);
         const entry = manualRepository.get(sessionId);
         return entry ? manualEntry(entry) : null;
       },

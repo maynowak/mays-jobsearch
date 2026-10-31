@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-AUTH-BOUNDARY-07
+- Typ: Security/Auth-Boundary/Isolation/Regression
+- Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistence NOT IMPLEMENTED)
+- Scope: Stabile Identitätsableitung über `iss` + `sub`, keine E-Mail als Identitäts-Fallback, explizite `auth:unverified`-Behandlung, Lese-Guards für alte Repository-Instanzen.
+- Identity contract: Unterschiedliche `sub` (auch bei identischer E-Mail) ergeben getrennte Session-Kontexte; gleiche `sub` bei unterschiedlichem `iss` ebenfalls. Ohne `sub` wird kein verifizierter Profilkontext angenommen, das Suchprofil-Dropdown bleibt verborgen und temporäre Daten werden bei Auth-Wechsel geleert.
+- Repository boundary: `list()`/`get()` prüfen nun ebenfalls die Session-Generation; alte Instanzen können nach `beginNewProfileSession()` keine neuen Session-Daten lesen.
+- AI-/Privacy-/Data-Flow impact: keine neue Netzwerk-, RIS-, AWS-, Modell- oder Persistenzstrecke. Keine Änderung an ATS-Detach, TTL oder Kapazitäten. Ohne stabilen Claim ist keine zuverlässige Mehrbenutzer-Isolation möglich; das bleibt dokumentiert.
+- Tests: Identity-/Read-Guard-/Late-Write-/Late-CV-Tests PASS; Gesamtsuite 952 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS. Chromium 1440/390 Smoke PASS; authentifizierter Browser-Login/Logout NOT VERIFIED.
+- Log: `docs/reports/JM-PROFILE-AUTH-BOUNDARY-07-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-SESSION-ISOLATION-GATE-06
 - Typ: Security/Isolation/Async-Safety/Privacy
 - Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistence NOT IMPLEMENTED)

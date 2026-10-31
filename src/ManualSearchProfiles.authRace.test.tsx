@@ -4,7 +4,7 @@ import type { ModelsResponse } from "./types";
 
 // JM-PROFILE-UI-HARDENING-05: a delayed manual-profile save must not restore
 // state after the authenticated identity has changed.
-const authState = { sub: "race-user-a" };
+const authState: { sub: string | null } = { sub: "race-user-a" };
 const gate: {
   resolve: (() => void) | null;
   manualRepository: { list: () => Array<{ name: string }> } | null;
@@ -38,7 +38,14 @@ vi.mock("react-oidc-context", () => ({
     isLoading: false,
     error: undefined,
     isAuthenticated: true,
-    user: { profile: { sub: authState.sub, email: "race@example.invalid", name: "Race User" } },
+    user: {
+      profile: {
+        ...(authState.sub ? { sub: authState.sub } : {}),
+        iss: "https://issuer.example",
+        email: "race@example.invalid",
+        name: "Race User",
+      },
+    },
     signinRedirect: vi.fn(),
     signoutRedirect: vi.fn(),
   }),
@@ -132,6 +139,33 @@ describe("JM-PROFILE-UI-HARDENING-05: session race isolation", () => {
     // The old repository instance must not have written into the new session.
     expect(gate.manualRepository?.list() ?? []).toEqual([]);
     expect(screen.queryByText("Profil für diese Sitzung gespeichert.")).toBeNull();
+  });
+
+  it("does not reuse profiles when the new identity has no verified sub", async () => {
+    const view = await renderAt("/profil");
+    fireEvent.click(screen.getByRole("button", { name: "Job-Präferenzen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Neues Suchprofil" }));
+    fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: "Verified profile" } });
+    fireEvent.change(screen.getByLabelText("Skills / Keywords"), { target: { value: "AWS" } });
+    fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
+    await waitFor(() => expect(gate.resolve).not.toBeNull());
+    gate.resolve?.();
+    gate.resolve = null;
+    await screen.findByText("Verified profile", { exact: true });
+
+    authState.sub = null;
+    const App = (await import("./App")).default;
+    const { LangProvider } = await import("./i18n");
+    view.rerender(
+      <LangProvider>
+        <App />
+      </LangProvider>
+    );
+
+    await waitFor(() => {
+      expect(gate.manualRepository?.list() ?? []).toEqual([]);
+    });
+    expect(screen.queryByText("Verified profile")).toBeNull();
   });
 
   it("does not publish CV extraction results after the user changes", async () => {
