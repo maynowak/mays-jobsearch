@@ -1,3 +1,14 @@
+2026-10-31 · JM-PROFILE-CACHE-DELETE-03-DESIGN-GATE
+- Typ: Security-Architecture/Design-Gate/Privacy
+- Status: SPECIFIED (implementation NOT STARTED; no code/API/Redis/AWS/deployment change)
+- Findings: `mj_session` is shape-validated only; a 32-hex client value is accepted without server proof (session fixation possible). Current cache is content-addressed, shared and has no delete path; `cacheDel` has no reliable result. All public handlers use `ACAO: *` without credentials.
+- Design: signed v2 guest cookie (`v2.<keyId>.<random>.<hmac>`), no adoption of client values, 180-day lifetime proposed; cache key `cv-profile:v2:<HMAC ownerScope>:<server contentDigest>` with no V1 fallback; bounded session index; strict Redis result (`deleted|missing|unavailable`); single and session-wide deletion endpoints with same-origin/CSRF/rate-limit; generation + Lua CAS so in-flight model responses cannot recreate deleted entries.
+- Privacy: local deletion, confirmed server-cache deletion and non-deleted provider/quota/future-RIS data are separated. Proposed DE/EN wording; legal review remains a separate decision. 30-day TTL unchanged in this gate.
+- AI-/Privacy-/Data-Flow impact: no change made. Design reduces cross-session cache sharing and adds an honest deletion contract; it may lower cache hit rate and increase model calls.
+- Decision status: recommendations only; session lifetime, 30-day retention, non-anonymized caching, secret management and legal wording remain DECISION REQUIRED. No decision APPROVED.
+- Tests: none run (design-only). No real CV/provider/Redis data used.
+- Log: `docs/reports/JM-PROFILE-CACHE-DELETE-03-DESIGN-GATE.md`
+
 2026-10-31 · JM-PROFILE-CACHE-DELETE-03-AUDIT
 - Typ: Security/Privacy/Audit/Architecture-Decision
 - Status: AUDIT COMPLETE (read-only; no code/API/AWS/deployment change)
