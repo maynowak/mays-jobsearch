@@ -86,5 +86,6 @@ and throws `ProfileSessionEndedError` after `beginNewProfileSession()`.
 
 ## Git
 
-- Commit and push are recorded after final validation.
+- Implementation commit: `db8490d`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
