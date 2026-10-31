@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-V1-CONSOLIDATION-10
+- Typ: Consolidation/Audit/Verification/Privacy
+- Status: CONSOLIDATED (Profile V1 session-only; RIS persistence SPECIFIED, NOT IMPLEMENTED; authenticated browser flow NOT VERIFIED)
+- Scope: Zusammenführung der Profil-, Session-, Auth-, ATS- und Gast-CV-Nachweise zu einer aktuellen Profile-V1-Matrix; keine Produktcodeänderung.
+- Findings: V1-Typen/Mapper/Validierung und Session-Repositories sind implementiert und getestet. CV max 10 im App-State; ATS max 5 pro Parent; CVSearchProfile-Produktziel 2 ist NICHT durchgesetzt (Session erlaubt 50); ManualProfile-Limit bleibt OPEN. Unassigned ATS werden retentioniert und sind wiederzuordnbar, dürfen aber nicht ohne Parent persistiert werden.
+- Storage boundary: Browserzustand, 12h-Session-Listen, serverseitiger `cv-profile:<hash>`-Cache (30 Tage, kein Client-Delete) und zukünftige Kontospeicherung bleiben getrennt. Keine automatische Gast→Konto-Migration.
+- AI-/Privacy-/Data-Flow impact: keine neue Route, Speicherung, RIS-/AWS-/Cognito-Änderung oder Modellstrecke. Gast-CV bleibt ohne Login nutzbar; authentifizierter Browser-Flow und RIS-Eigenschaften bleiben NOT VERIFIED.
+- Tests: frisch `npm test -- --run` 967 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS; `npm run test:e2e:guest-cv` PASS 1440/390 (gemockte APIs). Production NOT DEPLOYED.
+- Log: `docs/reports/JM-PROFILE-V1-CONSOLIDATION-10-EXECUTION_LOG.md`
+
 2026-10-31 · JM-GUEST-CV-E2E-09A
 - Typ: Test-Evidence/Browser-E2E/Verification
 - Status: VERIFIED (mock-backend browser evidence strengthened; authenticated flow NOT VERIFIED)
