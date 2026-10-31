@@ -135,6 +135,6 @@ the hash expires with the monthly TTL (62 days).
 
 ## Git
 
-- Implementation commit and remote synchronization are recorded after final
-  validation.
+- Implementation commit: `286d186`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
