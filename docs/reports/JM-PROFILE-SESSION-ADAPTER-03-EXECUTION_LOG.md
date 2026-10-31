@@ -7,7 +7,8 @@
 - **RIS persistence:** NOT IMPLEMENTED / NOT VERIFIED
 - **AWS/deployment/migration:** NOT RUN / NOT DEPLOYED
 - **Preflight baseline:** `70cff1c`; `main`, `origin/main` synchronized
-- **Final commit:** to be recorded after the scoped commit
+- **Final commit:** `3670b02`
+- **Remote:** pushed to `origin/main`, synchronized (`0 0`)
 
 ## Implemented files
 
