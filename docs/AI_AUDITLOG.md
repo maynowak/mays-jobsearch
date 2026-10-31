@@ -1,3 +1,13 @@
+2026-10-31 · MAYS-JOBSEARCH-PROFILE-API-01A
+- Typ: Contract/Architecture/Privacy/Data-Flow/RIS-Handoff
+- Status: SPECIFIED / PROPOSED (Job Matcher-only documentation; RIS capabilities and reachability NOT VERIFIED; no application implementation or deployment)
+- Scope: Versionierte, persistence-neutrale Profile-Datenmodelle, Session-/Remote-Repository-Vertrag, API-/Session-Grenzen und ein ausdrücklich offener RIS-Handoff für UserProfile, CVDocument, CVSearchProfile, ATSSearchProfile, ManualSearchProfile und MatchingPreferences.
+- Current data-flow finding: CV `File`-Objekte, CV workflow state, CV profile lists and manual profiles are currently session/in-memory. `cvProfileStore` uses a 12h lazy in-memory hash bucket; manual profiles use an App-level Map. Existing `POST /api/profile` remains AI CV-profile generation and its `cv-profile:<hash>` Upstash result cache has a 30-day TTL; it is not redefined as persistence.
+- AI-/Privacy-/Data-Flow impact: no new route, storage, provider, model call, auth flow or data transfer. The proposed future save action is explicitly separate from CV processing and model calls. No raw CV text, presigned URL, S3 key or CV hash is made a durable profile identifier in the proposed contract.
+- RIS boundary: RIS was not inspected in this phase. No handler, gateway route, OpenAPI entry, DynamoDB behavior, S3 lifecycle or erasure capability is claimed verified. The OPEN-5 `/me/jobsearches` reachability question remains OPEN.
+- Tests: application tests/build/API syntax NOT RUN because no application code changed; documentation `git diff --check` is the applicable validation gate. No AWS operation, migration or deployment.
+- Log: `docs/reports/MAYS-JOBSEARCH-PROFILE-API-01A-EXECUTION_LOG.md`
+
 2026-10-30 · MAYS-SEARCH-UX-02
 - Typ: Feature/Privacy/Data-Flow/UI/Security-Boundary
 - Status: IMPLEMENTED (full tests/build/API syntax green; Chromium 1440/390 smoke green; Firefox and live authenticated flow NOT VERIFIED)
