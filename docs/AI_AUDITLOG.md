@@ -1,3 +1,12 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-ARCHITECTURE-01
+- Typ: Architecture/Cost-Control/Privacy/Audit
+- Status: ANALYSIS COMPLETE (no product code/cookie/Redis/API/AWS change)
+- Findings: Guest `/api/jobs`, `/api/match` and `/api/job-details` set a 1-year `mj_session` cookie that is only shape-validated and drives per-session TheirStack/JobsPipe credits and Apify detail quotas. TheirStack/JobsPipe/AI limits are read-then-count (non-atomic); Redis outage makes counts read 0 and paid calls proceed. Apify run/detail quotas use atomic Lua reservations and fail closed.
+- Design: cookie-free guest search with HMAC-derived IP counters (IPv6 /64, no plaintext IP), short-window rate limits, global atomic budgets with reserve/settle/refund, single-flight cache locks, fail-closed paid paths on Redis errors, and a future verified-OIDC quota scope for registered users.
+- AI-/Privacy-/Data-Flow impact: no change made. Removing guest cookies reduces tracking; IP HMAC counters still require a legal basis and transparent notice. CV profile cache and 10/2/5 hierarchy untouched.
+- Tests: none run (analysis-only). No real provider/Redis/user data used.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-ARCHITECTURE-01.md`
+
 2026-10-31 · JM-PROFILE-CACHE-DELETE-03-SECURITY-DECISION-04
 - Typ: Security-Decision/Architecture/Privacy
 - Status: SPECIFIED (implementation NOT APPROVED; no code/API/Redis/AWS change)
