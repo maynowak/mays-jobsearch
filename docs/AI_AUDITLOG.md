@@ -1,3 +1,13 @@
+2026-10-31 · JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01
+- Typ: Product-Decision/Implementation/Privacy/Cost-Control
+- Status: IMPLEMENTED / VERIFIED (Model A; deployment NOT approved)
+- Scope: Guests get only free job sources; paid sources (TheirStack, JobsPipe, Apify/Arbeitsagentur) are blocked server-side; guest `mj_session` cookie removed from the job API and legacy cookies cleared once.
+- Security: centralized `sourcePolicy.mjs` in `fetchAllJobs`; no request body/header/frontend flag can enable paid sources; `/api/job-details` returns 403 `paid_source_blocked`; `/api/match` skips paid detail enrichment. Free sources, Redis caches, global budgets, IP quotas and single-flight remain.
+- Privacy: no new guest cookie or browser identifier; legacy `mj_session` deleted with `Max-Age=0`; OIDC/Cognito untouched. Public privacy text was not changed; legal review remains pending. Full-site cookieless operation is not claimed.
+- AI boundary: `/api/match` AI scoring, `/api/profile`, ATS and CV improvement unchanged; no provider disabled.
+- Tests: source-policy/cookie/job-details/match tests, ten parallel cookie-free guest searches, full suite 1026 passed/5 skipped, TypeScript/Build/diff checks, budget/IP/lock/REST Redis tests, guest E2E 1440/390 (asserts no mj_session) PASS. Live Vercel/production NOT VERIFIED.
+- Log: `docs/reports/JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02B-02B-VERIFICATION-02
 - Typ: Integration-Test/Cost-Control/Verification
 - Status: VERIFIED against local Upstash-REST emulation + isolated redis:7-alpine; real Upstash and live Vercel IP NOT VERIFIED
