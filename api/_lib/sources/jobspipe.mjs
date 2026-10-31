@@ -83,24 +83,24 @@ export async function fetchJobspipeJobs({ skills, targetRoles, targetRole, city,
     }
     // Optional IP quota is an additional abuse brake; global budgets remain
     // the hard cost boundary.
-    let ipReserved = false;
+    let ipReceipt = null;
     const ipScope = identity?.ipScope;
     if (ipQuotaConfig().enabled) {
       if (!ipScope) return emptyResult("quota_unavailable");
       const ipResult = await reserveIpQuota(SOURCE_ID, ipScope);
       if (ipResult.status === "limit_reached") return emptyResult("limit_reached");
       if (ipResult.status !== "allowed") return emptyResult("quota_unavailable");
-      ipReserved = true;
+      ipReceipt = ipResult.receipt;
     }
     // Atomic global budget: reserve the maximum possible credits before the
     // paid call. Redis outage fails closed.
     const reservation = await reserveProviderBudget("jobspipe", RESULTS_LIMIT);
     if (reservation.error === "exceeded") {
-      if (ipReserved) await releaseIpQuota(SOURCE_ID, ipScope);
+      if (ipReceipt) await releaseIpQuota(SOURCE_ID, ipScope, ipReceipt);
       return emptyResult("limit_reached");
     }
     if (reservation.error) {
-      if (ipReserved) await releaseIpQuota(SOURCE_ID, ipScope);
+      if (ipReceipt) await releaseIpQuota(SOURCE_ID, ipScope, ipReceipt);
       return emptyResult("quota_unavailable");
     }
     try {

@@ -93,23 +93,23 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
     }
 
     if (!records) {
-      let ipReserved = false;
+      let ipReceipt = null;
       const ipScope = identity?.ipScope;
       if (ipQuotaConfig().enabled) {
         if (!ipScope) return emptyResult("quota_unavailable");
         const ipResult = await reserveIpQuota(actor.sourceId, ipScope);
         if (ipResult.status === "limit_reached") return emptyResult("limit_reached");
         if (ipResult.status !== "allowed") return emptyResult("quota_unavailable");
-        ipReserved = true;
+        ipReceipt = ipResult.receipt;
       }
       // Atomic monthly run slot; Redis outage fails closed for this paid path.
       const slot = await reserveApifyRunSlot();
       if (slot.error === "exceeded") {
-        if (ipReserved) await releaseIpQuota(actor.sourceId, ipScope);
+        if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
         return emptyResult("limit_reached");
       }
       if (slot.error) {
-        if (ipReserved) await releaseIpQuota(actor.sourceId, ipScope);
+        if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
         return emptyResult("quota_unavailable");
       }
       const started = await startApifyRun(apiToken, actor.actorId, input);
@@ -118,7 +118,7 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
         // unreadable and 5xx responses are unknown and keep the reservation.
         if (startErrorDefinitelyNotStarted(started.error)) {
           await refundApifyRunSlot();
-          if (ipReserved) await releaseIpQuota(actor.sourceId, ipScope);
+          if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
         }
         return emptyResult(started.error);
       }

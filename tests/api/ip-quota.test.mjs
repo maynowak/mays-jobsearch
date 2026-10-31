@@ -39,14 +39,19 @@ describe("JM-COOKIELESS-QUOTA-02B-01: IP quota", () => {
     expect(cacheEval).not.toHaveBeenCalled();
   });
 
-  it("reserves atomically with window and daily keys", async () => {
-    await expect(reserveIpQuota("theirstack", scope, 1_700_000_000, env)).resolves.toEqual({
-      status: "allowed",
-    });
+  it("reserves atomically with window, daily and receipt keys", async () => {
+    const result = await reserveIpQuota("theirstack", scope, 1_700_000_000, env);
+    expect(result.status).toBe("allowed");
+    expect(result.receipt).toMatch(/^[a-f0-9]{32}$/);
     const [, keys, args] = vi.mocked(cacheEval).mock.calls[0];
     expect(keys[0]).toMatch(/^mj-quota:ip:v1:theirstack:w:\d+:[a-f0-9]{32}$/);
     expect(keys[1]).toMatch(/^mj-quota:ip:v1:theirstack:d:\d{4}-\d{2}-\d{2}:[a-f0-9]{32}$/);
-    expect(args).toEqual([30, 300, 660, 86_460]);
+    expect(keys[2]).toMatch(/^mj-quota:ip:v1:theirstack:r:[a-f0-9]{32}$/);
+    expect(args[0]).toBe(30);
+    expect(args[1]).toBe(300);
+    expect(args[2]).toBe(660);
+    expect(args[3]).toBe(86_460);
+    expect(args[6]).toBe(600);
   });
 
   it("maps limit and Redis failure", async () => {
@@ -69,12 +74,24 @@ describe("JM-COOKIELESS-QUOTA-02B-01: IP quota", () => {
     });
   });
 
-  it("releases atomically and is idempotent", async () => {
-    await expect(releaseIpQuota("theirstack", scope, 1_700_000_000, env)).resolves.toEqual({
-      status: "allowed",
-    });
-    const [script, keys] = vi.mocked(cacheEval).mock.calls[0];
+  it("releases only with a matching receipt and is idempotent", async () => {
+    const receipt = "b".repeat(32);
+    await expect(
+      releaseIpQuota("theirstack", scope, receipt, 1_700_000_000, env)
+    ).resolves.toEqual({ status: "allowed" });
+    const [script, keys, args] = vi.mocked(cacheEval).mock.calls[0];
     expect(String(script)).toContain("DECR");
-    expect(keys).toHaveLength(2);
+    expect(keys).toHaveLength(5);
+    expect(keys[0]).toMatch(new RegExp(`:r:${receipt}$`));
+    expect(args).toHaveLength(2);
+
+    vi.mocked(cacheEval).mockResolvedValue(0);
+    await expect(
+      releaseIpQuota("theirstack", scope, receipt, 1_700_000_000, env)
+    ).resolves.toEqual({ status: "missing" });
+
+    await expect(
+      releaseIpQuota("theirstack", scope, "not-a-receipt", 1_700_000_000, env)
+    ).resolves.toEqual({ status: "invalid_scope" });
   });
 });

@@ -1,3 +1,12 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02B-01-REPAIR-01
+- Typ: Fix/Cost-Control/Security/Idempotency
+- Status: IMPLEMENTED / VERIFIED (isolated Redis; live Vercel headers NOT VERIFIED)
+- Confirmed: `releaseIpQuota` was not bound to a reservation; double release or release after a window/day rollover could decrement another/newer counter. `keysFor` used ambient version instead of the supplied env.
+- Fix: reserve returns a server-only receipt; receipt stores `<windowId>|<UTC-date>` with a one-window TTL. Release requires the receipt, selects the original window/day from current/previous keys, is idempotent, never goes negative, and fails closed on Redis errors. Source/detail call sites carry the receipt; unknown billing keeps the reservation.
+- AI-/Privacy-/Data-Flow impact: no new cookie, no cache/TTL change, no provider change. A release after one window is a safe no-op and the attempt remains counted (conservative).
+- Tests: receipt/window/day/parallel/double-release Redis tests PASS; full suite 1004 passed, 5 skipped; TypeScript/Build/`git diff --check`/budget Redis/guest E2E PASS. Live Vercel IP headers NOT VERIFIED.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02B-01-REPAIR-01-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02B-01
 - Typ: Implementation/Cost-Control/Privacy/IP-Quota
 - Status: IMPLEMENTED / VERIFIED (unit + isolated Redis Lua; live Vercel IP headers NOT VERIFIED)

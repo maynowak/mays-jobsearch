@@ -106,23 +106,23 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, 
   const n = missing.length;
 
   // 2. Optional trusted-IP quota (additional abuse brake).
-  let ipQuotaReserved = false;
+  let ipQuotaReceipt = null;
   if (ipQuotaConfig().enabled) {
     if (!ipScope) return { error: "quota_unavailable" };
     const ipQuota = await reserveIpQuota("apify-detail", ipScope);
     if (ipQuota.status === "limit_reached") return { error: "quota_exceeded" };
     if (ipQuota.status !== "allowed") return { error: "quota_unavailable" };
-    ipQuotaReserved = true;
+    ipQuotaReceipt = ipQuota.receipt;
   }
 
   // 3. Global monthly run backstop (atomic; race-safe).
   const runSlot = await reserveApifyRunSlot();
   if (runSlot.error === "exceeded") {
-    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
     return { error: "apify_limit_reached" };
   }
   if (runSlot.error) {
-    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
     return { error: "quota_unavailable" };
   }
 
@@ -130,12 +130,12 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, 
   const sessionReserved = await cacheReserveIncr(sessionKey, n, cfg.apifyDetailMaxPerUserPerDay, QUOTA_TTL_SEC);
   if (sessionReserved === null) {
     await refundApifyRunSlot();
-    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
     return { error: "quota_unavailable" };
   }
   if (sessionReserved === -1) {
     await refundApifyRunSlot();
-    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
     return { error: "quota_exceeded" };
   }
 
@@ -144,13 +144,13 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, 
   if (ipReserved === null) {
     await refundQuota(sessionKey, ipKey, n);
     await refundApifyRunSlot();
-    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
     return { error: "quota_unavailable" };
   }
   if (ipReserved === -1) {
     await refundQuota(sessionKey, ipKey, n);
     await refundApifyRunSlot();
-    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
     return { error: "quota_exceeded" };
   }
 
@@ -159,7 +159,7 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, 
   if (!apiToken) {
     await refundQuota(sessionKey, ipKey, n);
     await refundApifyRunSlot();
-    if (ipQuotaReserved) await releaseIpQuota("apify-detail", ipScope);
+    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
     return { error: "missing_config" };
   }
 
