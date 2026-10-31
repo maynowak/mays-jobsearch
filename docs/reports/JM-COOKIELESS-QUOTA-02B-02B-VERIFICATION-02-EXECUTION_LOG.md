@@ -203,5 +203,6 @@ No product code, cookie, provider, Redis or deployment change.
 
 ## 15. Git
 
-- Commit and remote synchronization are recorded after final validation.
-- No deployment.
+- Implementation/test commit: `1fbf871`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
+- Production deployment: NOT DEPLOYED.
