@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { LangProvider } from '../i18n';
 import {
   resetCvProfileLists,
@@ -19,7 +19,10 @@ const makeDocument = (id: string, name: string, hash: string, skills: string[]):
   skills,
 });
 
-const renderSection = (documents: CvDocument[]) => {
+const renderSection = (
+  documents: CvDocument[],
+  onAssignUnassigned = vi.fn(async () => undefined)
+) => {
   const onSelectDocument = vi.fn();
   const onSelectSearchProfile = vi.fn();
   const onSelectAtsProfile = vi.fn();
@@ -41,10 +44,11 @@ const renderSection = (documents: CvDocument[]) => {
         onSelectSearchProfile={onSelectSearchProfile}
         onSelectAtsProfile={onSelectAtsProfile}
         onOpenCvUpload={vi.fn()}
+        onAssignUnassigned={onAssignUnassigned}
       />
     </LangProvider>
   );
-  return { ...view, onSelectDocument, onSelectSearchProfile, onSelectAtsProfile };
+  return { ...view, onSelectDocument, onSelectSearchProfile, onSelectAtsProfile, onAssignUnassigned };
 };
 
 describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
@@ -174,5 +178,59 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
     expect(screen.getByRole('option', { name: 'B Suche 1' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'B Suche 2' })).toBeTruthy();
     expect(screen.queryByRole('option', { name: 'A Suche 1' })).toBeNull();
+  });
+
+  it('passes the overlay assignment callback with the opened CV hash', async () => {
+    const cvA = makeDocument('cv-a', 'cv-a', 'hash-a', []);
+    const cvB = makeDocument('cv-b', 'cv-b', 'hash-b', []);
+    const search = saveCvSearchProfile('hash-a', 'A Suche', {
+      skills: 'AWS',
+      targetRoles: ['Cloud Engineer'],
+      city: '',
+      radiusKm: null,
+      workModes: [],
+      employmentTypes: ['full_time'],
+    })!;
+    const orphan = saveCvAtsProfile('hash-a', 'Orphan ATS', ['AWS'], ['Cloud Engineer'], null)!;
+    const onAssignUnassigned = vi.fn(async () => undefined);
+    const view = renderSection([cvA, cvB], onAssignUnassigned);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Profile anzeigen' })[0]);
+    expect(screen.getByRole('heading', { name: 'Nicht zugeordnete ATS-Profile' })).toBeTruthy();
+
+    const select = screen.getByLabelText('Zuordnen zu') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: search.id } });
+    fireEvent.click(screen.getByRole('button', { name: 'Zuordnen' }));
+
+    await waitFor(() =>
+      expect(onAssignUnassigned).toHaveBeenCalledWith('hash-a', orphan.id, search.id)
+    );
+    // A later CV switch must not change the overlay's captured CV hash.
+    view.rerender(
+      <LangProvider>
+        <DashboardV2CvSection
+          documents={[cvA, cvB]}
+          selectedDocumentId="cv-b"
+          selectedSearchProfileId={null}
+          selectedAtsProfileId={null}
+          processing={false}
+          searching={false}
+          onSelectDocument={view.onSelectDocument}
+          onRemoveDocument={vi.fn()}
+          onAddFiles={vi.fn()}
+          onProcess={vi.fn()}
+          onSearch={vi.fn()}
+          onRemoveData={vi.fn()}
+          onSelectSearchProfile={view.onSelectSearchProfile}
+          onSelectAtsProfile={view.onSelectAtsProfile}
+          onOpenCvUpload={vi.fn()}
+          onAssignUnassigned={onAssignUnassigned}
+        />
+      </LangProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Zuordnen' }));
+    await waitFor(() =>
+      expect(onAssignUnassigned).toHaveBeenLastCalledWith('hash-a', orphan.id, search.id)
+    );
   });
 });

@@ -2759,6 +2759,7 @@ export default function App() {
       onSelectSearchProfile={handleDashboardSearchProfileSelect}
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
       onOpenCvUpload={() => navigateInApp("/search?cv=upload")}
+      onAssignUnassigned={handleAssignUnassignedAts}
     />
   );
 

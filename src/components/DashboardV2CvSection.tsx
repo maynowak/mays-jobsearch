@@ -25,6 +25,12 @@ interface Props {
   onSelectSearchProfile: (id: string | null) => void;
   onSelectAtsProfile: (id: string | null) => void;
   onOpenCvUpload: () => void;
+  // JM-ATS-OVERLAY-PARITY-08A: same session-adapter handler as the search page.
+  onAssignUnassigned?: (
+    cvHash: string,
+    atsSessionId: string,
+    targetSearchProfileId: string
+  ) => Promise<void>;
 }
 
 const DashboardV2CvSection = ({
@@ -44,6 +50,7 @@ const DashboardV2CvSection = ({
   onSelectSearchProfile,
   onSelectAtsProfile,
   onOpenCvUpload,
+  onAssignUnassigned,
 }: Props) => {
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
@@ -178,9 +185,20 @@ const DashboardV2CvSection = ({
         const profilesDocument = documents.find((document) => document.id === profilesDocumentId);
         return profilesDocument ? (
           <CvProfilesOverlay
+            key={profilesDocument.id}
             docName={profilesDocument.name}
             docHash={profilesDocument.hash ?? null}
             onClose={() => setProfilesDocumentId(null)}
+            onAssignUnassigned={
+              onAssignUnassigned && profilesDocument.hash
+                ? (atsSessionId, targetSearchProfileId) =>
+                    onAssignUnassigned(
+                      profilesDocument.hash as string,
+                      atsSessionId,
+                      targetSearchProfileId
+                    )
+                : undefined
+            }
           />
         ) : null;
       })()}

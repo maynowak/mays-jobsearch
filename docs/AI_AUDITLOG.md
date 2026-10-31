@@ -1,3 +1,12 @@
+2026-10-31 · JM-ATS-OVERLAY-PARITY-08A
+- Typ: Fix/Integration/UI/Parity
+- Status: IMPLEMENTED / VERIFIED (session-only)
+- Confirmed: `DashboardV2CvSection` rendered `CvProfilesOverlay` without `onAssignUnassigned`; the dashboard reassignment action could not work.
+- Correction: Dashboard section accepts and forwards the existing `handleAssignUnassignedAts`; the wrapper supplies the opened document's CV hash, keys the overlay by document ID and leaves the callback absent when no hash exists. No second assignment implementation was created.
+- AI-/Privacy-/Data-Flow impact: keine neue Netzwerk-, RIS-, AWS-, Modell- oder Persistenzstrecke; keine automatische Suche. Gast-CV-Tab und `/search`-Workflow bleiben ohne Anmeldung verfügbar; `/profil` behält seine Auth-Regeln.
+- Tests: Dashboard-Paritäts-/CV-Hash-/CV-Wechsel-Tests PASS; Gesamtsuite 964 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS. Chromium 1440/390 Gast-CV-Tab/Upload PASS; vollständiger Gast-PDF-Workflow und authentifizierter Flow NOT VERIFIED.
+- Log: `docs/reports/JM-ATS-OVERLAY-PARITY-08A-EXECUTION_LOG.md`
+
 2026-10-31 · JM-ATS-UNASSIGNED-UX-08
 - Typ: Feature/Session-UX/Integrity/Privacy
 - Status: IMPLEMENTED / VERIFIED (session-only; persistence NOT IMPLEMENTED)
