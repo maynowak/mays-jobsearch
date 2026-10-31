@@ -117,5 +117,6 @@ must require a valid parent before creating `ATSSearchProfileV1`.
 
 ## Git
 
-- Commit and push are recorded after final validation.
+- Implementation commit: `4e9fe5f`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
