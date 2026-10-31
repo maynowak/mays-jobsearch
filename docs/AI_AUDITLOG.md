@@ -1,3 +1,13 @@
+2026-10-31 · JM-AUTH-COGNITO-CUSTOM-DOMAIN-REGRESSION-01
+- Typ: Auth-Regression/Infrastruktur-Ursache/Security
+- Status: URSACHE IDENTIFIZIERT — keine Codeänderung, kein AWS-/Terraform-/Vercel-Deployment
+- Ursache: Nicht der Login-Code, sondern die Cognito-Custom-Domain `auth.mays-job-matcher.app` wurde am 31.10.2026 um 07:41:21 per Terraform (`DeleteUserPoolDomain`) vom Jobsearch-Pool `eu-central-1_ZURSMpD2O` entfernt; danach wurde die Prefix-Domain `mays-ris-dev` am Pool `ojbmoiYGM` angelegt. OIDC-Discovery liefert seither `ris-dev-jobsearch-dev.auth.eu-central-1.amazoncognito.com` statt der Custom Domain.
+- Code: `LoginForm`/`authFlow`/`oidcConfig` unverändert seit `fb88729` (23.10.2026); `signinRedirect` nutzt weiterhin die Discovery. Keine Hardcodierung der Login-Domain.
+- AWS-Zustand: aktueller Pool hat `Domain=ris-dev-jobsearch-dev`, `CustomDomain=null`; `describe-user-pool-domain auth...` leer. DNS `auth...` zeigt noch auf altes CloudFront, ist aber keine aktive Cognito-Custom-Domain.
+- AI-/Privacy-/Data-Flow: keine neue Datenübertragung, keine Token-/Cookie-Änderung, keine Gast-/Apify-/Redis-/Budget-/CV-/ATS-Änderung. Login funktioniert weiter über die Prefix-Domain.
+- Tests: Auth-Baseline 22 PASS; Gesamtsuite 1031 passed/5 skipped; TypeScript/Build/diff PASS. Browser-Login nicht ausgeführt; AWS-Read-only durchgeführt.
+- Log: `docs/reports/JM-AUTH-COGNITO-CUSTOM-DOMAIN-REGRESSION-01.md`
+
 2026-10-31 · JM-RIS-COGNITO-SAME-HOST-LOGIN-02
 - Typ: Auth-Implementierungsgate/Dependency/Security
 - Status: BLOCKED — keine Implementierung, kein AWS-/Vercel-Deployment
