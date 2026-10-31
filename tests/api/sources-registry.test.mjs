@@ -113,7 +113,7 @@ beforeEach(() => {
 describe("Job Sources Registry (sources/index.mjs)", () => {
   it("A) Arbeitnow enabled -> Jobs", async () => {
     setupFetchMock({ arbeitnowJobs: [baseArbeitnowJob] });
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.jobs.length).toBeGreaterThan(0);
     expect(result.jobs[0].source).toContain("arbeitnow");
   });
@@ -121,14 +121,14 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
   it("B) Arbeitnow disabled -> keine Requests", async () => {
     process.env.JOB_SOURCE_ARBEITNOW_ENABLED = "false";
     setupAllDisabled();
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.jobs.length).toBe(0);
     expect(result.meta.disabledSources).toContain("arbeitnow");
   });
 
   it("E) beide enabled -> kombinierter Pool", async () => {
     setupFetchMock();
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.jobs.length).toBeGreaterThan(0);
     expect(result.meta.sources.arbeitnow).toBeGreaterThan(0);
     expect(result.meta.sourceDetails.some((s) => s.id === "arbeitnow" && s.enabled)).toBe(true);
@@ -139,7 +139,7 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
     process.env.JOB_SOURCE_ARBEITNOW_ENABLED = "false";
     process.env.JOB_SOURCE_ARBEITSAGENTUR_ENABLED = "false";
     setupAllDisabled();
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.jobs.length).toBe(0);
     expect(result.meta.totalFiltered).toBe(0);
     expect(result.meta.disabledSources).toContain("arbeitnow");
@@ -152,7 +152,7 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
     const arbeitnowJob = { ...baseArbeitnowJob, slug: "j1", title: "Frontend Developer", company_name: "Acme", location: ["Berlin"] };
     const apifyRecord = { ...baseApifyRecord, referenceId: "aa-1", title: "Frontend Developer", employer: "Acme", location: "Berlin" };
     setupFetchMock({ arbeitnowJobs: [arbeitnowJob], apifyRecords: [apifyRecord], datasetFresh: true });
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     const job = result.jobs.find((j) => j.title === "Frontend Developer" && j.company_name === "Acme");
     expect(job).toBeDefined();
     expect(job.source).toEqual(expect.arrayContaining(["arbeitnow", "arbeitsagentur"]));
@@ -162,7 +162,7 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
     delete process.env.APIFY_API_TOKEN;
     delete process.env.JOB_SOURCE_GREENHOUSE_BOARDS;
     setupFetchMock({ arbeitnowJobs: [baseArbeitnowJob] });
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.meta.sources.arbeitnow).toBeGreaterThan(0);
     expect(result.meta.sourceReasons.arbeitnow).toBeNull();
     // Ohne Keys/Boards werden die Quellen gar nicht erst angefragt (ehrliches
@@ -187,15 +187,15 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
 
     it("Fall A: city ohne radiusKm -> kein Geo-Filter (identisch zu Fall B ohne Stadt)", async () => {
       setupFetchMock({ arbeitnowJobs: geoJobs });
-      const withCity = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "Michelstadt" });
-      const withoutCity = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "" });
+      const withCity = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "Michelstadt" });
+      const withoutCity = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "" });
       expect(withCity.jobs.length).toBeGreaterThan(0);
       expect(withCity.jobs.length).toBe(withoutCity.jobs.length);
     });
 
     it("Fall C: city mit konkretem radiusKm -> bisheriger Ortsfilter bleibt aktiv", async () => {
       setupFetchMock({ arbeitnowJobs: geoJobs });
-      const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "Michelstadt", radiusKm: "50" });
+      const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "Michelstadt", radiusKm: "50" });
       // Bestehende Semantik: exakter Orts-Substring; nur der Remote-Job bleibt
       expect(result.jobs.length).toBe(1);
       expect(result.jobs[0].remote).toBe(true);

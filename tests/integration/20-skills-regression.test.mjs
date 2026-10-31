@@ -165,7 +165,7 @@ describe("REGRESSION: 20 Skills Multi-Word Preservation", () => {
 
   it("fetchAllJobs receives skills as array and preserves multi-word skills", async () => {
     setupFetchMock();
-    
+
     const skillsArray = [
       "Java",
       "Spring Boot",
@@ -176,10 +176,10 @@ describe("REGRESSION: 20 Skills Multi-Word Preservation", () => {
       "Linux"
     ];
 
-    const result = await fetchAllJobs({ 
-      skills: skillsArray, 
-      targetRole: "Cloud Engineer", 
-      city: "Frankfurt" 
+    const result = await fetchAllJobs({ paidSourcesAllowed: true,
+      skills: skillsArray,
+      targetRole: "Cloud Engineer",
+      city: "Frankfurt"
     });
 
     expect(result.jobs.length).toBeGreaterThan(0);
@@ -188,7 +188,7 @@ describe("REGRESSION: 20 Skills Multi-Word Preservation", () => {
 
   it("search strategy preserves multi-word skills in candidate pool", async () => {
     const { applySearchStrategyWithTargetRole } = await import("../../api/_lib/searchStrategy.mjs");
-    
+
     const skills = [
       "Java",
       "Spring Boot",
@@ -206,9 +206,9 @@ describe("REGRESSION: 20 Skills Multi-Word Preservation", () => {
       { slug: "4", title: "Frontend Developer", tags: ["react", "typescript"], description: "Frontend Developer", source: ["test"] },
     ];
 
-    const result = applySearchStrategyWithTargetRole(skills, "Cloud Engineer", allJobs, { 
-      id: "combined", 
-      provider: "search-strategy" 
+    const result = applySearchStrategyWithTargetRole(skills, "Cloud Engineer", allJobs, {
+      id: "combined",
+      provider: "search-strategy"
     });
 
     expect(result.jobs.length).toBeGreaterThan(0);
@@ -248,14 +248,14 @@ describe("REGRESSION: 20 Skills Multi-Word Preservation", () => {
 
   it("targetRole is preserved and used separately from skills", async () => {
     setupFetchMock();
-    
+
     const skills = ["Java", "Spring Boot", "AWS"];
     const targetRole = "Cloud Engineer";
-    
-    const result = await fetchAllJobs({ 
-      skills, 
-      targetRole, 
-      city: "Frankfurt" 
+
+    const result = await fetchAllJobs({ paidSourcesAllowed: true,
+      skills,
+      targetRole,
+      city: "Frankfurt"
     });
 
     expect(result.meta.searchStrategy).toBeDefined();

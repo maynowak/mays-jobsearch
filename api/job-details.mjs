@@ -2,6 +2,7 @@ import { HttpError } from "./_lib/filter.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
 import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
+import { paidSourcesAllowedForGuest } from "./_lib/sourcePolicy.mjs";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -24,6 +25,14 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
     return res.status(405).json({ error: "This endpoint accepts POST requests only.", code: "method" });
+  }
+
+  // Model A: paid detail enrichment is not available to public guest requests.
+  if (!paidSourcesAllowedForGuest()) {
+    return res.status(403).json({
+      error: "Paid job details are not available for guests.",
+      code: "paid_source_blocked",
+    });
   }
 
   try {

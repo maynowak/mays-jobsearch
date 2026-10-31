@@ -162,7 +162,7 @@ describe("E2E: CV to Jobs Flow", () => {
     it("applies progressive K-of-N search with targetRole preservation", () => {
       const skills = ["Java", "AWS", "Terraform", "Docker", "Linux", "SQL", "Spring Boot"];
       const targetRole = "Cloud Engineer";
-      
+
       const allJobs = [
         { slug: "1", title: "Cloud Engineer", tags: ["aws", "terraform", "docker"], description: "", source: ["arbeitnow"] },
         { slug: "2", title: "DevOps Engineer", tags: ["aws", "docker", "kubernetes"], description: "", source: ["arbeitnow"] },
@@ -170,14 +170,14 @@ describe("E2E: CV to Jobs Flow", () => {
         { slug: "4", title: "Frontend Developer", tags: ["react", "typescript"], description: "", source: ["arbeitnow"] },
       ];
 
-      const result = applySearchStrategyWithTargetRole(skills, targetRole, allJobs, { 
-        id: "combined", 
-        provider: "search-strategy" 
+      const result = applySearchStrategyWithTargetRole(skills, targetRole, allJobs, {
+        id: "combined",
+        provider: "search-strategy"
       });
 
       // TargetRole matches should be preserved even with 0 skill matches
       expect(result.meta.targetRoleMatches).toBeGreaterThan(0);
-      
+
       // Jobs matching targetRole should be included even with 0 skill overlap
       const targetRoleJob = result.jobs.find(j => j.slug === "4");
       const cloudJob = result.jobs.find(j => j.title.includes("Cloud"));
@@ -190,13 +190,13 @@ describe("E2E: CV to Jobs Flow", () => {
         { slug: "1", title: "Cloud Engineer", tags: ["aws", "terraform"], description: "", source: ["test"] },
         { slug: "2", title: "DevOps", tags: ["aws", "docker"], description: "", source: ["test"] },
       ];
-      
-      const result = applySearchStrategyWithTargetRole(skills, "", limitedJobs, { 
+
+      const result = applySearchStrategyWithTargetRole(skills, "", limitedJobs, {
         id: "test",
         candidatePoolTarget: 10,
         minCandidatePoolTarget: 5
       });
-      
+
       expect(result.meta.strategy).toBe("progressive");
       expect(result.meta.threshold).toBeLessThanOrEqual(6);
     });
@@ -232,7 +232,7 @@ describe("E2E: CV to Jobs Flow", () => {
       };
       const profile = { skills: "React, TypeScript" };
       const result = analyzeJobForAts(job, profile);
-      
+
       expect(result.summary.matched).toBeGreaterThan(0);
       expect(result.matches.length).toBeGreaterThan(0);
     });
@@ -242,7 +242,7 @@ describe("E2E: CV to Jobs Flow", () => {
     it("applies progressive K-of-N search with targetRole preservation", () => {
       const skills = ["Java", "AWS", "Terraform", "Docker", "Linux", "SQL", "Spring Boot"];
       const targetRole = "Cloud Engineer";
-      
+
       const allJobs = [
         { slug: "1", title: "Cloud Engineer", tags: ["aws", "terraform", "docker"], description: "", source: ["arbeitnow"] },
         { slug: "2", title: "DevOps Engineer", tags: ["aws", "docker", "kubernetes"], description: "", source: ["arbeitnow"] },
@@ -250,14 +250,14 @@ describe("E2E: CV to Jobs Flow", () => {
         { slug: "4", title: "Frontend Developer", tags: ["react", "typescript"], description: "", source: ["arbeitnow"] },
       ];
 
-      const result = applySearchStrategyWithTargetRole(skills, targetRole, allJobs, { 
-        id: "combined", 
-        provider: "search-strategy" 
+      const result = applySearchStrategyWithTargetRole(skills, targetRole, allJobs, {
+        id: "combined",
+        provider: "search-strategy"
       });
 
       // TargetRole matches should be preserved even with 0 skill matches
       expect(result.meta.targetRoleMatches).toBeGreaterThan(0);
-      
+
       // Jobs matching targetRole should be included even with 0 skill overlap
       const targetRoleJob = result.jobs.find(j => j.slug === "4");
       const cloudJob = result.jobs.find(j => j.title.includes("Cloud"));
@@ -270,13 +270,13 @@ describe("E2E: CV to Jobs Flow", () => {
         { slug: "1", title: "Cloud Engineer", tags: ["aws", "terraform"], description: "", source: ["test"] },
         { slug: "2", title: "DevOps", tags: ["aws", "docker"], description: "", source: ["test"] },
       ];
-      
-      const result = applySearchStrategyWithTargetRole(skills, "", limitedJobs, { 
+
+      const result = applySearchStrategyWithTargetRole(skills, "", limitedJobs, {
         id: "test",
         candidatePoolTarget: 10,
         minCandidatePoolTarget: 5
       });
-      
+
       expect(result.meta.strategy).toBe("progressive");
       expect(result.meta.threshold).toBeLessThanOrEqual(6);
     });
@@ -312,7 +312,7 @@ describe("E2E: CV to Jobs Flow", () => {
       };
       const profile = { skills: "React, TypeScript" };
       const result = analyzeJobForAts(job, profile);
-      
+
       expect(result.summary.matched).toBeGreaterThan(0);
       expect(result.matches.length).toBeGreaterThan(0);
     });
@@ -321,13 +321,13 @@ describe("E2E: CV to Jobs Flow", () => {
   describe("Step 5: Full Source Integration", () => {
     it("fetchAllJobs applies search strategy and preserves filters", async () => {
       setupFetchMock();
-      
+
       // When skills come from JSON array (as parsed by /api/jobs endpoint), they stay intact
       const skillsArray = ["Java", "AWS", "Terraform", "Spring Boot"];
-      const result = await fetchAllJobs({ 
-        skills: skillsArray, 
-        targetRole: "Cloud Engineer", 
-        city: "Frankfurt" 
+      const result = await fetchAllJobs({ paidSourcesAllowed: true,
+        skills: skillsArray,
+        targetRole: "Cloud Engineer",
+        city: "Frankfurt"
       });
 
       expect(result.jobs.length).toBeGreaterThan(0);
@@ -345,17 +345,17 @@ describe("E2E: CV to Jobs Flow", () => {
         { slug: "3", title: "Cloud Engineer", tags: ["aws", "terraform"], location: ["Munich"], remote: false, jobTypes: ["part_time"], source: ["arbeitnow"] },
         { slug: "4", title: "Cloud Engineer", tags: ["aws", "terraform"], location: ["Remote"], remote: true, jobTypes: ["part_time"], source: ["arbeitnow"] },
       ];
-      
+
       const { applySearchFilters } = await import("../../api/_lib/filter.mjs");
       const { buildCandidatePool } = await import("../../api/_lib/searchStrategy.mjs");
-      
+
       const pool = buildCandidatePool(["aws", "terraform"], jobs, { id: "test" });
-      
+
       // Test employmentType filter
       const filteredFullTime = applySearchFilters(pool.jobs, { radiusKm: null, workMode: [], employmentType: "full_time" });
       expect(filteredFullTime.every(j => j.jobTypes?.includes("full_time") || j.jobTypes?.includes("full-time"))).toBe(true);
       expect(filteredFullTime.some(j => j.jobTypes?.includes("part_time"))).toBe(false);
-      
+
       // Test workMode filter
       const filteredRemote = applySearchFilters(pool.jobs, { radiusKm: null, workMode: ["remote"], employmentType: "" });
       expect(filteredRemote.every(j => j.remote === true)).toBe(true);
@@ -367,7 +367,7 @@ describe("E2E: CV to Jobs Flow", () => {
       const result = applySearchStrategyWithTargetRole([], "Cloud Engineer", [
         { slug: "1", title: "Cloud Engineer", tags: ["aws"], description: "", source: ["test"] },
       ], { id: "test" });
-      
+
       expect(result.meta.targetRoleMatches).toBe(1);
       expect(result.meta.threshold).toBe(0);
     });

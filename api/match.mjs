@@ -3,6 +3,7 @@ import { computeMatch } from "./_lib/matching.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
 import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
+import { paidSourcesAllowedForGuest } from "./_lib/sourcePolicy.mjs";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -20,6 +21,8 @@ function readBody(req) {
 }
 
 async function enrichMatchedBAJobs(matches, identity) {
+  // Model A: paid detail enrichment must never run for public guest requests.
+  if (!paidSourcesAllowedForGuest()) return matches;
   const slugs = [...new Set(
     matches
       .map((m) => m.job)

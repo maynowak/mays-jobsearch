@@ -70,12 +70,7 @@ beforeEach(() => {
 });
 
 describe("/api/match BA detail enrichment", () => {
-  it("enriches only the evaluated Arbeitsagentur jobs, never the whole list or Arbeitnow", async () => {
-    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({
-      jobs: { "aa-13644-290571-S": { ...aaJob, description: "<p>full</p>" } },
-      enrichedCount: 1,
-    });
-
+  it("does not run paid detail enrichment for public guests", async () => {
     const res = makeRes();
     await handler(
       makeReq({
@@ -89,29 +84,9 @@ describe("/api/match BA detail enrichment", () => {
 
     expect(res.statusCode).toBe(200);
     expect(chat).toHaveBeenCalled();
-    const enrichCall = vi.mocked(enrichArbeitsagenturDetails).mock.calls[0];
-    expect(enrichCall[0]).toEqual(["aa-13644-290571-S"]);
+    expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
     const aaMatch = res.body.matches.find((m) => m.job.slug === "aa-13644-290571-S");
-    expect(aaMatch.job.description).toBe("<p>full</p>");
-  });
-
-  it("degrades gracefully when detail enrichment fails (match still succeeds)", async () => {
-    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ error: "quota_exceeded" });
-
-    const res = makeRes();
-    await handler(
-      makeReq({
-        skills: "Data Engineer",
-        targetRole: "Data Engineer",
-        city: "Berlin",
-        jobs: [aaJob, arbeitnowJob],
-      }),
-      res
-    );
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.matches.length).toBe(2);
-    expect(chat).toHaveBeenCalled();
+    expect(aaMatch.job.description).toBeUndefined();
   });
 
   it("AI failure => ZERO detail-enrichment Apify runs", async () => {

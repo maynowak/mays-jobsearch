@@ -7,6 +7,7 @@ import { createPublicJobSource } from "./public-ats/index.mjs";
 import { APIFY_ACTORS } from "./apify/actors.mjs";
 import { createApifySource } from "./apify/index.mjs";
 import { countJobSourceRequest } from "../usage.mjs";
+import { guestAllowedSources } from "../sourcePolicy.mjs";
 import { applySearchFilters } from "../filter.mjs";
 import { applySearchStrategy, applySearchStrategyWithTargetRole } from "../searchStrategy.mjs";
 import { getConfig } from "../config.mjs";
@@ -58,8 +59,9 @@ export function dedupJobs(jobs) {
   return result;
 }
 
-export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radiusKm, workMode, employmentType, identity }) {
-  const sources = enabledSources();
+export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radiusKm, workMode, employmentType, identity, paidSourcesAllowed = false }) {
+  const enabled = enabledSources();
+  const sources = paidSourcesAllowed ? enabled : guestAllowedSources(enabled);
   // Backward compatibility: support both targetRoles (array) and targetRole (string)
   const roles = Array.isArray(targetRoles) ? targetRoles : (targetRole ? [targetRole] : []);
   // Geo-Semantik: "Entfernung egal" (kein numerischer Radius) bedeutet keine

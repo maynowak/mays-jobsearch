@@ -46,7 +46,7 @@ const baseApifyRecord = {
 
 function setupApifyFlow(overrides = {}) {
   const { apifyRecords = [baseApifyRecord], datasetFresh = false, limitReached = false } = overrides;
-  
+
   vi.mocked(cacheGet).mockImplementation(async (key) => {
     if (datasetFresh && key && String(key).startsWith("job-source:arbeitsagentur:dataset:")) {
       return { datasetId: "ds-1", createdAt: Date.now() };
@@ -99,14 +99,14 @@ beforeEach(() => {
 describe("Apify Actor (arbeitsagentur)", () => {
   it("C) Arbeitsagentur enabled -> Jobs", async () => {
     setupApifyFlow();
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.jobs.length).toBeGreaterThan(0);
     expect(result.jobs[0].source).toContain("arbeitsagentur");
   });
 
   it("D) Arbeitsagentur disabled -> kein Apify Run", async () => {
     setupApifyDisabled();
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.jobs.length).toBe(0);
     expect(result.meta.disabledSources).toContain("arbeitsagentur");
     expect(result.meta.apify.enabled).toBe(false);
@@ -115,7 +115,7 @@ describe("Apify Actor (arbeitsagentur)", () => {
 
   it("H) Cache Key enthält Source eindeutig", async () => {
     setupApifyFlow();
-    await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     const cacheGetCalls = vi.mocked(cacheGet).mock.calls.map((c) => c[0]);
     const cacheSetCalls = vi.mocked(cacheSet).mock.calls.map((c) => c[0]);
     expect(cacheGetCalls.some((k) => String(k).startsWith("job-source:arbeitsagentur:"))).toBe(true);
@@ -126,7 +126,7 @@ describe("Apify Actor (arbeitsagentur)", () => {
 
   it("I) Apify Dataset Reuse bleibt aktiv", async () => {
     setupApifyFlow({ datasetFresh: true });
-    await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     const fetchCalls = vi.mocked(globalThis.fetch).mock.calls.map((c) => String(c[0]));
     expect(fetchCalls.some((u) => u.includes("/v2/acts/"))).toBe(false);
     expect(vi.mocked(cacheGet).mock.calls.some((c) => String(c[0]).includes(":dataset:"))).toBe(true);
@@ -136,7 +136,7 @@ describe("Apify Actor (arbeitsagentur)", () => {
 
   it("J) Refresh Policy bleibt aktiv (stale dataset -> neuer Run)", async () => {
     setupApifyFlow({ datasetFresh: false });
-    await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     const fetchCalls = vi.mocked(globalThis.fetch).mock.calls.map((c) => String(c[0]));
     expect(fetchCalls.some((u) => u.includes("/v2/acts/"))).toBe(true);
   });
@@ -161,7 +161,7 @@ describe("Apify Actor (arbeitsagentur)", () => {
       if (u.includes("/v2/acts/")) return new Response("bad request", { status: 400 });
       throw new Error(`unexpected fetch: ${u}`);
     });
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.meta.apify.reason).toBe("upstream_400");
     expect(vi.mocked(refundApifyRunSlot)).toHaveBeenCalled();
   });
@@ -174,14 +174,14 @@ describe("Apify Actor (arbeitsagentur)", () => {
       if (u.includes("/v2/acts/")) throw new Error("network down");
       throw new Error(`unexpected fetch: ${u}`);
     });
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     expect(result.meta.apify.reason).toBe("network");
     expect(vi.mocked(refundApifyRunSlot)).not.toHaveBeenCalled();
   });
 
   it("K) Cost Guard verhindert neuen Apify Run", async () => {
     setupApifyFlow({ limitReached: true });
-    const result = await fetchAllJobs({ skills: "react", targetRole: "frontend", city: "berlin" });
+    const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
     const aaJobs = result.jobs.filter((j) => j.source?.includes("arbeitsagentur"));
     expect(aaJobs.length).toBe(0);
     expect(result.meta.apify.enabled).toBe(false);

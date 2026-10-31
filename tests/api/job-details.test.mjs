@@ -37,57 +37,31 @@ beforeEach(() => {
 });
 
 describe("/api/job-details route", () => {
-  it("derives identity from server-side session + IP, not a client-supplied userId", async () => {
+  it("blocks paid detail enrichment for public guests", async () => {
     const slug = "aa-13644-290571-S";
-    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({
-      jobs: { [slug]: { slug, description: "<p>x</p>" } },
-      enrichedCount: 1,
-    });
-
     const res = makeRes();
     await handler.default(
       makeReq({ jobs: [slug], userId: "attacker-chosen-id" }, { "x-forwarded-for": "1.2.3.4" }),
       res
     );
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.jobs[slug]).toBeDefined();
-    const args = vi.mocked(enrichArbeitsagenturDetails).mock.calls[0];
-    expect(args[0]).toEqual([slug]);
-    // identity is server-derived: clientIp from header + an issued session id
-    expect(args[1].clientIp).toBe("1.2.3.4");
-    expect(args[1].sessionId).toMatch(/^[a-f0-9]{32}$/);
-    expect(args[1]).not.toHaveProperty("userId");
-  });
-
-  it("maps quota_exceeded to HTTP 429", async () => {
-    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ error: "quota_exceeded" });
-    const res = makeRes();
-    await handler.default(makeReq({ jobs: ["aa-1"] }, { "x-forwarded-for": "1.2.3.4" }), res);
-    expect(res.statusCode).toBe(429);
-    expect(res.body.code).toBe("quota_exceeded");
-  });
-
-  it("maps invalid_slug to HTTP 400", async () => {
-    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ error: "invalid_slug" });
-    const res = makeRes();
-    await handler.default(makeReq({ jobs: ["aa-1"] }, { "x-forwarded-for": "1.2.3.4" }), res);
-    expect(res.statusCode).toBe(400);
-    expect(res.body.code).toBe("invalid_slug");
-  });
-
-  it("maps quota_unavailable (Redis down) to HTTP 503", async () => {
-    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ error: "quota_unavailable" });
-    const res = makeRes();
-    await handler.default(makeReq({ jobs: ["aa-1"] }, { "x-forwarded-for": "1.2.3.4" }), res);
-    expect(res.statusCode).toBe(503);
-    expect(res.body.code).toBe("quota_unavailable");
-  });
-
-  it("rejects an empty job list with 400", async () => {
-    const res = makeRes();
-    await handler.default(makeReq({ jobs: [] }, { "x-forwarded-for": "1.2.3.4" }), res);
-    expect(res.statusCode).toBe(400);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe("paid_source_blocked");
     expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
+  });
+
+  it("blocks even an empty or malformed paid detail request", async () => {
+    for (const body of [{}, { jobs: [] }, { jobs: ["aa-1"] }]) {
+      const res = makeRes();
+      await handler.default(makeReq(body), res);
+      expect(res.statusCode).toBe(403);
+      expect(res.body.code).toBe("paid_source_blocked");
+    }
+    expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
+  });
+
+  it("continues to reject non-POST methods", async () => {
+    const res = makeRes();
+    await handler.default({ method: "GET", headers: {}, body: {} }, res);
+    expect(res.statusCode).toBe(405);
   });
 });
