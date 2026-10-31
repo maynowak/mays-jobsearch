@@ -158,7 +158,8 @@ lesende Produktionsverbindung verwendet, keine Secrets ausgegeben).
 ## 8. Preview-Freigabevoraussetzungen
 
 1. Ausdrückliche Preview-Freigabe.
-2. Zu prüfender Commit: der Dokumentations-Commit nach `7c7e0dd`.
+2. Zu prüfender Runtime-Commit: `7c7e0dd` (Dokumentations-Commits ändern kein
+   Laufzeitverhalten).
 3. Preview-Deploy nur mit `vercel deploy` (kein `--prod`).
 4. Erwartete API-Antworten:
    - Gastsuche enthält Arbeitnow/Greenhouse/Adzuna/public ATS und
@@ -186,7 +187,9 @@ lesende Produktionsverbindung verwendet, keine Secrets ausgegeben).
 ## 10. Git
 
 - Source-Policy-/Test-Commit: `7c7e0dd`
-- Dokumentations-Commit: nach diesem Bericht
+- Dokumentations-Commit: `dbfccb4`
+- Preview-Prüf-Commit (Runtime): `7c7e0dd`; Deployment-HEAD enthält zusätzlich
+  `dbfccb4` (Dokumentation)
 - Remote-Synchronität: nach Push geprüft
 - Kein Deployment
 
