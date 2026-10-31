@@ -172,5 +172,6 @@ cookieless operation is not claimed.
 
 ## 10. Git
 
-- Policy hardening + documentation commit: recorded after validation.
-- No deployment.
+- Policy hardening + documentation commit: `2661da2`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
+- Production deployment: NOT DEPLOYED.
