@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-CACHE-DELETE-03-AUDIT
+- Typ: Security/Privacy/Audit/Architecture-Decision
+- Status: AUDIT COMPLETE (read-only; no code/API/AWS/deployment change)
+- Findings: `api/profile.mjs` caches derived profiles under `cv-profile:<server-sha256(text)>` for 30 days. Client-supplied hash is ignored for key/authority. The key is content-addressed, not user/session-bound, so entries are shared across requests; no `cacheDel` exists for this namespace. “CV data remove” deletes only local state/lists; the server cache remains until TTL. Redis failures fail-safe to miss/no-op.
+- Security: a client-hash-based delete endpoint would be an unauthenticated availability attack and cannot prove ownership; shared entries cannot be deleted per-user. External provider processing cannot be undone locally.
+- Recommendation: short-term transparent retention wording; next implementation should session-bind the cache key and add an idempotent, session-authorized delete with rate limiting and Redis-failure honesty. Optionally skip caching for “not anonymized”.
+- AI-/Privacy-/Data-Flow impact: no change made. The existing privacy text is broadly accurate but the UI “remove permanently” wording does not cover the server cache.
+- Tests: none run (audit only). No real CV/provider data used.
+- Log: `docs/reports/JM-PROFILE-CACHE-DELETE-03-AUDIT.md`
+
 2026-10-31 · JM-PROFILE-CAPACITY-02-LIMIT
 - Typ: Feature/Capacity/Session-Integrity/UI
 - Status: IMPLEMENTED / VERIFIED (session-only; RIS persistence NOT IMPLEMENTED)
