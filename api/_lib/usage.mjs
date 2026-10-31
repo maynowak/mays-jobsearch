@@ -49,11 +49,20 @@ function providerLimit(provider) {
   return cfg.openRouterMonthlyMaxRequests;
 }
 
-function currentMonth() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
+/** UTC month key; server local timezone must not affect budget allocation. */
+export function budgetMonth(date = new Date()) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
+}
+
+export function previousBudgetMonth(date = new Date()) {
+  const previous = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
+  return budgetMonth(previous);
+}
+
+function currentMonth() {
+  return budgetMonth();
 }
 
 function monthScoped(base) {
@@ -270,9 +279,7 @@ function budgetProvider(provider) {
 }
 
 function previousMonth() {
-  const now = new Date();
-  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+  return previousBudgetMonth();
 }
 
 function reservationHashKey(provider, month = currentMonth()) {
@@ -490,3 +497,11 @@ export async function getUsageSnapshot() {
     },
   };
 }
+
+// Exposed only for the isolated Redis verification script
+// (tests/tools/verify-budget-lua.mjs). Not part of the public API surface.
+export const __BUDGET_SCRIPTS = {
+  reserve: RESERVE_SCRIPT,
+  settle: SETTLE_SCRIPT,
+  release: RELEASE_SCRIPT,
+};

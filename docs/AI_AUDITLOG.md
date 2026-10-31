@@ -1,3 +1,13 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02A-CLOSEOUT-02
+- Typ: Closeout/Verification/Cost-Control
+- Status: VERIFIED (UTC logic + real isolated Redis Lua verification; cookie removal NOT IMPLEMENTED)
+- Fixed: `currentMonth()` used local time while `previousMonth()` used UTC. Both now use UTC helpers (`budgetMonth`, `previousBudgetMonth`), so server timezone cannot shift budget allocation.
+- Redis verification: `tests/tools/verify-budget-lua.mjs` starts an isolated `redis:7-alpine` container and executes the real Lua scripts. Reserve/exceed/settle/double-settle/release/900s expiry/max-charge/December→January/parallel reservations all PASS. No production Redis used.
+- Conservative behavior: expired unknown reservations charge max before removal; explicit releases remain free; duplicate settlement is idempotent; Redis failure blocks paid calls.
+- AI-/Privacy-/Data-Flow impact: no new cookie, no IP quota, no cache/CV/ATS change. 02B (IP HMAC, rate limits, single-flight, cookie removal) remains NOT STARTED and requires explicit approval.
+- Tests: full suite 991 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS; guest E2E 1440/390 PASS; budget Redis script PASS.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02A-CLOSEOUT-02-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02A-REPAIR-01
 - Typ: Fix/Cost-Control/Reliability/Security
 - Status: IMPLEMENTED / VERIFIED with mocked Redis (real Lua/TTL boundary NOT VERIFIED)
