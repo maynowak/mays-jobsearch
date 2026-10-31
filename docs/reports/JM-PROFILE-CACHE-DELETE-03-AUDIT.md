@@ -576,5 +576,8 @@ Unverändert und durch dieses Audit **nicht** anzutasten:
 - Ausführlicher Verlauf:
   `docs/reports/JM-PROFILE-CACHE-DELETE-03-AUDIT-EXECUTION_LOG.md`.
 
+**Audit-Commit:** `a89727b` (lokal, `main`) — ausschließlich Dokumentation.
+Kein Push, kein Deployment, keine AWS-/Redis-/Terraform-Operation.
+
 **Status: YELLOW.** Nächster Schritt ist eine Produkt-/Datenschutzentscheidung
 zu Abschnitt 15; die Implementierung von D+B bleibt bis zur Freigabe gesperrt.

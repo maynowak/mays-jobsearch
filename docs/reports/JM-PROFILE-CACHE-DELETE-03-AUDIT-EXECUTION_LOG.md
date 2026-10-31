@@ -156,6 +156,6 @@ Keine ausgeführt (read-only Audit, keine Infrastruktur im Scope).
 
 ## Resume-Punkt
 
-Audit abgeschlossen, Bericht und Log vorhanden, Commit ausstehend/erfolgt.
-Nächster sinnvoller Einstieg: Entscheidungsvorlage zu Abschnitt 15, nicht
-erneute Ist-Analyse.
+Audit abgeschlossen. Bericht, Execution Log und AI_AUDITLOG-Eintrag sind
+committet (`a89727b`, nur Dokumentation). Nächster sinnvoller Einstieg:
+Entscheidungsvorlage zu Abschnitt 15, nicht erneute Ist-Analyse.
