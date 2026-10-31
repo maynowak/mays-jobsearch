@@ -238,7 +238,7 @@ Ursache ist ausschließlich die entfernte Cognito-Custom-Domain.
 ## 10. Git
 
 - Keine Codeänderung.
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `cdbc632`
 - Remote-Synchronität: nach Push geprüft.
 - Kein AWS-/Terraform-/Vercel-Deployment in diesem Task.
 
