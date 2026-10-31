@@ -154,6 +154,20 @@ Defined in `vercel.json`:
 - Not automated — deployments are performed explicitly via the CLI (see above).
 - Recommended: push to GitHub → import in Vercel → auto-deploy on push.
 
+## Rollback (Guest Model A)
+
+- **Do not roll back to a commit before `8f04af8` / `21609f3`.** That would
+  re-enable TheirStack/JobsPipe for guests and could reintroduce `mj_session`.
+- Apify incident: set `JOB_SOURCE_ARBEITSAGENTUR_ENABLED=false` (and/or remove
+  `APIFY_API_TOKEN`). This disables only the approved Arbeitsagentur path.
+- Code rollback: redeploy the last release commit that already contains the
+  source policy and cookie removal (`b2cb191` or later). If no such deployment
+  exists, roll forward with a reviewed fix; this is a deployment blocker.
+- Keep all Redis keys, counters and budgets. Never flush Redis during rollback.
+- Never re-enable `Set-Cookie: mj_session`; legacy cookies stay deleted.
+- A rollback must not silently allow TheirStack, JobsPipe or unknown paid
+  providers.
+
 #Domain
 
 - Custom domain not yet configured.

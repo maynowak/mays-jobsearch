@@ -138,13 +138,35 @@ cookieless operation is not claimed.
 
 ## 7. Rollback
 
-- Revert to the pre-cutover commit (`823b715`) or revert the Model A commits.
-- Rollback restores the previous cookie/paid-source behavior and must be a
-  conscious security decision.
-- Redis keys and budgets are additive; no deletion required.
-- No new secrets or production env changes.
-- A rollback must not silently re-enable TheirStack/JobsPipe for guests; those
-  remain blocked by the source policy unless explicitly reverted.
+**Corrected by `JM-GUEST-MODEL-A-RELEASE-GATE-FIX-01`.**
+
+`823b715` is **not** a safe rollback target: it predates the Model A source
+policy and the guest-cookie removal. Reverting to it would silently re-enable
+TheirStack/JobsPipe for guests and could reintroduce `mj_session`.
+
+### Safe rollback rules
+
+1. **Never deploy `823b715` or any commit before `8f04af8` as a guest-facing
+   rollback.** It re-opens paid sources and the old cookie behavior.
+2. **Operational brake for an Apify incident:** set
+   `JOB_SOURCE_ARBEITSAGENTUR_ENABLED=false` (and/or remove `APIFY_API_TOKEN`).
+   This disables the paid Arbeitsagentur path without changing code, cookies or
+   the source policy. TheirStack/JobsPipe remain blocked.
+3. **Code rollback target:** the last deployment that already contained
+   `8f04af8` (source policy) and `21609f3` (cookie removal), currently
+   `b2cb191`. This keeps paid sources blocked and keeps legacy cookies deleted.
+4. **If only `b2cb191` was ever deployed and it is faulty:** no earlier
+   guest-safe deployment exists. Roll forward with a reviewed fix; do not fall
+   back to `823b715`. This is a deployment blocker for a pre-Model-A fallback.
+5. **Redis:** all keys, counters, budgets and caches remain. No `FLUSHDB`, no
+   key deletion, no budget reset during rollback.
+6. **Cookies:** no rollback may re-enable `Set-Cookie: mj_session`. Legacy
+   cookies stay deleted.
+7. **Arbeitsagentur:** re-enable only through the explicit policy rule
+   (`id === "arbeitsagentur"` + `provider === "apify"`) or the env switch; an
+   incident block is done by disabling the source, never by weakening the
+   policy for other paid providers.
+8. **No new secrets or production env changes** are part of a code rollback.
 
 ## 8. Regression results
 

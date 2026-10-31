@@ -1,3 +1,12 @@
+2026-10-31 · JM-GUEST-MODEL-A-RELEASE-GATE-FIX-01
+- Typ: Release-Gate-Fix/Source-Policy/Rollback/Security
+- Status: ABGESCHLOSSEN — kein Deployment, keine Preview
+- Fix 1: Guest source policy now requires both approved identity and expected adapter/provider type (`arbeitnow`→`direct-api`, `greenhouse`→`ats`, `adzuna`→`job-api`, public-ATS prefixes→`ats`, `arbeitsagentur`→`apify`). Mismatched providers, `lever:paid`/`greenhouse:paid` with paid classes, TheirStack, JobsPipe and other Apify actors are BLOCKED. ID-only helper removed.
+- Fix 2: Rollback documentation corrected: `823b715` is not safe (pre-Model-A). Apify incident brake is `JOB_SOURCE_ARBEITSAGENTUR_ENABLED=false`; code rollback only to a release containing `8f04af8`+`21609f3`; no Redis flush; no cookie reintroduction; paid sources stay blocked.
+- Unchanged: Redis caches/budgets, IP-HMAC quotas, single-flight, CV cache, consent, ATS, 10/2/5, AI matching, RIS/Cognito/AWS. No new cookies/secrets/env changes.
+- Tests: policy 4 PASS; full suite 1031 passed/5 skipped; TypeScript/Build/diff, budget/IP/lock/REST Redis, guest E2E 1440/390 PASS. Live Vercel/production config NOT VERIFIED.
+- Log: `docs/reports/JM-GUEST-MODEL-A-RELEASE-GATE-FIX-01.md`
+
 2026-10-31 · JM-GUEST-MODEL-A-RELEASE-PREFLIGHT-01
 - Typ: Release-Preflight/Audit/Security
 - Status: PREFLIGHT COMPLETE — deployment NOT approved
@@ -827,7 +836,7 @@ CHANGE RECORD — AUTH SESSION UI (REFERENCE)
 - Status: COMPLETE (Login/Profil/Logout Links bedingt angezeigt)
 - Scope: LandingPage2.tsx und LandingPage2.test.tsx angepasst.
 - Ergebnis: LandingPage2 zeigt nun KONSISTENT mit Navbar Login/Register wenn nicht authentifiziert, und Profil/Logout wenn authentifiziert. Der Auth-Status wird via `useAuth()` von react-oidc-context abgerufen.
-- Files: 
+- Files:
   - src/main.tsx: AuthProvider nun umspielt sowohl LandingPage2 als auch App (statt LandingPage2 ausserhalb)
   - src/components/LandingPage2.tsx: `useAuth()` importiert, bedingte Render-Logik für Login/Profil/Logout
   - src/components/LandingPage2.test.tsx: Mock für react-oidc-context hinzugefügt
@@ -860,7 +869,7 @@ MAYS-AURORA-GLASS-DASHBOARD-01 - IMPLEMENTATION COMPLETE
   - Nutzt existierendes useAuth() von react-oidc-context
   - Nutzt existierende signOut() Funktion
 - Deployment: NICHT deployed (STOP vor Production)
-- Next Steps: 
+- Next Steps:
   - Dashboard in App.tsx für /profil Route aktivieren
   - Component-Tests für Dashboard schreiben
   - Produktionsdeployment nach GO
@@ -1009,8 +1018,8 @@ Commits:
 ### GATE A – Repository-Konsolidierung
 ✅ GREEN: Alle Commits erhalten, keine Konflikte mit Cognito-Integration
 
-### GATE B – Dashboard-Integration  
-✅ GREEN: 
+### GATE B – Dashboard-Integration
+✅ GREEN:
 - `/profil` rendert Aurora Dashboard
 - Echte Cognito-Benutzerdaten werden verwendet (via useAuth)
 - Logout-Implementierung unverändert (useAuth.signOut)
@@ -1021,7 +1030,7 @@ Commits:
 - Erwartet: `http://localhost:5173/profil` zeigt Dashboard (nach Login)
 
 ### GATE D – Tests und Build
-✅ GREEN: 
+✅ GREEN:
 - Build: PASSING
 - Tests: 821 passed | 5 skipped
 - TypeScript: OK
@@ -1164,7 +1173,7 @@ MAYS-AURORA-GLASS-DASHBOARD-06 - CSS CONSOLIDATION COMPLETE
 
 1. **Duplizierte CSS-Definitionen entfernt:**
    - `.aurora-header`: 3 → 1 Definition
-   - `.aurora-title`: 3 → 1 Definition  
+   - `.aurora-title`: 3 → 1 Definition
    - `.aurora-subtitle`: 2 → 1 Definition
    - `.aurora-content-grid`: 6 → 1 Definition
    - `.aurora-card`: 3 → 1 Definition
@@ -1257,7 +1266,7 @@ MAYS-AURORA-GLASS-DASHBOARD-06-FINAL – DOM/CSS CONTRACT FIX COMPLETE
 ### Root Cause Analysis:
 
 1. **Grid Column Issue**:
-   - Original CSS used `auto-fit, minmax(320px, 1fr)` 
+   - Original CSS used `auto-fit, minmax(320px, 1fr)`
    - At 1440px viewport → 4 columns attempted
    - Features card had no grid positioning
 
