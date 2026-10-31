@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-AUTH-BOUNDARY-07A
+- Typ: Security/Auth-Boundary/Identity-Contract/Fix
+- Status: IMPLEMENTED / VERIFIED (session-only; no auth-config change)
+- Confirmed: `deriveAuthProfileKey` treated a missing issuer as an empty string, so `sub` without `iss` became a verified key.
+- Correction: `iss` and `sub` are both required and trimmed; missing/blank issuer or subject yields `auth:unverified`. Verified keys use JSON encoding to avoid delimiter ambiguity. Email remains excluded.
+- Trusted source: the OIDC client validates the ID token against the configured Cognito authority; only the validated `iss` claim is trusted, with no fallback to the configured authority when absent.
+- AI-/Privacy-/Data-Flow impact: no new network, storage, RIS, AWS, model or auth-config change. Guests remain `null`; verified Cognito users keep their prior behavior.
+- Tests: identity/ambiguity/missing-claim tests, issuer-disappearance reset, read guards and late-operation tests PASS; full suite 956 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS. Authenticated browser flow NOT VERIFIED.
+- Log: `docs/reports/JM-PROFILE-AUTH-BOUNDARY-07A-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-AUTH-BOUNDARY-07
 - Typ: Security/Auth-Boundary/Isolation/Regression
 - Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistence NOT IMPLEMENTED)

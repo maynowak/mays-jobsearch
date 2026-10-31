@@ -25,9 +25,14 @@ export function deriveAuthProfileKey(
 ): string | null {
   if (!isAuthenticated) return null;
   const sub = typeof claims?.sub === "string" ? claims.sub.trim() : "";
-  if (!sub) return UNVERIFIED_AUTH_KEY;
   const iss = typeof claims?.iss === "string" ? claims.iss.trim() : "";
-  return `iss:${iss}|sub:${sub}`;
+  // Both claims are required. A missing issuer must never produce a key that
+  // is treated as verified. The OIDC client validates the token issuer against
+  // the configured authority; this function only trusts the validated `iss`
+  // claim and does not substitute a configured value.
+  if (!sub || !iss) return UNVERIFIED_AUTH_KEY;
+  // JSON encoding avoids delimiter ambiguity if either value contains "|".
+  return JSON.stringify([iss, sub]);
 }
 
 export function isVerifiedAuthProfileKey(key: string | null): boolean {

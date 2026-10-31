@@ -3,9 +3,20 @@ import { deriveAuthProfileKey, isVerifiedAuthProfileKey, UNVERIFIED_AUTH_KEY } f
 
 describe("JM-PROFILE-AUTH-BOUNDARY-07: identity key", () => {
   it("uses iss + sub as the stable combination", () => {
-    expect(deriveAuthProfileKey(true, { iss: "https://issuer.example", sub: "user-a" })).toBe(
-      "iss:https://issuer.example|sub:user-a"
-    );
+    const key = deriveAuthProfileKey(true, { iss: "https://issuer.example", sub: "user-a" });
+    expect(key).not.toBeNull();
+    expect(isVerifiedAuthProfileKey(key)).toBe(true);
+    expect(key).toBe(JSON.stringify(["https://issuer.example", "user-a"]));
+  });
+
+  it("does not treat a missing issuer as verified", () => {
+    const key = deriveAuthProfileKey(true, { sub: "user-a" });
+    expect(key).toBe(UNVERIFIED_AUTH_KEY);
+    expect(isVerifiedAuthProfileKey(key)).toBe(false);
+  });
+
+  it("does not treat a blank issuer as verified", () => {
+    expect(deriveAuthProfileKey(true, { iss: "   ", sub: "user-a" })).toBe(UNVERIFIED_AUTH_KEY);
   });
 
   it("separates users with different subs even when email is identical", () => {
@@ -17,6 +28,12 @@ describe("JM-PROFILE-AUTH-BOUNDARY-07: identity key", () => {
   it("separates the same sub from different issuers", () => {
     const a = deriveAuthProfileKey(true, { iss: "issuer-a", sub: "same" });
     const b = deriveAuthProfileKey(true, { iss: "issuer-b", sub: "same" });
+    expect(a).not.toBe(b);
+  });
+
+  it("avoids delimiter ambiguity between issuer and subject", () => {
+    const a = deriveAuthProfileKey(true, { iss: "issuer|one", sub: "user" });
+    const b = deriveAuthProfileKey(true, { iss: "issuer", sub: "one|user" });
     expect(a).not.toBe(b);
   });
 

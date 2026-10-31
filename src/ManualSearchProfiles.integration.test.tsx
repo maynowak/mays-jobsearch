@@ -30,7 +30,14 @@ vi.mock("react-oidc-context", () => ({
     error: undefined,
     isAuthenticated: authState.isAuthenticated,
     user: authState.isAuthenticated
-      ? { profile: { sub: authState.sub, email: "profil@example.invalid", name: "Test Person" } }
+      ? {
+          profile: {
+            sub: authState.sub,
+            iss: "https://issuer.example",
+            email: "profil@example.invalid",
+            name: "Test Person",
+          },
+        }
       : undefined,
     signinRedirect: vi.fn(),
     signoutRedirect: vi.fn(),
