@@ -1545,6 +1545,21 @@ export default function App() {
     refreshManualProfiles();
   };
 
+  // JM-ATS-UNASSIGNED-UX-08: re-assign an unassigned ATS session profile to an
+  // existing CV search profile. The adapter enforces hash/parent/capacity.
+  const handleAssignUnassignedAts = async (
+    cvHash: string,
+    atsSessionId: string,
+    targetSearchProfileId: string
+  ) => {
+    const repositories = profileRepositoriesRef.current;
+    if (!repositories) throw new Error("profile repository unavailable");
+    const epoch = sessionEpochRef.current;
+    await repositories.atsSearchProfiles.assignUnassigned(cvHash, atsSessionId, targetSearchProfileId);
+    if (sessionEpochRef.current !== epoch) throw new ProfileSessionEndedError();
+    setCvProfileStoreVersion((version) => version + 1);
+  };
+
   // Uebernimmt die Profilkonfiguration in die bestehende Suchmaske und startet
   // GENAU EINE Suche ueber den vorhandenen /api/jobs-Pfad: kein zweiter
   // Endpunkt, keine parallele Suche, kein CV, kein Modellaufruf durch die
@@ -3056,9 +3071,16 @@ export default function App() {
 
           {profilesDoc && (
             <CvProfilesOverlay
+              key={profilesDoc.id}
               docName={profilesDoc.name}
               docHash={profilesDoc.hash ?? null}
               onClose={() => setProfilesDocId(null)}
+              onAssignUnassigned={
+                profilesDoc.hash
+                  ? (atsSessionId, targetSearchProfileId) =>
+                      handleAssignUnassignedAts(profilesDoc.hash as string, atsSessionId, targetSearchProfileId)
+                  : undefined
+              }
             />
           )}
           <Footer />

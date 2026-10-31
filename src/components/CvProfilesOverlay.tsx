@@ -12,6 +12,7 @@ interface Props {
   docName: string;
   docHash: string | null;
   onClose: () => void;
+  onAssignUnassigned?: (atsSessionId: string, targetSearchProfileId: string) => Promise<void>;
 }
 
 type Selection =
@@ -19,13 +20,42 @@ type Selection =
   | { kind: "ats"; entry: CvAtsProfileEntry }
   | null;
 
-export default function CvProfilesOverlay({ docName, docHash, onClose }: Props) {
+export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignUnassigned }: Props) {
   const { t, lang } = useLang();
   // Re-read je Render: Eintraege, die waehrend geoeffnetem Overlay
   // gespeichert werden, erscheinen sofort.
   const lists = readCvProfileLists(docHash);
   const [showProfile, setShowProfile] = useState(false);
   const [selection, setSelection] = useState<Selection>(null);
+  const [assignTargets, setAssignTargets] = useState<Record<string, string>>({});
+  const [pendingAtsId, setPendingAtsId] = useState<string | null>(null);
+  const [assignNotice, setAssignNotice] = useState<string | null>(null);
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const unassigned = lists.atsProfiles.filter((entry) => !entry.searchProfileId);
+
+  const assign = async (atsSessionId: string) => {
+    const target = assignTargets[atsSessionId] ?? "";
+    if (!onAssignUnassigned || !target || pendingAtsId) return;
+    setPendingAtsId(atsSessionId);
+    setAssignError(null);
+    setAssignNotice(null);
+    try {
+      await onAssignUnassigned(atsSessionId, target);
+      setAssignNotice(t("cv.unassignedAssigned"));
+      setAssignTargets((prev) => ({ ...prev, [atsSessionId]: "" }));
+    } catch (error) {
+      if ((error as { code?: string })?.code === "session_ended") {
+        return;
+      }
+      setAssignError(
+        (error as { code?: string })?.code === "capacity_exceeded"
+          ? t("cv.unassignedCapacity")
+          : t("cv.unassignedError")
+      );
+    } finally {
+      setPendingAtsId(null);
+    }
+  };
 
   const latestSearchProfile = lists.searchProfiles[0] ?? null;
   const locale = lang === "de" ? "de-DE" : "en-US";
@@ -178,6 +208,69 @@ export default function CvProfilesOverlay({ docName, docHash, onClose }: Props) 
             )}
           </section>
         </div>
+
+        {unassigned.length > 0 && (
+          <section className="cv-profiles-overlay__unassigned" aria-labelledby="cv-unassigned-ats-title">
+            <h4 id="cv-unassigned-ats-title">{t("cv.unassignedTitle")}</h4>
+            <p className="cv-profiles-overlay__note">{t("cv.unassignedHint")}</p>
+            {lists.searchProfiles.length === 0 ? (
+              <p className="cv-profiles-overlay__empty">{t("cv.unassignedNoParent")}</p>
+            ) : (
+              <ul className="cv-profiles-overlay__unassigned-list">
+                {unassigned.map((entry) => (
+                  <li key={entry.id} className="cv-profiles-overlay__unassigned-item">
+                    <div>
+                      <strong>{entry.name}</strong>
+                      <span className="cv-profiles-overlay__unassigned-status">
+                        {t("cv.unassignedStatus")}
+                      </span>
+                      <p className="cv-profiles-overlay__unassigned-meta">
+                        {(entry.targetRoles ?? []).join(", ") || "—"} · {entry.skills.join(" · ") || "—"}
+                      </p>
+                    </div>
+                    <div className="cv-profiles-overlay__unassigned-action">
+                      <label htmlFor={`assign-ats-${entry.id}`}>{t("cv.unassignedTarget")}</label>
+                      <select
+                        id={`assign-ats-${entry.id}`}
+                        value={assignTargets[entry.id] ?? ""}
+                        onChange={(event) =>
+                          setAssignTargets((prev) => ({ ...prev, [entry.id]: event.target.value }))
+                        }
+                        disabled={pendingAtsId !== null}
+                      >
+                        <option value="">{t("cv.choosePlaceholder")}</option>
+                        {lists.searchProfiles.map((searchProfile) => (
+                          <option key={searchProfile.id} value={searchProfile.id}>
+                            {searchProfile.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => void assign(entry.id)}
+                        disabled={pendingAtsId !== null || !(assignTargets[entry.id] ?? "")}
+                      >
+                        {t("cv.unassignedAssign")}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {assignNotice && (
+          <p className="cv-profiles-overlay__note" role="status">
+            {assignNotice}
+          </p>
+        )}
+        {assignError && (
+          <p className="field-error" role="alert">
+            {assignError}
+          </p>
+        )}
 
         {/* Austauschbarer Detailbereich: Inhalt haengt vom gewaehlten Thema
             (Suchprofil vs. ATS-Profil) ab */}

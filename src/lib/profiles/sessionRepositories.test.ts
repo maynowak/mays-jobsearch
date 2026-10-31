@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetCvProfileLists } from '../cvProfileStore';
+import { deleteCvSearchProfile, resetCvProfileLists, saveCvAtsProfile } from '../cvProfileStore';
 import { createManualSearchProfileRepository } from '../manualSearchProfiles';
 import {
   beginNewProfileSession,
@@ -7,6 +7,7 @@ import {
   ProfileSessionEndedError,
 } from './sessionRepositories';
 import type { SearchConfigurationV1 } from './contractTypes';
+import { ProfileValidationError } from './profileValidation';
 
 const searchConfig: SearchConfigurationV1 = {
   skills: 'AWS, "Cloud Architecture"',
@@ -92,6 +93,78 @@ describe('JM-PROFILE-SESSION-ADAPTER-03: session repositories', () => {
         skills: ['Terraform'],
       })
     ).rejects.toBeInstanceOf(ProfileSessionEndedError);
+  });
+
+  it('keeps ATS children and lists them as unassigned after parent deletion', async () => {
+    const repositories = createSessionProfileRepositories();
+    const search = await repositories.cvSearchProfiles.create('cv-unassigned', { name: 'Parent', searchConfig });
+    const ats = await repositories.atsSearchProfiles.create('cv-unassigned', search.sessionId, {
+      name: 'Orphan ATS',
+      targetRoles: ['DevOps Engineer'],
+      skills: ['Terraform', 'Cloud Architecture'],
+      criteria: { schemaVersion: 1, requiredSkills: ['Terraform'] },
+    });
+
+    expect(deleteCvSearchProfile('cv-unassigned', search.sessionId)).toBe(true);
+    const unassigned = await repositories.atsSearchProfiles.listUnassigned('cv-unassigned');
+    expect(unassigned).toHaveLength(1);
+    expect(unassigned[0].sessionId).toBe(ats.sessionId);
+    expect(unassigned[0].skills).toEqual(['Terraform', 'Cloud Architecture']);
+    expect(unassigned[0].criteria).toEqual({ schemaVersion: 1, requiredSkills: ['Terraform'] });
+  });
+
+  it('re-assigns an unassigned ATS profile without changing identity or content', async () => {
+    const repositories = createSessionProfileRepositories();
+    const target = await repositories.cvSearchProfiles.create('cv-reassign', { name: 'Target', searchConfig });
+    const orphan = saveCvAtsProfile('cv-reassign', 'Orphan', ['AWS'], ['Cloud Engineer'], null);
+    expect(orphan).not.toBeNull();
+
+    const assigned = await repositories.atsSearchProfiles.assignUnassigned(
+      'cv-reassign',
+      orphan!.id,
+      target.sessionId
+    );
+    expect(assigned.sessionId).toBe(orphan!.id);
+    expect(assigned.searchProfileId).toBe(target.sessionId);
+    expect(assigned.skills).toEqual(['AWS']);
+    expect(await repositories.atsSearchProfiles.listUnassigned('cv-reassign')).toEqual([]);
+    expect((await repositories.atsSearchProfiles.list('cv-reassign', target.sessionId))).toHaveLength(1);
+  });
+
+  it('rejects invalid unassigned assignments without mutating the store', async () => {
+    const repositories = createSessionProfileRepositories();
+    const target = await repositories.cvSearchProfiles.create('cv-invalid', { name: 'Target', searchConfig });
+    const orphan = saveCvAtsProfile('cv-invalid', 'Orphan', ['AWS'], ['Cloud Engineer'], null)!;
+
+    await expect(
+      repositories.atsSearchProfiles.assignUnassigned('other-hash', orphan.id, target.sessionId)
+    ).rejects.toBeInstanceOf(ProfileValidationError);
+    await expect(
+      repositories.atsSearchProfiles.assignUnassigned('cv-invalid', orphan.id, 'missing-parent')
+    ).rejects.toBeInstanceOf(ProfileValidationError);
+    expect(await repositories.atsSearchProfiles.listUnassigned('cv-invalid')).toHaveLength(1);
+  });
+
+  it('rejects assignment into a full parent and to an already assigned ATS profile', async () => {
+    const repositories = createSessionProfileRepositories();
+    const full = await repositories.cvSearchProfiles.create('cv-capacity', { name: 'Full', searchConfig });
+    for (let index = 0; index < 5; index += 1) {
+      await repositories.atsSearchProfiles.create('cv-capacity', full.sessionId, {
+        name: `ATS ${index}`,
+        targetRoles: ['Cloud Engineer'],
+        skills: ['AWS'],
+      });
+    }
+    const orphan = saveCvAtsProfile('cv-capacity', 'Orphan', ['AWS'], ['Cloud Engineer'], null)!;
+
+    await expect(
+      repositories.atsSearchProfiles.assignUnassigned('cv-capacity', orphan.id, full.sessionId)
+    ).rejects.toMatchObject({ code: 'capacity_exceeded' });
+
+    const assigned = (await repositories.atsSearchProfiles.list('cv-capacity', full.sessionId))[0];
+    await expect(
+      repositories.atsSearchProfiles.assignUnassigned('cv-capacity', assigned.sessionId, full.sessionId)
+    ).rejects.toMatchObject({ code: 'validation_error' });
   });
 
   it('does not expose reads from an ended session repository', async () => {

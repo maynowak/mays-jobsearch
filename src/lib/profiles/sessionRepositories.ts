@@ -8,6 +8,7 @@ import {
   type ManualSearchProfileRepository,
 } from '../manualSearchProfiles';
 import {
+  assignCvAtsProfileToSearchProfile,
   deleteCvAtsProfile,
   deleteCvSearchProfile,
   readCvProfileLists,
@@ -27,6 +28,7 @@ import type {
   SessionCvSearchProfile,
   SessionManualSearchProfile,
   SessionProfileRepositories,
+  SessionUnassignedAtsProfile,
 } from './repositoryTypes';
 
 /**
@@ -77,6 +79,21 @@ function atsEntry(hash: string, searchProfileId: string, id: string): SessionAts
   const entry = lists.atsProfiles.find((candidate) => candidate.id === id && candidate.searchProfileId === searchProfileId);
   if (!entry) throw new ProfileValidationError('ATS search profile was not found', 'invalid_parent');
   return { sessionId: entry.id, cvHash: hash, searchProfileId, name: entry.name, savedAt: entry.savedAt, skills: [...entry.skills], targetRoles: [...entry.targetRoles], ...(entry.criteria ? { criteria: { ...entry.criteria, requiredSkills: entry.criteria.requiredSkills ? [...entry.criteria.requiredSkills] : undefined, preferredSkills: entry.criteria.preferredSkills ? [...entry.criteria.preferredSkills] : undefined, excludedTerms: entry.criteria.excludedTerms ? [...entry.criteria.excludedTerms] : undefined } } : {}) };
+}
+
+function unassignedAtsEntry(
+  hash: string,
+  entry: { id: string; name: string; savedAt: number; skills: string[]; targetRoles: string[]; criteria?: import('./contractTypes').ATSCriteriaV1 }
+): SessionUnassignedAtsProfile {
+  return {
+    sessionId: entry.id,
+    cvHash: hash,
+    name: entry.name,
+    savedAt: entry.savedAt,
+    skills: [...entry.skills],
+    targetRoles: [...entry.targetRoles],
+    ...(entry.criteria ? { criteria: entry.criteria } : {}),
+  };
 }
 
 function profileFromSearchInput(input: CreateCVSearchProfileInputV1): Profile {
@@ -194,6 +211,35 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
       async delete(cvHash, searchProfileId, sessionId) {
         assertSessionCurrent(generation);
         if (!(await this.get(cvHash, searchProfileId, sessionId)) || !deleteCvAtsProfile(cvHash, sessionId)) throw new ProfileValidationError('ATS search profile was not found', 'invalid_parent');
+      },
+      async listUnassigned(cvHash) {
+        assertSessionCurrent(generation);
+        return readCvProfileLists(cvHash).atsProfiles
+          .filter((entry) => !entry.searchProfileId)
+          .map((entry) => unassignedAtsEntry(cvHash, entry));
+      },
+      async assignUnassigned(cvHash, atsSessionId, targetSearchProfileId) {
+        assertSessionCurrent(generation);
+        const lists = readCvProfileLists(cvHash);
+        const entry = lists.atsProfiles.find((candidate) => candidate.id === atsSessionId);
+        if (!entry) throw new ProfileValidationError('ATS search profile was not found', 'invalid_parent');
+        if (entry.searchProfileId) {
+          throw new ProfileValidationError('ATS search profile is already assigned', 'validation_error');
+        }
+        if (!lists.searchProfiles.some((candidate) => candidate.id === targetSearchProfileId)) {
+          throw new ProfileValidationError('Target search profile was not found', 'invalid_parent');
+        }
+        const assignedCount = lists.atsProfiles.filter(
+          (candidate) => candidate.searchProfileId === targetSearchProfileId
+        ).length;
+        if (assignedCount >= 5) {
+          throw new ProfileValidationError('Target search profile already has five ATS profiles', 'capacity_exceeded');
+        }
+        assertSessionCurrent(generation);
+        if (!assignCvAtsProfileToSearchProfile(cvHash, atsSessionId, targetSearchProfileId)) {
+          throw new ProfileValidationError('ATS search profile could not be assigned', 'validation_error');
+        }
+        return atsEntry(cvHash, targetSearchProfileId, atsSessionId);
       },
     },
     manualSearchProfiles: {

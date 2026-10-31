@@ -1,3 +1,14 @@
+2026-10-31 · JM-ATS-UNASSIGNED-UX-08
+- Typ: Feature/Session-UX/Integrity/Privacy
+- Status: IMPLEMENTED / VERIFIED (session-only; persistence NOT IMPLEMENTED)
+- Scope: Nicht zugeordnete ATS-Session-Profile sichtbar machen und über den Session-Adapter wieder einem vorhandenen CV-Suchprofil zuordnen.
+- Repository rules: `listUnassigned`/`assignUnassigned` prüfen CV-Hash, Existenz, Unassigned-Status, Ziel-Elternprofil und 5er-Kapazität. ATS-ID, Name, Skills, Zielrollen und `criteria` bleiben erhalten. Ungültige Operationen verändern den Store nicht; alte Generationen dürfen weder lesen noch schreiben.
+- UI: Abschnitt „Nicht zugeordnete ATS-Profile“ im bestehenden CV-Profil-Overlay mit Status, Inhalten, Elternauswahl und „Zuordnen“. Erfolg erst nach await; Kapazitäts-/Fehlerhinweise; stiller Abbruch bei Session-Ende; Key per CV-ID gegen CV-Wechsel.
+- Parent deletion: Variante B bestätigt — Kinder bleiben erhalten und werden als unassigned verwaltet; keine Kaskadenlöschung. Persistente V1-Migration erfordert weiterhin einen gültigen Parent.
+- AI-/Privacy-/Data-Flow impact: keine neue Netzwerk-, RIS-, AWS-, Modell- oder Persistenzstrecke; keine automatische Suche. 12h-TTL und Kapazitäten unverändert.
+- Tests: Repository-/Integritäts-/UI-Tests PASS; Gesamtsuite 963 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS. Chromium-Route-Smoke 1440/390 PASS; Overlay-Smoke ohne CV-Fixture und authentifizierter Flow NOT VERIFIED.
+- Log: `docs/reports/JM-ATS-UNASSIGNED-UX-08-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-AUTH-BOUNDARY-07A
 - Typ: Security/Auth-Boundary/Identity-Contract/Fix
 - Status: IMPLEMENTED / VERIFIED (session-only; no auth-config change)

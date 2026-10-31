@@ -12,7 +12,8 @@ export type ProfileValidationCode =
   | 'validation_error'
   | 'invalid_parent'
   | 'invalid_enum'
-  | 'invalid_radius';
+  | 'invalid_radius'
+  | 'capacity_exceeded';
 
 export class ProfileValidationError extends Error {
   readonly code: ProfileValidationCode;

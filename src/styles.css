@@ -4101,6 +4101,70 @@ body {
   font-size: var(--text-sm);
 }
 
+/* JM-ATS-UNASSIGNED-UX-08 */
+.cv-profiles-overlay__unassigned {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+}
+
+.cv-profiles-overlay__unassigned h4 {
+  margin: 0 0 var(--space-2);
+}
+
+.cv-profiles-overlay__unassigned-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cv-profiles-overlay__unassigned-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.cv-profiles-overlay__unassigned-status {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--brand-soft, rgba(13, 148, 136, 0.08));
+  color: var(--muted);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.cv-profiles-overlay__unassigned-meta {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.cv-profiles-overlay__unassigned-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cv-profiles-overlay__unassigned-action label {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.cv-profiles-overlay__unassigned-action select {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .cv-profiles-overlay__details {
   margin-top: var(--space-4);
   padding: var(--space-4);
