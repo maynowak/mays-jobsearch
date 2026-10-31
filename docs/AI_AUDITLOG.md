@@ -7,6 +7,17 @@
 - Tests: none run (decision-only). No real CV/provider/Redis data used.
 - Log: `docs/reports/JM-PROFILE-CACHE-DELETE-03-SECURITY-DECISION-04.md`
 
+2026-10-31 · JM-PROFILE-CACHE-DELETE-03-AUDIT-R2
+- Typ: Security/Privacy/Audit/Re-Verification/Decision-Basis
+- Status: AUDIT COMPLETE (read-only; YELLOW; no code/API/Redis/AWS/deployment change)
+- Baseline: `c246868`; Re-Verifikation bei `aec3ef9`; `git diff c246868..aec3ef9 -- api src` leer.
+- Findings: Cache-Key = `cv-profile:` + serverseitigem `sha256(text)`; Client-Hash nur Warnung, keine Key-/Berechtigungswirkung. 30-Tage-TTL (`SETEX`), kein Refresh beim Lesen. Kein `cacheDel` für `cv-profile:*` (nur Apify-Dataset). „CV-Daten entfernen“ ist rein lokal. `mj_session` shape-only und im Profilpfad ungenutzt, daher kein Eigentumsnachweis. Geteilte, inhaltsadressierte Einträge; `cacheDel` ohne Status; Redis-Ausfall ist Miss/No-op. Datenschutzerklärung konsistent, aber ohne 30-Tage-Angabe; UI „Endgültig entfernen“ und unkonditionaler Anonymisierungs-Satz zu stark.
+- Security: Client-Hash-basierte Löschung wäre unautorisierte Verfügbarkeitsänderung an fremden Einträgen; naive Löschung könnte Redis-Ausfall als Erfolg melden; verspätete Modellantwort kann Eintrag wiederherstellen.
+- Recommendation: UI-/Retention-Klarstellung sofort; Implementierung nur als session-gebundene Zuordnung + autorisierte, idempotente Löschung mit striktem Redis-Ergebnis, CSRF/Rate-Limit und Generation/CAS; optional kein Cache für „nicht anonymisiert“. Gastbetrieb, 10/2/5-Hierarchie und fehlende RIS-Speicherung unverändert.
+- AI-/Privacy-/Data-Flow impact: no change made. Keine echten CV-/Provider-/Redis-Daten. Keine Tests ausgeführt (Audit-only).
+- Offen: Cache-Sharing, 30-Tage-Rechtfertigung, Caching von „nicht anonymisiert“, Alt-Key-Purge, Cookie-Lebensdauer, Übergangslösung (DECISION REQUIRED).
+- Log: `docs/reports/JM-PROFILE-CACHE-DELETE-03-AUDIT.md`, `docs/reports/JM-PROFILE-CACHE-DELETE-03-AUDIT-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-CACHE-DELETE-03-DESIGN-GATE
 - Typ: Security-Architecture/Design-Gate/Privacy
 - Status: SPECIFIED (implementation NOT STARTED; no code/API/Redis/AWS/deployment change)
