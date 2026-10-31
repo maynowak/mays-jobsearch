@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-UI-ADAPTER-04
+- Typ: Implementation/UI/Session-Privacy/Contract
+- Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistent storage NOT IMPLEMENTED)
+- Scope: Bestehende App-Aufrufstellen für manuelle Profile, CV-Suchprofile und ATS-Erstellung verwenden die neue Session-Repository-Schicht, ohne einen zweiten Speicher, neue Route oder Remote-Verbindung einzuführen.
+- Contract handling: CV-Suchprofilbeschreibungen werden im bestehenden Session-Store erhalten. Session records bleiben ausdrücklich getrennt von persistenten V1-DTOs: CV-Hash/Session-ID statt künstlicher `cvId`, keine lokale persistente Version oder `documentId`. ATS-`criteria` wird validiert und erhalten.
+- Parent deletion: Bestehendes Verhalten bleibt: CV-Suchprofil-Löschung detachiert ATS-Kinder durch `searchProfileId: null`, löscht sie nicht. Kaskadenlöschung bleibt eine offene Produktentscheidung.
+- AI-/Privacy-/Data-Flow impact: keine neue Netzwerkstrecke, keine RIS-/AWS-Verbindung, keine Modellanfrage, keine dauerhafte Browser-Speicherung und keine CV-Übertragung. Bestehende 12h-TTL, Session-Kapazität und Auth-Wechsel-Bereinigung bleiben erhalten.
+- Tests: gezielt 37 passed; Gesamtsuite `npm test -- --run` (937 passed, 5 skipped); `npx tsc --noEmit -p tsconfig.app.json`; `npm run build`; `git diff --check` PASS. Chromium 1440/390 Disclosure-Smoke PASS; authentifizierter Browser-CRUD-Flow NOT VERIFIED.
+- Log: `docs/reports/JM-PROFILE-UI-ADAPTER-04-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-SESSION-ADAPTER-03
 - Typ: Implementation/Contract/Session-Privacy/Validation
 - Status: IMPLEMENTED / VERIFIED (session-only; RIS remote adapter and persistence NOT IMPLEMENTED)

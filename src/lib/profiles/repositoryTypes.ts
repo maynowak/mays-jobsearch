@@ -13,6 +13,7 @@ export interface SessionCvSearchProfile {
   sessionId: string;
   cvHash: string;
   name: string;
+  description?: string;
   savedAt: number;
   profile: Profile;
 }

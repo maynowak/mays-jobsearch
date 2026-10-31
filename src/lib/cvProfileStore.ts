@@ -20,6 +20,7 @@ export interface CvSearchProfileEntry {
   name: string;
   savedAt: number;
   profile: Profile;
+  description?: string;
 }
 
 export interface CvAtsProfileEntry {
@@ -94,7 +95,8 @@ export function findSavedSearchProfile(
 export function saveCvSearchProfile(
   hash: string | null | undefined,
   name: string,
-  profile: Profile
+  profile: Profile,
+  description?: string
 ): CvSearchProfileEntry | null {
   if (!hash) return null;
   const now = Date.now();
@@ -104,8 +106,8 @@ export function saveCvSearchProfile(
   // (ID bleibt stabil; der Eintrag wandert nach vorn).
   const existing = bucket.searchProfiles.find((e) => e.name === finalName);
   const entry: CvSearchProfileEntry = existing
-    ? { ...existing, savedAt: now, profile }
-    : { id: generateEntryId(), name: finalName, savedAt: now, profile };
+    ? { ...existing, savedAt: now, profile, ...(description === undefined ? {} : { description }) }
+    : { id: generateEntryId(), name: finalName, savedAt: now, profile, ...(description === undefined ? {} : { description }) };
   bucket.searchProfiles = [
     entry,
     ...bucket.searchProfiles.filter((e) => e.id !== entry.id),
@@ -165,13 +167,14 @@ export function updateCvSearchProfile(
   hash: string | null | undefined,
   id: string,
   name: string,
-  profile: Profile
+  profile: Profile,
+  description?: string
 ): CvSearchProfileEntry | null {
   if (!hash) return null;
   const bucket = getBucket(hash, Date.now());
   const existing = bucket?.searchProfiles.find((entry) => entry.id === id);
   if (!bucket || !existing) return null;
-  const updated = { ...existing, name: name.trim() || existing.name, savedAt: Date.now(), profile };
+  const updated = { ...existing, name: name.trim() || existing.name, savedAt: Date.now(), profile, ...(description === undefined ? {} : { description }) };
   bucket.searchProfiles = [updated, ...bucket.searchProfiles.filter((entry) => entry.id !== id)];
   buckets.set(hash, bucket);
   return updated;

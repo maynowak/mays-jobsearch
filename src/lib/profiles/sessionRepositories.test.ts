@@ -18,7 +18,8 @@ beforeEach(() => resetCvProfileLists());
 describe('JM-PROFILE-SESSION-ADAPTER-03: session repositories', () => {
   it('keeps CV search and ATS children isolated by hash and parent', async () => {
     const repositories = createSessionProfileRepositories();
-    const search = await repositories.cvSearchProfiles.create('cv-hash-a', { name: 'Cloud', searchConfig });
+    const search = await repositories.cvSearchProfiles.create('cv-hash-a', { name: 'Cloud', description: 'Saved description', searchConfig });
+    expect(search.description).toBe('Saved description');
     const ats = await repositories.atsSearchProfiles.create('cv-hash-a', search.sessionId, {
       name: 'ATS Cloud',
       targetRoles: ['DevOps Engineer'],

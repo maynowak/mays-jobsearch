@@ -36,7 +36,7 @@ function missing(message: string): never {
 function cvSearchEntry(hash: string, id: string): SessionCvSearchProfile {
   const entry = readCvProfileLists(hash).searchProfiles.find((candidate) => candidate.id === id);
   if (!entry) throw new ProfileValidationError('CV search profile was not found', 'invalid_parent');
-  return { sessionId: entry.id, cvHash: hash, name: entry.name, savedAt: entry.savedAt, profile: { ...entry.profile, targetRoles: [...entry.profile.targetRoles], workModes: [...entry.profile.workModes], employmentTypes: [...entry.profile.employmentTypes] } };
+  return { sessionId: entry.id, cvHash: hash, name: entry.name, ...(entry.description === undefined ? {} : { description: entry.description }), savedAt: entry.savedAt, profile: { ...entry.profile, targetRoles: [...entry.profile.targetRoles], workModes: [...entry.profile.workModes], employmentTypes: [...entry.profile.employmentTypes] } };
 }
 
 function atsEntry(hash: string, searchProfileId: string, id: string): SessionAtsSearchProfile {
@@ -93,6 +93,7 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
           sessionId: entry.id,
           cvHash,
           name: entry.name,
+          ...(entry.description === undefined ? {} : { description: entry.description }),
           savedAt: entry.savedAt,
           profile: { ...entry.profile, targetRoles: [...entry.profile.targetRoles], workModes: [...entry.profile.workModes], employmentTypes: [...entry.profile.employmentTypes] },
         }));
@@ -103,7 +104,7 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
       },
       async create(cvHash, input) {
         validateCreateCVSearchProfile(input);
-        const entry = saveCvSearchProfile(cvHash, input.name, profileFromSearchInput(input));
+        const entry = saveCvSearchProfile(cvHash, input.name, profileFromSearchInput(input), input.description);
         if (!entry) throw new ProfileValidationError('CV hash is required for a session profile', 'invalid_parent');
         return cvSearchEntry(cvHash, entry.id);
       },
@@ -111,7 +112,7 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
         const current = await this.get(cvHash, sessionId);
         if (!current) throw new ProfileValidationError('CV search profile was not found', 'invalid_parent');
         if (input.searchConfig) validateSearchConfiguration(input.searchConfig);
-        const updated = updateCvSearchProfile(cvHash, sessionId, input.name ?? current.name, input.searchConfig ? profileFromSearchInput({ name: input.name ?? current.name, searchConfig: input.searchConfig }) : current.profile);
+        const updated = updateCvSearchProfile(cvHash, sessionId, input.name ?? current.name, input.searchConfig ? profileFromSearchInput({ name: input.name ?? current.name, searchConfig: input.searchConfig }) : current.profile, input.description ?? current.description);
         if (!updated) throw new ProfileValidationError('CV search profile was not found', 'invalid_parent');
         return cvSearchEntry(cvHash, updated.id);
       },

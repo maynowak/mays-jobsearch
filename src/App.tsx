@@ -43,8 +43,6 @@ import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
 import CvProfilesOverlay from "./components/CvProfilesOverlay";
 import { 
-  saveCvAtsProfile, 
-  saveCvSearchProfile, 
   purgeLegacyCvListsFromLocalStorage, 
   readCvProfileLists, 
   resetCvProfileLists, 
@@ -59,10 +57,7 @@ import { buildCvSearchProfile } from "./lib/cvSearchConfig";
 import { partitionCvFiles, validateCvFile } from "./lib/cvFileValidation";
 import ManualSearchProfilesSection from "./components/ManualSearchProfilesSection";
 import {
-  applyManualSearchProfileDraft,
-  createManualSearchProfile,
   createManualSearchProfileRepository,
-  duplicateManualSearchProfile,
   toSearchProfile,
 } from "./lib/manualSearchProfiles";
 import type {
@@ -70,6 +65,9 @@ import type {
   ManualSearchProfileDraft,
   ManualSearchProfileRepository,
 } from "./lib/manualSearchProfiles";
+import { createSessionProfileRepositories } from "./lib/profiles/sessionRepositories";
+import type { SessionProfileRepositories } from "./lib/profiles/repositoryTypes";
+import type { CreateManualSearchProfileInputV1 } from "./lib/profiles/contractTypes";
 import { useAuth } from "react-oidc-context";
 
 
@@ -170,6 +168,12 @@ export default function App() {
   const [manualProfiles, setManualProfiles] = useState<ManualSearchProfile[]>(() =>
     manualProfileStoreRef.current ? manualProfileStoreRef.current.list() : []
   );
+  const profileRepositoriesRef = useRef<SessionProfileRepositories | null>(null);
+  if (!profileRepositoriesRef.current && manualProfileStoreRef.current) {
+    profileRepositoriesRef.current = createSessionProfileRepositories({
+      manualRepository: manualProfileStoreRef.current,
+    });
+  }
   const authProfileKey = isAuth ? String(auth.user?.profile?.sub ?? "authenticated") : null;
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
@@ -1006,14 +1010,18 @@ export default function App() {
           return;
         }
 
-        savedName =
-          saveCvAtsProfile(
-            doc.hash,
-            atsProfileName,
-            cvState.selectedSkills,
-            cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
-            selectedSavedSearchId
-          )?.name ?? null;
+          const repositories = profileRepositoriesRef.current;
+          if (repositories) {
+            void repositories.atsSearchProfiles.create(doc.hash, selectedSavedSearchId, {
+              name: atsProfileName,
+              skills: cvState.selectedSkills,
+              targetRoles: cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
+            }).catch(() => undefined);
+          }
+          const atsTargetRoles = cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [];
+          const expectedAtsName = atsProfileName.trim() || atsTargetRoles[0] || cvState.selectedSkills[0] || "ATS-Profil";
+          const savedAts = readCvProfileLists(doc.hash).atsProfiles.find((entry) => entry.name === expectedAtsName);
+          savedName = savedAts?.name ?? null;
         setCvProfileStoreVersion((version) => version + 1);
       }
       setCvState((prev) => ({
@@ -1441,32 +1449,45 @@ export default function App() {
     if (store) setManualProfiles(store.list());
   };
 
+  const manualDraftToContractInput = (draft: ManualSearchProfileDraft): CreateManualSearchProfileInputV1 => ({
+    name: draft.name,
+    ...(draft.description.trim() ? { description: draft.description } : {}),
+    searchConfig: draft.searchConfig,
+    matchingPreferences: draft.matchingPreferences,
+  });
+
   const handleSaveManualProfile = (draft: ManualSearchProfileDraft, existingId: string | null) => {
     const store = manualProfileStoreRef.current;
-    if (!store) return;
+    const repositories = profileRepositoriesRef.current;
+    if (!store || !repositories) return;
+    const input = manualDraftToContractInput(draft);
     if (existingId) {
-      const existing = store.get(existingId);
-      if (!existing) return;
-      // id + createdAt bleiben stabil, updatedAt wird erneuert.
-      store.save(applyManualSearchProfileDraft(existing, draft));
+      void repositories.manualSearchProfiles.update(existingId, input).catch(() => undefined);
     } else {
-      store.save(createManualSearchProfile(draft));
+      void repositories.manualSearchProfiles.create(input).catch(() => undefined);
     }
     refreshManualProfiles();
   };
 
   const handleDeleteManualProfile = (id: string) => {
-    const store = manualProfileStoreRef.current;
-    if (!store) return;
-    if (store.delete(id)) refreshManualProfiles();
+    const repositories = profileRepositoriesRef.current;
+    if (!repositories) return;
+    void repositories.manualSearchProfiles.delete(id).catch(() => undefined);
+    refreshManualProfiles();
   };
 
   const handleDuplicateManualProfile = (id: string) => {
     const store = manualProfileStoreRef.current;
-    if (!store) return;
+    const repositories = profileRepositoriesRef.current;
+    if (!store || !repositories) return;
     const source = store.get(id);
     if (!source) return;
-    store.save(duplicateManualSearchProfile(source, `${source.name} ${t("manualProfiles.copySuffix")}`));
+    void repositories.manualSearchProfiles.create({
+      name: `${source.name} ${t("manualProfiles.copySuffix")}`,
+      ...(source.description ? { description: source.description } : {}),
+      searchConfig: source.searchConfig,
+      matchingPreferences: source.matchingPreferences,
+    }).catch(() => undefined);
     refreshManualProfiles();
   };
 
@@ -1997,7 +2018,15 @@ export default function App() {
             // haengen (gleicher Name ueberschreibt den Eintrag).
             const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
             if (doc?.hash) {
-              const saved = saveCvSearchProfile(doc.hash, profileName, profile);
+              const repositories = profileRepositoriesRef.current;
+              if (repositories) {
+                void repositories.cvSearchProfiles.create(doc.hash, {
+                  name: profileName,
+                  searchConfig: profile,
+                }).catch(() => undefined);
+              }
+              const expectedSearchName = profileName.trim() || profile.targetRoles?.[0] || "Suchprofil";
+              const saved = readCvProfileLists(doc.hash).searchProfiles.find((entry) => entry.name === expectedSearchName);
               if (saved) {
                 setSelectedSavedSearchId(saved.id);
                 setCvProfileStoreVersion((version) => version + 1);
