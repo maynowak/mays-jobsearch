@@ -1,3 +1,12 @@
+2026-10-31 · JM-PROFILE-CACHE-DELETE-03-SECURITY-DECISION-04
+- Typ: Security-Decision/Architecture/Privacy
+- Status: SPECIFIED (implementation NOT APPROVED; no code/API/Redis/AWS change)
+- Decisions: separate signed `mj_cache_session` cookie instead of changing `mj_session`; separate cookie-signing and owner-derivation HMAC keyrings with active+previous kid; 90-day cookie lifetime recommended; owner-key rotation keeps dual-kid deletion possible; cache key `cv-profile:v2:<HMAC ownerScope>:<server digest>` with generation CAS and bounded index; deletion linearization point is the generation increment; Redis `unavailable` → 503, never success.
+- Privacy: local deletion, confirmed server deletion and non-deleted provider/quota/future-RIS data remain separate. 30-day TTL, non-anonymized caching, secret management, V1 purge and legal wording remain DECISION REQUIRED; no decision APPROVED.
+- AI-/Privacy-/Data-Flow impact: no change made. Design may reduce cross-session cache reuse and increase model calls; guest workflow and 10/2/5 remain unchanged.
+- Tests: none run (decision-only). No real CV/provider/Redis data used.
+- Log: `docs/reports/JM-PROFILE-CACHE-DELETE-03-SECURITY-DECISION-04.md`
+
 2026-10-31 · JM-PROFILE-CACHE-DELETE-03-DESIGN-GATE
 - Typ: Security-Architecture/Design-Gate/Privacy
 - Status: SPECIFIED (implementation NOT STARTED; no code/API/Redis/AWS/deployment change)
