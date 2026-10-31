@@ -106,5 +106,6 @@ No request field, header, frontend flag or old cookie can widen this.
 
 ## 8. Git
 
-- Commit and remote synchronization are recorded after final validation.
-- No deployment.
+- Implementation commit: `4ab97e3`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
+- Production deployment: NOT DEPLOYED.
