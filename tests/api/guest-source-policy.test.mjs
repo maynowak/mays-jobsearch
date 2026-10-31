@@ -4,7 +4,7 @@ import {
   GUEST_FREE_SOURCE_IDS,
   guestAllowedSources,
   isGuestAllowedSource,
-  paidSourcesAllowedForGuest,
+  guestPaidSourceAllowed,
 } from "../../api/_lib/sourcePolicy.mjs";
 
 const source = (id, provider) => ({ id, provider });
@@ -17,7 +17,8 @@ describe("JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01: guest source policy", () => {
     expect(isGuestAllowedSource(source("personio:acme", "ats"))).toBe(true);
     expect(isGuestAllowedSource(source("theirstack", "job-api"))).toBe(false);
     expect(isGuestAllowedSource(source("jobspipe", "job-api"))).toBe(false);
-    expect(isGuestAllowedSource(source("arbeitsagentur", "apify"))).toBe(false);
+    expect(isGuestAllowedSource(source("arbeitsagentur", "apify"))).toBe(true);
+    expect(isGuestAllowedSource(source("other-apify", "apify"))).toBe(false);
     expect(isGuestAllowedSource(source("unknown-paid", "job-api"))).toBe(false);
   });
 
@@ -28,11 +29,13 @@ describe("JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01: guest source policy", () => {
       source("jobspipe", "job-api"),
       source("arbeitsagentur", "apify"),
     ]);
-    expect(filtered.map((entry) => entry.id)).toEqual(["arbeitnow"]);
+    expect(filtered.map((entry) => entry.id)).toEqual(["arbeitnow", "arbeitsagentur"]);
   });
 
-  it("never allows paid sources for public guests", () => {
-    expect(paidSourcesAllowedForGuest()).toBe(false);
+  it("allows only the explicit Arbeitsagentur paid exception", () => {
+    expect(guestPaidSourceAllowed("arbeitsagentur")).toBe(true);
+    expect(guestPaidSourceAllowed("theirstack")).toBe(false);
+    expect(guestPaidSourceAllowed("jobspipe")).toBe(false);
     expect([...GUEST_FREE_SOURCE_IDS]).toEqual(["arbeitnow", "greenhouse", "adzuna"]);
   });
 });

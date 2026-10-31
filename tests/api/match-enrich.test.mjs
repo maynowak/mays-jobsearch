@@ -70,7 +70,7 @@ beforeEach(() => {
 });
 
 describe("/api/match BA detail enrichment", () => {
-  it("does not run paid detail enrichment for public guests", async () => {
+  it("enriches Arbeitsagentur jobs for guests without a session cookie", async () => {
     const res = makeRes();
     await handler(
       makeReq({
@@ -84,9 +84,12 @@ describe("/api/match BA detail enrichment", () => {
 
     expect(res.statusCode).toBe(200);
     expect(chat).toHaveBeenCalled();
-    expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
+    expect(enrichArbeitsagenturDetails).toHaveBeenCalled();
+    const enrichCall = vi.mocked(enrichArbeitsagenturDetails).mock.calls[0];
+    expect(enrichCall[0]).toEqual(["aa-13644-290571-S"]);
+    expect(enrichCall[1]).not.toHaveProperty("sessionId");
     const aaMatch = res.body.matches.find((m) => m.job.slug === "aa-13644-290571-S");
-    expect(aaMatch.job.description).toBeUndefined();
+    expect(aaMatch.job.description).toBe("<p>full</p>");
   });
 
   it("AI failure => ZERO detail-enrichment Apify runs", async () => {

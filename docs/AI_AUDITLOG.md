@@ -1,3 +1,12 @@
+2026-10-31 · JM-GUEST-MODEL-A-APIFY-EXCEPTION-REPAIR-01
+- Typ: Fix/Product-Decision/Cost-Control/Privacy
+- Status: IMPLEMENTED / VERIFIED (deployment NOT approved)
+- Change: Arbeitsagentur via the existing Apify adapter is explicitly allowed for guest search and detail enrichment again; TheirStack, JobsPipe and other Apify actors remain blocked.
+- Cookie-free controls: no `mj_session` reintroduced; detail enrichment uses no session quota when no sessionId exists, optional trusted-IP quota, atomic global Apify run budget, cache-first and single-flight. Redis outage fails closed. Legacy cookie is still cleared once.
+- AI-/Privacy-/Data-Flow impact: no new cookie/browser ID/secret; CV/ATS/AI functions unchanged. Global Apify budget remains the hard cost cap for guest detail runs.
+- Tests: policy, job-details, match enrichment and cookie-free detail tests PASS; full suite 1030 passed/5 skipped; TypeScript/Build/diff, budget/IP/lock/REST Redis, guest E2E 1440/390 PASS. Live Vercel/production Apify NOT VERIFIED.
+- Log: `docs/reports/JM-GUEST-MODEL-A-APIFY-EXCEPTION-REPAIR-01.md`
+
 2026-10-31 · JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01
 - Typ: Product-Decision/Implementation/Privacy/Cost-Control
 - Status: IMPLEMENTED / VERIFIED (Model A; deployment NOT approved)

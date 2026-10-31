@@ -2,7 +2,7 @@ import { HttpError } from "./_lib/filter.mjs";
 import { computeMatch } from "./_lib/matching.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 import { SESSION_COOKIE, clearSessionCookieHeader, readCookie } from "./_lib/identity.mjs";
-import { paidSourcesAllowedForGuest } from "./_lib/sourcePolicy.mjs";
+import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -20,8 +20,6 @@ function readBody(req) {
 }
 
 async function enrichMatchedBAJobs(matches, identity) {
-  // Model A: paid detail enrichment must never run for public guest requests.
-  if (!paidSourcesAllowedForGuest()) return matches;
   const slugs = [...new Set(
     matches
       .map((m) => m.job)
@@ -80,8 +78,11 @@ export default async function handler(req, res) {
 
     const result = await computeMatch({ profile, jobs, model: body.model, attempt });
 
-    // Model A: no guest cookie and no paid detail enrichment.
-    await enrichMatchedBAJobs(result.matches);
+    // Model A exception: Arbeitsagentur detail enrichment remains available,
+    // cookie-free. TheirStack/JobsPipe stay blocked in the source policy.
+    const trustedIp = resolveTrustedClientIp(req);
+    const ipScope = trustedIp.status === "trusted-ip" ? deriveIpScope(trustedIp.group) : null;
+    await enrichMatchedBAJobs(result.matches, { ipScope });
 
     return res.status(200).json({
       matches: result.matches,

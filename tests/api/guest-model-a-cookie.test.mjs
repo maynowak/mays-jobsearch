@@ -71,7 +71,7 @@ describe("JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01: guest cookie cutover", () => {
     expect(res.headers["set-cookie"]).not.toMatch(/mj_session=[a-f0-9]{32}/);
   });
 
-  it("does not issue a cookie for matching and never enriches paid jobs", async () => {
+  it("does not issue a cookie for matching and never enriches unrelated paid jobs", async () => {
     const res = makeRes();
     await matchHandler(
       postReq({ skills: "aws", targetRole: "", city: "", jobs: [{ slug: "job-1", title: "Job", company_name: "C", location: ["Berlin"], remote: false, tags: [], url: "https://example.invalid" }] }, {}),
@@ -85,10 +85,10 @@ describe("JM-COOKIELESS-GUEST-MODEL-A-CUTOVER-01: guest cookie cutover", () => {
   it("blocks job-details for guests and clears the legacy cookie", async () => {
     const res = makeRes();
     await detailsHandler(postReq({ jobs: ["aa-1"] }, { cookie: "mj_session=legacyvalue" }), res);
-    expect(res.statusCode).toBe(403);
-    expect(res.body.code).toBe("paid_source_blocked");
+    expect(res.statusCode).toBe(200);
     expect(res.headers["set-cookie"]).toContain("mj_session=;");
-    expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
+    expect(res.headers["set-cookie"]).toContain("Max-Age=0");
+    expect(enrichArbeitsagenturDetails).toHaveBeenCalled();
   });
 
   it("does not issue cookies on OPTIONS", async () => {

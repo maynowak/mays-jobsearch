@@ -16,7 +16,10 @@ function makeRes() {
   const res = {
     statusCode: 200,
     body: null,
-    setHeader() {},
+    headers: {},
+    setHeader(name, value) {
+      this.headers[String(name).toLowerCase()] = value;
+    },
     status(code) {
       this.statusCode = code;
       return this;
@@ -37,31 +40,65 @@ beforeEach(() => {
 });
 
 describe("/api/job-details route", () => {
-  it("blocks paid detail enrichment for public guests", async () => {
+  it("enriches Arbeitsagentur details for guests without a session cookie", async () => {
     const slug = "aa-13644-290571-S";
+    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({
+      jobs: { [slug]: { slug, description: "<p>x</p>" } },
+      enrichedCount: 1,
+    });
+    const res = makeRes();
+    await handler.default(makeReq({ jobs: [slug] }, { "x-forwarded-for": "1.2.3.4" }), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.jobs[slug]).toBeDefined();
+    expect(res.headers["set-cookie"]).toBeUndefined();
+    const args = vi.mocked(enrichArbeitsagenturDetails).mock.calls[0];
+    expect(args[0]).toEqual([slug]);
+    expect(args[1]).not.toHaveProperty("sessionId");
+    expect(args[1]).not.toHaveProperty("clientIp");
+    expect(args[1]).toHaveProperty("ipScope");
+  });
+
+  it("clears a legacy mj_session cookie without issuing a new one", async () => {
+    const slug = "aa-13644-290571-S";
+    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ jobs: {}, enrichedCount: 0 });
     const res = makeRes();
     await handler.default(
-      makeReq({ jobs: [slug], userId: "attacker-chosen-id" }, { "x-forwarded-for": "1.2.3.4" }),
+      makeReq({ jobs: [slug] }, { "x-forwarded-for": "1.2.3.4", cookie: "mj_session=legacy" }),
       res
     );
-    expect(res.statusCode).toBe(403);
-    expect(res.body.code).toBe("paid_source_blocked");
-    expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["set-cookie"]).toContain("mj_session=;");
+    expect(res.headers["set-cookie"]).toContain("Max-Age=0");
   });
 
-  it("blocks even an empty or malformed paid detail request", async () => {
-    for (const body of [{}, { jobs: [] }, { jobs: ["aa-1"] }]) {
-      const res = makeRes();
-      await handler.default(makeReq(body), res);
-      expect(res.statusCode).toBe(403);
-      expect(res.body.code).toBe("paid_source_blocked");
-    }
-    expect(enrichArbeitsagenturDetails).not.toHaveBeenCalled();
-  });
-
-  it("continues to reject non-POST methods", async () => {
+  it("maps quota_exceeded to HTTP 429", async () => {
+    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ error: "quota_exceeded" });
     const res = makeRes();
-    await handler.default({ method: "GET", headers: {}, body: {} }, res);
-    expect(res.statusCode).toBe(405);
+    await handler.default(makeReq({ jobs: ["aa-1"] }), res);
+    expect(res.statusCode).toBe(429);
+    expect(res.body.code).toBe("quota_exceeded");
+  });
+
+  it("maps invalid_slug to HTTP 400", async () => {
+    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ error: "invalid_slug" });
+    const res = makeRes();
+    await handler.default(makeReq({ jobs: ["aa-1"] }), res);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("invalid_slug");
+  });
+
+  it("maps quota_unavailable (Redis down) to HTTP 503", async () => {
+    vi.mocked(enrichArbeitsagenturDetails).mockResolvedValue({ error: "quota_unavailable" });
+    const res = makeRes();
+    await handler.default(makeReq({ jobs: ["aa-1"] }), res);
+    expect(res.statusCode).toBe(503);
+    expect(res.body.code).toBe("quota_unavailable");
+  });
+
+  it("rejects an empty job list with 400", async () => {
+    const res = makeRes();
+    await handler.default(makeReq({ jobs: [] }), res);
+    expect(res.statusCode).toBe(400);
   });
 });

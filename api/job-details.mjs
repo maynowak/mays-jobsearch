@@ -1,7 +1,7 @@
 import { HttpError } from "./_lib/filter.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 import { SESSION_COOKIE, clearSessionCookieHeader, readCookie } from "./_lib/identity.mjs";
-import { paidSourcesAllowedForGuest } from "./_lib/sourcePolicy.mjs";
+import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -29,14 +29,6 @@ export default async function handler(req, res) {
   if (readCookie(req, SESSION_COOKIE)) {
     res.setHeader("Set-Cookie", clearSessionCookieHeader());
   }
-  // Model A: paid detail enrichment is not available to public guest requests.
-  if (!paidSourcesAllowedForGuest()) {
-    return res.status(403).json({
-      error: "Paid job details are not available for guests.",
-      code: "paid_source_blocked",
-    });
-  }
-
   try {
     const body = req.body || (await readBody(req));
     const slugs = Array.isArray(body.jobs) ? body.jobs.filter((s) => typeof s === "string") : [];
@@ -47,7 +39,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const result = await enrichArbeitsagenturDetails(slugs);
+    // Model A exception: cookie-free Arbeitsagentur detail enrichment.
+    const trustedIp = resolveTrustedClientIp(req);
+    const ipScope = trustedIp.status === "trusted-ip" ? deriveIpScope(trustedIp.group) : null;
+    const result = await enrichArbeitsagenturDetails(slugs, { ipScope });
 
     if (result.error) {
       const codes = {

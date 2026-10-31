@@ -225,6 +225,14 @@ describe("detailEnrich - enrichment flow", () => {
     expect(cacheReserveIncr).not.toHaveBeenCalled();
   });
 
+  it("runs cookie-free guest detail enrichment under the global run budget", async () => {
+    const result = await enrichArbeitsagenturDetails([SLUG], {});
+    expect(result.error).toBeUndefined();
+    expect(reserveApifyRunSlot).toHaveBeenCalled();
+    // No session identity and no legacy client IP => no per-session/IP reserve.
+    expect(cacheReserveIncr).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid slugs before any Apify call", async () => {
     const result = await enrichArbeitsagenturDetails(["https://evil.example.com"], ID);
     expect(result.error).toBe("invalid_slug");

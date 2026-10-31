@@ -60,10 +60,9 @@ function ipQuotaKey(clientIp) {
 }
 
 async function refundQuota(sessionKey, ipKey, amount) {
-  if (amount > 0) {
-    await cacheDecrBy(sessionKey, amount);
-    await cacheDecrBy(ipKey, amount);
-  }
+  if (amount <= 0) return;
+  if (sessionKey) await cacheDecrBy(sessionKey, amount);
+  if (ipKey) await cacheDecrBy(ipKey, amount);
 }
 
 /**
@@ -125,8 +124,10 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, 
 
   try {
   const cfg = getConfig();
-  const sessionKey = sessionQuotaKey(sessionId);
-  const ipKey = ipQuotaKey(clientIp);
+  // Cookie-free guests have no session; the global Apify run budget and the
+  // optional trusted-IP quota remain the cost controls.
+  const sessionKey = sessionId ? sessionQuotaKey(sessionId) : null;
+  const ipKey = clientIp ? ipQuotaKey(clientIp) : null;
   const n = missing.length;
 
   // 2. Optional trusted-IP quota (additional abuse brake).
@@ -150,32 +151,36 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, 
     return { error: "quota_unavailable" };
   }
 
-  // 4. Per-session quota (primary identity).
-  const sessionReserved = await cacheReserveIncr(sessionKey, n, cfg.apifyDetailMaxPerUserPerDay, QUOTA_TTL_SEC);
-  if (sessionReserved === null) {
-    await refundApifyRunSlot();
-    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
-    return { error: "quota_unavailable" };
-  }
-  if (sessionReserved === -1) {
-    await refundApifyRunSlot();
-    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
-    return { error: "quota_exceeded" };
+  // 4. Per-session quota only when a session identity exists (legacy path).
+  if (sessionKey) {
+    const sessionReserved = await cacheReserveIncr(sessionKey, n, cfg.apifyDetailMaxPerUserPerDay, QUOTA_TTL_SEC);
+    if (sessionReserved === null) {
+      await refundApifyRunSlot();
+      if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
+      return { error: "quota_unavailable" };
+    }
+    if (sessionReserved === -1) {
+      await refundApifyRunSlot();
+      if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
+      return { error: "quota_exceeded" };
+    }
   }
 
-  // 5. Per-IP backstop (anti-abuse; tolerates NAT via a higher limit).
-  const ipReserved = await cacheReserveIncr(ipKey, n, cfg.apifyDetailMaxPerIpPerDay, QUOTA_TTL_SEC);
-  if (ipReserved === null) {
-    await refundQuota(sessionKey, ipKey, n);
-    await refundApifyRunSlot();
-    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
-    return { error: "quota_unavailable" };
-  }
-  if (ipReserved === -1) {
-    await refundQuota(sessionKey, ipKey, n);
-    await refundApifyRunSlot();
-    if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
-    return { error: "quota_exceeded" };
+  // 5. Legacy per-IP backstop only when a legacy IP value is supplied.
+  if (ipKey) {
+    const ipReserved = await cacheReserveIncr(ipKey, n, cfg.apifyDetailMaxPerIpPerDay, QUOTA_TTL_SEC);
+    if (ipReserved === null) {
+      await refundQuota(sessionKey, ipKey, n);
+      await refundApifyRunSlot();
+      if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
+      return { error: "quota_unavailable" };
+    }
+    if (ipReserved === -1) {
+      await refundQuota(sessionKey, ipKey, n);
+      await refundApifyRunSlot();
+      if (ipQuotaReceipt) await releaseIpQuota("apify-detail", ipScope, ipQuotaReceipt);
+      return { error: "quota_exceeded" };
+    }
   }
 
   // 6. One batched targeted run.
