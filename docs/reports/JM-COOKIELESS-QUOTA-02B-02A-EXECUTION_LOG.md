@@ -158,3 +158,26 @@ All use isolated `redis:7-alpine` containers; no production Redis.
 - Implementation commit: `08ef99f`
 - Remote: pushed to `origin/main`, synchronized (`0 0`)
 - Production deployment: NOT DEPLOYED.
+
+## 11. Re-verification at `81886be` (stale baseline note)
+
+The task was re-issued with baseline `d89ce03`, but the repository already
+contains this package plus `JM-COOKIELESS-QUOTA-02B-02A-REPAIR-01` (cache-first
+lock repair) at `81886be`. No duplicate implementation was added.
+
+Re-verified on `81886be`:
+
+- `npm test -- --run` — PASS, 1011 passed, 5 skipped.
+- `npx tsc --noEmit -p tsconfig.app.json` — PASS.
+- `npm run build` — PASS.
+- `npm run test:budget:redis` — PASS.
+- `npm run test:ip-quota:redis` — PASS.
+- `npm run test:lock:redis` — PASS.
+- `npm run test:e2e:guest-cv` — PASS, 1440/390.
+- `git diff --check` — PASS.
+- `mj_session` still issued; no cookie removed.
+- No deployment.
+
+The cache-first behavior from the repair package is the active implementation:
+cache check → lock → cache re-check → paid call; busy followers return `busy`
+and never start a second paid call.
