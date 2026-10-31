@@ -169,3 +169,7 @@ Key test files:
 
 No product code was changed in this consolidation package. No RIS, AWS,
 Cognito, API route, session capacity or ATS deletion semantics were changed.
+
+- Consolidation commit: `1493d6b`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
+- Production deployment: NOT DEPLOYED
