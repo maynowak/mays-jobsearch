@@ -89,5 +89,6 @@ because it is keyed by document ID.
 
 ## Git
 
-- Commit and push are recorded after final validation.
+- Implementation commit: `d95d6f8`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
