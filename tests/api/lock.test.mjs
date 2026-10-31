@@ -8,8 +8,8 @@ vi.mock("../../api/_lib/cache.mjs", () => ({
   cacheEval: vi.fn(async () => 1),
 }));
 
-const { cacheEval, cacheGetRaw, cacheSetNx } = await import("../../api/_lib/cache.mjs");
-const { acquireSingleFlight, releaseSingleFlight, singleFlightKey } = await import(
+const { cacheEval, cacheGet, cacheGetRaw, cacheSetNx } = await import("../../api/_lib/cache.mjs");
+const { acquireSingleFlight, releaseSingleFlight, singleFlightKey, runPaidOnce } = await import(
   "../../api/_lib/lock.mjs"
 );
 
@@ -20,6 +20,8 @@ beforeEach(() => {
   vi.mocked(cacheGetRaw).mockResolvedValue(null);
   vi.mocked(cacheEval).mockReset();
   vi.mocked(cacheEval).mockResolvedValue(1);
+  vi.mocked(cacheGet).mockReset();
+  vi.mocked(cacheGet).mockResolvedValue(null);
 });
 
 describe("JM-COOKIELESS-QUOTA-02B-02A: single-flight lock", () => {
@@ -48,6 +50,52 @@ describe("JM-COOKIELESS-QUOTA-02B-02A: single-flight lock", () => {
     await expect(acquireSingleFlight("lock-key", 5000)).resolves.toEqual({
       status: "unavailable",
     });
+  });
+
+  it("serves a cache hit before acquiring the lock", async () => {
+    vi.mocked(cacheGet).mockResolvedValue([{ slug: "cached" }]);
+    const run = vi.fn(async () => [{ slug: "fresh" }]);
+    const result = await runPaidOnce({
+      cacheKey: "cache-key",
+      lockKey: "lock-key",
+      ttlMs: 1000,
+      run,
+    });
+    expect(result).toEqual({ status: "cached", value: [{ slug: "cached" }] });
+    expect(cacheSetNx).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("re-checks the cache after acquiring the lock", async () => {
+    vi.mocked(cacheGet)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([{ slug: "filled-by-owner" }]);
+    const run = vi.fn(async () => [{ slug: "fresh" }]);
+    const result = await runPaidOnce({
+      cacheKey: "cache-key",
+      lockKey: "lock-key",
+      ttlMs: 1000,
+      run,
+    });
+    expect(result.status).toBe("cached");
+    expect(result.value).toEqual([{ slug: "filled-by-owner" }]);
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("returns busy without running a second paid call", async () => {
+    vi.mocked(cacheGet).mockResolvedValue(null);
+    vi.mocked(cacheSetNx).mockResolvedValue(null);
+    vi.mocked(cacheGetRaw).mockResolvedValue("other-token");
+    const run = vi.fn(async () => [{ slug: "fresh" }]);
+    const result = await runPaidOnce({
+      cacheKey: "cache-key",
+      lockKey: "lock-key",
+      ttlMs: 1000,
+      waitMs: 50,
+      run,
+    });
+    expect(result).toEqual({ status: "busy" });
+    expect(run).not.toHaveBeenCalled();
   });
 
   it("releases only with the owner token", async () => {

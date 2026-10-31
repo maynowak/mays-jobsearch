@@ -1,3 +1,12 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02B-02A-REPAIR-01
+- Typ: Fix/Cost-Control/Single-Flight/Concurrency
+- Status: IMPLEMENTED / VERIFIED (unit + isolated Redis primitives; 10-request browser concurrency and live Vercel IP headers NOT VERIFIED)
+- Confirmed: the central lock was acquired before the source cache lookup, so cache hits could be blocked. Lock TTL can expire during a slow provider call.
+- Fix: cache-first `runPaidOnce` (cache → lock → cache re-check → run; busy → bounded wait → cache or busy), moved into TheirStack/JobsPipe/Apify general paid branches and Apify detail after missing-ref computation. Cache hits bypass locks/reservations. Busy callers never start a second paid call. Lock TTLs unchanged (20 s HTTP, 55 s Apify); no exactly-once claim across expiry; global budgets remain the hard cap.
+- AI-/Privacy-/Data-Flow impact: no new cookie, no browser identifier, no cache/TTL change, no provider change. Empty results remain non-negative-cached; retries may repeat a paid call (documented).
+- Tests: cache-first/busy/re-check unit tests, lock primitives in isolated Redis, receipt/window/day tests, full suite 1011 passed/5 skipped, TypeScript/Build/`git diff --check`, all three Redis scripts, guest E2E 1440/390 PASS.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02B-02A-REPAIR-01-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02B-02A
 - Typ: Implementation/Cost-Control/Single-Flight/Privacy
 - Status: IMPLEMENTED / VERIFIED (unit + isolated Redis; live Vercel IP headers NOT VERIFIED)

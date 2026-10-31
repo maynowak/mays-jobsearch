@@ -79,3 +79,30 @@ export async function waitForCachedValue(key, waitMs = 2000, pollMs = 150) {
 
 // Exposed only for the isolated Redis verification script.
 export const __LOCK_SCRIPTS = { release: RELEASE_SCRIPT };
+
+/**
+ * Cache-first paid execution:
+ * 1. cache check before the lock,
+ * 2. acquire lock on miss,
+ * 3. re-check cache after acquisition,
+ * 4. busy callers wait and use the cache if it appears,
+ * 5. only the owner runs the paid operation.
+ */
+export async function runPaidOnce({ cacheKey, lockKey, ttlMs, waitMs = 3000, run }) {
+  const before = await cacheGet(cacheKey);
+  if (before !== null) return { status: "cached", value: before };
+  const lock = await acquireSingleFlight(lockKey, ttlMs);
+  if (lock.status === "unavailable") return { status: "unavailable" };
+  if (lock.status === "busy") {
+    const waited = await waitForCachedValue(cacheKey, waitMs);
+    if (waited !== null) return { status: "cached", value: waited };
+    return { status: "busy" };
+  }
+  try {
+    const after = await cacheGet(cacheKey);
+    if (after !== null) return { status: "cached", value: after };
+    return { status: "ran", value: await run() };
+  } finally {
+    await releaseSingleFlight(lockKey, lock.token);
+  }
+}

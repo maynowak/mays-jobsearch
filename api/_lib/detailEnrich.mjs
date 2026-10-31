@@ -74,7 +74,7 @@ async function refundQuota(sessionKey, ipKey, amount) {
  *
  * @returns {Promise<{ jobs: Record<string, Job>, enrichedCount: number } | { error: string }>}
  */
-async function enrichArbeitsagenturDetailsUnlocked(slugs, { clientIp, sessionId, ipScope } = {}) {
+export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, ipScope } = {}) {
   const actor = actorById(SOURCE_ID);
   if (!actor) return { error: "source_not_found" };
 
@@ -106,6 +106,24 @@ async function enrichArbeitsagenturDetailsUnlocked(slugs, { clientIp, sessionId,
     return { jobs, enrichedCount: 0 };
   }
 
+  const lockKey = singleFlightKey("apify-detail", missing.map((req) => req.refNr).sort());
+  const lock = await acquireSingleFlight(lockKey, 55_000);
+  if (lock.status === "unavailable") return { error: "quota_unavailable" };
+  if (lock.status === "busy") {
+    // Wait briefly, then use any caches filled by the owner; never start a
+    // second paid batch.
+    await waitForLockRelease(lockKey, 3_000);
+    const stillMissing = [];
+    for (const req of missing) {
+      const cached = await cacheGet(`${DETAIL_CACHE_PREFIX}:${req.refNr}`);
+      if (cached && cached.slug) jobs[req.slug] = cached;
+      else stillMissing.push(req);
+    }
+    if (!stillMissing.length) return { jobs, enrichedCount: 0 };
+    return { error: "busy" };
+  }
+
+  try {
   const cfg = getConfig();
   const sessionKey = sessionQuotaKey(sessionId);
   const ipKey = ipQuotaKey(clientIp);
@@ -216,21 +234,7 @@ async function enrichArbeitsagenturDetailsUnlocked(slugs, { clientIp, sessionId,
   }
 
   return { jobs, enrichedCount };
-}
-
-/** Single-flight wrapper: identical batches do not start duplicate paid runs. */
-export async function enrichArbeitsagenturDetails(slugs, options = {}) {
-  const key = singleFlightKey("apify-detail", [...(slugs ?? [])].sort());
-  const lock = await acquireSingleFlight(key, 55_000);
-  if (lock.status === "unavailable") return { error: "quota_unavailable" };
-  if (lock.status === "busy") {
-    // Wait briefly for the owner, but never start a second paid run.
-    await waitForLockRelease(key, 3_000);
-    return { error: "busy" };
-  }
-  try {
-    return await enrichArbeitsagenturDetailsUnlocked(slugs, options);
   } finally {
-    await releaseSingleFlight(key, lock.token);
+    await releaseSingleFlight(lockKey, lock.token);
   }
 }

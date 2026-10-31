@@ -11,7 +11,10 @@ vi.mock("../../api/_lib/config.mjs", () => ({
 
 vi.mock("../../api/_lib/cache.mjs", () => ({
   cacheGet: vi.fn(async () => null),
+  cacheGetRaw: vi.fn(async () => null),
   cacheSet: vi.fn(async () => undefined),
+  cacheSetNx: vi.fn(async () => "OK"),
+  cacheEval: vi.fn(async () => 1),
   cacheEval: vi.fn(async () => 1),
 }));
 

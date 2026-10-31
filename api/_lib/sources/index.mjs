@@ -11,7 +11,6 @@ import { applySearchFilters } from "../filter.mjs";
 import { applySearchStrategy, applySearchStrategyWithTargetRole } from "../searchStrategy.mjs";
 import { getConfig } from "../config.mjs";
 import { geocodeCity } from "../geo.mjs";
-import { singleFlightKey, withSourceLock } from "../lock.mjs";
 
 const publicAtsConfigs = getConfig().publicAtsSources || [];
 const publicAtsSources = publicAtsConfigs.map(createPublicJobSource);
@@ -79,23 +78,7 @@ export async function fetchAllJobs({ skills, targetRoles, targetRole, city, radi
     if (coords) geo = { ...coords, radiusKm: radiusValue, city: geoCity };
   }
   const settled = await Promise.allSettled(
-    sources.map(async (source) => {
-      const params = { skills, targetRoles: roles, city: geoCity, geo, identity };
-      const paid = source.provider === "apify" || source.id === "theirstack" || source.id === "jobspipe";
-      if (!paid) return source.fetchJobs(params);
-      const key = singleFlightKey(source.id, {
-        skills,
-        roles,
-        city: geoCity,
-        radiusKm,
-        geo: geo ? { lat: geo.lat, lon: geo.lon, radiusKm: geo.radiusKm } : null,
-      });
-      const ttlMs = source.provider === "apify" ? 55_000 : 20_000;
-      const flight = await withSourceLock(key, ttlMs, () => source.fetchJobs(params), 3_000);
-      if (flight.status === "unavailable") return { jobs: [], meta: { reason: "quota_unavailable" } };
-      if (flight.status === "busy") return { jobs: [], meta: { reason: "busy" } };
-      return flight.value;
-    })
+    sources.map((source) => source.fetchJobs({ skills, targetRoles: roles, city: geoCity, geo, identity }))
   );
 
   const results = [];

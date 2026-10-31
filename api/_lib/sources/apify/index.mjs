@@ -14,6 +14,7 @@ import {
 } from "../../usage.mjs";
 import { startApifyRun, waitForRun, readDataset, startErrorDefinitelyNotStarted } from "./client.mjs";
 import { ipQuotaConfig, releaseIpQuota, reserveIpQuota } from "../../ipQuota.mjs";
+import { runPaidOnce, singleFlightKey } from "../../lock.mjs";
 
 const APIFY_SYNC_TIMEOUT_SEC = 50;
 const APIFY_CACHE_TTL_SEC = 600;
@@ -93,48 +94,62 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
     }
 
     if (!records) {
-      let ipReceipt = null;
-      const ipScope = identity?.ipScope;
-      if (ipQuotaConfig().enabled) {
-        if (!ipScope) return emptyResult("quota_unavailable");
-        const ipResult = await reserveIpQuota(actor.sourceId, ipScope);
-        if (ipResult.status === "limit_reached") return emptyResult("limit_reached");
-        if (ipResult.status !== "allowed") return emptyResult("quota_unavailable");
-        ipReceipt = ipResult.receipt;
-      }
-      // Atomic monthly run slot; Redis outage fails closed for this paid path.
-      const slot = await reserveApifyRunSlot();
-      if (slot.error === "exceeded") {
-        if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
-        return emptyResult("limit_reached");
-      }
-      if (slot.error) {
-        if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
-        return emptyResult("quota_unavailable");
-      }
-      const started = await startApifyRun(apiToken, actor.actorId, input);
-      if (started.error) {
-        // Refund only when the response proves the run never started. Network,
-        // unreadable and 5xx responses are unknown and keep the reservation.
-        if (startErrorDefinitelyNotStarted(started.error)) {
-          await refundApifyRunSlot();
-          if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
-        }
-        return emptyResult(started.error);
-      }
-      await countJobSourceRun(actor.sourceId);
-      const waited = await waitForRun(apiToken, started.run.id, APIFY_SYNC_TIMEOUT_SEC * 1000);
-      if (waited.error) return emptyResult(waited.error);
-      const read = await readDataset(apiToken, waited.run.defaultDatasetId);
-      if (read.error) return emptyResult(read.error);
-      records = read.records;
-      if (records.length) {
-        await cacheSet(
-          datasetKey,
-          { datasetId: waited.run.defaultDatasetId, createdAt: Date.now() },
-          Math.round(refreshMs / 1000)
-        );
-      }
+      const lockKey = singleFlightKey(actor.sourceId, input);
+      let earlyResult = null;
+      const flight = await runPaidOnce({
+        cacheKey,
+        lockKey,
+        ttlMs: 55_000,
+        waitMs: 3_000,
+        run: async () => {
+          let ipReceipt = null;
+          const ipScope = identity?.ipScope;
+          if (ipQuotaConfig().enabled) {
+            if (!ipScope) { earlyResult = emptyResult("quota_unavailable"); return []; }
+            const ipResult = await reserveIpQuota(actor.sourceId, ipScope);
+            if (ipResult.status === "limit_reached") { earlyResult = emptyResult("limit_reached"); return []; }
+            if (ipResult.status !== "allowed") { earlyResult = emptyResult("quota_unavailable"); return []; }
+            ipReceipt = ipResult.receipt;
+          }
+          const slot = await reserveApifyRunSlot();
+          if (slot.error === "exceeded") {
+            if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
+            earlyResult = emptyResult("limit_reached");
+            return [];
+          }
+          if (slot.error) {
+            if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
+            earlyResult = emptyResult("quota_unavailable");
+            return [];
+          }
+          const started = await startApifyRun(apiToken, actor.actorId, input);
+          if (started.error) {
+            if (startErrorDefinitelyNotStarted(started.error)) {
+              await refundApifyRunSlot();
+              if (ipReceipt) await releaseIpQuota(actor.sourceId, ipScope, ipReceipt);
+            }
+            earlyResult = emptyResult(started.error);
+            return [];
+          }
+          await countJobSourceRun(actor.sourceId);
+          const waited = await waitForRun(apiToken, started.run.id, APIFY_SYNC_TIMEOUT_SEC * 1000);
+          if (waited.error) { earlyResult = emptyResult(waited.error); return []; }
+          const read = await readDataset(apiToken, waited.run.defaultDatasetId);
+          if (read.error) { earlyResult = emptyResult(read.error); return []; }
+          if (read.records.length) {
+            await cacheSet(
+              datasetKey,
+              { datasetId: waited.run.defaultDatasetId, createdAt: Date.now() },
+              Math.round(refreshMs / 1000)
+            );
+          }
+          return read.records;
+        },
+      });
+      if (earlyResult) return earlyResult;
+      if (flight.status === "unavailable") return emptyResult("quota_unavailable");
+      if (flight.status === "busy") return emptyResult("busy");
+      records = flight.value;
     }
 
     if (records.length) await cacheSet(cacheKey, records, APIFY_CACHE_TTL_SEC);

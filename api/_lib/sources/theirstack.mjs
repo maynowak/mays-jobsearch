@@ -10,6 +10,7 @@ import {
   theirstackUserCreditLimitReached,
 } from "../usage.mjs";
 import { ipQuotaConfig, releaseIpQuota, reserveIpQuota } from "../ipQuota.mjs";
+import { runPaidOnce, singleFlightKey } from "../lock.mjs";
 
 const API_BASE = "https://api.theirstack.com/v1/jobs/search";
 // TheirStack bills 1 API credit per returned record: keep the page small.
@@ -78,45 +79,53 @@ export async function fetchTheirstackJobs({ skills, targetRoles, targetRole, cit
     await countJobSourceCacheHit(SOURCE_ID);
   } else {
     await countJobSourceCacheMiss(SOURCE_ID);
-    // Per-user monthly guard (anonymous session = user, 20 credits default).
-    if (identity && (await theirstackUserCreditLimitReached(identity))) {
-      return emptyResult("user_limit_reached");
-    }
-    // Optional IP quota is an additional abuse brake; global budgets remain
-    // the hard cost boundary.
-    let ipReceipt = null;
-    const ipScope = identity?.ipScope;
-    if (ipQuotaConfig().enabled) {
-      if (!ipScope) return emptyResult("quota_unavailable");
-      const ipResult = await reserveIpQuota(SOURCE_ID, ipScope);
-      if (ipResult.status === "limit_reached") return emptyResult("limit_reached");
-      if (ipResult.status !== "allowed") return emptyResult("quota_unavailable");
-      ipReceipt = ipResult.receipt;
-    }
-    // Atomic global budget: reserve the maximum possible credits before the
-    // paid call. Redis outage fails closed.
-    const reservation = await reserveProviderBudget("theirstack", RESULTS_LIMIT);
-    if (reservation.error === "exceeded") {
-      if (ipReceipt) await releaseIpQuota(SOURCE_ID, ipScope, ipReceipt);
-      return emptyResult("limit_reached");
-    }
-    if (reservation.error) {
-      if (ipReceipt) await releaseIpQuota(SOURCE_ID, ipScope, ipReceipt);
-      return emptyResult("quota_unavailable");
-    }
-    try {
-      rawJobs = await fetchTheirstackUpstream(apiKey, body);
-    } catch (err) {
-      // Billing on a thrown/unknown provider response is not proven; keep the
-      // reservation until its TTL instead of refunding it unsafely.
-      throw err;
-    }
-    const settled = await settleProviderBudget("theirstack", reservation.id, rawJobs.length);
-    if (settled.error) {
-      console.warn("[theirstack] budget settlement failed:", settled.error);
-    }
-    if (identity) await countTheirstackUserCredits(identity, rawJobs.length);
-    if (rawJobs.length) await cacheSet(cacheKey, rawJobs, CACHE_TTL_SEC);
+    const lockKey = singleFlightKey(SOURCE_ID, { body, city: cityQueries });
+    let earlyResult = null;
+    const flight = await runPaidOnce({
+      cacheKey,
+      lockKey,
+      ttlMs: 20_000,
+      waitMs: 3_000,
+      run: async () => {
+        // Per-user monthly guard (anonymous session = user, 20 credits default).
+        if (identity && (await theirstackUserCreditLimitReached(identity))) {
+          earlyResult = emptyResult("user_limit_reached"); return [];
+        }
+        let ipReceipt = null;
+        const ipScope = identity?.ipScope;
+        if (ipQuotaConfig().enabled) {
+          if (!ipScope) { earlyResult = emptyResult("quota_unavailable"); return []; }
+          const ipResult = await reserveIpQuota(SOURCE_ID, ipScope);
+          if (ipResult.status === "limit_reached") { earlyResult = emptyResult("limit_reached"); return []; }
+          if (ipResult.status !== "allowed") { earlyResult = emptyResult("quota_unavailable"); return []; }
+          ipReceipt = ipResult.receipt;
+        }
+        const reservation = await reserveProviderBudget("theirstack", RESULTS_LIMIT);
+        if (reservation.error === "exceeded") {
+          if (ipReceipt) await releaseIpQuota(SOURCE_ID, ipScope, ipReceipt);
+          earlyResult = emptyResult("limit_reached");
+          return [];
+        }
+        if (reservation.error) {
+          if (ipReceipt) await releaseIpQuota(SOURCE_ID, ipScope, ipReceipt);
+          earlyResult = emptyResult("quota_unavailable");
+          return [];
+        }
+        // Unknown billing keeps the reservation until its TTL.
+        const jobs = await fetchTheirstackUpstream(apiKey, body);
+        const settled = await settleProviderBudget("theirstack", reservation.id, jobs.length);
+        if (settled.error) {
+          console.warn("[theirstack] budget settlement failed:", settled.error);
+        }
+        if (identity) await countTheirstackUserCredits(identity, jobs.length);
+        if (jobs.length) await cacheSet(cacheKey, jobs, CACHE_TTL_SEC);
+        return jobs;
+      },
+    });
+    if (earlyResult) return earlyResult;
+    if (flight.status === "unavailable") return emptyResult("quota_unavailable");
+    if (flight.status === "busy") return emptyResult("busy");
+    rawJobs = flight.value;
   }
 
   const allJobs = rawJobs;
