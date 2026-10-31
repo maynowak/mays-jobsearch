@@ -1,3 +1,12 @@
+2026-10-31 · JM-AUTH-SAME-DOMAIN-LOGIN-01
+- Typ: Auth-Architektur/Machbarkeit/Security
+- Status: BLOCKED — keine Implementierung, kein AWS-/Vercel-Deployment
+- Befund: `/anmelden` nutzt `react-oidc-context` + Authorization-Code-PKCE und leitet auf Cognito Managed Login (`auth.mays-job-matcher.app`) um. Der aktuelle App Client (`5hb3f6dj5ialg77jf4blur9g6g`, Pool `eu-central-1_ZURSMpD2O`) hat `AllowedOAuthFlows=["code"]`, aber kein `ExplicitAuthFlows`; `USER_SRP_AUTH`, `USER_PASSWORD_AUTH` und `USER_AUTH` sind damit nicht nachgewiesen/nicht freigeschaltet.
+- Blockade: Same-Origin-Direktlogin würde eine Cognito-App-Client-Änderung (`ALLOW_USER_SRP_AUTH` + `ALLOW_REFRESH_TOKEN_AUTH` oder begründete Alternative) sowie eine sichere SRP-/Token-Validierungs-/Storage-Entscheidung erfordern. MFA-, NEW_PASSWORD_REQUIRED- und Passwortzurücksetzungs-Flows sind nicht verifiziert.
+- Unverändert: Gast-Jobsuche, Apify/Arbeitsagentur, Redis, Budgets, Cookie-Freiheit, CV/ATS, 10/2/5, RIS/Cognito/AWS-Konfiguration. Keine neuen Cookies oder Secrets.
+- Tests: Auth-Baseline 22 Tests PASS; Gesamtsuite 1031 passed/5 skipped; TypeScript/Build/diff PASS. Same-Origin-/MFA-Tests nicht ausgeführt (keine Implementierung). AWS-Live-Verifikation NOT VERIFIED.
+- Log: `docs/reports/JM-AUTH-SAME-DOMAIN-LOGIN-01.md`
+
 2026-10-31 · JM-GUEST-MODEL-A-RELEASE-GATE-FIX-01
 - Typ: Release-Gate-Fix/Source-Policy/Rollback/Security
 - Status: ABGESCHLOSSEN — kein Deployment, keine Preview
