@@ -202,5 +202,6 @@ keys only; no production Redis or credentials.
 
 ## 10. Git
 
-- Commit and remote synchronization are recorded after final validation.
-- No deployment.
+- Implementation commit: `4904e71`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
+- Production deployment: NOT DEPLOYED.
