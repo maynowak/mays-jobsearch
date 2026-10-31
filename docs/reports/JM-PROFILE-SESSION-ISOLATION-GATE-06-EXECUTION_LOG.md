@@ -122,5 +122,6 @@ retroactive deletion.
 
 ## Git
 
-- Commit and push are recorded after final validation.
+- Implementation commit: `dadf8fb`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
 - No production deployment was performed.
