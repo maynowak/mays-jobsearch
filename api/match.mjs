@@ -1,8 +1,7 @@
 import { HttpError } from "./_lib/filter.mjs";
 import { computeMatch } from "./_lib/matching.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
-import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
-import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
+import { SESSION_COOKIE, clearSessionCookieHeader, readCookie } from "./_lib/identity.mjs";
 import { paidSourcesAllowedForGuest } from "./_lib/sourcePolicy.mjs";
 
 function readBody(req) {
@@ -58,6 +57,9 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "This endpoint accepts POST requests only.", code: "method" });
   }
+  if (readCookie(req, SESSION_COOKIE)) {
+    res.setHeader("Set-Cookie", clearSessionCookieHeader());
+  }
 
   try {
     const attempt = Number.parseInt(req.headers["x-mj-attempt"] ?? "", 10) || 0;
@@ -78,11 +80,8 @@ export default async function handler(req, res) {
 
     const result = await computeMatch({ profile, jobs, model: body.model, attempt });
 
-    const trustedIp = resolveTrustedClientIp(req);
-    const ipScope = trustedIp.status === "trusted-ip" ? deriveIpScope(trustedIp.group) : null;
-    const identity = { ...anonymousIdentity(req), ipScope };
-    res.setHeader("Set-Cookie", sessionCookieHeader(identity.sessionId));
-    await enrichMatchedBAJobs(result.matches, identity);
+    // Model A: no guest cookie and no paid detail enrichment.
+    await enrichMatchedBAJobs(result.matches);
 
     return res.status(200).json({
       matches: result.matches,

@@ -1,7 +1,6 @@
 import { fetchAllJobs } from "./_lib/jobs.mjs";
 import { HttpError, splitQuotedPhrases } from "./_lib/filter.mjs";
-import { anonymousIdentity, sessionCookieHeader } from "./_lib/identity.mjs";
-import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
+import { SESSION_COOKIE, clearSessionCookieHeader, readCookie } from "./_lib/identity.mjs";
 
 function parseArrayParam(value, delimiters = /[,;]+/) {
   if (!value) return [];
@@ -41,6 +40,10 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(204).end();
+  // Model A: no guest session cookie is issued. Delete the legacy cookie once.
+  if (readCookie(req, SESSION_COOKIE)) {
+    res.setHeader("Set-Cookie", clearSessionCookieHeader());
+  }
 
   try {
     const { 
@@ -67,13 +70,8 @@ export default async function handler(req, res) {
     // Parse radiusKm - number or string
     const radiusKmNum = parseNumberParam(radiusKm);
 
-    // Anonymous session identity for per-user quotas (sources without
-    // identity simply skip user accounting). Same pattern as /api/match.
-    const trustedIp = resolveTrustedClientIp(req);
-    const ipScope = trustedIp.status === "trusted-ip" ? deriveIpScope(trustedIp.group) : null;
-    const identity = { ...anonymousIdentity(req), ipScope };
-    res.setHeader("Set-Cookie", sessionCookieHeader(identity.sessionId));
-
+    // Model A: public guest search has no session identity. Paid sources are
+    // excluded centrally by the source policy.
     const result = await fetchAllJobs({
       skills: skillsArray,
       targetRoles,
@@ -81,7 +79,6 @@ export default async function handler(req, res) {
       radiusKm: radiusKmNum,
       workMode: workModes,
       employmentType: employmentTypes,
-      identity,
     });
 
     // Source diagnostics are operational data. No server-verified admin

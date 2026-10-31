@@ -189,6 +189,10 @@ async function runViewport(browser, name, viewport) {
   if (finalUrl.pathname !== "/search") throw new Error(`unexpected redirect: ${page.url()}`);
   if (requests.login !== 0) throw new Error("login redirect detected");
 
+  const cookies = await context.cookies();
+  if (cookies.some((cookie) => cookie.name === "mj_session")) {
+    throw new Error("guest search issued a legacy mj_session cookie");
+  }
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth
   );

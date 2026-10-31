@@ -44,6 +44,13 @@ export function anonymousIdentity(req) {
   return { sessionId, ip, issuedNew };
 }
 
+/** One-time deletion of the legacy guest cookie; no new identity is issued. */
+export function clearSessionCookieHeader() {
+  const attrs = ["Path=/", "HttpOnly", "SameSite=Lax", "Max-Age=0"];
+  if (process.env.NODE_ENV === "production") attrs.push("Secure");
+  return `${SESSION_COOKIE}=; ${attrs.join("; ")}`;
+}
+
 export function sessionCookieHeader(sessionId) {
   const attrs = [
     "Path=/",

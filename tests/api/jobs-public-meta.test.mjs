@@ -15,8 +15,9 @@ vi.mock("../../api/_lib/sources/index.mjs", () => ({
 }));
 
 vi.mock("../../api/_lib/identity.mjs", () => ({
-  anonymousIdentity: () => ({ sessionId: "test-session" }),
-  sessionCookieHeader: () => "session=test",
+  SESSION_COOKIE: "mj_session",
+  readCookie: () => undefined,
+  clearSessionCookieHeader: () => "mj_session=; Path=/; Max-Age=0",
 }));
 
 describe("GET /api/jobs public metadata boundary", () => {
