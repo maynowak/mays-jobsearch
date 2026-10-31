@@ -1,4 +1,5 @@
 import type { Profile } from "../types";
+import type { ATSCriteriaV1 } from "./profiles/contractTypes";
 
 // CV-PROFILE-LISTS-01 + CV-PROFILE-LISTS-02 (Privacy):
 // Benannte Profil-Listen pro CV (Suchprofile/ATS-Profile) — jetzt NUR im
@@ -28,6 +29,7 @@ export interface CvAtsProfileEntry {
   targetRoles: string[];
   skills: string[];
   searchProfileId?: string | null;
+  criteria?: ATSCriteriaV1;
 }
 
 export interface CvProfileLists {
@@ -117,7 +119,8 @@ export function saveCvAtsProfile(
   name: string,
   skills: string[],
   targetRoles: string[],
-  searchProfileId: string | null = null
+  searchProfileId: string | null = null,
+  criteria?: ATSCriteriaV1
 ): CvAtsProfileEntry | null {
   if (!hash) return null;
   const now = Date.now();
@@ -147,14 +150,84 @@ export function saveCvAtsProfile(
   }
 
   const entry: CvAtsProfileEntry = existing
-    ? { ...existing, savedAt: now, skills, targetRoles, searchProfileId }
-    : { id: generateEntryId(), name: finalName, savedAt: now, targetRoles, skills, searchProfileId };
+    ? { ...existing, savedAt: now, skills, targetRoles, searchProfileId, ...(criteria ? { criteria } : {}) }
+    : { id: generateEntryId(), name: finalName, savedAt: now, targetRoles, skills, searchProfileId, ...(criteria ? { criteria } : {}) };
   bucket.atsProfiles = [
     entry,
     ...bucket.atsProfiles.filter((e) => e.id !== entry.id),
   ].slice(0, MAX_ENTRIES_PER_LIST);
   buckets.set(hash, bucket);
   return entry;
+}
+
+/** Session adapter helpers: mutate only the existing hash bucket. */
+export function updateCvSearchProfile(
+  hash: string | null | undefined,
+  id: string,
+  name: string,
+  profile: Profile
+): CvSearchProfileEntry | null {
+  if (!hash) return null;
+  const bucket = getBucket(hash, Date.now());
+  const existing = bucket?.searchProfiles.find((entry) => entry.id === id);
+  if (!bucket || !existing) return null;
+  const updated = { ...existing, name: name.trim() || existing.name, savedAt: Date.now(), profile };
+  bucket.searchProfiles = [updated, ...bucket.searchProfiles.filter((entry) => entry.id !== id)];
+  buckets.set(hash, bucket);
+  return updated;
+}
+
+export function deleteCvSearchProfile(hash: string | null | undefined, id: string): boolean {
+  if (!hash) return false;
+  const bucket = getBucket(hash, Date.now());
+  if (!bucket || !bucket.searchProfiles.some((entry) => entry.id === id)) return false;
+  bucket.searchProfiles = bucket.searchProfiles.filter((entry) => entry.id !== id);
+  bucket.atsProfiles = bucket.atsProfiles.map((entry) =>
+    entry.searchProfileId === id ? { ...entry, searchProfileId: null } : entry
+  );
+  buckets.set(hash, bucket);
+  return true;
+}
+
+export function updateCvAtsProfile(
+  hash: string | null | undefined,
+  id: string,
+  name: string,
+  skills: string[],
+  targetRoles: string[],
+  searchProfileId: string | null,
+  criteria?: ATSCriteriaV1
+): CvAtsProfileEntry | null {
+  if (!hash) return null;
+  const bucket = getBucket(hash, Date.now());
+  const existing = bucket?.atsProfiles.find((entry) => entry.id === id);
+  if (!bucket || !existing) return null;
+  if (searchProfileId && !bucket.searchProfiles.some((entry) => entry.id === searchProfileId)) return null;
+  if (searchProfileId && existing.searchProfileId !== searchProfileId) {
+    const assignedCount = bucket.atsProfiles.filter((entry) => entry.searchProfileId === searchProfileId).length;
+    if (assignedCount >= 5) return null;
+  }
+  const updated = {
+    ...existing,
+    name: name.trim() || existing.name,
+    skills: [...skills],
+    targetRoles: [...targetRoles],
+    searchProfileId,
+    ...(criteria ? { criteria } : {}),
+    savedAt: Date.now(),
+  };
+  bucket.atsProfiles = [updated, ...bucket.atsProfiles.filter((entry) => entry.id !== id)];
+  buckets.set(hash, bucket);
+  return updated;
+}
+
+export function deleteCvAtsProfile(hash: string | null | undefined, id: string): boolean {
+  if (!hash) return false;
+  const bucket = getBucket(hash, Date.now());
+  if (!bucket || !bucket.atsProfiles.some((entry) => entry.id === id)) return false;
+  bucket.atsProfiles = bucket.atsProfiles.filter((entry) => entry.id !== id);
+  buckets.set(hash, bucket);
+  return true;
 }
 
 // Leert alle Listen sofort (Tests + kuenftiger "Alles löschen"-Button).

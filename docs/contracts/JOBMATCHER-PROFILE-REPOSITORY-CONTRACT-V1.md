@@ -185,8 +185,11 @@ persistence:
 - CV `File` objects and the active CV workflow remain React state.
 
 The session adapter may implement `get/list/create/update/delete` locally, but
-its return type must be normalized to v1 DTOs. It must not invent a durable
-`cvId` from the CV hash. Session IDs are explicitly marked ephemeral.
+its **session record type must remain explicit** and must not be presented as a
+persistent V1 DTO. It must not invent a durable `cvId` from the CV hash, a
+`documentId` for a browser `File`, or a persistent `version`. The remote
+adapter is the boundary that returns normalized V1 DTOs; session IDs are
+explicitly marked ephemeral.
 
 ## 5. Remote adapter behavior
 

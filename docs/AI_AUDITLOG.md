@@ -1,3 +1,13 @@
+2026-10-31 · JM-PROFILE-SESSION-ADAPTER-03
+- Typ: Implementation/Contract/Session-Privacy/Validation
+- Status: IMPLEMENTED / VERIFIED (session-only; RIS remote adapter and persistence NOT IMPLEMENTED)
+- Scope: Ausführbare Job-Matcher-V1-Typen, verlustfreie Profile/SearchConfiguration-Mappings, lokale Runtime-Validierung und Session-Repository-Adapter für CV-Suchprofile, ATS-Kinder und unabhängige manuelle Profile.
+- Session boundary: CV-Adapter arbeitet weiter mit dem bestehenden CV-Hash/12h-In-Memory-Store; Session records exponieren `cvHash`/`sessionId` statt künstlicher `cvId`, keine lokale persistente `version` und keine erfundene `documentId`. ManualProfile bleibt CV-/Hash-frei und nutzt die bestehende unabhängige Map.
+- AI-/Privacy-/Data-Flow impact: keine neue Route, Netzwerk-/RIS-Verbindung, Speicherung, Authänderung, Modellanfrage oder Hintergrundsynchronisierung. Validierung und Mapping laufen lokal; keine echten CV-/Benutzerdaten.
+- Contract rules: ATS-`criteria` erlaubt ausschließlich V1-Listen required/preferred/excluded; unbekannte Felder, Scores und Modellresultate werden abgelehnt. V1-Kapazitäten sind dokumentierte Backend-Ziele; der Session-Store behält bewusst seine bestehende 50er/5er-Semantik.
+- Tests: neue Profile-Unit-/Session-Tests und bestehende CV-Store-Tests PASS; Gesamtsuite `npm test -- --run` (937 passed, 5 skipped); `npx tsc --noEmit -p tsconfig.app.json`; `npm run build`; `git diff --check` PASS. Browser/RIS/AWS NOT RUN.
+- Log: `docs/reports/JM-PROFILE-SESSION-ADAPTER-03-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-CONTRACT-02
 - Typ: Contract/Validation/Privacy/Data-Flow
 - Status: SPECIFIED / VERIFIED (JSON Schema and synthetic fixture validation green; no application/RIS/AWS implementation)
