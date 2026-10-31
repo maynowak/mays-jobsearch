@@ -143,5 +143,6 @@ Unchanged and still blocked:
 
 ## Git
 
-- Commit and remote synchronization are recorded after final validation.
-- No deployment.
+- Implementation commit: `a1a179d`
+- Remote: pushed to `origin/main`, synchronized (`0 0`)
+- Production deployment: NOT DEPLOYED.
