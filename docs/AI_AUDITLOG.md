@@ -1,3 +1,13 @@
+2026-10-31 · JM-RIS-COGNITO-SAME-HOST-LOGIN-02
+- Typ: Auth-Implementierungsgate/Dependency/Security
+- Status: BLOCKED — keine Implementierung, kein AWS-/Vercel-Deployment
+- Read-only AWS: Pool `eu-central-1_ZURSMpD2O`, Client `5hb3f6dj5ialg77jf4blur9g6g`; `ExplicitAuthFlows` nicht gesetzt, `AllowedOAuthFlows=["code"]`, kein Client-Secret, Token-Revocation aktiv, MFA OFF, Username=E-Mail. Nach AWS-Default sind `ALLOW_REFRESH_TOKEN_AUTH`, `ALLOW_USER_SRP_AUTH` und `ALLOW_CUSTOM_AUTH` aktiv; `USER_SRP_AUTH` damit konfigurationsseitig verfügbar. Kein Live-SRP-Handshake.
+- Dependency-Blocker: `amazon-cognito-identity-js` (SRP/MFA/New-Password/Refresh) und `aws-jwt-verify` (ID-Token-Validierung) sind nicht installiert und nach AGENTS.md freigabepflichtig. Keine eigene SRP-/JWT-Kryptografie, kein Amplify.
+- RIS-Blocker: RIS-Verträge nennen teils andere Pool-IDs; Akzeptanz des aktuellen Issuers/Clients sowie die Zulässigkeit von direktem SRP statt OAuth sind NOT VERIFIED. Keine RIS-/Cognito-Änderung.
+- Unverändert: Gast-Jobsuche, Apify/Arbeitsagentur, Redis, Budgets, Cookie-Freiheit, CV/ATS, 10/2/5. Keine neuen Cookies/Secrets.
+- Tests: Auth-Baseline 22 PASS; Gesamtsuite 1031 passed/5 skipped; TypeScript/Build/diff PASS. Same-Host-Login/MFA/RIS nicht getestet.
+- Log: `docs/reports/JM-RIS-COGNITO-SAME-HOST-LOGIN-02.md`
+
 2026-10-31 · JM-AUTH-SAME-DOMAIN-LOGIN-DIAGNOSIS-01
 - Typ: Auth-Diagnose/Ursachenanalyse/Security
 - Status: DIAGNOSE ABGESCHLOSSEN — keine Codeänderung, kein Deployment
