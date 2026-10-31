@@ -1,3 +1,12 @@
+2026-10-31 · JM-AUTH-SAME-DOMAIN-LOGIN-DIAGNOSIS-01
+- Typ: Auth-Diagnose/Ursachenanalyse/Security
+- Status: DIAGNOSE ABGESCHLOSSEN — keine Codeänderung, kein Deployment
+- Ursache: `/anmelden` ruft `signIn` → `auth.signinRedirect()` auf. `react-oidc-context` navigiert zum Cognito-Authorization-Endpoint aus der OIDC-Discovery (Custom- oder Prefix-Domain). Das ist der konfigurierte Authorization-Code-PKCE-Flow, kein Router-/Vercel-Bug. Die Rückkehr über `https://www.mays-job-matcher.app/auth/callback` ist same-origin; der Login selbst nicht.
+- Historie: `e9b60a6` hatte eine lokale Login-Maske ohne Backend/Cognito (UI-only, kein echter Login). `dc117c9` führte OIDC ein; `cbce3c8` entfernte die lokalen Passwortfelder und ließ den Button direkt `signinRedirect()` aufrufen. Es gab keinen zuvor funktionierenden Same-Host-Login.
+- AI-/Privacy-/Data-Flow: keine neue Datenübertragung, keine neuen Cookies/Secrets, keine Änderung an Gast-Jobsuche, Apify, Redis, Budgets oder CV/ATS. OIDC sendet Credentials weiterhin an Cognito; same-host Direktlogin ist nicht implementiert.
+- Tests: Auth-Baseline 22 Tests PASS; Gesamtsuite 1031 passed/5 skipped; TypeScript/Build/diff PASS. Browser-Login auf Produktion nicht ausgeführt; Live-Domain/Konfiguration NOT VERIFIED.
+- Log: `docs/reports/JM-AUTH-SAME-DOMAIN-LOGIN-DIAGNOSIS-01.md`
+
 2026-10-31 · JM-AUTH-SAME-DOMAIN-LOGIN-01
 - Typ: Auth-Architektur/Machbarkeit/Security
 - Status: BLOCKED — keine Implementierung, kein AWS-/Vercel-Deployment
