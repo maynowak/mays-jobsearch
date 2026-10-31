@@ -11,7 +11,8 @@
     "test:e2e:guest-cv": "node tests/e2e/guest-cv-workflow.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
-    "test:lock:redis": "node tests/tools/verify-lock-lua.mjs"
+    "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",
+    "test:ip-quota:rest": "npx vitest run tests/integration/ip-quota-parallel.test.mjs"
   },
   "dependencies": {
     "dompurify": "^3.4.14",

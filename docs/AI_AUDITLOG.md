@@ -1,3 +1,11 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02B-02B-VERIFICATION-02
+- Typ: Integration-Test/Cost-Control/Verification
+- Status: VERIFIED against local Upstash-REST emulation + isolated redis:7-alpine; real Upstash and live Vercel IP NOT VERIFIED
+- Scope: local REST adapter (loopback) + minimal RESP client, real cache/lock/IP-quota/global-budget code, synthetic TheirStack provider.
+- Results: ten identical requests → exactly one provider call, one IP window reservation, one credit; different queries → two calls; cache hit → no call; IP limit and global budget → no call; Redis outage → `quota_unavailable`, no call. Full suite 1020 passed/5 skipped; TypeScript/Build/`git diff --check`/budget/IP/lock Redis/guest E2E PASS.
+- Limits: local REST emulation is not real Upstash; lock TTL expiry can still duplicate a paid call (global budgets cap cost); busy followers return `busy`; empty results not negatively cached. Cookie cutover remains BLOCKED pending Vercel live verification, product IP limits, HMAC secret/rotation and privacy review.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02B-02B-VERIFICATION-02-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02B-02B-PREFLIGHT-01
 - Typ: Preflight/Security-Verification/Cookie-Migration
 - Status: PREFLIGHT COMPLETE — cutover NOT approved; `mj_session` unchanged
