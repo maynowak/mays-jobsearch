@@ -5,7 +5,20 @@ import type { ModelsResponse } from "./types";
 // JM-PROFILE-UI-HARDENING-05: a delayed manual-profile save must not restore
 // state after the authenticated identity has changed.
 const authState = { sub: "race-user-a" };
-const gate: { resolve: (() => void) | null } = { resolve: null };
+const gate: {
+  resolve: (() => void) | null;
+  manualRepository: { list: () => Array<{ name: string }> } | null;
+  resolveExtract: ((text: string) => void) | null;
+} = { resolve: null, manualRepository: null, resolveExtract: null };
+
+vi.mock("./lib/pdf", () => ({
+  extractPdfText: vi.fn(
+    () =>
+      new Promise<string>((resolve) => {
+        gate.resolveExtract = resolve;
+      })
+  ),
+}));
 
 vi.mock("./api", async () => {
   const actual = await vi.importActual<typeof import("./api")>("./api");
@@ -38,6 +51,7 @@ vi.mock("./lib/profiles/sessionRepositories", async () => {
   return {
     ...actual,
     createSessionProfileRepositories: (options: Parameters<typeof actual.createSessionProfileRepositories>[0]) => {
+      gate.manualRepository = options?.manualRepository ?? null;
       const repositories = actual.createSessionProfileRepositories(options);
       return {
         ...repositories,
@@ -115,5 +129,43 @@ describe("JM-PROFILE-UI-HARDENING-05: session race isolation", () => {
       expect(screen.queryByText("Stale profile")).toBeNull();
     });
     expect(document.querySelectorAll(".dashboard-v2__manual-item")).toHaveLength(0);
+    // The old repository instance must not have written into the new session.
+    expect(gate.manualRepository?.list() ?? []).toEqual([]);
+    expect(screen.queryByText("Profil für diese Sitzung gespeichert.")).toBeNull();
+  });
+
+  it("does not publish CV extraction results after the user changes", async () => {
+    const view = await renderAt("/search");
+    fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
+    const file = new File(["synthetic cv"], "cv.pdf", { type: "application/pdf" });
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [file] },
+    });
+    await screen.findByText("CV-Verarbeitung erlauben?");
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Ich stimme der Verarbeitung meiner CV-Daten wie beschrieben zu.",
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeitung erlauben" }));
+    await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await waitFor(() => expect(gate.resolveExtract).not.toBeNull());
+
+    authState.sub = "race-user-b";
+    const App = (await import("./App")).default;
+    const { LangProvider } = await import("./i18n");
+    view.rerender(
+      <LangProvider>
+        <App />
+      </LangProvider>
+    );
+
+    gate.resolveExtract?.("React Developer with five years of experience in Berlin");
+    await waitFor(() => {
+      expect(screen.queryByText("Dein vorgeschlagenes Suchprofil")).toBeNull();
+    });
   });
 });

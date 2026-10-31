@@ -65,7 +65,11 @@ import type {
   ManualSearchProfileDraft,
   ManualSearchProfileRepository,
 } from "./lib/manualSearchProfiles";
-import { createSessionProfileRepositories } from "./lib/profiles/sessionRepositories";
+import {
+  beginNewProfileSession,
+  createSessionProfileRepositories,
+  ProfileSessionEndedError,
+} from "./lib/profiles/sessionRepositories";
 import type { SessionProfileRepositories } from "./lib/profiles/repositoryTypes";
 import type { CreateManualSearchProfileInputV1 } from "./lib/profiles/contractTypes";
 import { useAuth } from "react-oidc-context";
@@ -206,17 +210,36 @@ export default function App() {
       manualRepository: manualProfileStoreRef.current,
     });
   }
-  const authProfileKey = isAuth ? String(auth.user?.profile?.sub ?? "authenticated") : null;
+  const identityClaim =
+    typeof auth.user?.profile?.sub === "string" && auth.user.profile.sub
+      ? `sub:${auth.user.profile.sub}`
+      : typeof auth.user?.profile?.email === "string" && auth.user.profile.email
+        ? `email:${auth.user.profile.email}`
+        : null;
+  // An authenticated session without a verified stable claim must not silently
+  // share the same key with another such session. It is treated as a distinct
+  // unverified identity and still cleared on auth transitions.
+  const authProfileKey = isAuth ? identityClaim ?? "auth:unverified" : null;
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
   // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
   // apply late results after a user switch/logout.
   const sessionEpochRef = useRef(0);
+  const createFreshProfileStores = () => {
+    const manualStore = createManualSearchProfileRepository();
+    manualProfileStoreRef.current = manualStore;
+    profileRepositoriesRef.current = createSessionProfileRepositories({
+      manualRepository: manualStore,
+    });
+  };
   useEffect(() => {
     const previous = previousAuthProfileKeyRef.current;
     if (previous !== undefined && previous !== authProfileKey) {
       sessionEpochRef.current += 1;
-      const store = manualProfileStoreRef.current;
-      store?.list().forEach((entry) => store.delete(entry.id));
+      // Invalidate every repository instance created for the previous identity
+      // so a late operation cannot write into the new session.
+      beginNewProfileSession();
+      createFreshProfileStores();
+      cvOperationRef.current = null;
       setManualProfiles([]);
       setProfile({ ...INITIAL_MANUAL_PROFILE });
       // Temporary CV/profile data belongs to the previous identity. Clear the
@@ -871,8 +894,10 @@ export default function App() {
     // a later/default state value.
     const selectedAnonymizationMode = cvState.anonymizationMode;
     const operationToken = `${doc.id}:${Date.now()}:${Math.random()}`;
+    const sessionEpoch = sessionEpochRef.current;
     cvOperationRef.current = operationToken;
-    const isCurrentOperation = () => cvOperationRef.current === operationToken;
+    const isCurrentOperation = () =>
+      cvOperationRef.current === operationToken && sessionEpochRef.current === sessionEpoch;
     setCvState((prev) => ({
       ...prev,
       step: "anonymizing",
@@ -1043,7 +1068,8 @@ export default function App() {
           if (sessionEpochRef.current !== epoch) return;
           savedName = created.name;
           setCvProfileStoreVersion((version) => version + 1);
-        } catch {
+        } catch (error) {
+          if (error instanceof ProfileSessionEndedError) return;
           if (sessionEpochRef.current === epoch) {
             setCvState((prev) => ({ ...prev, isProcessing: false }));
             setStatus({ type: "error", message: t("cv.errorAtsProfileSave") });
@@ -1494,7 +1520,7 @@ export default function App() {
     } else {
       await repositories.manualSearchProfiles.create(input);
     }
-    if (sessionEpochRef.current !== epoch) return;
+    if (sessionEpochRef.current !== epoch) throw new ProfileSessionEndedError();
     refreshManualProfiles();
   };
 
@@ -1503,7 +1529,7 @@ export default function App() {
     if (!repositories) throw new Error("profile repository unavailable");
     const epoch = sessionEpochRef.current;
     await repositories.manualSearchProfiles.delete(id);
-    if (sessionEpochRef.current !== epoch) return;
+    if (sessionEpochRef.current !== epoch) throw new ProfileSessionEndedError();
     refreshManualProfiles();
   };
 
@@ -1520,7 +1546,7 @@ export default function App() {
       searchConfig: source.searchConfig,
       matchingPreferences: source.matchingPreferences,
     });
-    if (sessionEpochRef.current !== epoch) return;
+    if (sessionEpochRef.current !== epoch) throw new ProfileSessionEndedError();
     refreshManualProfiles();
   };
 
@@ -2066,7 +2092,8 @@ export default function App() {
                   if (sessionEpochRef.current !== epoch) return;
                   setSelectedSavedSearchId(saved.sessionId);
                   setCvProfileStoreVersion((version) => version + 1);
-                } catch {
+                } catch (error) {
+                  if (error instanceof ProfileSessionEndedError) return;
                   if (sessionEpochRef.current === epoch) {
                     setStatus({ type: "error", message: t("cv.errorProfileSave") });
                   }

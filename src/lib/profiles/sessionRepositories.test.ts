@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { resetCvProfileLists } from '../cvProfileStore';
 import { createManualSearchProfileRepository } from '../manualSearchProfiles';
-import { createSessionProfileRepositories } from './sessionRepositories';
+import {
+  beginNewProfileSession,
+  createSessionProfileRepositories,
+  ProfileSessionEndedError,
+} from './sessionRepositories';
 import type { SearchConfigurationV1 } from './contractTypes';
 
 const searchConfig: SearchConfigurationV1 = {
@@ -54,6 +58,40 @@ describe('JM-PROFILE-SESSION-ADAPTER-03: session repositories', () => {
 
     await repositories.manualSearchProfiles.delete(created.sessionId);
     expect(await repositories.manualSearchProfiles.get(created.sessionId)).toBeNull();
+  });
+
+  it('rejects writes from a repository instance of an ended session', async () => {
+    const repositories = createSessionProfileRepositories();
+    beginNewProfileSession();
+
+    await expect(
+      repositories.manualSearchProfiles.create({
+        name: 'Late profile',
+        searchConfig,
+        matchingPreferences: { requiredSkills: [], preferredSkills: [], excludedTerms: [] },
+      })
+    ).rejects.toBeInstanceOf(ProfileSessionEndedError);
+
+    await expect(
+      repositories.cvSearchProfiles.create('cv-hash-late', { name: 'Late CV', searchConfig })
+    ).rejects.toBeInstanceOf(ProfileSessionEndedError);
+  });
+
+  it('rejects a delayed CV/ATS write after the session changed', async () => {
+    const repositories = createSessionProfileRepositories();
+    const search = await repositories.cvSearchProfiles.create('cv-hash-late', { name: 'CV', searchConfig });
+    beginNewProfileSession();
+
+    await expect(
+      repositories.cvSearchProfiles.update('cv-hash-late', search.sessionId, { name: 'Changed' })
+    ).rejects.toBeInstanceOf(ProfileSessionEndedError);
+    await expect(
+      repositories.atsSearchProfiles.create('cv-hash-late', search.sessionId, {
+        name: 'Late ATS',
+        targetRoles: ['DevOps Engineer'],
+        skills: ['Terraform'],
+      })
+    ).rejects.toBeInstanceOf(ProfileSessionEndedError);
   });
 
   it('does not manufacture persistent IDs or versions for session records', async () => {

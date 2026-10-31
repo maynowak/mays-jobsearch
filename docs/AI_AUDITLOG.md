@@ -1,3 +1,14 @@
+2026-10-31 · JM-PROFILE-SESSION-ISOLATION-GATE-06
+- Typ: Security/Isolation/Async-Safety/Privacy
+- Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistence NOT IMPLEMENTED)
+- Scope: Repository-Session-Generation, Auth-Wechsel-Reset, CV-Operation-Invalidierung und eindeutige Abbruchsemantik für manuelle/CV-/ATS-Profiloperationen.
+- Reproduced: UI-Epoch verhinderte nur den Refresh; verzögerte Schreiboperationen änderten weiterhin den gemeinsamen Session-Speicher. `createProfileFromPdf` prüfte nur den CV-Operationstoken, nicht den Auth-Wechsel. Manuelle Handler meldeten bei Epoch-Wechsel fälschlich Erfolg.
+- Corrections: `beginNewProfileSession()`/`ProfileSessionEndedError`; alte Adapter-Instanzen lehnen Create/Update/Delete ab; Auth-Wechsel erzeugt frische Repositories, nullt `cvOperationRef`, erhöht die UI-Epoch und leert CV-/Manual-State. CV-Fortsetzungen prüfen Token + Epoch. Section behandelt `session_ended` als stillen Abbruch ohne Erfolgs-/Fehlermeldung.
+- Auth identity: `sub` → `email` → expliziter `auth:unverified`-Fallback; ohne stabilen Claim ist keine zuverlässige Mehrbenutzer-Isolation möglich und bleibt dokumentiert.
+- AI-/Privacy-/Data-Flow impact: keine neue Netzwerk-, RIS-, AWS-, Modell- oder Persistenzstrecke. Bereits gesendete externe Requests können lokal nicht zurückgerufen werden; ihre Ergebnisse werden verworfen. 12h-TTL, Kapazitäten und ATS-Semantik unverändert.
+- Tests: Generation-/Late-Write-/Late-CV-/No-Success-Tests PASS; Gesamtsuite 945 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS. Chromium 1440/390 CRUD-Smoke PASS; authentifizierter Browser-Wechsel NOT VERIFIED.
+- Log: `docs/reports/JM-PROFILE-SESSION-ISOLATION-GATE-06-EXECUTION_LOG.md`
+
 2026-10-31 · JM-PROFILE-UI-HARDENING-05
 - Typ: Hardening/Async-Safety/Session-Isolation/UI
 - Status: IMPLEMENTED / VERIFIED (session-only; RIS/persistence NOT IMPLEMENTED)

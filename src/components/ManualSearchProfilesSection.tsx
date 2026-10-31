@@ -15,6 +15,7 @@ import type {
 } from "../lib/manualSearchProfiles";
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
+import { ProfileSessionEndedError } from "../lib/profiles/sessionRepositories";
 
 // MAYS-SEARCH-PROFILE-MANUAL-01:
 // Manuelle Suchprofile unter "Job-Praferenzen".
@@ -174,7 +175,13 @@ export default function ManualSearchProfilesSection({
       restoreFocusRef.current = true;
       setForm(null);
       setNotice(t("manualProfiles.notice.saved"));
-    } catch {
+    } catch (error) {
+      if (error instanceof ProfileSessionEndedError) {
+        setError(null);
+        setNotice(null);
+        setForm(null);
+        return;
+      }
       setError(t("manualProfiles.error.save"));
     } finally {
       setPendingAction(null);
@@ -189,7 +196,13 @@ export default function ManualSearchProfilesSection({
       await onDelete(id);
       setPendingDeleteId(null);
       setNotice(t("manualProfiles.notice.deleted"));
-    } catch {
+    } catch (error) {
+      if (error instanceof ProfileSessionEndedError) {
+        setError(null);
+        setNotice(null);
+        setPendingDeleteId(null);
+        return;
+      }
       setError(t("manualProfiles.error.delete"));
     } finally {
       setPendingAction(null);
@@ -203,7 +216,12 @@ export default function ManualSearchProfilesSection({
     try {
       await onDuplicate(id);
       setNotice(t("manualProfiles.notice.duplicated"));
-    } catch {
+    } catch (error) {
+      if (error instanceof ProfileSessionEndedError) {
+        setError(null);
+        setNotice(null);
+        return;
+      }
       setError(t("manualProfiles.error.duplicate"));
     } finally {
       setPendingAction(null);
