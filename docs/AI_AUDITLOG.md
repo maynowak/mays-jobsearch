@@ -1,3 +1,12 @@
+2026-10-31 · JM-GUEST-CV-E2E-09A
+- Typ: Test-Evidence/Browser-E2E/Verification
+- Status: VERIFIED (mock-backend browser evidence strengthened; authenticated flow NOT VERIFIED)
+- Scope: Elternprofil und ATS-Variante im Gast-E2E mit unterscheidbaren Skills; echte `/api/jobs`-Query prüft ATS-Skill-Override und Erhalt der Elternfilter.
+- Evidence: Parent `Java, AWS` vs ATS `Java, AWS, Terraform, Docker`; Browser-Request enthält Terraform/Docker (ATS) sowie Frankfurt, radiusKm 50 und full_time (Parent). Eine abweichende ATS-Zielrolle ist über die UI nicht einstellbar; sie erbt die Elternrolle. Der distinkte Rollen-Override bleibt ausschließlich durch `cvSearchConfig`-Unit-Tests belegt.
+- AI-/Privacy-/Data-Flow impact: keine Produkt-/API-/Persistenz-/Auth-Änderung. Weiterhin synthetische PDF-Fixture und gemockte APIs; keine echten Provider-/Produktionsdaten.
+- Tests: E2E PASS 1440/390; Gesamtsuite 967 passed, 5 skipped; TypeScript/Build/`git diff --check` PASS.
+- Log: `docs/reports/JM-GUEST-CV-E2E-09A-EXECUTION_LOG.md`
+
 2026-10-31 · JM-GUEST-CV-E2E-09
 - Typ: Test-Infrastructure/Browser-E2E/Privacy/Verification
 - Status: VERIFIED (mocked-backend browser E2E; RIS/persistence NOT IMPLEMENTED; authenticated flow NOT VERIFIED)

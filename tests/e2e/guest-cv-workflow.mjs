@@ -137,6 +137,11 @@ async function runViewport(browser, name, viewport) {
   }
 
   await page.locator("#cv-profile-name").fill("Synthetic CV Profile");
+  // Parent profile deliberately uses a smaller/different skill set than the
+  // ATS variant so the jobs request can prove the ATS override.
+  await page.locator("#cv-skills").fill("Java, AWS");
+  await page.locator("#cv-targetRole").fill("Platform Engineer");
+  await page.locator("#cv-radius").selectOption("50");
   await page.getByRole("button", { name: "Speichern" }).click();
 
   await page.getByRole("button", { name: "Ziel ausführen" }).click();
@@ -158,14 +163,25 @@ async function runViewport(browser, name, viewport) {
 
   const params = jobUrls[0];
   const skills = params.get("skills") ?? "";
-  if (!skills.includes("Terraform") || !skills.includes("Java")) {
+  // Parent profile has only Java, AWS. The ATS variant adds Terraform and
+  // Docker, so their presence proves the ATS skills override won.
+  if (!skills.includes("Terraform") || !skills.includes("Docker")) {
     throw new Error(`ATS skills override missing: ${skills}`);
   }
-  if (params.get("targetRole") !== "Cloud Engineer") {
-    throw new Error(`ATS target role missing: ${params.get("targetRole")}`);
+  if (!skills.includes("Java") || !skills.includes("AWS")) {
+    throw new Error(`ATS skills did not preserve selected skills: ${skills}`);
+  }
+  if (params.get("targetRole") !== "Platform Engineer") {
+    throw new Error(`parent/ATS target role missing: ${params.get("targetRole")}`);
   }
   if (params.get("city") !== "Frankfurt") {
     throw new Error(`parent city missing: ${params.get("city")}`);
+  }
+  if (params.get("radiusKm") !== "50") {
+    throw new Error(`parent radius missing: ${params.get("radiusKm")}`);
+  }
+  if (params.get("employmentType") !== "full_time") {
+    throw new Error(`parent employment type missing: ${params.get("employmentType")}`);
   }
 
   await page.waitForTimeout(300);
