@@ -38,12 +38,23 @@ export async function cacheGet(key) {
   }
 }
 
+export async function cacheGetRaw(key) {
+  const raw = await cacheCommand("GET", key);
+  return typeof raw === "string" && raw ? raw : null;
+}
+
 export async function cacheSet(key, value, ttlSec = DEFAULT_TTL_SEC) {
   await cacheCommand("SETEX", key, ttlSec, JSON.stringify(value));
 }
 
 export async function cacheDel(key) {
   await cacheCommand("DEL", key);
+}
+
+/** SET key value NX PX ttlMs. Returns "OK" or null (busy/unavailable). */
+export async function cacheSetNx(key, value, ttlMs) {
+  const result = await cacheCommand("SET", key, String(value), "NX", "PX", Math.max(1, Math.floor(ttlMs)));
+  return result === "OK" ? "OK" : null;
 }
 
 /**

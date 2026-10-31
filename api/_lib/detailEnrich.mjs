@@ -13,6 +13,12 @@ import {
   startErrorDefinitelyNotStarted,
 } from "./sources/apify/client.mjs";
 import { ipQuotaConfig, releaseIpQuota, reserveIpQuota } from "./ipQuota.mjs";
+import {
+  acquireSingleFlight,
+  releaseSingleFlight,
+  singleFlightKey,
+  waitForLockRelease,
+} from "./lock.mjs";
 import { actorById, SOURCE_ID } from "./sources/apify/actors.mjs";
 
 const DETAIL_CACHE_PREFIX = "mj-detail:arbeitsagentur";
@@ -68,7 +74,7 @@ async function refundQuota(sessionKey, ipKey, amount) {
  *
  * @returns {Promise<{ jobs: Record<string, Job>, enrichedCount: number } | { error: string }>}
  */
-export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, ipScope } = {}) {
+async function enrichArbeitsagenturDetailsUnlocked(slugs, { clientIp, sessionId, ipScope } = {}) {
   const actor = actorById(SOURCE_ID);
   if (!actor) return { error: "source_not_found" };
 
@@ -210,4 +216,21 @@ export async function enrichArbeitsagenturDetails(slugs, { clientIp, sessionId, 
   }
 
   return { jobs, enrichedCount };
+}
+
+/** Single-flight wrapper: identical batches do not start duplicate paid runs. */
+export async function enrichArbeitsagenturDetails(slugs, options = {}) {
+  const key = singleFlightKey("apify-detail", [...(slugs ?? [])].sort());
+  const lock = await acquireSingleFlight(key, 55_000);
+  if (lock.status === "unavailable") return { error: "quota_unavailable" };
+  if (lock.status === "busy") {
+    // Wait briefly for the owner, but never start a second paid run.
+    await waitForLockRelease(key, 3_000);
+    return { error: "busy" };
+  }
+  try {
+    return await enrichArbeitsagenturDetailsUnlocked(slugs, options);
+  } finally {
+    await releaseSingleFlight(key, lock.token);
+  }
 }

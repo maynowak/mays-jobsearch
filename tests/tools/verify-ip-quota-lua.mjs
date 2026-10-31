@@ -53,54 +53,54 @@ async function main() {
 
   assert(
     "first reserve",
-    await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [2, 10, 600, 86400, 1, "2026-10-31", 600]),
+    await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [2, 10, 600, 86400, 1, "2026-10-31", 600, "scope"]),
     "1"
   );
-  assert("receipt stored", await redis(["GET", rKey]), "1|2026-10-31");
+  assert("receipt stored", await redis(["GET", rKey]), "1|2026-10-31|scope");
   assert(
     "second reserve",
-    await evalScript("/tmp/reserve.lua", [w1, d1, `mj-quota:ip:v1:test:r:${"b".repeat(32)}`], [2, 10, 600, 86400, 1, "2026-10-31", 600]),
+    await evalScript("/tmp/reserve.lua", [w1, d1, `mj-quota:ip:v1:test:r:${"b".repeat(32)}`], [2, 10, 600, 86400, 1, "2026-10-31", 600, "scope"]),
     "1"
   );
   assert(
     "third reserve blocked",
-    await evalScript("/tmp/reserve.lua", [w1, d1, `mj-quota:ip:v1:test:r:${"c".repeat(32)}`], [2, 10, 600, 86400, 1, "2026-10-31", 600]),
+    await evalScript("/tmp/reserve.lua", [w1, d1, `mj-quota:ip:v1:test:r:${"c".repeat(32)}`], [2, 10, 600, 86400, 1, "2026-10-31", 600, "scope"]),
     "-1"
   );
   assert(
     "release first",
-    await evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31"]),
+    await evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31", "scope"]),
     "1"
   );
   assert("window after release", await redis(["GET", w1]), "1");
   assert("daily after release", await redis(["GET", d1]), "1");
   assert(
     "double release no-op",
-    await evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31"]),
+    await evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31", "scope"]),
     "0"
   );
   assert("window after double release", await redis(["GET", w1]), "1");
 
   // Release in a later window must decrement the original window, not the new.
   await redis(["FLUSHALL"]);
-  await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600]);
-  await evalScript("/tmp/release.lua", [rKey, w2, w1, d1, d0], [2, "2026-10-31"]);
+  await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600, "scope"]);
+  await evalScript("/tmp/release.lua", [rKey, w2, w1, d1, d0], [2, "2026-10-31", "scope"]);
   assert("old window decremented", await redis(["GET", w1]), "0");
   assert("new window untouched", await redis(["GET", w2]), "");
 
   // Release after UTC midnight must decrement the original day, not the new one.
   await redis(["FLUSHALL"]);
-  await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600]);
-  await evalScript("/tmp/release.lua", [rKey, w1, w2, d0, d1], [1, "2026-10-30"]);
+  await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600, "scope"]);
+  await evalScript("/tmp/release.lua", [rKey, w1, w2, d0, d1], [1, "2026-10-30", "scope"]);
   assert("old day decremented", await redis(["GET", d1]), "0");
   assert("new day untouched", await redis(["GET", d0]), "");
 
   // Parallel releases: exactly one consumes the receipt.
   await redis(["FLUSHALL"]);
-  await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600]);
+  await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600, "scope"]);
   const parallel = await Promise.all([
-    evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31"]),
-    evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31"]),
+    evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31", "scope"]),
+    evalScript("/tmp/release.lua", [rKey, w1, w2, d1, d0], [1, "2026-10-31", "scope"]),
   ]);
   assert("parallel exactly one release", parallel.filter((value) => value === "1").length, 1);
   assert("counter not over-refunded", await redis(["GET", w1]), "0");
@@ -108,7 +108,7 @@ async function main() {
   await redis(["FLUSHALL"]);
   assert(
     "reserve after releases",
-    await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600]),
+    await evalScript("/tmp/reserve.lua", [w1, d1, rKey], [1, 10, 600, 86400, 1, "2026-10-31", 600, "scope"]),
     "1"
   );
 

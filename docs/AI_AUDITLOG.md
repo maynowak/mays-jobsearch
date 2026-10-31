@@ -1,3 +1,13 @@
+2026-10-31 · JM-COOKIELESS-QUOTA-02B-02A
+- Typ: Implementation/Cost-Control/Single-Flight/Privacy
+- Status: IMPLEMENTED / VERIFIED (unit + isolated Redis; live Vercel IP headers NOT VERIFIED)
+- Scope: Redis single-flight for paid sources, deduplication of identical concurrent provider calls, receipt scope binding for IP quotas.
+- Lock: `SET NX PX` with 128-bit owner token, compare-and-delete release, 20 s TTL for HTTP paid sources, 55 s for Apify, bounded busy wait; busy callers return `busy` and never start a second paid call. Cache hits bypass lock/reservations. Redis outage fails closed for paid sources; free sources unaffected.
+- Receipt: IP quota receipts now bind `<windowId>|<UTC-date>|<hmacScope>`; release rejects mismatched scope and is idempotent. Old receipts without scope become non-refundable (safe no-op); feature disabled by default.
+- AI-/Privacy-/Data-Flow impact: no new cookie, no browser identifier, no cache/TTL change, no provider change. `mj_session` remains; cookie removal is blocked pending live Vercel IP verification and product approval.
+- Tests: lock unit + real Redis lock primitives, receipt scope/window/day/parallel Redis tests, full suite 1008 passed/5 skipped, TypeScript/Build/`git diff --check`, budget/IP/lock Redis scripts, guest E2E 1440/390 PASS. Ten-request browser concurrency and live IP headers NOT VERIFIED.
+- Log: `docs/reports/JM-COOKIELESS-QUOTA-02B-02A-EXECUTION_LOG.md`
+
 2026-10-31 · JM-COOKIELESS-QUOTA-02B-01-REPAIR-01
 - Typ: Fix/Cost-Control/Security/Idempotency
 - Status: IMPLEMENTED / VERIFIED (isolated Redis; live Vercel headers NOT VERIFIED)

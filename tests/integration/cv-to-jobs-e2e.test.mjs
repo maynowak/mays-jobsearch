@@ -4,7 +4,10 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 // Mock all external dependencies
 vi.mock("../../api/_lib/cache.mjs", () => ({
   cacheGet: vi.fn(async () => null),
+  cacheGetRaw: vi.fn(async () => null),
   cacheSet: vi.fn(async () => undefined),
+  cacheSetNx: vi.fn(async () => "OK"),
+  cacheEval: vi.fn(async () => 1),
   cacheDel: vi.fn(async () => undefined),
   cacheIncr: vi.fn(async () => 1),
   cacheHIncrBy: vi.fn(async () => 1),

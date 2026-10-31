@@ -12,7 +12,7 @@ local nextWindow = redis.call('INCR', KEYS[1])
 if nextWindow == 1 then redis.call('EXPIRE', KEYS[1], tonumber(ARGV[3])) end
 local nextDaily = redis.call('INCR', KEYS[2])
 if nextDaily == 1 then redis.call('EXPIRE', KEYS[2], tonumber(ARGV[4])) end
-redis.call('SET', KEYS[3], ARGV[5]..'|'..ARGV[6], 'EX', tonumber(ARGV[7]))
+redis.call('SET', KEYS[3], ARGV[5]..'|'..ARGV[6]..'|'..ARGV[8], 'EX', tonumber(ARGV[7]))
 return 1
 `;
 
@@ -25,7 +25,12 @@ if not receipt then return 0 end
 local sep = string.find(receipt, '|', 1, true)
 if not sep then redis.call('DEL', KEYS[1]); return -1 end
 local windowId = string.sub(receipt, 1, sep - 1)
-local date = string.sub(receipt, sep + 1)
+local rest = string.sub(receipt, sep + 1)
+local sep2 = string.find(rest, '|', 1, true)
+if not sep2 then redis.call('DEL', KEYS[1]); return -1 end
+local date = string.sub(rest, 1, sep2 - 1)
+local receiptScope = string.sub(rest, sep2 + 1)
+if receiptScope ~= ARGV[3] then redis.call('DEL', KEYS[1]); return -2 end
 redis.call('DEL', KEYS[1])
 local windowKey = KEYS[2]
 if windowId ~= ARGV[1] then windowKey = KEYS[3] end
@@ -97,7 +102,7 @@ export async function reserveIpQuota(provider, scope, nowSec = Math.floor(Date.n
   const result = await cacheEval(
     RESERVE_SCRIPT,
     [keys.window, keys.daily, receiptKey(provider, receipt, version)],
-    [config.windowMax, config.dailyMax, keys.windowTtl, keys.dailyTtl, keys.windowId, keys.date, config.windowSec]
+    [config.windowMax, config.dailyMax, keys.windowTtl, keys.dailyTtl, keys.windowId, keys.date, config.windowSec, scope]
   );
   if (result === null) return { status: "quota_unavailable" };
   if (result === -1) return { status: "limit_reached" };
@@ -133,11 +138,11 @@ export async function releaseIpQuota(
       current.daily,
       previousDay.daily,
     ],
-    [current.windowId, current.date]
+    [current.windowId, current.date, scope]
   );
   if (result === null) return { status: "quota_unavailable" };
   if (result === 0) return { status: "missing" };
-  if (result === -1) return { status: "invalid_scope" };
+  if (result === -1 || result === -2) return { status: "invalid_scope" };
   return { status: "allowed" };
 }
 

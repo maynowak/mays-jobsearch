@@ -83,7 +83,8 @@ describe("JM-COOKIELESS-QUOTA-02B-01: IP quota", () => {
     expect(String(script)).toContain("DECR");
     expect(keys).toHaveLength(5);
     expect(keys[0]).toMatch(new RegExp(`:r:${receipt}$`));
-    expect(args).toHaveLength(2);
+    expect(args).toHaveLength(3);
+    expect(args[2]).toBe(scope);
 
     vi.mocked(cacheEval).mockResolvedValue(0);
     await expect(
