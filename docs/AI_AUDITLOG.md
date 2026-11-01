@@ -1,3 +1,14 @@
+2026-11-01 · JM-BA-DIRECT-API-READINESS-01
+- Typ: Bundesagentur für Arbeit/Direct-API/Readiness/Legal-Access/Architektur
+- Status: **BLOCKED** für produktive Integration — technisch teilweise machbar, Zugang/Nutzungsrecht nicht geklärt; keine Codeänderung, kein Deployment, keine Live-Jobabfrage, kein Apify-Run
+- Recherche: `bundesAPI/jobsuche-api` README/OpenAPI 2.1.0, GitHub-Issue #69 (v6/v4-Schemaabweichungen), BA-Nutzungsbedingungen Stand 08.07.2026, BA-HR-BA-XML-Seite, netzpolitik.org-Bericht 30.11.2021, bestehende BA-Reports.
+- Befund: Die dokumentierte Schnittstelle ist keine offizielle BA-API. `X-API-Key: jobboerse-jobsuche` ist die öffentliche Client-ID der BA-Jobsuche-App, kein Drittanbieter-Zugangsrecht. BA §2a(3) verbietet Robots/Webspider und zweckwidrige Nutzung bestehender Schnittstellen zur Datensammlung; die BA bezeichnete die Schnittstelle als nicht für massenhaften technischen Zugriff konzipiert. HR-BA-XML ist offiziell, aber nur für die Einlieferung eigener Stellen an die BA, nicht für einen Read-/Search-API-Zugang.
+- Technik: Suche `/pc/v6/jobs` bzw. `/pc/v4/app/jobs`, Details `/pc/v4/jobdetails/{base64(refnr)}`; Such-/Detailfelder weichen von OpenAPI ab (`ergebnisliste` vs. `stellenangebote`, `referenznummer` vs. `refnr`, `stellenangebotsTitel`/`firma`/`stellenlokationen`/`stellenangebotsBeschreibung`). Mapping auf `slug: aa-<refnr>` und bestehendes Job-Modell möglich, benötigt aber duale Schema-Normalisierung.
+- Architekturvorschlag: optionale Source `arbeitsagentur-direct`, Default aus, unabhängig von Apify, gemeinsame Referenznummern-Deduplizierung, gemeinsamer Detail-Cache, kein zusätzlicher Apify-Detail-Run bei vorhandener direkt/gecachter Beschreibung, eigene Diagnose (`http_403`, `http_429`, `schema_mismatch`, `timeout`, `disabled`). Keine Implementierung.
+- Browser/Citizen-Nuance: Manuelle Nutzung der BA im Browser ist erlaubt; ein automatisiertes App-/Browser-Abruf ist damit nicht automatisch erlaubt. Der direkte REST-Zugriff bleibt technisch 403/CORS-blockiert; keine Header-Simulation/Umgehung.
+- Entscheidung: **BLOCKED** bis schriftliche BA-Freigabe/Kooperations-/Lizenzmodell, rechtliche Prüfung, stabile Schemata und offizieller Zugang. Bestehende Apify-Route bleibt unverändert.
+- Log: `docs/reports/JM-BA-DIRECT-API-READINESS-01.md`
+
 2026-11-01 · JM-MOBILE-NAV-UX-01
 - Typ: Mobile Navbar/Auth-UX/Responsive Regression + Dokumentationskorrektur Apify-Limit
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, kein Release
