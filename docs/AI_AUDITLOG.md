@@ -1,3 +1,13 @@
+2026-11-01 · JM-COVER-LETTER-05-RELEASE-GATE
+- Typ: Release-Gate/Audit/Privacy/Model-Routing
+- Status: **YELLOW — technisch weitgehend abgenommen, Produktionsfreigabe NO-GO**
+- P0 fix: Frontend sendet `options.model`; `api/cover-letter.mjs` las nur `body.model`. Typisierter `options.model` ist jetzt primär, `body.model` bleibt Legacy-Fallback; ungültige Werte 400. Regressionstest: Modell erreicht `chat()`, Fallback-Modell wird durchgereicht.
+- P1 fix: 30.000-Zeichen-CV-Limit wurde zuvor still gekürzt. Browser und Server lehnen zu lange CV-Texte jetzt transparent ab; keine KI-Zusammenfassung, kein PDF-/Hash-/ID-Versand.
+- Privacy: nur ausgewählter CV, anonymisiert als Standard, unredigierte Option weiterhin nicht produktionsfreigegeben; keine Redis-/RIS-/Cookie-Speicherung; keine Prompt-/CV-Inhalte in Logs. Datenschutztexte/Rechtsprüfung offen.
+- Tests: API 12, LetterModal 29, Gesamtsuite 1096 passed/5 skipped, TypeScript/Build/diff PASS; Browser-E2E Desktop 1440/Mobil 390 PASS (1 Jobs, 0 Job-Details, 1 CV-Profil, 0 Cover-Letter vor Start, 1 danach, selected description/CV text im Request, keine Datei-/Hash-/Interviewdaten). `LIVE PROVIDER TEST: NOT EXECUTED`.
+- Gates: G01/G02/G03/G04/G06/G07/G08 PASS; G05 BLOCKED (unredigierte CV-Option/Rechtsgrundlage), G09 NOT VERIFIED, G10 BLOCKED (Datenschutztexte/Rechtsfreigabe).
+- Log: `docs/reports/JM-COVER-LETTER-05-RELEASE-GATE.md`
+
 2026-11-01 · JM-COVER-LETTER-04
 - Typ: AI-Generation/Privacy/CV-Context/Race-Safety
 - Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
