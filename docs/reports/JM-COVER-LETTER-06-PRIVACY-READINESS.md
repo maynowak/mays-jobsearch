@@ -259,5 +259,5 @@ G09 bis zu einem autorisierten Live-Test unverifiziert.
 ## 11. Git
 
 - Fail-Closed-Korrektur: `3c54742`
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `96559c1`
 - Kein Deployment, keine AWS-/RIS-/Cognito-Änderung.
