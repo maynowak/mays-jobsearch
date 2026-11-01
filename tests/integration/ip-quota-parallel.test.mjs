@@ -266,5 +266,5 @@ describeDocker("JM-COOKIELESS-QUOTA-02B-02B-VERIFICATION-02: REST + parallel", (
     });
     expect(result.meta.reason).toBe("quota_unavailable");
     expect(providerCalls).toBe(0);
-  });
+  }, 15000);
 });

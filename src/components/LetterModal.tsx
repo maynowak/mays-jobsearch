@@ -11,9 +11,32 @@ import {
 } from "../lib/jobDescriptionReview";
 import { readCvProfileLists } from "../lib/cvProfileStore";
 import { validateCvFile } from "../lib/cvFileValidation";
+import { extractPdfText } from "../lib/pdf";
+import { anonymizeText } from "../lib/anonymize";
+import {
+  buildJobContext,
+  buildTargetRoles,
+  cvIsUsable,
+  type CoverLetterLength,
+  type CoverLetterStyle,
+} from "../lib/coverLetterRequest";
+import { type DescriptionOrigin } from "../lib/jobDescriptionReview";
 import SourceBadge from "./SourceBadge";
 
 export type LetterCvChoice = "none" | "existing";
+
+export interface LetterCandidateDraft {
+  skills: string;
+  experience: string;
+  qualifications: string;
+  motivation: string;
+  startDate: string;
+  salaryExpectation: string;
+  style: CoverLetterStyle;
+  length: CoverLetterLength;
+  cvAnonymize: boolean;
+  cvRawConfirmed: boolean;
+}
 
 export interface LetterPreparationContext {
   jobSlug: string;
@@ -21,6 +44,7 @@ export interface LetterPreparationContext {
   review: DescriptionReviewState | null;
   cvChoice: LetterCvChoice;
   selectedCvId: string | null;
+  candidateDraft?: LetterCandidateDraft;
 }
 
 interface Props {
@@ -33,6 +57,7 @@ interface Props {
   cvDocuments?: CvDocument[];
   initialContext?: LetterPreparationContext | null;
   onAddCv?: (file: File, context: LetterPreparationContext) => void;
+  onProcessCv?: (id: string, context: LetterPreparationContext) => void;
   onClose: () => void;
 }
 
@@ -51,9 +76,11 @@ export default function LetterModal({
   cvDocuments = [],
   initialContext,
   onAddCv,
+  onProcessCv,
   onClose,
 }: Props) {
   const { t, lang } = useLang();
+  void prepare; // CL-01 compatibility; interview prompts are no longer part of the letter.
   const headingId = useId();
   const helpId = useId();
   const cvGroupId = useId();
@@ -82,6 +109,41 @@ export default function LetterModal({
     initialContextForJob?.selectedCvId ?? null
   );
   const [cvError, setCvError] = useState<string | null>(null);
+  const [cvAnonymize, setCvAnonymize] = useState(
+    initialContextForJob?.candidateDraft?.cvAnonymize ?? true
+  );
+  const [cvRawConfirmed, setCvRawConfirmed] = useState(
+    initialContextForJob?.candidateDraft?.cvRawConfirmed ?? false
+  );
+  const [manualSkills, setManualSkills] = useState(
+    initialContextForJob?.candidateDraft?.skills ?? ""
+  );
+  const [manualExperience, setManualExperience] = useState(
+    initialContextForJob?.candidateDraft?.experience ?? ""
+  );
+  const [manualQualifications, setManualQualifications] = useState(
+    initialContextForJob?.candidateDraft?.qualifications ?? ""
+  );
+  const [manualMotivation, setManualMotivation] = useState(
+    initialContextForJob?.candidateDraft?.motivation ?? ""
+  );
+  const [startDate, setStartDate] = useState(
+    initialContextForJob?.candidateDraft?.startDate ?? ""
+  );
+  const [salaryExpectation, setSalaryExpectation] = useState(
+    initialContextForJob?.candidateDraft?.salaryExpectation ?? ""
+  );
+  const [style, setStyle] = useState<CoverLetterStyle>(
+    initialContextForJob?.candidateDraft?.style ?? "professional"
+  );
+  const [length, setLength] = useState<CoverLetterLength>(
+    initialContextForJob?.candidateDraft?.length ?? "one_page"
+  );
+  const [generationError, setGenerationError] = useState("");
+  const [generatedText, setGeneratedText] = useState("");
+  const [edited, setEdited] = useState(false);
+  const [regenerateWarning, setRegenerateWarning] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<"cv" | "model">("model");
   const cvFileInputRef = useRef<HTMLInputElement>(null);
   const previousJobSlugRef = useRef(job.slug);
   const originalReview = useMemo(
@@ -89,6 +151,13 @@ export default function LetterModal({
     [job]
   );
   const visibleReview = review ?? originalReview;
+  const selectedCv =
+    cvChoice === "existing" && selectedCvId
+      ? cvDocuments.find((document) => document.id === selectedCvId) ?? null
+      : null;
+  const selectedCvReady = cvIsUsable(selectedCv);
+  const selectedDescription = visibleReview.selected;
+  const selectedOrigin = (selectedDescription?.origin ?? "original") as DescriptionOrigin;
 
   // A new job must never inherit the previous job's letter, review or CV
   // selection. The initial mount is excluded so a preserved context survives.
@@ -107,7 +176,50 @@ export default function LetterModal({
     setCvChoice("none");
     setSelectedCvId(null);
     setCvError(null);
+    setCvAnonymize(true);
+    setCvRawConfirmed(false);
+    setManualSkills("");
+    setManualExperience("");
+    setManualQualifications("");
+    setManualMotivation("");
+    setStartDate("");
+    setSalaryExpectation("");
+    setStyle("professional");
+    setLength("one_page");
+    setGenerationError("");
+    setGeneratedText("");
+    setEdited(false);
+    setRegenerateWarning(false);
   }, [job.slug]);
+
+  // Editing the job description, candidate basis or options invalidates a
+  // completed draft. A late model response must not repopulate it.
+  useEffect(() => {
+    if (phase === "intro") return;
+    requestSeqRef.current += 1;
+    inFlightRef.current = false;
+    setPhase("intro");
+    setLetter("");
+    setGeneratedText("");
+    setEdited(false);
+    setRegenerateWarning(false);
+    setGenerationError("");
+  }, [
+    cvChoice,
+    selectedCvId,
+    descriptionInput,
+    review,
+    manualSkills,
+    manualExperience,
+    manualQualifications,
+    manualMotivation,
+    startDate,
+    salaryExpectation,
+    style,
+    length,
+    cvAnonymize,
+    cvRawConfirmed,
+  ]);
 
   useEffect(() => {
     if (!selectedCvId) return;
@@ -175,34 +287,96 @@ export default function LetterModal({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const splitManualList = (value: string): string[] =>
+    value
+      .split(/[,;\n]+/)
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .slice(0, 50);
+
   const handleStart = async () => {
     if (inFlightRef.current || phase === "loading") return;
+
+    if (visibleReview.confirmation === "required") {
+      setGenerationError(t("letter.reviewUncertain"));
+      return;
+    }
+    if (cvChoice === "existing" && !selectedCv) {
+      setGenerationError(t("letter.cvNeedsProcessing"));
+      return;
+    }
+    if (selectedCv && !selectedCvReady) {
+      setGenerationError(t("letter.cvNeedsProcessing"));
+      return;
+    }
+    if (selectedCv && !cvAnonymize && !cvRawConfirmed) {
+      setGenerationError(t("letter.cvRawConfirmRequired"));
+      return;
+    }
+
     inFlightRef.current = true;
     const requestSeq = requestSeqRef.current + 1;
     requestSeqRef.current = requestSeq;
+    setGenerationError("");
     setPhase("loading");
+    setLoadingStage(selectedCv ? "cv" : "model");
     setError("");
     setLetter("");
     setCopied(false);
     setFallbackNote(false);
+    setRegenerateWarning(false);
 
     try {
-      const { data: text, usedFallback } = await withModelFallback({
+      let cvText: string | undefined;
+      if (selectedCv) {
+        const raw = await extractPdfText(selectedCv.file);
+        if (requestSeq !== requestSeqRef.current) return;
+        const normalized = String(raw ?? "")
+          .replace(/\u0000/g, "")
+          .trim()
+          .slice(0, 30000);
+        if (!normalized) throw new Error(t("letter.cvTextEmpty"));
+        cvText = cvAnonymize ? anonymizeText(normalized) : normalized;
+      }
+      if (requestSeq !== requestSeqRef.current) return;
+
+      const candidate = {
+        mode: selectedCv ? ("cv" as const) : ("manual" as const),
+        skills: splitManualList(manualSkills),
+        experience: manualExperience.trim(),
+        qualifications: manualQualifications.trim(),
+        motivation: manualMotivation.trim(),
+        ...(cvText ? { cv_text: cvText, cv_anonymized: cvAnonymize } : {}),
+        ...(startDate.trim() ? { start_date: startDate.trim() } : {}),
+        ...(salaryExpectation.trim() ? { salary_expectation: salaryExpectation.trim() } : {}),
+      };
+      const descriptionText = selectedDescription?.text ?? visibleReview.originalText ?? "";
+      const request = {
+        job: buildJobContext(job, descriptionText, selectedOrigin),
+        candidate,
+        options: {
+          language: (lang === "de" ? "German" : "English") as "German" | "English",
+          style,
+          length,
+          target_roles: buildTargetRoles(profile),
+        },
+      };
+
+      setLoadingStage("model");
+      const { data: result, usedFallback } = await withModelFallback({
         initialModel: model,
         availableModels,
         recommendedModel,
         request: (m, attempt) =>
           generateCoverLetter(
-            profile,
-            job,
-            prepare,
-            lang === "de" ? "German" : "English",
-            m,
+            { ...request, options: { ...request.options, model: m } },
             attempt
           ),
       });
       if (requestSeq !== requestSeqRef.current) return;
-      setLetter(text);
+      setLetter(result.letter);
+      setGeneratedText(result.letter);
+      setEdited(false);
       setFallbackNote(usedFallback);
       setPhase("done");
     } catch (err) {
@@ -242,6 +416,18 @@ export default function LetterModal({
     review,
     cvChoice,
     selectedCvId,
+    candidateDraft: {
+      skills: manualSkills,
+      experience: manualExperience,
+      qualifications: manualQualifications,
+      motivation: manualMotivation,
+      startDate,
+      salaryExpectation,
+      style,
+      length,
+      cvAnonymize,
+      cvRawConfirmed,
+    },
   });
 
   const handleNoCv = () => {
@@ -253,6 +439,8 @@ export default function LetterModal({
   const handleSelectCv = (id: string) => {
     setCvChoice("existing");
     setSelectedCvId(id);
+    setCvAnonymize(true);
+    setCvRawConfirmed(false);
     setCvError(null);
   };
 
@@ -275,6 +463,21 @@ export default function LetterModal({
     }
     setCvError(null);
     onAddCv?.(file, buildPreparationContext());
+  };
+
+  const handleLetterChange = (value: string) => {
+    setLetter(value);
+    setEdited(value !== generatedText);
+  };
+
+  const handleRegenerate = () => {
+    if (inFlightRef.current || phase === "loading") return;
+    if (edited && !regenerateWarning) {
+      setRegenerateWarning(true);
+      return;
+    }
+    setRegenerateWarning(false);
+    void handleStart();
   };
 
   const handleCopy = () => {
@@ -313,6 +516,19 @@ export default function LetterModal({
     ? `${visibleReview.originalText.slice(0, 900).trimEnd()}…`
     : visibleReview.originalText;
   const reasonKey = (reason: ReviewReason) => `letter.reason.${reason}`;
+  const completedDescriptionIsLimited =
+    !selectedDescription || selectedDescription.completeness !== "sufficient";
+  const manualSummary =
+    [
+      manualSkills.trim() ? t("letter.manualSkills") : "",
+      manualExperience.trim() ? t("letter.manualExperience") : "",
+      manualQualifications.trim() ? t("letter.manualQualifications") : "",
+      manualMotivation.trim() ? t("letter.manualMotivation") : "",
+      startDate.trim() ? t("letter.startDate") : "",
+      salaryExpectation.trim() ? t("letter.salaryExpectation") : "",
+    ]
+      .filter(Boolean)
+      .join(" · ") || t("letter.noManualData");
   const location =
     formatGermanLocation(job.location ?? []) ||
     (job.remote ? t("match.remote") : t("match.locationNotStated"));
@@ -426,6 +642,45 @@ export default function LetterModal({
                   onChange={handleCvFileChange}
                 />
               </div>
+              {selectedCv && !selectedCvReady && (
+                <div className="letter-cv-privacy">
+                  <p className="letter-review-warning">{t("letter.cvNeedsProcessing")}</p>
+                  <button
+                    type="button"
+                    className="ats-evaluate-btn"
+                    onClick={() => onProcessCv?.(selectedCv.id, buildPreparationContext())}
+                    disabled={!onProcessCv}
+                  >
+                    {t("letter.cvProcessNow")}
+                  </button>
+                </div>
+              )}
+              {selectedCv && selectedCvReady && (
+                <div className="letter-cv-privacy">
+                  <label className="letter-check">
+                    <input
+                      type="checkbox"
+                      checked={cvAnonymize}
+                      onChange={(event) => {
+                        setCvAnonymize(event.target.checked);
+                        if (!event.target.checked) setCvRawConfirmed(false);
+                      }}
+                    />
+                    <span>{t("letter.cvAnonymize")}</span>
+                  </label>
+                  {!cvAnonymize && (
+                    <label className="letter-check letter-check--warning">
+                      <input
+                        type="checkbox"
+                        checked={cvRawConfirmed}
+                        onChange={(event) => setCvRawConfirmed(event.target.checked)}
+                      />
+                      <span>{t("letter.cvRawConfirm")}</span>
+                    </label>
+                  )}
+                  <p className="letter-hint">{t("letter.cvAnonymizeHint")}</p>
+                </div>
+              )}
               {cvError && (
                 <p className="letter-review-warning" role="alert">
                   {cvError}
@@ -535,6 +790,116 @@ export default function LetterModal({
               </div>
             </div>
 
+            <div className="letter-candidate">
+              <h5>{t("letter.candidateDetails")}</h5>
+              <p className="letter-hint">{t("letter.candidateHint")}</p>
+              <div className="letter-candidate-grid">
+                <label className="letter-field">
+                  <span>{t("letter.manualSkills")}</span>
+                  <input
+                    value={manualSkills}
+                    onChange={(event) => setManualSkills(event.target.value)}
+                    placeholder={t("letter.manualSkillsPh")}
+                  />
+                </label>
+                <label className="letter-field">
+                  <span>{t("letter.startDate")}</span>
+                  <input
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                    placeholder={t("letter.startDatePh")}
+                  />
+                </label>
+                <label className="letter-field">
+                  <span>{t("letter.manualExperience")}</span>
+                  <textarea
+                    rows={2}
+                    value={manualExperience}
+                    onChange={(event) => setManualExperience(event.target.value)}
+                    placeholder={t("letter.manualExperiencePh")}
+                  />
+                </label>
+                <label className="letter-field">
+                  <span>{t("letter.manualQualifications")}</span>
+                  <textarea
+                    rows={2}
+                    value={manualQualifications}
+                    onChange={(event) => setManualQualifications(event.target.value)}
+                    placeholder={t("letter.manualQualificationsPh")}
+                  />
+                </label>
+                <label className="letter-field">
+                  <span>{t("letter.manualMotivation")}</span>
+                  <textarea
+                    rows={2}
+                    value={manualMotivation}
+                    onChange={(event) => setManualMotivation(event.target.value)}
+                    placeholder={t("letter.manualMotivationPh")}
+                  />
+                </label>
+                <label className="letter-field">
+                  <span>{t("letter.salaryExpectation")}</span>
+                  <input
+                    value={salaryExpectation}
+                    onChange={(event) => setSalaryExpectation(event.target.value)}
+                    placeholder={t("letter.salaryExpectationPh")}
+                  />
+                </label>
+              </div>
+
+              <div className="letter-candidate-options">
+                <label className="letter-field">
+                  <span>{t("letter.style")}</span>
+                  <select value={style} onChange={(event) => setStyle(event.target.value as CoverLetterStyle)}>
+                    <option value="professional">{t("letter.style.professional")}</option>
+                    <option value="warm">{t("letter.style.warm")}</option>
+                    <option value="concise">{t("letter.style.concise")}</option>
+                  </select>
+                </label>
+                <label className="letter-field">
+                  <span>{t("letter.length")}</span>
+                  <select value={length} onChange={(event) => setLength(event.target.value as CoverLetterLength)}>
+                    <option value="short">{t("letter.length.short")}</option>
+                    <option value="one_page">{t("letter.length.one_page")}</option>
+                    <option value="detailed">{t("letter.length.detailed")}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="letter-generation-summary">
+              <h5>{t("letter.generationSummary")}</h5>
+              <dl>
+                <dt>{t("letter.dataJob")}</dt>
+                <dd>{job.company_name || t("letter.companyUnknown")} · {job.title || t("match.unknownRole")}</dd>
+                <dt>{t("letter.dataDescription")}</dt>
+                <dd>
+                  {t(`letter.origin.${selectedOrigin}`)} ·{" "}
+                  {completenessLabel(selectedDescription?.completeness ?? "missing")}
+                </dd>
+                <dt>{t("letter.dataCv")}</dt>
+                <dd>
+                  {selectedCv
+                    ? `${selectedCv.name} · ${cvAnonymize ? t("letter.cvAnonymized") : t("letter.cvRaw")}`
+                    : t("letter.cvNone")}
+                </dd>
+                <dt>{t("letter.dataManual")}</dt>
+                <dd>{manualSummary}</dd>
+                <dt>{t("letter.dataModel")}</dt>
+                <dd>{model || t("letter.modelDefault")}</dd>
+              </dl>
+              {completedDescriptionIsLimited && (
+                <p className="letter-review-warning">{t("letter.limitedDescription")}</p>
+              )}
+              <p className="letter-hint">{t("letter.externalProcessing")}</p>
+            </div>
+
+            {generationError && (
+              <p className="letter-review-warning" role="alert">
+                {generationError}
+              </p>
+            )}
+
             <p id={helpId} className="letter-notice" role="note">
               {t("letter.preparationNotice")}
             </p>
@@ -547,7 +912,7 @@ export default function LetterModal({
                 onClick={() => void handleStart()}
                 data-autofocus
               >
-                {t("letter.start")}
+                {t("letter.generate")}
               </button>
             </div>
           </div>
@@ -556,7 +921,7 @@ export default function LetterModal({
         {phase === "loading" && (
           <div className="letter-loading" role="status" aria-live="polite">
             <span className="spinner" />
-            {t("letter.loading")}
+            {loadingStage === "cv" ? t("letter.processingCv") : t("letter.loading")}
           </div>
         )}
 
@@ -576,7 +941,22 @@ export default function LetterModal({
           <p className="fallback-note letter-fallback-note">{t("model.fallbackNote")}</p>
         )}
 
-        {phase === "done" && <div className="letter-output">{letter}</div>}
+        {phase === "done" && (
+          <div className="letter-editor-wrap">
+            <textarea
+              className="letter-editor"
+              value={letter}
+              onChange={(event) => handleLetterChange(event.target.value)}
+              aria-label={t("letter.editorAria")}
+            />
+            <p className="letter-hint">{t("letter.editHint")}</p>
+            {regenerateWarning && (
+              <p className="letter-review-warning" role="alert">
+                {t("letter.regenerateWarning")}
+              </p>
+            )}
+          </div>
+        )}
 
         {phase === "done" && (
           <div className="modal-actions">
@@ -585,6 +965,9 @@ export default function LetterModal({
             </button>
             <button type="button" className="btn-ghost" onClick={handleDownload}>
               {t("letter.download")}
+            </button>
+            <button type="button" className="btn-ghost" onClick={handleRegenerate}>
+              {regenerateWarning ? t("letter.confirmRegenerate") : t("letter.regenerate")}
             </button>
           </div>
         )}

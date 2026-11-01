@@ -6,6 +6,10 @@ import type {
   Profile,
   SuggestedProfile,
 } from "./types";
+import type {
+  CoverLetterGenerationRequest,
+  CoverLetterGenerationResponse,
+} from "./lib/coverLetterRequest";
 import { parseSkills } from "./lib/skills";
 
 export class ApiError extends Error {
@@ -285,21 +289,16 @@ export async function createProfile(
 }
 
 export async function generateCoverLetter(
-  profile: Profile,
-  job: Job,
-  prepareQuestion: string,
-  language: string = "English",
-  model?: string | null,
+  request: CoverLetterGenerationRequest,
   attempt?: number
-): Promise<string> {
+): Promise<CoverLetterGenerationResponse> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (attempt && attempt > 1) headers["x-mj-attempt"] = String(attempt);
-  const data = await apiFetch<{ letter: string }>("/api/cover-letter", {
+  return apiFetch<CoverLetterGenerationResponse>("/api/cover-letter", {
     method: "POST",
     headers,
-    body: JSON.stringify({ ...profile, job, prepareQuestion, language, ...(model ? { model } : {}) }),
+    body: JSON.stringify(request),
   });
-  return data.letter;
 }
 
 export async function subscribeAlert(email: string, profile: Profile): Promise<string> {

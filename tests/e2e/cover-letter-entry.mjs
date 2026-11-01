@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-03");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-04");
 const fixturePdf = resolve(repoRoot, "tests/fixtures/cv/synthetic-cv.pdf");
 const port = 5201;
 const base = `http://localhost:${port}`;
@@ -152,7 +152,7 @@ async function runViewport(browser, name, viewport) {
   await page.locator(".match-card .letter-btn").first().click();
   await page.waitForSelector('[role="dialog"]');
   if (coverLetterCalls !== 0) throw new Error(`${name}: AI call on dialog open`);
-  if (!(await page.getByText("Vorläufige Version").isVisible())) throw new Error(`${name}: preparation view missing`);
+  if (!(await page.getByText("Anschreiben-Assistent").isVisible())) throw new Error(`${name}: preparation view missing`);
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-intro.png`), fullPage: false });
 
   await page.getByLabel("Weitere Informationen zur Stellenanzeige einfügen").fill(
@@ -191,8 +191,33 @@ async function runViewport(browser, name, viewport) {
   await page.locator('[role="dialog"]').evaluate((element) => { element.scrollTop = 0; });
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-cv-return.png`), fullPage: false });
 
-  // CL-03 abort path: start a second upload, return before processing and keep
-  // the prepared description/review context.
+  // CL-04: generate with the selected, processed CV and verified description.
+  await page.getByRole("button", { name: "Anschreiben generieren" }).click();
+  await page.waitForFunction(() => {
+    const editor = document.querySelector('textarea[aria-label="Bearbeitbares Anschreiben"]');
+    return editor instanceof HTMLTextAreaElement && editor.value.includes("vielen Dank für die Einladung.");
+  });
+  if (coverLetterCalls !== 1) throw new Error(`${name}: expected one cover-letter call, got ${coverLetterCalls}`);
+  if (profileCalls !== 1) throw new Error(`${name}: generation made an additional profile request`);
+  const coverBody = JSON.stringify(coverLetterBodies[0] || {});
+  if (!coverBody.includes("Position als Frontend Engineer bei Example GmbH in Berlin. Du entwickelst React-Anwendungen")) {
+    throw new Error(`${name}: selected description was not sent`);
+  }
+  if (!coverBody.includes("Synthetic") || !coverBody.includes("cv_text")) {
+    throw new Error(`${name}: selected CV text was not sent`);
+  }
+  if (coverBody.includes("synthetic-cv.pdf") || coverBody.includes("cvHash") || coverBody.includes("processedAt")) {
+    throw new Error(`${name}: CV file/hash metadata was sent`);
+  }
+  if (coverBody.includes("PRAKTISCHE FRAGE") || coverBody.includes("ANTWORTSKIZZE")) {
+    throw new Error(`${name}: interview section was sent`);
+  }
+  await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-generated.png`), fullPage: false });
+  await page.getByRole("button", { name: "Schließen" }).click();
+  await page.waitForSelector('[role="dialog"]', { state: "detached" });
+
+  // CL-03 abort path: reopen, start a new CV upload, return before processing.
+  await page.locator(".match-card .letter-btn").first().click();
   const abortChooserPromise = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Neuen Lebenslauf hinzufügen" }).click();
   const abortChooser = await abortChooserPromise;
@@ -200,15 +225,10 @@ async function runViewport(browser, name, viewport) {
   await page.locator(".cv-anonymization-choice").waitFor();
   await page.getByRole("button", { name: "Zurück zum Anschreiben" }).click();
   await page.waitForSelector('[role="dialog"]');
-  if ((await page.getByLabel("Weitere Informationen zur Stellenanzeige einfügen").inputValue()) === "") {
-    throw new Error(`${name}: review text lost after aborting CV workflow`);
-  }
   if (profileCalls !== 1) throw new Error(`${name}: aborted CV workflow started processing`);
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-cv-abort.png`), fullPage: false });
-
   await page.getByRole("button", { name: "Schließen" }).click();
   await page.waitForSelector('[role="dialog"]', { state: "detached" });
-  if (coverLetterCalls !== 0) throw new Error(`${name}: AI call on dialog close`);
 
   await page.getByRole("button", { name: /Weitere gefundene Jobs ansehen/ }).click();
   await page.waitForSelector(".remaining-card");
@@ -218,22 +238,10 @@ async function runViewport(browser, name, viewport) {
   }
   await page.locator(".remaining-card .letter-btn").first().click();
   await page.waitForSelector('[role="dialog"]');
-  if (coverLetterCalls !== 0) throw new Error(`${name}: AI call on remaining dialog open`);
+  if (coverLetterCalls !== 1) throw new Error(`${name}: unexpected additional AI call on remaining dialog open`);
   await page.getByRole("button", { name: "Schließen" }).click();
   await page.waitForSelector('[role="dialog"]', { state: "detached" });
 
-  await page.locator(".match-card .letter-btn").first().click();
-  await page.getByRole("button", { name: "Vorläufiges Anschreiben erstellen" }).click();
-  await page.waitForSelector("text=vielen Dank für die Einladung.");
-  if (coverLetterCalls !== 1) throw new Error(`${name}: expected one AI call, got ${coverLetterCalls}`);
-  const coverBody = JSON.stringify(coverLetterBodies);
-  if (coverBody.includes("Position als Frontend Engineer bei Example GmbH in Berlin. Du entwickelst React-Anwendungen")) {
-    throw new Error(`${name}: enriched review text was sent to the model`);
-  }
-  if (coverBody.includes("synthetic-cv.pdf") || coverBody.includes("cvHash") || coverBody.includes("processedAt")) {
-    throw new Error(`${name}: CV selection was sent to the model`);
-  }
-  await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-generated.png`), fullPage: false });
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   if (overflow) throw new Error(`${name}: horizontal overflow detected`);

@@ -697,6 +697,17 @@ export default function App() {
     setCvState((prev) => ({ ...prev, step: "creating-profile", isProcessing: false }));
   };
 
+  const handleProcessCvFromLetter = (id: string, context: LetterPreparationContext) => {
+    if (!letterJob) return;
+    setPendingLetterContext({
+      job: letterJob.job,
+      prepare: letterJob.prepare,
+      context: { ...context, cvChoice: "existing", selectedCvId: id },
+    });
+    setLetterJob(null);
+    handleCvProcess(id);
+  };
+
   // CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — Session-Listen
   // + Legacy-localStorage + Dokumente/Workflow-States. Danach ist ein
   // erneutes Hochladen noetig (Hinweis im Bestaetigungsdialog).
@@ -3087,6 +3098,7 @@ export default function App() {
               cvDocuments={cvState.documents}
               initialContext={letterJob.context}
               onAddCv={handleAddCvFromLetter}
+              onProcessCv={handleProcessCvFromLetter}
               onClose={() => setLetterJob(null)}
             />
           )}
