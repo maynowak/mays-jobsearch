@@ -1,3 +1,17 @@
+2026-11-01 · JM-COVER-LETTER-UX-01
+- Typ: Cover-Letter-UX/Model-Auswahl/Guided-Revision/API/Privacy/Faktentreue
+- Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, G05/G09/G10 unverändert
+- Scroll/Fokus: Ursache war der `data-autofocus` auf dem Generierungsbutton am Dialogende; der Fokus scrollte den `.modal-box`-Container nach unten. Fix: fokussierbare Dialogüberschrift (`tabIndex=-1`), `focus({preventScroll:true})`, `scrollTop=0` synchron + per rAF, Fokusfalle beginnt an der Überschrift, Scroll-Lock/Fokus-Rückgabe erhalten. Rückkehr aus CV-Upload stellt den Vorbereitungskontext inklusive lokalem Modell wieder her.
+- Modellwahl: `App` übergibt `modelsState`, `models`, `defaultModel`; bestehender `ModelSelector` lokal im LetterModal. Modellwechsel startet keinen Request, löscht keinen Entwurf und wird als `options.model` an die nächste ausdrückliche Aktion übergeben. Fallback-/Free-Model-Prüfungen unverändert.
+- Aktionen: `operation:"generate"` erzeugt neu ohne alten Entwurf als Prompt-Grundlage; `operation:"revise"` nutzt den sichtbaren bearbeiteten Entwurf + optionalen Kommentar. Vorhandener Entwurf bleibt bei Fehler erhalten; Ersetzen erst nach Erfolg; bei bearbeitetem Entwurf zweite Bestätigung. Getrennte Buttons „Neu generieren“ und „Mit Kommentar verbessern“.
+- API: `POST /api/cover-letter` minimal erweitert. `operation` optional/backward-compatible; `revision.draft_text` (max. 20.000), `revision.feedback` (max. 2.000), `revision.draft_anonymized` muss `true` sein. Ungültige Typen/Operationswerte/Pflichtfelder/Längen → 400. Bestehende Raw-CV-Sperre bleibt.
+- Privacy: Entwurf und Kommentar werden clientseitig mit `anonymizeText()` anonymisiert; UI weist auf erneute externe Übertragung und Anonymisierungsgrenze hin. Keine Server-Persistenz, keine Inhalte in Logs, keine stillschweigende Freigabe. `draft_anonymized=true` ist nur ein Gate, kein Beweis vollständiger Anonymisierung.
+- Faktentreue/Ausgabe: Prompt verbietet erfundene Berufsjahre, Arbeitgeber, Projekte, Referenzen, Zertifikate, Qualifikationen, Tool-/Regulated-Experience; Zielrolle ist kein Erfahrungsbeleg; Jobanforderung darf nicht zu Bewerbererfahrung werden. Max. eine Seite standardmäßig, kein Markdown/Interviewteil; Server entfernt Markdown-Reste.
+- Tests: LetterModal 42, Cover-Letter-API 23, Gesamtsuite **1123 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS. Cover-Letter-E2E Desktop 1440/Mobil 390 PASS: 2 Cover-Letter-Calls (generate + revise), 1 `/api/profile` (nur CV), keine Console-Errors; ScrollTop 0 und Modellkontext nach CV-Rückkehr geprüft. `LIVE PROVIDER TEST: NOT EXECUTED`.
+- Implementierung: `c0a022a`
+- Log: `docs/reports/JM-COVER-LETTER-UX-01.md`
+- Evidence: `docs/reports/assets/JM-COVER-LETTER-UX-01/`
+
 2026-11-01 · JM-CV-REASONING-TOKENS-02
 - Typ: CV-Processing/Model-Diagnose/Reasoning-Token-Budget
 - Status: ROOT CAUSE IDENTIFIZIERT/CODE-FIX IMPLEMENTIERT; Live-Verifikation offen
