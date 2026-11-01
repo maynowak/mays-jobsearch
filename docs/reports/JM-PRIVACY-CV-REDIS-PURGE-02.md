@@ -250,6 +250,6 @@ Upstash-Konsole eindeutig bestätigt werden.
 
 - Purge-Tool/Test: `27a7a58`
 - Scan-Härtung (Duplikate/Nachscan): `247e81d`
-- Dokumentations-Commit: `3b255df` (wird durch den 02A-Nachtrag ergänzt)
+- Dokumentations-Commit: `1a0abcf`
 - Kein AWS-/RIS-/Vercel-Deployment.
 - Kein GitHub-Release.
