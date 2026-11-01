@@ -228,6 +228,6 @@ Nicht implementiert:
 ## 13. Git
 
 - Implementierung: `f8e3047`
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `a5200b2`
 - Remote-Synchronität: nach Push geprüft.
 - Kein Deployment, keine AWS-/RIS-/Cognito-Änderung, kein Release.
