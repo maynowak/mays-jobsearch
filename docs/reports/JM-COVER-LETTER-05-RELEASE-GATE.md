@@ -249,7 +249,7 @@ Docker-Stop-Timeouts wurden durch ein angemessenes Test-Timeout entschärft.
 ## 12. Korrektur-Commit
 
 - P0 Modellrouting + CV-Limit + Tests: `e62ad3c`
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `10249b5`
 
 ## 13. Empfehlung
 
