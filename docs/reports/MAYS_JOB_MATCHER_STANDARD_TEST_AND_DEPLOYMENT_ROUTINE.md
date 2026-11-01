@@ -19,7 +19,10 @@ Execution Log — dieser bleibt der Nachweis der tatsächlichen Ausführung
   quota- und cache-gesteuert.
 - **Kostenrelevante Grenzen:** Apify Pay-per-event
   (~$0.00005 Runstart + $0.00079/Record). Quota: `APIFY_DETAIL_MAX_PER_USER_PER_DAY=30`,
-  `APIFY_DETAIL_MAX_PER_IP_PER_DAY=100`, global `APIFY_MONTHLY_MAX_RUNS=30`.
+  `APIFY_DETAIL_MAX_PER_IP_PER_DAY=100`, global `APIFY_MONTHLY_MAX_RUNS=100`.
+  Der Standardwert beträgt 100 Apify-Runs pro Monat. Ein explizit gesetzter
+  Environment-Wert hat Vorrang. Der tatsächliche Produktionswert muss separat
+  überprüft werden.
 
 ## 3. Testklassen / Kostenklassen
 

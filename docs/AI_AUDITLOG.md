@@ -1,3 +1,15 @@
+2026-11-01 · JM-MOBILE-NAV-UX-01
+- Typ: Mobile Navbar/Auth-UX/Responsive Regression + Dokumentationskorrektur Apify-Limit
+- Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, kein Release
+- Ursache: Mobile CSS versteckte nur `.nav-links`; im Glass-Modus blieb Login/Logout in `.nav-right` außerhalb des Menüs. Desktop- und Mobile-Auth wurden doppelt gerendert. Das Mobile-Overlay lag in `.nav-inner`; dessen `backdrop-filter` erzeugte einen Containing Block für `position:fixed`, wodurch Menü/Overlay relativ zur Navbar-Pille und außerhalb des Viewports lagen.
+- Fix: `useMobileNav()` mit Breakpoint 767px; unter 768px werden Desktop-Links, Desktop-Sprachschalter und Desktop-Auth nicht gerendert. Mobile Menü per `createPortal` an `document.body`; Overlay `z-index:35` unter Navbar (40), Burger bleibt klickbar. Mobile Menü enthält Links, Profil/Login/Logout je Auth-Status und DE/EN. Auth-Statuswechsel und Logout schließen das Menü; Fokus auf ersten Link, Fokusfalle, Fokus-Rückgabe an Burger, Escape/Outside/Navigation schließen, Scroll-Lock bleibt.
+- Auth: Cognito/OIDC/Login-Callback/Session/Logout-Sicherheitslogik unverändert. E2E-angemeldet nutzt eine geseedete OIDC-Session, keinen echten Cognito-Login.
+- Tests: Navbar/Auth inkl. Mobile **17 passed**; Gesamtsuite **1130 passed/5 skipped**; TypeScript/Build/`git diff --check` PASS. Playwright Mobile-Nav E2E 390/430/768/1024/1440 jeweils Gast + angemeldet PASS, keine Console-Errors, kein horizontaler Overflow.
+- Addendum: `docs/reports/MAYS_JOB_MATCHER_STANDARD_TEST_AND_DEPLOYMENT_ROUTINE.md` korrigiert `APIFY_MONTHLY_MAX_RUNS=30` → `100` inkl. Hinweis auf Env-Override und separate Produktionsprüfung. `APIFY_DETAIL_MAX_PER_USER_PER_DAY=30`, `APIFY_DETAIL_MAX_PER_IP_PER_DAY=100`, Cost-Guards/Cache/Source-Registry/Actor-Konfiguration unverändert. Historische Reports nicht rückwirkend geändert.
+- Risiko/offen: Kein echter Cognito-Login/-Logout im E2E; Produktionsverhalten nicht live geprüft. Keine Änderungen an BA, Apify-Code, RIS oder AWS.
+- Implementierung: `c701aad`
+- Log: `docs/reports/JM-MOBILE-NAV-UX-01.md`
+
 2026-11-01 · BA-SOURCE-CHECK-02
 - Typ: Arbeitsagentur-Quellenprüfung/Architektur-Abgleich (read-only)
 - Status: ABGESCHLOSSEN — keine Codeänderung, kein Deployment, kein echter Apify-Run
