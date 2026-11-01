@@ -24,6 +24,17 @@ const job: Job = {
   source: ["arbeitnow"],
 };
 
+const fullDescription =
+  "Du entwickelst React-Anwendungen und betreust unsere Frontend-Plattform. " +
+  "Du hast mindestens 3 Jahre Erfahrung mit TypeScript und React. " +
+  "Kenntnisse in CSS und barrierefreiem Webdesign sind erforderlich.";
+
+const reviewedJob: Job = {
+  ...job,
+  description: `<p>${fullDescription}</p>`,
+  descriptionPlain: fullDescription,
+};
+
 const profile: Profile = {
   skills: "React, TypeScript",
   targetRoles: ["Frontend Engineer"],
@@ -227,6 +238,96 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
     expect(trigger).toHaveFocus();
+  });
+
+  it("shows a deterministic review with no AI call during the check", () => {
+    renderModal({ job: reviewedJob });
+
+    fireEvent.change(
+      screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen"),
+      {
+        target: {
+          value:
+            "Position als Frontend Engineer bei Example GmbH in Berlin. Du entwickelst React-Anwendungen und hast Erfahrung mit TypeScript.",
+        },
+      }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Beschreibung prüfen" }));
+
+    expect(screen.getByText("Plausibel")).toBeInTheDocument();
+    expect(screen.getByText("Ergänzt")).toBeInTheDocument();
+    expect(screen.getByText("Vorgesehene Beschreibung für die spätere Generierung")).toBeInTheDocument();
+    expect(withModelFallback).not.toHaveBeenCalled();
+    expect(generateCoverLetter).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the original description on a clear mismatch", () => {
+    renderModal({ job: reviewedJob });
+
+    fireEvent.change(
+      screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen"),
+      {
+        target: {
+          value:
+            "Position als Backend Engineer bei Other AG. Du entwickelst Java-Anwendungen.",
+        },
+      }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Beschreibung prüfen" }));
+
+    expect(screen.getByText("Deutlicher Widerspruch")).toBeInTheDocument();
+    expect(screen.getByText("Original")).toBeInTheDocument();
+    expect(screen.getByText(/Die vorhandene Beschreibung bleibt ausgewählt/)).toBeInTheDocument();
+    expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("requires and accepts confirmation for an uncertain enrichment", () => {
+    renderModal({ job: reviewedJob });
+
+    fireEvent.change(
+      screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen"),
+      { target: { value: "Wir suchen eine motivierte Person mit Erfahrung und Teamgeist." } }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Beschreibung prüfen" }));
+
+    expect(screen.getByText("Zuordnung unklar")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Diesen Text trotzdem verwenden" }));
+
+    expect(screen.getByText("Vom Benutzer ergänzt")).toBeInTheDocument();
+    expect(screen.getByText("Für die spätere Verwendung bestätigt.")).toBeInTheDocument();
+    expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("discards review input after closing and reopening", () => {
+    const first = renderModal({ job: reviewedJob });
+    fireEvent.change(screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen"), {
+      target: { value: "Some text" },
+    });
+    first.unmount();
+
+    renderModal({ job: reviewedJob });
+    expect(screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen")).toHaveValue("");
+    expect(screen.queryByText("Prüfergebnis")).not.toBeInTheDocument();
+  });
+
+  it("resets the review input when the selected job changes", () => {
+    const view = renderModal({ job: reviewedJob });
+    const textarea = screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen");
+    fireEvent.change(textarea, { target: { value: "Some text" } });
+    fireEvent.click(screen.getByRole("button", { name: "Beschreibung prüfen" }));
+    expect(screen.getByText("Prüfergebnis")).toBeInTheDocument();
+
+    view.rerender(
+      <LangProvider>
+        <LetterModal
+          {...defaultProps}
+          job={{ ...reviewedJob, slug: "job-2", title: "Backend Engineer" }}
+        />
+      </LangProvider>
+    );
+
+    expect(screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen")).toHaveValue("");
+    expect(screen.queryByText("Prüfergebnis")).not.toBeInTheDocument();
   });
 
   it("keeps the copy action usable after generation", async () => {

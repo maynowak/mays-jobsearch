@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-01");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-02");
 const port = 5201;
 const base = `http://localhost:${port}`;
 
@@ -79,6 +79,9 @@ async function runViewport(browser, name, viewport) {
   const page = await context.newPage();
   const consoleErrors = [];
   let coverLetterCalls = 0;
+  let jobsCalls = 0;
+  let jobDetailsCalls = 0;
+  const coverLetterBodies = [];
 
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
@@ -94,13 +97,19 @@ async function runViewport(browser, name, viewport) {
       });
     }
     if (url.pathname === "/api/jobs") {
+      jobsCalls += 1;
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(jobs) });
+    }
+    if (url.pathname === "/api/job-details") {
+      jobDetailsCalls += 1;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ jobs: {}, meta: { enrichedCount: 0 } }) });
     }
     if (url.pathname === "/api/match") {
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(matches) });
     }
     if (url.pathname === "/api/cover-letter") {
       coverLetterCalls += 1;
+      coverLetterBodies.push(route.request().postDataJSON());
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -130,6 +139,17 @@ async function runViewport(browser, name, viewport) {
   if (coverLetterCalls !== 0) throw new Error(`${name}: AI call on dialog open`);
   if (!(await page.getByText("Vorläufige Version").isVisible())) throw new Error(`${name}: preparation view missing`);
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-intro.png`), fullPage: false });
+
+  await page.getByLabel("Weitere Informationen zur Stellenanzeige einfügen").fill(
+    "Position als Frontend Engineer bei Example GmbH in Berlin. Du entwickelst React-Anwendungen und hast Erfahrung mit TypeScript."
+  );
+  await page.getByRole("button", { name: "Beschreibung prüfen" }).click();
+  await page.waitForSelector("text=Plausibel");
+  if (coverLetterCalls !== 0) throw new Error(`${name}: AI call during description review`);
+  if (jobsCalls !== 1) throw new Error(`${name}: unexpected /api/jobs request during review (${jobsCalls})`);
+  if (jobDetailsCalls !== 0) throw new Error(`${name}: unexpected /api/job-details request during review (${jobDetailsCalls})`);
+  await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-review.png`), fullPage: false });
+
   await page.getByRole("button", { name: "Schließen" }).click();
   await page.waitForSelector('[role="dialog"]', { state: "detached" });
   if (coverLetterCalls !== 0) throw new Error(`${name}: AI call on dialog close`);
@@ -150,13 +170,16 @@ async function runViewport(browser, name, viewport) {
   await page.getByRole("button", { name: "Vorläufiges Anschreiben erstellen" }).click();
   await page.waitForSelector("text=vielen Dank für die Einladung.");
   if (coverLetterCalls !== 1) throw new Error(`${name}: expected one AI call, got ${coverLetterCalls}`);
+  if (JSON.stringify(coverLetterBodies).includes("Position als Frontend Engineer bei Example GmbH in Berlin. Du entwickelst React-Anwendungen")) {
+    throw new Error(`${name}: enriched review text was sent to the model`);
+  }
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-generated.png`), fullPage: false });
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   if (overflow) throw new Error(`${name}: horizontal overflow detected`);
 
   await context.close();
-  return { name, coverLetterCalls, consoleErrors };
+  return { name, coverLetterCalls, jobsCalls, jobDetailsCalls, consoleErrors };
 }
 
 async function main() {

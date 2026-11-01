@@ -1,8 +1,14 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Job, Profile } from "../types";
 import { generateCoverLetter, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 import { formatGermanLocation } from "../lib/location";
+import {
+  MAX_DESCRIPTION_INPUT_LENGTH,
+  buildDescriptionReview,
+  type DescriptionReviewState,
+  type ReviewReason,
+} from "../lib/jobDescriptionReview";
 import SourceBadge from "./SourceBadge";
 
 interface Props {
@@ -42,6 +48,13 @@ export default function LetterModal({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [fallbackNote, setFallbackNote] = useState(false);
+  const [descriptionInput, setDescriptionInput] = useState("");
+  const [review, setReview] = useState<DescriptionReviewState | null>(null);
+  const originalReview = useMemo(
+    () => buildDescriptionReview({ job, enrichedInput: "" }),
+    [job]
+  );
+  const visibleReview = review ?? originalReview;
 
   // A new job must never inherit the previous job's letter or in-flight result.
   useEffect(() => {
@@ -52,6 +65,8 @@ export default function LetterModal({
     setError("");
     setCopied(false);
     setFallbackNote(false);
+    setDescriptionInput("");
+    setReview(null);
   }, [job.slug]);
 
   useEffect(() => {
@@ -159,6 +174,20 @@ export default function LetterModal({
     }
   };
 
+  const handleDescriptionChange = (value: string) => {
+    setDescriptionInput(value.slice(0, MAX_DESCRIPTION_INPUT_LENGTH));
+    setReview(null);
+  };
+
+  const handleReviewDescription = () => {
+    setReview(buildDescriptionReview({ job, enrichedInput: descriptionInput, confirmed: false }));
+  };
+
+  const handleConfirmReview = () => {
+    if (!review || review.confirmation !== "required") return;
+    setReview(buildDescriptionReview({ job, enrichedInput: descriptionInput, confirmed: true }));
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(letter).then(
       () => {
@@ -184,6 +213,17 @@ export default function LetterModal({
   };
 
   const jobName = [job.title, job.company_name].filter(Boolean).join(" @ ");
+  const completenessLabel = (state: string) => t(`letter.completeness.${state}`);
+  const selected = visibleReview.selected;
+  const selectedPreview = selected
+    ? selected.text.length > 900
+      ? `${selected.text.slice(0, 900).trimEnd()}…`
+      : selected.text
+    : "";
+  const originalPreview = visibleReview.originalText.length > 900
+    ? `${visibleReview.originalText.slice(0, 900).trimEnd()}…`
+    : visibleReview.originalText;
+  const reasonKey = (reason: ReviewReason) => `letter.reason.${reason}`;
   const location =
     formatGermanLocation(job.location ?? []) ||
     (job.remote ? t("match.remote") : t("match.locationNotStated"));
@@ -226,6 +266,107 @@ export default function LetterModal({
                 <span>{location}</span>
                 {job.remote && <span className="badge badge-remote">{t("match.remote")}</span>}
                 <SourceBadge sources={job.source} />
+              </div>
+            </div>
+
+            <div className="letter-review">
+              <div className="letter-review-head">
+                <h5 id={`${helpId}-description`}>{t("letter.existingDescription")}</h5>
+                <span className={`letter-status letter-status--${visibleReview.original.completeness}`}>
+                  {completenessLabel(visibleReview.original.completeness)}
+                </span>
+              </div>
+              {originalPreview ? (
+                <p className="letter-description-preview">{originalPreview}</p>
+              ) : (
+                <p className="letter-description-preview letter-description-preview--empty">
+                  {t("letter.noDescription")}
+                </p>
+              )}
+
+              <label className="letter-label" htmlFor={`${helpId}-enrich`}>
+                {t("letter.enrichLabel")}
+              </label>
+              <textarea
+                id={`${helpId}-enrich`}
+                className="letter-textarea"
+                value={descriptionInput}
+                onChange={(event) => handleDescriptionChange(event.target.value)}
+                maxLength={MAX_DESCRIPTION_INPUT_LENGTH}
+                rows={5}
+                placeholder={t("letter.enrichPlaceholder")}
+                aria-describedby={`${helpId}-enrich-hint`}
+              />
+              <p id={`${helpId}-enrich-hint`} className="letter-hint">
+                {t("letter.enrichHint")}
+              </p>
+
+              <div className="letter-review-actions">
+                <button
+                  type="button"
+                  className="ats-evaluate-btn"
+                  onClick={handleReviewDescription}
+                  disabled={!descriptionInput.trim()}
+                >
+                  {t("letter.reviewButton")}
+                </button>
+                {review?.confirmation === "required" && (
+                  <button type="button" className="letter-btn" onClick={handleConfirmReview}>
+                    {t("letter.confirmUse")}
+                  </button>
+                )}
+              </div>
+
+              {review && (
+                <div
+                  className={`letter-review-result letter-review-result--${review.plausibility?.status ?? "original"}`}
+                  aria-live="polite"
+                >
+                  <div className="letter-review-head">
+                    <strong>{t("letter.reviewResult")}</strong>
+                    {review.plausibility && (
+                      <span className={`letter-status letter-status--${review.plausibility.status}`}>
+                        {t(`letter.plausibility.${review.plausibility.status}`)}
+                      </span>
+                    )}
+                  </div>
+
+                  {review.plausibility && review.plausibility.reasons.length > 0 && (
+                    <ul className="letter-reasons">
+                      {review.plausibility.reasons.map((reason) => (
+                        <li key={reason}>{t(reasonKey(reason))}</li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {review.insufficient && (
+                    <p className="letter-review-warning">{t("letter.reviewInsufficient")}</p>
+                  )}
+                  {review.plausibility?.status === "mismatch" && (
+                    <p className="letter-review-warning">{t("letter.reviewMismatch")}</p>
+                  )}
+                  {review.plausibility?.status === "uncertain" && review.confirmation === "required" && (
+                    <p className="letter-review-warning">{t("letter.reviewUncertain")}</p>
+                  )}
+                  {review.confirmation === "confirmed" && (
+                    <p className="letter-review-ok">{t("letter.reviewConfirmed")}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="letter-selected">
+                <div className="letter-review-head">
+                  <strong>{t("letter.selectedDescription")}</strong>
+                  {selected && (
+                    <span className="letter-origin">{t(`letter.origin.${selected.origin}`)}</span>
+                  )}
+                </div>
+                {selected ? (
+                  <p className="letter-description-preview">{selectedPreview}</p>
+                ) : (
+                  <p className="letter-review-warning">{t("letter.reviewInsufficient")}</p>
+                )}
+                <p className="letter-hint">{t("letter.reviewOnlyNote")}</p>
               </div>
             </div>
 
