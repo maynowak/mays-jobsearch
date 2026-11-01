@@ -120,7 +120,7 @@ Die Tests bestätigen:
 ## 7. Git
 
 - UI-Korrektur: `626739b`
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `3338121`
 - Kein Deployment, keine AWS-/RIS-/Cognito-Änderung.
 
 ## 8. Empfehlung
