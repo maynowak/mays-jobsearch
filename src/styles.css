@@ -1067,7 +1067,9 @@ body {
 .mobile-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  /* Portal to body: keep the navbar (z-index 40) and its burger clickable
+     above the overlay; the menu panel itself starts below the nav padding. */
+  z-index: 35;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(2px);
   animation: overlay-in 0.2s ease;
@@ -1137,11 +1139,53 @@ body {
   /* Keep both top and scrolled dashboard nav states compact; the burger is
      the mobile navigation and the inline links must not widen the document. */
   .navbar:not(.scrolled) .nav-links,
-  .navbar.scrolled .nav-links {
+  .navbar.scrolled .nav-links,
+  .navbar .nav-center,
+  .navbar .nav-lang,
+  .navbar .nav-right {
     display: none;
   }
+
+  .navbar-title-left {
+    max-width: calc(100% - 64px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .burger {
     display: flex;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+  }
+
+  .burger:focus-visible,
+  .mobile-link:focus-visible,
+  .mobile-menu .nav-login:focus-visible,
+  .mobile-lang .lang-toggle button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .mobile-menu {
+    max-width: 100vw;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-menu .nav-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 0.5rem;
+    text-align: center;
+  }
+
+  .mobile-lang .lang-toggle button {
+    min-height: 44px;
   }
 }
 

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import type { MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { useLang } from "../i18n";
 import type { Lang } from "../i18n";
 import { navLinksFor } from "../navLinks";
@@ -7,6 +8,31 @@ import type { NavRoute } from "../navLinks";
 import { useAuth } from "react-oidc-context";
 import { signOut } from "../lib/authFlow";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
+
+function useMobileNav() {
+  const query = "(max-width: 767px)";
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return false;
+    }
+    return window.matchMedia(query).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia(query);
+    const update = () => setIsMobile(media.matches);
+    update();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
+
+  return isMobile;
+}
 
 function LangToggle() {
   const { lang, setLang, t } = useLang();
@@ -45,13 +71,43 @@ interface Props {
 export default function Navbar({ route, glass = false, hideOnScroll = false, onNavigate }: Props) {
   const { t } = useLang();
   const auth = useAuth();
+  const isMobile = useMobileNav();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const close = useCallback(() => setIsOpen(false), []);
+  const burgerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const previousAuthRef = useRef(auth?.isAuthenticated);
+  const close = useCallback(() => {
+    setIsOpen((open) => {
+      if (open) {
+        window.requestAnimationFrame(() => burgerRef.current?.focus());
+      }
+      return false;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setIsOpen(false);
+      return;
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (previousAuthRef.current === auth?.isAuthenticated) return;
+    previousAuthRef.current = auth?.isAuthenticated;
+    setIsOpen(false);
+  }, [auth?.isAuthenticated]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const handler = (event: KeyboardEvent) => {
+    const first = menuRef.current?.querySelector<HTMLElement>("a, button");
+    first?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", handler);
@@ -145,6 +201,28 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
     close();
   };
 
+  const handleLogout = () => {
+    close();
+    void signOut(auth);
+  };
+
+  const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab" || !menuRef.current) return;
+    const focusable = Array.from(
+      menuRef.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")
+    );
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   // TOP-MENU-02: Glass-Look auf Suchmaske, Auth-Seiten und visuellen Hero-Routen
   const isGlass = glass || route === "matcher" || route === "register" || route === "login";
 
@@ -161,10 +239,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
           May&rsquo;s Job Matcher
         </a>
 
-        {/* TOP-MENU-02: Reihenfolge für Glass-Mode (/search) = Brand → EN/DE → Links → Login,
-            EN/DE hat margin-left:auto und schiebt die rechte Gruppe.
-            Für alle anderen Routen bleibt die bisherige Zentrierung erhalten. */}
-        {isGlass ? (
+        {!isMobile && (isGlass ? (
           <>
             <div className="nav-lang">
               <LangToggle />
@@ -194,7 +269,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
                 <button
                   type="button"
                   className="nav-login"
-                  onClick={() => void signOut(auth)}
+                  onClick={handleLogout}
                 >
                   {t("auth.logout")}
                 </button>
@@ -233,7 +308,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
                 <button
                   type="button"
                   className="nav-login"
-                  onClick={() => void signOut(auth)}
+                  onClick={handleLogout}
                 >
                   {t("auth.logout")}
                 </button>
@@ -244,57 +319,75 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
               )}
             </div>
           </>
-        )}
+        ))}
 
-        <button
-          type="button"
-          className={`burger${isOpen ? " burger-open" : ""} ${isScrolled ? "hamburger-small" : ""}`}
-          onClick={() => setIsOpen((v) => !v)}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? t("nav.menuClose") : t("nav.menuOpen")}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+        {isMobile && (
+          <>
+            <button
+              ref={burgerRef}
+              type="button"
+              className={`burger${isOpen ? " burger-open" : ""} ${isScrolled ? "hamburger-small" : ""}`}
+              onClick={() => setIsOpen((v) => !v)}
+              aria-expanded={isOpen}
+              aria-controls="mobile-navigation"
+              aria-haspopup="dialog"
+              aria-label={isOpen ? t("nav.menuClose") : t("nav.menuOpen")}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
 
-        {isOpen && (
-          <div className="mobile-overlay" onClick={close}>
-            <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
-              {links.map((link, i) => (
-                <a
-                  key={link.id}
-                  href={link.href}
-                  className="mobile-link"
-                  style={{ animationDelay: `${i * 50}ms` }}
-                  onClick={(e) => handleClick(e, link.href, link.inPage)}
-                >
-                  {t(link.labelKey)}
-                </a>
-              ))}
-              <div className="mobile-lang">
-                <LangToggle />
-              </div>
-              {auth?.isAuthenticated && (
-                <a href="/profil" className="mobile-link" onClick={(event) => handleClick(event, "/profil")}>
-                  {t("profile.title")}
-                </a>
+            {isOpen &&
+              createPortal(
+                <div className="mobile-overlay" onClick={close}>
+                  <div
+                    id="mobile-navigation"
+                    ref={menuRef}
+                    className="mobile-menu"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={t("nav.aria")}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={handleMenuKeyDown}
+                  >
+                    {links.map((link, i) => (
+                      <a
+                        key={link.id}
+                        href={link.href}
+                        className="mobile-link"
+                        style={{ animationDelay: `${i * 50}ms` }}
+                        onClick={(e) => handleClick(e, link.href, link.inPage)}
+                      >
+                        {t(link.labelKey)}
+                      </a>
+                    ))}
+                    <div className="mobile-lang">
+                      <LangToggle />
+                    </div>
+                    {auth?.isAuthenticated && (
+                      <a href="/profil" className="mobile-link" onClick={(event) => handleClick(event, "/profil")}>
+                        {t("profile.title")}
+                      </a>
+                    )}
+                    {auth?.isLoading ? (
+                      <span className="nav-login" aria-busy="true">
+                        {t("nav.signingIn")}
+                      </span>
+                    ) : auth?.isAuthenticated ? (
+                      <button type="button" className="nav-login" onClick={handleLogout}>
+                        {t("auth.logout")}
+                      </button>
+                    ) : (
+                      <a href="/anmelden" className="nav-login" onClick={close}>
+                        {t("auth.loginTitle")}
+                      </a>
+                    )}
+                  </div>
+                </div>,
+                document.body
               )}
-              {auth?.isLoading ? (
-                <span className="nav-login" aria-busy="true">
-                  {t("nav.signingIn")}
-                </span>
-              ) : auth?.isAuthenticated ? (
-                <button className="nav-login" onClick={() => void signOut(auth)}>
-                  {t("auth.logout")}
-                </button>
-              ) : (
-                <a href="/anmelden" className="nav-login" onClick={close}>
-                  {t("auth.loginTitle")}
-                </a>
-              )}
-            </div>
-          </div>
+          </>
         )}
       </nav>
     </header>
