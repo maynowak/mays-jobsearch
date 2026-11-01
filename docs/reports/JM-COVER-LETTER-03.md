@@ -183,6 +183,10 @@ Klar gekennzeichnet:
 24. Mobil 390
 25. CL-01-/CL-02-Regression
 
+Einige Sitzungs-/Identitätsfälle sind durch bestehende Auth-/CV-Tests und
+Code-Pfade abgedeckt; der neue Browser-E2E deckt Gast, explizite Auswahl,
+erfolgreiche CV-Verarbeitung, Abbruch und Rückkehr mit Kontext ab.
+
 ## 11. UI-Evidenz
 
 `docs/reports/assets/JM-COVER-LETTER-03/`
