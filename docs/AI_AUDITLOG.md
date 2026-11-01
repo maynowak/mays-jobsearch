@@ -1,3 +1,13 @@
+2026-11-01 · JM-COVER-LETTER-01
+- Typ: UI/Accessibility/Privacy/AI-Action-Gate
+- Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
+- Änderung: MatchCard und RemainingCard teilen eine einheitliche Aktionsleiste (Originalanzeige, Anschreiben, ATS). RemainingCard erhält die bestehende Callback-Kette zu LetterModal; Detaildaten werden nur genutzt, wenn bereits geladen, ohne neue Detailabfrage.
+- LetterModal startet keinen KI-Aufruf mehr beim Öffnen/Re-Render/Schließen. Vorbereitungsansicht mit Stellen-/Quelldaten und explizitem Startbutton; Doppelklick-Schutz, Jobwechsel-Reset, Retry/Copy/Download, Fokusfalle und Fokus-Rückgabe.
+- Datenschutz: Öffnen bleibt lokal; externer Modellaufruf nur nach bewusster Aktion; keine Persistenz, keine Cookies, keine neue Identität, keine RIS-Übertragung.
+- Tests: MatchCard/RemainingCard/Results/LetterModal PASS; Gesamtsuite 1049 passed/5 skipped; TypeScript/Build/diff PASS; Browser-E2E Desktop 1440 und Mobil 390 PASS, `coverLetterCalls=1` erst nach Start, keine Console Errors, kein Horizontal Overflow.
+- Abgrenzung: CL-02–CL-05 (Stellenprüfung, CV-Auswahl, neue Prompt-Architektur) nicht implementiert.
+- Log: `docs/reports/JM-COVER-LETTER-01.md`
+
 2026-11-01 · JM-PRIVACY-CV-REDIS-PURGE-02
 - Typ: Privacy/Redis-Purge/Security-Gate
 - Status: BLOCKED — Produktions-Redis-Ziel nicht verifizierbar; keine Löschung, kein Deployment
