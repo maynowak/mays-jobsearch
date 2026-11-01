@@ -211,6 +211,6 @@ Produktions-Logs, die öffentliche OpenRouter-Modellliste und Mock-Tests.
 
 - Vorheriger UI-Fix: `626739b`
 - Diagnose 01: `3338121` / `8156ab7`
-- Dieser Fix: Commit nach Verifikation.
+- Dieser Fix: `b770979`
 - Kein Deployment, keine AWS-/RIS-/Cognito-Änderung, keine echten
   Provideraufrufe.
