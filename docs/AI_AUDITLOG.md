@@ -1,6 +1,16 @@
+2026-11-01 · JM-CV-REASONING-TOKENS-02
+- Typ: CV-Processing/Model-Diagnose/Reasoning-Token-Budget
+- Status: ROOT CAUSE IDENTIFIZIERT/CODE-FIX IMPLEMENTIERT; Live-Verifikation offen
+- Befundkorrektur zu 01: Die leeren Antworten (`stage=empty-content`, HTTP 200) sind nicht primär ein Provider-/Free-Modellproblem. `/api/profile` ruft optionale Reasoning-Modelle mit `maxTokens: 900` auf; OpenRouter zählt Reasoning-Tokens gegen `max_tokens`. Bei vollem Budget liefert das Modell `finish_reason=length` mit leerem `content`; der Provider mappt das auf 502 `model_unavailable`.
+- Evidence: `nvidia/nemotron-3.5-super-vl:free` hat `reasoning.mandatory:false`, 1.000.000 Kontext, kostenlos, `response_format`/`structured_outputs`; das frühere Eligibility-Feld `architecture.supports_reasoning` ist in der aktuellen Katalogstruktur nicht gesetzt. Produktions-Logs zeigen dieselben leeren Antworten für nvidia/dots/cohere/openrouter-free.
+- Fix: Reasoning-Policy aus `reasoning.mandatory`; mandatory-Reasoning-Modelle und dynamische Router (`openrouter/*`) werden gefiltert; Audio-Ausgabemodelle ausgeschlossen; für JSON-Tasks (Profil/Match/ATS) wird bei optionalen Reasoning-Modellen `reasoning:{enabled:false}` gesendet. Empty-Content-Logging ergänzt `finish`, `completion_tokens`, `reasoning_tokens`.
+- Tests: OpenRouter-Provider 9 passed (Request-Body, Mandatory-Filter, Audio-Filter, Empty-Content-Logging); Gesamtsuite **1100 passed/5 skipped**, TS/Build/diff PASS. Keine echten Provideraufrufe; `LIVE PROVIDER TEST: NOT EXECUTED`.
+- Risiko: Anbieter könnte `enabled:false` ignorieren; dann greift Fallback/Modellschritt. Live-Test mit Budgetfreigabe bleibt offen.
+- Log: `docs/reports/JM-CV-REASONING-TOKENS-02.md`
+
 2026-11-01 · JM-CV-MODEL-UNAVAILABLE-DIAGNOSIS-01
 - Typ: CV-Processing/Model-Diagnose/UI-Recovery
-- Status: UI-KORREKTUR IMPLEMENTIERT/VERIFIZIERT; Provider-/Free-Modellproblem OPEN
+- Status: SUPERSEDED durch JM-CV-REASONING-TOKENS-02; UI-Korrektur bleibt gültig
 - Befund: Production-Logs für `/api/profile` zeigen HTTP 200 mit `stage=empty-content` bei mehreren OpenRouter-Free-Modellen (`nvidia/...`, `dots-studio/...`, `cohere/north-mini-code`, `openrouter/free`). Provider mappt das auf `model_unavailable`; Anonymisierung ist nicht die Ursache. Durch Entfernung des CV-Caches wird der Providerpfad häufiger erreicht.
 - UI-Fix: Modellfehler bleiben im Schritt `model-selection`, Fehler direkt am ModelSelector, kein Sprung auf Dokument/Anfang. Modellwechsel löscht alten Fehler. Button im Modellschritt heißt DE „Verarbeiten“ / EN „Process“; Optionen-Schritt bleibt „Weiter“.
 - Tests: App 96, AuthRace PASS, Gesamtsuite 1097 passed/5 skipped, TypeScript/Build/diff PASS, Guest-CV-E2E und Cover-Letter-E2E Desktop/Mobil PASS. Keine neuen echten Provideraufrufe; `LIVE PROVIDER TEST: NOT EXECUTED`.

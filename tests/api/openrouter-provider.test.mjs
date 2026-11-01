@@ -23,14 +23,46 @@ const OPENROUTER_MODELS = {
       name: "Dots 3 Note",
       pricing: { prompt: "0", completion: "0", request: "0" },
       architecture: { input_modalities: ["text"], output_modalities: ["text"] },
-      supported_parameters: ["response_format"],
+      supported_parameters: ["response_format", "reasoning"],
+      reasoning: { mandatory: false },
+    },
+    {
+      id: "nvidia/nemotron-3.5-super-vl:free",
+      name: "Nemotron Super VL",
+      pricing: { prompt: "0", completion: "0", request: "0" },
+      architecture: { input_modalities: ["text", "image"], output_modalities: ["text"] },
+      supported_parameters: ["response_format", "reasoning"],
+      reasoning: { mandatory: false },
     },
     {
       id: "cohere/north-mini-code:free",
       name: "North Mini",
       pricing: { prompt: "0", completion: "0", request: "0" },
       architecture: { input_modalities: ["text"], output_modalities: ["text"] },
-      supported_parameters: [],
+      supported_parameters: ["reasoning"],
+      reasoning: { mandatory: false },
+    },
+    {
+      id: "liquid/mandatory-reasoning:free",
+      name: "Mandatory Reasoning",
+      pricing: { prompt: "0", completion: "0", request: "0" },
+      architecture: { input_modalities: ["text"], output_modalities: ["text"] },
+      supported_parameters: ["reasoning"],
+      reasoning: { mandatory: true },
+    },
+    {
+      id: "openrouter/free",
+      name: "OpenRouter Free Router",
+      pricing: { prompt: "0", completion: "0", request: "0" },
+      architecture: { input_modalities: ["text"], output_modalities: ["text"] },
+      supported_parameters: ["response_format", "reasoning"],
+    },
+    {
+      id: "google/lyria-music-preview",
+      name: "Music Preview",
+      pricing: { prompt: "0", completion: "0", request: "0" },
+      architecture: { input_modalities: ["text"], output_modalities: ["text", "audio"] },
+      supported_parameters: ["response_format"],
     },
     {
       id: "anthropic/claude-3-haiku",
@@ -98,6 +130,68 @@ describe("OpenRouter chat", () => {
     expect(body.response_format).toBeUndefined();
   });
 
+  it("deaktiviert Reasoning-Tokens bei optionalen Reasoning-Modellen", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse(OPENROUTER_MODELS))
+      .mockResolvedValueOnce(jsonResponse({ choices: [{ message: { content: '{"skills":[]}' } }] }));
+
+    await chat({
+      system: "sys",
+      prompt: "prompt",
+      json: true,
+      model: "dots-studio/dots-3-note-preview:free",
+    });
+
+    const [, opts] = vi.mocked(fetch).mock.calls[1];
+    const body = JSON.parse(opts.body);
+    expect(body.reasoning).toEqual({ enabled: false });
+  });
+
+  it("mappt leeren Reasoning-Inhalt auf model_unavailable und loggt finish_reason", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse(OPENROUTER_MODELS))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          choices: [{ message: { content: "" }, finish_reason: "length" }],
+          usage: { completion_tokens: 900, completion_tokens_details: { reasoning_tokens: 900 } },
+        })
+      );
+
+    await expect(
+      chat({
+        system: "sys",
+        prompt: "prompt",
+        json: true,
+        maxTokens: 900,
+        model: "nvidia/nemotron-3.5-super-vl:free",
+      })
+    ).rejects.toMatchObject({ code: "model_unavailable", status: 502 });
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("stage=empty-content")
+    );
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("finish=length"));
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("reasoning_tokens=900"));
+  });
+
+  it("sendet bei Nicht-JSON-Anfragen kein reasoning-Feld", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      jsonResponse({ choices: [{ message: { content: "Hallo" } }] })
+    );
+
+    await chat({
+      system: "sys",
+      prompt: "prompt",
+      json: false,
+      model: "dots-studio/dots-3-note-preview:free",
+    });
+
+    const [, opts] = vi.mocked(fetch).mock.calls[0];
+    const body = JSON.parse(opts.body);
+    expect(body.reasoning).toBeUndefined();
+  });
+
   it("mappt einen Timeout (AbortSignal) auf timeout statt model_unavailable", async () => {
     const timeoutErr = new Error("The operation was aborted");
     timeoutErr.name = "TimeoutError";
@@ -135,5 +229,9 @@ describe("OpenRouter model catalog", () => {
     expect(ids).toContain("dots-studio/dots-3-note-preview:free");
     expect(ids).toContain("cohere/north-mini-code:free");
     expect(ids).not.toContain("anthropic/claude-3-haiku");
+    expect(ids).not.toContain("liquid/mandatory-reasoning:free");
+    expect(ids).not.toContain("openrouter/free");
+    expect(ids).not.toContain("google/lyria-music-preview");
+    expect(models.find((m) => m.id === "dots-studio/dots-3-note-preview:free")?.reasoningOptional).toBe(true);
   });
 });

@@ -55,12 +55,24 @@ export function isFreeDailyQuotaError(providerError) {
   return typeof providerError === "string" && /free-models-per-day/i.test(providerError);
 }
 
-function logModelError(stage, { model, attempt, status, providerError, retryAfter }) {
+function logModelError(stage, {
+  model,
+  attempt,
+  status,
+  providerError,
+  retryAfter,
+  finishReason,
+  completionTokens,
+  reasoningTokens,
+}) {
   const parts = [`[ai] provider=openrouter model=${model ?? "(none)"}`];
   parts.push(`stage=${stage}`);
   if (attempt) parts.push(`attempt=${attempt}`);
   if (status) parts.push(`status=${status}`);
   if (retryAfter) parts.push(`retryAfter=${retryAfter}`);
+  if (finishReason) parts.push(`finish=${finishReason}`);
+  if (Number.isFinite(completionTokens)) parts.push(`completion_tokens=${completionTokens}`);
+  if (Number.isFinite(reasoningTokens)) parts.push(`reasoning_tokens=${reasoningTokens}`);
   if (providerError) parts.push(`provider=${providerError}`);
   console.error(parts.join(" "));
 }
@@ -91,8 +103,26 @@ function isNotExpired(m) {
   return Number.isFinite(t) && t > Date.now();
 }
 
-function supportsReasoning(m) {
-  return m?.architecture?.supports_reasoning === true;
+function supportsTextOnlyOutput(m) {
+  const modalities = m?.architecture?.output_modalities;
+  return (
+    Array.isArray(modalities) &&
+    modalities.length > 0 &&
+    modalities.every((modality) => modality === "text")
+  );
+}
+
+function reasoningPolicy(m) {
+  const reasoning = m?.reasoning;
+  if (reasoning && typeof reasoning === "object") {
+    return reasoning.mandatory === true ? "mandatory" : "optional";
+  }
+  // Legacy catalog metadata only exposes architecture.supports_reasoning.
+  // Treat that as mandatory unless the newer reasoning descriptor says
+  // otherwise, so we never send reasoning.enabled=false to a model that
+  // rejects it.
+  if (m?.architecture?.supports_reasoning === true) return "mandatory";
+  return "none";
 }
 
 function supportsStructuredOutput(m) {
@@ -100,13 +130,19 @@ function supportsStructuredOutput(m) {
   return params.includes("response_format") || params.includes("json_schema");
 }
 
+function isDynamicRouter(m) {
+  return String(m?.id || "").startsWith("openrouter/");
+}
+
 function isEligible(m) {
   return (
     pricingIsFree(m) &&
     supportsTextInput(m) &&
     supportsTextOutput(m) &&
+    supportsTextOnlyOutput(m) &&
     isNotExpired(m) &&
-    !supportsReasoning(m)
+    !isDynamicRouter(m) &&
+    reasoningPolicy(m) !== "mandatory"
   );
 }
 
@@ -140,6 +176,7 @@ async function fetchEligibleModels() {
       id: String(m.id || "").trim(),
       name: String(m.name || m.id || "").trim(),
       structured: supportsStructuredOutput(m),
+      reasoningOptional: reasoningPolicy(m) === "optional",
     }))
     .filter((m) => m.id)
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -218,10 +255,13 @@ export function countAttempt() {
 export async function chat({ system, prompt, json, temperature, maxTokens, model, attempt }) {
   const apiKey = requireApiKey();
   let supportsStructured = false;
+  let reasoningOptional = false;
   if (json && model) {
     try {
       const models = await getModels();
-      supportsStructured = Boolean(models.find((candidate) => candidate.id === model)?.structured);
+      const candidate = models.find((entry) => entry.id === model);
+      supportsStructured = Boolean(candidate?.structured);
+      reasoningOptional = Boolean(candidate?.reasoningOptional);
     } catch {
       // The prompt still requests JSON; do not fail a request only because the
       // optional catalogue metadata is temporarily unavailable.
@@ -262,6 +302,12 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
         temperature,
         max_tokens: maxTokens,
         ...(json && supportsStructured ? { response_format: { type: "json_object" } } : {}),
+        // OpenRouter reasoning tokens count against max_tokens. CV profile,
+        // matching and ATS requests use small output budgets, so an optional
+        // reasoning model can spend the whole budget thinking and return
+        // finish_reason="length" with empty content. Disable reasoning for
+        // these JSON tasks; mandatory-reasoning models are filtered out above.
+        ...(json && reasoningOptional ? { reasoning: { enabled: false } } : {}),
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -337,9 +383,18 @@ export async function chat({ system, prompt, json, temperature, maxTokens, model
     throw aiError(502, "This AI model is temporarily unavailable. Please choose another model.", ERROR_CODES.modelUnavailable);
   }
 
-  const content = jsonBody?.choices?.[0]?.message?.content;
+  const choice = jsonBody?.choices?.[0];
+  const content = choice?.message?.content;
   if (!content) {
-    logModelError("empty-content", { model, attempt, status: response.status });
+    const usage = jsonBody?.usage;
+    logModelError("empty-content", {
+      model,
+      attempt,
+      status: response.status,
+      finishReason: choice?.finish_reason,
+      completionTokens: usage?.completion_tokens,
+      reasoningTokens: usage?.completion_tokens_details?.reasoning_tokens,
+    });
     throw aiError(502, "This AI model is temporarily unavailable. Please choose another model.", ERROR_CODES.modelUnavailable);
   }
   return content;

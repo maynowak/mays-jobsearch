@@ -1,7 +1,13 @@
 # JM-CV-MODEL-UNAVAILABLE-DIAGNOSIS-01
 
+> **Korrektur:** Die Einordnung „Provider-/Free-Modellproblem“ war
+> unvollständig. Die genauere Analyse zeigt einen App-seitigen
+> Reasoning-Token-Budgetfehler. Siehe
+> `JM-CV-REASONING-TOKENS-02.md`; dieser Bericht bleibt als erster
+> Diagnosestand erhalten.
+
 **Art:** CV-Processing / Model-Fehlerdiagnose / Recovery-UX
-**Status:** DIAGNOSE ABGESCHLOSSEN — UI-Korrektur implementiert, Providerproblem OPEN
+**Status:** SUPERSEDED durch `JM-CV-REASONING-TOKENS-02` (Reasoning-Token-Budget)
 **Datum:** 2026-11-01
 
 ## 1. Baseline
@@ -42,8 +48,9 @@ mappen `empty-content` auf `model_unavailable`; dadurch sieht die UI
   scheiterten mehrere Free-Modelle hintereinander mit `empty-content`.
 - Aktuell von `/api/models` empfohlen: `dots-studio/dots-3-note-preview:free`.
   Auch dieses Modell erscheint in den Fehler-Logs.
-- Es gibt keinen Nachweis eines App-/Anonymisierungsfehlers; die konkrete
-  Modellverfügbarkeit ist ein Provider-/Free-Modell-Problem.
+- Erste Einordnung: kein Anonymisierungsfehler. Die tatsächliche Ursache ist
+  jedoch das Reasoning-Token-Budget bei optionalen Reasoning-Modellen; siehe
+  `JM-CV-REASONING-TOKENS-02.md`.
 
 **LIVE PROVIDER TEST: NOT EXECUTED** — es wurden keine neuen echten
 Provideraufrufe durchgeführt.
@@ -104,18 +111,15 @@ Die Tests bestätigen:
 - Der Step-Button heißt „Verarbeiten“.
 - Gast-CV-Workflow und Cover-Letter-Workflow bleiben intakt.
 
-## 6. Offene Punkte
+## 6. Offene Punkte (Stand 01, durch 02 korrigiert)
 
-1. **Provider-/Free-Modell-Verfügbarkeit:** Die Logs zeigen leere
-   Providerantworten über mehrere Modelle. Das ist kein durch diese Änderung
-   behebbarer App-Fehler.
-2. **Modellkatalog:** `/api/models` listet aktuelle Free-Modelle; die
-   Eignung einzelner Modelle für JSON-CV-Profile ist nicht garantiert.
-3. **Nächster Schritt:** Ein anderes Modell im Selector wählen und erneut
-   „Verarbeiten“. Falls alle Free-Modelle `empty-content` liefern, ist das ein
-   Provider-/Katalogproblem (OPEN), kein Anonymisierungsfehler.
-4. **Optional:** Modell-Health/`empty_response` später getrennt behandeln;
-   keine Änderung in diesem Diagnose-Task.
+1. **Reasoning-Token-Budget:** Der erste Bericht erkannte nicht, dass
+   optionale Reasoning-Modelle mit `max_tokens: 900` das Budget vollständig
+   verbrauchen können. Fix und Details: `JM-CV-REASONING-TOKENS-02.md`.
+2. **Live-Verifikation:** Ein autorisierter synthetischer Providerlauf steht
+   weiterhin aus.
+3. **UI:** Die Recovery bleibt am Modellschritt; das ist in 01 bereits
+   umgesetzt und getestet.
 
 ## 7. Git
 
