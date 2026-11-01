@@ -96,6 +96,8 @@ async function main() {
   const deleted = await purgeCvProfileCache({ redis, dryRun: false, batchSize: 2 });
   assert("delete counts exact CV keys", deleted.validKeys, validKeys.length);
   assert("delete removes exact CV keys", deleted.deletedKeys, validKeys.length);
+  assert("post-delete verification finds no CV keys", deleted.verification.validKeys, 0);
+  assert("post-delete verification deletes nothing", deleted.verification.deletedKeys, 0);
   for (const key of validKeys) {
     assert(`deleted ${key.slice(0, 12)}…`, await exists(key), 0);
   }
@@ -106,9 +108,22 @@ async function main() {
   const repeated = await purgeCvProfileCache({ redis, dryRun: false, batchSize: 2 });
   assert("repeated run is idempotent (no keys)", repeated.validKeys, 0);
   assert("repeated run deletes nothing", repeated.deletedKeys, 0);
+  assert("repeated post-scan finds no CV keys", repeated.verification.validKeys, 0);
   for (const key of otherKeys) {
     assert(`repeat retains ${key.slice(0, 12)}…`, await exists(key), 1);
   }
+
+  const duplicateProbe = {
+    command: async (...args) => {
+      if (args[0] === "SCAN") return ["0", [validKeys[0], validKeys[0], "job-source:duplicate-probe"]];
+      throw new Error("unexpected duplicate probe command");
+    },
+    pipeline: async (commands) => commands.map(() => 3600),
+  };
+  const duplicateResult = await purgeCvProfileCache({ redis: duplicateProbe, dryRun: true });
+  assert("duplicate SCAN result counted once", duplicateResult.validKeys, 1);
+  assert("duplicate SCAN result detected", duplicateResult.duplicateKeys, 1);
+  assert("non-exact key still counted as mismatched", duplicateResult.mismatchedKeys, 1);
 
   let failed = false;
   try {

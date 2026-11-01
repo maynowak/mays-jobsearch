@@ -72,63 +72,78 @@ export async function purgeCvProfileCache({ redis, dryRun = true, batchSize = DE
     throw new Error("batchSize must be between 1 and 1000");
   }
 
-  let cursor = "0";
-  let iterations = 0;
-  let totalScanned = 0;
-  let validKeys = 0;
-  let mismatchedKeys = 0;
-  let deletedKeys = 0;
-  const ttlBuckets = emptyTtlBuckets();
+  async function scanPass({ deleteKeys }) {
+    let cursor = "0";
+    let iterations = 0;
+    let totalScanned = 0;
+    let validKeyCount = 0;
+    let mismatchedKeyCount = 0;
+    let duplicateKeyCount = 0;
+    let deletedKeyCount = 0;
+    const ttlBuckets = emptyTtlBuckets();
+    const seenKeys = new Set();
 
-  do {
-    const result = await redis.command("SCAN", cursor, "MATCH", "cv-profile:*", "COUNT", String(batchSize));
-    if (!Array.isArray(result) || result.length !== 2) {
-      throw new Error("unexpected SCAN result");
-    }
-    cursor = String(result[0]);
-    const keys = Array.isArray(result[1]) ? result[1] : [];
-    totalScanned += keys.length;
-
-    const exactKeys = [];
-    for (const key of keys) {
-      if (isCvProfileKey(key)) {
-        validKeys += 1;
-        exactKeys.push(key);
-      } else {
-        mismatchedKeys += 1;
+    do {
+      const result = await redis.command("SCAN", cursor, "MATCH", "cv-profile:*", "COUNT", String(batchSize));
+      if (!Array.isArray(result) || result.length !== 2) {
+        throw new Error("unexpected SCAN result");
       }
-    }
+      cursor = String(result[0]);
+      const keys = Array.isArray(result[1]) ? result[1] : [];
+      totalScanned += keys.length;
 
-    if (exactKeys.length) {
-      const ttls = await redis.pipeline(exactKeys.map((key) => ["TTL", key]));
-      if (!Array.isArray(ttls) || ttls.length !== exactKeys.length) {
-        throw new Error("unexpected TTL pipeline result");
-      }
-      for (const ttl of ttls) addTtl(ttlBuckets, Number(ttl));
-
-      if (!dryRun) {
-        for (const batch of chunk(exactKeys, batchSize)) {
-          const deleted = await redis.command("DEL", ...batch);
-          const count = Number(deleted);
-          if (!Number.isFinite(count) || count < 0) throw new Error("unexpected DEL result");
-          deletedKeys += count;
+      const exactKeys = [];
+      for (const key of keys) {
+        // SCAN can return a key more than once while the keyspace changes.
+        // Count and delete each key only once per pass.
+        if (seenKeys.has(key)) {
+          duplicateKeyCount += 1;
+          continue;
+        }
+        seenKeys.add(key);
+        if (isCvProfileKey(key)) {
+          validKeyCount += 1;
+          exactKeys.push(key);
+        } else {
+          mismatchedKeyCount += 1;
         }
       }
-    }
 
-    iterations += 1;
-    if (iterations > 10000) throw new Error("SCAN iteration limit reached");
-  } while (cursor !== "0");
+      if (exactKeys.length) {
+        const ttls = await redis.pipeline(exactKeys.map((key) => ["TTL", key]));
+        if (!Array.isArray(ttls) || ttls.length !== exactKeys.length) {
+          throw new Error("unexpected TTL pipeline result");
+        }
+        for (const ttl of ttls) addTtl(ttlBuckets, Number(ttl));
 
-  return {
-    dryRun,
-    totalScanned,
-    validKeys,
-    mismatchedKeys,
-    deletedKeys,
-    ttlBuckets,
-    scanIterations: iterations,
-  };
+        if (deleteKeys) {
+          for (const batch of chunk(exactKeys, batchSize)) {
+            const deleted = await redis.command("DEL", ...batch);
+            const count = Number(deleted);
+            if (!Number.isFinite(count) || count < 0) throw new Error("unexpected DEL result");
+            deletedKeyCount += count;
+          }
+        }
+      }
+
+      iterations += 1;
+      if (iterations > 10000) throw new Error("SCAN iteration limit reached");
+    } while (cursor !== "0");
+
+    return {
+      totalScanned,
+      validKeys: validKeyCount,
+      mismatchedKeys: mismatchedKeyCount,
+      duplicateKeys: duplicateKeyCount,
+      deletedKeys: deletedKeyCount,
+      ttlBuckets,
+      scanIterations: iterations,
+    };
+  }
+
+  const result = await scanPass({ deleteKeys: !dryRun });
+  const verification = dryRun ? null : await scanPass({ deleteKeys: false });
+  return { dryRun, ...result, verification };
 }
 
 export function createUpstashRedis({ url, token, fetchImpl = fetch }) {
