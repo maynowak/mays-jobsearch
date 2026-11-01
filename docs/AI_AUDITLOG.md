@@ -1,3 +1,12 @@
+2026-11-01 · JM-COVER-LETTER-02
+- Typ: UI/Deterministic-Review/Privacy/AI-Action-Gate
+- Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
+- Änderung: `LetterModal` prüft vorhandene Stellenbeschreibung deterministisch (sufficient/limited/missing), erlaubt optionale Benutzereingabe (max. 20.000 Zeichen), normalisiert/strip HTML und Script, prüft Plausibilität (plausible/uncertain/mismatch) und zeigt die ausgewählte Beschreibung mit Herkunft (original/enriched/user_supplied). Review-Zustand ist sitzungsgebunden; keine Persistenz.
+- AI-Grenze: Kein KI-Aufruf für Review/Öffnen/Schließen. Die ausgewählte Beschreibung wird in CL-02 noch nicht an `/api/cover-letter` übergeben; die vorläufige Generierung aus CL-01 nutzt weiterhin nur Stellen-/Suchprofildaten.
+- Sicherheit: Eingabe wird als Text behandelt, HTML/Script entfernt, keine URL-Abfrage, keine RIS-/Redis-Speicherung, keine neuen Cookies/Identitäten, keine Budgetänderung.
+- Tests: Review-Modul 17, LetterModal 16, Gesamtsuite 1071 passed/5 skipped, TypeScript/Build/diff PASS; Browser-E2E Desktop 1440/Mobil 390 PASS mit 1 `/api/jobs`, 0 `/api/job-details`, 0 Cover-Letter-Calls vor explizitem Start, 1 danach; kein Review-Text im Cover-Letter-Request.
+- Log: `docs/reports/JM-COVER-LETTER-02.md`
+
 2026-11-01 · JM-COVER-LETTER-01
 - Typ: UI/Accessibility/Privacy/AI-Action-Gate
 - Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
