@@ -1,3 +1,12 @@
+2026-11-01 · JM-CV-MODEL-UNAVAILABLE-DIAGNOSIS-01
+- Typ: CV-Processing/Model-Diagnose/UI-Recovery
+- Status: UI-KORREKTUR IMPLEMENTIERT/VERIFIZIERT; Provider-/Free-Modellproblem OPEN
+- Befund: Production-Logs für `/api/profile` zeigen HTTP 200 mit `stage=empty-content` bei mehreren OpenRouter-Free-Modellen (`nvidia/...`, `dots-studio/...`, `cohere/north-mini-code`, `openrouter/free`). Provider mappt das auf `model_unavailable`; Anonymisierung ist nicht die Ursache. Durch Entfernung des CV-Caches wird der Providerpfad häufiger erreicht.
+- UI-Fix: Modellfehler bleiben im Schritt `model-selection`, Fehler direkt am ModelSelector, kein Sprung auf Dokument/Anfang. Modellwechsel löscht alten Fehler. Button im Modellschritt heißt DE „Verarbeiten“ / EN „Process“; Optionen-Schritt bleibt „Weiter“.
+- Tests: App 96, AuthRace PASS, Gesamtsuite 1097 passed/5 skipped, TypeScript/Build/diff PASS, Guest-CV-E2E und Cover-Letter-E2E Desktop/Mobil PASS. Keine neuen echten Provideraufrufe; `LIVE PROVIDER TEST: NOT EXECUTED`.
+- Risiko: Free-Modell-Katalog kann leere Antworten liefern; Nutzer muss anderes Modell wählen; Provider-/Katalogproblem bleibt OPEN.
+- Log: `docs/reports/JM-CV-MODEL-UNAVAILABLE-DIAGNOSIS-01.md`
+
 2026-11-01 · JM-COVER-LETTER-06-PRIVACY-READINESS
 - Typ: Privacy-Hardening/Provider-Readiness/Release-Gate
 - Status: **YELLOW — technisch gehärtet, Produktionsfreigabe NO-GO**
