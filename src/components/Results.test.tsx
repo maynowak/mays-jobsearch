@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { Job, Match } from "../types";
 import { LangProvider } from "../i18n";
@@ -25,10 +25,10 @@ function makeJobs(n: number): Job[] {
   }));
 }
 
-function renderResults(matches: Match[], foundJobs: Job[]) {
+function renderResults(matches: Match[], foundJobs: Job[], onGenerateLetter = () => {}) {
   return render(
     <LangProvider>
-      <Results matches={matches} foundJobs={foundJobs} onGenerateLetter={() => {}} />
+      <Results matches={matches} foundJobs={foundJobs} onGenerateLetter={onGenerateLetter} />
     </LangProvider>
   );
 }
@@ -58,5 +58,16 @@ describe("Results: gefunden / bewertet / angezeigt", () => {
     expect(document.querySelectorAll(".match-card").length).toBe(0);
     expect(document.querySelectorAll(".remaining-card").length).toBe(66);
     expect(screen.getByText(/konnten aber gerade nicht per KI bewertet werden/)).toBeTruthy();
+  });
+
+  it("gibt die Anschreiben-Aktion an RemainingCards weiter", () => {
+    const jobs = makeJobs(1);
+    const onGenerateLetter = vi.fn();
+    renderResults([], jobs, onGenerateLetter);
+
+    fireEvent.click(screen.getByText("Anschreiben erstellen"));
+
+    expect(onGenerateLetter).toHaveBeenCalledTimes(1);
+    expect(onGenerateLetter).toHaveBeenCalledWith(jobs[0], "");
   });
 });

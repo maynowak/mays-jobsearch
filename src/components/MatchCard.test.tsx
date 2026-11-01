@@ -91,7 +91,7 @@ describe("MatchCard - ATS Evaluation Button", () => {
       onAtsEvaluate: () => {},
     });
 
-    expect(screen.getByText("Bewerbung generieren")).toBeInTheDocument();
+    expect(screen.getByText("Anschreiben erstellen")).toBeInTheDocument();
     expect(screen.getByText("Mit ATS bewerten")).toBeInTheDocument();
   });
 
@@ -105,7 +105,39 @@ describe("MatchCard - ATS Evaluation Button", () => {
       onAtsEvaluate: () => {},
     });
 
-    expect(screen.getByText("Bewerbung generieren")).toBeInTheDocument();
+    expect(screen.getByText("Anschreiben erstellen")).toBeInTheDocument();
     expect(screen.getByText("Mit ATS bewerten")).toBeInTheDocument();
+  });
+
+  it("keeps the original posting link in the shared action bar", () => {
+    const match = createTestMatch();
+
+    renderMatchCard({
+      match,
+      index: 0,
+      onGenerateLetter: () => {},
+      onAtsEvaluate: () => {},
+    });
+
+    const link = screen.getByRole("link", { name: /Original-Anzeige ansehen/ });
+    expect(link).toHaveAttribute("href", "https://example.com/job");
+    expect(link.closest(".job-actions")).not.toBeNull();
+  });
+
+  it("passes the selected job and prepare text to the letter callback", () => {
+    const match = createTestMatch();
+    const onGenerateLetter = vi.fn();
+
+    renderMatchCard({
+      match,
+      index: 0,
+      onGenerateLetter,
+      onAtsEvaluate: () => {},
+    });
+
+    fireEvent.click(screen.getByText("Anschreiben erstellen"));
+
+    expect(onGenerateLetter).toHaveBeenCalledTimes(1);
+    expect(onGenerateLetter).toHaveBeenCalledWith(match.job, match.prepare);
   });
 });

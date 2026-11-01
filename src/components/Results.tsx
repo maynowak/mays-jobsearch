@@ -115,9 +115,10 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
           {moreOpen && (
             <ol id="remaining-jobs" className="remaining-list">
               {remainingJobs.map((job) => (
-                <RemainingCard 
-                  key={job.slug} 
-                  job={job} 
+                <RemainingCard
+                  key={job.slug}
+                  job={job}
+                  onGenerateLetter={onGenerateLetter}
                   onAtsEvaluate={onAtsEvaluate}
                   analyzing={job.slug === analyzingJobSlug}
                 />

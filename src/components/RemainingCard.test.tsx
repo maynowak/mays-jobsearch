@@ -1,8 +1,12 @@
-import { render, screen, cleanup } from "@testing-library/react";
-import { describe, expect, it, afterEach } from "vitest";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { describe, expect, it, afterEach, vi } from "vitest";
+import type { ComponentProps } from "react";
 import RemainingCard from "./RemainingCard";
+import { fetchJobDetails } from "../api";
 import { LangProvider } from "../i18n";
 import "@testing-library/jest-dom";
+
+vi.mock("../api", () => ({ fetchJobDetails: vi.fn() }));
 
 const createTestJob = (overrides = {}) => ({
   slug: "test-job",
@@ -22,14 +26,18 @@ const createTestJob = (overrides = {}) => ({
   ...overrides,
 });
 
-function renderWithProvider(job: ReturnType<typeof createTestJob>, lang: "en" | "de" = "de") {
+function renderWithProvider(
+  job: ReturnType<typeof createTestJob>,
+  lang: "en" | "de" = "de",
+  props: Partial<ComponentProps<typeof RemainingCard>> = {}
+) {
   // Force language by setting localStorage before render
   try {
     localStorage.setItem("mj-lang", lang);
   } catch {}
   return render(
     <LangProvider>
-      <RemainingCard job={job as any} />
+      <RemainingCard job={job as any} {...props} />
     </LangProvider>
   );
 }
@@ -101,5 +109,58 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(screen.queryByText(/alert/i)).not.toBeInTheDocument();
     expect(document.querySelector("img")).toBeNull();
     expect(document.querySelector("script")).toBeNull();
+  });
+
+  it("uses already loaded Arbeitsagentur details for the letter without another detail request", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    const enriched = {
+      ...job,
+      title: "Changed detail title",
+      company_name: "Changed detail company",
+      description: "<p>Full detail text</p>",
+      descriptionPlain: "Full detail text",
+    };
+    vi.mocked(fetchJobDetails).mockResolvedValue({ jobs: { [job.slug]: enriched } });
+    const onGenerateLetter = vi.fn();
+
+    renderWithProvider(job, "de", { onGenerateLetter });
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    await waitFor(() => expect(fetchJobDetails).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByText("Anschreiben erstellen"));
+    expect(onGenerateLetter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        slug: job.slug,
+        title: job.title,
+        company_name: job.company_name,
+        source: job.source,
+        description: "<p>Full detail text</p>",
+      }),
+      ""
+    );
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers original posting, ATS and letter actions in one action bar", () => {
+    const job = createTestJob();
+    const onAtsEvaluate = vi.fn();
+    const onGenerateLetter = vi.fn();
+
+    renderWithProvider(job, "de", { onAtsEvaluate, onGenerateLetter });
+
+    expect(screen.getByText("Mit ATS bewerten")).toBeInTheDocument();
+    expect(screen.getByText("Anschreiben erstellen")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Original-Anzeige ansehen/ });
+    expect(link.closest(".job-actions")).not.toBeNull();
+
+    fireEvent.click(screen.getByText("Mit ATS bewerten"));
+    expect(onAtsEvaluate).toHaveBeenCalledWith(job);
+
+    fireEvent.click(screen.getByText("Anschreiben erstellen"));
+    expect(onGenerateLetter).toHaveBeenCalledWith(job, "");
   });
 });

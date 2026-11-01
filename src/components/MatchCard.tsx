@@ -63,35 +63,37 @@ export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluat
           </div>
         )}
 
-        {m.url && (
-          <a
-            className="apply-link"
-            href={m.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t("match.viewPosting")}
-          </a>
-        )}
+        <div className="job-actions">
+          {m.url && (
+            <a
+              className="apply-link"
+              href={m.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t("match.viewPosting")}
+            </a>
+          )}
 
-        <button
-          type="button"
-          className="letter-btn"
-          onClick={() => onGenerateLetter(m as Job, match.prepare || "")}
-        >
-          {t("match.generateLetter")}
-        </button>
-
-        {onAtsEvaluate && (
           <button
             type="button"
-            className="ats-evaluate-btn"
-            onClick={() => onAtsEvaluate(m as Job)}
-            aria-label={t("match.atsEvaluate")}
+            className="letter-btn"
+            onClick={() => onGenerateLetter(m as Job, match.prepare || "")}
           >
-            {t("match.atsEvaluate")}
+            {t("match.generateLetter")}
           </button>
-        )}
+
+          {onAtsEvaluate && (
+            <button
+              type="button"
+              className="ats-evaluate-btn"
+              onClick={() => onAtsEvaluate(m as Job)}
+              aria-label={t("match.atsEvaluate")}
+            >
+              {t("match.atsEvaluate")}
+            </button>
+          )}
+        </div>
       </div>
     </li>
   );

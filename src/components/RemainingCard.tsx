@@ -21,11 +21,12 @@ function renderHtmlContent(html: string, lang?: string) {
 
 interface Props {
   job: Job;
+  onGenerateLetter?: (job: Job, prepare: string) => void;
   onAtsEvaluate?: (job: Job) => void;
   analyzing?: boolean;
 }
 
-export default function RemainingCard({ job, onAtsEvaluate, analyzing }: Props) {
+export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, analyzing }: Props) {
   const { t, lang } = useLang();
   const [expanded, setExpanded] = useState(false);
   const [detailJob, setDetailJob] = useState<Job | null>(null);
@@ -84,6 +85,21 @@ export default function RemainingCard({ job, onAtsEvaluate, analyzing }: Props) 
     !expanded && showDescriptionToggle
       ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
       : descriptionPlain;
+
+  // Reuse already-loaded detail data for the letter, but never trigger a new
+  // detail request here. Preserve the original job's stable fields.
+  const letterJob: Job = detailJob
+    ? {
+        ...job,
+        ...detailJob,
+        slug: job.slug,
+        title: job.title || detailJob.title,
+        company_name: job.company_name || detailJob.company_name,
+        location: job.location?.length ? job.location : detailJob.location,
+        source: job.source?.length ? job.source : detailJob.source,
+        url: job.url || detailJob.url,
+      }
+    : job;
 
   return (
     <li className="remaining-card">
@@ -172,27 +188,39 @@ export default function RemainingCard({ job, onAtsEvaluate, analyzing }: Props) 
         )
       )}
 
-      {job.url && (
-        <a
-          className="remaining-link"
-          href={job.url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {t("match.viewPosting")}
-        </a>
-      )}
+      <div className="job-actions">
+        {job.url && (
+          <a
+            className="remaining-link"
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("match.viewPosting")}
+          </a>
+        )}
 
-      {onAtsEvaluate && (
-        <button
-          type="button"
-          className="ats-evaluate-btn"
-          onClick={() => onAtsEvaluate(job)}
-          aria-label={t("match.atsEvaluate")}
-        >
-          {t("match.atsEvaluate")}
-        </button>
-      )}
+        {onGenerateLetter && (
+          <button
+            type="button"
+            className="letter-btn"
+            onClick={() => onGenerateLetter(letterJob, "")}
+          >
+            {t("match.generateLetter")}
+          </button>
+        )}
+
+        {onAtsEvaluate && (
+          <button
+            type="button"
+            className="ats-evaluate-btn"
+            onClick={() => onAtsEvaluate(job)}
+            aria-label={t("match.atsEvaluate")}
+          >
+            {t("match.atsEvaluate")}
+          </button>
+        )}
+      </div>
     </li>
   );
 }
