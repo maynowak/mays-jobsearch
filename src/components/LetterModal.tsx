@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { Job, Profile } from "../types";
+import type { CvDocument, Job, Profile } from "../types";
 import { generateCoverLetter, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 import { formatGermanLocation } from "../lib/location";
@@ -9,7 +9,19 @@ import {
   type DescriptionReviewState,
   type ReviewReason,
 } from "../lib/jobDescriptionReview";
+import { readCvProfileLists } from "../lib/cvProfileStore";
+import { validateCvFile } from "../lib/cvFileValidation";
 import SourceBadge from "./SourceBadge";
+
+export type LetterCvChoice = "none" | "existing";
+
+export interface LetterPreparationContext {
+  jobSlug: string;
+  descriptionInput: string;
+  review: DescriptionReviewState | null;
+  cvChoice: LetterCvChoice;
+  selectedCvId: string | null;
+}
 
 interface Props {
   job: Job;
@@ -18,6 +30,9 @@ interface Props {
   model: string | null;
   availableModels: string[];
   recommendedModel: string | null;
+  cvDocuments?: CvDocument[];
+  initialContext?: LetterPreparationContext | null;
+  onAddCv?: (file: File, context: LetterPreparationContext) => void;
   onClose: () => void;
 }
 
@@ -33,11 +48,15 @@ export default function LetterModal({
   model,
   availableModels,
   recommendedModel,
+  cvDocuments = [],
+  initialContext,
+  onAddCv,
   onClose,
 }: Props) {
   const { t, lang } = useLang();
   const headingId = useId();
   const helpId = useId();
+  const cvGroupId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const requestSeqRef = useRef(0);
@@ -48,16 +67,34 @@ export default function LetterModal({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [fallbackNote, setFallbackNote] = useState(false);
-  const [descriptionInput, setDescriptionInput] = useState("");
-  const [review, setReview] = useState<DescriptionReviewState | null>(null);
+  const initialContextForJob =
+    initialContext && initialContext.jobSlug === job.slug ? initialContext : null;
+  const [descriptionInput, setDescriptionInput] = useState(
+    initialContextForJob?.descriptionInput ?? ""
+  );
+  const [review, setReview] = useState<DescriptionReviewState | null>(
+    initialContextForJob?.review ?? null
+  );
+  const [cvChoice, setCvChoice] = useState<LetterCvChoice>(
+    initialContextForJob?.cvChoice ?? "none"
+  );
+  const [selectedCvId, setSelectedCvId] = useState<string | null>(
+    initialContextForJob?.selectedCvId ?? null
+  );
+  const [cvError, setCvError] = useState<string | null>(null);
+  const cvFileInputRef = useRef<HTMLInputElement>(null);
+  const previousJobSlugRef = useRef(job.slug);
   const originalReview = useMemo(
     () => buildDescriptionReview({ job, enrichedInput: "" }),
     [job]
   );
   const visibleReview = review ?? originalReview;
 
-  // A new job must never inherit the previous job's letter or in-flight result.
+  // A new job must never inherit the previous job's letter, review or CV
+  // selection. The initial mount is excluded so a preserved context survives.
   useEffect(() => {
+    if (previousJobSlugRef.current === job.slug) return;
+    previousJobSlugRef.current = job.slug;
     requestSeqRef.current += 1;
     inFlightRef.current = false;
     setPhase("intro");
@@ -67,7 +104,18 @@ export default function LetterModal({
     setFallbackNote(false);
     setDescriptionInput("");
     setReview(null);
+    setCvChoice("none");
+    setSelectedCvId(null);
+    setCvError(null);
   }, [job.slug]);
+
+  useEffect(() => {
+    if (!selectedCvId) return;
+    if (!cvDocuments.some((document) => document.id === selectedCvId)) {
+      setSelectedCvId(null);
+      setCvChoice("none");
+    }
+  }, [cvDocuments, selectedCvId]);
 
   useEffect(() => {
     return () => {
@@ -188,6 +236,47 @@ export default function LetterModal({
     setReview(buildDescriptionReview({ job, enrichedInput: descriptionInput, confirmed: true }));
   };
 
+  const buildPreparationContext = (): LetterPreparationContext => ({
+    jobSlug: job.slug,
+    descriptionInput,
+    review,
+    cvChoice,
+    selectedCvId,
+  });
+
+  const handleNoCv = () => {
+    setCvChoice("none");
+    setSelectedCvId(null);
+    setCvError(null);
+  };
+
+  const handleSelectCv = (id: string) => {
+    setCvChoice("existing");
+    setSelectedCvId(id);
+    setCvError(null);
+  };
+
+  const handleCvFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const rejection = validateCvFile(file);
+    if (rejection) {
+      setCvError(
+        t(
+          rejection === "not-pdf"
+            ? "cv.notPdf"
+            : rejection === "too-large"
+              ? "cv.tooLarge"
+              : "cv.emptyFile"
+        )
+      );
+      return;
+    }
+    setCvError(null);
+    onAddCv?.(file, buildPreparationContext());
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(letter).then(
       () => {
@@ -268,6 +357,82 @@ export default function LetterModal({
                 <SourceBadge sources={job.source} />
               </div>
             </div>
+
+            <fieldset className="letter-cv">
+              <legend>{t("letter.cvHeading")}</legend>
+              <p className="letter-hint">{t("letter.cvHint")}</p>
+
+              <label className={`letter-cv-option${cvChoice === "none" ? " letter-cv-option--selected" : ""}`}>
+                <input
+                  type="radio"
+                  name={cvGroupId}
+                  checked={cvChoice === "none"}
+                  onChange={handleNoCv}
+                />
+                <span className="letter-cv-name">{t("letter.cvNone")}</span>
+              </label>
+
+              {cvDocuments.length === 0 ? (
+                <p className="letter-hint">{t("letter.cvNoDocuments")}</p>
+              ) : (
+                cvDocuments.map((document) => {
+                  const processed = Boolean(document.processedAt && document.hash);
+                  const lists = document.hash ? readCvProfileLists(document.hash) : null;
+                  const searchCount = lists?.searchProfiles.length ?? 0;
+                  const atsCount = lists?.atsProfiles.length ?? 0;
+                  return (
+                    <label
+                      key={document.id}
+                      className={`letter-cv-option${selectedCvId === document.id ? " letter-cv-option--selected" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name={cvGroupId}
+                        checked={selectedCvId === document.id}
+                        onChange={() => handleSelectCv(document.id)}
+                      />
+                      <span className="letter-cv-name">{document.name}</span>
+                      <span className={`letter-cv-status${processed ? " letter-cv-status--processed" : ""}`}>
+                        {processed
+                          ? searchCount > 0 || atsCount > 0
+                            ? t("letter.cvProcessed")
+                            : t("letter.cvProcessedNoProfile")
+                          : t("letter.cvNotProcessed")}
+                      </span>
+                      {processed && searchCount + atsCount > 0 && (
+                        <span className="letter-cv-profiles">
+                          {t("letter.cvProfileCounts", { search: searchCount, ats: atsCount })}
+                        </span>
+                      )}
+                    </label>
+                  );
+                })
+              )}
+
+              <div className="letter-cv-actions">
+                <button
+                  type="button"
+                  className="ats-evaluate-btn"
+                  onClick={() => cvFileInputRef.current?.click()}
+                  disabled={!onAddCv}
+                >
+                  {t("letter.cvAdd")}
+                </button>
+                <input
+                  ref={cvFileInputRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="visually-hidden"
+                  onChange={handleCvFileChange}
+                />
+              </div>
+              {cvError && (
+                <p className="letter-review-warning" role="alert">
+                  {cvError}
+                </p>
+              )}
+              <p className="letter-hint">{t("letter.cvNotUsedYet")}</p>
+            </fieldset>
 
             <div className="letter-review">
               <div className="letter-review-head">

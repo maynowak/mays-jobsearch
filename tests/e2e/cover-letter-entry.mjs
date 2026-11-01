@@ -6,7 +6,8 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-02");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-03");
+const fixturePdf = resolve(repoRoot, "tests/fixtures/cv/synthetic-cv.pdf");
 const port = 5201;
 const base = `http://localhost:${port}`;
 
@@ -81,6 +82,7 @@ async function runViewport(browser, name, viewport) {
   let coverLetterCalls = 0;
   let jobsCalls = 0;
   let jobDetailsCalls = 0;
+  let profileCalls = 0;
   const coverLetterBodies = [];
 
   page.on("console", (message) => {
@@ -103,6 +105,19 @@ async function runViewport(browser, name, viewport) {
     if (url.pathname === "/api/job-details") {
       jobDetailsCalls += 1;
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ jobs: {}, meta: { enrichedCount: 0 } }) });
+    }
+    if (url.pathname === "/api/profile") {
+      profileCalls += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          skills: ["React", "TypeScript"],
+          experienceLevel: "Mid",
+          targetRoles: ["Frontend Engineer"],
+          location: "Berlin",
+        }),
+      });
     }
     if (url.pathname === "/api/match") {
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(matches) });
@@ -150,6 +165,47 @@ async function runViewport(browser, name, viewport) {
   if (jobDetailsCalls !== 0) throw new Error(`${name}: unexpected /api/job-details request during review (${jobDetailsCalls})`);
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-review.png`), fullPage: false });
 
+  // CL-03: add a CV through the existing upload workflow and return to the
+  // preserved letter context.
+  const chooserPromise = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Neuen Lebenslauf hinzufügen" }).click();
+  const chooser = await chooserPromise;
+  await chooser.setFiles(fixturePdf);
+  await page.getByText("CV-Verarbeitung erlauben?").waitFor();
+  if (coverLetterCalls !== 0) throw new Error(`${name}: AI call while opening CV workflow`);
+  await page.getByRole("checkbox", { name: /Ich stimme der Verarbeitung meiner CV-Daten/ }).check();
+  await page.getByRole("button", { name: "Verarbeitung erlauben" }).click();
+  await page.locator(".cv-anonymization-choice").waitFor();
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await page.locator("#cv-model-selection-title").waitFor();
+  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await page.locator(".cv-result").waitFor();
+  if (profileCalls !== 1) throw new Error(`${name}: expected one CV profile request, got ${profileCalls}`);
+  if (coverLetterCalls !== 0) throw new Error(`${name}: cover-letter request during CV processing`);
+  await page.getByRole("button", { name: "Zurück zum Anschreiben" }).click();
+  await page.waitForSelector('[role="dialog"]');
+  if ((await page.getByLabel("Weitere Informationen zur Stellenanzeige einfügen").inputValue()) === "") {
+    throw new Error(`${name}: review text lost after CV workflow`);
+  }
+  await page.getByText("Verarbeitet — kein gespeichertes Suchprofil").waitFor();
+  await page.locator('[role="dialog"]').evaluate((element) => { element.scrollTop = 0; });
+  await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-cv-return.png`), fullPage: false });
+
+  // CL-03 abort path: start a second upload, return before processing and keep
+  // the prepared description/review context.
+  const abortChooserPromise = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Neuen Lebenslauf hinzufügen" }).click();
+  const abortChooser = await abortChooserPromise;
+  await abortChooser.setFiles(fixturePdf);
+  await page.locator(".cv-anonymization-choice").waitFor();
+  await page.getByRole("button", { name: "Zurück zum Anschreiben" }).click();
+  await page.waitForSelector('[role="dialog"]');
+  if ((await page.getByLabel("Weitere Informationen zur Stellenanzeige einfügen").inputValue()) === "") {
+    throw new Error(`${name}: review text lost after aborting CV workflow`);
+  }
+  if (profileCalls !== 1) throw new Error(`${name}: aborted CV workflow started processing`);
+  await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-cv-abort.png`), fullPage: false });
+
   await page.getByRole("button", { name: "Schließen" }).click();
   await page.waitForSelector('[role="dialog"]', { state: "detached" });
   if (coverLetterCalls !== 0) throw new Error(`${name}: AI call on dialog close`);
@@ -170,8 +226,12 @@ async function runViewport(browser, name, viewport) {
   await page.getByRole("button", { name: "Vorläufiges Anschreiben erstellen" }).click();
   await page.waitForSelector("text=vielen Dank für die Einladung.");
   if (coverLetterCalls !== 1) throw new Error(`${name}: expected one AI call, got ${coverLetterCalls}`);
-  if (JSON.stringify(coverLetterBodies).includes("Position als Frontend Engineer bei Example GmbH in Berlin. Du entwickelst React-Anwendungen")) {
+  const coverBody = JSON.stringify(coverLetterBodies);
+  if (coverBody.includes("Position als Frontend Engineer bei Example GmbH in Berlin. Du entwickelst React-Anwendungen")) {
     throw new Error(`${name}: enriched review text was sent to the model`);
+  }
+  if (coverBody.includes("synthetic-cv.pdf") || coverBody.includes("cvHash") || coverBody.includes("processedAt")) {
+    throw new Error(`${name}: CV selection was sent to the model`);
   }
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-generated.png`), fullPage: false });
 
@@ -179,7 +239,7 @@ async function runViewport(browser, name, viewport) {
   if (overflow) throw new Error(`${name}: horizontal overflow detected`);
 
   await context.close();
-  return { name, coverLetterCalls, jobsCalls, jobDetailsCalls, consoleErrors };
+  return { name, coverLetterCalls, jobsCalls, jobDetailsCalls, profileCalls, consoleErrors };
 }
 
 async function main() {

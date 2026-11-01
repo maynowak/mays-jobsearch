@@ -3739,6 +3739,35 @@ body {
   margin-bottom: var(--space-5);
 }
 
+.cv-processing-card__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.cv-return-letter {
+  padding: 7px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-link);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cv-return-letter:hover {
+  border-color: var(--text-link);
+}
+
+.cv-return-letter:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .cv-processing-card__close {
   border: none;
   background: transparent;
@@ -5755,6 +5784,80 @@ body {
   margin: 0;
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.letter-cv {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.letter-cv legend {
+  padding: 0 4px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.letter-cv-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 10px;
+  align-items: start;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.letter-cv-option--selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.letter-cv-option input {
+  grid-row: 1 / span 3;
+  margin-top: 3px;
+  accent-color: var(--bg);
+}
+
+.letter-cv-name {
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.letter-cv-status,
+.letter-cv-profiles {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}
+
+.letter-cv-status--processed {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.letter-cv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+@media (max-width: 600px) {
+  .letter-cv-option {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .letter-cv-actions .ats-evaluate-btn {
+    width: 100%;
+  }
 }
 
 .letter-review {

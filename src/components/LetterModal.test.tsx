@@ -4,7 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { LangProvider } from "../i18n";
 import LetterModal from "./LetterModal";
 import { generateCoverLetter, withModelFallback } from "../api";
-import type { Job, Profile } from "../types";
+import { resetCvProfileLists, saveCvAtsProfile, saveCvSearchProfile } from "../lib/cvProfileStore";
+import type { CvDocument, Job, Profile } from "../types";
 
 vi.mock("../api", () => ({
   generateCoverLetter: vi.fn(),
@@ -35,6 +36,17 @@ const reviewedJob: Job = {
   descriptionPlain: fullDescription,
 };
 
+function makeCv(overrides: Partial<CvDocument> = {}): CvDocument {
+  return {
+    id: "cv-1",
+    name: "my-cv.pdf",
+    size: 1024,
+    selected: false,
+    file: new File(["synthetic"], "my-cv.pdf", { type: "application/pdf" }),
+    ...overrides,
+  };
+}
+
 const profile: Profile = {
   skills: "React, TypeScript",
   targetRoles: ["Frontend Engineer"],
@@ -44,17 +56,19 @@ const profile: Profile = {
   employmentTypes: ["full_time"],
 };
 
-const defaultProps = {
+const defaultProps: React.ComponentProps<typeof LetterModal> = {
   job,
   prepare: "Ask about the team.",
   profile,
   model: "model-x",
   availableModels: ["model-x", "model-y"],
   recommendedModel: "model-x",
+  cvDocuments: [],
+  onAddCv: vi.fn(),
   onClose: vi.fn(),
 };
 
-function renderModal(overrides: Partial<typeof defaultProps> = {}, lang: "de" | "en" = "de") {
+function renderModal(overrides: Partial<React.ComponentProps<typeof LetterModal>> = {}, lang: "de" | "en" = "de") {
   try {
     localStorage.setItem("mj-lang", lang);
   } catch {
@@ -69,6 +83,7 @@ function renderModal(overrides: Partial<typeof defaultProps> = {}, lang: "de" | 
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetCvProfileLists();
   try {
     localStorage.setItem("mj-lang", "de");
   } catch {
@@ -84,6 +99,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  resetCvProfileLists();
   try {
     localStorage.clear();
   } catch {
@@ -92,6 +108,82 @@ afterEach(() => {
 });
 
 describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
+  it("requires an explicit CV choice even when one CV exists", () => {
+    const cv = makeCv();
+    renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });
+
+    expect(screen.getByLabelText("Ohne Lebenslauf fortfahren")).toBeChecked();
+    expect(screen.getByLabelText(/my-cv\.pdf/)).not.toBeChecked();
+    expect(screen.getByText("Hochgeladen — noch nicht verarbeitet")).toBeInTheDocument();
+    expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("shows processed CV profile information without auto-selecting it", () => {
+    const hash = "a".repeat(64);
+    const saved = saveCvSearchProfile(hash, "Frontend", profile);
+    expect(saved).not.toBeNull();
+    if (saved) saveCvAtsProfile(hash, "ATS Frontend", ["React"], ["Frontend Engineer"], saved.id);
+    const cv = makeCv({ processedAt: Date.now(), hash });
+    renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });
+
+    expect(screen.getByLabelText(/my-cv\.pdf/)).not.toBeChecked();
+    expect(screen.getByText("Verarbeitet — Profilinformationen verfügbar")).toBeInTheDocument();
+    expect(screen.getByText("1 Suchprofile · 1 ATS-Profile")).toBeInTheDocument();
+    expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("selects an existing CV explicitly and drops the selection when it disappears", () => {
+    const cv = makeCv();
+    const view = renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });
+    fireEvent.click(screen.getByLabelText(/my-cv\.pdf/));
+    expect(screen.getByLabelText(/my-cv\.pdf/)).toBeChecked();
+
+    view.rerender(
+      <LangProvider>
+        <LetterModal {...defaultProps} cvDocuments={[]} onAddCv={vi.fn()} />
+      </LangProvider>
+    );
+
+    expect(screen.getByLabelText("Ohne Lebenslauf fortfahren")).toBeChecked();
+    expect(screen.queryByLabelText(/my-cv\.pdf/)).not.toBeInTheDocument();
+    expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("adds a new CV through the existing callback and preserves context", () => {
+    const onAddCv = vi.fn();
+    renderModal({ cvDocuments: [], onAddCv });
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["synthetic"], "new-cv.pdf", { type: "application/pdf" });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(onAddCv).toHaveBeenCalledTimes(1);
+    const [sentFile, context] = onAddCv.mock.calls[0];
+    expect(sentFile.name).toBe("new-cv.pdf");
+    expect(context.jobSlug).toBe(job.slug);
+    expect(context.cvChoice).toBe("none");
+    expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("restores a preserved preparation context", () => {
+    const cv = makeCv({ id: "cv-restored", name: "restored.pdf" });
+    renderModal({
+      cvDocuments: [cv],
+      initialContext: {
+        jobSlug: job.slug,
+        descriptionInput: "Preserved description",
+        review: null,
+        cvChoice: "existing",
+        selectedCvId: cv.id,
+      },
+    });
+
+    expect(screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen")).toHaveValue(
+      "Preserved description"
+    );
+    expect(screen.getByLabelText(/restored\.pdf/)).toBeChecked();
+  });
+
   it("opens with a preparation view and sends no AI request", () => {
     renderModal();
 

@@ -294,6 +294,9 @@ export interface CvDocument {
   // (Suchprofile / ATS-Profile) je CV-Inhalt. Wird bei der Profil-Erstellung
   // gesetzt (solange null/undefined, gibt es keine gespeicherten Listen).
   hash?: string | null;
+  // CL-03: explicit per-document proof that the AI profile step completed.
+  // A File or hash alone is not enough to mark a document as processed.
+  processedAt?: number | null;
 }
 
 export type AnonymizationMode = "anonymized" | "not-anonymized";

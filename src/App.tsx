@@ -18,7 +18,7 @@ import Status from "./components/Status";
 import Results from "./components/Results";
 import AlertCard from "./components/AlertCard";
 import Footer from "./components/Footer";
-import LetterModal from "./components/LetterModal";
+import LetterModal, { type LetterPreparationContext } from "./components/LetterModal";
 import ATSModal from "./components/AtsOverlay";
 import { useSearchWorldMotion } from "./hooks/useSearchWorldMotion";
 import RegisterForm from "./components/RegisterForm";
@@ -162,7 +162,16 @@ export default function App() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [foundJobs, setFoundJobs] = useState<Job[]>([]);
   const [profile, setProfile] = useState<Profile>({ ...INITIAL_MANUAL_PROFILE });
-  const [letterJob, setLetterJob] = useState<{ job: Job; prepare: string } | null>(null);
+  const [letterJob, setLetterJob] = useState<{
+    job: Job;
+    prepare: string;
+    context?: LetterPreparationContext;
+  } | null>(null);
+  const [pendingLetterContext, setPendingLetterContext] = useState<{
+    job: Job;
+    prepare: string;
+    context: LetterPreparationContext;
+  } | null>(null);
   const [atsJob, setAtsJob] = useState<Job | null>(null);
   // CV-PROFILE-LISTS-01: Profil-Overlay pro CV (benannte Such-/ATS-Profile)
   const [profilesDocId, setProfilesDocId] = useState<string | null>(null);
@@ -246,6 +255,8 @@ export default function App() {
       setProfilesDocId(null);
       setAtsProfileName("");
       setConsentDismissed(false);
+      setLetterJob(null);
+      setPendingLetterContext(null);
       setStatus(null);
     }
     previousAuthProfileKeyRef.current = authProfileKey;
@@ -535,7 +546,7 @@ export default function App() {
         type: "error",
         message: t(rejection === "empty" ? "cv.emptyFile" : rejection === "too-large" ? "cv.tooLarge" : "cv.notPdf"),
       });
-      return;
+      return null;
     }
     cvOperationRef.current = null;
     const doc: CvDocument = {
@@ -556,6 +567,19 @@ export default function App() {
       error: null,
       errorBackStep: null,
     }));
+    return doc.id;
+  };
+
+  const handleAddCvFromLetter = (file: File, context: LetterPreparationContext) => {
+    if (!letterJob) return;
+    const previous = { job: letterJob.job, prepare: letterJob.prepare };
+    const newDocumentId = handleCvUploadStart(file);
+    if (!newDocumentId) return;
+    setPendingLetterContext({
+      ...previous,
+      context: { ...context, cvChoice: "existing", selectedCvId: newDocumentId },
+    });
+    setLetterJob(null);
   };
 
   const handleAddCvFiles = (files: FileList | File[], skills?: string[]) => {
@@ -698,6 +722,8 @@ export default function App() {
     setEditingSearchName(null);
     setCvProfileStoreVersion((version) => version + 1);
     setConsentDismissed(false);
+    setLetterJob(null);
+    setPendingLetterContext(null);
     if (manualShowsRemovedProfile) {
       setProfile({ ...INITIAL_MANUAL_PROFILE });
     }
@@ -948,6 +974,9 @@ export default function App() {
 
       setCvState((prev) => ({
         ...prev,
+        documents: prev.documents.map((item) =>
+          item.id === doc.id ? { ...item, processedAt: Date.now() } : item
+        ),
         suggestedProfile,
         step: "profile-ready",
         isProcessing: false,
@@ -1817,13 +1846,25 @@ export default function App() {
       // Im Consent-Step zaehlt Schliessen als "ausstehend" (wieder oeffnbar
       // ueber "Einwilligung anzeigen") — kein Step-Wechsel.
       setConsentDismissed(true);
-      return;
+    } else {
+      setCvState((prev) => ({
+        ...prev,
+        step: prev.documents.length > 0 ? "document-selected" : "idle",
+        isProcessing: false,
+      }));
     }
-    setCvState((prev) => ({
-      ...prev,
-      step: prev.documents.length > 0 ? "document-selected" : "idle",
-      isProcessing: false,
-    }));
+
+    // CL-03: A CV added from the cover-letter assistant returns to that
+    // assistant with the job, review and new document context preserved.
+    if (pendingLetterContext) {
+      const pending = pendingLetterContext;
+      setPendingLetterContext(null);
+      setLetterJob({
+        job: pending.job,
+        prepare: pending.prepare,
+        context: pending.context,
+      });
+    }
   };
 
   // CV-MODAL-ISOLATION-01: A11y + Isolation des Dialogs.
@@ -1890,14 +1931,25 @@ export default function App() {
           : t("cv.statusTitle")}</h2>
         {/* CV-UPLOAD-UX-09: Schliessen in jedem Overlay-Step */}
         {cvDialogOpen && (
-          <button
-            type="button"
-            className="cv-processing-card__close"
-            aria-label={t("cv.workflowClose")}
-            onClick={handleCvWorkflowClose}
-          >
-            ×
-          </button>
+          <div className="cv-processing-card__head-actions">
+            {pendingLetterContext && (
+              <button
+                type="button"
+                className="cv-return-letter"
+                onClick={handleCvWorkflowClose}
+              >
+                {t("cv.returnToLetter")}
+              </button>
+            )}
+            <button
+              type="button"
+              className="cv-processing-card__close"
+              aria-label={t("cv.workflowClose")}
+              onClick={handleCvWorkflowClose}
+            >
+              ×
+            </button>
+          </div>
         )}
       </div>
 
@@ -3032,6 +3084,9 @@ export default function App() {
               model={effectiveModel}
               availableModels={models.map((model) => model.id)}
               recommendedModel={recommendedModel}
+              cvDocuments={cvState.documents}
+              initialContext={letterJob.context}
+              onAddCv={handleAddCvFromLetter}
               onClose={() => setLetterJob(null)}
             />
           )}
