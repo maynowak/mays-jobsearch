@@ -1,7 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { CvDocument, Job, Profile } from "../types";
+import type { CvDocument, Job, ModelOption, Profile } from "../types";
 import { generateCoverLetter, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
+import type { ModelsState } from "../hooks/useAvailableModels";
 import { formatGermanLocation } from "../lib/location";
 import {
   MAX_DESCRIPTION_INPUT_LENGTH,
@@ -18,11 +19,15 @@ import {
   buildTargetRoles,
   cvIsUsable,
   MAX_CV_TEXT_LENGTH,
+  MAX_REVISION_DRAFT_LENGTH,
+  MAX_REVISION_FEEDBACK_LENGTH,
   type CoverLetterLength,
+  type CoverLetterOperation,
   type CoverLetterStyle,
 } from "../lib/coverLetterRequest";
 import { type DescriptionOrigin } from "../lib/jobDescriptionReview";
 import SourceBadge from "./SourceBadge";
+import ModelSelector from "./ModelSelector";
 
 export type LetterCvChoice = "none" | "existing";
 
@@ -43,6 +48,7 @@ export interface LetterPreparationContext {
   review: DescriptionReviewState | null;
   cvChoice: LetterCvChoice;
   selectedCvId: string | null;
+  model?: string | null;
   candidateDraft?: LetterCandidateDraft;
 }
 
@@ -51,6 +57,9 @@ interface Props {
   prepare: string;
   profile: Profile;
   model: string | null;
+  modelsState: ModelsState;
+  models: ModelOption[];
+  defaultModel: string | null;
   availableModels: string[];
   recommendedModel: string | null;
   cvDocuments?: CvDocument[];
@@ -70,6 +79,9 @@ export default function LetterModal({
   prepare,
   profile,
   model,
+  modelsState,
+  models,
+  defaultModel,
   availableModels,
   recommendedModel,
   cvDocuments = [],
@@ -84,17 +96,22 @@ export default function LetterModal({
   const helpId = useId();
   const cvGroupId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const requestSeqRef = useRef(0);
   const inFlightRef = useRef(false);
 
+  const initialContextForJob =
+    initialContext && initialContext.jobSlug === job.slug ? initialContext : null;
   const [phase, setPhase] = useState<LetterPhase>("intro");
+  const [selectedModel, setSelectedModel] = useState<string | null>(
+    initialContextForJob?.model ?? model
+  );
   const [letter, setLetter] = useState("");
+  const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [fallbackNote, setFallbackNote] = useState(false);
-  const initialContextForJob =
-    initialContext && initialContext.jobSlug === job.slug ? initialContext : null;
   const [descriptionInput, setDescriptionInput] = useState(
     initialContextForJob?.descriptionInput ?? ""
   );
@@ -136,6 +153,8 @@ export default function LetterModal({
   const [generatedText, setGeneratedText] = useState("");
   const [edited, setEdited] = useState(false);
   const [regenerateWarning, setRegenerateWarning] = useState(false);
+  const [reviseWarning, setReviseWarning] = useState(false);
+  const [modelFailure, setModelFailure] = useState(false);
   const [loadingStage, setLoadingStage] = useState<"cv" | "model">("model");
   const cvFileInputRef = useRef<HTMLInputElement>(null);
   const previousJobSlugRef = useRef(job.slug);
@@ -144,6 +163,7 @@ export default function LetterModal({
     [job]
   );
   const visibleReview = review ?? originalReview;
+  const activeModel = selectedModel ?? model;
   const selectedCv =
     cvChoice === "existing" && selectedCvId
       ? cvDocuments.find((document) => document.id === selectedCvId) ?? null
@@ -181,6 +201,10 @@ export default function LetterModal({
     setGeneratedText("");
     setEdited(false);
     setRegenerateWarning(false);
+    setReviseWarning(false);
+    setModelFailure(false);
+    setFeedback("");
+    setSelectedModel(model);
   }, [job.slug]);
 
   // Editing the job description, candidate basis or options invalidates a
@@ -211,6 +235,10 @@ export default function LetterModal({
   ]);
 
   useEffect(() => {
+    if (!selectedModel && model) setSelectedModel(model);
+  }, [model, selectedModel]);
+
+  useEffect(() => {
     if (!selectedCvId) return;
     if (!cvDocuments.some((document) => document.id === selectedCvId)) {
       setSelectedCvId(null);
@@ -226,18 +254,33 @@ export default function LetterModal({
   }, []);
 
   // Dialog focus, background scroll lock and focus restoration.
+  // The heading is focused with preventScroll; focusing the generate button
+  // would move the scroll container to the bottom of the modal.
   useEffect(() => {
     previousFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const dialog = dialogRef.current;
-    const initial =
-      dialog?.querySelector<HTMLElement>("[data-autofocus]") ??
-      dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-    initial?.focus();
+    const heading = headingRef.current;
+    const resetScroll = () => {
+      if (dialogRef.current) dialogRef.current.scrollTop = 0;
+    };
+
+    resetScroll();
+    heading?.focus({ preventScroll: true });
+    resetScroll();
+
+    const frame =
+      typeof window.requestAnimationFrame === "function"
+        ? window.requestAnimationFrame(resetScroll)
+        : window.setTimeout(resetScroll, 0);
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
+      if (typeof window.cancelAnimationFrame === "function") {
+        window.cancelAnimationFrame(frame);
+      } else {
+        window.clearTimeout(frame);
+      }
       document.body.style.overflow = previousOverflow;
       previousFocusRef.current?.focus?.();
     };
@@ -264,7 +307,8 @@ export default function LetterModal({
       if (!focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      const atHeading = document.activeElement === headingRef.current;
+      if (event.shiftKey && (document.activeElement === first || atHeading)) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -283,7 +327,16 @@ export default function LetterModal({
       .filter(Boolean)
       .slice(0, 50);
 
-  const handleStart = async () => {
+  const handleModelChange = (nextModel: string) => {
+    setSelectedModel(nextModel);
+    setModelFailure(false);
+    setGenerationError("");
+    setRegenerateWarning(false);
+    setReviseWarning(false);
+    if (phase === "error") setPhase("intro");
+  };
+
+  const runRequest = async (operation: CoverLetterOperation, revisionFeedback = "") => {
     if (inFlightRef.current || phase === "loading") return;
 
     if (visibleReview.confirmation === "required") {
@@ -298,6 +351,15 @@ export default function LetterModal({
       setGenerationError(t("letter.cvNeedsProcessing"));
       return;
     }
+    if (operation === "revise" && !letter.trim()) {
+      setGenerationError(t("letter.reviseNeedsDraft"));
+      return;
+    }
+    if (operation === "revise" && letter.length > MAX_REVISION_DRAFT_LENGTH) {
+      setGenerationError(t("letter.reviseDraftTooLong"));
+      return;
+    }
+
     inFlightRef.current = true;
     const requestSeq = requestSeqRef.current + 1;
     requestSeqRef.current = requestSeq;
@@ -305,10 +367,11 @@ export default function LetterModal({
     setPhase("loading");
     setLoadingStage(selectedCv ? "cv" : "model");
     setError("");
-    setLetter("");
     setCopied(false);
     setFallbackNote(false);
     setRegenerateWarning(false);
+    setReviseWarning(false);
+    setModelFailure(false);
 
     try {
       let cvText: string | undefined;
@@ -333,7 +396,7 @@ export default function LetterModal({
         ...(salaryExpectation.trim() ? { salary_expectation: salaryExpectation.trim() } : {}),
       };
       const descriptionText = selectedDescription?.text ?? visibleReview.originalText ?? "";
-      const request = {
+      const requestBase = {
         job: buildJobContext(job, descriptionText, selectedOrigin),
         candidate,
         options: {
@@ -342,11 +405,23 @@ export default function LetterModal({
           length,
           target_roles: buildTargetRoles(profile),
         },
+        operation,
       };
+      const revision =
+        operation === "revise"
+          ? {
+              draft_text: anonymizeText(letter),
+              draft_anonymized: true,
+              ...(revisionFeedback.trim()
+                ? { feedback: anonymizeText(revisionFeedback.trim()) }
+                : {}),
+            }
+          : undefined;
+      const request = revision ? { ...requestBase, revision } : requestBase;
 
       setLoadingStage("model");
-      const { data: result, usedFallback } = await withModelFallback({
-        initialModel: model,
+      const { data: result, usedFallback, attempts } = await withModelFallback({
+        initialModel: activeModel,
         availableModels,
         recommendedModel,
         request: (m, attempt) =>
@@ -356,26 +431,43 @@ export default function LetterModal({
           ),
       });
       if (requestSeq !== requestSeqRef.current) return;
-      setLetter(result.letter);
-      setGeneratedText(result.letter);
+      const nextLetter = String(result.letter ?? "").trim();
+      if (!nextLetter) throw new Error(t("letter.emptyResponse"));
+      setLetter(nextLetter);
+      setGeneratedText(nextLetter);
       setEdited(false);
       setFallbackNote(usedFallback);
+      if (usedFallback) {
+        const successfulModel = attempts.find((attempt) => attempt.ok)?.model;
+        if (successfulModel) setSelectedModel(successfulModel);
+      }
       setPhase("done");
     } catch (err) {
       if (requestSeq !== requestSeqRef.current) return;
-      setError(
-        isFreeQuotaExceeded(err)
-          ? t("model.quotaExceeded")
-          : isModelUnavailable(err)
-            ? t("model.unavailable")
-            : err instanceof Error
-              ? err.message || t("letter.error")
-              : t("letter.error")
-      );
-      setPhase("error");
+      const message = isFreeQuotaExceeded(err)
+        ? t("model.quotaExceeded")
+        : isModelUnavailable(err)
+          ? t("model.unavailable")
+          : err instanceof Error
+            ? err.message || t("letter.error")
+            : t("letter.error");
+      setError(message);
+      setModelFailure(isModelUnavailable(err));
+      if (letter) {
+        // Keep the existing draft visible. A failed regeneration/revision must
+        // never wipe the user's text.
+        setGenerationError(message);
+        setPhase("done");
+      } else {
+        setPhase("error");
+      }
     } finally {
       if (requestSeq === requestSeqRef.current) inFlightRef.current = false;
     }
+  };
+
+  const handleStart = () => {
+    void runRequest("generate");
   };
 
   const handleDescriptionChange = (value: string) => {
@@ -398,6 +490,7 @@ export default function LetterModal({
     review,
     cvChoice,
     selectedCvId,
+    model: selectedModel,
     candidateDraft: {
       skills: manualSkills,
       experience: manualExperience,
@@ -446,16 +539,29 @@ export default function LetterModal({
   const handleLetterChange = (value: string) => {
     setLetter(value);
     setEdited(value !== generatedText);
+    setRegenerateWarning(false);
+    setReviseWarning(false);
   };
 
   const handleRegenerate = () => {
     if (inFlightRef.current || phase === "loading") return;
     if (edited && !regenerateWarning) {
       setRegenerateWarning(true);
+      setReviseWarning(false);
       return;
     }
-    setRegenerateWarning(false);
-    void handleStart();
+    void runRequest("generate");
+  };
+
+  const handleImprove = () => {
+    if (inFlightRef.current || phase === "loading") return;
+    if (!letter.trim()) return;
+    if (edited && !reviseWarning) {
+      setReviseWarning(true);
+      setRegenerateWarning(false);
+      return;
+    }
+    void runRequest("revise", feedback);
   };
 
   const handleCopy = () => {
@@ -524,7 +630,9 @@ export default function LetterModal({
       >
         <div className="modal-head">
           <div>
-            <h3 id={headingId}>{t("letter.heading")}</h3>
+            <h3 ref={headingRef} id={headingId} tabIndex={-1}>
+              {t("letter.heading")}
+            </h3>
             <p className="modal-sub">{jobName}</p>
           </div>
           <button
@@ -535,6 +643,20 @@ export default function LetterModal({
           >
             &times;
           </button>
+        </div>
+
+        <div className="letter-model">
+          <ModelSelector
+            state={modelsState}
+            models={models}
+            defaultModel={defaultModel}
+            recommendedModel={recommendedModel}
+            value={activeModel}
+            onChange={handleModelChange}
+            disabled={phase === "loading"}
+            attention={modelFailure}
+          />
+          <p className="letter-hint">{t("letter.modelHint")}</p>
         </div>
 
         {phase === "intro" && (
@@ -847,7 +969,7 @@ export default function LetterModal({
                 <dt>{t("letter.dataManual")}</dt>
                 <dd>{manualSummary}</dd>
                 <dt>{t("letter.dataModel")}</dt>
-                <dd>{model || t("letter.modelDefault")}</dd>
+                <dd>{activeModel || t("letter.modelDefault")}</dd>
               </dl>
               {completedDescriptionIsLimited && (
                 <p className="letter-review-warning">{t("letter.limitedDescription")}</p>
@@ -870,8 +992,7 @@ export default function LetterModal({
               <button
                 type="button"
                 className="letter-btn"
-                onClick={() => void handleStart()}
-                data-autofocus
+                onClick={handleStart}
               >
                 {t("letter.generate")}
               </button>
@@ -902,18 +1023,41 @@ export default function LetterModal({
           <p className="fallback-note letter-fallback-note">{t("model.fallbackNote")}</p>
         )}
 
+        {phase === "done" && generationError && (
+          <p className="letter-review-warning letter-draft-error" role="alert">
+            {generationError}
+          </p>
+        )}
+
         {phase === "done" && (
           <div className="letter-editor-wrap">
             <textarea
               className="letter-editor"
               value={letter}
               onChange={(event) => handleLetterChange(event.target.value)}
+              maxLength={MAX_REVISION_DRAFT_LENGTH}
               aria-label={t("letter.editorAria")}
             />
             <p className="letter-hint">{t("letter.editHint")}</p>
+            <label className="letter-field letter-feedback">
+              <span>{t("letter.feedbackLabel")}</span>
+              <textarea
+                rows={3}
+                value={feedback}
+                onChange={(event) => setFeedback(event.target.value)}
+                maxLength={MAX_REVISION_FEEDBACK_LENGTH}
+                placeholder={t("letter.feedbackPlaceholder")}
+              />
+            </label>
+            <p className="letter-hint">{t("letter.revisionPrivacy")}</p>
             {regenerateWarning && (
               <p className="letter-review-warning" role="alert">
                 {t("letter.regenerateWarning")}
+              </p>
+            )}
+            {reviseWarning && (
+              <p className="letter-review-warning" role="alert">
+                {t("letter.reviseWarning")}
               </p>
             )}
           </div>
@@ -926,6 +1070,9 @@ export default function LetterModal({
             </button>
             <button type="button" className="btn-ghost" onClick={handleDownload}>
               {t("letter.download")}
+            </button>
+            <button type="button" className="btn-ghost" onClick={handleImprove}>
+              {reviseWarning ? t("letter.confirmImprove") : t("letter.improve")}
             </button>
             <button type="button" className="btn-ghost" onClick={handleRegenerate}>
               {regenerateWarning ? t("letter.confirmRegenerate") : t("letter.regenerate")}

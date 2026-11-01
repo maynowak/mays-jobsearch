@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import LetterModal from "./LetterModal";
-import { generateCoverLetter, withModelFallback } from "../api";
+import { generateCoverLetter, isModelUnavailable, withModelFallback } from "../api";
 import { resetCvProfileLists, saveCvAtsProfile, saveCvSearchProfile } from "../lib/cvProfileStore";
 import { extractPdfText } from "../lib/pdf";
 import { anonymizeText } from "../lib/anonymize";
@@ -71,6 +71,12 @@ const defaultProps: React.ComponentProps<typeof LetterModal> = {
   prepare: "Ask about the team.",
   profile,
   model: "model-x",
+  modelsState: "ready",
+  models: [
+    { id: "model-x", name: "Model X" },
+    { id: "model-y", name: "Model Y" },
+  ],
+  defaultModel: "model-x",
   availableModels: ["model-x", "model-y"],
   recommendedModel: "model-x",
   cvDocuments: [],
@@ -101,9 +107,10 @@ beforeEach(() => {
   } catch {
     // ignore
   }
+  vi.mocked(isModelUnavailable).mockReturnValue(false);
   vi.mocked(generateCoverLetter).mockResolvedValue({ letter: "Dear hiring team," });
-  vi.mocked(withModelFallback).mockImplementation(async ({ request }) => ({
-    data: await request("model-x", 1),
+  vi.mocked(withModelFallback).mockImplementation(async ({ initialModel, request }) => ({
+    data: await request(initialModel ?? "model-x", 1),
     usedFallback: false,
     attempts: [],
   }));
@@ -194,6 +201,23 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
       "Preserved description"
     );
     expect(screen.getByLabelText(/restored\.pdf/)).toBeChecked();
+  });
+
+  it("restores the locally selected model from a preserved context", () => {
+    renderModal({
+      initialContext: {
+        jobSlug: job.slug,
+        descriptionInput: "",
+        review: null,
+        cvChoice: "none",
+        selectedCvId: null,
+        model: "model-y",
+      },
+    });
+
+    expect(screen.getAllByRole("combobox")[0].getAttribute("aria-label")).toContain(
+      "model-y"
+    );
   });
 
   it("opens with a preparation view and sends no AI request", () => {
@@ -384,6 +408,7 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
       description_origin: "original",
     });
     expect(request.candidate).toMatchObject({ mode: "manual", skills: [] });
+    expect(request.operation).toBe("generate");
     expect(request.options).toMatchObject({
       language: "German",
       style: "professional",
@@ -454,7 +479,7 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(withModelFallback).toHaveBeenCalledTimes(1);
   });
 
-  it("focuses the start action on open and returns focus to the trigger on close", () => {
+  it("focuses the heading on open, starts at the top and returns focus to the trigger on close", () => {
     function Harness() {
       const [open, setOpen] = useState(false);
       return (
@@ -473,11 +498,29 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     fireEvent.click(trigger);
 
     const dialog = screen.getByRole("dialog");
+    const heading = screen.getByRole("heading", { name: "Bewerbungsschreiben" });
     expect(dialog).toHaveAttribute("aria-modal", "true");
-    expect(screen.getByRole("button", { name: "Anschreiben generieren" })).toHaveFocus();
+    expect(heading).toHaveFocus();
+    expect(dialog.scrollTop).toBe(0);
+    expect(screen.getByRole("button", { name: "Anschreiben generieren" })).not.toHaveFocus();
+    expect(document.body.style.overflow).toBe("hidden");
 
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
     expect(trigger).toHaveFocus();
+    expect(document.body.style.overflow).not.toBe("hidden");
+  });
+
+  it("keeps the focus trap around the modal heading", () => {
+    renderModal();
+    const heading = screen.getByRole("heading", { name: "Bewerbungsschreiben" });
+    const generate = screen.getByRole("button", { name: "Anschreiben generieren" });
+    expect(heading).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(generate).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(screen.getByRole("button", { name: "Schließen" })).toHaveFocus();
   });
 
   it("shows a deterministic review with no AI call during the check", () => {
@@ -604,5 +647,188 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     fireEvent.click(screen.getByRole("button", { name: "Kopieren" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("My edited letter text"));
     expect(screen.getByText("Kopiert ✓")).toBeInTheDocument();
+  });
+});
+
+describe("JM-COVER-LETTER-UX-01: local model choice and guided revision", () => {
+  const generate = () =>
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+
+  const modelCombobox = () => screen.getAllByRole("combobox")[0];
+  const selectModel = (name: RegExp) => {
+    fireEvent.click(modelCombobox());
+    fireEvent.click(screen.getByRole("option", { name }));
+  };
+
+  it("shows the local model selector before generation without starting a request", () => {
+    renderModal();
+
+    expect(modelCombobox()).toBeInTheDocument();
+    expect(screen.getByText("Das gewählte Modell wird für die nächste Generierung oder Überarbeitung verwendet.")).toBeInTheDocument();
+    expect(withModelFallback).not.toHaveBeenCalled();
+    expect(generateCoverLetter).not.toHaveBeenCalled();
+  });
+
+  it("changes the model without a request and uses it for the next generation", async () => {
+    renderModal();
+    generate();
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+
+    selectModel(/Model Y/);
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Neu generieren" }));
+    await waitFor(() => expect(withModelFallback).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(withModelFallback).mock.calls[1][0].initialModel).toBe("model-y");
+    expect(generateCoverLetter).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(generateCoverLetter).mock.calls[1][0].options.model).toBe("model-y");
+  });
+
+  it("keeps the model selector visible after a model failure and retries explicitly", async () => {
+    vi.mocked(isModelUnavailable).mockReturnValue(true);
+    vi.mocked(withModelFallback).mockRejectedValueOnce(new Error("provider down"));
+    renderModal();
+
+    generate();
+    expect(await screen.findByRole("alert")).toHaveTextContent(/KI-Modell/);
+    expect(modelCombobox()).toBeInTheDocument();
+
+    selectModel(/Model Y/);
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await waitFor(() => expect(withModelFallback).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(withModelFallback).mock.calls[1][0].initialModel).toBe("model-y");
+  });
+
+  it("preserves an edited draft when the model changes", async () => {
+    renderModal();
+    generate();
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.change(editor, { target: { value: "Edited draft must stay" } });
+
+    selectModel(/Model Y/);
+
+    expect(editor).toHaveValue("Edited draft must stay");
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not start a revision when the feedback changes", async () => {
+    renderModal();
+    generate();
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    fireEvent.change(screen.getByLabelText("Was möchtest du am Anschreiben verbessern?"), {
+      target: { value: "Bitte kürzer." },
+    });
+
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+  });
+
+  it("revises with feedback using the edited draft as the basis", async () => {
+    renderModal();
+    generate();
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.change(editor, { target: { value: "Edited draft text" } });
+    fireEvent.change(screen.getByLabelText("Was möchtest du am Anschreiben verbessern?"), {
+      target: { value: "Bitte kürzer formulieren." },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Mit Kommentar verbessern" }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/bearbeiteter Entwurf/);
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiteten Entwurf verbessern" }));
+    await waitFor(() => expect(withModelFallback).toHaveBeenCalledTimes(2));
+
+    const [request] = vi.mocked(generateCoverLetter).mock.calls[1];
+    expect(request.operation).toBe("revise");
+    expect(request.revision?.draft_text).toContain("anonymized: Edited draft text");
+    expect(request.revision?.draft_text).not.toBe("Edited draft text");
+    expect(request.revision?.feedback).toContain("anonymized: Bitte kürzer formulieren.");
+    expect(request.revision?.draft_anonymized).toBe(true);
+  });
+
+  it("revises without feedback and asks for general improvement", async () => {
+    renderModal();
+    generate();
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Mit Kommentar verbessern" }));
+    await waitFor(() => expect(withModelFallback).toHaveBeenCalledTimes(2));
+
+    const [request] = vi.mocked(generateCoverLetter).mock.calls[1];
+    expect(request.operation).toBe("revise");
+    expect(request.revision?.draft_text).toContain("Dear hiring team,");
+    expect(request.revision?.feedback).toBeUndefined();
+  });
+
+  it("keeps the previous draft when the model returns an empty letter", async () => {
+    renderModal();
+    generate();
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    expect(editor).toHaveValue("Dear hiring team,");
+    vi.mocked(withModelFallback).mockResolvedValueOnce({
+      data: { letter: "   " },
+      usedFallback: false,
+      attempts: [],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Neu generieren" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/kein verwertbares Anschreiben/);
+    expect(screen.getByRole("textbox", { name: "Bearbeitbares Anschreiben" })).toHaveValue(
+      "Dear hiring team,"
+    );
+  });
+
+  it("keeps the previous draft when regeneration fails", async () => {
+    renderModal();
+    generate();
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.change(editor, { target: { value: "Draft that must survive" } });
+    vi.mocked(withModelFallback).mockRejectedValueOnce(new Error("provider down"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Neu generieren" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiteten Entwurf überschreiben" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("provider down");
+
+    expect(screen.getByRole("textbox", { name: "Bearbeitbares Anschreiben" })).toHaveValue(
+      "Draft that must survive"
+    );
+    expect(withModelFallback).toHaveBeenCalledTimes(2);
+  });
+
+  it("anonymizes personal data in the revised draft before transfer", async () => {
+    vi.mocked(anonymizeText).mockImplementation((text: string) =>
+      `anonymized: ${text.replace("max@example.com", "[E-MAIL]")}`
+    );
+    renderModal();
+    generate();
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.change(editor, {
+      target: { value: "Max Mustermann, max@example.com, Telefon 0170 1234567" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Mit Kommentar verbessern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiteten Entwurf verbessern" }));
+    await waitFor(() => expect(withModelFallback).toHaveBeenCalledTimes(2));
+
+    const [request] = vi.mocked(generateCoverLetter).mock.calls[1];
+    expect(request.revision?.draft_text).toContain("anonymized:");
+    expect(request.revision?.draft_text).not.toContain("max@example.com");
+    expect(anonymizeText).toHaveBeenCalled();
+  });
+
+  it("shows distinct regenerate and improve actions after generation", async () => {
+    renderModal();
+    generate();
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    expect(screen.getByRole("button", { name: "Neu generieren" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Mit Kommentar verbessern" })
+    ).toBeInTheDocument();
   });
 });

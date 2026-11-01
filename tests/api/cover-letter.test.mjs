@@ -233,4 +233,148 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.statusCode).toBe(200);
     expect(vi.mocked(chat).mock.calls[0][0].prompt).not.toContain("Secret interview question");
   });
+
+  it("rejects an invalid operation type or value", async () => {
+    for (const operation of [123, "other"]) {
+      const res = makeRes();
+      await handler(req({ ...validBody, operation }), res);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.code).toBe("bad_request");
+    }
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("requires an existing draft for revise", async () => {
+    const res = makeRes();
+    await handler(req({ ...validBody, operation: "revise" }), res);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("bad_request");
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("rejects unredacted draft transfers server-side", async () => {
+    for (const draftAnonymized of [false, undefined]) {
+      const res = makeRes();
+      const revision = {
+        draft_text: "Anonymized draft text",
+        ...(draftAnonymized === undefined ? {} : { draft_anonymized: draftAnonymized }),
+      };
+      await handler(req({ ...validBody, operation: "revise", revision }), res);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.code).toBe("draft_raw_not_allowed");
+    }
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("rejects an oversized draft or feedback", async () => {
+    for (const revision of [
+      { draft_text: "x".repeat(20001), draft_anonymized: true },
+      { draft_text: "Draft", feedback: "x".repeat(2001), draft_anonymized: true },
+    ]) {
+      const res = makeRes();
+      await handler(req({ ...validBody, operation: "revise", revision }), res);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.code).toBe("bad_request");
+    }
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("uses the draft and optional feedback for revision", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        operation: "revise",
+        revision: {
+          draft_text: "Current draft text",
+          draft_anonymized: true,
+          feedback: "Bitte kürzer formulieren.",
+        },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.meta.operation).toBe("revise");
+    expect(res.body.meta.draft_anonymized).toBe(true);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("Current draft text");
+    expect(prompt).toContain("Bitte kürzer formulieren.");
+    expect(prompt).toContain("Use the current draft as the starting text.");
+  });
+
+  it("supports revision without feedback and uses a general improvement instruction", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        operation: "revise",
+        revision: { draft_text: "Current draft text", draft_anonymized: true },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("no specific feedback");
+    expect(prompt).toContain("improve clarity, flow and professional style");
+  });
+
+  it("keeps generation backward-compatible when operation is omitted", async () => {
+    const res = makeRes();
+    await handler(req(validBody), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.meta.operation).toBe("generate");
+    expect(vi.mocked(chat).mock.calls[0][0].prompt).toContain("No previous draft is provided");
+  });
+
+  it("contains factual and output-format safeguards in the prompt", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        candidate: {
+          mode: "manual",
+          skills: [],
+          experience: "",
+          qualifications: "",
+          motivation: "",
+        },
+        options: { ...validBody.options, target_roles: ["Cloud Architect"] },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("A target role is only a possible direction.");
+    expect(prompt).toContain("Do not turn a job requirement");
+    expect(prompt).toContain("Do not claim a concrete number of years of experience");
+    expect(prompt).toContain("Do not invent experience in regulated");
+    expect(prompt).toContain("Do not use Markdown, **, bullet points");
+    expect(prompt).toContain("Keep the letter to one page by default");
+    expect(prompt).toContain("Use the explicitly selected language exactly: German.");
+  });
+
+  it("rejects an empty response instead of returning a blank letter", async () => {
+    vi.mocked(chat).mockResolvedValue("   \n");
+    const res = makeRes();
+    await handler(req(validBody), res);
+    expect(res.statusCode).toBe(502);
+    expect(res.body.code).toBe("bad_ai_response");
+  });
+
+  it("sanitizes markdown and headings from the returned letter", async () => {
+    vi.mocked(chat).mockResolvedValue(
+      "**Sehr geehrte Damen und Herren,**\n\n# Bewerbung\n- React\n- TypeScript\n\nMit freundlichen Grüßen\nMax"
+    );
+    const res = makeRes();
+    await handler(req(validBody), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.letter).toBe(
+      "Sehr geehrte Damen und Herren,\n\nBewerbung\nReact\nTypeScript\n\nMit freundlichen Grüßen\nMax"
+    );
+    expect(res.body.letter).not.toContain("**");
+  });
 });

@@ -503,6 +503,19 @@ const en: Dict = {
   "letter.dataCv": "CV basis",
   "letter.dataManual": "Additional applicant information",
   "letter.dataModel": "Model",
+  "letter.modelHint": "The selected model is used for the next generation or revision.",
+  "letter.feedbackLabel": "What would you like to improve?",
+  "letter.feedbackPlaceholder":
+    "e.g. shorter, less self-praise, highlight cloud-architecture experience.",
+  "letter.revisionPrivacy":
+    "The edited draft and your feedback are anonymized locally before they are sent again to the external AI provider for this revision. Complete anonymization cannot be guaranteed.",
+  "letter.improve": "Improve with comment",
+  "letter.confirmImprove": "Improve edited draft",
+  "letter.reviseWarning":
+    "Your edited draft will be used as the basis and replaced after a successful revision. Confirm the revision explicitly.",
+  "letter.reviseNeedsDraft": "There is no draft to revise.",
+  "letter.reviseDraftTooLong": "The draft is too long. Please shorten it before improving.",
+  "letter.emptyResponse": "The AI returned no usable cover letter. Your previous draft was kept.",
   "letter.externalProcessing": "The selected data is sent to the external AI provider for this generation only.",
   "letter.noManualData": "None",
   "letter.cvAnonymized": "anonymized",
@@ -1256,6 +1269,19 @@ const de: Dict = {
   "letter.dataCv": "CV-Grundlage",
   "letter.dataManual": "Zusätzliche Bewerberangaben",
   "letter.dataModel": "Modell",
+  "letter.modelHint": "Das gewählte Modell wird für die nächste Generierung oder Überarbeitung verwendet.",
+  "letter.feedbackLabel": "Was möchtest du am Anschreiben verbessern?",
+  "letter.feedbackPlaceholder":
+    "z. B. kürzer formulieren, weniger Eigenlob, Cloud-Architekturerfahrung stärker hervorheben.",
+  "letter.revisionPrivacy":
+    "Der bearbeitete Entwurf und dein Kommentar werden vor der erneuten Übermittlung an den externen KI-Anbieter lokal anonymisiert. Eine vollständige Anonymisierung kann nicht garantiert werden.",
+  "letter.improve": "Mit Kommentar verbessern",
+  "letter.confirmImprove": "Bearbeiteten Entwurf verbessern",
+  "letter.reviseWarning":
+    "Dein bearbeiteter Entwurf wird als Grundlage verwendet und nach erfolgreicher Überarbeitung ersetzt. Bestätige die Überarbeitung ausdrücklich.",
+  "letter.reviseNeedsDraft": "Es ist kein Entwurf zum Überarbeiten vorhanden.",
+  "letter.reviseDraftTooLong": "Der Entwurf ist zu lang. Kürze ihn vor der Überarbeitung.",
+  "letter.emptyResponse": "Die KI hat kein verwertbares Anschreiben geliefert. Dein bisheriger Entwurf bleibt erhalten.",
   "letter.externalProcessing": "Die ausgewählten Daten werden nur für diese Generierung an den externen KI-Anbieter gesendet.",
   "letter.noManualData": "Keine",
   "letter.cvAnonymized": "anonymisiert",

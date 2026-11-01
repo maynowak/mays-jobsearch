@@ -7,6 +7,8 @@ export type CoverLetterLength = "short" | "one_page" | "detailed";
 export type CandidateMode = "cv" | "manual";
 
 export const MAX_CV_TEXT_LENGTH = 30000;
+export const MAX_REVISION_DRAFT_LENGTH = 20000;
+export const MAX_REVISION_FEEDBACK_LENGTH = 2000;
 
 export interface CoverLetterJobContext {
   title: string;
@@ -39,20 +41,32 @@ export interface CoverLetterGenerationOptions {
   model?: string | null;
 }
 
+export type CoverLetterOperation = "generate" | "revise";
+
+export interface CoverLetterRevisionContext {
+  draft_text: string;
+  draft_anonymized?: boolean;
+  feedback?: string;
+}
+
 export interface CoverLetterGenerationRequest {
   job: CoverLetterJobContext;
   candidate: CoverLetterCandidateContext;
   options: CoverLetterGenerationOptions;
+  operation?: CoverLetterOperation;
+  revision?: CoverLetterRevisionContext;
 }
 
 export interface CoverLetterGenerationResponse {
   letter: string;
   meta?: {
+    operation?: CoverLetterOperation;
     job?: { title?: string; company_name?: string };
     language?: string;
     description_origin?: string;
     candidate_mode?: string;
     cv_anonymized?: boolean;
+    draft_anonymized?: boolean;
   };
 }
 

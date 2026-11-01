@@ -5704,6 +5704,25 @@ body {
   background: var(--border);
 }
 
+.letter-model {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 20px 0;
+}
+
+.letter-model .model-field {
+  max-width: 100%;
+}
+
+.letter-feedback textarea {
+  min-height: 72px;
+}
+
+.letter-draft-error {
+  margin: 12px 20px 0;
+}
+
 .letter-loading {
   padding: 40px 20px;
   text-align: center;

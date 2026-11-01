@@ -3107,6 +3107,9 @@ export default function App() {
               prepare={letterJob.prepare}
               profile={profile}
               model={effectiveModel}
+              modelsState={modelsState}
+              models={models}
+              defaultModel={defaultModel}
               availableModels={models.map((model) => model.id)}
               recommendedModel={recommendedModel}
               cvDocuments={cvState.documents}

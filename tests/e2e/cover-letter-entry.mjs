@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-06");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-UX-01");
 const fixturePdf = resolve(repoRoot, "tests/fixtures/cv/synthetic-cv.pdf");
 const port = 5201;
 const base = `http://localhost:${port}`;
@@ -95,7 +95,15 @@ async function runViewport(browser, name, viewport) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ models: [{ id: "mock-model", name: "Mock Model" }], defaultModel: "mock-model", recommendedModel: "mock-model", fallbackModel: null }),
+        body: JSON.stringify({
+          models: [
+            { id: "mock-model", name: "Mock Model" },
+            { id: "mock-model-b", name: "Mock Model B" },
+          ],
+          defaultModel: "mock-model",
+          recommendedModel: "mock-model",
+          fallbackModel: null,
+        }),
       });
     }
     if (url.pathname === "/api/jobs") {
@@ -153,6 +161,24 @@ async function runViewport(browser, name, viewport) {
   await page.waitForSelector('[role="dialog"]');
   if (coverLetterCalls !== 0) throw new Error(`${name}: AI call on dialog open`);
   if (!(await page.getByText("Anschreiben-Assistent").isVisible())) throw new Error(`${name}: preparation view missing`);
+  if (!(await page.getByRole("heading", { name: "Bewerbungsschreiben" }).isVisible())) {
+    throw new Error(`${name}: dialog heading not visible`);
+  }
+  const initialScrollTop = await page
+    .locator('[role="dialog"]')
+    .evaluate((element) => element.scrollTop);
+  if (initialScrollTop !== 0) throw new Error(`${name}: dialog did not start at top (${initialScrollTop})`);
+  if ((await page.getByRole("combobox").count()) < 1) throw new Error(`${name}: model selector missing`);
+  const modelTrigger = page.locator(".letter-model .model-trigger");
+  const modelBox = await modelTrigger.boundingBox();
+  if (!modelBox) throw new Error(`${name}: model selector has no layout box`);
+  await page.mouse.click(modelBox.x + modelBox.width / 2, modelBox.y + modelBox.height / 2);
+  await page.getByRole("option", { name: "Mock Model B" }).click();
+  const selectedBeforeCv = await page.locator(".letter-model .model-trigger").getAttribute("aria-label");
+  if (!selectedBeforeCv?.includes("mock-model-b")) {
+    throw new Error(`${name}: model selection did not apply (${selectedBeforeCv})`);
+  }
+  if (coverLetterCalls !== 0) throw new Error(`${name}: model change started an AI call`);
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-intro.png`), fullPage: false });
 
   await page.getByLabel("Weitere Informationen zur Stellenanzeige einfügen").fill(
@@ -188,7 +214,14 @@ async function runViewport(browser, name, viewport) {
     throw new Error(`${name}: review text lost after CV workflow`);
   }
   await page.getByText("Verarbeitet — kein gespeichertes Suchprofil").waitFor();
-  await page.locator('[role="dialog"]').evaluate((element) => { element.scrollTop = 0; });
+  const returnScrollTop = await page
+    .locator('[role="dialog"]')
+    .evaluate((element) => element.scrollTop);
+  if (returnScrollTop !== 0) throw new Error(`${name}: dialog did not return to top (${returnScrollTop})`);
+  const restoredModel = await page.locator(".letter-model .model-trigger").getAttribute("aria-label");
+  if (!restoredModel?.includes("mock-model-b")) {
+    throw new Error(`${name}: selected model was lost after CV workflow (${restoredModel})`);
+  }
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-cv-return.png`), fullPage: false });
 
   // CL-04: generate with the selected, processed CV and verified description.
@@ -212,7 +245,30 @@ async function runViewport(browser, name, viewport) {
   if (coverBody.includes("PRAKTISCHE FRAGE") || coverBody.includes("ANTWORTSKIZZE")) {
     throw new Error(`${name}: interview section was sent`);
   }
+  if (JSON.parse(coverBody).options?.model !== "mock-model-b") {
+    throw new Error(`${name}: selected model was not sent`);
+  }
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-generated.png`), fullPage: false });
+
+  // JM-COVER-LETTER-UX-01: visible revision path, explicit action only.
+  await page.getByLabel("Was möchtest du am Anschreiben verbessern?").fill("Bitte kürzer.");
+  if (coverLetterCalls !== 1) throw new Error(`${name}: feedback started an AI call`);
+  const revisionResponse = page.waitForResponse(
+    (response) => response.url().includes("/api/cover-letter") && response.request().method() === "POST"
+  );
+  await page.getByRole("button", { name: "Mit Kommentar verbessern" }).click();
+  await revisionResponse;
+  if (coverLetterCalls !== 2) throw new Error(`${name}: expected one revision call, got ${coverLetterCalls}`);
+  const revisionBody = coverLetterBodies[1] || {};
+  if (revisionBody.operation !== "revise") throw new Error(`${name}: revision operation missing`);
+  if (revisionBody.revision?.draft_anonymized !== true) throw new Error(`${name}: draft anonymization flag missing`);
+  if (!String(revisionBody.revision?.draft_text ?? "").includes("Sehr geehrte")) {
+    throw new Error(`${name}: current draft was not sent as revision basis`);
+  }
+  if (!String(revisionBody.revision?.feedback ?? "").includes("Bitte kürzer")) {
+    throw new Error(`${name}: revision feedback was not sent`);
+  }
+
   await page.getByRole("button", { name: "Schließen" }).click();
   await page.waitForSelector('[role="dialog"]', { state: "detached" });
 
@@ -238,7 +294,7 @@ async function runViewport(browser, name, viewport) {
   }
   await page.locator(".remaining-card .letter-btn").first().click();
   await page.waitForSelector('[role="dialog"]');
-  if (coverLetterCalls !== 1) throw new Error(`${name}: unexpected additional AI call on remaining dialog open`);
+  if (coverLetterCalls !== 2) throw new Error(`${name}: unexpected additional AI call on remaining dialog open`);
   await page.getByRole("button", { name: "Schließen" }).click();
   await page.waitForSelector('[role="dialog"]', { state: "detached" });
 
