@@ -1,3 +1,12 @@
+2026-11-01 · JM-COVER-LETTER-03
+- Typ: UI/CV-Selection/Session-Context/Privacy
+- Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
+- Änderung: `LetterModal` bietet eine explizite CV-Auswahl (bestehender CV, neuer CV über den vorhandenen Upload-Workflow, ohne CV). `CvDocument.processedAt` + `hash` belegen Verarbeitung; Datei/Hash allein reichen nicht. Session-only Such-/ATS-Profile werden über `readCvProfileLists` angezeigt.
+- Kontext: `pendingLetterContext` bewahrt Job, Beschreibungseingabe, CL-02-Review und CV-Auswahl über den CV-Workflow; Rückkehr über „Zurück zum Anschreiben“. Job-/Auth-/CV-Löschwechsel setzen den Kontext zurück. Keine nested Dialoge.
+- AI-/Privacy: Keine CV-Übermittlung beim Auswählen/Öffnen, keine CV-Daten im Cover-Letter-Request. Die vorläufige Generierung nutzt weiterhin keine CV-Inhalte. Keine Redis-/RIS-Speicherung, keine Cookies, keine neuen Modellaufrufe.
+- Tests: Gesamtsuite 1076 passed/5 skipped; TypeScript/Build/diff PASS; Browser-E2E Desktop 1440/Mobil 390 PASS (1 `/api/jobs`, 0 `/api/job-details`, 1 `/api/profile` für CV, 0 Cover-Letter-Calls vor Start, 1 danach, keine CV-Daten im Cover-Letter-Body).
+- Log: `docs/reports/JM-COVER-LETTER-03.md`
+
 2026-11-01 · JM-COVER-LETTER-02
 - Typ: UI/Deterministic-Review/Privacy/AI-Action-Gate
 - Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
