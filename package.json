@@ -12,7 +12,9 @@
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",
-    "test:ip-quota:rest": "npx vitest run tests/integration/ip-quota-parallel.test.mjs"
+    "test:ip-quota:rest": "npx vitest run tests/integration/ip-quota-parallel.test.mjs",
+    "test:cv-purge:redis": "node tests/tools/verify-cv-profile-purge.mjs",
+    "purge:cv-cache": "node scripts/purge-cv-profile-cache.mjs"
   },
   "dependencies": {
     "dompurify": "^3.4.14",
