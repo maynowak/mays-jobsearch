@@ -472,6 +472,8 @@ const en: Dict = {
   "letter.cvRawConfirmRequired":
     "Please confirm the unredacted transfer or enable anonymization.",
   "letter.cvTextEmpty": "The selected CV produced no readable text.",
+  "letter.cvTextTooLong":
+    "The selected CV is too long for a single generation. Please use a shorter CV; it was not truncated silently.",
   "letter.candidateDetails": "Applicant information (optional)",
   "letter.candidateHint":
     "Only information you provide here is used. Do not enter facts you cannot support.",
@@ -1224,6 +1226,8 @@ const de: Dict = {
   "letter.cvRawConfirmRequired":
     "Bitte bestätige die unredigierte Übertragung oder aktiviere die Anonymisierung.",
   "letter.cvTextEmpty": "Aus dem gewählten CV konnte kein lesbarer Text gewonnen werden.",
+  "letter.cvTextTooLong":
+    "Der gewählte CV ist für eine einzelne Generierung zu lang. Bitte verwende einen kürzeren CV; er wurde nicht stillschweigend gekürzt.",
   "letter.candidateDetails": "Bewerberinformationen (optional)",
   "letter.candidateHint":
     "Es werden nur Angaben verwendet, die du hier machst. Trage keine Tatsachen ein, die du nicht belegen kannst.",

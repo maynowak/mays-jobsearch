@@ -289,6 +289,19 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(extractPdfText).not.toHaveBeenCalled();
   });
 
+  it("rejects an oversized CV instead of silently truncating it", async () => {
+    const cv = makeCv({ processedAt: Date.now(), hash: "a".repeat(64) });
+    vi.mocked(extractPdfText).mockResolvedValue("x".repeat(30001));
+    renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });
+
+    fireEvent.click(screen.getByLabelText(/my-cv\.pdf/));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/zu lang/i);
+    expect(withModelFallback).not.toHaveBeenCalled();
+    expect(generateCoverLetter).not.toHaveBeenCalled();
+  });
+
   it("requires explicit confirmation for a non-anonymized CV transfer", async () => {
     const cv = makeCv({ processedAt: Date.now(), hash: "a".repeat(64) });
     renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });
@@ -328,6 +341,22 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(request.candidate.experience).toBe("4 Jahre Frontend");
     expect(request.candidate).not.toHaveProperty("cv_text");
     expect(extractPdfText).not.toHaveBeenCalled();
+  });
+
+  it("passes each fallback model through options.model", async () => {
+    vi.mocked(withModelFallback).mockImplementation(async ({ request }) => {
+      const data = await request("fallback-model", 2);
+      return { data, usedFallback: true, attempts: [] };
+    });
+
+    renderModal();
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+    const [request, attempt] = vi.mocked(generateCoverLetter).mock.calls[0];
+    expect(request.options.model).toBe("fallback-model");
+    expect(attempt).toBe(2);
   });
 
   it("keeps the edited text and warns before regeneration", async () => {
@@ -543,6 +572,25 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
 
     expect(screen.getByLabelText("Weitere Informationen zur Stellenanzeige einfügen")).toHaveValue("");
     expect(screen.queryByText("Prüfergebnis")).not.toBeInTheDocument();
+  });
+
+  it("downloads the edited cover letter text", async () => {
+    const createObjectURL = vi.fn((_blob: Blob) => "blob:cover-letter");
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: revokeObjectURL });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+    renderModal();
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.change(editor, { target: { value: "Edited download text" } });
+    fireEvent.click(screen.getByRole("button", { name: "Download .txt" }));
+
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    const blob = createObjectURL.mock.calls[0][0];
+    await expect(blob.text()).resolves.toBe("Edited download text");
+    clickSpy.mockRestore();
   });
 
   it("keeps the copy action usable after generation", async () => {

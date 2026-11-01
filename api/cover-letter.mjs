@@ -30,7 +30,7 @@ function readBody(req) {
   });
 }
 
-function plainText(value, maxLength) {
+function plainText(value) {
   return String(value ?? "")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -38,8 +38,7 @@ function plainText(value, maxLength) {
     .replace(/\u0000/g, "")
     .replace(/\r\n?/g, "\n")
     .replace(/[ \t]{2,}/g, " ")
-    .trim()
-    .slice(0, maxLength);
+    .trim();
 }
 
 function stringValue(value, maxLength, allowEmpty = true) {
@@ -47,7 +46,10 @@ function stringValue(value, maxLength, allowEmpty = true) {
     if (value === undefined || value === null) return "";
     throw new HttpError(400, "A text field has an invalid type.", "bad_request");
   }
-  const text = plainText(value, maxLength);
+  const text = plainText(value);
+  if (text.length > maxLength) {
+    throw new HttpError(400, "A text field exceeds its maximum length.", "bad_request");
+  }
   if (!allowEmpty && !text) throw new HttpError(400, "A required text field is empty.", "bad_request");
   return text;
 }
@@ -116,6 +118,16 @@ function buildOptions(body) {
       : body.targetRole
         ? [body.targetRole]
         : [];
+  // P02 CL-05: the typed V1 request carries the selected model in
+  // options.model. Keep body.model as a legacy fallback for older callers.
+  const rawModel = raw.model !== undefined && raw.model !== "" ? raw.model : body.model;
+  let model;
+  if (rawModel !== undefined && rawModel !== null && rawModel !== "") {
+    if (typeof rawModel !== "string" || !rawModel.trim()) {
+      throw new HttpError(400, "The selected model is invalid.", "bad_request");
+    }
+    model = rawModel.trim();
+  }
   return {
     language: enumValue(raw.language || body.language, ALLOWED_LANGUAGES, "English"),
     style: enumValue(raw.style, ALLOWED_STYLES, "professional"),
@@ -123,6 +135,7 @@ function buildOptions(body) {
     target_roles: raw.target_roles !== undefined
       ? stringList(raw.target_roles, MAX_TARGET_ROLES, 200)
       : stringList(legacyRoles, MAX_TARGET_ROLES, 200),
+    model,
   };
 }
 
@@ -212,7 +225,7 @@ export default async function handler(req, res) {
       temperature: 0.5,
       maxTokens: 1500,
       attempt,
-      model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
+      model: options.model,
     });
 
     return res.status(200).json({

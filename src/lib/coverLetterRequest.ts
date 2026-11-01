@@ -6,6 +6,8 @@ export type CoverLetterStyle = "professional" | "warm" | "concise";
 export type CoverLetterLength = "short" | "one_page" | "detailed";
 export type CandidateMode = "cv" | "manual";
 
+export const MAX_CV_TEXT_LENGTH = 30000;
+
 export interface CoverLetterJobContext {
   title: string;
   company_name: string;

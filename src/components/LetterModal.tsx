@@ -17,6 +17,7 @@ import {
   buildJobContext,
   buildTargetRoles,
   cvIsUsable,
+  MAX_CV_TEXT_LENGTH,
   type CoverLetterLength,
   type CoverLetterStyle,
 } from "../lib/coverLetterRequest";
@@ -331,11 +332,9 @@ export default function LetterModal({
       if (selectedCv) {
         const raw = await extractPdfText(selectedCv.file);
         if (requestSeq !== requestSeqRef.current) return;
-        const normalized = String(raw ?? "")
-          .replace(/\u0000/g, "")
-          .trim()
-          .slice(0, 30000);
+        const normalized = String(raw ?? "").replace(/\u0000/g, "").trim();
         if (!normalized) throw new Error(t("letter.cvTextEmpty"));
+        if (normalized.length > MAX_CV_TEXT_LENGTH) throw new Error(t("letter.cvTextTooLong"));
         cvText = cvAnonymize ? anonymizeText(normalized) : normalized;
       }
       if (requestSeq !== requestSeqRef.current) return;

@@ -93,6 +93,51 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.body.letter).not.toContain("PRAKTISCHE FRAGE");
   });
 
+  it("passes the typed options.model to the provider", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        options: { ...validBody.options, model: "selected-model" },
+        model: "legacy-model",
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(vi.mocked(chat).mock.calls[0][0].model).toBe("selected-model");
+  });
+
+  it("keeps legacy body.model as a fallback", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        options: { ...validBody.options },
+        model: "legacy-model",
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(vi.mocked(chat).mock.calls[0][0].model).toBe("legacy-model");
+  });
+
+  it("rejects an invalid model value instead of silently bypassing it", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        options: { ...validBody.options, model: 123 },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("bad_request");
+    expect(chat).not.toHaveBeenCalled();
+  });
+
   it("strips HTML and script from untrusted description/CV text", async () => {
     const res = makeRes();
     await handler(
@@ -146,6 +191,20 @@ describe("/api/cover-letter typed generation", () => {
     await handler(req({ ...validBody, candidate: { ...validBody.candidate, cv_text: "" } }), res);
     expect(res.statusCode).toBe(400);
     expect(res.body.code).toBe("bad_request");
+  });
+
+  it("rejects an oversized CV text instead of silently truncating it", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        candidate: { ...validBody.candidate, cv_text: "x".repeat(30001) },
+      }),
+      res
+    );
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("bad_request");
+    expect(chat).not.toHaveBeenCalled();
   });
 
   it("requires a job title and company", async () => {
