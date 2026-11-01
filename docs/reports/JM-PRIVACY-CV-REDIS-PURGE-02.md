@@ -114,6 +114,9 @@ Sicherheitsregeln:
 - Löschung ausschließlich exakter `cv-profile:<64 lowercase hex>`-Keys.
 - `DEL` mit expliziten Key-Listen, keine Wildcard-Löschung.
 - Batch-Verarbeitung (`COUNT`/`DEL` in Blöcken).
+- SCAN-Duplikate werden pro Pass dedupliziert und separat gezählt.
+- Nach einem Delete folgt ein vollständiger, read-only Nachscan
+  (`verification`) zur Löschverifikation.
 - Keine Ausgabe von Keys/Hashes/Secrets.
 - Keine anderen Namespaces.
 - Kein `FLUSHDB`, kein `FLUSHALL`.
@@ -146,7 +149,7 @@ Ergebnis:
 
 ```text
 status: PASS
-checks: 49
+checks: 55
 ```
 
 Geprüft:
@@ -160,6 +163,8 @@ Geprüft:
    `alerts`) bleiben erhalten.
 6. Wiederholte Ausführung ist sicher/idempotent.
 7. Redis-Fehler werden als Fehler erkannt.
+8. SCAN-Duplikate werden nicht doppelt gelöscht/gezählt.
+9. Der Nachscan nach dem Delete meldet keine verbleibenden CV-Keys.
 
 ## 6. Unverändertheit anderer Redis-Daten
 
@@ -196,7 +201,7 @@ Bis dahin gilt: **HARD STOP vor produktiven Redis-Löschoperationen.**
 
 | Prüfung | Ergebnis |
 |---|---|
-| `npm run test:cv-purge:redis` | PASS — 49 Checks |
+| `npm run test:cv-purge:redis` | PASS — 55 Checks |
 | Gesamtsuite | PASS — 1033 passed, 5 skipped |
 | TypeScript | PASS |
 | Build | PASS |
@@ -213,9 +218,38 @@ Bis dahin gilt: **HARD STOP vor produktiven Redis-Löschoperationen.**
 4. Production-Purge freigeben.
 5. Alte Vercel-Deployments bewerten.
 
-## 10. Git
+## 10. Production-Redis-Identifikation (02A)
+
+**Stand:** `e76a224`
+**Ergebnis:** BLOCKED — Ziel nicht eindeutig identifiziert.
+
+Read-only geprüft:
+
+| Prüfung | Ergebnis |
+|---|---|
+| `vercel storage list` | keine Storage-Resources im Scope |
+| `vercel storage status` | keine Storage-Verbindung zum Projekt |
+| `vercel integration list` | keine Marketplace-Resources |
+| Vercel Production Env | `UPSTASH_REDIS_REST_URL`/`TOKEN` vorhanden, Typ `sensitive` |
+| Env-Werte über CLI/API | nicht auslesbar (`decrypt=true` liefert keinen Wert) |
+| Lokale autorisierte Upstash-Credentials | nicht vorhanden |
+| Upstash-Datenbank-ID | **NOT VERIFIED** |
+| Datenbankname | **NOT VERIFIED** |
+| REST-Hostname | **NOT VERIFIED** |
+| Region | **NOT VERIFIED** |
+
+Es wurden keine geschützten Variablen rekonstruiert und keine
+Sicherheitsbeschränkungen umgangen. Ohne eindeutige Zuordnung wurde
+`npm run purge:cv-cache` **nicht** gegen Production ausgeführt.
+
+Offener Blocker: Der konkrete Production-Upstash-Zugang muss durch den
+zuständigen Betreiber lokal bereitgestellt oder die Datenbank anhand der
+Upstash-Konsole eindeutig bestätigt werden.
+
+## 11. Git
 
 - Purge-Tool/Test: `27a7a58`
-- Dokumentations-Commit: `3b255df`
+- Scan-Härtung (Duplikate/Nachscan): `247e81d`
+- Dokumentations-Commit: `3b255df` (wird durch den 02A-Nachtrag ergänzt)
 - Kein AWS-/RIS-/Vercel-Deployment.
 - Kein GitHub-Release.
