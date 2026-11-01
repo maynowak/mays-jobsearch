@@ -464,13 +464,12 @@ const en: Dict = {
   "letter.companyUnknown": "Company not specified",
   "letter.generate": "Generate cover letter",
   "letter.cvAnonymize": "Anonymize CV text before transfer",
-  "letter.cvRawConfirm": "I understand that unredacted personal data may be transferred.",
+  "letter.cvRawUnavailable":
+    "Unredacted CV transfer is not available in this release. The CV text is always anonymized before transfer.",
   "letter.cvAnonymizeHint":
     "Anonymization reduces personal data but cannot guarantee complete removal.",
   "letter.cvProcessNow": "Process this CV now",
   "letter.cvNeedsProcessing": "This CV has not been processed yet. Process it or choose another CV.",
-  "letter.cvRawConfirmRequired":
-    "Please confirm the unredacted transfer or enable anonymization.",
   "letter.cvTextEmpty": "The selected CV produced no readable text.",
   "letter.cvTextTooLong":
     "The selected CV is too long for a single generation. Please use a shorter CV; it was not truncated silently.",
@@ -506,7 +505,6 @@ const en: Dict = {
   "letter.externalProcessing": "The selected data is sent to the external AI provider for this generation only.",
   "letter.noManualData": "None",
   "letter.cvAnonymized": "anonymized",
-  "letter.cvRaw": "not anonymized",
   "letter.modelDefault": "Default model",
   "letter.editorAria": "Editable cover letter",
   "letter.editHint": "You can edit the generated letter before copying or downloading it.",
@@ -1218,13 +1216,12 @@ const de: Dict = {
   "letter.companyUnknown": "Arbeitgeber nicht angegeben",
   "letter.generate": "Anschreiben generieren",
   "letter.cvAnonymize": "CV-Text vor der Übertragung anonymisieren",
-  "letter.cvRawConfirm": "Ich verstehe, dass unredigierte personenbezogene Daten übertragen werden können.",
+  "letter.cvRawUnavailable":
+    "Die unredigierte CV-Übertragung ist in diesem Release nicht verfügbar. Der CV-Text wird vor der Übertragung immer anonymisiert.",
   "letter.cvAnonymizeHint":
     "Anonymisierung reduziert personenbezogene Daten, garantiert aber keine vollständige Entfernung.",
   "letter.cvProcessNow": "Diesen CV jetzt verarbeiten",
   "letter.cvNeedsProcessing": "Dieser CV wurde noch nicht verarbeitet. Verarbeite ihn oder wähle einen anderen CV.",
-  "letter.cvRawConfirmRequired":
-    "Bitte bestätige die unredigierte Übertragung oder aktiviere die Anonymisierung.",
   "letter.cvTextEmpty": "Aus dem gewählten CV konnte kein lesbarer Text gewonnen werden.",
   "letter.cvTextTooLong":
     "Der gewählte CV ist für eine einzelne Generierung zu lang. Bitte verwende einen kürzeren CV; er wurde nicht stillschweigend gekürzt.",
@@ -1260,7 +1257,6 @@ const de: Dict = {
   "letter.externalProcessing": "Die ausgewählten Daten werden nur für diese Generierung an den externen KI-Anbieter gesendet.",
   "letter.noManualData": "Keine",
   "letter.cvAnonymized": "anonymisiert",
-  "letter.cvRaw": "nicht anonymisiert",
   "letter.modelDefault": "Standardmodell",
   "letter.editorAria": "Bearbeitbares Anschreiben",
   "letter.editHint": "Du kannst das generierte Anschreiben vor dem Kopieren oder Herunterladen bearbeiten.",

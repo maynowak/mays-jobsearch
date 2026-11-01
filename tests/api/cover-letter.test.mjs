@@ -193,6 +193,19 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.body.code).toBe("bad_request");
   });
 
+  it("rejects unredacted CV transfers server-side", async () => {
+    for (const value of [false, undefined]) {
+      const res = makeRes();
+      const candidate = { ...validBody.candidate };
+      if (value === undefined) delete candidate.cv_anonymized;
+      else candidate.cv_anonymized = value;
+      await handler(req({ ...validBody, candidate }), res);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.code).toBe("cv_raw_not_allowed");
+    }
+    expect(chat).not.toHaveBeenCalled();
+  });
+
   it("rejects an oversized CV text instead of silently truncating it", async () => {
     const res = makeRes();
     await handler(

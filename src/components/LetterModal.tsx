@@ -35,8 +35,6 @@ export interface LetterCandidateDraft {
   salaryExpectation: string;
   style: CoverLetterStyle;
   length: CoverLetterLength;
-  cvAnonymize: boolean;
-  cvRawConfirmed: boolean;
 }
 
 export interface LetterPreparationContext {
@@ -110,12 +108,6 @@ export default function LetterModal({
     initialContextForJob?.selectedCvId ?? null
   );
   const [cvError, setCvError] = useState<string | null>(null);
-  const [cvAnonymize, setCvAnonymize] = useState(
-    initialContextForJob?.candidateDraft?.cvAnonymize ?? true
-  );
-  const [cvRawConfirmed, setCvRawConfirmed] = useState(
-    initialContextForJob?.candidateDraft?.cvRawConfirmed ?? false
-  );
   const [manualSkills, setManualSkills] = useState(
     initialContextForJob?.candidateDraft?.skills ?? ""
   );
@@ -177,8 +169,6 @@ export default function LetterModal({
     setCvChoice("none");
     setSelectedCvId(null);
     setCvError(null);
-    setCvAnonymize(true);
-    setCvRawConfirmed(false);
     setManualSkills("");
     setManualExperience("");
     setManualQualifications("");
@@ -218,8 +208,6 @@ export default function LetterModal({
     salaryExpectation,
     style,
     length,
-    cvAnonymize,
-    cvRawConfirmed,
   ]);
 
   useEffect(() => {
@@ -310,11 +298,6 @@ export default function LetterModal({
       setGenerationError(t("letter.cvNeedsProcessing"));
       return;
     }
-    if (selectedCv && !cvAnonymize && !cvRawConfirmed) {
-      setGenerationError(t("letter.cvRawConfirmRequired"));
-      return;
-    }
-
     inFlightRef.current = true;
     const requestSeq = requestSeqRef.current + 1;
     requestSeqRef.current = requestSeq;
@@ -335,7 +318,7 @@ export default function LetterModal({
         const normalized = String(raw ?? "").replace(/\u0000/g, "").trim();
         if (!normalized) throw new Error(t("letter.cvTextEmpty"));
         if (normalized.length > MAX_CV_TEXT_LENGTH) throw new Error(t("letter.cvTextTooLong"));
-        cvText = cvAnonymize ? anonymizeText(normalized) : normalized;
+        cvText = anonymizeText(normalized);
       }
       if (requestSeq !== requestSeqRef.current) return;
 
@@ -345,7 +328,7 @@ export default function LetterModal({
         experience: manualExperience.trim(),
         qualifications: manualQualifications.trim(),
         motivation: manualMotivation.trim(),
-        ...(cvText ? { cv_text: cvText, cv_anonymized: cvAnonymize } : {}),
+        ...(cvText ? { cv_text: cvText, cv_anonymized: true } : {}),
         ...(startDate.trim() ? { start_date: startDate.trim() } : {}),
         ...(salaryExpectation.trim() ? { salary_expectation: salaryExpectation.trim() } : {}),
       };
@@ -424,8 +407,6 @@ export default function LetterModal({
       salaryExpectation,
       style,
       length,
-      cvAnonymize,
-      cvRawConfirmed,
     },
   });
 
@@ -438,8 +419,6 @@ export default function LetterModal({
   const handleSelectCv = (id: string) => {
     setCvChoice("existing");
     setSelectedCvId(id);
-    setCvAnonymize(true);
-    setCvRawConfirmed(false);
     setCvError(null);
   };
 
@@ -656,28 +635,11 @@ export default function LetterModal({
               )}
               {selectedCv && selectedCvReady && (
                 <div className="letter-cv-privacy">
-                  <label className="letter-check">
-                    <input
-                      type="checkbox"
-                      checked={cvAnonymize}
-                      onChange={(event) => {
-                        setCvAnonymize(event.target.checked);
-                        if (!event.target.checked) setCvRawConfirmed(false);
-                      }}
-                    />
-                    <span>{t("letter.cvAnonymize")}</span>
-                  </label>
-                  {!cvAnonymize && (
-                    <label className="letter-check letter-check--warning">
-                      <input
-                        type="checkbox"
-                        checked={cvRawConfirmed}
-                        onChange={(event) => setCvRawConfirmed(event.target.checked)}
-                      />
-                      <span>{t("letter.cvRawConfirm")}</span>
-                    </label>
-                  )}
+                  <p className="letter-hint">
+                    <strong>{t("letter.cvAnonymize")}</strong>
+                  </p>
                   <p className="letter-hint">{t("letter.cvAnonymizeHint")}</p>
+                  <p className="letter-hint">{t("letter.cvRawUnavailable")}</p>
                 </div>
               )}
               {cvError && (
@@ -879,7 +841,7 @@ export default function LetterModal({
                 <dt>{t("letter.dataCv")}</dt>
                 <dd>
                   {selectedCv
-                    ? `${selectedCv.name} · ${cvAnonymize ? t("letter.cvAnonymized") : t("letter.cvRaw")}`
+                    ? `${selectedCv.name} · ${t("letter.cvAnonymized")}`
                     : t("letter.cvNone")}
                 </dd>
                 <dt>{t("letter.dataManual")}</dt>

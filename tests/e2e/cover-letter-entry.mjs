@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-05");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-06");
 const fixturePdf = resolve(repoRoot, "tests/fixtures/cv/synthetic-cv.pdf");
 const port = 5201;
 const base = `http://localhost:${port}`;

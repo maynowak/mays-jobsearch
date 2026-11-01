@@ -92,6 +92,16 @@ function buildCandidate(body) {
   if (mode === "cv" && !cvText) {
     throw new HttpError(400, "A CV mode request requires CV text.", "bad_request");
   }
+  // CL-06 fail-closed: the unredacted path is not released. A client flag alone
+  // must not be able to bypass this gate.
+  const cvAnonymized = mode === "cv" ? booleanValue(raw.cv_anonymized, false) : false;
+  if (mode === "cv" && cvAnonymized !== true) {
+    throw new HttpError(
+      400,
+      "Unredacted CV transfer is not allowed. Send an anonymized CV text.",
+      "cv_raw_not_allowed"
+    );
+  }
 
   return {
     mode,
@@ -102,7 +112,7 @@ function buildCandidate(body) {
     qualifications: stringValue(raw.qualifications, MAX_FIELD),
     motivation: stringValue(raw.motivation, MAX_FIELD),
     ...(cvText ? { cv_text: cvText } : {}),
-    ...(mode === "cv" ? { cv_anonymized: booleanValue(raw.cv_anonymized, true) } : {}),
+    ...(mode === "cv" ? { cv_anonymized: true } : {}),
     ...(raw.start_date ? { start_date: stringValue(raw.start_date, 200) } : {}),
     ...(raw.salary_expectation
       ? { salary_expectation: stringValue(raw.salary_expectation, 200) }

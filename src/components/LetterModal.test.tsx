@@ -302,25 +302,21 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(generateCoverLetter).not.toHaveBeenCalled();
   });
 
-  it("requires explicit confirmation for a non-anonymized CV transfer", async () => {
+  it("does not offer an unredacted CV transfer and always sends anonymized text", async () => {
     const cv = makeCv({ processedAt: Date.now(), hash: "a".repeat(64) });
     renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });
 
     fireEvent.click(screen.getByLabelText(/my-cv\.pdf/));
-    fireEvent.click(screen.getByLabelText("CV-Text vor der Übertragung anonymisieren"));
-    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    expect(screen.queryByText("Ich verstehe, dass unredigierte personenbezogene Daten übertragen werden können.")).not.toBeInTheDocument();
+    expect(screen.getByText(/unredigierte CV-Übertragung ist in diesem Release nicht verfügbar/i)).toBeInTheDocument();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(/bestätige die unredigierte Übertragung/i);
-    expect(withModelFallback).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByLabelText(/Ich verstehe, dass unredigierte personenbezogene Daten/));
     fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
     await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
 
     const [request] = vi.mocked(generateCoverLetter).mock.calls[0];
-    expect(request.candidate.cv_anonymized).toBe(false);
-    expect(request.candidate.cv_text).toContain("Synthetic CV");
-    expect(anonymizeText).not.toHaveBeenCalled();
+    expect(request.candidate.cv_anonymized).toBe(true);
+    expect(request.candidate.cv_text).toContain("anonymized:");
+    expect(anonymizeText).toHaveBeenCalled();
   });
 
   it("supports a manual candidate context without a CV", async () => {
