@@ -1,3 +1,14 @@
+2026-11-01 · JM-COVER-LETTER-06-PRIVACY-READINESS
+- Typ: Privacy-Hardening/Provider-Readiness/Release-Gate
+- Status: **YELLOW — technisch gehärtet, Produktionsfreigabe NO-GO**
+- G05: Unredigierte CV-Übertragung fail-closed. UI bietet keine Raw-Option; CV-Text wird immer `anonymizeText()` unterzogen. Server akzeptiert `candidate.mode="cv"` nur mit `cv_anonymized=true`; fehlend/false → 400 `cv_raw_not_allowed`. `cv_anonymized=true` bleibt ein Client-Signal, kein Beweis vollständiger Anonymisierung.
+- Privacy: Datenfluss Browser → /api/cover-letter → OpenRouter/EdenAI dokumentiert; keine PDF-/Hash-/ID-Übertragung, keine Persistenz, keine Prompt-/CV-Inhalte in Logs. Providerverträge, Regionen, Retention und Drittlandtransfers sind nicht aus dem Repo belegbar.
+- G10: Datenschutztexte nur als Änderungsvorschlag dokumentiert, nicht veröffentlicht. Bestehender Text enthält noch veraltete CV-Cache-Formulierung und keine konkreten Anschreiben-/Providerangaben.
+- G09: synthetische Testmatrix A–F dokumentiert; `LIVE PROVIDER TEST: NOT EXECUTED` (keine echten Provideraufrufe).
+- Tests: API 13, LetterModal 29, Gesamtsuite 1097 passed/5 skipped, TypeScript/Build/diff PASS; Browser-E2E Desktop 1440/Mobil 390 PASS (1 Jobs, 0 Job-Details, 1 CV-Profil, 0 Cover-Letter vor Start, 1 danach, selected description/CV text im Request, keine Datei-/Hash-/Interviewdaten).
+- Gates: G01–G04/G06–G08 PASS; G05 BLOCKED (Rechtsgrundlage/Anonymisierungsgrenze), G09 NOT VERIFIED, G10 BLOCKED (Texte/Rechtsfreigabe).
+- Log: `docs/reports/JM-COVER-LETTER-06-PRIVACY-READINESS.md`
+
 2026-11-01 · JM-COVER-LETTER-05-RELEASE-GATE
 - Typ: Release-Gate/Audit/Privacy/Model-Routing
 - Status: **YELLOW — technisch weitgehend abgenommen, Produktionsfreigabe NO-GO**
