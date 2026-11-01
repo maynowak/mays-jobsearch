@@ -1,3 +1,12 @@
+2026-11-01 · JM-COVER-LETTER-04
+- Typ: AI-Generation/Privacy/CV-Context/Race-Safety
+- Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
+- Änderung: `/api/cover-letter` nutzt typisierten Job-/Candidate-/Options-Kontext. Ausgewählte CL-02-Beschreibung (original/enriched/user_supplied), `Profile.targetRoles[]`, Stil/Länge, Sprache und optionaler Eintrittstermin/Gehalt. Keine Interviewfrage mehr im Prompt/Response; serverseitiges Abschneiden eines angehängten Interviewabschnitts.
+- CV: Nur der ausdrücklich gewählte, verarbeitete CV wird lokal mit `extractPdfText()` gelesen und standardmäßig mit `anonymizeText()` anonymisiert. Kein PDF-/Hash-/Dokument-ID-Versand, kein `/api/profile`-Aufruf. Unredigierte Übertragung nur nach separater Bestätigung. Unverarbeitete CVs blockieren; Verarbeitung/anderer CV/ohne CV angeboten.
+- UI: Explizite Zusammenfassung vor der Modellübertragung, manuelle Bewerberfelder, editierbares Anschreiben, Copy/Download des bearbeiteten Texts, Regenerierungswarnung, Doppelklick-/Race-Schutz. Kein KI-Aufruf beim Öffnen/Auswählen/Prüfen.
+- Tests: API-Vertrag 8 Tests; Gesamtsuite 1089 passed/5 skipped; TypeScript/Build/diff PASS; Browser-E2E Desktop 1440/Mobil 390 PASS (1 `/api/jobs`, 0 `/api/job-details`, 1 `/api/profile` nur CV-Workflow, 0 Cover-Letter-Calls vor Start, 1 danach, ausgewählte Beschreibung/CV im Request, keine Datei-/Hash-/Interviewdaten).
+- Log: `docs/reports/JM-COVER-LETTER-04.md`
+
 2026-11-01 · JM-COVER-LETTER-03
 - Typ: UI/CV-Selection/Session-Context/Privacy
 - Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
