@@ -1,3 +1,13 @@
+2026-11-01 · JM-PRIVACY-CV-REDIS-PURGE-02
+- Typ: Privacy/Redis-Purge/Security-Gate
+- Status: BLOCKED — Produktions-Redis-Ziel nicht verifizierbar; keine Löschung, kein Deployment
+- Production: Vercel `dpl_HzLL5iSUbhkbrwky7BBFELmfwXTw` (Commit `c787fea`, 2026-10-31 23:21) ist aktiv; Build-Log bestätigt `c787fea` inkl. `049edda`. Production-JS enthält keinen `cv-profile:`-Cachepfad und `/api/profile` sendet keinen Hash.
+- Redis: `UPSTASH_REDIS_REST_URL`/`TOKEN` sind in Vercel Production als `sensitive` markiert und über CLI/API nicht auslesbar; `vercel env pull`/`run` liefert keine Werte. Daher kein Production-SCAN, keine Anzahl, keine TTLs und keine Löschung. Ziel-DB NOT VERIFIED.
+- Tooling: `scripts/purge-cv-profile-cache.mjs` (Dry-run default, `--delete --confirm-production`, exakte 64-Hex-Key-Prüfung, Batch-DEL, keine Wildcard-/Namespace-Löschung, keine Key-Logs); `tests/tools/verify-cv-profile-purge.mjs` mit Docker-Redis und synthetischen Daten.
+- Tests: Purge-Test 49 Checks PASS; Gesamtsuite 1033 passed/5 skipped; TypeScript/Build/diff PASS. Production-Redis-Scan/Löschung NOT VERIFIED.
+- Unverändert: Job-Source-/Detail-/Geo-Caches, Usage/Budgets, Alerts; keine neuen Cookies/Secrets.
+- Log: `docs/reports/JM-PRIVACY-CV-REDIS-PURGE-02.md`
+
 2026-10-31 · JM-SEARCH-PARAMETERS-PRIORITY-03
 - Typ: Suchprofile/Datenschutz/Redis-Grenzen/Logging
 - Status: IMPLEMENTIERT / VERIFIZIERT (lokal) — kein Deployment
