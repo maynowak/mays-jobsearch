@@ -1,10 +1,24 @@
 # JM-BA-DIRECT-API-READINESS-01
 
 **Art:** Bundesagentur für Arbeit / direkte Jobsuche-API / Machbarkeit und Rechtsgrenzen
-**Status:** **BLOCKED** für eine produktive Integration — technisch teilweise machbar, Zugang/Nutzungsrecht nicht geklärt
+**Status:** **BLOCKED** für eine automatische App-Source — für den vereinbarten nutzervermittelten BA-Fluss **nicht erforderlich**
 **Datum:** 2026-11-01
 **Baseline:** `main` @ `334371d`, `origin/main` synchron
 **Grenzen:** Keine Live-Jobabfrage, keine Apify-Runs, kein Deployment, keine Codeänderung.
+
+## 0. Korrektur der Produktprämisse
+
+Die ursprüngliche Aufgabenbeschreibung ließ sich so lesen, als solle unsere Anwendung die BA-Jobsuche-API als automatische Quelle abfragen. Das entspricht **nicht** dem besprochenen Produktmodell.
+
+Korrekt ist:
+
+- **Personen** suchen bei der Bundesagentur für Arbeit (im BA-Portal/Jobsuche).
+- Die BA-Website bzw. die BA-App übernimmt dabei die technische Kommunikation mit ihrer eigenen Schnittstelle.
+- Die Personen nutzen anschließend **unsere Aufbereitungsmöglichkeiten** für die gefundene Stelle.
+- Unsere Anwendung fragt die BA-REST-API in diesem Fluss **nicht** automatisch ab.
+- Bürgerinnen und Bürger müssen keine REST-API lesen; sie nutzen die BA-Oberfläche.
+
+Damit ist ein automatischer Source-Adapter `arbeitsagentur-direct` für das aktuelle Produktmodell **nicht erforderlich**. Die nachfolgende technische und rechtliche Prüfung bleibt als Readiness-Analyse für den Fall erhalten, dass später doch ein automatischer BA-Zugang gewünscht wird oder eine schriftliche Freigabe vorliegt.
 
 ## 1. Executive Summary
 
@@ -17,9 +31,12 @@ Die durch `bundesAPI/jobsuche-api` dokumentierte Schnittstelle ist **technisch b
 - ein offizieller Read-/Search-API-Zugang für Dritte wurde nicht gefunden,
 - die offizielle HR-BA-XML-Schnittstelle dient der **Einlieferung** von Stellenangeboten an die BA, nicht dem Auslesen des BA-Stellenmarkts.
 
-**Entscheidung: BLOCKED.** Eine produktive Source `arbeitsagentur-direct` darf erst nach schriftlicher Klärung mit der BA bzw. nach einem belastbaren Kooperations-/Lizenzmodell umgesetzt werden.
+**Entscheidung:**
 
-Die technische Machbarkeit bleibt dokumentiert; sie ist nicht mit einer Nutzungserlaubnis gleichzusetzen.
+- **Automatische App-Source `arbeitsagentur-direct`: BLOCKED.**
+- **Nutzervermittelter BA-Fluss (Person sucht bei der BA, nutzt danach unsere Aufbereitung): GO, ohne BA-API-Adapter.**
+
+Die technische Machbarkeit eines automatischen Adapters bleibt dokumentiert; sie ist nicht mit einer Nutzungserlaubnis gleichzusetzen.
 
 ## 2. Recherchegrundlagen
 
@@ -190,17 +207,30 @@ Das ist keine aktuelle Rechtsauskunft, aber ein relevanter behördlicher Wille, 
 - Für HR-BA-XML ist eine Kooperationsvereinbarung mit der BA erforderlich; Arbeitgeber, Stellenbörsen, öffentlich-rechtliche Institutionen und zugelassene kommunale Träger haben eigene Kooperationsmodelle.
 - Ein offizieller, öffentlich dokumentierter Read-API-Zugang für Dritte wurde nicht gefunden.
 
-### 4.4 Browser-nutzt-die-BA-Nuance
+### 4.4 Browser-/Nutzer-Nuance
 
-Die Aussage „die BA darf von Bürgern benutzt werden, und der Browser läuft beim Bürger“ ist richtig, aber sie löst nicht automatisch die API-Frage:
+Die Aussage „die BA darf von Bürgern benutzt werden, und der Browser läuft beim Bürger“ ist richtig. Für den vereinbarten Fluss bedeutet das:
 
-- **Erlaubt:** Ein Bürger öffnet die BA-Jobbörse manuell im Browser und liest Stellenanzeigen.
-- **Erlaubt:** Unsere App verlinkt auf die BA-Portal-URL; der Nutzer öffnet sie selbst.
-- **Nicht automatisch erlaubt:** Unsere App ruft die BA-Schnittstelle automatisiert auf, auch wenn der Request technisch im Browser des Nutzers ausgeführt würde. Das kann weiterhin ein Robot/vergleichbarer automatisierter Datenabruf sein.
+- **Erlaubt und vorgesehen:** Eine Person sucht selbst in der BA-Jobbörse und nutzt danach unsere Aufbereitungsfunktionen.
+- **Erlaubt:** Unsere App verlinkt auf die BA-Portal-URL; die Person öffnet die Stelle selbst.
+- **Nicht erforderlich:** Unsere App muss die BA-REST-API nicht selbst abfragen.
+- **Nicht automatisch erlaubt:** Ein automatisierter App-/Browser-Abruf der BA-Schnittstelle, auch wenn er technisch im Browser der Person liefe. Das kann weiterhin ein Robot/vergleichbarer automatisierter Datenabruf sein.
 - **Technisch blockiert:** Ein direkter Browser-`fetch` auf `rest.arbeitsagentur.de` scheitert an 403/CORS; Header-Simulation, Proxy oder Captcha-Umgehung sind ausgeschlossen.
 - **Nicht gleichzusetzen:** Die öffentliche Client-ID der Jobsuche-App ist kein Nachweis, dass Dritte sie für eigene Dienste verwenden dürfen.
 
-## 5. Architekturvorschlag (nicht implementiert)
+### 4.5 Vereinbarter nutzervermittelter Fluss
+
+```text
+Person → BA-Jobsuche im Browser → gefundene Stelle
+       → Übernahme in unsere Aufbereitung (Link/Text/User-Aktion)
+       → unsere Analyse-/Anschreiben-/Aufbereitungsfunktionen
+```
+
+Die konkrete Übergabe (Link, Copy/Paste oder manuelle Eingabe) ist ein separater UX-Task. In diesem Fluss gibt es **keinen automatischen BA-API-Aufruf** durch unsere Anwendung.
+
+## 5. Architekturvorschlag (nicht implementiert, nur bei späterer BA-Freigabe)
+
+> **Für das aktuelle Produktmodell nicht erforderlich.** Der nutzervermittelte Fluss nach §4.5 ist der empfohlene Weg. Die folgende Source ist nur eine Option für den Fall, dass die BA später einen automatisierten Zugang ausdrücklich freigibt.
 
 ### 5.1 Source-Adapter
 
@@ -255,11 +285,15 @@ Eigenschaften:
 
 ## 6. Empfohlene Entscheidung
 
-### Entscheidung: **BLOCKED**
+### Automatische Source: **BLOCKED**
 
 **Technisch:** Ein Adapter ist grundsätzlich baubar; die Feldstruktur ist dokumentiert und die Referenznummern sind mit Apify kompatibel.
 
 **Rechtlich/Zugang:** Eine produktive Aktivierung ist ohne schriftliche Klärung mit der BA nicht vertretbar. Die BA-Nutzungsbedingungen und die BA-Aussage zur Schnittstelle sprechen gegen einen ungefragten automatisierten Datenabruf. Die Community-Dokumentation und die öffentliche Client-ID sind keine Nutzungserlaubnis.
+
+### Aktuelles Produktmodell: **GO ohne BA-API-Adapter**
+
+Personen suchen bei der BA und nutzen danach unsere Aufbereitung. Dafür ist kein automatischer BA-API-Zugriff und keine `arbeitsagentur-direct`-Source erforderlich. Die bestehende BA-Apify-Route bleibt unverändert; zusätzlich kann die BA-Stelle über den nutzervermittelten Fluss in die Aufbereitung gelangen.
 
 ### Bedingungen für eine Neubewertung
 
