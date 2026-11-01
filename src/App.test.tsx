@@ -175,7 +175,7 @@ afterEach(() => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" })); // -> anonymizing
     await waitFor(() =>
       expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy()
     );
@@ -769,7 +769,7 @@ describe("CV workflow", () => {
     });
 
     // BUG-16: Weiter -> anonymizing -> profile-ready (alles im Overlay)
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" }));
     await waitFor(() => {
       expect(document.querySelector(".cv-workflow-overlay .cv-result")).toBeTruthy();
     });
@@ -899,18 +899,15 @@ describe("CV workflow", () => {
 
     // Modell nicht verfügbar: createProfile schlägt einmal mit transientem Fehler fehl
     vi.mocked(createProfile).mockRejectedValueOnce(new ApiError("overloaded", 429, "rate_limited"));
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> createProfileFromPdf schlägt fehl
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" })); // -> anonymizing -> createProfileFromPdf schlägt fehl
 
-    // Fehler erscheint; Rücksprung zielt auf Modellauswahl
-    await waitFor(() => expect(document.querySelector(".cv-error-state")).toBeTruthy());
-    const backToModel = screen.getByRole("button", { name: "Zurück zur Modellauswahl" });
-    fireEvent.click(backToModel);
-
-    // Model Selection wieder da, Dokument noch vorhanden
+    // Fehler bleibt am Model-Step; kein Sprung an den Dokumentanfang.
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    expect(document.querySelector(".cv-error-state")).toBeNull();
+    expect(screen.getAllByText(/KI-Modell ist momentan nicht verfügbar/).length).toBeGreaterThan(0);
 
     // Recovery: nächster Durchlauf erfolgreich (kein neuer Upload nötig)
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> erfolgreich
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" })); // -> anonymizing -> erfolgreich
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
     // zurück zur Liste zeigt das erhaltene Dokument
     const card = document.querySelector(".cv-processing-card") as HTMLElement;
@@ -942,23 +939,21 @@ describe("CV workflow", () => {
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
 
     // Modell-Ausfall (model_not_free, nicht transient) bei der Profil-Erstellung
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> schlaegt fehl
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" })); // -> anonymizing -> schlaegt fehl
 
-    // Modell-Recovery im Overlay statt generischem Fehler + Neustart
-    // (CV-UPLOAD-UX-01: model_not_free fuehrt zurueck zur Modellauswahl)
-    await waitFor(() => expect(document.querySelector(".cv-error-state")).toBeTruthy());
+    // Modell-Recovery bleibt am Model-Step statt generischem Fehler + Neustart.
+    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
+    expect(document.querySelector(".cv-error-state")).toBeNull();
     expect(screen.getAllByText(/KI-Modell ist momentan nicht verfügbar/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/konnte gerade nicht ausgewertet werden/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Zurück zur Modellauswahl" }));
 
     // anderes Modell waehlen und direkt erneut starten — ohne erneuten Upload
-    await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
     fireEvent.click(document.querySelector(".cv-model-selection .model-trigger") as HTMLButtonElement);
     // MODEL-SELECT-01: die geoeffnete Liste liegt ueberlaufend (position: fixed)
     expect(document.querySelector(".model-popover--fixed")).toBeTruthy();
     fireEvent.click(await screen.findByRole("option", { name: /Modell B/ }));
     const callsBefore = vi.mocked(createProfile).mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing -> erfolgreich (mit m-b)
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" })); // -> anonymizing -> erfolgreich (mit m-b)
 
     // erneuter Call mit dem neuen Modell — ohne erneuten Upload
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
@@ -993,7 +988,7 @@ describe("CV workflow", () => {
     await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" }));
     await waitFor(() => expect(vi.mocked(createProfile)).toHaveBeenCalled());
     const sentText = vi.mocked(createProfile).mock.calls[0][0] as string;
     // Keine PII im Text, der an die AI geht
@@ -1033,7 +1028,7 @@ describe("CV workflow", () => {
     // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> Verarbeitung
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" })); // -> anonymizing
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
     confirmProfileInOverlay();
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
@@ -1070,7 +1065,7 @@ describe("CV workflow", () => {
     // CV-UPLOAD-UX-03: Optionen (Anonymisierung) -> Modellwahl -> Verarbeitung
     fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // creating-profile -> model-selection
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" })); // -> anonymizing
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" })); // -> anonymizing
 
     // profile-ready -> bestätigen (legt cvState.cvProfile an)
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
@@ -1141,8 +1136,8 @@ describe("CV workflow", () => {
     // (früher React #321 via useLang im Handler)
     const createProfileCallsBefore = vi.mocked(createProfile).mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await screen.findByRole("button", { name: "Weiter" });
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await screen.findByRole("button", { name: "Verarbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" }));
     await waitFor(() => {
       expect(vi.mocked(createProfile).mock.calls.length).toBeGreaterThan(createProfileCallsBefore);
     });
@@ -1184,8 +1179,8 @@ describe("CV workflow", () => {
     });
     await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
-    await screen.findByRole("button", { name: "Weiter" });
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    await screen.findByRole("button", { name: "Verarbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" }));
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
     await waitFor(() => expect(vi.mocked(createProfile)).toHaveBeenCalled());
 
@@ -2514,7 +2509,7 @@ describe("ATS-HOLOGRAPHIC-STUDIO-01: Dialog-Optik ohne Workflow-Aenderung", () =
     );
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" }));
     await waitFor(() =>
       expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy()
     );
@@ -2725,7 +2720,7 @@ describe("ATS-SKILL-INPUT-POLISH-01: Skill-Eingabefeld verbreitert, Logik intakt
     await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" }));
     await waitFor(() => expect(document.querySelector(".cv-processing-card .cv-result")).toBeTruthy());
     // Speichern -> Zielauswahl -> Ziel ausfuehren -> Skill-Step
     fireEvent.click(screen.getByRole("button", { name: "Speichern" }));

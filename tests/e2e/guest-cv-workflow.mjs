@@ -126,7 +126,7 @@ async function runViewport(browser, name, viewport) {
   await page.getByRole("button", { name: "Weiter", exact: true }).click();
 
   await page.locator("#cv-model-selection-title").waitFor();
-  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await page.getByRole("button", { name: "Verarbeiten", exact: true }).click();
 
   await page.locator(".cv-result").waitFor();
   if (requests.profile !== 1) throw new Error(`expected one profile request, got ${requests.profile}`);

@@ -178,7 +178,7 @@ async function runViewport(browser, name, viewport) {
   await page.locator(".cv-anonymization-choice").waitFor();
   await page.getByRole("button", { name: "Weiter", exact: true }).click();
   await page.locator("#cv-model-selection-title").waitFor();
-  await page.getByRole("button", { name: "Weiter", exact: true }).click();
+  await page.getByRole("button", { name: "Verarbeiten", exact: true }).click();
   await page.locator(".cv-result").waitFor();
   if (profileCalls !== 1) throw new Error(`${name}: expected one CV profile request, got ${profileCalls}`);
   if (coverLetterCalls !== 0) throw new Error(`${name}: cover-letter request during CV processing`);

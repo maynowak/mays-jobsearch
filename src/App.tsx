@@ -511,6 +511,13 @@ export default function App() {
     if (busyRef.current) return;
     setSelectedModel(model);
     setModelExhausted(false);
+    // A previous model failure belongs to the old selection. Keep the user on
+    // the model step and clear the error before another explicit attempt.
+    setCvState((prev) =>
+      prev.step === "model-selection" && prev.errorBackStep === "model-selection"
+        ? { ...prev, error: null, errorBackStep: null }
+        : prev
+    );
   };
 
   // CV Processing Handlers (Phases 6.1/6.2)
@@ -1003,7 +1010,9 @@ export default function App() {
         (err instanceof ApiError && (err.code === "model_not_free" || err.code === "model_invalid"));
       setCvState((prev) => ({
         ...prev,
-        step: "error",
+        // Model failures stay on the model step: the selector and its error
+        // remain in place instead of jumping back to the document step.
+        step: modelError ? "model-selection" : "error",
         isProcessing: false,
         error:
           isFreeQuotaExceeded(err)
@@ -2043,6 +2052,11 @@ export default function App() {
             {t("cv.modelSelect")}
           </h3>
           <p className="cv-model-selection__description">{t("cv.modelSelectDescription")}</p>
+          {cvState.error && cvState.errorBackStep === "model-selection" && (
+            <p className="alert alert-error" role="alert">
+              {cvState.error}
+            </p>
+          )}
           <ModelSelector
             state={modelsState}
             models={models}
@@ -2070,7 +2084,7 @@ export default function App() {
               }}
               disabled={cvState.isProcessing || modelsState !== "ready" || !effectiveModel}
             >
-              {cvState.isProcessing ? t("cv.continueProcessing") : t("cv.continue")}
+              {cvState.isProcessing ? t("cv.continueProcessing") : t("cv.processWithModel")}
               {cvState.isProcessing && <span className="spinner" />}
             </button>
             {/* BUG-11: klarer Zurückweg, CV-State bleibt erhalten */}

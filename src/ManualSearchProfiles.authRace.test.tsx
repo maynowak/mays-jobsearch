@@ -216,7 +216,7 @@ describe("JM-PROFILE-UI-HARDENING-05: session race isolation", () => {
     await waitFor(() => expect(document.querySelector(".cv-anonymization-choice")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
     await waitFor(() => expect(document.getElementById("cv-model-selection-title")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten" }));
     await waitFor(() => expect(gate.resolveExtract).not.toBeNull());
 
     authState.sub = "race-user-b";
