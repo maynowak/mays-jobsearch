@@ -216,6 +216,6 @@ Bis dahin gilt: **HARD STOP vor produktiven Redis-Löschoperationen.**
 ## 10. Git
 
 - Purge-Tool/Test: `27a7a58`
-- Dokumentations-Commit: nach diesem Bericht.
+- Dokumentations-Commit: `3b255df`
 - Kein AWS-/RIS-/Vercel-Deployment.
 - Kein GitHub-Release.
