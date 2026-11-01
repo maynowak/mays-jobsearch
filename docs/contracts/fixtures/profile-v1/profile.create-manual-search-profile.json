@@ -1,0 +1,17 @@
+{
+  "name": "Manual Cloud Search",
+  "description": "Created manually",
+  "searchConfig": {
+    "skills": "AWS, \"Cloud Architecture\"",
+    "targetRoles": ["Cloud Engineer"],
+    "city": "",
+    "radiusKm": null,
+    "workModes": ["remote"],
+    "employmentTypes": ["full_time"]
+  },
+  "matchingPreferences": {
+    "requiredSkills": ["AWS"],
+    "preferredSkills": ["Cloud Architecture"],
+    "excludedTerms": []
+  }
+}

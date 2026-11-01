@@ -1,0 +1,11 @@
+{
+  "name": "Manual Cloud Search Updated",
+  "searchConfig": {
+    "skills": "AWS, Terraform, \"Cloud Architecture\"",
+    "targetRoles": ["Cloud Engineer", "DevOps Engineer"],
+    "city": "Darmstadt",
+    "radiusKm": 25,
+    "workModes": ["remote", "hybrid"],
+    "employmentTypes": ["full_time"]
+  }
+}

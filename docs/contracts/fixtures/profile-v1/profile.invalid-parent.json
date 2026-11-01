@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "searchProfileId": "sp_01ORPHAN",
+  "cvId": "cv_01DOES_NOT_EXIST",
+  "name": "Orphan profile",
+  "origin": "cv",
+  "searchConfig": {
+    "skills": "AWS",
+    "targetRoles": ["Cloud Engineer"],
+    "city": "",
+    "radiusKm": null,
+    "workModes": [],
+    "employmentTypes": ["full_time"]
+  },
+  "createdAt": "2026-10-31T12:00:00Z",
+  "updatedAt": "2026-10-31T12:00:00Z",
+  "version": 1
+}

@@ -419,3 +419,14 @@ JOBMATCHER-PRODUCTION-CONNECTION-INCIDENT-01
 - AI-/Privacy-/Data-Flow impact: Keine (Diagnose, keine Änderungen)
 - Log: Dieser Eintrag
 
+
+
+2026-11-01 · JM-RIS-CONTRACT-01
+- Type: Contract/Validation/RIS-Handoff
+- Status: COMPLETE — Jobsearch contract side; RIS unchanged.
+- CVDocumentV1: sizeBytes optional for pending/failed/deleted; required positive integer for ready. Supplied non-positive/non-integer values fail.
+- CreateCVInputV1 retains required positive sizeBytes as a client-declared upload hint only; it is not authoritative verified document size.
+- Updated schema, TypeScript discriminated types, runtime validation, docs and synthetic fixtures.
+- Tests: targeted contract validation 7 passed; build PASS; API syntax PASS. Full Vitest: 825 passed, 5 skipped, 3 pre-existing env/build-identity failures.
+- RIS handoff: READY for size semantics; prior RIS DynamoDB Local gate remains separately BLOCKED with 39 skipped tests.
+- Report: docs/reports/JM-RIS-CONTRACT-01-EXECUTION_LOG.md

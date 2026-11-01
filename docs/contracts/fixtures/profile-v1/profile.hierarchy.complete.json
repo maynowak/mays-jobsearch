@@ -1,0 +1,11 @@
+{
+  "userProfile": "profile.user-profile.json",
+  "cvs": ["profile.cv-document.json"],
+  "searchProfilesByCv": {
+    "cv_01EXAMPLE": ["profile.cv-search-profile.json"]
+  },
+  "atsProfilesBySearchProfile": {
+    "sp_01EXAMPLE": ["profile.ats-search-profile.json"]
+  },
+  "manualProfiles": ["profile.manual-search-profile.json"]
+}
