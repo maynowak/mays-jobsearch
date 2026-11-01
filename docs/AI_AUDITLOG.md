@@ -1,3 +1,16 @@
+2026-11-01 · BA-SOURCE-CHECK-02
+- Typ: Arbeitsagentur-Quellenprüfung/Architektur-Abgleich (read-only)
+- Status: ABGESCHLOSSEN — keine Codeänderung, kein Deployment, kein echter Apify-Run
+- Anlass: Annahme, BA habe eine eigene direkte API-Routine und liefe parallel zu Apify; zusätzliche Routinen prüften BA-Anfragen bei Apify.
+- Befund: Im aktuellen `main` gibt es nur eine registrierte BA-Source (`arbeitsagentur`) über den Apify-Actor `blackfalcondata~arbeitsagentur-jobs-feed`. Keine direkte `rest.arbeitsagentur.de`-Implementierung. Repository-/History-Suche findet `rest.arbeitsagentur.de`, `jobsuche-service`, `pc/v6/jobs` und `pc/v4/app/jobs` ausschließlich in Dokumentation, nicht in Code.
+- Parallelität: Die verschiedenen Job-Quellen laufen über `Promise.allSettled` parallel. BA-Liste und BA-Detail sind keine zwei BA-Routinen: `detailEnrich.mjs` startet für bereits gefundene BA-Slugs einen gezielten zweiten Apify-Run mit `startUrls` (bedarfsgesteuert über `/api/match` bzw. `/api/job-details`).
+- Direkter BA-Probe (read-only, ohne Apify): `pc/v4/app/jobs`, `pc/v6/jobs`, `pc/v4/jobdetails` und `rest.arbeitsagentur.de/` → HTTP 403 (1 Byte); `www.arbeitsagentur.de/jobsuche/suche` → HTTP 200. Bestätigt den bestehenden 403-Befund; keyless direkter Serverzugriff aktuell nicht belastbar.
+- Production-Config (nur Namen): `APIFY_API_TOKEN` gesetzt; `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` nicht explizit gesetzt → Default true; kein BA-spezifischer Key/keine separate BA-Source. `/api/usage` deaktiviert (403), keine Run-/Cache-Zähler.
+- Actor: öffentlich, nicht deprecated, zuletzt 2026-10-28 aktualisiert; Input-Schema passt zu `query`, `location`, `maxResults`, `mode`, `includeDetails`, `compact`, `excludeEmptyFields`, `startUrls`.
+- Tests: `apify-actor`, `sources-registry`, `guest-source-policy` → 22 passed (gemockt, keine Apify-Kosten).
+- Risiko/offen: Kein Live-Apify-Run; aktuelle Trefferquote/Fehlerbild unbelegt. Eine direkte BA-Routine existiert in diesem Repository nicht; falls in anderer Umgebung vorhanden, ist Branch/Deployment-Commit/Log erforderlich. Live-Test nur mit Freigabe und kleinem `maxResults`.
+- Log: `docs/reports/BA-SOURCE-CHECK-02.md`
+
 2026-11-01 · JM-COVER-LETTER-UX-01
 - Typ: Cover-Letter-UX/Model-Auswahl/Guided-Revision/API/Privacy/Faktentreue
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, G05/G09/G10 unverändert
