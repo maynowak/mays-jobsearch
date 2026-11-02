@@ -1,3 +1,11 @@
+2026-11-02 · JM-BA-DETAIL-FORMAT-01
+- Typ: BA-Detailanzeige/„Mehr anzeigen"/Plain-Text-Formatierung
+- Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, keine Live-/Apify-Runs
+- Befund: BA-Detailbeschreibungen können als reiner Text mit Leerzeilen/Bullets geliefert werden; `renderSanitizedHtml` setzte diesen String bisher unformatiert in ein div, sodass Zeilenumbrüche/Absätze/Listen im Browser verloren gingen. Betroffen: BA-Details über „Mehr anzeigen", u. a. Suche „AWS Fullstack“.
+- Fix: `src/lib/safeHtml.tsx` erkennt Plain-Text ohne HTML-Markup und wandelt Absätze, Zeilenumbrüche sowie `-`/`*`/`•`/`–`/nummerierte Zeilen in semantisches HTML (`p`, `br`, `ul`/`li`) um; Text wird escaped. Vorhandenes HTML bleibt unverändert und wird weiterhin durch DOMPurify sanitized. `RemainingCard` nutzt den bestehenden Render-Pfad unverändert.
+- Tests: safeHtml 25, RemainingCard 7, Gesamtsuite **1137 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS. Keine echte BA-/Apify-Abfrage, keine Quoten-/Cache-/Source-Änderung, keine AWS-/RIS-/Cognito-Änderung.
+- Log: `docs/reports/JM-BA-DETAIL-FORMAT-01.md`
+
 2026-11-02 · JM-BA-RESTORE-03
 - Typ: Arbeitsagentur/Apify-Adapter/Search-Strategy/Reparatur
 - Status: CODE-FEHLER REPARIERT UND LOKAL VERIFIZIERT — kein Deployment, keine Live-Runs

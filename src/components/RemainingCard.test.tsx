@@ -145,6 +145,31 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(fetchJobDetails).toHaveBeenCalledTimes(1);
   });
 
+  it("formats plain-text BA detail descriptions when expanded", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    const enriched = {
+      ...job,
+      description: "Ihre Aufgaben:\n\n- AWS-Infrastruktur\n- Fullstack-Entwicklung\n\nIhr Profil:\nTypeScript und Node.js",
+      descriptionPlain: "Ihre Aufgaben: AWS-Infrastruktur Fullstack-Entwicklung Ihr Profil: TypeScript und Node.js",
+    };
+    vi.mocked(fetchJobDetails).mockClear();
+    vi.mocked(fetchJobDetails).mockResolvedValue({ jobs: { [job.slug]: enriched } });
+
+    const { container } = renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    await waitFor(() => expect(fetchJobDetails).toHaveBeenCalledTimes(1));
+
+    const content = container.querySelector(".html-content");
+    expect(content?.querySelector("p")).toHaveTextContent("Ihre Aufgaben:");
+    expect(content?.querySelectorAll("li")).toHaveLength(2);
+    expect(content?.querySelector("li")).toHaveTextContent("AWS-Infrastruktur");
+    expect(content).toHaveTextContent("TypeScript und Node.js");
+  });
+
   it("offers original posting, ATS and letter actions in one action bar", () => {
     const job = createTestJob();
     const onAtsEvaluate = vi.fn();

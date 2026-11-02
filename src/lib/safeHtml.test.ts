@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prepareHtmlForRender, sanitizeHtml, renderSanitizedHtml, decodeHtmlEntities } from "./safeHtml";
+import { prepareHtmlForRender, sanitizeHtml, renderSanitizedHtml, decodeHtmlEntities, plainTextToHtml } from "./safeHtml";
 
 describe("safeHtml - decodeHtmlEntities", () => {
   it("decodes basic HTML entities", () => {
@@ -135,6 +135,22 @@ describe("safeHtml - prepareHtmlForRender", () => {
 });
 
 describe("safeHtml - renderSanitizedHtml", () => {
+  it("formats plain-text paragraphs and bullet lists as semantic HTML", () => {
+    const input = "Ihre Aufgaben:\n\n- AWS-Infrastruktur\n- Fullstack-Entwicklung\n\nIhr Profil:\nTypeScript und Node.js";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<p>Ihre Aufgaben:</p>");
+    expect(result).toContain("<ul>");
+    expect(result).toContain("<li>AWS-Infrastruktur</li>");
+    expect(result).toContain("<li>Fullstack-Entwicklung</li>");
+    expect(result).toContain("<p>Ihr Profil:<br>TypeScript und Node.js</p>");
+  });
+
+  it("escapes plain text and does not interpret it as markup", () => {
+    const result = plainTextToHtml("A < B & C > D");
+    expect(result).toContain("A &lt; B &amp; C &gt; D");
+    expect(result).not.toContain("<B");
+  });
+
   it("returns null for undefined/null/empty", () => {
     expect(renderSanitizedHtml(undefined)).toBeNull();
     expect(renderSanitizedHtml(null as any)).toBeNull();

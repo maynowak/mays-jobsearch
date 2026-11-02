@@ -21,6 +21,71 @@ export function decodeHtmlEntities(html: string): string {
   return current;
 }
 
+function escapeHtmlText(value: string): string {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Convert plain-text descriptions (for example BA detail text) into safe
+ * semantic HTML. Existing HTML descriptions are left untouched by
+ * prepareHtmlForRender(), so this only runs for actual plain text.
+ */
+export function plainTextToHtml(value: string): string {
+  const text = String(value ?? "").replace(/\r\n?/g, "\n").trim();
+  if (!text) return "";
+
+  const blocks: string[] = [];
+  let paragraph: string[] = [];
+  let list: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length === 0) return;
+    blocks.push(`<p>${paragraph.join("<br>")}</p>`);
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (list.length === 0) return;
+    blocks.push(`<ul>${list.map((item) => `<li>${item}</li>`).join("")}</ul>`);
+    list = [];
+  };
+
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+    const bullet = /^[-*•–]\s+(.*)$/.exec(line);
+    if (bullet) {
+      flushParagraph();
+      list.push(escapeHtmlText(bullet[1]));
+      continue;
+    }
+    const numbered = /^\d+[.)]\s+(.*)$/.exec(line);
+    if (numbered) {
+      flushParagraph();
+      list.push(escapeHtmlText(numbered[1]));
+      continue;
+    }
+    flushList();
+    paragraph.push(escapeHtmlText(line));
+  }
+
+  flushParagraph();
+  flushList();
+  return blocks.join("");
+}
+
+function containsHtmlMarkup(value: string): boolean {
+  return /<\/?[a-z][^>]*>/i.test(value);
+}
+
 export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
@@ -60,7 +125,7 @@ export function sanitizeHtml(html: string): string {
 export function prepareHtmlForRender(html: string | undefined): string {
   if (!html) return "";
   const decoded = decodeHtmlEntities(html);
-  return sanitizeHtml(decoded);
+  return sanitizeHtml(containsHtmlMarkup(decoded) ? decoded : plainTextToHtml(decoded));
 }
 
 export function renderSanitizedHtml(
