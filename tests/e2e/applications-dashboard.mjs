@@ -9,6 +9,7 @@ const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-02");
 const editEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04A");
 const ux04bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04B");
+const ux04cEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04C");
 const port = 5203;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
@@ -157,6 +158,10 @@ async function checkResponsiveLayouts(page, originalViewport) {
       () => document.documentElement.scrollWidth > window.innerWidth + 1
     );
     if (overflow) throw new Error(`Horizontal overflow at ${width}px`);
+    await page.getByRole("tab", { name: "Kommunikation" }).click();
+    await page.getByRole("tabpanel", { name: "Kommunikation" }).waitFor();
+    await page.getByRole("tab", { name: "Übersicht" }).click();
+    await page.getByRole("tabpanel", { name: "Übersicht" }).waitFor();
     await assertNoNavOverlap(page);
   }
   await page.setViewportSize(originalViewport);
@@ -208,6 +213,28 @@ async function runViewport(browser, name, viewport) {
   await assertNoNavOverlap(page);
   await assertNoNavOverlapWhileScrolling(page);
   if (name === "desktop-1440") await checkResponsiveLayouts(page, viewport);
+
+  // UX-04C: four ARIA tabs, real interaction and screenshots.
+  await mkdir(ux04cEvidenceDir, { recursive: true });
+  await page.screenshot({ path: resolve(ux04cEvidenceDir, `${name}-overview.png`), fullPage: false });
+  for (const [tab, slug, heading] of [
+    ["Kommunikation", "communication", "Rückmeldungen"],
+    ["Dokumente", "documents", "Dokumente"],
+    ["Verlauf", "history", "Bewerbungsverlauf"],
+  ]) {
+    await page.getByRole("tab", { name: tab }).click();
+    await page.getByRole("tab", { name: tab }).evaluate((element) => {
+      if (element.getAttribute("aria-selected") !== "true") throw new Error(`${tab} not selected`);
+    });
+    await page.getByRole("tabpanel", { name: tab }).waitFor();
+    await page.getByRole("heading", { name: heading, exact: true }).waitFor();
+    await page.getByRole("tabpanel", { name: tab }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    await assertNoNavOverlap(page);
+    await page.screenshot({ path: resolve(ux04cEvidenceDir, `${name}-${slug}.png`), fullPage: false });
+  }
+  await page.getByRole("tab", { name: "Übersicht" }).click();
+  await page.getByRole("tabpanel", { name: "Übersicht" }).waitFor();
 
   // UX-04A: edit and persist all previously read-only application details.
   await page.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }).click();

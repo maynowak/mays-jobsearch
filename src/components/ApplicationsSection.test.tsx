@@ -141,6 +141,7 @@ describe("APP-02 ApplicationsSection", () => {
 
   it("saves the current cover-letter draft as an explicit version", async () => {
     renderSection([draft()]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
     await screen.findByRole("button", { name: "Aktuellen Entwurf als Version speichern" });
     expect(screen.getByText(/Anschreiben-Versionen/).closest("p")).toHaveTextContent("0");
     fireEvent.click(screen.getByRole("button", { name: "Aktuellen Entwurf als Version speichern" }));
@@ -152,6 +153,7 @@ describe("APP-02 ApplicationsSection", () => {
 
   it("records feedback, interview and note without changing the status", async () => {
     renderSection([submitted()]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Kommunikation" }));
     await screen.findByLabelText("Welche Rückmeldung hast du erhalten?");
     fireEvent.change(screen.getByLabelText("Welche Rückmeldung hast du erhalten?"), {
       target: { value: "We would like to talk." },
@@ -163,8 +165,10 @@ describe("APP-02 ApplicationsSection", () => {
       target: { value: "2026-11-10T10:00" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Termin speichern" }));
-    await waitFor(() => expect(screen.getByText(/2026-11-10/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/10\.11\.2026/)).toBeInTheDocument());
 
+    fireEvent.click(screen.getByRole("tab", { name: "Verlauf" }));
+    await screen.findByLabelText("Notiz");
     fireEvent.change(screen.getByLabelText("Notiz"), { target: { value: "Prepare examples." } });
     fireEvent.click(screen.getByRole("button", { name: "Notiz speichern" }));
     await waitFor(() => expect(screen.getByText(/Prepare examples\./)).toBeInTheDocument());
@@ -179,6 +183,7 @@ describe("APP-02 ApplicationsSection", () => {
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
 
     renderSection([draft()]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
     fireEvent.click(await screen.findByRole("button", { name: "Lokalen Entwurf exportieren" }));
     await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
     const blob = createObjectURL.mock.calls[0][0] as Blob;
@@ -194,6 +199,7 @@ describe("APP-02 ApplicationsSection", () => {
   it("keeps a failed action visible instead of mutating the draft", async () => {
     const application = submitted();
     renderSection([application]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Kommunikation" }));
     await screen.findByRole("button", { name: "Rückmeldung speichern" });
     // The UI only exposes valid transitions; this verifies the error surface
     // remains available for domain failures.
@@ -366,6 +372,75 @@ describe("APP-02 ApplicationsSection", () => {
 
     await waitFor(() => expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull());
     expect(screen.getByText("Noch keine Bewerbungen")).toBeInTheDocument();
+  });
+
+  it("starts on overview and switches tabs without changing the selected application", async () => {
+    renderSection([detailed()]);
+    const overview = await screen.findByRole("tab", { name: "Übersicht" });
+    expect(overview).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Übersicht" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Kommunikation" }));
+    expect(screen.getByRole("tab", { name: "Kommunikation" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Kommunikation" })).toBeInTheDocument();
+    expect(screen.getAllByText("Senior Fullstack Developer").length).toBeGreaterThan(0);
+  });
+
+  it("supports arrow, Home and End keyboard navigation on the tabs", async () => {
+    renderSection([draft()]);
+    const overview = await screen.findByRole("tab", { name: "Übersicht" });
+    overview.focus();
+
+    fireEvent.keyDown(overview, { key: "ArrowRight" });
+    expect(screen.getByRole("tab", { name: "Kommunikation" })).toHaveAttribute("aria-selected", "true");
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Kommunikation" }));
+
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "End" });
+    expect(screen.getByRole("tab", { name: "Verlauf" })).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "Home" });
+    expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("keeps the status visible outside the overview tab", async () => {
+    renderSection([submitted()]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    expect(screen.getAllByText("Beworben / Antwort ausstehend").length).toBeGreaterThan(0);
+    expect(screen.getByRole("tabpanel", { name: "Dokumente" })).toBeInTheDocument();
+  });
+
+  it("requires saving or cancelling before switching tabs or applications while editing", async () => {
+    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
+    renderSection([detailed(), { ...draft({ localId: "local-2", job: otherJob }) }]);
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ })
+    );
+    await screen.findByRole("heading", { name: "Senior Fullstack Developer", level: 3 });
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("alert")).toHaveTextContent(/speichere oder brich/i);
+    expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+    expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByLabelText("Name")).toHaveValue("Anna Beispiel");
+    expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
+  });
+
+  it("returns to overview and shows the newly selected application", async () => {
+    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
+    renderSection([detailed(), draft({ localId: "local-2", job: otherJob })]);
+    fireEvent.click(await screen.findByRole("button", { name: /Cloud Engineer.*Other AG/ }));
+    expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "Cloud Engineer", level: 3 })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(screen.getByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ }));
+    expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "Senior Fullstack Developer", level: 3 })).toBeInTheDocument();
   });
   it("ignores a late operation after the repository/session changes", async () => {
     const base = createSessionApplicationRepository({ initial: [draft()] });

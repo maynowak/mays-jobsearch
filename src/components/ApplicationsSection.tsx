@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type {
   SessionApplicationUpdateChanges,
@@ -15,6 +15,15 @@ interface Props {
   repository: ApplicationRepository;
   onChanged?: (applications: SessionApplicationV1[]) => void;
 }
+
+type ApplicationTab = "overview" | "communication" | "documents" | "history";
+
+const APPLICATION_TABS: readonly ApplicationTab[] = [
+  "overview",
+  "communication",
+  "documents",
+  "history",
+];
 
 const STATUS_ORDER: readonly ApplicationStatus[] = [
   "draft",
@@ -89,6 +98,14 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState("");
+  const [activeTab, setActiveTab] = useState<ApplicationTab>("overview");
+  const tabBaseId = useId();
+  const tabRefs = useRef<Record<ApplicationTab, HTMLButtonElement | null>>({
+    overview: null,
+    communication: null,
+    documents: null,
+    history: null,
+  });
   const mountedRef = useRef(true);
   const repositoryRef = useRef(repository);
   const onChangedRef = useRef(onChanged);
@@ -150,11 +167,14 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
   }, [repository]);
 
   useEffect(() => {
-    if (!selectedId && applications[0]) setSelectedId(applications[0].localId);
-    if (selectedId && !applications.some((application) => application.localId === selectedId)) {
-      setSelectedId(applications[0]?.localId ?? null);
-    }
-  }, [applications, selectedId]);
+    setSelectedId((current) => {
+      if (!current && applications[0]) return applications[0].localId;
+      if (current && !applications.some((application) => application.localId === current)) {
+        return applications[0]?.localId ?? null;
+      }
+      return current;
+    });
+  }, [applications]);
 
   const visible = useMemo(() => {
     const filtered = filter === "all" ? applications : applications.filter((application) => application.status === filter);
@@ -198,6 +218,47 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
       runningRef.current = false;
       if (mountedRef.current) setBusy(false);
     }
+  };
+
+  const tabId = (tab: ApplicationTab) => `${tabBaseId}-tab-${tab}`;
+  const panelId = (tab: ApplicationTab) => `${tabBaseId}-panel-${tab}`;
+
+  const selectApplication = (id: string) => {
+    if (editing) {
+      setError(t("applications.edit.finishFirst"));
+      return;
+    }
+    setSelectedId(id);
+    setActiveTab("overview");
+    setEditing(false);
+    setEditError("");
+    setPendingSubmit(false);
+    setDeleteConfirmId(null);
+    setError("");
+  };
+
+  const selectTab = (tab: ApplicationTab): boolean => {
+    if (tab === activeTab) return true;
+    if (editing) {
+      setError(t("applications.edit.finishFirst"));
+      return false;
+    }
+    setActiveTab(tab);
+    setError("");
+    return true;
+  };
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: ApplicationTab) => {
+    const index = APPLICATION_TABS.indexOf(tab);
+    let nextIndex = index;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % APPLICATION_TABS.length;
+    else if (event.key === "ArrowLeft") nextIndex = (index - 1 + APPLICATION_TABS.length) % APPLICATION_TABS.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = APPLICATION_TABS.length - 1;
+    else return;
+    event.preventDefault();
+    const next = APPLICATION_TABS[nextIndex];
+    if (selectTab(next)) tabRefs.current[next]?.focus();
   };
 
   const handleTransition = (to: ApplicationStatus, confirmed = false) => {
@@ -343,6 +404,9 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
     });
   };
 
+  const feedbackEntries = selected?.history.filter((entry) => entry.kind === "feedback") ?? [];
+  const interviewEntries = selected?.history.filter((entry) => entry.kind === "interview") ?? [];
+
   const timeline = selected
     ? [
         ...selected.statusHistory.map((entry, index) => ({
@@ -410,13 +474,7 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                 <button
                   type="button"
                   className={`applications-list__item${selected?.localId === application.localId ? " applications-list__item--active" : ""}`}
-                  onClick={() => {
-                    setSelectedId(application.localId);
-                    setEditing(false);
-                    setEditError("");
-                    setPendingSubmit(false);
-                    setError("");
-                  }}
+                  onClick={() => selectApplication(application.localId)}
                 >
                   <strong>{application.job.title}</strong>
                   <span>{application.job.companyName}</span>
@@ -435,6 +493,9 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                   <p>{selected.job.companyName} · {selected.job.location.join(", ") || "-"}</p>
                 </div>
                 <div className="applications-detail__actions">
+                  <span className={`applications-status-pill applications-status-pill--${selected.status}`}>
+                    {statusLabel(t, selected.status)}
+                  </span>
                   {!editing && (
                     <button
                       type="button"
@@ -442,6 +503,7 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                       onClick={() => {
                         setEditError("");
                         setError("");
+                        setActiveTab("overview");
                         setEditing(true);
                       }}
                       disabled={busy}
@@ -449,160 +511,252 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                       {t("applications.edit")}
                     </button>
                   )}
-                  <button type="button" className="btn-ghost" onClick={() => handleExport(selected)} disabled={busy}>
-                    {t("applications.export")}
-                  </button>
                 </div>
               </div>
 
               <div className="applications-detail__meta">
-                <span>{t("applications.statusLabel")}: <strong>{statusLabel(t, selected.status)}</strong></span>
                 <span>{t("applications.created")}: {formatDate(selected.createdAt, locale)}</span>
                 <span>{t("applications.updated")}: {formatDate(selected.updatedAt, locale)}</span>
                 <span>{t("applications.applied")}: {formatApplicationDate(selected.applicationDate, locale)}</span>
               </div>
 
-              {selected.job.originalUrl && (
-                <a className="remaining-link" href={selected.job.originalUrl} target="_blank" rel="noopener noreferrer">
-                  {t("applications.openOriginal")}
-                </a>
-              )}
-
-              {editing && (
-                <ApplicationEditForm
-                  key={`${selected.localId}-${selected.version}`}
-                  application={selected}
-                  busy={busy}
-                  error={editError}
-                  onSave={handleSaveEdits}
-                  onCancel={() => {
-                    setEditing(false);
-                    setEditError("");
-                  }}
-                />
-              )}
-
-              <section className="applications-block">
-                <h4>{t("applications.section.job")}</h4>
-                <p><strong>{t("applications.sources")}:</strong> {selected.job.source.join(", ") || "-"}</p>
-                <p><strong>{t("applications.jobId")}:</strong> {selected.job.jobId}</p>
-              </section>
-
-              {!editing && (
-                <>
-                  <section className="applications-block">
-                    <h4>{t("applications.section.application")}</h4>
-                    <p><strong>{t("applications.channel")}:</strong> {selected.applicationChannel ? t(`applications.channel.${selected.applicationChannel}`) : "-"}</p>
-                    <p><strong>{t("applications.contact")}:</strong> {[selected.contact?.name, selected.contact?.email, selected.contact?.phone].filter(Boolean).join(" · ") || "-"}</p>
-                    <p><strong>{t("applications.notes")}:</strong> {selected.notes || "-"}</p>
-                  </section>
-
-                  <section className="applications-block">
-                    <h4>{t("applications.section.salary")}</h4>
-                    <p><strong>{t("applications.expectation")}:</strong> {formatSalary(selected.salary?.expectation, t)}</p>
-                    <p><strong>{t("applications.offer")}:</strong> {formatSalary(selected.salary?.offer, t)}</p>
-                  </section>
-                </>
-              )}
-
-              <section className="applications-block">
-                <h4>{t("applications.section.documents")}</h4>
-                <p><strong>{t("applications.documentStatus")}:</strong> {t(`applications.documentStatus.${selected.documents.documentStatus}`)}</p>
-                <p><strong>{t("applications.cvReference")}:</strong> {selected.documents.cvReference?.label || selected.documents.cvReference?.cvId || "-"}</p>
-                <details>
-                  <summary>{t("applications.coverLetterDraft")}</summary>
-                  <pre className="applications-cover-letter">{selected.documents.coverLetterDraft || "-"}</pre>
-                </details>
-                <p><strong>{t("applications.versions")}:</strong> {selected.documents.coverLetterVersions.length}</p>
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  onClick={handleSaveVersion}
-                  disabled={busy || !selected.documents.coverLetterDraft.trim()}
-                >
-                  {t("applications.saveVersion")}
-                </button>
-                {selected.documents.coverLetterVersions.map((version) => (
-                  <details key={version.versionId}>
-                    <summary>{version.versionId} · {formatDate(version.createdAt, locale)}</summary>
-                    <pre className="applications-cover-letter">{version.content}</pre>
-                  </details>
+              <div
+                className="applications-tabs"
+                role="tablist"
+                aria-label={t("applications.tabs.aria")}
+              >
+                {APPLICATION_TABS.map((tab) => (
+                  <button
+                    key={tab}
+                    ref={(element) => {
+                      tabRefs.current[tab] = element;
+                    }}
+                    id={tabId(tab)}
+                    type="button"
+                    role="tab"
+                    className={`applications-tab${activeTab === tab ? " applications-tab--active" : ""}`}
+                    aria-selected={activeTab === tab}
+                    aria-controls={panelId(tab)}
+                    tabIndex={activeTab === tab ? 0 : -1}
+                    onClick={() => selectTab(tab)}
+                    onKeyDown={(event) => handleTabKeyDown(event, tab)}
+                  >
+                    {t(`applications.tabs.${tab}`)}
+                  </button>
                 ))}
-              </section>
+              </div>
 
-              <section className="applications-block">
-                <h4>{t("applications.section.status")}</h4>
-                <div className="applications-status-actions">
-                  {STATUS_ORDER.filter((status) => canTransitionApplicationStatus(selected.status, status)).map((status) => (
-                    <button key={status} type="button" className="btn-ghost" onClick={() => handleTransition(status)} disabled={busy}>
-                      {statusLabel(t, status)}
-                    </button>
-                  ))}
+              {error && <p className="letter-review-warning" role="alert">{error}</p>}
+
+              {activeTab === "overview" && (
+                <div
+                  className="applications-tabpanel"
+                  role="tabpanel"
+                  id={panelId("overview")}
+                  aria-labelledby={tabId("overview")}
+                  tabIndex={0}
+                >
+                  {editing ? (
+                    <ApplicationEditForm
+                      key={`${selected.localId}-${selected.version}`}
+                      application={selected}
+                      busy={busy}
+                      error={editError}
+                      onSave={handleSaveEdits}
+                      onCancel={() => {
+                        setEditing(false);
+                        setEditError("");
+                      }}
+                    />
+                  ) : (
+                    <>
+                      {selected.job.originalUrl && (
+                        <a className="remaining-link" href={selected.job.originalUrl} target="_blank" rel="noopener noreferrer">
+                          {t("applications.openOriginal")}
+                        </a>
+                      )}
+
+                      <section className="applications-block">
+                        <h4>{t("applications.section.job")}</h4>
+                        <p><strong>{t("applications.sources")}:</strong> {selected.job.source.join(", ") || "-"}</p>
+                        <p><strong>{t("applications.jobId")}:</strong> {selected.job.jobId}</p>
+                      </section>
+
+                      <section className="applications-block">
+                        <h4>{t("applications.section.application")}</h4>
+                        <p><strong>{t("applications.channel")}:</strong> {selected.applicationChannel ? t(`applications.channel.${selected.applicationChannel}`) : "-"}</p>
+                        <p><strong>{t("applications.contact")}:</strong> {[selected.contact?.name, selected.contact?.email, selected.contact?.phone].filter(Boolean).join(" · ") || "-"}</p>
+                        <p><strong>{t("applications.notes")}:</strong> {selected.notes || "-"}</p>
+                      </section>
+
+                      <section className="applications-block">
+                        <h4>{t("applications.section.salary")}</h4>
+                        <p><strong>{t("applications.expectation")}:</strong> {formatSalary(selected.salary?.expectation, t)}</p>
+                        <p><strong>{t("applications.offer")}:</strong> {formatSalary(selected.salary?.offer, t)}</p>
+                      </section>
+                    </>
+                  )}
+
+                  <section className="applications-block">
+                    <h4>{t("applications.section.status")}</h4>
+                    <div className="applications-status-actions">
+                      {STATUS_ORDER.filter((status) => canTransitionApplicationStatus(selected.status, status)).map((status) => (
+                        <button key={status} type="button" className="btn-ghost" onClick={() => handleTransition(status)} disabled={busy}>
+                          {statusLabel(t, status)}
+                        </button>
+                      ))}
+                    </div>
+                    {pendingSubmit && (
+                      <div className="applications-confirm" role="alert">
+                        <p>{t("applications.confirmSubmitQuestion")}</p>
+                        <button type="button" className="letter-btn" onClick={() => handleTransition("submitted", true)} disabled={busy}>
+                          {t("applications.confirmSubmitYes")}
+                        </button>
+                        <button type="button" className="btn-ghost" onClick={() => setPendingSubmit(false)}>
+                          {t("applications.cancel")}
+                        </button>
+                      </div>
+                    )}
+                  </section>
                 </div>
-                {pendingSubmit && (
-                  <div className="applications-confirm" role="alert">
-                    <p>{t("applications.confirmSubmitQuestion")}</p>
-                    <button type="button" className="letter-btn" onClick={() => handleTransition("submitted", true)} disabled={busy}>
-                      {t("applications.confirmSubmitYes")}
-                    </button>
-                    <button type="button" className="btn-ghost" onClick={() => setPendingSubmit(false)}>
-                      {t("applications.cancel")}
-                    </button>
-                  </div>
-                )}
-                {error && <p className="letter-review-warning" role="alert">{error}</p>}
-              </section>
+              )}
 
-              <section className="applications-block">
-                <h4>{t("applications.timeline.title")}</h4>
-                {timeline.length === 0 ? <p>{t("applications.timeline.empty")}</p> : (
-                  <ol className="applications-timeline">
-                    {timeline.map((entry) => (
-                      <li key={entry.key}>
-                        <strong>{entry.label}</strong> · {formatDate(entry.at, locale)}
-                        {entry.detail && <p>{entry.detail}</p>}
-                      </li>
+              {activeTab === "communication" && (
+                <div
+                  className="applications-tabpanel"
+                  role="tabpanel"
+                  id={panelId("communication")}
+                  aria-labelledby={tabId("communication")}
+                  tabIndex={0}
+                >
+                  <section className="applications-block">
+                    <h4>{t("applications.communication.feedback")}</h4>
+                    <label className="letter-field">
+                      <span>{t("applications.feedbackLabel")}</span>
+                      <textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} rows={2} maxLength={5000} />
+                    </label>
+                    <button type="button" className="btn-ghost" onClick={handleFeedback} disabled={busy || !feedback.trim()}>
+                      {t("applications.addFeedback")}
+                    </button>
+                    {feedbackEntries.length === 0 ? (
+                      <p>{t("applications.communication.noFeedback")}</p>
+                    ) : (
+                      <ul className="applications-communication">
+                        {feedbackEntries.map((entry) => (
+                          <li key={entry.id}>
+                            <strong>{t("applications.timeline.feedback")}</strong> · {formatDate(entry.at, locale)}
+                            <p>{entry.text}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+
+                  <section className="applications-block">
+                    <h4>{t("applications.interview")}</h4>
+                    <label className="letter-field">
+                      <span>{t("applications.interviewAt")}</span>
+                      <input type="datetime-local" value={interviewAt} onChange={(event) => setInterviewAt(event.target.value)} />
+                    </label>
+                    <label className="letter-field">
+                      <span>{t("applications.interviewNote")}</span>
+                      <input value={interviewNote} onChange={(event) => setInterviewNote(event.target.value)} maxLength={2000} />
+                    </label>
+                    <button type="button" className="btn-ghost" onClick={handleInterview} disabled={busy || !interviewAt}>
+                      {t("applications.addInterview")}
+                    </button>
+                    {interviewEntries.length === 0 ? (
+                      <p>{t("applications.communication.noInterviews")}</p>
+                    ) : (
+                      <ul className="applications-communication">
+                        {interviewEntries.map((entry) => (
+                          <li key={entry.id}>
+                            <strong>{t("applications.timeline.interview")}</strong> · {formatDate(entry.at, locale)}
+                            <p>{t("applications.communication.interviewAt")}: {formatDate(entry.scheduledAt, locale)}{entry.note ? ` — ${entry.note}` : ""}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                </div>
+              )}
+
+              {activeTab === "documents" && (
+                <div
+                  className="applications-tabpanel"
+                  role="tabpanel"
+                  id={panelId("documents")}
+                  aria-labelledby={tabId("documents")}
+                  tabIndex={0}
+                >
+                  <section className="applications-block">
+                    <h4>{t("applications.section.documents")}</h4>
+                    <p><strong>{t("applications.documentStatus")}:</strong> {t(`applications.documentStatus.${selected.documents.documentStatus}`)}</p>
+                    <p><strong>{t("applications.cvReference")}:</strong> {selected.documents.cvReference?.label || selected.documents.cvReference?.cvId || "-"}</p>
+                    <details>
+                      <summary>{t("applications.coverLetterDraft")}</summary>
+                      <pre className="applications-cover-letter">{selected.documents.coverLetterDraft || "-"}</pre>
+                    </details>
+                    <p><strong>{t("applications.versions")}:</strong> {selected.documents.coverLetterVersions.length}</p>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={handleSaveVersion}
+                      disabled={busy || !selected.documents.coverLetterDraft.trim()}
+                    >
+                      {t("applications.saveVersion")}
+                    </button>
+                    {selected.documents.coverLetterVersions.map((version) => (
+                      <details key={version.versionId}>
+                        <summary>{version.versionId} · {formatDate(version.createdAt, locale)}</summary>
+                        <pre className="applications-cover-letter">{version.content}</pre>
+                      </details>
                     ))}
-                  </ol>
-                )}
-              </section>
+                  </section>
 
-              <section className="applications-block">
-                <h4>{t("applications.feedback")}</h4>
-                <label className="letter-field">
-                  <span>{t("applications.feedbackLabel")}</span>
-                  <textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} rows={2} maxLength={5000} />
-                </label>
-                <button type="button" className="btn-ghost" onClick={handleFeedback} disabled={busy || !feedback.trim()}>
-                  {t("applications.addFeedback")}
-                </button>
-              </section>
+                  <section className="applications-block">
+                    <h4>{t("applications.exportTitle")}</h4>
+                    <button type="button" className="btn-ghost" onClick={() => handleExport(selected)} disabled={busy}>
+                      {t("applications.export")}
+                    </button>
+                  </section>
+                </div>
+              )}
 
-              <section className="applications-block">
-                <h4>{t("applications.interview")}</h4>
-                <label className="letter-field">
-                  <span>{t("applications.interviewAt")}</span>
-                  <input type="datetime-local" value={interviewAt} onChange={(event) => setInterviewAt(event.target.value)} />
-                </label>
-                <label className="letter-field">
-                  <span>{t("applications.interviewNote")}</span>
-                  <input value={interviewNote} onChange={(event) => setInterviewNote(event.target.value)} maxLength={2000} />
-                </label>
-                <button type="button" className="btn-ghost" onClick={handleInterview} disabled={busy || !interviewAt}>
-                  {t("applications.addInterview")}
-                </button>
-              </section>
+              {activeTab === "history" && (
+                <div
+                  className="applications-tabpanel"
+                  role="tabpanel"
+                  id={panelId("history")}
+                  aria-labelledby={tabId("history")}
+                  tabIndex={0}
+                >
+                  <section className="applications-block">
+                    <h4>{t("applications.timeline.title")}</h4>
+                    {timeline.length === 0 ? <p>{t("applications.timeline.empty")}</p> : (
+                      <ol className="applications-timeline">
+                        {timeline.map((entry) => (
+                          <li key={entry.key}>
+                            <strong>{entry.label}</strong> · {formatDate(entry.at, locale)}
+                            {entry.detail && <p>{entry.detail}</p>}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </section>
 
-              <section className="applications-block">
-                <h4>{t("applications.note")}</h4>
-                <label className="letter-field">
-                  <span>{t("applications.noteLabel")}</span>
-                  <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={5000} />
-                </label>
-                <button type="button" className="btn-ghost" onClick={handleNote} disabled={busy || !note.trim()}>
-                  {t("applications.addNote")}
-                </button>
-              </section>
+                  <section className="applications-block">
+                    <h4>{t("applications.note")}</h4>
+                    <label className="letter-field">
+                      <span>{t("applications.noteLabel")}</span>
+                      <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={5000} />
+                    </label>
+                    <button type="button" className="btn-ghost" onClick={handleNote} disabled={busy || !note.trim()}>
+                      {t("applications.addNote")}
+                    </button>
+                  </section>
+                </div>
+              )}
 
               <div className="applications-danger">
                 {deleteConfirmId === selected.localId ? (

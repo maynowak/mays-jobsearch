@@ -9337,3 +9337,111 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     min-height: 56px;
   }
 }
+
+/* UX-04C: accessible tab navigation inside application details */
+.applications-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.applications-tabs {
+  display: flex;
+  gap: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.applications-tab {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.applications-tab:hover {
+  color: var(--text);
+}
+
+.applications-tab--active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.applications-tab:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.applications-tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.applications-tabpanel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.applications-communication {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.applications-communication li {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  overflow-wrap: anywhere;
+}
+
+.applications-communication p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 700px) {
+  .applications-tabs {
+    margin-inline: calc(var(--space-1) * -1);
+  }
+
+  .applications-tab {
+    padding-inline: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .applications-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .applications-tab {
+    flex: 1 1 auto;
+  }
+}
