@@ -1,3 +1,16 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-02
+- Typ: Bewerbungsverwaltung/Dashboard/Session-only MVP
+- Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — Session-only, kein Deployment, keine neue Persistenz/RIS/AWS/Cognito
+- UI: DashboardV2 erhält `applicationsSection`; Menüpunkt „Bewerbungen“ ist bei vorhandener Section aktiv. `ApplicationsSection` bietet Übersicht, Statusfilter, Datumssortierung, Detailansicht, Verlauf, Statusverwaltung, Feedback/Interview/Notiz, Dokument-/Anschreibenversionen, lokalen Export und bestätigtes Löschen.
+- Session: eigener `SessionApplicationV1`-Zustand in React; **kein** `applicationId`/`ownerId`, keine Serveridentität; keine localStorage/sessionStorage/IndexedDB/Redis/Backend-Speicherung. `localId` nur UI-Zuordnung. `beforeunload`-Warnung bei vorhandenen Sitzungsbewerbungen. Reload zeigt leeren Zustand.
+- Anschreiben: `LetterModal` bietet „Als Bewerbungsentwurf übernehmen“ nur bei vorhandenem Anschreiben; übernimmt aktuellen Text, Stellenreferenz und optionale CV-Referenz; kein neuer KI-Aufruf, keine Statusänderung, keine automatische Versionierung. Bestehende Entwürfe für dieselbe Stelle werden nicht überschrieben. Versionen können separat ausdrücklich gespeichert werden.
+- Status: APP-01-Übergänge; `draft -> submitted` nur nach Bestätigung „Hast du diese Bewerbung tatsächlich abgeschickt?“; Notizen/Dokumente ändern Status nicht automatisch.
+- Auth/Isolation: Callback nur für authentifizierte Nutzer; bestehende `iss + sub`-Logik; Auth-Wechsel/Logout setzt Sitzungsbewerbungen zurück; keine E-Mail-Identität.
+- Tests: ApplicationsSection 8, Session 5, LetterModal 45, DashboardV2 10, Gesamtsuite **1173 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors, Reload-Leerzustand PASS. Keine KI-/Apify-/Backend-Aufrufe.
+- Offen: RIS/Backend-Persistenz, serverseitige ApplicationV1-Erstellung mit verifizierter Identität, echte Auth-Live-Matrix, Retention/Löschtexte.
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-02.md`
+- Screenshots: `docs/reports/assets/JM-APPLICATION-MANAGEMENT-02/`
+
 2026-11-02 · JM-BA-INTEGRATION-GREEN-01
 - Typ: Bundesagentur für Arbeit/Integrationsentwicklung/Green-Status-Dokumentation
 - Status: **TESTED GREEN (lokal/mock)** — Produktions-Live-Verifikation und Deployment offen
