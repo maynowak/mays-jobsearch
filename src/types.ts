@@ -297,6 +297,9 @@ export interface CvDocument {
   // CL-03: explicit per-document proof that the AI profile step completed.
   // A File or hash alone is not enough to mark a document as processed.
   processedAt?: number | null;
+  // Session-only, already anonymized CV text for reusing a processed CV in
+  // the cover-letter assistant without re-reading the PDF. Never persisted.
+  letterText?: string;
 }
 
 export type AnonymizationMode = "anonymized" | "not-anonymized";

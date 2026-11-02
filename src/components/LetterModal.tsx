@@ -384,12 +384,21 @@ export default function LetterModal({
     try {
       let cvText: string | undefined;
       if (selectedCv) {
-        const raw = await extractPdfText(selectedCv.file);
-        if (requestSeq !== requestSeqRef.current) return;
-        const normalized = String(raw ?? "").replace(/\u0000/g, "").trim();
+        // A processed CV already carries its anonymized text for this session.
+        // Reusing it avoids a second PDF read and keeps the privacy boundary:
+        // only anonymized text is sent to the cover-letter endpoint.
+        let normalized: string;
+        if (selectedCv.letterText) {
+          normalized = selectedCv.letterText;
+        } else {
+          const raw = await extractPdfText(selectedCv.file);
+          if (requestSeq !== requestSeqRef.current) return;
+          normalized = anonymizeText(String(raw ?? "").replace(/\u0000/g, "").trim());
+        }
+        normalized = normalized.trim();
         if (!normalized) throw new Error(t("letter.cvTextEmpty"));
         if (normalized.length > MAX_CV_TEXT_LENGTH) throw new Error(t("letter.cvTextTooLong"));
-        cvText = anonymizeText(normalized);
+        cvText = normalized;
       }
       if (requestSeq !== requestSeqRef.current) return;
 

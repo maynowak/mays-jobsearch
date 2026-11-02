@@ -11,6 +11,25 @@
 - Git: Branch `feature/jm-application-management-03-readiness`; `ea57e9c`/`0d9ef8d`/`89e877c` initiale APP-03-Schritte, `24bf818` Konsolidierung Repository-/Remote-/Migrationsgrenzen und Invalidation, `c12d7a4`/`ec7abfa`/`6a20b08` RIS-Handoff, APP-03E-Dokumentation in `e76f976`.
 - Offen/Blockiert: RIS-Backend/Persistenz, serverseitige `ApplicationV1`-Erstellung, Live-Auth-Matrix, Retention/Datenschutz-Freigabe, Browser-/BFF-Delegation; referenzierte RIS-Dokumente/Branch im lokalen Checkout nicht vorhanden und nicht verifiziert. **NICHT DEPLOYED.**
 - Log: `docs/reports/JM-APPLICATION-MANAGEMENT-03.md`
+2026-11-02 · JM-COVER-LETTER-CV-REUSE-01
+- Typ: Anschreiben-Generierung/bereits verarbeiteter CV/Session-Text-Wiederverwendung
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Live-Provider-Test, kein Deployment
+- Befund: Bei einem bereits verarbeiteten CV las der Anschreiben-Assistent beim Start erneut die PDF-Datei. Bei fehlender/nicht mehr lesbarer Datei-Referenz oder PDF-/Worker-Fehlern scheiterte die Generierung vor dem KI-Aufruf, obwohl der CV bereits verarbeitet war.
+- Fix: `CvDocument.letterText` hält den bereits anonymisierten CV-Text nur im React-Session-State. Die CV-Verarbeitung erzeugt ihn einmalig; `LetterModal` verwendet ihn ohne erneutes `extractPdfText`. Ältere Dokumente ohne `letterText` nutzen weiterhin den PDF-Fallback. Es wird kein unredigierter Text für die Anschreiben-Wiederverwendung gespeichert.
+- Tests: LetterModal **46 passed**, Gesamtsuite **1177 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Cover-Letter-E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors. Neuer Test: `extractPdfText` wird bei gespeichertem `letterText` nicht aufgerufen; Request enthält den anonymisierten Text. Keine echten KI-/Apify-/Provider-Aufrufe.
+- Datenschutz: `letterText` nur anonymisiert, nur Browser-Session, keine Persistenz, kein PDF-/Hash-Versand an `/api/cover-letter`.
+- Status: **NOT DEPLOYED**; Live-Verifikation mit echtem verarbeitetem CV bleibt OPEN.
+- Log: `docs/reports/JM-COVER-LETTER-CV-REUSE-01.md`
+
+2026-11-02 · JM-COVER-LETTER-MODEL-FALLBACK-01
+- Typ: Anschreiben-Generierung/Modell-Fallback/Provider-Routing
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Live-Provider-Test, kein Deployment
+- Befund: Erste `/api/cover-letter`-Versuche lieferten 502; ein späterer Versuch lieferte 200 mit gültigem `letter`, wurde aber nicht als Ergebnis verwendet. Der Server-Router wechselte bei modellbezogenen Fehlern (`model_unavailable`/`bad_ai_response`) nicht zum nächsten Provider, sondern nur bei Quota/Limit. Der Client-Fallback verarbeitet einen erfolgreichen zweiten/dritten Versuch bereits korrekt.
+- Fix: `isRetryableModelError` + optionaler `fallbackOnModelError`-Schalter in `chat()`; `/api/cover-letter` aktiviert ihn. Das erste erfolgreiche Provider-Ergebnis wird sofort zurückgegeben. Matching/Profile/ATS bleiben beim bisherigen Standardverhalten (`false`).
+- Regression: Neuer LetterModal-Fallback-Integrationstest (erster Versuch 502, zweiter 200 → Anschreiben sichtbar, kein dritter Request; CV-Modus: dritter 200 → sichtbar). Provider- und Cover-Letter-API-Tests ergänzt.
+- Tests: gezielt **33 passed**, Gesamtsuite **1176 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Cover-Letter-E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors. Keine echten KI-/Apify-/Provider-Aufrufe.
+- Status: **NOT DEPLOYED**; Live-Verifikation und konkrete Produktions-Providerlogs bleiben OPEN. Keine Änderung an Env/Secrets/Quotas/Modellkatalogen.
+- Log: `docs/reports/JM-COVER-LETTER-MODEL-FALLBACK-01.md`
 
 2026-11-02 · JM-APPLICATION-MANAGEMENT-02
 - Typ: Bewerbungsverwaltung/Dashboard/Session-only MVP

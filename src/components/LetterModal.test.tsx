@@ -301,6 +301,29 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(extractPdfText).toHaveBeenCalledTimes(1);
   });
 
+  it("reuses the stored anonymized text of an already processed CV without re-reading the PDF", async () => {
+    const cv = makeCv({
+      id: "cv-processed",
+      name: "processed.pdf",
+      processedAt: Date.now(),
+      hash: "c".repeat(64),
+      letterText: "Stored anonymized CV text",
+    });
+    vi.mocked(extractPdfText).mockRejectedValue(new Error("PDF should not be read"));
+    renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });
+
+    fireEvent.click(screen.getByLabelText(/processed\.pdf/));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    expect(extractPdfText).not.toHaveBeenCalled();
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+    const [request] = vi.mocked(generateCoverLetter).mock.calls[0];
+    expect(request.candidate.mode).toBe("cv");
+    expect(request.candidate.cv_text).toBe("Stored anonymized CV text");
+    expect(request.candidate.cv_anonymized).toBe(true);
+  });
+
   it("does not use an uploaded, unprocessed CV silently", () => {
     const cv = makeCv();
     renderModal({ cvDocuments: [cv], onAddCv: vi.fn() });

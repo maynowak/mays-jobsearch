@@ -326,6 +326,9 @@ export default async function handler(req, res) {
       maxTokens: 1500,
       attempt,
       model: options.model,
+      // A model-level 502/empty answer from one provider must not discard a
+      // compatible result that another configured free provider can deliver.
+      fallbackOnModelError: true,
     });
 
     const sanitizedLetter = sanitizeLetter(letter);
