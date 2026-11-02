@@ -1,3 +1,14 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04E
+- Typ: UX-Konsolidierung/Regression/Release Readiness
+- Status: **READY für lokale main-Integration** — kein Merge, kein Deployment
+- Ausgangsstand: UX-04D `72327e2`, lokaler `main` `b897259`, origin/main `e1f0347`; Prüfbranch `feature/jm-application-management-ux-04e`.
+- Scope: UX-04A–D vollständig geprüft: editierbare Details, responsive 30/70-Layout, vier ARIA-Tabs, Kommunikation/Interviews, Dokumente/Versionen, Verlauf, Wiedervorlagen, Export/Löschen, Session-/Versionsschutz.
+- Tests: Gesamtsuite **1213 passed/5 skipped**, TypeScript PASS, Build PASS, `git diff --check` PASS; Applications-E2E 1440/390 + Responsive 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; Navigation-BBox PASS; keine Console-Errors. JSON Schema/15 Fixtures + negatives Fixture PASS.
+- Finding: kein Produktfehler im UX-04-Scope. Ein erster paralleler Gesamtlauf zeigte den bekannten `ManualSearchProfiles.integration`-Timeout; Datei einzeln 8/8 und finaler Gesamtlauf 1213/5. Test-Infrastruktur-Flake, kein UX-04-Blocker.
+- Vertrag/Sicherheit: ApplicationV1, optionales Follow-up, Session-Repository, expectedVersion, AbortSignal, invalidate(), Stale-/Doppelaktionsschutz unverändert. Keine neue Persistenz, keine RIS-/AWS-/Cognito-/KI-/Apify-Aufrufe.
+- Git: Branch `feature/jm-application-management-ux-04e`; Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Logs: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-04E.md`, `docs/reports/JM-APPLICATION-MANAGEMENT-UX-04-CONSOLIDATED.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04D
 - Typ: Bewerbungsverwaltung/Wiedervorlagen/Nachfassplanung
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
