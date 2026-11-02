@@ -54,7 +54,7 @@ import {
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
-import { createSessionApplicationRepository } from "./lib/applications/sessionRepository";
+import { beginNewApplicationSession, createSessionApplicationRepository } from "./lib/applications/sessionRepository";
 import { isDevOnlyRoute } from "./lib/devRoute";
 import { buildCvSearchProfile } from "./lib/cvSearchConfig";
 import { partitionCvFiles, validateCvFile } from "./lib/cvFileValidation";
@@ -272,6 +272,8 @@ export default function App() {
       setConsentDismissed(false);
       setLetterJob(null);
       setPendingLetterContext(null);
+      applicationRepository.invalidate();
+      beginNewApplicationSession();
       setSessionApplications([]);
       setApplicationRepository(createSessionApplicationRepository());
       setStatus(null);

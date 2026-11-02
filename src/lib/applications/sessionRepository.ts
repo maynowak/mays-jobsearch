@@ -31,6 +31,18 @@ export interface SessionApplicationRepositoryOptions {
   now?: () => string;
 }
 
+let activeGeneration = 0;
+
+/** Invalidate every repository instance from the previous auth/session. */
+export function beginNewApplicationSession(): number {
+  activeGeneration += 1;
+  return activeGeneration;
+}
+
+export function currentApplicationSessionGeneration(): number {
+  return activeGeneration;
+}
+
 function defaultId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return `local-${crypto.randomUUID()}`;
@@ -62,18 +74,28 @@ function assertAbort(signal: AbortSignal | undefined): void {
 export function createSessionApplicationRepository(
   options: SessionApplicationRepositoryOptions = {}
 ): ApplicationRepository {
+  const generation = activeGeneration;
+  let invalidated = false;
   let applications = (options.initial ?? []).map((application) => JSON.parse(JSON.stringify(application)) as SessionApplicationV1);
   const idFactory = options.idFactory ?? defaultId;
   const now = options.now ?? defaultNow;
   const idempotency = new Map<string, string>();
 
+  const assertActive = (): void => {
+    if (invalidated || generation !== activeGeneration) {
+      throw new ApplicationRepositoryError("The application session has ended", "session_ended");
+    }
+  };
+
   const find = (localId: string): SessionApplicationV1 => {
+    assertActive();
     const application = applications.find((candidate) => candidate.localId === localId);
     if (!application) throw new ApplicationRepositoryError("Application was not found", "not_found");
     return application;
   };
 
   const replace = (updated: SessionApplicationV1): SessionApplicationV1 => {
+    assertActive();
     applications = applications.map((application) =>
       application.localId === updated.localId ? updated : application
     );
@@ -82,6 +104,7 @@ export function createSessionApplicationRepository(
 
   return {
     async list(query: ApplicationListQuery = {}): Promise<ApplicationPage> {
+      assertActive();
       assertAbort(query.signal);
       const statusFiltered = query.status
         ? applications.filter((application) => application.status === query.status)
@@ -100,18 +123,21 @@ export function createSessionApplicationRepository(
     },
 
     async get(localId: string, signal?: AbortSignal): Promise<SessionApplicationV1 | null> {
+      assertActive();
       assertAbort(signal);
       const application = applications.find((candidate) => candidate.localId === localId);
       return application ? (JSON.parse(JSON.stringify(application)) as SessionApplicationV1) : null;
     },
 
     async findByJob(jobId: string, signal?: AbortSignal): Promise<SessionApplicationV1 | null> {
+      assertActive();
       assertAbort(signal);
       const application = applications.find((candidate) => candidate.job.jobId === jobId);
       return application ? (JSON.parse(JSON.stringify(application)) as SessionApplicationV1) : null;
     },
 
     async create(input: SessionCreateInput): Promise<SessionApplicationV1> {
+      assertActive();
       assertAbort(input.signal);
       try {
         if (input.idempotencyKey) {
@@ -144,6 +170,7 @@ export function createSessionApplicationRepository(
     },
 
     async update(localId: string, input: SessionUpdateInput): Promise<SessionApplicationV1> {
+      assertActive();
       assertAbort(input.signal);
       try {
         const current = find(localId);
@@ -154,6 +181,7 @@ export function createSessionApplicationRepository(
     },
 
     async transitionStatus(localId: string, input: SessionStatusRepositoryInput): Promise<SessionApplicationV1> {
+      assertActive();
       assertAbort(input.signal);
       try {
         const current = find(localId);
@@ -164,6 +192,7 @@ export function createSessionApplicationRepository(
     },
 
     async addHistory(localId: string, input: SessionHistoryInput): Promise<SessionApplicationV1> {
+      assertActive();
       assertAbort(input.signal);
       try {
         const current = find(localId);
@@ -202,6 +231,7 @@ export function createSessionApplicationRepository(
     },
 
     async addCoverLetterVersion(localId: string, input: SessionCoverLetterVersionInput): Promise<SessionApplicationV1> {
+      assertActive();
       assertAbort(input.signal);
       try {
         return replace(
@@ -216,6 +246,7 @@ export function createSessionApplicationRepository(
     },
 
     async export(localId: string, signal?: AbortSignal): Promise<ReturnType<typeof exportSessionApplication>> {
+      assertActive();
       assertAbort(signal);
       try {
         return exportSessionApplication(find(localId), now());
@@ -225,6 +256,7 @@ export function createSessionApplicationRepository(
     },
 
     async delete(localId: string, input: SessionDeleteInput): Promise<ApplicationDeletionResult> {
+      assertActive();
       assertAbort(input.signal);
       try {
         const current = applications.find((application) => application.localId === localId);
@@ -237,6 +269,12 @@ export function createSessionApplicationRepository(
       } catch (err) {
         throw mapError(err);
       }
+    },
+
+    invalidate(): void {
+      invalidated = true;
+      applications = [];
+      idempotency.clear();
     },
   };
 }

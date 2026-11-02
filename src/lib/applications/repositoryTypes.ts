@@ -1,7 +1,17 @@
 import type {
+  AddApplicationCoverLetterVersionInputV1,
+  AddApplicationFeedbackInputV1,
+  AddApplicationInterviewInputV1,
+  AddApplicationNoteInputV1,
+  ApplicationDeletionReceiptV1,
+  ApplicationExportV1,
   ApplicationStatus,
+  ApplicationV1,
   CoverLetterVersionV1,
+  CreateApplicationDraftInputV1,
   ISODateTime,
+  TransitionApplicationStatusInputV1,
+  UpdateApplicationDraftInputV1,
 } from "./contractTypes";
 import type {
   SessionApplicationExportV1,
@@ -18,7 +28,12 @@ export type ApplicationRepositoryErrorCode =
   | "aborted"
   | "unavailable"
   | "owner_mismatch"
-  | "idempotency_conflict";
+  | "idempotency_conflict"
+  | "unauthorized"
+  | "forbidden"
+  | "conflict"
+  | "capacity_exceeded"
+  | "session_ended";
 
 export class ApplicationRepositoryError extends Error {
   readonly code: ApplicationRepositoryErrorCode;
@@ -113,6 +128,104 @@ export interface ApplicationDeletionResult {
   idempotent: boolean;
 }
 
+/** Read options for the future RIS-owned port. No implementation is implied. */
+export interface ApplicationReadOptions {
+  signal?: AbortSignal;
+}
+
+export interface ApplicationListOptions extends ApplicationReadOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+export interface ApplicationPageV1 {
+  items: ApplicationV1[];
+  nextCursor: string | null;
+}
+
+/**
+ * Future RIS-owned asynchronous port for the server-backed ApplicationV1.
+ * This is a contract only: there is no HTTP client, route assumption or
+ * credential storage in APP-03. `applicationId` and `ownerId` are always
+ * server-generated and server-derived.
+ */
+export interface ApplicationPersistencePort {
+  list(options?: ApplicationListOptions): Promise<ApplicationPageV1>;
+  get(applicationId: string, options?: ApplicationReadOptions): Promise<ApplicationV1>;
+  create(
+    input: CreateApplicationDraftInputV1,
+    options?: ApplicationReadOptions & { idempotencyKey?: string }
+  ): Promise<ApplicationV1>;
+  update(
+    applicationId: string,
+    input: UpdateApplicationDraftInputV1,
+    options?: ApplicationReadOptions
+  ): Promise<ApplicationV1>;
+  transitionStatus(
+    applicationId: string,
+    input: TransitionApplicationStatusInputV1,
+    options?: ApplicationReadOptions
+  ): Promise<ApplicationV1>;
+  addFeedback(
+    applicationId: string,
+    input: AddApplicationFeedbackInputV1,
+    options?: ApplicationReadOptions
+  ): Promise<ApplicationV1>;
+  addInterview(
+    applicationId: string,
+    input: AddApplicationInterviewInputV1,
+    options?: ApplicationReadOptions
+  ): Promise<ApplicationV1>;
+  addNote(
+    applicationId: string,
+    input: AddApplicationNoteInputV1,
+    options?: ApplicationReadOptions
+  ): Promise<ApplicationV1>;
+  addCoverLetterVersion(
+    applicationId: string,
+    input: AddApplicationCoverLetterVersionInputV1,
+    options?: ApplicationReadOptions
+  ): Promise<ApplicationV1>;
+  export(applicationId: string, options?: ApplicationReadOptions): Promise<ApplicationExportV1>;
+  delete(
+    applicationId: string,
+    expectedVersion: number,
+    options?: ApplicationReadOptions
+  ): Promise<ApplicationDeletionReceiptV1>;
+}
+
+export interface ApplicationMigrationSelectionV1 {
+  localIds: string[];
+}
+
+export interface ApplicationMigrationPreviewV1 {
+  /** No ownerId, backend ID or durable-write claim before RIS verification. */
+  drafts: SessionApplicationV1[];
+  duplicateJobIds: string[];
+  warnings: string[];
+}
+
+export interface ApplicationMigrationResultV1 {
+  succeeded: Array<{ localId: string; applicationId: string; version: number }>;
+  failed: Array<{ localId: string; reason: string }>;
+}
+
+/**
+ * Contract only: no code calls this until RIS authentication, privacy and API
+ * gates pass. There is intentionally no UI button for account persistence.
+ */
+export interface ApplicationMigrationPortV1 {
+  preview(
+    selection: ApplicationMigrationSelectionV1,
+    signal?: AbortSignal
+  ): Promise<ApplicationMigrationPreviewV1>;
+  commit(
+    selection: ApplicationMigrationSelectionV1,
+    idempotencyKey: string,
+    signal?: AbortSignal
+  ): Promise<ApplicationMigrationResultV1>;
+}
+
 /**
  * APP-03 persistence-neutral application repository.
  *
@@ -135,4 +248,9 @@ export interface ApplicationRepository {
   ): Promise<SessionApplicationV1>;
   export(localId: string, signal?: AbortSignal): Promise<SessionApplicationExportV1>;
   delete(localId: string, input: SessionDeleteInput): Promise<ApplicationDeletionResult>;
+  /** Permanently disable this in-memory instance after a session/auth change. */
+  invalidate(): void;
 }
+
+/** Explicit name for the current in-memory adapter. */
+export type SessionApplicationRepository = ApplicationRepository;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSessionApplicationRepository } from "./sessionRepository";
+import { beginNewApplicationSession, createSessionApplicationRepository } from "./sessionRepository";
 import { ApplicationRepositoryError } from "./repositoryTypes";
 import type { ApplicationJobReferenceV1 } from "./contractTypes";
 
@@ -160,6 +160,24 @@ describe("APP-03 session application repository", () => {
     ).resolves.toMatchObject({ localId: "local-1", status: "draft" });
   });
 
+
+  it("invalidates all existing instances on a session-generation change", async () => {
+    const first = repository();
+    await first.create({ job, coverLetter: "A" });
+    beginNewApplicationSession();
+    await expect(first.list()).rejects.toMatchObject({ code: "session_ended" });
+    await expect(first.create({ job, coverLetter: "B" })).rejects.toMatchObject({ code: "session_ended" });
+    expect((await repository().list()).items).toHaveLength(0);
+  });
+
+  it("invalidates a repository explicitly without carrying data forward", async () => {
+    const first = repository();
+    await first.create({ job, coverLetter: "A" });
+    first.invalidate();
+    await expect(first.get("local-1")).rejects.toMatchObject({ code: "session_ended" });
+    await expect(first.export("local-1")).rejects.toMatchObject({ code: "session_ended" });
+    expect((await repository().list()).items).toHaveLength(0);
+  });
   it("aborts list operations through AbortSignal", async () => {
     const { repo } = await created();
     const controller = new AbortController();
