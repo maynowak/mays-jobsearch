@@ -1,3 +1,17 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-03
+- Typ: Bewerbungsverwaltung/Repository-Readiness/Session-Adapter
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein RIS-Backend, keine neue Persistenz, kein Deployment
+- Architektur: `ApplicationRepository` als persistenzneutraler Operationsvertrag (`list`, `get`, `findByJob`, `create`, `update`, `transitionStatus`, `addHistory`, `addCoverLetterVersion`, `export`, `delete`) mit `expectedVersion`, Pagination, `AbortSignal`, typisierten Fehlern und Idempotenz. Der Session-Adapter `createSessionApplicationRepository()` nutzt die vorhandenen APP-01-/APP-02-Domainfunktionen und speichert weiterhin ausschließlich in React-Memory.
+- UI: `ApplicationsSection` erhält eine Repository-Instanz statt direkter Anwendungsliste/Setter; Laden, Status, Feedback, Interview, Notiz, Anschreiben-Version, Export und Löschen laufen über die Repository-Grenze. `busy` verhindert Doppelaktionen; späte Ergebnisse nach Repository-/Session-Wechsel werden verworfen. Lade-/Fehlertexte DE/EN ergänzt.
+- Identität/Isolation: Weiterhin `iss + sub` als einzige Auth-Grenze, kein E-Mail-Fallback, kein clientseitiger `ownerId`, kein `localId` als `applicationId`. Auth-Reset ersetzt Repository und Sitzungsbewerbungen; Dashboard-Section wird über den Auth-Profilschlüssel neu aufgebaut.
+- Persistenz/Privacy: Keine localStorage-/sessionStorage-/IndexedDB-/Redis-/Backend-Speicherung, keine CV-Dateiinhalte in Bewerbungen, keine KI-/Apify-Aufrufe durch Repository-Operationen. Export bleibt `localDraft: true`.
+- RIS: `docs/contracts/MAYS-RIS-APPLICATION-PERSISTENCE-HANDOFF-V1.md` spezifiziert serverseitige Ressourcen, CRUD/Status, `iss + sub`-Ownership, Server-IDs, Conditional Writes, Anschreiben-Versionen, CV-Referenzen, Export/Löschung, Fehler/Pagination und Datenschutz. Endpunkte sind Vorschläge, keine vorhandene RIS-API. Keine RIS-Implementierung.
+- Migration: Nur Vertrag; keine automatische Migration, kein „Im Konto speichern“-Button ohne Backend, lokale Daten bleiben bei Fehlern erhalten, `localId` wird nie ohne Serverbestätigung übernommen.
+- Tests: Session-Repository **9 passed**, ApplicationsSection **9 passed**, Gesamtsuite **1183 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Browser-E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors, Reload-Leerzustand PASS. Keine produktiven API-/KI-/Apify-Aufrufe.
+- Git: `ea57e9c` Repository-Vertrag, `0d9ef8d` Session-Adapter, `89e877c` UI-Integration, `c12d7a4` RIS-Handoff, APP-03E-Dokumentation in diesem Commit.
+- Offen: RIS-Backend/Persistenz, serverseitige `ApplicationV1`-Erstellung, Live-Auth-Matrix, Retention/Datenschutz-Freigabe; referenzierte RIS-Dokumente im Workspace nicht vorhanden und nicht verifiziert. **NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-03.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-02
 - Typ: Bewerbungsverwaltung/Dashboard/Session-only MVP
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — Session-only, kein Deployment, keine neue Persistenz/RIS/AWS/Cognito
