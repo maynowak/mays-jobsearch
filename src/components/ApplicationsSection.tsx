@@ -147,7 +147,7 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
     setEditError("");
     setPendingSubmit(false);
     setDeleteConfirmId(null);
-  }, [selectedId, repository]);
+  }, [repository]);
 
   useEffect(() => {
     if (!selectedId && applications[0]) setSelectedId(applications[0].localId);
@@ -337,6 +337,8 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
       if (!isCurrent()) return;
       notify(applications.filter((application) => application.localId !== localIdToDelete));
       setDeleteConfirmId(null);
+      setEditing(false);
+      setEditError("");
       setSelectedId(null);
     });
   };
@@ -410,6 +412,8 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                   className={`applications-list__item${selected?.localId === application.localId ? " applications-list__item--active" : ""}`}
                   onClick={() => {
                     setSelectedId(application.localId);
+                    setEditing(false);
+                    setEditError("");
                     setPendingSubmit(false);
                     setError("");
                   }}

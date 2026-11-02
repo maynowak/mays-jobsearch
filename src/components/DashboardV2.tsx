@@ -51,7 +51,10 @@ const DashboardV2 = ({ user, isDemo, onLogout, cvSection, applicationsSection, p
   ];
 
   return (
-    <div className="dashboard-v2" aria-labelledby="dashboard-v2-title">
+    <div
+      className={`dashboard-v2${activeId === "applications" ? " dashboard-v2--applications" : ""}`}
+      aria-labelledby="dashboard-v2-title"
+    >
       <header className="dashboard-v2__header">
         <div>
           {isDemo ? <Badge tone="neutral">{t('dashboard.devBadge')}</Badge> : <Badge tone="active">{t('dashboard.active')}</Badge>}

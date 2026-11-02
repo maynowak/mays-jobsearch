@@ -189,32 +189,34 @@ export default function ApplicationEditForm({ application, busy, error, onSave, 
 
         <section className="applications-edit__section">
           <h4>{t("applications.contact")}</h4>
-          <label className="letter-field">
-            <span>{t("applications.edit.contactName")}</span>
-            <input
-              value={draft.contactName}
-              onChange={(event) => update("contactName", event.target.value)}
-              maxLength={500}
-            />
-          </label>
-          <label className="letter-field">
-            <span>{t("applications.edit.contactEmail")}</span>
-            <input
-              type="email"
-              value={draft.contactEmail}
-              onChange={(event) => update("contactEmail", event.target.value)}
-              maxLength={500}
-            />
-          </label>
-          <label className="letter-field">
-            <span>{t("applications.edit.contactPhone")}</span>
-            <input
-              type="tel"
-              value={draft.contactPhone}
-              onChange={(event) => update("contactPhone", event.target.value)}
-              maxLength={500}
-            />
-          </label>
+          <div className="applications-edit__contact">
+            <label className="letter-field applications-edit__full">
+              <span>{t("applications.edit.contactName")}</span>
+              <input
+                value={draft.contactName}
+                onChange={(event) => update("contactName", event.target.value)}
+                maxLength={500}
+              />
+            </label>
+            <label className="letter-field">
+              <span>{t("applications.edit.contactEmail")}</span>
+              <input
+                type="email"
+                value={draft.contactEmail}
+                onChange={(event) => update("contactEmail", event.target.value)}
+                maxLength={500}
+              />
+            </label>
+            <label className="letter-field">
+              <span>{t("applications.edit.contactPhone")}</span>
+              <input
+                type="tel"
+                value={draft.contactPhone}
+                onChange={(event) => update("contactPhone", event.target.value)}
+                maxLength={500}
+              />
+            </label>
+          </div>
         </section>
       </div>
 
@@ -245,7 +247,7 @@ export default function ApplicationEditForm({ application, busy, error, onSave, 
       </section>
 
       <section className="applications-edit__section">
-        <h4>{t("applications.notes")}</h4>
+        <h4>{t("applications.edit.notesSection")}</h4>
         <label className="letter-field">
           <span>{t("applications.edit.notesLabel")}</span>
           <textarea

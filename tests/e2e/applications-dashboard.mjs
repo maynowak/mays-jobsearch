@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-02");
 const editEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04A");
+const ux04bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04B");
 const port = 5203;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
@@ -112,6 +113,57 @@ async function openDashboard(page, mobile) {
   await page.waitForSelector(".dashboard-v2");
 }
 
+async function assertNoNavOverlap(page) {
+  const overlaps = await page.evaluate(() => {
+    const nav = document.querySelector(".navbar");
+    if (!nav) return [];
+    const navRect = nav.getBoundingClientRect();
+    if (navRect.bottom <= 0 || navRect.top >= window.innerHeight) return [];
+    return Array.from(
+      document.querySelectorAll(
+        ".applications-section input, .applications-section select, .applications-section textarea, .applications-section button, .applications-section a"
+      )
+    )
+      .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+      .filter(({ rect }) =>
+        rect.width > 0 &&
+        rect.height > 0 &&
+        rect.bottom > navRect.top &&
+        rect.top < navRect.bottom
+      )
+      .map(({ element }) => element.getAttribute("aria-label") || element.textContent?.trim().slice(0, 60));
+  });
+  if (overlaps.length) throw new Error(`Navigation overlaps application controls: ${overlaps.join(" | ")}`);
+}
+
+async function assertNoNavOverlapWhileScrolling(page) {
+  const originalY = await page.evaluate(() => window.scrollY);
+  const height = await page.evaluate(() => document.body.scrollHeight);
+  for (const y of [0, 300, 700, 1200, Math.max(0, height - 900)]) {
+    await page.evaluate((nextY) => window.scrollTo(0, nextY), y);
+    await page.waitForTimeout(60);
+    await assertNoNavOverlap(page);
+  }
+  await page.evaluate((nextY) => window.scrollTo(0, nextY), originalY);
+  await page.waitForTimeout(60);
+}
+
+async function checkResponsiveLayouts(page, originalViewport) {
+  for (const width of [1024, 768, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(100);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1
+    );
+    if (overflow) throw new Error(`Horizontal overflow at ${width}px`);
+    await assertNoNavOverlap(page);
+  }
+  await page.setViewportSize(originalViewport);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(100);
+}
+
 async function runViewport(browser, name, viewport) {
   const mobile = viewport.width < 768;
   const { context, page, consoleErrors } = await preparePage(browser, viewport);
@@ -150,7 +202,12 @@ async function runViewport(browser, name, viewport) {
   await page.getByRole("link", { name: "Originalanzeige öffnen" }).waitFor();
   await page.locator(".applications-section").scrollIntoViewIfNeeded();
   await mkdir(evidenceDir, { recursive: true });
+  await mkdir(ux04bEvidenceDir, { recursive: true });
   await page.screenshot({ path: resolve(evidenceDir, `${name}-overview.png`), fullPage: false });
+  await page.screenshot({ path: resolve(ux04bEvidenceDir, `${name}-overview.png`), fullPage: false });
+  await assertNoNavOverlap(page);
+  await assertNoNavOverlapWhileScrolling(page);
+  if (name === "desktop-1440") await checkResponsiveLayouts(page, viewport);
 
   // UX-04A: edit and persist all previously read-only application details.
   await page.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }).click();
@@ -160,15 +217,23 @@ async function runViewport(browser, name, viewport) {
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("E2E Kontakt");
   await page.getByRole("textbox", { name: "E-Mail", exact: true }).fill("e2e.kontakt@example.invalid");
   await page.getByRole("textbox", { name: "Telefon", exact: true }).fill("+49 30 123456");
-  await page.getByRole("textbox", { name: "Persönliche Notizen", exact: true }).fill("E2E edit note");
+  await page.getByLabel("Persönliche Notizen", { exact: true }).fill("E2E edit note");
   await page.getByRole("spinbutton", { name: "Gehaltsvorstellung Betrag", exact: true }).fill("80000");
   await page.getByRole("spinbutton", { name: "Angebotenes Gehalt Betrag", exact: true }).fill("75000");
+  await page.locator(".applications-edit").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
   await mkdir(editEvidenceDir, { recursive: true });
   await page.screenshot({ path: resolve(editEvidenceDir, `${name}-edit.png`), fullPage: false });
+  await page.screenshot({ path: resolve(ux04bEvidenceDir, `${name}-edit.png`), fullPage: false });
+  await assertNoNavOverlap(page);
   await page.getByRole("button", { name: "Änderungen speichern" }).click();
   await page.getByText("E2E edit note").waitFor();
   await page.getByText("E2E Kontakt").waitFor();
+  await page.locator(".applications-detail").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(editEvidenceDir, `${name}-updated.png`), fullPage: false });
+  await page.screenshot({ path: resolve(ux04bEvidenceDir, `${name}-details.png`), fullPage: false });
+  await assertNoNavOverlap(page);
 
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();
   await page.getByText("Hast du diese Bewerbung tatsächlich abgeschickt?").waitFor();
