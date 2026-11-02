@@ -1,3 +1,14 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04C
+- Typ: Bewerbungsverwaltung/Tab-Navigation/Barrierefreiheit
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Änderung: Detailansicht in vier ARIA-Tabs gegliedert: Übersicht (Stelle, Bewerbungsdaten, Kontakt, Gehalt, Notizen, Statusverwaltung, Bearbeiten), Kommunikation (Feedback/Interviews), Dokumente (CV-Referenz, Anschreiben, Versionen, Export) und Verlauf (Timeline + Verlaufsnotiz). Persönliche Notizen bleiben von chronologischen Verlaufsnotizen getrennt.
+- State: Standard-Tab Übersicht; kein Repository-Reload pro Tab; Bewerbungswechsel setzt Übersicht/Fehler/Bestätigungen zurück. Offenes UX-04A-Formular blockiert Tab-/Bewerbungswechsel mit Hinweis, damit ungespeicherte Änderungen nicht stillschweigend verworfen werden. Statusindikator bleibt im Kopfbereich sichtbar.
+- Accessibility: `tablist`/`tab`/`tabpanel`, `aria-selected`/`aria-controls`/`aria-labelledby`, eindeutige IDs, Pfeiltasten/Home/End, Fokusführung, sichtbare Fokuszustände, 44-px-Touchziele, mobile Umbrüche ohne Seiten-Overflow.
+- Sicherheit: Session-Repository, AbortSignal, invalidate(), expectedVersion, Doppelaktionsschutz und Session-Isolation unverändert. Keine neue Persistenz, keine RIS-/AWS-/Cognito-/KI-/Apify-Aufrufe.
+- Tests: ApplicationsSection **23 passed**, Gesamtsuite **1206 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/768/390/320 PASS, Navigation-BBox PASS, keine Console-Errors. Acht synthetische Screenshots unter UX-04C.
+- Git: Implementierungskommit `aac997b`, Branch `feature/jm-application-management-ux-04c`; Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-04C.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04B
 - Typ: Bewerbungsverwaltung/responsives Layout/Navigation Fix
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
