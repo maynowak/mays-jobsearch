@@ -69,6 +69,23 @@ describe("APP-03 session application repository", () => {
     ).rejects.toMatchObject({ code: "version_conflict" });
   });
 
+  it("updates the cover-letter draft of an existing application without duplicating it", async () => {
+    const { repo, application } = await created();
+    const updated = await repo.update(application.localId, {
+      expectedVersion: 1,
+      changes: {
+        coverLetterDraft: "Updated letter",
+        documentStatus: "draft",
+        cvReference: { cvId: "cv-2", label: "New CV" },
+      },
+    });
+    expect(updated.documents.coverLetterDraft).toBe("Updated letter");
+    expect(updated.documents.cvReference).toEqual({ cvId: "cv-2", label: "New CV" });
+    expect(updated.status).toBe("draft");
+    expect(updated.version).toBe(2);
+    expect((await repo.list()).items).toHaveLength(1);
+  });
+
   it("requires explicit status confirmation and supports history", async () => {
     const { repo, application } = await created();
     await expect(

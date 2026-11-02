@@ -527,15 +527,24 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     );
   });
 
-  it("does not offer a second application draft for the same job", async () => {
-    renderModal({ onAdoptAsApplication: vi.fn(), hasApplicationDraft: true });
+  it("shows an existing draft with a check and still allows updating it", async () => {
+    const onAdoptAsApplication = vi.fn();
+    renderModal({ onAdoptAsApplication, hasApplicationDraft: true });
     fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
     await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
 
+    expect(
+      screen.getByText("Für diese Stelle ist bereits ein Anschreiben gespeichert.")
+    ).toBeInTheDocument();
     const button = screen.getByRole("button", {
-      name: "Für diese Stelle existiert bereits ein Bewerbungsentwurf.",
+      name: "Anschreiben im Bewerbungsentwurf aktualisieren",
     });
-    expect(button).toBeDisabled();
+    expect(button).toBeEnabled();
+    expect(button.closest(".letter-application-adopt--existing")).not.toBeNull();
+    expect(screen.getByText("✓")).toHaveAttribute("aria-hidden", "true");
+
+    fireEvent.click(button);
+    expect(onAdoptAsApplication).toHaveBeenCalledTimes(1);
   });
 
   it("shows an error state and allows an explicit retry", async () => {

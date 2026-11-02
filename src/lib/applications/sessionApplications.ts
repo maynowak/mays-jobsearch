@@ -136,19 +136,24 @@ export function updateSessionApplication(
     salary?: ApplicationSalaryContextV1;
     coverLetterDraft?: string;
     documentStatus?: ApplicationDocumentsV1["documentStatus"];
+    cvReference?: ApplicationDocumentsV1["cvReference"];
   },
   now: ISODateTime
 ): SessionApplicationV1 {
   if (changes.notes !== undefined) assertText(changes.notes, "notes", 10000, true);
   if (changes.coverLetterDraft !== undefined) assertText(changes.coverLetterDraft, "coverLetterDraft", 50000, true);
   const base = next(application, expectedVersion, now);
-  const documents = changes.coverLetterDraft === undefined && changes.documentStatus === undefined
-    ? base.documents
-    : {
-        ...base.documents,
-        ...(changes.coverLetterDraft === undefined ? {} : { coverLetterDraft: changes.coverLetterDraft }),
-        ...(changes.documentStatus === undefined ? {} : { documentStatus: changes.documentStatus }),
-      };
+  const documents =
+    changes.coverLetterDraft === undefined &&
+    changes.documentStatus === undefined &&
+    changes.cvReference === undefined
+      ? base.documents
+      : {
+          ...base.documents,
+          ...(changes.coverLetterDraft === undefined ? {} : { coverLetterDraft: changes.coverLetterDraft }),
+          ...(changes.documentStatus === undefined ? {} : { documentStatus: changes.documentStatus }),
+          ...(changes.cvReference === undefined ? {} : { cvReference: clone(changes.cvReference) }),
+        };
   return {
     ...base,
     documents,

@@ -1083,24 +1083,34 @@ export default function LetterModal({
         {phase === "done" && (
           <div className="modal-actions">
             {onAdoptAsApplication && (
-              <button
-                type="button"
-                className="btn-ghost"
-                disabled={hasApplicationDraft || !letter.trim() || !job.url}
-                onClick={() =>
-                  onAdoptAsApplication({
-                    job,
-                    letter,
-                    ...(selectedCv && selectedCvReady
-                      ? { cvReference: { cvId: selectedCv.id, label: selectedCv.name } }
-                      : {}),
-                  })
-                }
+              <div
+                className={`letter-application-adopt${hasApplicationDraft ? " letter-application-adopt--existing" : ""}`}
               >
-                {hasApplicationDraft
-                  ? t("letter.applicationDraftExists")
-                  : t("letter.adoptApplication")}
-              </button>
+                {hasApplicationDraft && (
+                  <p className="letter-application-existing" role="status">
+                    <span className="letter-application-check" aria-hidden="true">✓</span>
+                    {t("letter.applicationDraftExists")}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  disabled={!letter.trim() || !job.url}
+                  onClick={() =>
+                    onAdoptAsApplication({
+                      job,
+                      letter,
+                      ...(selectedCv && selectedCvReady
+                        ? { cvReference: { cvId: selectedCv.id, label: selectedCv.name } }
+                        : {}),
+                    })
+                  }
+                >
+                  {hasApplicationDraft
+                    ? t("letter.updateApplicationDraft")
+                    : t("letter.adoptApplication")}
+                </button>
+              </div>
             )}
             <button type="button" className="btn-ghost" onClick={handleCopy}>
               {copied ? t("letter.copied") : t("letter.copy")}

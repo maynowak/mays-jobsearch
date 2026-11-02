@@ -739,8 +739,35 @@ export default function App() {
     letter: string;
     cvReference?: { cvId: string; label?: string };
   }) => {
-    if (sessionApplicationForJob(sessionApplications, payload.job.slug)) return;
+    const existing = sessionApplicationForJob(sessionApplications, payload.job.slug);
     const epoch = sessionEpochRef.current;
+
+    if (existing) {
+      void applicationRepository
+        .update(existing.localId, {
+          expectedVersion: existing.version,
+          changes: {
+            coverLetterDraft: payload.letter,
+            documentStatus: payload.letter.trim() ? "draft" : existing.documents.documentStatus,
+            ...(payload.cvReference ? { cvReference: payload.cvReference } : {}),
+          },
+        })
+        .then((updated) => {
+          if (sessionEpochRef.current !== epoch) return;
+          setSessionApplications((current) =>
+            current.map((application) =>
+              application.localId === updated.localId ? updated : application
+            )
+          );
+          setStatus({ type: "info", message: t("applications.updatedNotice") });
+        })
+        .catch(() => {
+          if (sessionEpochRef.current !== epoch) return;
+          setStatus({ type: "error", message: t("applications.actionError") });
+        });
+      return;
+    }
+
     void applicationRepository
       .create({
         idempotencyKey: `adopt:${payload.job.slug}`,
@@ -757,7 +784,11 @@ export default function App() {
       })
       .then((application) => {
         if (sessionEpochRef.current !== epoch) return;
-        setSessionApplications((current) => [...current, application]);
+        setSessionApplications((current) =>
+          current.some((item) => item.localId === application.localId)
+            ? current.map((item) => (item.localId === application.localId ? application : item))
+            : [...current, application]
+        );
         setStatus({ type: "info", message: t("applications.createdNotice") });
       })
       .catch(() => {

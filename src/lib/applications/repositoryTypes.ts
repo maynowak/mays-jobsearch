@@ -75,6 +75,7 @@ export interface SessionUpdateInput {
     salary?: SessionApplicationV1["salary"];
     coverLetterDraft?: string;
     documentStatus?: SessionApplicationV1["documents"]["documentStatus"];
+    cvReference?: SessionApplicationV1["documents"]["cvReference"];
   };
   signal?: AbortSignal;
 }

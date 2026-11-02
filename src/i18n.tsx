@@ -772,9 +772,11 @@ const en: Dict = {
   "applications.deleteConfirm": "Delete this temporary session draft? This cannot be undone.",
   "applications.deleteYes": "Yes, delete",
   "applications.createdNotice": "Application draft created for this session. It is not stored permanently.",
+  "applications.updatedNotice": "Application draft updated for this session. It is not stored permanently.",
   "applications.actionError": "This change could not be applied.",
   "letter.adoptApplication": "Adopt as application draft",
-  "letter.applicationDraftExists": "An application draft already exists for this job.",
+  "letter.applicationDraftExists": "A cover letter is already saved for this job.",
+  "letter.updateApplicationDraft": "Update cover letter in application draft",
 
   "manualProfiles.title": "My search profiles",
   "manualProfiles.description":
@@ -1632,9 +1634,11 @@ const de: Dict = {
   "applications.deleteConfirm": "Diesen temporären Sitzungsentwurf löschen? Das kann nicht rückgängig gemacht werden.",
   "applications.deleteYes": "Ja, löschen",
   "applications.createdNotice": "Bewerbungsentwurf für diese Sitzung angelegt. Er wird nicht dauerhaft gespeichert.",
+  "applications.updatedNotice": "Bewerbungsentwurf für diese Sitzung aktualisiert. Er wird nicht dauerhaft gespeichert.",
   "applications.actionError": "Diese Änderung konnte nicht angewendet werden.",
   "letter.adoptApplication": "Als Bewerbungsentwurf übernehmen",
-  "letter.applicationDraftExists": "Für diese Stelle existiert bereits ein Bewerbungsentwurf.",
+  "letter.applicationDraftExists": "Für diese Stelle ist bereits ein Anschreiben gespeichert.",
+  "letter.updateApplicationDraft": "Anschreiben im Bewerbungsentwurf aktualisieren",
 
   "manualProfiles.title": "Meine Suchprofile",
   "manualProfiles.description":

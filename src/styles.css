@@ -9092,3 +9092,45 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Existing application draft: visible border + check, while keeping the
+   explicit save/update action available. */
+.letter-application-adopt {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.letter-application-adopt--existing {
+  padding: 10px 12px;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.letter-application-existing {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.letter-application-check {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  background: #0d9488;
+  border-radius: 50%;
+}
