@@ -141,6 +141,25 @@ export function buildCandidatePool(skills, allJobs, source, options = {}) {
       usedThreshold -= 1;
       filtered = filterJobsBySkillThreshold(allJobs, normalizedSkills, usedThreshold);
     }
+    // A multi-word skill such as "Java Developer" is preserved as one token by
+    // the normal parser. Some sources return valid titles with different word
+    // order/separators ("Java-Entwickler", "Cloud-Engineer"). If no exact
+    // phrase match exists, retry with the individual words at threshold 1 so
+    // source results are not silently discarded.
+    if (filtered.length === 0) {
+      const wordSkills = normalizedSkills.flatMap((skill) => splitQuotedPhrases(skill));
+      const originalWords = new Set(normalizedSkills.map((skill) => skill.toLowerCase()));
+      const hasDifferentWords =
+        wordSkills.length > normalizedSkills.length &&
+        wordSkills.some((skill) => !originalWords.has(skill.toLowerCase()));
+      if (hasDifferentWords) {
+        const wordFiltered = filterJobsBySkillThreshold(allJobs, wordSkills, 1);
+        if (wordFiltered.length > 0) {
+          filtered = wordFiltered;
+          usedThreshold = 1;
+        }
+      }
+    }
     return {
       jobs: filtered.slice(0, candidatePoolTarget),
       meta: { threshold: usedThreshold, strategy, skillsUsed: normalizedSkills.length }

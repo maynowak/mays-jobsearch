@@ -155,7 +155,18 @@ export async function fetchActorJobs(actor, { skills, targetRoles, targetRole, c
     if (records.length) await cacheSet(cacheKey, records, APIFY_CACHE_TTL_SEC);
   }
 
-  const keywordTokens = [...roles.flatMap(tokenize), ...tokenize(skills)];
+  // Roles and skill phrases are split into their individual words for the
+  // local actor-result filter. The actor has already received the full role
+  // query; filtering by the exact phrase here would drop valid BA records
+  // whose titles use German or hyphenated wording (e.g. "Java-Entwickler"
+  // for "Java Developer" or "Cloud-Engineer" for "Cloud Engineer").
+  const skillTokens = Array.isArray(skills)
+    ? skills.flatMap((skill) => tokenize(String(skill)))
+    : tokenize(skills);
+  const keywordTokens = [
+    ...roles.flatMap((role) => tokenize(String(role))),
+    ...skillTokens,
+  ];
   const cityQueries = String(city || "")
     .split(",")
     .map((c) => c.trim().toLowerCase())

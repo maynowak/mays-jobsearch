@@ -1,3 +1,13 @@
+2026-11-02 · JM-BA-RESTORE-03
+- Typ: Arbeitsagentur/Apify-Adapter/Search-Strategy/Reparatur
+- Status: CODE-FEHLER REPARIERT UND LOKAL VERIFIZIERT — kein Deployment, keine Live-Runs
+- Ursache 1: `fetchActorJobs` behielt mehrwortige Skills wie `["Java Developer"]` als ein Phrase-Token; BA-Actor-Titel wie `Java-Entwickler`/`Cloud-Engineer` wurden dadurch trotz gelieferter Daten verworfen.
+- Ursache 2: `buildCandidatePool` prüfte dieselbe Phrase exakt; bei genau einem mehrwortigen Skill griff die Threshold-Schleife nicht, sodass der Kandidatenpool leer blieb.
+- Fix: Source-Filter teilt Rollen/Skills für die lokale Trefferprüfung in Wörter; Search-Strategy hat einen begrenzten Einzelwort-Fallback bei leerem exaktem Phrase-Match. Actor-Query, Actor, Cache, Quotas, Guest-Policy, Registry und Frontend unverändert.
+- Tests: Apify/BA-Regression 13 passed; Search-Strategy/Registry/Guest-Policy 90 passed; Gesamtsuite **1134 passed/5 skipped**; TypeScript/Build/`git diff --check` PASS. Mock-Daten für Java Developer/Frankfurt, Softwareentwickler/Darmstadt, Cloud Engineer/Mainz; Gast und angemeldet; nach Fix jeweils BA-Treffer.
+- Production: `APIFY_API_TOKEN` vorhanden, `JOB_SOURCE_ARBEITSAGENTUR_ENABLED` Default true, `APIFY_MONTHLY_MAX_RUNS` Default 100. `limit_reached`/Cache/Upstream nicht verifiziert; `/api/usage` ohne Token nicht lesbar; keine Secrets ausgegeben. Kein Deployment, kein Live-Apify-Run.
+- Log: `docs/reports/JM-BA-RESTORE-03.md`
+
 2026-11-01 · JM-BA-DIRECT-API-READINESS-01
 - Typ: Bundesagentur für Arbeit/Direct-API/Readiness/Legal-Access/Architektur
 - Status: **BLOCKED** für eine automatische App-Source; für den vereinbarten nutzervermittelten BA-Fluss **nicht erforderlich** — keine Codeänderung, kein Deployment, keine Live-Jobabfrage, kein Apify-Run

@@ -104,6 +104,148 @@ describe("Apify Actor (arbeitsagentur)", () => {
     expect(result.jobs[0].source).toContain("arbeitsagentur");
   });
 
+  it("JM-BA-RESTORE-03: keeps BA jobs for English target roles with German titles", async () => {
+    setupApifyFlow({
+      apifyRecords: [
+        {
+          ...baseApifyRecord,
+          referenceId: "aa-java-1",
+          title: "Java-Entwickler (m/w/d)",
+          location: "Frankfurt am Main",
+          description: "Java, Spring Boot, Cloud",
+        },
+        {
+          ...baseApifyRecord,
+          referenceId: "aa-cloud-1",
+          title: "Cloud-Engineer (m/w/d)",
+          location: "Mainz",
+          description: "AWS, Terraform",
+        },
+      ],
+    });
+
+    const java = await fetchAllJobs({
+      paidSourcesAllowed: true,
+      skills: "",
+      targetRole: "Java Developer",
+      city: "Frankfurt",
+    });
+    expect(java.jobs.some((job) => job.slug === "aa-aa-java-1")).toBe(true);
+
+    const cloud = await fetchAllJobs({
+      paidSourcesAllowed: true,
+      skills: "",
+      targetRole: "Cloud Engineer",
+      city: "Mainz",
+    });
+    expect(cloud.jobs.some((job) => job.slug === "aa-aa-cloud-1")).toBe(true);
+  });
+
+  it("JM-BA-RESTORE-03: keeps BA jobs for multi-word skills", async () => {
+    setupApifyFlow({
+      apifyRecords: [
+        {
+          ...baseApifyRecord,
+          referenceId: "aa-skill-java",
+          title: "Java-Entwickler (m/w/d)",
+          location: "Frankfurt am Main",
+          description: "Java, Spring Boot, Cloud",
+        },
+        {
+          ...baseApifyRecord,
+          referenceId: "aa-skill-cloud",
+          title: "Cloud-Engineer (m/w/d)",
+          location: "Mainz",
+          description: "AWS, Terraform",
+        },
+      ],
+    });
+
+    const java = await fetchAllJobs({
+      paidSourcesAllowed: true,
+      skills: ["Java Developer"],
+      targetRole: "",
+      city: "Frankfurt",
+    });
+    expect(java.jobs.some((job) => job.slug === "aa-aa-skill-java")).toBe(true);
+
+    const cloud = await fetchAllJobs({
+      paidSourcesAllowed: true,
+      skills: ["Cloud Engineer"],
+      targetRole: "",
+      city: "Mainz",
+    });
+    expect(cloud.jobs.some((job) => job.slug === "aa-aa-skill-cloud")).toBe(true);
+  });
+
+  it("JM-BA-RESTORE-03: reproduces the three requested BA searches for guests and authenticated callers", async () => {
+    const records = [
+      {
+        ...baseApifyRecord,
+        referenceId: "10001-1002716922-S",
+        title: "Java-Entwickler (m/w/d)",
+        location: "Frankfurt am Main",
+        description: "Java, Spring Boot, Cloud",
+      },
+      {
+        ...baseApifyRecord,
+        referenceId: "10002-1002716923-S",
+        title: "Softwareentwickler (m/w/d)",
+        location: "Darmstadt",
+        description: "Java, TypeScript, Cloud",
+      },
+      {
+        ...baseApifyRecord,
+        referenceId: "10003-1002716924-S",
+        title: "Cloud-Engineer (m/w/d)",
+        location: "Mainz",
+        description: "AWS, Terraform",
+      },
+    ];
+    setupApifyFlow({ apifyRecords: records });
+
+    const cases = [
+      { skills: ["Java Developer"], targetRoles: [], city: "Frankfurt", slug: "aa-10001-1002716922-S" },
+      { skills: ["Softwareentwickler"], targetRoles: [], city: "Darmstadt", slug: "aa-10002-1002716923-S" },
+      { skills: ["Cloud Engineer"], targetRoles: [], city: "Mainz", slug: "aa-10003-1002716924-S" },
+    ];
+
+    for (const paidSourcesAllowed of [false, true]) {
+      for (const search of cases) {
+        const result = await fetchAllJobs({
+          paidSourcesAllowed,
+          skills: search.skills,
+          targetRoles: search.targetRoles,
+          city: search.city,
+        });
+        const job = result.jobs.find((candidate) => candidate.slug === search.slug);
+        expect(job, `${search.city} (paidSourcesAllowed=${paidSourcesAllowed})`).toBeDefined();
+        expect(job?.source).toContain("arbeitsagentur");
+        expect(job?.company_name).toBe("Acme");
+      }
+    }
+  });
+
+  it("JM-BA-RESTORE-03: keeps target-role searches with German/hyphenated BA titles", async () => {
+    setupApifyFlow({
+      apifyRecords: [
+        { ...baseApifyRecord, referenceId: "20001-1-S", title: "Java-Entwickler", location: "Frankfurt am Main" },
+        { ...baseApifyRecord, referenceId: "20002-2-S", title: "Cloud-Engineer", location: "Mainz" },
+      ],
+    });
+
+    for (const targetRole of ["Java Developer", "Cloud Engineer"]) {
+      const result = await fetchAllJobs({
+        paidSourcesAllowed: false,
+        skills: [],
+        targetRoles: [targetRole],
+        city: targetRole === "Java Developer" ? "Frankfurt" : "Mainz",
+      });
+      expect(result.jobs.length).toBeGreaterThan(0);
+      expect(result.jobs.some((job) => job.source?.includes("arbeitsagentur"))).toBe(true);
+    }
+  });
+
   it("D) Arbeitsagentur disabled -> kein Apify Run", async () => {
     setupApifyDisabled();
     const result = await fetchAllJobs({ paidSourcesAllowed: true, skills: "react", targetRole: "frontend", city: "berlin" });
