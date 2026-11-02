@@ -120,6 +120,28 @@ describe('MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences navigation', () => {
     expect(screen.getByRole('button', { name: /Job-Präferenzen/ })).toBeDisabled();
   });
 
+  it('enables applications navigation when the section is supplied', () => {
+    render(
+      <LangProvider>
+        <DashboardV2
+          user={DEMO_USER}
+          isDemo
+          applicationsSection={<section aria-label="Meine Bewerbungen">Inhalt</section>}
+        />
+      </LangProvider>
+    );
+
+    const applicationsButton = screen.getByRole('button', { name: 'Bewerbungen' });
+    expect(applicationsButton).not.toBeDisabled();
+    fireEvent.click(applicationsButton);
+    expect(screen.getByRole('region', { name: 'Meine Bewerbungen' })).toBeTruthy();
+  });
+
+  it('keeps applications navigation disabled without the section', () => {
+    renderDashboard();
+    expect(screen.getByRole('button', { name: /Bewerbungen/ })).toBeDisabled();
+  });
+
   it('no longer lists the implemented preferences as an upcoming feature', () => {
     renderWithPreferences();
     const upcoming = screen.getByRole('heading', { name: 'Zukünftige Funktionen' }).closest('.aurora-card') as HTMLElement;

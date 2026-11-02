@@ -30,6 +30,7 @@ import UiComponentsPreview from "./components/UiComponentsPreview";
 import DashboardV2, { DEMO_USER } from "./components/DashboardV2";
 import DashboardV2AuthenticatedPreview from "./components/DashboardV2AuthenticatedPreview";
 import DashboardV2CvSection from "./components/DashboardV2CvSection";
+import ApplicationsSection from "./components/ApplicationsSection";
 import CvDocumentList from "./components/CvDocumentList";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
@@ -52,6 +53,7 @@ import {
 } from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
+import { createSessionApplication, sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
 import { isDevOnlyRoute } from "./lib/devRoute";
 import { buildCvSearchProfile } from "./lib/cvSearchConfig";
 import { partitionCvFiles, validateCvFile } from "./lib/cvFileValidation";
@@ -167,6 +169,17 @@ export default function App() {
     prepare: string;
     context?: LetterPreparationContext;
   } | null>(null);
+  const [sessionApplications, setSessionApplications] = useState<SessionApplicationV1[]>([]);
+
+  useEffect(() => {
+    if (sessionApplications.length === 0) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [sessionApplications.length]);
   const [pendingLetterContext, setPendingLetterContext] = useState<{
     job: Job;
     prepare: string;
@@ -257,6 +270,7 @@ export default function App() {
       setConsentDismissed(false);
       setLetterJob(null);
       setPendingLetterContext(null);
+      setSessionApplications([]);
       setStatus(null);
     }
     previousAuthProfileKeyRef.current = authProfileKey;
@@ -713,6 +727,38 @@ export default function App() {
     });
     setLetterJob(null);
     handleCvProcess(id);
+  };
+
+  const handleAdoptLetterAsApplication = (payload: {
+    job: Job;
+    letter: string;
+    cvReference?: { cvId: string; label?: string };
+  }) => {
+    if (sessionApplicationForJob(sessionApplications, payload.job.slug)) return;
+    const localId =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? `local-${crypto.randomUUID()}`
+        : `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    try {
+      const application = createSessionApplication({
+        localId,
+        now: new Date().toISOString(),
+        coverLetter: payload.letter,
+        cvReference: payload.cvReference,
+        job: {
+          jobId: payload.job.slug,
+          title: payload.job.title,
+          companyName: payload.job.company_name,
+          location: payload.job.location ?? [],
+          source: payload.job.source ?? [],
+          originalUrl: payload.job.url,
+        },
+      });
+      setSessionApplications((current) => [...current, application]);
+      setStatus({ type: "info", message: t("applications.createdNotice") });
+    } catch {
+      setStatus({ type: "error", message: t("applications.actionError") });
+    }
   };
 
   // CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — Session-Listen
@@ -2862,6 +2908,10 @@ export default function App() {
     />
   );
 
+  const dashboardApplicationsSection = (
+    <ApplicationsSection applications={sessionApplications} onChange={setSessionApplications} />
+  );
+
 // SEARCH-WORLD-09: Das halbrunde Podium (bisher `.search-world__floor`) ist der
   // LETZTE visuelle Abschluss der Future Search World und liegt hinter dem Footer.
   // Es wird deshalb nicht mehr im World-Fluss gefuehrt, sondern zusammen mit dem
@@ -2926,6 +2976,7 @@ export default function App() {
             user={DEMO_USER}
             isDemo
             cvSection={dashboardCvSection}
+            applicationsSection={dashboardApplicationsSection}
             preferencesSection={dashboardPreferencesSection}
           />
         </main>
@@ -2946,6 +2997,7 @@ export default function App() {
         <main className="container legal-main layout-dashboard">
           <DashboardV2AuthenticatedPreview
             cvSection={dashboardCvSection}
+            applicationsSection={dashboardApplicationsSection}
             preferencesSection={dashboardPreferencesSection}
           />
         </main>
@@ -2966,6 +3018,7 @@ export default function App() {
         <main className="container legal-main layout-dashboard">
           <DashboardV2AuthenticatedPreview
             cvSection={dashboardCvSection}
+            applicationsSection={dashboardApplicationsSection}
             preferencesSection={dashboardPreferencesSection}
           />
         </main>
@@ -3116,6 +3169,10 @@ export default function App() {
               initialContext={letterJob.context}
               onAddCv={handleAddCvFromLetter}
               onProcessCv={handleProcessCvFromLetter}
+              onAdoptAsApplication={isAuth ? handleAdoptLetterAsApplication : undefined}
+              hasApplicationDraft={Boolean(
+                sessionApplicationForJob(sessionApplications, letterJob.job.slug)
+              )}
               onClose={() => setLetterJob(null)}
             />
           )}

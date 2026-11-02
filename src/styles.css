@@ -757,6 +757,208 @@ body {
   grid-column: 1 / -1;
 }
 
+.applications-section {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--space-5);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.applications-section__head h2,
+.applications-detail__head h3,
+.applications-block h4 {
+  margin: 0;
+}
+
+.applications-session-note {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.applications-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.applications-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.applications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.applications-list__item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.applications-list__item span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.applications-list__item--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.applications-list__item:focus-visible,
+.applications-detail button:focus-visible,
+.applications-detail a:focus-visible,
+.applications-detail input:focus-visible,
+.applications-detail textarea:focus-visible,
+.applications-detail select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.applications-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.applications-detail__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.applications-detail__head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.applications-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.applications-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.applications-block p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.applications-status-actions,
+.applications-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.applications-confirm {
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.applications-confirm p {
+  flex: 1 1 100%;
+  margin: 0;
+  font-weight: 700;
+}
+
+.applications-cover-letter {
+  max-height: 280px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--bg);
+  padding: 10px;
+  border-radius: var(--radius-xs);
+}
+
+.applications-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.applications-timeline li {
+  overflow-wrap: anywhere;
+}
+
+.applications-timeline p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.applications-empty {
+  padding: 18px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.applications-danger {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 760px) {
+  .applications-layout,
+  .applications-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dashboard-v2__manual-form-grid select {
   min-width: 0;
   max-width: 100%;

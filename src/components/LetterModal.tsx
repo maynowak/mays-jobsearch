@@ -66,6 +66,12 @@ interface Props {
   initialContext?: LetterPreparationContext | null;
   onAddCv?: (file: File, context: LetterPreparationContext) => void;
   onProcessCv?: (id: string, context: LetterPreparationContext) => void;
+  onAdoptAsApplication?: (payload: {
+    job: Job;
+    letter: string;
+    cvReference?: { cvId: string; label?: string };
+  }) => void;
+  hasApplicationDraft?: boolean;
   onClose: () => void;
 }
 
@@ -88,6 +94,8 @@ export default function LetterModal({
   initialContext,
   onAddCv,
   onProcessCv,
+  onAdoptAsApplication,
+  hasApplicationDraft = false,
   onClose,
 }: Props) {
   const { t, lang } = useLang();
@@ -1065,6 +1073,26 @@ export default function LetterModal({
 
         {phase === "done" && (
           <div className="modal-actions">
+            {onAdoptAsApplication && (
+              <button
+                type="button"
+                className="btn-ghost"
+                disabled={hasApplicationDraft || !letter.trim() || !job.url}
+                onClick={() =>
+                  onAdoptAsApplication({
+                    job,
+                    letter,
+                    ...(selectedCv && selectedCvReady
+                      ? { cvReference: { cvId: selectedCv.id, label: selectedCv.name } }
+                      : {}),
+                  })
+                }
+              >
+                {hasApplicationDraft
+                  ? t("letter.applicationDraftExists")
+                  : t("letter.adoptApplication")}
+              </button>
+            )}
             <button type="button" className="btn-ghost" onClick={handleCopy}>
               {copied ? t("letter.copied") : t("letter.copy")}
             </button>

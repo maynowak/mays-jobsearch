@@ -468,6 +468,53 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(screen.getByRole("button", { name: "Anschreiben generieren" })).toBeInTheDocument();
   });
 
+  it("adopts an existing letter as an application draft without another AI call", async () => {
+    const onAdoptAsApplication = vi.fn();
+    renderModal({ onAdoptAsApplication });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }));
+
+    expect(onAdoptAsApplication).toHaveBeenCalledTimes(1);
+    expect(onAdoptAsApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        job: expect.objectContaining({ slug: job.slug }),
+        letter: "Dear hiring team,",
+      })
+    );
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes the selected CV reference into the local application draft", async () => {
+    const cv = makeCv({ processedAt: Date.now(), hash: "a".repeat(64), name: "selected.pdf" });
+    const onAdoptAsApplication = vi.fn();
+    renderModal({ cvDocuments: [cv], onAdoptAsApplication });
+    fireEvent.click(screen.getByLabelText(/selected\.pdf/));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.click(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }));
+
+    expect(onAdoptAsApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cvReference: { cvId: cv.id, label: cv.name },
+      })
+    );
+  });
+
+  it("does not offer a second application draft for the same job", async () => {
+    renderModal({ onAdoptAsApplication: vi.fn(), hasApplicationDraft: true });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    const button = screen.getByRole("button", {
+      name: "Für diese Stelle existiert bereits ein Bewerbungsentwurf.",
+    });
+    expect(button).toBeDisabled();
+  });
+
   it("shows an error state and allows an explicit retry", async () => {
     vi.mocked(withModelFallback).mockRejectedValueOnce(new Error("provider down"));
 

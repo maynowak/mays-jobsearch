@@ -7,10 +7,11 @@ import Button from './ui/Button';
 
 interface Props {
   cvSection?: ReactNode;
+  applicationsSection?: ReactNode;
   preferencesSection?: ReactNode;
 }
 
-const DashboardV2AuthenticatedPreview = ({ cvSection, preferencesSection }: Props) => {
+const DashboardV2AuthenticatedPreview = ({ cvSection, applicationsSection, preferencesSection }: Props) => {
   const auth = useAuth();
   const { t } = useLang();
 
@@ -54,6 +55,7 @@ const DashboardV2AuthenticatedPreview = ({ cvSection, preferencesSection }: Prop
       isDemo={false}
       onLogout={() => void signOut(auth)}
       cvSection={cvSection}
+      applicationsSection={applicationsSection}
       preferencesSection={preferencesSection}
     />
   );

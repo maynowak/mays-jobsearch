@@ -11,6 +11,7 @@
     "test:e2e:guest-cv": "node tests/e2e/guest-cv-workflow.mjs",
     "test:e2e:cover-letter": "node tests/e2e/cover-letter-entry.mjs",
     "test:e2e:mobile-nav": "node tests/e2e/mobile-nav.mjs",
+    "test:e2e:applications": "node tests/e2e/applications-dashboard.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",
