@@ -1,0 +1,25 @@
+{
+  "job": {
+    "jobId": "job-1",
+    "title": "Senior Fullstack Developer (w/m/d)",
+    "companyName": "Siemens AG",
+    "location": [
+      "Frankfurt am Main"
+    ],
+    "source": [
+      "arbeitsagentur"
+    ],
+    "originalUrl": "https://www.arbeitsagentur.de/jobsuche/suche?id=10001-1002716922-S"
+  },
+  "documents": {
+    "coverLetterDraft": "Dear team,",
+    "documentStatus": "draft"
+  },
+  "salary": {
+    "expectation": {
+      "amount": 80000,
+      "currency": "EUR",
+      "period": "year"
+    }
+  }
+}

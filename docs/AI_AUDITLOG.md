@@ -1,3 +1,15 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-01
+- Typ: Bewerbungsverwaltung/Datenmodell/API-Vertrag/RIS-Handoff
+- Status: **SPECIFIED / VERIFIED** (Domainregeln, TypeScript-Contract, JSON Schema + Fixtures) — keine UI, keine Persistenz, keine RIS/AWS/Cognito-Änderung, kein Deployment
+- Datenmodell V1: `ApplicationV1` mit schemaVersion, server-owned `applicationId`/`ownerId`, Stellenreferenz, Dokumenten-/Anschreibenversionen, optionaler CV-Referenz (nur ID, keine Datei/Hash), Bewerbungsinformationen, Gehalt, Status/StatusHistory/History und `version` für optimistic concurrency.
+- Regeln: Bewerbung startet `draft`; `draft -> submitted` nur mit `confirmed:true`; Dokument-/History-Aktionen ändern den Status nicht automatisch; Anschreibenversionen sind an `application.job.jobId` gebunden; CV-Referenzen kopieren keine CV-Dateien.
+- API-Vertrag: künftige `POST/GET/PATCH/DELETE /api/applications...`, Status- und History-Routen, Export, `expectedVersion`/409 `version_conflict`; alle Endpunkte nur spezifiziert, nicht implementiert.
+- Identity/RIS: `ownerId` muss aus dem verifizierten `iss + sub`-Vertrag kommen, nie aus E-Mail oder ungeprüften Browserangaben. Keine RIS-Route/DynamoDB/S3-Annahme; spätere Persistenz und Lösch-/Aufbewahrungssemantik bleiben APP-02.
+- Privacy: keine automatische Konto-/KI-Speicherung, keine Application-Inhalte in Logs, getrennte Browser-/Konto-Grenzen, explizite Export-/Löschverträge, keine CV-Dateikopien.
+- Tests: Domain **12 passed**; Gesamtsuite **1155 passed/5 skipped**; JSON Schema/Fixtures (14 Dateien) mit Python `jsonschema`/FormatChecker: 13 gültige PASS, Unknown-Field korrekt abgelehnt; TypeScript/Build/`git diff --check` PASS. Keine echten BA-/Apify-/Provider-Aufrufe.
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-01.md`
+- Contract: `docs/contracts/JOBMATCHER-APPLICATION-MANAGEMENT-V1.md`
+
 2026-11-02 · JM-BA-DETAIL-FALLBACK-04
 - Typ: BA-Detailnachladen/Fehler-Fallback/Originalanzeige
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, keine echten Apify-Runs

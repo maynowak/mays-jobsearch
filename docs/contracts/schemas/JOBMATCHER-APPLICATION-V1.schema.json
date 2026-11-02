@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.mays-job-matcher.invalid/jobmatcher-application-v1.schema.json",
+  "$comment": "APP-01 PROPOSED application-management contract v1. Select a named $defs entry when validating a resource or input payload.",
+  "$defs": {
+    "ISODateTime": { "type": "string", "format": "date-time" },
+    "OpaqueId": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "Status": {
+      "type": "string",
+      "enum": ["draft", "submitted", "feedback", "interview", "offer", "rejected", "withdrawn"]
+    },
+    "Channel": { "type": "string", "enum": ["online", "email", "portal", "postal", "other"] },
+    "SalaryPeriod": { "type": "string", "enum": ["year", "month", "hour"] },
+    "DocumentStatus": { "type": "string", "enum": ["missing", "draft", "ready"] },
+    "VersionSource": { "type": "string", "enum": ["generated", "revised", "manual"] },
+    "JobReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobId", "title", "companyName", "location", "source", "originalUrl"],
+      "properties": {
+        "jobId": { "$ref": "#/$defs/OpaqueId" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "companyName": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "location": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "source": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 100 }
+        },
+        "originalUrl": { "type": "string", "format": "uri", "pattern": "^https?://" }
+      }
+    },
+    "CVReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cvId"],
+      "properties": {
+        "cvId": { "$ref": "#/$defs/OpaqueId" },
+        "documentId": { "$ref": "#/$defs/OpaqueId" },
+        "label": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "CoverLetterVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["versionId", "jobId", "createdAt", "content", "source"],
+      "properties": {
+        "versionId": { "$ref": "#/$defs/OpaqueId" },
+        "jobId": { "$ref": "#/$defs/OpaqueId" },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "content": { "type": "string", "minLength": 1, "maxLength": 50000 },
+        "source": { "$ref": "#/$defs/VersionSource" },
+        "language": { "type": "string", "enum": ["de", "en"] },
+        "model": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "Documents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coverLetterDraft", "coverLetterVersions", "documentStatus"],
+      "properties": {
+        "coverLetterDraft": { "type": "string", "maxLength": 50000 },
+        "coverLetterVersions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CoverLetterVersion" }
+        },
+        "cvReference": { "$ref": "#/$defs/CVReference" },
+        "documentStatus": { "$ref": "#/$defs/DocumentStatus" }
+      }
+    },
+    "PartialDocuments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coverLetterDraft": { "type": "string", "maxLength": 50000 },
+        "coverLetterVersions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CoverLetterVersion" }
+        },
+        "cvReference": { "$ref": "#/$defs/CVReference" },
+        "documentStatus": { "$ref": "#/$defs/DocumentStatus" }
+      }
+    },
+    "Contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "maxLength": 500 },
+        "email": { "type": "string", "maxLength": 500 },
+        "phone": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "Salary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency", "period"],
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "period": { "$ref": "#/$defs/SalaryPeriod" }
+      }
+    },
+    "SalaryContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expectation": { "$ref": "#/$defs/Salary" },
+        "offer": { "$ref": "#/$defs/Salary" }
+      }
+    },
+    "StatusHistoryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "from", "to"],
+      "properties": {
+        "at": { "$ref": "#/$defs/ISODateTime" },
+        "from": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/Status" }] },
+        "to": { "$ref": "#/$defs/Status" },
+        "note": { "type": "string", "maxLength": 2000 }
+      }
+    },
+    "FeedbackEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "at", "text"],
+      "properties": {
+        "kind": { "const": "feedback" },
+        "id": { "$ref": "#/$defs/OpaqueId" },
+        "at": { "$ref": "#/$defs/ISODateTime" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 5000 }
+      }
+    },
+    "InterviewEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "at", "scheduledAt"],
+      "properties": {
+        "kind": { "const": "interview" },
+        "id": { "$ref": "#/$defs/OpaqueId" },
+        "at": { "$ref": "#/$defs/ISODateTime" },
+        "scheduledAt": { "$ref": "#/$defs/ISODateTime" },
+        "note": { "type": "string", "maxLength": 2000 }
+      }
+    },
+    "NoteEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "at", "text"],
+      "properties": {
+        "kind": { "const": "note" },
+        "id": { "$ref": "#/$defs/OpaqueId" },
+        "at": { "$ref": "#/$defs/ISODateTime" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 5000 }
+      }
+    },
+    "HistoryEntry": {
+      "oneOf": [
+        { "$ref": "#/$defs/FeedbackEntry" },
+        { "$ref": "#/$defs/InterviewEntry" },
+        { "$ref": "#/$defs/NoteEntry" }
+      ]
+    },
+    "ApplicationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "applicationId", "ownerId", "job", "documents",
+        "createdAt", "updatedAt", "status", "statusHistory", "history", "version"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "applicationId": { "$ref": "#/$defs/OpaqueId" },
+        "ownerId": { "$ref": "#/$defs/OpaqueId" },
+        "job": { "$ref": "#/$defs/JobReference" },
+        "documents": { "$ref": "#/$defs/Documents" },
+        "createdAt": { "$ref": "#/$defs/ISODateTime" },
+        "updatedAt": { "$ref": "#/$defs/ISODateTime" },
+        "applicationDate": { "$ref": "#/$defs/ISODateTime" },
+        "applicationChannel": { "$ref": "#/$defs/Channel" },
+        "contact": { "$ref": "#/$defs/Contact" },
+        "notes": { "type": "string", "maxLength": 10000 },
+        "salary": { "$ref": "#/$defs/SalaryContext" },
+        "status": { "$ref": "#/$defs/Status" },
+        "statusHistory": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/StatusHistoryEntry" }
+        },
+        "history": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/HistoryEntry" }
+        },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "CreateApplicationDraftInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job"],
+      "properties": {
+        "job": { "$ref": "#/$defs/JobReference" },
+        "documents": { "$ref": "#/$defs/PartialDocuments" },
+        "applicationDate": { "$ref": "#/$defs/ISODateTime" },
+        "applicationChannel": { "$ref": "#/$defs/Channel" },
+        "contact": { "$ref": "#/$defs/Contact" },
+        "notes": { "type": "string", "maxLength": 10000 },
+        "salary": { "$ref": "#/$defs/SalaryContext" }
+      }
+    },
+    "UpdateApplicationDraftInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expectedVersion"],
+      "properties": {
+        "expectedVersion": { "type": "integer", "minimum": 1 },
+        "documents": { "$ref": "#/$defs/PartialDocuments" },
+        "applicationDate": { "$ref": "#/$defs/ISODateTime" },
+        "applicationChannel": { "$ref": "#/$defs/Channel" },
+        "contact": { "$ref": "#/$defs/Contact" },
+        "notes": { "type": "string", "maxLength": 10000 },
+        "salary": { "$ref": "#/$defs/SalaryContext" }
+      }
+    },
+    "TransitionApplicationStatusInputV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expectedVersion", "to", "at"],
+      "properties": {
+        "expectedVersion": { "type": "integer", "minimum": 1 },
+        "to": { "$ref": "#/$defs/Status" },
+        "at": { "$ref": "#/$defs/ISODateTime" },
+        "note": { "type": "string", "maxLength": 2000 },
+        "confirmed": { "type": "boolean" }
+      }
+    },
+    "ApplicationExportV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "exportedAt", "application"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "exportedAt": { "$ref": "#/$defs/ISODateTime" },
+        "application": { "$ref": "#/$defs/ApplicationV1" }
+      }
+    },
+    "ApplicationDeletionReceiptV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "applicationId", "ownerId", "deletedAt"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "applicationId": { "$ref": "#/$defs/OpaqueId" },
+        "ownerId": { "$ref": "#/$defs/OpaqueId" },
+        "deletedAt": { "$ref": "#/$defs/ISODateTime" }
+      }
+    }
+  }
+}

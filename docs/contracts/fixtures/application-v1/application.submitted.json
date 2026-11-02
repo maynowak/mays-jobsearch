@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "applicationId": "application-1",
+  "ownerId": "owner-verified-1",
+  "job": {
+    "jobId": "job-1",
+    "title": "Senior Fullstack Developer (w/m/d)",
+    "companyName": "Siemens AG",
+    "location": [
+      "Frankfurt am Main"
+    ],
+    "source": [
+      "arbeitsagentur"
+    ],
+    "originalUrl": "https://www.arbeitsagentur.de/jobsuche/suche?id=10001-1002716922-S"
+  },
+  "documents": {
+    "coverLetterDraft": "Dear hiring team,\n\nI am interested in this role.",
+    "coverLetterVersions": [],
+    "documentStatus": "draft"
+  },
+  "createdAt": "2026-11-02T10:00:00.000Z",
+  "updatedAt": "2026-11-02T10:00:00.000Z",
+  "status": "submitted",
+  "statusHistory": [
+    {
+      "at": "2026-11-02T10:00:00.000Z",
+      "from": null,
+      "to": "draft"
+    },
+    {
+      "at": "2026-11-02T11:00:00.000Z",
+      "from": "draft",
+      "to": "submitted",
+      "note": "Explicitly confirmed by user"
+    }
+  ],
+  "history": [],
+  "version": 2,
+  "applicationDate": "2026-11-02T11:00:00.000Z",
+  "applicationChannel": "portal",
+  "contact": {
+    "name": "Recruiting Team",
+    "email": "recruiting@example.invalid"
+  }
+}
