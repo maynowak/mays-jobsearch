@@ -1,6 +1,6 @@
 # JM-BA-DETAIL-FORMAT-01
 
-**Art:** BA-Detailanzeige / „Mehr anzeigen" / Plain-Text-Formatierung
+**Art:** BA-Detailanzeige / „Mehr anzeigen" / Plain-Text- und Markdown-Formatierung
 **Status:** IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment
 **Datum:** 2026-11-02
 **Baseline:** `main` @ `559cd55`, `origin/main` synchron
@@ -28,11 +28,16 @@ Beispielsuche: **AWS Fullstack**.
 
 `src/lib/safeHtml.tsx`:
 
-- Neuer `plainTextToHtml()`-Formatter:
+- Neuer gemeinsamer `plainTextToHtml()`-Formatter:
   - Leerzeilen werden zu Absätzen (`<p>`).
   - Einzelne Zeilen innerhalb eines Absatzes werden zu `<br>`.
-  - `-`, `*`, `•`, `–` und nummerierte Zeilen werden zu Listen (`<ul><li>`).
-  - Text wird HTML-escaped.
+  - `-`, `*`, `•`, `–` und nummerierte Zeilen werden zu Listen (`<ul>`/`<ol>`).
+  - Markdown-ähnliche BA-Texte werden unterstützt:
+    - `**fett**` → `<strong>`,
+    - `[Text](https://…)` → sicherer Link,
+    - `# Überschrift` → Überschrift,
+    - Inline-Bullets wie `Vergütungspaket- Attraktive …- Zugang …` werden zeilenweise getrennt.
+  - Text wird HTML-escaped; Links werden nur für `http`/`https` erzeugt.
 - `prepareHtmlForRender()` erkennt, ob bereits HTML-Markup vorliegt:
   - HTML bleibt unverändert und wird weiterhin durch DOMPurify sanitized.
   - Reiner Text wird vor der Sanitization in semantisches HTML umgewandelt.
@@ -73,14 +78,17 @@ Neu/erweitert:
 - `src/components/RemainingCard.test.tsx`
   - BA-Detail mit reinem Text,
   - „Mehr anzeigen" erzeugt `<p>` und `<li>` statt eines unformatierten Strings.
+  - BA-Markdown mit `**Fett**`, Markdown-Links und Inline-Bullet-Trennern
+    wird als `<strong>`, `<a>` und `<li>` gerendert; `**` erscheint nicht mehr
+    als Rohtext.
 
 Ergebnis:
 
 | Prüfung | Ergebnis |
 |---|---|
-| safeHtml-Tests | **25 passed** |
-| RemainingCard-Tests | **8 passed** |
-| Gesamtsuite | **1138 passed, 5 skipped** |
+| safeHtml-Tests | **26 passed** |
+| RemainingCard-Tests | **9 passed** |
+| Gesamtsuite | **1140 passed, 5 skipped** |
 | TypeScript | PASS |
 | Build | PASS |
 | `git diff --check` | PASS |

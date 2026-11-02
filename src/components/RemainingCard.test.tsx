@@ -170,6 +170,30 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(content).toHaveTextContent("TypeScript und Node.js");
   });
 
+  it("formats BA Markdown detail text including links and bullet lists", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    const enriched = {
+      ...job,
+      description: "**Was wir dir bieten:**\n\nEin attraktives Vergütungspaket- Attraktive Altersvorsorge- Zugang zu Aktienplänen\n\n[hier](https://example.com/benefits) weitere Informationen.",
+      descriptionPlain: "Was wir dir bieten: Ein attraktives Vergütungspaket Attraktive Altersvorsorge Zugang zu Aktienplänen hier weitere Informationen.",
+    };
+    vi.mocked(fetchJobDetails).mockClear();
+    vi.mocked(fetchJobDetails).mockResolvedValue({ jobs: { [job.slug]: enriched } });
+
+    const { container } = renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    await waitFor(() => expect(fetchJobDetails).toHaveBeenCalledTimes(1));
+
+    expect(container.querySelector(".html-content strong")).toHaveTextContent("Was wir dir bieten:");
+    expect(container.querySelector(".html-content a")).toHaveAttribute("href", "https://example.com/benefits");
+    expect(container.querySelectorAll(".html-content li")).toHaveLength(2);
+    expect(screen.queryByText(/\*\*/)).not.toBeInTheDocument();
+  });
+
   it("uses enriched BA detail fields with the same display scope", async () => {
     const job = createTestJob({
       source: ["arbeitsagentur"],

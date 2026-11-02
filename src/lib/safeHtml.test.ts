@@ -145,6 +145,18 @@ describe("safeHtml - renderSanitizedHtml", () => {
     expect(result).toContain("<p>Ihr Profil:<br>TypeScript und Node.js</p>");
   });
 
+  it("formats BA-style Markdown headings, links and inline bullet separators", () => {
+    const input = "**Was wir dir bieten:**\n\nEin attraktives Vergütungspaket- Attraktive Altersvorsorge- Zugang zu Aktienplänen\n\n[hier](https://example.com/benefits) weitere Informationen.\n**So kannst du den Status Quo verändern:**- Entwicklung moderner Anwendungen- Code Reviews";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<strong>Was wir dir bieten:</strong>");
+    expect(result).toContain('<a href="https://example.com/benefits" target="_blank" rel="noopener noreferrer">hier</a>');
+    expect(result).toContain("<li>Attraktive Altersvorsorge</li>");
+    expect(result).toContain("<li>Zugang zu Aktienplänen</li>");
+    expect(result).toContain("<li>Entwicklung moderner Anwendungen</li>");
+    expect(result).toContain("<li>Code Reviews</li>");
+    expect(result).not.toContain("**");
+  });
+
   it("escapes plain text and does not interpret it as markup", () => {
     const result = plainTextToHtml("A < B & C > D");
     expect(result).toContain("A &lt; B &amp; C &gt; D");

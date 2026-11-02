@@ -1,3 +1,12 @@
+2026-11-02 · JM-BA-DETAIL-FORMAT-03
+- Typ: BA-Detailanzeige/Markdown-Antwortparser
+- Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, keine Live-/Apify-Runs
+- Befund: BA-Detailtexte können Markdown-Syntax enthalten (`**Fett**`, `[Text](https://…)`, `# Überschrift`) sowie Inline-Bullet-Trenner ohne Zeilenumbruch (`Vergütungspaket- Attraktive …- Zugang …`). Der bisherige Plain-Text-Fallback zeigte diese Marker als Rohtext.
+- Fix: Der gemeinsame `plainTextToHtml`-Pfad in `src/lib/safeHtml.tsx` verarbeitet jetzt Markdown-ähnliche BA-Texte: Fett, sichere http/https-Links, Überschriften, geordnete/ungeordnete Listen und Inline-Bullet-Trenner. HTML bleibt unverändert; Markdown-Text wird escaped und durch DOMPurify sanitized. Kein neuer UI-Pfad, keine neue Abhängigkeit.
+- Darstellungsumfang: `RemainingCard` nutzt nach BA-Detail-Laden weiterhin `displayJob` und denselben Renderpfad wie normale Treffer; alle angereicherten Felder und die formatierte Beschreibung werden angezeigt.
+- Tests: safeHtml 26, RemainingCard 9, Gesamtsuite **1140 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS. Keine echte BA-/Apify-Abfrage, keine Quoten-/Cache-/Source-Änderung.
+- Log: `docs/reports/JM-BA-DETAIL-FORMAT-01.md`
+
 2026-11-02 · JM-BA-DETAIL-FORMAT-02
 - Typ: BA-Detailanzeige/Nachladen/Darstellungsumfang
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment

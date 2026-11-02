@@ -30,18 +30,41 @@ function escapeHtmlText(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function renderInlineMarkdown(value: string): string {
+  let text = escapeHtmlText(value);
+  text = text.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi,
+    (_match, label: string, url: string) =>
+      `<a href="${escapeHtmlText(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+  );
+  text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  text = text.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+  text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+  return text;
+}
+
 /**
- * Convert plain-text descriptions (for example BA detail text) into safe
- * semantic HTML. Existing HTML descriptions are left untouched by
- * prepareHtmlForRender(), so this only runs for actual plain text.
+ * Convert plain-text or Markdown descriptions (for example BA detail text)
+ * into safe semantic HTML. Existing HTML descriptions are left untouched by
+ * prepareHtmlForRender(), so this only runs for actual text.
  */
 export function plainTextToHtml(value: string): string {
-  const text = String(value ?? "").replace(/\r\n?/g, "\n").trim();
+  let text = String(value ?? "").replace(/\r\n?/g, "\n").trim();
   if (!text) return "";
+
+  // Some BA descriptions contain Markdown bullet markers without line
+  // breaks (e.g. "Vergütungspaket- Attraktive ...- Zugang ..."). Normalize
+  // those separators before block parsing. Hyphenated words without a
+  // following space remain untouched.
+  text = text
+    .replace(/(?<=\S)-\s+(?=[A-ZÄÖÜ0-9])/g, "\n- ")
+    .replace(/(?<=[.:!?])\s*-\s+(?=[A-ZÄÖÜ0-9])/g, "\n- ")
+    .replace(/(?<=\*\*)\s*-\s+(?=[A-ZÄÖÜ0-9])/g, "\n- ");
 
   const blocks: string[] = [];
   let paragraph: string[] = [];
   let list: string[] = [];
+  let listTag: "ul" | "ol" = "ul";
 
   const flushParagraph = () => {
     if (paragraph.length === 0) return;
@@ -50,7 +73,7 @@ export function plainTextToHtml(value: string): string {
   };
   const flushList = () => {
     if (list.length === 0) return;
-    blocks.push(`<ul>${list.map((item) => `<li>${item}</li>`).join("")}</ul>`);
+    blocks.push(`<${listTag}>${list.map((item) => `<li>${item}</li>`).join("")}</${listTag}>`);
     list = [];
   };
 
@@ -61,20 +84,32 @@ export function plainTextToHtml(value: string): string {
       flushList();
       continue;
     }
+    const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      const level = heading[1].length;
+      blocks.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+      continue;
+    }
     const bullet = /^[-*•–]\s+(.*)$/.exec(line);
     if (bullet) {
       flushParagraph();
-      list.push(escapeHtmlText(bullet[1]));
+      if (listTag !== "ul") flushList();
+      listTag = "ul";
+      list.push(renderInlineMarkdown(bullet[1]));
       continue;
     }
     const numbered = /^\d+[.)]\s+(.*)$/.exec(line);
     if (numbered) {
       flushParagraph();
-      list.push(escapeHtmlText(numbered[1]));
+      if (listTag !== "ol") flushList();
+      listTag = "ol";
+      list.push(renderInlineMarkdown(numbered[1]));
       continue;
     }
     flushList();
-    paragraph.push(escapeHtmlText(line));
+    paragraph.push(renderInlineMarkdown(line));
   }
 
   flushParagraph();
