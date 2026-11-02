@@ -7,6 +7,7 @@ import playwright from "playwright";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-02");
+const editEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04A");
 const port = 5203;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
@@ -150,6 +151,25 @@ async function runViewport(browser, name, viewport) {
   await page.locator(".applications-section").scrollIntoViewIfNeeded();
   await mkdir(evidenceDir, { recursive: true });
   await page.screenshot({ path: resolve(evidenceDir, `${name}-overview.png`), fullPage: false });
+
+  // UX-04A: edit and persist all previously read-only application details.
+  await page.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }).click();
+  await page.getByRole("form", { name: "Bewerbungsdaten bearbeiten" }).waitFor();
+  await page.getByLabel("Bewerbungsweg").selectOption("email");
+  await page.getByLabel("Bewerbungsdatum").fill("2026-10-20");
+  await page.getByRole("textbox", { name: "Name", exact: true }).fill("E2E Kontakt");
+  await page.getByRole("textbox", { name: "E-Mail", exact: true }).fill("e2e.kontakt@example.invalid");
+  await page.getByRole("textbox", { name: "Telefon", exact: true }).fill("+49 30 123456");
+  await page.getByRole("textbox", { name: "Persönliche Notizen", exact: true }).fill("E2E edit note");
+  await page.getByRole("spinbutton", { name: "Gehaltsvorstellung Betrag", exact: true }).fill("80000");
+  await page.getByRole("spinbutton", { name: "Angebotenes Gehalt Betrag", exact: true }).fill("75000");
+  await mkdir(editEvidenceDir, { recursive: true });
+  await page.screenshot({ path: resolve(editEvidenceDir, `${name}-edit.png`), fullPage: false });
+  await page.getByRole("button", { name: "Änderungen speichern" }).click();
+  await page.getByText("E2E edit note").waitFor();
+  await page.getByText("E2E Kontakt").waitFor();
+  await page.screenshot({ path: resolve(editEvidenceDir, `${name}-updated.png`), fullPage: false });
+
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();
   await page.getByText("Hast du diese Bewerbung tatsächlich abgeschickt?").waitFor();
   await page.getByRole("button", { name: "Ja, als versendet markieren" }).click();

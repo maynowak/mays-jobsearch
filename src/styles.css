@@ -9134,3 +9134,85 @@ body {
   background: #0d9488;
   border-radius: 50%;
 }
+
+/* UX-04A: inline application-detail editing */
+.applications-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.applications-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.applications-edit__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.applications-edit__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.applications-edit__section h4 {
+  margin: 0 0 2px;
+  font-size: var(--text-sm);
+}
+
+.applications-edit__salary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.applications-edit__salary-group {
+  min-width: 0;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.applications-edit__salary-group legend {
+  padding: 0 4px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.applications-edit__salary-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(70px, 0.6fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.applications-edit__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 700px) {
+  .applications-edit__grid,
+  .applications-edit__salary {
+    grid-template-columns: 1fr;
+  }
+
+  .applications-detail__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

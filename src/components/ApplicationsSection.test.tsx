@@ -5,7 +5,7 @@ import { LangProvider } from "../i18n";
 import ApplicationsSection from "./ApplicationsSection";
 import { createSessionApplication, transitionSessionStatus, type SessionApplicationV1 } from "../lib/applications/sessionApplications";
 import { createSessionApplicationRepository } from "../lib/applications/sessionRepository";
-import type { ApplicationRepository } from "../lib/applications/repositoryTypes";
+import { ApplicationRepositoryError, type ApplicationRepository } from "../lib/applications/repositoryTypes";
 import type { ApplicationJobReferenceV1 } from "../lib/applications/contractTypes";
 
 const NOW = "2026-11-02T10:00:00.000Z";
@@ -38,9 +38,15 @@ function submitted(): SessionApplicationV1 {
   });
 }
 
-function Harness({ initial }: { initial: SessionApplicationV1[] }) {
+function Harness({
+  initial,
+  onChanged,
+}: {
+  initial: SessionApplicationV1[];
+  onChanged?: (applications: SessionApplicationV1[]) => void;
+}) {
   const [repository] = useState(() => createSessionApplicationRepository({ initial }));
-  return <ApplicationsSection repository={repository} />;
+  return <ApplicationsSection repository={repository} onChanged={onChanged} />;
 }
 
 function renderSection(initial: SessionApplicationV1[] = [draft()]) {
@@ -49,6 +55,30 @@ function renderSection(initial: SessionApplicationV1[] = [draft()]) {
       <Harness initial={initial} />
     </LangProvider>
   );
+}
+
+function renderSectionWithChanges(initial: SessionApplicationV1[] = [draft()]) {
+  const onChanged = vi.fn();
+  const view = render(
+    <LangProvider>
+      <Harness initial={initial} onChanged={onChanged} />
+    </LangProvider>
+  );
+  return { view, onChanged };
+}
+
+function detailed(): SessionApplicationV1 {
+  return {
+    ...draft(),
+    applicationChannel: "email",
+    applicationDate: "2026-10-15T00:00:00.000Z",
+    contact: { name: "Anna Beispiel", email: "anna@example.com", phone: "+49 170 1234567" },
+    notes: "Bestehende persönliche Notiz",
+    salary: {
+      expectation: { amount: 70000, currency: "EUR", period: "year" },
+      offer: { amount: 65000, currency: "EUR", period: "year" },
+    },
+  };
 }
 
 beforeEach(() => {
@@ -169,6 +199,173 @@ describe("APP-02 ApplicationsSection", () => {
     // remains available for domain failures.
     expect(screen.getByRole("button", { name: "Rückmeldung speichern" })).toBeDisabled();
     expect(screen.getAllByText("Beworben / Antwort ausstehend").length).toBeGreaterThan(0);
+  });
+
+  it("opens the edit form with all existing application details prefilled", async () => {
+    renderSection([detailed()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+
+    expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Bewerbungsweg")).toHaveValue("email");
+    expect(screen.getByLabelText("Bewerbungsdatum")).toHaveValue("2026-10-15");
+    expect(screen.getByLabelText("Name")).toHaveValue("Anna Beispiel");
+    expect(screen.getByLabelText("E-Mail")).toHaveValue("anna@example.com");
+    expect(screen.getByLabelText("Telefon")).toHaveValue("+49 170 1234567");
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Bestehende persönliche Notiz");
+    expect(screen.getByLabelText("Gehaltsvorstellung Betrag")).toHaveValue(70000);
+    expect(screen.getByLabelText("Angebotenes Gehalt Betrag")).toHaveValue(65000);
+  });
+
+  it("saves changed application details through the repository", async () => {
+    const { onChanged } = renderSectionWithChanges([draft()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+
+    fireEvent.change(screen.getByLabelText("Bewerbungsweg"), { target: { value: "portal" } });
+    fireEvent.change(screen.getByLabelText("Bewerbungsdatum"), { target: { value: "2026-10-20" } });
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Max Kontakt" } });
+    fireEvent.change(screen.getByLabelText("E-Mail"), { target: { value: "max@example.com" } });
+    fireEvent.change(screen.getByLabelText("Telefon"), { target: { value: "+49 30 123456" } });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Neue Notiz" } });
+    fireEvent.change(screen.getByLabelText("Gehaltsvorstellung Betrag"), { target: { value: "80000" } });
+    fireEvent.change(screen.getByLabelText("Angebotenes Gehalt Betrag"), { target: { value: "75000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    const updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.applicationChannel).toBe("portal");
+    expect(updated.applicationDate).toBe("2026-10-20T00:00:00.000Z");
+    expect(updated.contact).toEqual({ name: "Max Kontakt", email: "max@example.com", phone: "+49 30 123456" });
+    expect(updated.notes).toBe("Neue Notiz");
+    expect(updated.salary?.expectation).toEqual({ amount: 80000, currency: "EUR", period: "year" });
+    expect(updated.salary?.offer).toEqual({ amount: 75000, currency: "EUR", period: "year" });
+    expect(updated.status).toBe("draft");
+    expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull();
+  });
+
+  it("clears optional application details without dummy values", async () => {
+    const { onChanged } = renderSectionWithChanges([detailed()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+
+    fireEvent.change(screen.getByLabelText("Bewerbungsweg"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Bewerbungsdatum"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("E-Mail"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Telefon"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Gehaltsvorstellung Betrag"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Angebotenes Gehalt Betrag"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    const updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.applicationChannel).toBeUndefined();
+    expect(updated.applicationDate).toBeUndefined();
+    expect(updated.contact).toBeUndefined();
+    expect(updated.notes).toBeUndefined();
+    expect(updated.salary).toBeUndefined();
+  });
+
+  it("rejects an invalid contact email and keeps the form values", async () => {
+    const { onChanged } = renderSectionWithChanges([draft()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("E-Mail"), { target: { value: "invalid-email" } });
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/gültige E-Mail-Adresse/i);
+    expect(screen.getByLabelText("E-Mail")).toHaveValue("invalid-email");
+    expect(onChanged).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid salary values and keeps the form open", async () => {
+    const { onChanged } = renderSectionWithChanges([draft()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Gehaltsvorstellung Betrag"), { target: { value: "0" } });
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/positiven Gehaltsbetrag/i);
+    expect(screen.getByLabelText("Gehaltsvorstellung Betrag")).toHaveValue(0);
+    expect(onChanged).not.toHaveBeenCalled();
+  });
+
+  it("cancels editing without mutating the application", async () => {
+    const { onChanged } = renderSectionWithChanges([detailed()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Nicht speichern" } });
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+
+    expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull();
+    expect(onChanged).not.toHaveBeenCalled();
+    expect(screen.getByText("Bestehende persönliche Notiz")).toBeInTheDocument();
+  });
+
+  it("keeps the form values on a version conflict", async () => {
+    const base = createSessionApplicationRepository({ initial: [draft()] });
+    const conflicted: ApplicationRepository = {
+      ...base,
+      update: async () => {
+        throw new ApplicationRepositoryError("conflict", "version_conflict");
+      },
+    };
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={conflicted} />
+      </LangProvider>
+    );
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Nicht verlieren" } });
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen speichern" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/zwischenzeitlich geändert/i);
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Nicht verlieren");
+    expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
+  });
+
+  it("prevents a double-click from saving twice", async () => {
+    const { onChanged } = renderSectionWithChanges([draft()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Einmal speichern" } });
+    const save = screen.getByRole("button", { name: "Änderungen speichern" });
+    fireEvent.click(save);
+    fireEvent.click(save);
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(onChanged.mock.calls[0][0][0].notes).toBe("Einmal speichern");
+  });
+
+  it("resets an open edit form when the repository/session changes", async () => {
+    const first = createSessionApplicationRepository({ initial: [detailed()] });
+    const view = render(
+      <LangProvider>
+        <ApplicationsSection repository={first} />
+      </LangProvider>
+    );
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
+
+    const next = createSessionApplicationRepository();
+    view.rerender(
+      <LangProvider>
+        <ApplicationsSection repository={next} />
+      </LangProvider>
+    );
+
+    await waitFor(() => expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull());
+    expect(screen.getByText("Noch keine Bewerbungen")).toBeInTheDocument();
   });
   it("ignores a late operation after the repository/session changes", async () => {
     const base = createSessionApplicationRepository({ initial: [draft()] });

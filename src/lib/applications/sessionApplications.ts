@@ -5,6 +5,7 @@ import type {
   ApplicationHistoryEntryV1,
   ApplicationJobReferenceV1,
   ApplicationSalaryContextV1,
+  ApplicationSalaryV1,
   ApplicationStatus,
   ApplicationStatusHistoryEntryV1,
   CoverLetterVersionV1,
@@ -63,6 +64,22 @@ export interface SessionStatusInput {
   at: ISODateTime;
   note?: string;
   confirmed?: boolean;
+}
+
+export interface SessionSalaryUpdate {
+  expectation?: ApplicationSalaryV1 | null;
+  offer?: ApplicationSalaryV1 | null;
+}
+
+export interface SessionApplicationUpdateChanges {
+  applicationDate?: ISODateTime | null;
+  applicationChannel?: ApplicationChannel | null;
+  contact?: ApplicationContactV1 | null;
+  notes?: string;
+  salary?: SessionSalaryUpdate | null;
+  coverLetterDraft?: string;
+  documentStatus?: ApplicationDocumentsV1["documentStatus"];
+  cvReference?: ApplicationDocumentsV1["cvReference"] | null;
 }
 
 function clone<T>(value: T): T {
@@ -125,43 +142,127 @@ export function createSessionApplication(input: CreateSessionApplicationInput): 
   };
 }
 
+const CHANNELS: readonly ApplicationChannel[] = ["online", "email", "portal", "postal", "other"];
+const SALARY_PERIODS: readonly ApplicationSalaryV1["period"][] = ["year", "month", "hour"];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function assertOptionalContactText(value: string | undefined, field: string): void {
+  if (value === undefined) return;
+  assertText(value, field, 500, true);
+}
+
+function assertContactUpdate(contact: ApplicationContactV1): void {
+  assertOptionalContactText(contact.name, "contact.name");
+  assertOptionalContactText(contact.email, "contact.email");
+  assertOptionalContactText(contact.phone, "contact.phone");
+  if (contact.email?.trim() && !EMAIL_RE.test(contact.email.trim())) {
+    throw new ApplicationValidationError("Invalid contact email address");
+  }
+  if (contact.phone && /[\u0000-\u001f\u007f]/.test(contact.phone)) {
+    throw new ApplicationValidationError("Invalid contact phone number");
+  }
+}
+
+function assertSalaryUpdate(salary: ApplicationSalaryV1, field: string): void {
+  if (
+    typeof salary.amount !== "number" ||
+    !Number.isFinite(salary.amount) ||
+    salary.amount <= 0
+  ) {
+    throw new ApplicationValidationError(`Invalid salary amount: ${field}`);
+  }
+  if (typeof salary.currency !== "string" || !/^[A-Z]{3}$/.test(salary.currency)) {
+    throw new ApplicationValidationError(`Invalid salary currency: ${field}`);
+  }
+  if (!SALARY_PERIODS.includes(salary.period)) {
+    throw new ApplicationValidationError(`Invalid salary period: ${field}`);
+  }
+}
+
+function updateSalary(
+  current: ApplicationSalaryContextV1 | undefined,
+  update: SessionSalaryUpdate | null | undefined
+): ApplicationSalaryContextV1 | undefined {
+  if (update === undefined) return current;
+  if (update === null) return undefined;
+  const expectation =
+    update.expectation === undefined ? current?.expectation : update.expectation ?? undefined;
+  const offer = update.offer === undefined ? current?.offer : update.offer ?? undefined;
+  if (expectation) assertSalaryUpdate(expectation, "salary.expectation");
+  if (offer) assertSalaryUpdate(offer, "salary.offer");
+  if (!expectation && !offer) return undefined;
+  return {
+    ...(expectation ? { expectation: clone(expectation) } : {}),
+    ...(offer ? { offer: clone(offer) } : {}),
+  };
+}
+
 export function updateSessionApplication(
   application: SessionApplicationV1,
   expectedVersion: number,
-  changes: {
-    applicationDate?: ISODateTime;
-    applicationChannel?: ApplicationChannel;
-    contact?: ApplicationContactV1;
-    notes?: string;
-    salary?: ApplicationSalaryContextV1;
-    coverLetterDraft?: string;
-    documentStatus?: ApplicationDocumentsV1["documentStatus"];
-    cvReference?: ApplicationDocumentsV1["cvReference"];
-  },
+  changes: SessionApplicationUpdateChanges,
   now: ISODateTime
 ): SessionApplicationV1 {
   if (changes.notes !== undefined) assertText(changes.notes, "notes", 10000, true);
   if (changes.coverLetterDraft !== undefined) assertText(changes.coverLetterDraft, "coverLetterDraft", 50000, true);
+  if (changes.applicationDate !== undefined && changes.applicationDate !== null) {
+    if (!Number.isFinite(Date.parse(changes.applicationDate))) {
+      throw new ApplicationValidationError("Invalid application date");
+    }
+  }
+  if (
+    changes.applicationChannel !== undefined &&
+    changes.applicationChannel !== null &&
+    !CHANNELS.includes(changes.applicationChannel)
+  ) {
+    throw new ApplicationValidationError("Invalid application channel");
+  }
+  if (changes.contact !== undefined && changes.contact !== null) {
+    assertContactUpdate(changes.contact);
+  }
+
   const base = next(application, expectedVersion, now);
+  const hasCvReference = changes.cvReference !== undefined;
   const documents =
     changes.coverLetterDraft === undefined &&
     changes.documentStatus === undefined &&
-    changes.cvReference === undefined
+    !hasCvReference
       ? base.documents
       : {
           ...base.documents,
           ...(changes.coverLetterDraft === undefined ? {} : { coverLetterDraft: changes.coverLetterDraft }),
           ...(changes.documentStatus === undefined ? {} : { documentStatus: changes.documentStatus }),
-          ...(changes.cvReference === undefined ? {} : { cvReference: clone(changes.cvReference) }),
+          cvReference: changes.cvReference === null ? undefined : changes.cvReference === undefined
+            ? base.documents.cvReference
+            : clone(changes.cvReference),
         };
+
+  const applicationDate =
+    changes.applicationDate === undefined
+      ? base.applicationDate
+      : changes.applicationDate ?? undefined;
+  const applicationChannel =
+    changes.applicationChannel === undefined
+      ? base.applicationChannel
+      : changes.applicationChannel ?? undefined;
+  const contact =
+    changes.contact === undefined ? base.contact : changes.contact === null ? undefined : clone(changes.contact);
+  const notes =
+    changes.notes === undefined
+      ? base.notes
+      : changes.notes.trim()
+        ? changes.notes
+        : undefined;
+  const salary = updateSalary(base.salary, changes.salary);
+
   return {
     ...base,
     documents,
-    ...(changes.applicationDate === undefined ? {} : { applicationDate: changes.applicationDate }),
-    ...(changes.applicationChannel === undefined ? {} : { applicationChannel: changes.applicationChannel }),
-    ...(changes.contact === undefined ? {} : { contact: clone(changes.contact) }),
-    ...(changes.notes === undefined ? {} : { notes: changes.notes }),
-    ...(changes.salary === undefined ? {} : { salary: clone(changes.salary) }),
+    applicationDate,
+    applicationChannel,
+    contact,
+    notes,
+    salary,
   };
 }
 

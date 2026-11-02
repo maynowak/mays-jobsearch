@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
-import type { SessionApplicationV1 } from "../lib/applications/sessionApplications";
+import type {
+  SessionApplicationUpdateChanges,
+  SessionApplicationV1,
+} from "../lib/applications/sessionApplications";
 import type { ApplicationRepository } from "../lib/applications/repositoryTypes";
 import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
 import type { ApplicationSalaryV1, ApplicationStatus } from "../lib/applications/contractTypes";
 import { ApplicationValidationError } from "../lib/applications/applicationValidation";
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
+import ApplicationEditForm from "./ApplicationEditForm";
 
 interface Props {
   repository: ApplicationRepository;
@@ -38,6 +42,14 @@ function formatDate(value: string | undefined, locale: string): string {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return value;
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(date);
+}
+
+function formatApplicationDate(value: string | undefined, locale: string): string {
+  if (!value) return "-";
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return value;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(date);
 }
 
 function formatSalary(
@@ -75,6 +87,8 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState("");
   const mountedRef = useRef(true);
   const repositoryRef = useRef(repository);
   const onChangedRef = useRef(onChanged);
@@ -129,6 +143,13 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
   }, [repository, t]);
 
   useEffect(() => {
+    setEditing(false);
+    setEditError("");
+    setPendingSubmit(false);
+    setDeleteConfirmId(null);
+  }, [selectedId, repository]);
+
+  useEffect(() => {
     if (!selectedId && applications[0]) setSelectedId(applications[0].localId);
     if (selectedId && !applications.some((application) => application.localId === selectedId)) {
       setSelectedId(applications[0]?.localId ?? null);
@@ -150,7 +171,10 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
     notify(applications.map((application) => (application.localId === updated.localId ? updated : application)));
   };
 
-  const run = async (action: (signal: AbortSignal, current: () => boolean) => Promise<void>) => {
+  const run = async (
+    action: (signal: AbortSignal, current: () => boolean) => Promise<void>,
+    onError?: (message: string, err: unknown) => void
+  ) => {
     if (runningRef.current) return;
     runningRef.current = true;
     setBusy(true);
@@ -166,7 +190,9 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
       await action(controller.signal, current);
     } catch (err) {
       if (!current()) return;
-      setError(errorLabel(t, err));
+      const message = errorLabel(t, err);
+      if (onError) onError(message, err);
+      else setError(message);
     } finally {
       operationsRef.current.delete(controller);
       runningRef.current = false;
@@ -264,6 +290,29 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
       replace(updated);
       setNote("");
     });
+  };
+
+  const handleSaveEdits = (changes: SessionApplicationUpdateChanges) => {
+    if (!selected) return;
+    setEditError("");
+    void run(
+      async (signal, current) => {
+        const updated = await repository.update(selected.localId, {
+          expectedVersion: selected.version,
+          changes,
+          signal,
+        });
+        if (!current()) return;
+        replace(updated);
+        setEditing(false);
+      },
+      (message, err) => {
+        setEditError(message);
+        if (err instanceof ApplicationRepositoryError && err.code === "session_ended") {
+          setEditing(false);
+        }
+      }
+    );
   };
 
   const handleExport = (application: SessionApplicationV1) => {
@@ -381,16 +430,32 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                   <h3>{selected.job.title}</h3>
                   <p>{selected.job.companyName} · {selected.job.location.join(", ") || "-"}</p>
                 </div>
-                <button type="button" className="btn-ghost" onClick={() => handleExport(selected)} disabled={busy}>
-                  {t("applications.export")}
-                </button>
+                <div className="applications-detail__actions">
+                  {!editing && (
+                    <button
+                      type="button"
+                      className="letter-btn"
+                      onClick={() => {
+                        setEditError("");
+                        setError("");
+                        setEditing(true);
+                      }}
+                      disabled={busy}
+                    >
+                      {t("applications.edit")}
+                    </button>
+                  )}
+                  <button type="button" className="btn-ghost" onClick={() => handleExport(selected)} disabled={busy}>
+                    {t("applications.export")}
+                  </button>
+                </div>
               </div>
 
               <div className="applications-detail__meta">
                 <span>{t("applications.statusLabel")}: <strong>{statusLabel(t, selected.status)}</strong></span>
                 <span>{t("applications.created")}: {formatDate(selected.createdAt, locale)}</span>
                 <span>{t("applications.updated")}: {formatDate(selected.updatedAt, locale)}</span>
-                <span>{t("applications.applied")}: {formatDate(selected.applicationDate, locale)}</span>
+                <span>{t("applications.applied")}: {formatApplicationDate(selected.applicationDate, locale)}</span>
               </div>
 
               {selected.job.originalUrl && (
@@ -399,24 +464,42 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                 </a>
               )}
 
+              {editing && (
+                <ApplicationEditForm
+                  key={`${selected.localId}-${selected.version}`}
+                  application={selected}
+                  busy={busy}
+                  error={editError}
+                  onSave={handleSaveEdits}
+                  onCancel={() => {
+                    setEditing(false);
+                    setEditError("");
+                  }}
+                />
+              )}
+
               <section className="applications-block">
                 <h4>{t("applications.section.job")}</h4>
                 <p><strong>{t("applications.sources")}:</strong> {selected.job.source.join(", ") || "-"}</p>
                 <p><strong>{t("applications.jobId")}:</strong> {selected.job.jobId}</p>
               </section>
 
-              <section className="applications-block">
-                <h4>{t("applications.section.application")}</h4>
-                <p><strong>{t("applications.channel")}:</strong> {selected.applicationChannel ? t(`applications.channel.${selected.applicationChannel}`) : "-"}</p>
-                <p><strong>{t("applications.contact")}:</strong> {[selected.contact?.name, selected.contact?.email, selected.contact?.phone].filter(Boolean).join(" · ") || "-"}</p>
-                <p><strong>{t("applications.notes")}:</strong> {selected.notes || "-"}</p>
-              </section>
+              {!editing && (
+                <>
+                  <section className="applications-block">
+                    <h4>{t("applications.section.application")}</h4>
+                    <p><strong>{t("applications.channel")}:</strong> {selected.applicationChannel ? t(`applications.channel.${selected.applicationChannel}`) : "-"}</p>
+                    <p><strong>{t("applications.contact")}:</strong> {[selected.contact?.name, selected.contact?.email, selected.contact?.phone].filter(Boolean).join(" · ") || "-"}</p>
+                    <p><strong>{t("applications.notes")}:</strong> {selected.notes || "-"}</p>
+                  </section>
 
-              <section className="applications-block">
-                <h4>{t("applications.section.salary")}</h4>
-                <p><strong>{t("applications.expectation")}:</strong> {formatSalary(selected.salary?.expectation, t)}</p>
-                <p><strong>{t("applications.offer")}:</strong> {formatSalary(selected.salary?.offer, t)}</p>
-              </section>
+                  <section className="applications-block">
+                    <h4>{t("applications.section.salary")}</h4>
+                    <p><strong>{t("applications.expectation")}:</strong> {formatSalary(selected.salary?.expectation, t)}</p>
+                    <p><strong>{t("applications.offer")}:</strong> {formatSalary(selected.salary?.offer, t)}</p>
+                  </section>
+                </>
+              )}
 
               <section className="applications-block">
                 <h4>{t("applications.section.documents")}</h4>

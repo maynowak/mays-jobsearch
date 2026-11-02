@@ -15,6 +15,7 @@ import type {
 } from "./contractTypes";
 import type {
   SessionApplicationExportV1,
+  SessionApplicationUpdateChanges,
   SessionApplicationV1,
   SessionStatusInput,
 } from "./sessionApplications";
@@ -67,16 +68,7 @@ export interface SessionCreateInput {
 
 export interface SessionUpdateInput {
   expectedVersion: number;
-  changes: {
-    applicationDate?: ISODateTime;
-    applicationChannel?: SessionApplicationV1["applicationChannel"];
-    contact?: SessionApplicationV1["contact"];
-    notes?: string;
-    salary?: SessionApplicationV1["salary"];
-    coverLetterDraft?: string;
-    documentStatus?: SessionApplicationV1["documents"]["documentStatus"];
-    cvReference?: SessionApplicationV1["documents"]["cvReference"];
-  };
+  changes: SessionApplicationUpdateChanges;
   signal?: AbortSignal;
 }
 

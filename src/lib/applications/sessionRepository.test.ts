@@ -86,6 +86,57 @@ describe("APP-03 session application repository", () => {
     expect((await repo.list()).items).toHaveLength(1);
   });
 
+
+  it("validates editable contact, date and salary fields", async () => {
+    const { repo, application } = await created();
+    await expect(
+      repo.update(application.localId, {
+        expectedVersion: 1,
+        changes: { contact: { email: "invalid" } },
+      })
+    ).rejects.toMatchObject({ code: "validation_error" });
+    await expect(
+      repo.update(application.localId, {
+        expectedVersion: 1,
+        changes: { applicationDate: "not-a-date" },
+      })
+    ).rejects.toMatchObject({ code: "validation_error" });
+    await expect(
+      repo.update(application.localId, {
+        expectedVersion: 1,
+        changes: { salary: { expectation: { amount: 0, currency: "EUR", period: "year" } } },
+      })
+    ).rejects.toMatchObject({ code: "validation_error" });
+  });
+
+  it("clears optional application values with explicit null/empty updates", async () => {
+    const { repo, application } = await created();
+    const withValues = await repo.update(application.localId, {
+      expectedVersion: 1,
+      changes: {
+        applicationChannel: "email",
+        applicationDate: "2026-10-15T00:00:00.000Z",
+        contact: { name: "Kontakt", email: "kontakt@example.com" },
+        notes: "Notiz",
+        salary: { expectation: { amount: 70000, currency: "EUR", period: "year" } },
+      },
+    });
+    const cleared = await repo.update(withValues.localId, {
+      expectedVersion: withValues.version,
+      changes: {
+        applicationChannel: null,
+        applicationDate: null,
+        contact: null,
+        notes: "",
+        salary: null,
+      },
+    });
+    expect(cleared.applicationChannel).toBeUndefined();
+    expect(cleared.applicationDate).toBeUndefined();
+    expect(cleared.contact).toBeUndefined();
+    expect(cleared.notes).toBeUndefined();
+    expect(cleared.salary).toBeUndefined();
+  });
   it("requires explicit status confirmation and supports history", async () => {
     const { repo, application } = await created();
     await expect(
