@@ -1,3 +1,14 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04D
+- Typ: Bewerbungsverwaltung/Wiedervorlagen/Nachfassplanung
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Datenmodell: optionales `ApplicationFollowUpV1` (`dueOn` als Kalenderdatum YYYY-MM-DD, optionale Notiz max. 2000, `open`/`completed`, `completedAt` bei completed) in `ApplicationV1`, `SessionApplicationV1`, Update-Input, JSON Schema, Fixtures, APP-01-Vertrag und RIS-Handoff. Status der Bewerbung bleibt unabhängig.
+- Semantik: `dueOn` ist kein UTC-Zeitpunkt; heute/überfällig wird über lokale Kalenderdaten berechnet. Offene überfällige Wiedervorlagen werden textlich markiert; completed ist nie überfällig. Entfernen über `followUp: null`; keine Dummy-Objekte.
+- Repository/UI: ausschließlich bestehendes `applicationRepository.update()` mit expectedVersion, AbortSignal, Session-Invalidierung, Stale-/Doppelaktionsschutz. Kommunikation erhält Wiedervorlage & Nachfassen (speichern/bearbeiten, erledigen, erneut öffnen, entfernen); Übersicht und Liste zeigen kompakte Fälligkeit. Keine automatische Status-/History-Änderung.
+- Vertrag/Export: JSON Schema + Fixtures aktualisiert; lokaler Export enthält followUp. Python-jsonschema-Prüfung: gültige Follow-up-Fälle PASS, completed ohne completedAt abgelehnt. Keine RIS-Route/Implementierung.
+- Tests: ApplicationsSection **27 passed**, Session-Repository **16 passed**, Application-Domain **13 passed**, Gesamtsuite **1213 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 PASS, Navigation-BBox PASS, keine Console-Errors. Keine echten KI-/RIS-/Apify-Aufrufe.
+- Git: Implementierungskommit `1d1eccd`, Branch `feature/jm-application-management-ux-04d`; Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-04D.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04C
 - Typ: Bewerbungsverwaltung/Tab-Navigation/Barrierefreiheit
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
