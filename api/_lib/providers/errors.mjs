@@ -76,3 +76,11 @@ export function isProviderExhausted(err) {
 export function isModelLevelError(err) {
   return err instanceof HttpError && !PROVIDER_EXHAUSTED_CODES.has(err.code);
 }
+
+/** Model-response failures that can safely be retried by another provider. */
+export function isRetryableModelError(err) {
+  return (
+    err instanceof HttpError &&
+    (err.code === ERROR_CODES.modelUnavailable || err.code === ERROR_CODES.badAiResponse)
+  );
+}

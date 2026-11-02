@@ -72,6 +72,7 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.letter).toContain("Sehr geehrte");
     expect(vi.mocked(chat)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(chat).mock.calls[0][0].fallbackOnModelError).toBe(true);
     const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
     expect(prompt).toContain("Du entwickelst React-Anwendungen");
     expect(prompt).toContain("Synthetic CV with React");

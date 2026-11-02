@@ -1,6 +1,6 @@
 import { getConfig } from "../config.mjs";
 import { getOpenRouterModel, getEdenaiModel } from "../model.mjs";
-import { aiError, ERROR_CODES, isProviderExhausted } from "./errors.mjs";
+import { aiError, ERROR_CODES, isProviderExhausted, isRetryableModelError } from "./errors.mjs";
 import * as openrouter from "./openrouter.mjs";
 import * as edenai from "./edenai.mjs";
 
@@ -45,6 +45,7 @@ export async function chat({
   maxTokens = 1500,
   model,
   attempt = 0,
+  fallbackOnModelError = false,
 }) {
   const providers = enabledProviders();
   if (providers.length === 0) {
@@ -87,7 +88,8 @@ export async function chat({
       return await provider.chat({ system, prompt, json, temperature, maxTokens, model: resolvedModel, attempt });
     } catch (err) {
       await provider.countFailure();
-      if (!isProviderExhausted(err)) throw err;
+      const retryableModelError = fallbackOnModelError && isRetryableModelError(err);
+      if (!isProviderExhausted(err) && !retryableModelError) throw err;
       lastError = err;
     }
   }

@@ -123,6 +123,25 @@ describe("router chat(): provider fallback", () => {
     expect(edenai.chat).not.toHaveBeenCalled();
   });
 
+  it("versucht bei fallbackOnModelError den nächsten Provider und nutzt dessen Ergebnis", async () => {
+    vi.mocked(openrouter.ownsModel).mockImplementation(async (id) => id === "openrouter/free-a");
+    vi.mocked(openrouter.chat).mockRejectedValue(
+      new HttpError(502, "unavailable", "model_unavailable")
+    );
+    vi.mocked(edenai.chat).mockResolvedValue("ok-from-edenai");
+
+    const result = await chat({
+      system: "s",
+      prompt: "p",
+      model: "openrouter/free-a",
+      fallbackOnModelError: true,
+    });
+
+    expect(result).toBe("ok-from-edenai");
+    expect(openrouter.chat).toHaveBeenCalledTimes(1);
+    expect(edenai.chat).toHaveBeenCalledTimes(1);
+  });
+
   it("bricht beim limit_reached des Providers ab und wirft limit_reached", async () => {
     vi.mocked(openrouter.limitReached).mockResolvedValue(true);
     vi.mocked(edenai.limitReached).mockResolvedValue(true);
