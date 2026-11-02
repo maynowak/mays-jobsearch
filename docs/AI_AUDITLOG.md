@@ -1,3 +1,13 @@
+2026-11-02 · JM-APPLICATION-DRAFT-REUSE-01
+- Typ: Bewerbungsverwaltung/vorhandener Entwurf/erneutes Speichern
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Befund: Bei vorhandenem Bewerbungsentwurf war „Als Bewerbungsentwurf übernehmen“ deaktiviert und zeigte nur den Existenzhinweis. Ein überarbeitetes Anschreiben konnte für dieselbe Stelle nicht erneut gespeichert werden.
+- Fix: `LetterModal` zeigt bei vorhandenem Entwurf eine umrandete Statusbox mit grünem Haken („Für diese Stelle ist bereits ein Anschreiben gespeichert.“) und einen aktiven Button „Anschreiben im Bewerbungsentwurf aktualisieren“. `App` aktualisiert den bestehenden Entwurf über `applicationRepository.update()` statt einen zweiten anzulegen; Status/Verlauf/Version bleiben erhalten. Optional wird die CV-Referenz aktualisiert. Kein neuer KI-Aufruf.
+- Tests: LetterModal **46 passed**, Session-Repository **12 passed**, Gesamtsuite **1190 passed/5 skipped** (vollständiger Lauf mit `--maxWorkers=2`; bekannte ManualSearchProfiles-Timeouts bestanden einzeln), TypeScript/Build/`git diff --check` PASS; Applications- und Cover-Letter-E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors. Keine echten KI-/Apify-/Provider-Aufrufe.
+- Datenschutz: Keine neue Persistenz, keine CV-Dateikopie, keine Änderung an Submit-/Statusregeln, kein automatisches Versenden.
+- Status: **NOT DEPLOYED**
+- Log: `docs/reports/JM-APPLICATION-DRAFT-REUSE-01.md`
+
 2026-11-02 · JM-GIT-BRANCH-CONSOLIDATION-01
 - Typ: Git-Branch-Konsolidierung/lokale Integration/Regression
 - Status: **LOKAL INTEGRIERT UND VERIFIZIERT** — kein Push, kein Remote-Merge, kein Deployment
