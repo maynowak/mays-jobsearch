@@ -263,7 +263,7 @@ Abgedeckt:
 | APP-03C | `89e877c` | UI-Integration und Auth-/Session-Schutz |
 | APP-03A/B/C-Konsolidierung | `24bf818` | Remote-/Migrationsgrenzen, Generation-/Invalidate-Schutz, Fehlertexte |
 | APP-03D | `c12d7a4`, `ec7abfa`, `6a20b08` | RIS-Handoff, Formatierung und Konsolidierung |
-| APP-03E | dieser Commit | Security-/Regression-Gate und Dokumentation |
+| APP-03E | `e76f976` | Security-/Regression-Gate und Dokumentation |
 
 ## 12. Statusabgrenzung
 
