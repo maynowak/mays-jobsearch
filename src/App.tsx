@@ -1016,11 +1016,20 @@ export default function App() {
       const hash = await sha256Hex(normalized);
       if (!isCurrentOperation()) return;
 
+      // Das Anschreiben braucht spaeter denselben anonymisierten CV-Text.
+      // Fuer bereits verarbeitete CVs darf die PDF-Datei nicht erneut gelesen
+      // werden muessen; nur dieser anonymisierte Sitzungstext wird gehalten.
+      const letterText = normalizeText(
+        selectedAnonymizationMode === "anonymized" ? processedText : anonymizeText(text)
+      );
+
       // CV-PROFILE-LISTS-01: Hash am Dokument merken — Schluessel fuer die
       // benannten Profil-Listen (Suchprofile/ATS-Profile) dieses CVs.
       setCvState((prev) => ({
         ...prev,
-        documents: prev.documents.map((d) => (d.id === doc.id ? { ...d, hash } : d)),
+        documents: prev.documents.map((d) =>
+          d.id === doc.id ? { ...d, hash, letterText } : d
+        ),
       }));
 
       // Determine model to use
