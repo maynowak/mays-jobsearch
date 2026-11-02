@@ -1,3 +1,11 @@
+2026-11-02 · JM-BA-DETAIL-FORMAT-02
+- Typ: BA-Detailanzeige/Nachladen/Darstellungsumfang
+- Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment
+- Befund: Nach „Mehr anzeigen“ wurde bei BA zwar die Beschreibung formatiert, aber die Karte nutzte weiterhin überwiegend die Listenfelder. Der nachgeladene Detail-Datensatz enthält zusätzliche/aktualisierte Felder und soll denselben Darstellungsumfang wie normale Suchergebnisse haben.
+- Fix: `RemainingCard` bildet nach erfolgreichem Detail-Laden `displayJob` aus dem angereicherten BA-Datensatz und verwendet dafür denselben Description-/Feld-Renderpfad wie normale Treffer (Titel, Arbeitgeber, Ort, Remote, Tags, Vertrag, Gehalt, Datum, Sprache, URL, Aktionen). Vollansicht startet nach dem Laden; „Weniger anzeigen“ nutzt die vorhandene Preview ohne neuen Detail-Request. Plain-Text-Formatter bleibt gemeinsamer Fallback in `safeHtml`; keine neue UI-Komponente.
+- Tests: RemainingCard 8, safeHtml 25, Gesamtsuite **1138 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS. Keine echte BA-/Apify-Abfrage, keine Quoten-/Cache-/Source-Änderung.
+- Log: `docs/reports/JM-BA-DETAIL-FORMAT-01.md` (Nachtrag)
+
 2026-11-02 · JM-BA-DETAIL-FORMAT-01
 - Typ: BA-Detailanzeige/„Mehr anzeigen"/Plain-Text-Formatierung
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, keine Live-/Apify-Runs

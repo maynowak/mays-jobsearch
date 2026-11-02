@@ -170,6 +170,32 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(content).toHaveTextContent("TypeScript und Node.js");
   });
 
+  it("uses enriched BA detail fields with the same display scope", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+      salary: "",
+      contractType: "",
+    });
+    const enriched = {
+      ...job,
+      description: "<p>Vollständige Beschreibung</p>",
+      descriptionPlain: "Vollständige Beschreibung",
+      salary: "70.000 EUR",
+      contractType: "UNBEFRISTET",
+    };
+    vi.mocked(fetchJobDetails).mockClear();
+    vi.mocked(fetchJobDetails).mockResolvedValue({ jobs: { [job.slug]: enriched } });
+
+    renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    await waitFor(() => expect(fetchJobDetails).toHaveBeenCalledTimes(1));
+
+    expect(screen.getByText("70.000 EUR")).toBeInTheDocument();
+    expect(screen.getByText("Unbefristet")).toBeInTheDocument();
+  });
+
   it("offers original posting, ATS and letter actions in one action bar", () => {
     const job = createTestJob();
     const onAtsEvaluate = vi.fn();

@@ -38,8 +38,30 @@ Beispielsuche: **AWS Fullstack**.
   - Reiner Text wird vor der Sanitization in semantisches HTML umgewandelt.
 - Bestehende HTML-Darstellung, Link-/Tag-Whitelist und DOMPurify-Nutzung bleiben erhalten.
 
-`src/components/RemainingCard.tsx` musste nicht geändert werden; der bestehende
-`renderSanitizedHtml`-Pfad nutzt jetzt automatisch den Plain-Text-Formatter.
+`src/components/RemainingCard.tsx` nutzt jetzt nach dem Detail-Laden dieselbe
+Darstellung wie normale Suchergebnisse: Die angereicherten BA-Felder werden als
+`displayJob` verwendet, und die vorhandene Description-Renderlogik wird für BA
+und Nicht-BA gemeinsam genutzt. Der Plain-Text-Formatter bleibt nur der
+gemeinsame Fallback im bestehenden `renderSanitizedHtml`-Pfad.
+
+## 2a. Nachtrag — gleicher Darstellungsumfang wie normale Suchergebnisse
+
+Beim Klick auf „Mehr anzeigen“ wird nach erfolgreichem Detail-Laden nun ein
+`displayJob` aus dem angereicherten BA-Datensatz gebildet. Dadurch werden
+dieselben Kartenfelder wie bei normalen Suchergebnissen verwendet:
+
+- Titel, Arbeitgeber, Ort, Remote-Status
+- Tags
+- Vertragstyp, Gehalt, Datum
+- Beschreibung und Sprach-/Übersetzungsmetadaten
+- URL und Aktionen
+
+Die Beschreibung wird über den bestehenden `RemainingCard`-Renderpfad
+(`renderSanitizedHtml` / `.html-content`) dargestellt. Nach dem Laden startet
+die BA-Karte direkt im vollständigen Zustand; „Weniger anzeigen“ wechselt auf
+die vorhandene Preview, ohne einen weiteren Detail-Request auszulösen.
+Fehler-/Ladezustand und der ursprüngliche stabile Job bleiben als Fallback
+erhalten.
 
 ## 3. Tests
 
@@ -57,8 +79,8 @@ Ergebnis:
 | Prüfung | Ergebnis |
 |---|---|
 | safeHtml-Tests | **25 passed** |
-| RemainingCard-Tests | **7 passed** |
-| Gesamtsuite | **1137 passed, 5 skipped** |
+| RemainingCard-Tests | **8 passed** |
+| Gesamtsuite | **1138 passed, 5 skipped** |
 | TypeScript | PASS |
 | Build | PASS |
 | `git diff --check` | PASS |
