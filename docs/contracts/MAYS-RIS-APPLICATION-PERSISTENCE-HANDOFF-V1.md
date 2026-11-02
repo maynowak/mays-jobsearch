@@ -1,8 +1,8 @@
 # MAYS-RIS Application Persistence Handoff v1
 
-**Status:** SPECIFIED / PROPOSED — no RIS implementation, no verified RIS route, no deployment  
-**Owner of UI/contract/domain:** Mays-Jobsearch  
-**Owner of backend API, persistence, identity, authorization and lifecycle:** RIS  
+**Status:** SPECIFIED / PROPOSED — no RIS implementation, no verified RIS route, no deployment
+**Owner of UI/contract/domain:** Mays-Jobsearch
+**Owner of backend API, persistence, identity, authorization and lifecycle:** RIS
 **Date:** 2026-11-02
 
 This document is a requirements and integration contract for a future RIS
