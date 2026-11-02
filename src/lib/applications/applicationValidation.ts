@@ -4,6 +4,7 @@ import type {
   ApplicationHistoryEntryV1,
   ApplicationJobReferenceV1,
   ApplicationSalaryV1,
+  ApplicationFollowUpV1,
   ApplicationStatus,
   ApplicationStatusHistoryEntryV1,
   ApplicationV1,
@@ -246,6 +247,34 @@ function validateHistoryEntry(value: unknown, index: number): ApplicationHistory
   return { kind, id, at, text: readString(value.text, `history[${index}].text`, { maxLength: 5000 }) };
 }
 
+export function validateFollowUp(value: unknown): ApplicationFollowUpV1 {
+  if (!isRecord(value)) throw new ApplicationValidationError("followUp must be an object");
+  assertKeys(value, ["dueOn", "note", "status", "completedAt"], "followUp.");
+  const dueOn = readString(value.dueOn, "followUp.dueOn", { maxLength: 10 });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueOn)) {
+    throw new ApplicationValidationError("Invalid follow-up calendar date");
+  }
+  const parsed = new Date(`${dueOn}T00:00:00.000Z`);
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== dueOn) {
+    throw new ApplicationValidationError("Invalid follow-up calendar date");
+  }
+  const status = readEnum(value.status, ["open", "completed"] as const, "followUp.status");
+  const note = value.note === undefined ? undefined : readOptionalString(value.note, "followUp.note", 2000);
+  const completedAt = value.completedAt === undefined ? undefined : readDateTime(value.completedAt, "followUp.completedAt");
+  if (status === "completed" && !completedAt) {
+    throw new ApplicationValidationError("Completed follow-up requires completedAt");
+  }
+  if (status === "open" && completedAt) {
+    throw new ApplicationValidationError("Open follow-up must not have completedAt");
+  }
+  return {
+    dueOn,
+    status,
+    ...(note === undefined ? {} : { note }),
+    ...(completedAt === undefined ? {} : { completedAt }),
+  };
+}
+
 export function validateApplicationV1(value: unknown): asserts value is ApplicationV1 {
   if (!isRecord(value)) throw new ApplicationValidationError("Application must be an object");
   assertKeys(
@@ -263,6 +292,7 @@ export function validateApplicationV1(value: unknown): asserts value is Applicat
       "contact",
       "notes",
       "salary",
+      "followUp",
       "status",
       "statusHistory",
       "history",
@@ -292,6 +322,7 @@ export function validateApplicationV1(value: unknown): asserts value is Applicat
   if (value.applicationChannel !== undefined) readEnum(value.applicationChannel, CHANNELS, "applicationChannel");
   validateContact(value.contact);
   validateSalaryContext(value.salary);
+  if (value.followUp !== undefined) validateFollowUp(value.followUp);
   if (value.notes !== undefined) readOptionalString(value.notes, "notes", 10000);
   readString(value.applicationId, "applicationId", { maxLength: 500 });
   readString(value.ownerId, "ownerId", { maxLength: 500 });
@@ -342,7 +373,7 @@ export function validateCreateApplicationDraftInput(value: unknown): asserts val
 
 export function validateUpdateApplicationDraftInput(value: unknown): asserts value is UpdateApplicationDraftInputV1 {
   if (!isRecord(value)) throw new ApplicationValidationError("Update input must be an object");
-  assertKeys(value, ["expectedVersion", "documents", "applicationDate", "applicationChannel", "contact", "notes", "salary"], "");
+  assertKeys(value, ["expectedVersion", "documents", "applicationDate", "applicationChannel", "contact", "notes", "salary", "followUp"], "");
   readVersion(value.expectedVersion, "expectedVersion");
   if (value.documents !== undefined && !isRecord(value.documents)) {
     throw new ApplicationValidationError("documents must be an object");
@@ -351,6 +382,7 @@ export function validateUpdateApplicationDraftInput(value: unknown): asserts val
   if (value.applicationChannel !== undefined) readEnum(value.applicationChannel, CHANNELS, "applicationChannel");
   validateContact(value.contact);
   validateSalaryContext(value.salary);
+  if (value.followUp !== undefined) validateFollowUp(value.followUp);
   if (value.notes !== undefined) readOptionalString(value.notes, "notes", 10000);
 }
 

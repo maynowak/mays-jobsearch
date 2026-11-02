@@ -10,6 +10,7 @@ const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGE
 const editEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04A");
 const ux04bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04B");
 const ux04cEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04C");
+const ux04dEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04D");
 const port = 5203;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
@@ -260,6 +261,24 @@ async function runViewport(browser, name, viewport) {
   await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(editEvidenceDir, `${name}-updated.png`), fullPage: false });
   await page.screenshot({ path: resolve(ux04bEvidenceDir, `${name}-details.png`), fullPage: false });
+  await assertNoNavOverlap(page);
+
+  // UX-04D: create a synthetic follow-up and verify the summary/list badge.
+  await mkdir(ux04dEvidenceDir, { recursive: true });
+  await page.getByRole("tab", { name: "Kommunikation" }).click();
+  await page.getByLabel("Wiedervorlagedatum").fill("2026-11-30");
+  await page.getByLabel("Grund / geplante Aktion").fill("E2E Nachfassen");
+  await page.getByRole("button", { name: "Wiedervorlage speichern" }).click();
+  await page.getByText("Wiedervorlage 30.11.2026").first().waitFor();
+  await page.getByRole("tabpanel", { name: "Kommunikation" }).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: resolve(ux04dEvidenceDir, `${name}-communication.png`), fullPage: false });
+  await page.getByRole("tab", { name: "Übersicht" }).click();
+  await page.getByText("Nächste Wiedervorlage:").waitFor();
+  await page.getByText("Wiedervorlage 30.11.2026").first().waitFor();
+  await page.locator(".applications-detail").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: resolve(ux04dEvidenceDir, `${name}-overview.png`), fullPage: false });
   await assertNoNavOverlap(page);
 
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();

@@ -2,6 +2,7 @@ import type {
   ApplicationChannel,
   ApplicationContactV1,
   ApplicationDocumentsV1,
+  ApplicationFollowUpV1,
   ApplicationHistoryEntryV1,
   ApplicationJobReferenceV1,
   ApplicationSalaryContextV1,
@@ -16,6 +17,7 @@ import { canTransitionApplicationStatus } from "./applicationDomain";
 import {
   ApplicationValidationError,
   validateCreateApplicationDraftInput,
+  validateFollowUp,
 } from "./applicationValidation";
 
 /**
@@ -35,6 +37,7 @@ export interface SessionApplicationV1 {
   contact?: ApplicationContactV1;
   notes?: string;
   salary?: ApplicationSalaryContextV1;
+  followUp?: ApplicationFollowUpV1;
   status: ApplicationStatus;
   statusHistory: ApplicationStatusHistoryEntryV1[];
   history: ApplicationHistoryEntryV1[];
@@ -77,6 +80,7 @@ export interface SessionApplicationUpdateChanges {
   contact?: ApplicationContactV1 | null;
   notes?: string;
   salary?: SessionSalaryUpdate | null;
+  followUp?: ApplicationFollowUpV1 | null;
   coverLetterDraft?: string;
   documentStatus?: ApplicationDocumentsV1["documentStatus"];
   cvReference?: ApplicationDocumentsV1["cvReference"] | null;
@@ -220,6 +224,9 @@ export function updateSessionApplication(
   if (changes.contact !== undefined && changes.contact !== null) {
     assertContactUpdate(changes.contact);
   }
+  if (changes.followUp !== undefined && changes.followUp !== null) {
+    validateFollowUp(changes.followUp);
+  }
 
   const base = next(application, expectedVersion, now);
   const hasCvReference = changes.cvReference !== undefined;
@@ -254,6 +261,12 @@ export function updateSessionApplication(
         ? changes.notes
         : undefined;
   const salary = updateSalary(base.salary, changes.salary);
+  const followUp =
+    changes.followUp === undefined
+      ? base.followUp
+      : changes.followUp === null
+        ? undefined
+        : clone(changes.followUp);
 
   return {
     ...base,
@@ -263,6 +276,7 @@ export function updateSessionApplication(
     contact,
     notes,
     salary,
+    followUp,
   };
 }
 

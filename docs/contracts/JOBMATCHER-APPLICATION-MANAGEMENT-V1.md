@@ -63,6 +63,7 @@ interface ApplicationV1 {
   contact?: ApplicationContactV1;
   notes?: string;
   salary?: ApplicationSalaryContextV1;
+  followUp?: ApplicationFollowUpV1;
   status: ApplicationStatus;
   statusHistory: ApplicationStatusHistoryEntryV1[];
   history: ApplicationHistoryEntryV1[];
@@ -130,7 +131,20 @@ interface ApplicationSalaryContextV1 {
   expectation?: ApplicationSalaryV1;
   offer?: ApplicationSalaryV1;
 }
+
+interface ApplicationFollowUpV1 {
+  dueOn: string;              // calendar date YYYY-MM-DD, no UTC timestamp
+  note?: string;              // optional reason / planned action, max 2000
+  status: "open" | "completed";
+  completedAt?: ISODateTime;  // required when status is completed
+}
 ```
+
+`followUp` is optional and independent of the application status. A completed
+follow-up is never considered overdue. Removing it means omitting the optional
+property from the persisted resource. Follow-up mutations use the existing
+versioned update input; update input may carry `followUp`, and `null` in the
+client session update removes the optional value.
 
 ### 3.4 Status history and timeline
 

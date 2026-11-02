@@ -137,6 +137,78 @@ describe("APP-03 session application repository", () => {
     expect(cleared.notes).toBeUndefined();
     expect(cleared.salary).toBeUndefined();
   });
+
+  it("creates, completes, reopens and removes a follow-up independently of status", async () => {
+    const { repo, application } = await created();
+    const withFollowUp = await repo.update(application.localId, {
+      expectedVersion: 1,
+      changes: {
+        followUp: {
+          dueOn: "2026-11-16",
+          note: "Bei der Personalabteilung nachfragen.",
+          status: "open",
+        },
+      },
+    });
+    expect(withFollowUp.followUp).toEqual({
+      dueOn: "2026-11-16",
+      note: "Bei der Personalabteilung nachfragen.",
+      status: "open",
+    });
+    expect(withFollowUp.status).toBe("draft");
+
+    const completed = await repo.update(application.localId, {
+      expectedVersion: withFollowUp.version,
+      changes: {
+        followUp: {
+          ...withFollowUp.followUp!,
+          status: "completed",
+          completedAt: "2026-11-17T10:00:00.000Z",
+        },
+      },
+    });
+    expect(completed.followUp?.status).toBe("completed");
+    expect(completed.status).toBe("draft");
+    const exportedWithFollowUp = await repo.export(application.localId);
+    expect(exportedWithFollowUp.application.followUp?.dueOn).toBe("2026-11-16");
+
+    const reopened = await repo.update(application.localId, {
+      expectedVersion: completed.version,
+      changes: {
+        followUp: {
+          dueOn: "2026-11-20",
+          status: "open",
+        },
+      },
+    });
+    expect(reopened.followUp).toEqual({ dueOn: "2026-11-20", status: "open" });
+
+    const removed = await repo.update(application.localId, {
+      expectedVersion: reopened.version,
+      changes: { followUp: null },
+    });
+    expect(removed.followUp).toBeUndefined();
+    expect(removed.status).toBe("draft");
+
+    const exported = await repo.export(application.localId);
+    expect(exported.application.followUp).toBeUndefined();
+  });
+
+  it("rejects invalid follow-up calendar dates and inconsistent completion", async () => {
+    const { repo, application } = await created();
+    await expect(
+      repo.update(application.localId, {
+        expectedVersion: 1,
+        changes: { followUp: { dueOn: "2026-02-31", status: "open" } },
+      })
+    ).rejects.toMatchObject({ code: "validation_error" });
+    await expect(
+      repo.update(application.localId, {
+        expectedVersion: 1,
+        changes: { followUp: { dueOn: "2026-11-16", status: "completed" } },
+      })
+    ).rejects.toMatchObject({ code: "validation_error" });
+  });
   it("requires explicit status confirmation and supports history", async () => {
     const { repo, application } = await created();
     await expect(

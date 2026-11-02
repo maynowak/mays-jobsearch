@@ -77,6 +77,14 @@ export interface ApplicationSalaryContextV1 {
   offer?: ApplicationSalaryV1;
 }
 
+export interface ApplicationFollowUpV1 {
+  /** Calendar date (YYYY-MM-DD), not a UTC timestamp. */
+  dueOn: string;
+  note?: string;
+  status: "open" | "completed";
+  completedAt?: ISODateTime;
+}
+
 export interface ApplicationStatusHistoryEntryV1 {
   at: ISODateTime;
   from: ApplicationStatus | null;
@@ -125,6 +133,7 @@ export interface ApplicationV1 {
   contact?: ApplicationContactV1;
   notes?: string;
   salary?: ApplicationSalaryContextV1;
+  followUp?: ApplicationFollowUpV1;
   status: ApplicationStatus;
   /** Projection target: all status changes, including the initial draft. */
   statusHistory: ApplicationStatusHistoryEntryV1[];
@@ -158,6 +167,7 @@ export interface UpdateApplicationDraftInputV1 {
   contact?: ApplicationContactV1;
   notes?: string;
   salary?: ApplicationSalaryContextV1;
+  followUp?: ApplicationFollowUpV1;
 }
 
 export interface TransitionApplicationStatusInputV1 {

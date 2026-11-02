@@ -6,7 +6,11 @@ import type {
 } from "../lib/applications/sessionApplications";
 import type { ApplicationRepository } from "../lib/applications/repositoryTypes";
 import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
-import type { ApplicationSalaryV1, ApplicationStatus } from "../lib/applications/contractTypes";
+import type {
+  ApplicationFollowUpV1,
+  ApplicationSalaryV1,
+  ApplicationStatus,
+} from "../lib/applications/contractTypes";
 import { ApplicationValidationError } from "../lib/applications/applicationValidation";
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
 import ApplicationEditForm from "./ApplicationEditForm";
@@ -61,6 +65,61 @@ function formatApplicationDate(value: string | undefined, locale: string): strin
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(date);
 }
 
+function localCalendarDate(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isValidCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function daysFromToday(dueOn: string): number {
+  const due = Date.parse(`${dueOn}T00:00:00.000Z`);
+  const today = Date.parse(`${localCalendarDate()}T00:00:00.000Z`);
+  return Math.round((due - today) / 86_400_000);
+}
+
+function formatFollowUpDue(dueOn: string, locale: string): string {
+  return formatApplicationDate(`${dueOn}T00:00:00.000Z`, locale);
+}
+
+function followUpShortLabel(
+  followUp: ApplicationFollowUpV1,
+  locale: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+): string {
+  if (followUp.status === "completed") return t("applications.followUp.completed");
+  const days = daysFromToday(followUp.dueOn);
+  if (days < 0) {
+    return days === -1
+      ? t("applications.followUp.overdueOne")
+      : t("applications.followUp.overdueMany", { count: Math.abs(days) });
+  }
+  if (days === 0) return t("applications.followUp.dueToday");
+  return t("applications.followUp.dueOn", { date: formatFollowUpDue(followUp.dueOn, locale) });
+}
+
+function followUpSummaryLabel(
+  followUp: ApplicationFollowUpV1,
+  locale: string,
+  t: (key: string, vars?: Record<string, string | number>) => string
+): string {
+  if (followUp.status === "completed") return t("applications.followUp.completed");
+  const days = daysFromToday(followUp.dueOn);
+  if (days < 0) {
+    return days === -1
+      ? t("applications.followUp.overdueOne")
+      : t("applications.followUp.overdueMany", { count: Math.abs(days) });
+  }
+  if (days === 0) return t("applications.followUp.dueToday");
+  return formatFollowUpDue(followUp.dueOn, locale);
+}
+
 function formatSalary(
   salary: ApplicationSalaryV1 | undefined,
   t: (key: string) => string
@@ -99,6 +158,9 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState("");
   const [activeTab, setActiveTab] = useState<ApplicationTab>("overview");
+  const [followUpDue, setFollowUpDue] = useState("");
+  const [followUpNote, setFollowUpNote] = useState("");
+  const [followUpError, setFollowUpError] = useState("");
   const tabBaseId = useId();
   const tabRefs = useRef<Record<ApplicationTab, HTMLButtonElement | null>>({
     overview: null,
@@ -165,6 +227,12 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
     setPendingSubmit(false);
     setDeleteConfirmId(null);
   }, [repository]);
+
+  useEffect(() => {
+    setFollowUpDue(selected?.followUp?.dueOn ?? "");
+    setFollowUpNote(selected?.followUp?.note ?? "");
+    setFollowUpError("");
+  }, [selectedId, repository]);
 
   useEffect(() => {
     setSelectedId((current) => {
@@ -353,6 +421,77 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
     });
   };
 
+  const saveFollowUp = (followUp: ApplicationFollowUpV1) => {
+    if (!selected) return;
+    setFollowUpError("");
+    void run(
+      async (signal, current) => {
+        const updated = await repository.update(selected.localId, {
+          expectedVersion: selected.version,
+          changes: { followUp },
+          signal,
+        });
+        if (!current()) return;
+        replace(updated);
+        setFollowUpDue(updated.followUp?.dueOn ?? "");
+        setFollowUpNote(updated.followUp?.note ?? "");
+      },
+      (message) => setFollowUpError(message)
+    );
+  };
+
+  const handleSaveFollowUp = () => {
+    if (!selected || !isValidCalendarDate(followUpDue)) {
+      setFollowUpError(t("applications.followUp.invalidDate"));
+      return;
+    }
+    const existing = selected.followUp;
+    saveFollowUp({
+      dueOn: followUpDue,
+      ...(followUpNote.trim() ? { note: followUpNote.trim() } : {}),
+      status: existing?.status ?? "open",
+      ...(existing?.status === "completed" && existing.completedAt
+        ? { completedAt: existing.completedAt }
+        : {}),
+    });
+  };
+
+  const handleCompleteFollowUp = () => {
+    if (!selected?.followUp) return;
+    saveFollowUp({
+      ...selected.followUp,
+      status: "completed",
+      completedAt: nowIso(),
+    });
+  };
+
+  const handleReopenFollowUp = () => {
+    if (!selected?.followUp) return;
+    saveFollowUp({
+      dueOn: selected.followUp.dueOn,
+      ...(selected.followUp.note ? { note: selected.followUp.note } : {}),
+      status: "open",
+    });
+  };
+
+  const handleRemoveFollowUp = () => {
+    if (!selected) return;
+    void run(
+      async (signal, current) => {
+        const updated = await repository.update(selected.localId, {
+          expectedVersion: selected.version,
+          changes: { followUp: null },
+          signal,
+        });
+        if (!current()) return;
+        replace(updated);
+        setFollowUpDue("");
+        setFollowUpNote("");
+      },
+      (message) => setFollowUpError(message)
+    );
+  };
+
   const handleSaveEdits = (changes: SessionApplicationUpdateChanges) => {
     if (!selected) return;
     setEditError("");
@@ -480,6 +619,19 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                   <span>{application.job.companyName}</span>
                   <span>{statusLabel(t, application.status)}</span>
                   <span>{formatDate(application.createdAt, locale)}</span>
+                  {application.followUp?.status === "open" && (
+                    <span
+                      className={`applications-followup-tag${
+                        daysFromToday(application.followUp.dueOn) < 0
+                          ? " applications-followup-tag--overdue"
+                          : daysFromToday(application.followUp.dueOn) === 0
+                            ? " applications-followup-tag--today"
+                            : ""
+                      }`}
+                    >
+                      {followUpShortLabel(application.followUp, locale, t)}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
@@ -597,6 +749,21 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                     </>
                   )}
 
+                  {selected.followUp && (
+                    <div
+                      className={`applications-followup-summary${
+                        selected.followUp.status === "open" && daysFromToday(selected.followUp.dueOn) < 0
+                          ? " applications-followup-summary--overdue"
+                          : ""
+                      }`}
+                      role="status"
+                    >
+                      <strong>{t("applications.followUp.next")}</strong>{" "}
+                      {followUpSummaryLabel(selected.followUp, locale, t)}
+                      {selected.followUp.note ? <span>{selected.followUp.note}</span> : null}
+                    </div>
+                  )}
+
                   <section className="applications-block">
                     <h4>{t("applications.section.status")}</h4>
                     <div className="applications-status-actions">
@@ -629,6 +796,60 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                   aria-labelledby={tabId("communication")}
                   tabIndex={0}
                 >
+                  <section className="applications-block applications-followup-editor">
+                    <h4>{t("applications.followUp.title")}</h4>
+                    {selected.followUp && (
+                      <p className="applications-followup-status">
+                        <strong>{followUpShortLabel(selected.followUp, locale, t)}</strong>
+                        {selected.followUp.status === "completed" && selected.followUp.completedAt
+                          ? ` · ${t("applications.followUp.completedAt", {
+                              date: formatDate(selected.followUp.completedAt, locale),
+                            })}`
+                          : ""}
+                      </p>
+                    )}
+                    <label className="letter-field">
+                      <span>{t("applications.followUp.date")}</span>
+                      <input
+                        type="date"
+                        value={followUpDue}
+                        onChange={(event) => setFollowUpDue(event.target.value)}
+                        disabled={busy}
+                      />
+                    </label>
+                    <label className="letter-field">
+                      <span>{t("applications.followUp.note")}</span>
+                      <textarea
+                        value={followUpNote}
+                        onChange={(event) => setFollowUpNote(event.target.value)}
+                        rows={2}
+                        maxLength={2000}
+                        disabled={busy}
+                      />
+                    </label>
+                    <div className="applications-followup-actions">
+                      <button type="button" className="letter-btn" onClick={handleSaveFollowUp} disabled={busy}>
+                        {t("applications.followUp.save")}
+                      </button>
+                      {selected.followUp?.status === "open" && (
+                        <button type="button" className="btn-ghost" onClick={handleCompleteFollowUp} disabled={busy}>
+                          {t("applications.followUp.complete")}
+                        </button>
+                      )}
+                      {selected.followUp?.status === "completed" && (
+                        <button type="button" className="btn-ghost" onClick={handleReopenFollowUp} disabled={busy}>
+                          {t("applications.followUp.reopen")}
+                        </button>
+                      )}
+                      {selected.followUp && (
+                        <button type="button" className="btn-ghost" onClick={handleRemoveFollowUp} disabled={busy}>
+                          {t("applications.followUp.remove")}
+                        </button>
+                      )}
+                    </div>
+                    {followUpError && <p className="letter-review-warning" role="alert">{followUpError}</p>}
+                  </section>
+
                   <section className="applications-block">
                     <h4>{t("applications.communication.feedback")}</h4>
                     <label className="letter-field">

@@ -21,8 +21,14 @@ The server resource is `ApplicationV1` from
 - server-derived `ownerId`
 - `job` reference
 - `documents` (cover-letter draft/versions, optional CV reference, document status)
-- application information, salary, status, status history, timeline
+- application information, salary, optional follow-up, status, status history,
+  timeline
 - `createdAt`, `updatedAt`, `version`
+
+`followUp` is optional (`dueOn` as `YYYY-MM-DD`, optional note, `open` or
+`completed`, `completedAt` for completed). It is independent of the
+application status and must be validated as a real calendar date, not a
+synthetic UTC timestamp.
 
 The browser-local `SessionApplicationV1.localId` is not a server ID and must
 never be accepted as `applicationId`.

@@ -11,6 +11,8 @@ They contain no real applicant data, no CV files and no credentials.
 - `application.rejected.json` — rejected terminal state
 - `application.withdrawn.json` — withdrawn terminal state
 - `application.with-revisions.json` — cover-letter versions, CV reference, salary
+- `application.follow-up.json` — optional open follow-up
+- `application.update-follow-up.json` — versioned follow-up update input
 - `application.create-draft.json` — create input
 - `application.update-draft.json` — versioned update input
 - `application.transition.json` — explicit submit transition input

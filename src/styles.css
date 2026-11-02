@@ -9445,3 +9445,67 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     flex: 1 1 auto;
   }
 }
+
+/* UX-04D: follow-up / chasing */
+.applications-followup-tag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700;
+}
+
+.applications-followup-tag--today {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+}
+
+.applications-followup-tag--overdue {
+  border-color: #b45309;
+  background: #fff7ed;
+  color: #7c2d12 !important;
+}
+
+.applications-followup-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.applications-followup-summary--overdue {
+  border-color: #b45309;
+  background: #fff7ed;
+}
+
+.applications-followup-summary span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.applications-followup-editor {
+  gap: 10px;
+}
+
+.applications-followup-status {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.applications-followup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}

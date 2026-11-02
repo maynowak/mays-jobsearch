@@ -67,6 +67,15 @@ function renderSectionWithChanges(initial: SessionApplicationV1[] = [draft()]) {
   return { view, onChanged };
 }
 
+function calendarDate(offsetDays = 0): string {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function detailed(): SessionApplicationV1 {
   return {
     ...draft(),
@@ -441,6 +450,80 @@ describe("APP-02 ApplicationsSection", () => {
     fireEvent.click(screen.getByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ }));
     expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("heading", { name: "Senior Fullstack Developer", level: 3 })).toBeInTheDocument();
+  });
+
+  it("shows today's and overdue follow-ups in the overview and application list", async () => {
+    const todayApplication = {
+      ...draft({ localId: "today" }),
+      followUp: { dueOn: calendarDate(0), status: "open" as const },
+    };
+    const overdueApplication = {
+      ...draft({ localId: "overdue", job: { ...job, jobId: "job-2", title: "Overdue Job" } }),
+      followUp: { dueOn: calendarDate(-3), status: "open" as const, note: "Nachfassen" },
+    };
+    renderSection([overdueApplication, todayApplication]);
+    await screen.findByText("Overdue Job");
+    expect(screen.getAllByText("Heute nachfassen").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("3 Tage überfällig").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: /Overdue Job/ }));
+    expect(screen.getByText("Nächste Wiedervorlage:")).toBeInTheDocument();
+  });
+
+  it("creates and edits a follow-up in the communication tab", async () => {
+    const { onChanged } = renderSectionWithChanges([draft()]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Kommunikation" }));
+    fireEvent.change(screen.getByLabelText("Wiedervorlagedatum"), { target: { value: "2026-11-16" } });
+    fireEvent.change(screen.getByLabelText("Grund / geplante Aktion"), {
+      target: { value: "Bei der Personalabteilung nachfragen." },
+    });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Wiedervorlage speichern" }));
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    const updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.followUp).toEqual({
+      dueOn: "2026-11-16",
+      note: "Bei der Personalabteilung nachfragen.",
+      status: "open",
+    });
+    expect(updated.status).toBe("draft");
+  });
+
+  it("marks a follow-up completed, reopens it and removes it without changing status", async () => {
+    const application = {
+      ...draft(),
+      followUp: { dueOn: "2026-11-16", note: "Nachfassen", status: "open" as const },
+    };
+    const { onChanged } = renderSectionWithChanges([application]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Kommunikation" }));
+    onChanged.mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: "Als erledigt markieren" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    let updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.followUp?.status).toBe("completed");
+    expect(updated.followUp?.completedAt).toBeTruthy();
+    expect(updated.status).toBe("draft");
+
+    fireEvent.click(screen.getByRole("button", { name: "Erneut öffnen" }));
+    await waitFor(() => expect(onChanged.mock.calls.length).toBeGreaterThan(1));
+    updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.followUp).toEqual({ dueOn: "2026-11-16", note: "Nachfassen", status: "open" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Entfernen" }));
+    await waitFor(() => expect(onChanged.mock.calls.length).toBeGreaterThan(2));
+    updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.followUp).toBeUndefined();
+    expect(updated.status).toBe("draft");
+  });
+
+  it("rejects an empty follow-up date without mutating the application", async () => {
+    const { onChanged } = renderSectionWithChanges([draft()]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Kommunikation" }));
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Wiedervorlage speichern" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/gültiges Wiedervorlagedatum/i);
+    expect(onChanged).not.toHaveBeenCalled();
   });
   it("ignores a late operation after the repository/session changes", async () => {
     const base = createSessionApplicationRepository({ initial: [draft()] });

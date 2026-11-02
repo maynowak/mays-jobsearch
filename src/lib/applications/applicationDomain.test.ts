@@ -273,6 +273,28 @@ describe("APP-01 application domain", () => {
     ).toThrowError(/Unexpected field/i);
   });
 
+  it("validates optional follow-up calendar data and completion consistency", () => {
+    const application = draft();
+    expect(() =>
+      validateApplicationV1({
+        ...application,
+        followUp: { dueOn: "2026-11-16", note: "Nachfassen", status: "open" },
+      })
+    ).not.toThrow();
+    expect(() =>
+      validateApplicationV1({
+        ...application,
+        followUp: { dueOn: "2026-11-16", status: "completed" },
+      })
+    ).toThrowError(/completedAt/i);
+    expect(() =>
+      validateApplicationV1({
+        ...application,
+        followUp: { dueOn: "2026-02-31", status: "open" },
+      })
+    ).toThrowError(/calendar date/i);
+  });
+
   it("rejects invalid job URLs, salary and alternative-owner fields", () => {
     expect(() =>
       createApplicationDraft(

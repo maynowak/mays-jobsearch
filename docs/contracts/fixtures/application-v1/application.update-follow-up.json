@@ -1,0 +1,8 @@
+{
+  "expectedVersion": 2,
+  "followUp": {
+    "dueOn": "2026-11-20",
+    "note": "Erneut nachfassen.",
+    "status": "open"
+  }
+}

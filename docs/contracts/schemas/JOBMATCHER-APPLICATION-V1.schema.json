@@ -112,6 +112,27 @@
         "offer": { "$ref": "#/$defs/Salary" }
       }
     },
+    "FollowUp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dueOn", "status"],
+      "properties": {
+        "dueOn": { "type": "string", "format": "date", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "note": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["open", "completed"] },
+        "completedAt": { "$ref": "#/$defs/ISODateTime" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "completed" } }, "required": ["status"] },
+          "then": { "required": ["completedAt"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "open" } }, "required": ["status"] },
+          "then": { "not": { "required": ["completedAt"] } }
+        }
+      ]
+    },
     "StatusHistoryEntry": {
       "type": "object",
       "additionalProperties": false,
@@ -184,6 +205,7 @@
         "contact": { "$ref": "#/$defs/Contact" },
         "notes": { "type": "string", "maxLength": 10000 },
         "salary": { "$ref": "#/$defs/SalaryContext" },
+        "followUp": { "$ref": "#/$defs/FollowUp" },
         "status": { "$ref": "#/$defs/Status" },
         "statusHistory": {
           "type": "array",
@@ -222,7 +244,8 @@
         "applicationChannel": { "$ref": "#/$defs/Channel" },
         "contact": { "$ref": "#/$defs/Contact" },
         "notes": { "type": "string", "maxLength": 10000 },
-        "salary": { "$ref": "#/$defs/SalaryContext" }
+        "salary": { "$ref": "#/$defs/SalaryContext" },
+        "followUp": { "$ref": "#/$defs/FollowUp" }
       }
     },
     "TransitionApplicationStatusInputV1": {
