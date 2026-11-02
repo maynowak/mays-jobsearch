@@ -1,3 +1,12 @@
+2026-11-02 · JM-BA-INTEGRATION-GREEN-01
+- Typ: Bundesagentur für Arbeit/Integrationsentwicklung/Green-Status-Dokumentation
+- Status: **TESTED GREEN (lokal/mock)** — Produktions-Live-Verifikation und Deployment offen
+- Zusammenfassung: BA ist über Apify (`blackfalcondata~arbeitsagentur-jobs-feed`) angebunden: Liste compact + gezieltes Detail-Enrichment via startUrls, L1/L2-Cache, Quotas, Guest-Policy. Keine direkte BA-REST-Source; Header-/CORS-/403-Umgehung und neue BA-API nicht implementiert.
+- Entwicklung: `559cd55` behebt Multiword-Skill-/Search-Strategy-Verlust (Java Developer/Frankfurt, Softwareentwickler/Darmstadt, Cloud Engineer/Mainz); `d3989d8`/`4b498a4`/`fc84d20` vereinheitlichen BA-Detaildarstellung und formatieren Plain-Text/Markdown (Absätze, Listen, Fett, Links); `fb155cc` ergänzt den Fehler-Fallback „Originalanzeige bei der Arbeitsagentur öffnen“ mit gültiger http(s)-URL, ohne Auto-Navigation.
+- Tests: 11 gezielte BA-Testdateien **108 passed**; Gesamtsuite **1155 passed/5 skipped**; TypeScript/Build/`git diff --check` PASS. Keine echten Apify-Runs, keine Live-BA-Abfrage, kein Deployment.
+- Offen: Produktions-Apify-Zähler/Logs nicht lesbar (`/api/usage` ohne Token), aktuelle Live-Treffer nicht verifiziert; mögliche `limit_reached`/`busy`/Upstream/Cache-Zustände bleiben. Nutzervermittelter BA-Fluss GO; direkte automatische BA-API BLOCKED.
+- Log: `docs/reports/JM-BA-INTEGRATION-GREEN-01.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-01
 - Typ: Bewerbungsverwaltung/Datenmodell/API-Vertrag/RIS-Handoff
 - Status: **SPECIFIED / VERIFIED** (Domainregeln, TypeScript-Contract, JSON Schema + Fixtures) — keine UI, keine Persistenz, keine RIS/AWS/Cognito-Änderung, kein Deployment
