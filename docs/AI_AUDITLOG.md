@@ -1,3 +1,13 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04A
+- Typ: Bewerbungsverwaltung/editierbare Bewerbungsdetails/Session-Repository
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Änderung: Detailansicht erhält „Bewerbungsdaten bearbeiten“ mit integriertem Formular für Bewerbungsweg, Bewerbungsdatum, Ansprechpartner (Name/E-Mail/Telefon), persönliche Notizen sowie Gehaltsvorstellung und Angebot (Betrag/Währung/Zeitraum). Speichern ausschließlich über `applicationRepository.update()` mit `expectedVersion`, `AbortSignal`, Busy-/Doppelaktionsschutz und Session-Schutz.
+- Löschsemantik: optionale Felder können explizit über `null` (Bewerbungsweg, Datum, Kontakt, Gehalt, CV-Referenz) bzw. leere Notizen entfernt werden; `undefined` bleibt „nicht aktualisieren“. Leere Gehaltsfelder erzeugen keinen 0-Betrag. Validierung für E-Mail, Telefon-Steuerzeichen, Datum, positive endliche Beträge, ISO-4217-Code und Zeitraum.
+- Fachregeln: Status wird nicht automatisch geändert; `submitted` bleibt an die ausdrückliche Bestätigung gebunden. Datum wird als UTC-Mitternacht gespeichert/angezeigt, um Tagesverschiebungen zu vermeiden. Persönliche Notizen erzeugen keinen History-Eintrag. Keine neue Persistenz, keine RIS-/AWS-/Cognito-/KI-/Apify-Änderung.
+- Tests: ApplicationsSection **18 passed**, Session-Repository **14 passed**, Gesamtsuite **1201 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors, neue Edit-/Updated-Screenshots. Keine echten Provider-/Backend-Aufrufe.
+- Git: Implementierungskommit `65e314a`, Branch `feature/jm-application-management-ux-04a`; Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-04A.md`
+
 2026-11-02 · JM-APPLICATION-DRAFT-REUSE-01
 - Typ: Bewerbungsverwaltung/vorhandener Entwurf/erneutes Speichern
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
