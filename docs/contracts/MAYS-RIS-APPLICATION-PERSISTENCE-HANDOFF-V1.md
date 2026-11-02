@@ -27,6 +27,15 @@ The server resource is `ApplicationV1` from
 The browser-local `SessionApplicationV1.localId` is not a server ID and must
 never be accepted as `applicationId`.
 
+Jobsearch-side boundaries in `src/lib/applications/repositoryTypes.ts`:
+
+- `ApplicationRepository` — current synchronous-in-memory session contract.
+- `ApplicationPersistencePort` — future asynchronous RIS-owned contract for
+  `ApplicationV1`. It is a type-only interface; no implementation, HTTP client,
+  route assumption or credential storage exists in APP-03.
+- `ApplicationMigrationPortV1` — future, explicit, preview-and-confirm transfer
+  contract for local session drafts. It is not called by the UI.
+
 ## 2. Ownership and identity
 
 - `ownerId` is derived server-side from the existing verified OIDC identity
@@ -152,7 +161,31 @@ Rules:
 - On failure, local item remains intact.
 - No external AI calls or Apify runs during transfer.
 
-## 10. Privacy and lifecycle
+## 10. Existing RIS dependencies and local read-only check
+
+A local RIS checkout was inspected only read-only during APP-03. The checkout
+was on `main` at `c49eb2b`; the package-referenced branch
+`feature/ris-partner-profile-persistence-v1` and commit `b76adfa` were not
+present in that checkout. The referenced documents
+`RIS-JOBSEARCH-V1-CONTRACT-MATRIX.md`,
+`RIS-PARTNER-PROFILE-R07-G0-INTEGRATION-READINESS.md` and
+`RIS-R08-POLICY-01-PRIVACY-DECISION-GATE.md` were also not present locally.
+Those references therefore remain **NOT VERIFIED** here.
+
+No application CRUD endpoint was verified in RIS. The only safe statement is
+that Jobsearch has a consumer-side contract and a local session implementation;
+RIS persistence, authentication delegation, server ownership and retention
+remain backend dependencies.
+
+Risk handling:
+
+- No RIS partner credential or `X-Api-Credential` may be placed in the browser.
+- A browser/BFF or authorized delegation boundary must be selected jointly
+  before any remote call.
+- A disclosed S3 key or document-output mismatch in RIS is a separate security
+  finding and is not fixed by APP-03.
+
+## 11. Privacy and lifecycle
 
 - Application data is personal and must not appear in technical logs.
 - No storage without explicit account decision.
@@ -162,7 +195,7 @@ Rules:
 - RIS handles backend encryption, authorization, backups, retention and
   erasure; Jobsearch must not claim those controls without evidence.
 
-## 11. Open / unverified items
+## 12. Open / unverified items
 
 1. RIS route prefix, authentication handshake and gateway ownership.
 2. Whether RIS supports cursor pagination and conditional writes.
@@ -173,12 +206,16 @@ Rules:
 7. Migration/idempotency semantics and local-record replacement.
 8. Rate limits and error mapping.
 9. Legal/privacy approval for account-backed application storage.
-10. Referenced RIS documents `RIS-JOBSEARCH-V1-CONTRACT-MATRIX.md`,
-    `RIS-PARTNER-PROFILE-R07-G0-INTEGRATION-READINESS.md` and
-    `RIS-R08-POLICY-01-PRIVACY-DECISION-GATE.md` were not present in this
-    workspace and remain **NOT VERIFIED** here.
+10. Local RIS read-only check: `main` @ `c49eb2b`; the referenced branch
+    `feature/ris-partner-profile-persistence-v1` @ `b76adfa` and the three
+    referenced RIS reports were not present locally. They remain **NOT
+    VERIFIED** here.
+11. Browser-safe delegation/BFF boundary and exact request/response envelope.
+12. Application-level retention, physical erasure, backup and restore policy.
+13. Whether a local-to-account transfer can be resumed safely after a partial
+    failure.
 
-## 12. Non-goals
+## 13. Non-goals
 
 - No RIS backend implementation in this repository.
 - No AWS/Cognito/RIS change.
