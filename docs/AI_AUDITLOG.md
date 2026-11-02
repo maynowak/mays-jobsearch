@@ -1,3 +1,14 @@
+2026-11-02 · JM-GIT-BRANCH-CONSOLIDATION-01
+- Typ: Git-Branch-Konsolidierung/lokale Integration/Regression
+- Status: **LOKAL INTEGRIERT UND VERIFIZIERT** — kein Push, kein Remote-Merge, kein Deployment
+- Ausgangsstand: Lokaler `main` `c294ddf` (7 vor `origin/main` `e1f0347`), APP-03 `a401bb8` (4 voraus), Cover-Letter-Fix `7eb779a` (4 eigene Commits, 7 hinter `main`). 12 lokale/8 Remote-Branches; fremde untracked Dateien blieben unverändert.
+- Integration: APP-03 per Fast-Forward auf `a401bb8`; Cover-Letter-Fix per `--no-ff`/`--no-commit`; einziger Konflikt `docs/AI_AUDITLOG.md`, beide Einträge erhalten; `src/App.tsx` automatisch korrekt zusammengeführt. Merge-Commit `a47bf3d`.
+- Erhalten: APP-03-Repository-/Remote-/Migrationsgrenzen, Session-Generation/`invalidate()`, asynchrone UI-Architektur, Cover-Letter-Provider-Fallback und anonymisierte `letterText`-Wiederverwendung.
+- Tests: gezielt APP-03 **20 passed**, Integrationsprüfung **99 passed**, Gesamtsuite **1189 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; E2E Applications und Cover Letter Desktop 1440/Mobil 390 PASS, keine Console-Errors. Keine echten KI-/Apify-/Provider-Aufrufe, kein Deployment.
+- Git: Integrationsbranch `integration/jm-git-branch-consolidation-01`, Merge `a47bf3d`; abschließende lokale `main`-Aktualisierung per Fast-Forward. `origin/main` bleibt `e1f0347`; `backup/landing-iter-20251002` unverändert.
+- Log: `docs/reports/JM-GIT-BRANCH-CONSOLIDATION-01.md`
+- Offen: Backup-Branch nicht integriert, RIS-/Live-Auth-/Retention-/Deployment-Gates bleiben offen. **NICHT GEPUSHT / NICHT DEPLOYED.**
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-03
 - Typ: Bewerbungsverwaltung/Repository-Readiness/Session-Adapter
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein RIS-Backend, keine neue Persistenz, kein Deployment
