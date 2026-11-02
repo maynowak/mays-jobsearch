@@ -8,7 +8,7 @@
 - RIS: `docs/contracts/MAYS-RIS-APPLICATION-PERSISTENCE-HANDOFF-V1.md` spezifiziert serverseitige Ressourcen, CRUD/Status, `iss + sub`-Ownership, Server-IDs, Conditional Writes, Anschreiben-Versionen, CV-Referenzen, Export/Löschung, Fehler/Pagination und Datenschutz. Endpunkte sind Vorschläge, keine vorhandene RIS-API. Keine RIS-Implementierung.
 - Migration: Nur Vertrag; keine automatische Migration, kein „Im Konto speichern“-Button ohne Backend, lokale Daten bleiben bei Fehlern erhalten, `localId` wird nie ohne Serverbestätigung übernommen.
 - Tests: Session-Repository **9 passed**, ApplicationsSection **9 passed**, Gesamtsuite **1183 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Browser-E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors, Reload-Leerzustand PASS. Keine produktiven API-/KI-/Apify-Aufrufe.
-- Git: `ea57e9c` Repository-Vertrag, `0d9ef8d` Session-Adapter, `89e877c` UI-Integration, `c12d7a4` RIS-Handoff, APP-03E-Dokumentation in diesem Commit.
+- Git: `ea57e9c` Repository-Vertrag, `0d9ef8d` Session-Adapter, `89e877c` UI-Integration, `c12d7a4` RIS-Handoff, `ec7abfa` Formatierung, APP-03E-Dokumentation in `73e93a7`.
 - Offen: RIS-Backend/Persistenz, serverseitige `ApplicationV1`-Erstellung, Live-Auth-Matrix, Retention/Datenschutz-Freigabe; referenzierte RIS-Dokumente im Workspace nicht vorhanden und nicht verifiziert. **NICHT DEPLOYED.**
 - Log: `docs/reports/JM-APPLICATION-MANAGEMENT-03.md`
 

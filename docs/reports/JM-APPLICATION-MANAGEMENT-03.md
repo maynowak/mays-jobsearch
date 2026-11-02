@@ -213,7 +213,7 @@ Abgedeckt:
 | APP-03A | `ea57e9c` | Repository-Vertrag |
 | APP-03B | `0d9ef8d` | Session-Adapter und Tests |
 | APP-03C | `89e877c` | UI-Integration und Auth-/Session-Schutz |
-| APP-03D | `c12d7a4` | RIS-Handoff |
+| APP-03D | `c12d7a4`, `ec7abfa` | RIS-Handoff und Formatierungsnormalisierung |
 | APP-03E | dieser Commit | Security-/Regression-Gate und Dokumentation |
 
 ## 12. Statusabgrenzung
