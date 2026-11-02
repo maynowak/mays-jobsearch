@@ -1,3 +1,13 @@
+2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04B
+- Typ: Bewerbungsverwaltung/responsives Layout/Navigation Fix
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Änderung: Bewerbungs-Dashboard erhält `dashboard-v2--applications`, breitere Desktop-Fläche und ca. 30/70-Aufteilung zwischen Liste und Details (1440/1024), einspaltige Umbrüche bei 860/768/390/320, bessere Touch-Flächen, Umbruch langer Titel und klarere Formulargruppen. UX-04A-Felder und Repository-Flows bleiben unverändert.
+- Navigation: Ursache war die global sticky Navbar (`z-index:40`), die Inhalte beim Scrollen überlagern konnte. Im aktiven Bewerbungs-Dashboard wird sie scoped über `body:has(.dashboard-v2--applications)` auf `position:relative; top:auto` gesetzt; andere Seiten behalten das bisherige Verhalten. E2E prüft echte Bounding-Rectangles an mehreren Scrollpositionen.
+- Formular: Kontaktfelder Name voll, E-Mail/Telefon auf Desktop nebeneinander; Gehaltsgruppen getrennt; Notizen volle Breite; mobil einspaltig. Keine Validierungs-/Persistenzänderung.
+- Tests: ApplicationsSection **18 passed**, Session-Repository **14 passed**, Gesamtsuite **1201 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E Desktop 1440/Mobil 390 PASS, zusätzliche Responsive-Prüfung 1024/768/320 ohne Overflow, Navigation-BBox ohne Überlappung, keine Console-Errors. Screenshots unter UX-04B. Keine echten Provider-/Backend-Aufrufe.
+- Git: Implementierungskommit `f5dd90a`, Branch `feature/jm-application-management-ux-04b`; Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-04B.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04A
 - Typ: Bewerbungsverwaltung/editierbare Bewerbungsdetails/Session-Repository
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
