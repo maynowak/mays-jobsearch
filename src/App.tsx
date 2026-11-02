@@ -53,7 +53,8 @@ import {
 } from "./lib/cvProfileStore";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
-import { createSessionApplication, sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
+import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
+import { createSessionApplicationRepository } from "./lib/applications/sessionRepository";
 import { isDevOnlyRoute } from "./lib/devRoute";
 import { buildCvSearchProfile } from "./lib/cvSearchConfig";
 import { partitionCvFiles, validateCvFile } from "./lib/cvFileValidation";
@@ -170,6 +171,7 @@ export default function App() {
     context?: LetterPreparationContext;
   } | null>(null);
   const [sessionApplications, setSessionApplications] = useState<SessionApplicationV1[]>([]);
+  const [applicationRepository, setApplicationRepository] = useState(() => createSessionApplicationRepository());
 
   useEffect(() => {
     if (sessionApplications.length === 0) return;
@@ -271,6 +273,7 @@ export default function App() {
       setLetterJob(null);
       setPendingLetterContext(null);
       setSessionApplications([]);
+      setApplicationRepository(createSessionApplicationRepository());
       setStatus(null);
     }
     previousAuthProfileKeyRef.current = authProfileKey;
@@ -735,14 +738,10 @@ export default function App() {
     cvReference?: { cvId: string; label?: string };
   }) => {
     if (sessionApplicationForJob(sessionApplications, payload.job.slug)) return;
-    const localId =
-      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? `local-${crypto.randomUUID()}`
-        : `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    try {
-      const application = createSessionApplication({
-        localId,
-        now: new Date().toISOString(),
+    const epoch = sessionEpochRef.current;
+    void applicationRepository
+      .create({
+        idempotencyKey: `adopt:${payload.job.slug}`,
         coverLetter: payload.letter,
         cvReference: payload.cvReference,
         job: {
@@ -753,12 +752,16 @@ export default function App() {
           source: payload.job.source ?? [],
           originalUrl: payload.job.url,
         },
+      })
+      .then((application) => {
+        if (sessionEpochRef.current !== epoch) return;
+        setSessionApplications((current) => [...current, application]);
+        setStatus({ type: "info", message: t("applications.createdNotice") });
+      })
+      .catch(() => {
+        if (sessionEpochRef.current !== epoch) return;
+        setStatus({ type: "error", message: t("applications.actionError") });
       });
-      setSessionApplications((current) => [...current, application]);
-      setStatus({ type: "info", message: t("applications.createdNotice") });
-    } catch {
-      setStatus({ type: "error", message: t("applications.actionError") });
-    }
   };
 
   // CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — Session-Listen
@@ -2909,7 +2912,11 @@ export default function App() {
   );
 
   const dashboardApplicationsSection = (
-    <ApplicationsSection applications={sessionApplications} onChange={setSessionApplications} />
+    <ApplicationsSection
+      key={authProfileKey ?? "guest"}
+      repository={applicationRepository}
+      onChanged={setSessionApplications}
+    />
   );
 
 // SEARCH-WORLD-09: Das halbrunde Podium (bisher `.search-world__floor`) ist der
