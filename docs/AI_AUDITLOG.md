@@ -1,3 +1,13 @@
+2026-11-02 · JM-COVER-LETTER-MODEL-FALLBACK-01
+- Typ: Anschreiben-Generierung/Modell-Fallback/Provider-Routing
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Live-Provider-Test, kein Deployment
+- Befund: Erste `/api/cover-letter`-Versuche lieferten 502; ein späterer Versuch lieferte 200 mit gültigem `letter`, wurde aber nicht als Ergebnis verwendet. Der Server-Router wechselte bei modellbezogenen Fehlern (`model_unavailable`/`bad_ai_response`) nicht zum nächsten Provider, sondern nur bei Quota/Limit. Der Client-Fallback verarbeitet einen erfolgreichen zweiten/dritten Versuch bereits korrekt.
+- Fix: `isRetryableModelError` + optionaler `fallbackOnModelError`-Schalter in `chat()`; `/api/cover-letter` aktiviert ihn. Das erste erfolgreiche Provider-Ergebnis wird sofort zurückgegeben. Matching/Profile/ATS bleiben beim bisherigen Standardverhalten (`false`).
+- Regression: Neuer LetterModal-Fallback-Integrationstest (erster Versuch 502, zweiter 200 → Anschreiben sichtbar, kein dritter Request; CV-Modus: dritter 200 → sichtbar). Provider- und Cover-Letter-API-Tests ergänzt.
+- Tests: gezielt **33 passed**, Gesamtsuite **1176 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Cover-Letter-E2E Desktop 1440/Mobil 390 PASS, keine Console-Errors. Keine echten KI-/Apify-/Provider-Aufrufe.
+- Status: **NOT DEPLOYED**; Live-Verifikation und konkrete Produktions-Providerlogs bleiben OPEN. Keine Änderung an Env/Secrets/Quotas/Modellkatalogen.
+- Log: `docs/reports/JM-COVER-LETTER-MODEL-FALLBACK-01.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-02
 - Typ: Bewerbungsverwaltung/Dashboard/Session-only MVP
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — Session-only, kein Deployment, keine neue Persistenz/RIS/AWS/Cognito
