@@ -360,6 +360,7 @@ const en: Dict = {
   "results.showLess": "Show less",
   "results.detailLoading": "Loading full details…",
   "results.detailError": "The full details couldn't be loaded. Please try again.",
+  "results.openOriginalBA": "Open original posting at Arbeitsagentur",
   "results.published": "Published {date}",
 
   "jobtype.fullTime": "Full-time",
@@ -1128,6 +1129,7 @@ const de: Dict = {
   "results.showLess": "Weniger anzeigen",
   "results.detailLoading": "Vollständige Details werden geladen…",
   "results.detailError": "Die vollständigen Details konnten nicht geladen werden. Bitte versuche es erneut.",
+  "results.openOriginalBA": "Originalanzeige bei der Arbeitsagentur öffnen",
   "results.published": "Veröffentlicht am {date}",
 
   "jobtype.fullTime": "Vollzeit",

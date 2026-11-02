@@ -218,6 +218,81 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
 
     expect(screen.getByText("70.000 EUR")).toBeInTheDocument();
     expect(screen.getByText("Unbefristet")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Originalanzeige bei der Arbeitsagentur öffnen" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("reuses loaded BA details when collapsing and expanding again", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    const enriched = {
+      ...job,
+      description: "<p>Bereits geladene Details</p>",
+      descriptionPlain: "Bereits geladene Details ".repeat(20),
+    };
+    vi.mocked(fetchJobDetails).mockClear();
+    vi.mocked(fetchJobDetails).mockResolvedValue({ jobs: { [job.slug]: enriched } });
+
+    renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    await waitFor(() => expect(fetchJobDetails).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("button", { name: "Weniger anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    expect(screen.getByText("Bereits geladene Details")).toBeInTheDocument();
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a visible BA original-posting fallback directly on detail errors", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+      url: "https://www.arbeitsagentur.de/jobsuche/suche?id=10001-1002716922-S",
+    });
+    vi.mocked(fetchJobDetails).mockClear();
+    vi.mocked(fetchJobDetails).mockRejectedValueOnce(new Error("detail down"));
+
+    renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+
+    expect(await screen.findByText(/vollständigen Details konnten nicht geladen werden/i)).toBeInTheDocument();
+    const fallback = screen.getByRole("link", {
+      name: "Originalanzeige bei der Arbeitsagentur öffnen",
+    });
+    expect(fallback).toHaveAttribute(
+      "href",
+      "https://www.arbeitsagentur.de/jobsuche/suche?id=10001-1002716922-S"
+    );
+    expect(fallback).toHaveAttribute("target", "_blank");
+    expect(screen.getByRole("link", { name: /Original-Anzeige ansehen/ })).toBeInTheDocument();
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the loading state before falling back without another request", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    let resolveDetails: (value: { jobs: Record<string, never> }) => void = () => {};
+    const pending = new Promise<{ jobs: Record<string, never> }>((resolve) => {
+      resolveDetails = resolve;
+    });
+    vi.mocked(fetchJobDetails).mockClear();
+    vi.mocked(fetchJobDetails).mockImplementationOnce(() => pending);
+
+    renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Mehr anzeigen" }));
+    expect(screen.getByRole("status")).toHaveTextContent(/Details werden geladen/i);
+
+    resolveDetails({ jobs: {} });
+    expect(await screen.findByText(/vollständigen Details konnten nicht geladen werden/i)).toBeInTheDocument();
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
   });
 
   it("offers original posting, ATS and letter actions in one action bar", () => {

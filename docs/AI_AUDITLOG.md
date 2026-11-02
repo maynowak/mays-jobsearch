@@ -1,3 +1,11 @@
+2026-11-02 · JM-BA-DETAIL-FALLBACK-04
+- Typ: BA-Detailnachladen/Fehler-Fallback/Originalanzeige
+- Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, keine echten Apify-Runs
+- Änderung: Bei fehlgeschlagenem BA-Detail-Laden zeigt `RemainingCard` direkt bei der Fehlermeldung den Link „Originalanzeige bei der Arbeitsagentur öffnen“. Verwendet die vorhandene `job.url`, akzeptiert nur gültige http/https-Ziele, öffnet per ausdrücklicher Benutzeraktion in neuem Tab (`noopener noreferrer`). Bestehender „Stellenanzeige ansehen“-Link bleibt. Keine neue BA-API/Abfrage, kein zusätzlicher Apify-Run.
+- Zustände: Lade-/Erfolgs-/Leer-/Fehler-/Cache-Fall getestet; nach Erfolg kein Fallback-Link, Auf-/Zuklappen ohne neuen Request.
+- Tests: RemainingCard 12, safeHtml 26, Gesamtsuite **1143 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS. Keine echte BA-/Apify-Abfrage, keine Quoten-/Cache-/Source-Änderung.
+- Log: `docs/reports/JM-BA-DETAIL-FALLBACK-04.md`
+
 2026-11-02 · JM-BA-DETAIL-FORMAT-03
 - Typ: BA-Detailanzeige/Markdown-Antwortparser
 - Status: IMPLEMENTIERT UND LOKAL VERIFIZIERT — kein Deployment, keine Live-/Apify-Runs

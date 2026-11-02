@@ -15,6 +15,16 @@ import { renderSanitizedHtml } from "../lib/safeHtml";
 
 const DESCRIPTION_PREVIEW_LENGTH = 260;
 
+function safeExternalUrl(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 function renderHtmlContent(html: string, lang?: string) {
   return renderSanitizedHtml(html, lang);
 }
@@ -105,6 +115,7 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   // Reuse already-loaded detail data for the letter, but never trigger a new
   // detail request here. Preserve the original job's stable fields.
   const letterJob: Job = detailJob ? displayJob : job;
+  const originalUrl = safeExternalUrl(job.url);
 
   return (
     <li className="remaining-card">
@@ -149,7 +160,19 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
             </span>
           )}
           {detailStatus === "error" && (
-            <p className="remaining-description remaining-detail-error">{t("results.detailError")}</p>
+            <>
+              <p className="remaining-description remaining-detail-error">{t("results.detailError")}</p>
+              {originalUrl && (
+                <a
+                  className="remaining-detail-fallback"
+                  href={originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("results.openOriginalBA")}
+                </a>
+              )}
+            </>
           )}
           {detailStatus !== "loading" && (
             <button
