@@ -14,6 +14,9 @@ import { diffText } from "../lib/textDiff";
 import {
   MAX_REVISION_DRAFT_LENGTH,
   MAX_REVISION_FEEDBACK_LENGTH,
+  type CoverLetterLanguage,
+  type CoverLetterLength,
+  type CoverLetterStyle,
 } from "../lib/coverLetterRequest";
 import type {
   CoverLetterVersionV1,
@@ -85,6 +88,11 @@ export default function ApplicationLetterComparison({
   const [fromId, setFromId] = useState<Selection>("current");
   const [toId, setToId] = useState<Selection>(latestVersionId);
   const [model, setModel] = useState<string>(defaultModel ?? models[0]?.id ?? "");
+  const [letterLanguage, setLetterLanguage] = useState<CoverLetterLanguage>(() =>
+    lang === "de" ? "German" : "English"
+  );
+  const [letterStyle, setLetterStyle] = useState<CoverLetterStyle>("professional");
+  const [letterLength, setLetterLength] = useState<CoverLetterLength>("one_page");
   const [feedback, setFeedback] = useState("");
   const [consent, setConsent] = useState(false);
   const [improvement, setImprovement] = useState<Improvement | null>(null);
@@ -125,6 +133,9 @@ export default function ApplicationLetterComparison({
     setImprovement(null);
     setImproveError("");
     setFeedback("");
+    setLetterLanguage(lang === "de" ? "German" : "English");
+    setLetterStyle("professional");
+    setLetterLength("one_page");
     setConsent(false);
     setSaving(false);
     setAdopting(false);
@@ -159,8 +170,37 @@ export default function ApplicationLetterComparison({
   }, [fromId]);
 
   useEffect(() => {
+    requestSeqRef.current += 1;
+    inFlightRef.current = false;
+    setImproving(false);
+    setImprovement(null);
+    setImproveError("");
     setConsent(false);
+    setActionMessage("");
+    setActionError("");
+    setSavedContent(null);
+    setSavedVersionNumber(null);
   }, [model]);
+
+  useEffect(() => {
+    if (fromId === "current") return;
+    const source = versions.find((version) => version.versionId === fromId);
+    if (source?.language === "de") setLetterLanguage("German");
+    else if (source?.language === "en") setLetterLanguage("English");
+  }, [fromId, versions]);
+
+  useEffect(() => {
+    requestSeqRef.current += 1;
+    inFlightRef.current = false;
+    setImproving(false);
+    setImprovement(null);
+    setImproveError("");
+    setConsent(false);
+    setActionMessage("");
+    setActionError("");
+    setSavedContent(null);
+    setSavedVersionNumber(null);
+  }, [letterLanguage, letterLength, letterStyle]);
 
   useEffect(() => {
     if (fromId !== "current" && !versions.some((version) => version.versionId === fromId)) {
@@ -248,7 +288,7 @@ export default function ApplicationLetterComparison({
         createdAt: new Date().toISOString(),
         content,
         source: "revised",
-        language: lang,
+        language: letterLanguage === "German" ? "de" : "en",
         ...(improvement.model ? { model: improvement.model } : {}),
       });
       if (
@@ -429,9 +469,9 @@ export default function ApplicationLetterComparison({
         motivation: "",
       },
       options: {
-        language: (lang === "de" ? "German" : "English") as "German" | "English",
-        style: "professional" as const,
-        length: "one_page" as const,
+        language: letterLanguage,
+        style: letterStyle,
+        length: letterLength,
         target_roles: [],
         model,
       },
@@ -658,20 +698,57 @@ export default function ApplicationLetterComparison({
         <p className="applications-letter-improvement__source">
           <strong>{t("letter.improve.source")}:</strong> {resolvedFrom.label}
         </p>
-        {models.length === 0 ? (
-          <p className="letter-hint">{t("letter.improve.noModels")}</p>
-        ) : (
+        <div className="applications-letter-improvement__options">
           <label className="letter-field">
-            <span>{t("letter.improve.model")}</span>
-            <select value={model} onChange={(event) => setModel(event.target.value)} disabled={improving || saving || adopting || busy}>
-              {models.map((entry) => (
-                <option key={entry.id} value={entry.id}>
-                  {entry.name}
-                </option>
-              ))}
+            <span>{t("letter.improve.language")}</span>
+            <select
+              value={letterLanguage}
+              onChange={(event) => setLetterLanguage(event.target.value as CoverLetterLanguage)}
+              disabled={improving || saving || adopting || busy}
+            >
+              <option value="German">{t("letter.improve.language.german")}</option>
+              <option value="English">{t("letter.improve.language.english")}</option>
             </select>
           </label>
-        )}
+          <label className="letter-field">
+            <span>{t("letter.improve.style")}</span>
+            <select
+              value={letterStyle}
+              onChange={(event) => setLetterStyle(event.target.value as CoverLetterStyle)}
+              disabled={improving || saving || adopting || busy}
+            >
+              <option value="professional">{t("letter.improve.style.professional")}</option>
+              <option value="warm">{t("letter.improve.style.warm")}</option>
+              <option value="concise">{t("letter.improve.style.concise")}</option>
+              <option value="formal">{t("letter.improve.style.formal")}</option>
+            </select>
+          </label>
+          <label className="letter-field">
+            <span>{t("letter.improve.length")}</span>
+            <select
+              value={letterLength}
+              onChange={(event) => setLetterLength(event.target.value as CoverLetterLength)}
+              disabled={improving || saving || adopting || busy}
+            >
+              <option value="short">{t("letter.improve.length.short")}</option>
+              <option value="one_page">{t("letter.improve.length.one_page")}</option>
+              <option value="detailed">{t("letter.improve.length.detailed")}</option>
+            </select>
+          </label>
+          {models.length > 0 && (
+            <label className="letter-field">
+              <span>{t("letter.improve.model")}</span>
+              <select value={model} onChange={(event) => setModel(event.target.value)} disabled={improving || saving || adopting || busy}>
+                {models.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+        {models.length === 0 && <p className="letter-hint">{t("letter.improve.noModels")}</p>}
         <label className="letter-field">
           <span>{t("letter.improve.feedback")}</span>
           <textarea

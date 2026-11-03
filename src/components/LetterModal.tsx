@@ -1056,6 +1056,7 @@ export default function LetterModal({
                     <option value="professional">{t("letter.style.professional")}</option>
                     <option value="warm">{t("letter.style.warm")}</option>
                     <option value="concise">{t("letter.style.concise")}</option>
+                    <option value="formal">{t("letter.style.formal")}</option>
                   </select>
                 </label>
                 <label className="letter-field">

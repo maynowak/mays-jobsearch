@@ -10196,6 +10196,22 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   overflow-wrap: anywhere;
 }
 
+.applications-letter-improvement__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.applications-letter-improvement__options .letter-field select {
+  min-height: 44px;
+}
+
+@media (max-width: 560px) {
+  .applications-letter-improvement__options {
+    grid-template-columns: 1fr;
+  }
+}
+
 .applications-letter-improvement__privacy {
   margin: 0;
 }

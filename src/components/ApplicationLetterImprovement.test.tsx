@@ -33,14 +33,18 @@ const job: ApplicationJobReferenceV1 = {
   originalUrl: "https://example.invalid/job-1",
 };
 
-function version(id: string, content: string): CoverLetterVersionV1 {
+function version(
+  id: string,
+  content: string,
+  language: "de" | "en" = "de"
+): CoverLetterVersionV1 {
   return {
     versionId: id,
     jobId: job.jobId,
     createdAt: NOW,
     content,
     source: "generated",
-    language: "de",
+    language,
     model: "model-old",
   };
 }
@@ -429,4 +433,75 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     await waitFor(() => expect(screen.queryByText("Version 3 gespeichert.")).not.toBeInTheDocument());
   });
 
+
+  it("sends the explicitly selected language, style and length without an automatic request", async () => {
+    renderComparison(makeApplication([version("v1", "Version one")], "Draft"));
+
+    fireEvent.change(screen.getByLabelText("Sprache des Anschreibens"), { target: { value: "English" } });
+    fireEvent.change(screen.getByLabelText("Art des Anschreibens"), { target: { value: "formal" } });
+    fireEvent.change(screen.getByLabelText("Gewünschte Länge"), { target: { value: "short" } });
+    expect(generateCoverLetter).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+
+    expect(vi.mocked(generateCoverLetter).mock.calls[0][0].options).toMatchObject({
+      language: "English",
+      style: "formal",
+      length: "short",
+      model: "model-a",
+    });
+  });
+
+  it("keeps UI language and cover-letter language independent", async () => {
+    localStorage.setItem("mj-lang", "en");
+    renderComparison(makeApplication([version("v1", "Version one")], "Draft"));
+    expect(screen.getByLabelText("Cover-letter language")).toHaveValue("English");
+    fireEvent.change(screen.getByLabelText("Cover-letter language"), { target: { value: "German" } });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Suggest improvement" }));
+    await screen.findByRole("textbox", { name: "Edit AI proposal" });
+    expect(vi.mocked(generateCoverLetter).mock.calls[0][0].options.language).toBe("German");
+  });
+
+  it("uses a saved version's known language as the initial value", () => {
+    renderComparison(
+      makeApplication([version("v1", "German version", "de"), version("v2", "English version", "en")], "Draft")
+    );
+    fireEvent.change(screen.getByLabelText("Ausgangsversion"), { target: { value: "v2" } });
+    expect(screen.getByLabelText("Sprache des Anschreibens")).toHaveValue("English");
+  });
+
+  it("clears consent and preview when an improvement option changes", async () => {
+    renderComparison(makeApplication([version("v1", "Version one")], "Draft"));
+    const consent = screen.getByRole("checkbox");
+    fireEvent.click(consent);
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.change(screen.getByLabelText("Art des Anschreibens"), { target: { value: "formal" } });
+    expect(consent).not.toBeChecked();
+    expect(screen.queryByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).not.toBeInTheDocument();
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+  });
+
+  it("stores the selected letter language on a saved version", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    const onSaveVersion = vi.fn(async (nextVersion) => ({
+      ...application,
+      documents: {
+        ...application.documents,
+        coverLetterVersions: [...application.documents.coverLetterVersions, nextVersion],
+      },
+      version: application.version + 1,
+    }));
+    renderComparison(application, { onSaveVersion });
+    fireEvent.change(screen.getByLabelText("Sprache des Anschreibens"), { target: { value: "English" } });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Als neue Version speichern" }));
+    await screen.findByText("Version 2 gespeichert.");
+    expect(onSaveVersion.mock.calls[0][0].language).toBe("en");
+  });
 });

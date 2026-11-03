@@ -2,7 +2,7 @@ import type { CvDocument, Job, Profile } from "../types";
 import type { DescriptionOrigin } from "./jobDescriptionReview";
 
 export type CoverLetterLanguage = "German" | "English";
-export type CoverLetterStyle = "professional" | "warm" | "concise";
+export type CoverLetterStyle = "professional" | "warm" | "concise" | "formal";
 export type CoverLetterLength = "short" | "one_page" | "detailed";
 export type CandidateMode = "cv" | "manual";
 

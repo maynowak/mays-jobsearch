@@ -16,6 +16,7 @@ const ux05bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-M
 const ux05cEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05C");
 const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01A");
 const letterImprovementEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01B");
+const letterOptionsEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-OPTIONS-01");
 const letterDiffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01C");
 const letterAdoptionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01D");
 const profileHandoffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-PROFILE-HANDOFF-01");
@@ -385,13 +386,18 @@ async function runViewport(browser, name, viewport) {
 
   // LETTER-REVISION-01B: explicit, consent-gated AI improvement preview.
   await mkdir(letterImprovementEvidenceDir, { recursive: true });
+  await mkdir(letterOptionsEvidenceDir, { recursive: true });
   const improvement = page.locator(".applications-letter-improvement");
   await improvement.scrollIntoViewIfNeeded();
-  await page.locator(".applications-letter-improvement select").selectOption("mock-model");
+  await page.getByLabel("Sprache des Anschreibens").selectOption("English");
+  await page.getByLabel("Art des Anschreibens").selectOption("formal");
+  await page.getByLabel("Gewünschte Länge").selectOption("short");
+  await page.getByRole("combobox", { name: "KI-Modell", exact: true }).selectOption("mock-model");
   await page.getByRole("textbox", { name: "Verbesserungswunsch", exact: true }).fill("Bitte den Einstieg persönlicher formulieren.");
   await page.getByRole("checkbox").check();
   await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(letterImprovementEvidenceDir, `${name}-improvement.png`), fullPage: false });
+  await page.screenshot({ path: resolve(letterOptionsEvidenceDir, `${name}-options.png`), fullPage: false });
   await page.getByRole("button", { name: "Verbesserung vorschlagen" }).click();
   await page.getByRole("textbox", { name: "KI-Vorschlag bearbeiten", exact: true }).waitFor();
   await page.waitForTimeout(100);
@@ -422,6 +428,9 @@ async function runViewport(browser, name, viewport) {
   if (reviseRequest?.operation !== "revise") throw new Error(`${name}: improvement did not use revise`);
   if (reviseRequest?.revision?.draft_anonymized !== true) throw new Error(`${name}: draft was not marked anonymised`);
   if (reviseRequest?.candidate?.mode !== "manual") throw new Error(`${name}: unexpected candidate mode`);
+  if (reviseRequest?.options?.language !== "English") throw new Error(`${name}: selected language missing`);
+  if (reviseRequest?.options?.style !== "formal") throw new Error(`${name}: selected style missing`);
+  if (reviseRequest?.options?.length !== "short") throw new Error(`${name}: selected length missing`);
   await assertNoNavOverlap(page);
 
   // Unsaved AI proposal: normal tab navigation must not silently discard it.

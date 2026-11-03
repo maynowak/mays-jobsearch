@@ -378,4 +378,36 @@ describe("/api/cover-letter typed generation", () => {
     );
     expect(res.body.letter).not.toContain("**");
   });
+
+  it("supports the formal style and length guidance", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        options: { ...validBody.options, style: "formal", length: "short" },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("Selected style (formal)");
+    expect(prompt).toContain("public administration");
+    expect(prompt).toContain("Selected length (short)");
+    expect(prompt).toContain("Keep the letter short and focused");
+  });
+
+  it("rejects an unknown style instead of silently using a fallback", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        options: { ...validBody.options, style: "unknown" },
+      }),
+      res
+    );
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("bad_request");
+    expect(chat).not.toHaveBeenCalled();
+  });
 });
