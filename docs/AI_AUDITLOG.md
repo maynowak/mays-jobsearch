@@ -1,3 +1,13 @@
+2026-11-03 · JM-COVER-LETTER-FULL-DISPLAY-01
+- Typ: Anschreiben-Generierung/vollständige Anzeige
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Befund: `/api/cover-letter` lieferte vollständigen Text; die fest hohe Textarea zeigte nur den sichtbaren Ausschnitt, der Rest lag hinter einem internen Scrollbereich. Kein Server-/Provider-/Datenverlust.
+- Fix: `LetterModal` misst nach erfolgreicher Generierung und bei Textänderungen den `scrollHeight` der Textarea und setzt die Höhe entsprechend; das vollständige Anschreiben wird sichtbar. Max-Length, Editing, Copy/Download, Revision und Übernahme bleiben unverändert.
+- Regression: Cover-Letter-E2E nutzt ein langes synthetisches Anschreiben mit Endmarker und prüft vollständigen Editor-Inhalt sowie `scrollHeight <= clientHeight + 2` auf Desktop und Mobil.
+- Tests: Gesamtsuite **1222 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Cover-Letter-E2E 1440/390 PASS, keine Console-Errors. Keine echten KI-/Provider-/Backend-Aufrufe.
+- Git: Fix `a1b2588`, Branch `fix/cover-letter-full-display`; Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-COVER-LETTER-FULL-DISPLAY-01.md`
+
 2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05B
 - Typ: Bewerbungsverwaltung/kompakte Bewerbungskarten/Listennavigation
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
