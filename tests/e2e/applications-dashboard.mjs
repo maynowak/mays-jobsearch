@@ -164,6 +164,20 @@ async function assertNoNavOverlapWhileScrolling(page) {
   await page.waitForTimeout(60);
 }
 
+async function checkComparisonResponsive(page, originalViewport) {
+  for (const width of [1024, 768, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.locator(".applications-letter-comparison").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(80);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1
+    );
+    if (overflow) throw new Error(`Letter comparison overflow at ${width}px`);
+  }
+  await page.setViewportSize(originalViewport);
+  await page.waitForTimeout(80);
+}
+
 async function checkResponsiveLayouts(page, originalViewport) {
   for (const width of [1024, 768, 320]) {
     await page.setViewportSize({ width, height: 900 });
@@ -341,6 +355,7 @@ async function runViewport(browser, name, viewport) {
   const comparisonText = comparisonPanel.locator(".applications-letter-comparison__text").first();
   const comparisonClipped = await comparisonText.evaluate((element) => element.scrollHeight > element.clientHeight + 2);
   if (comparisonClipped) throw new Error(`${name}: comparison text is clipped`);
+  await checkComparisonResponsive(page, viewport);
   await page.getByRole("tab", { name: "Übersicht" }).click();
 
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();
