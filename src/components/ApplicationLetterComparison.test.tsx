@@ -21,9 +21,10 @@ function version(id: string, content: string, source: CoverLetterVersionV1["sour
 
 function makeApplication(
   versions: CoverLetterVersionV1[] = [],
-  draft = "CURRENT DRAFT"
+  draft = "CURRENT DRAFT",
+  localId = "local-1"
 ): SessionApplicationV1 {
-  const base = createSessionApplication({ localId: "local-1", now: NOW, job, coverLetter: draft });
+  const base = createSessionApplication({ localId, now: NOW, job, coverLetter: draft });
   return {
     ...base,
     documents: { ...base.documents, coverLetterDraft: draft, coverLetterVersions: versions },
@@ -113,7 +114,7 @@ describe("LETTER-REVISION-01A ApplicationLetterComparison", () => {
 
   it("resets the selection when switching applications", async () => {
     const first = makeApplication([version("v1", "FIRST", "generated")], "FIRST DRAFT");
-    const second = makeApplication([version("v2", "SECOND", "generated")], "SECOND DRAFT");
+    const second = makeApplication([version("v2", "SECOND", "generated")], "SECOND DRAFT", "local-2");
     const view = renderComparison(first);
     fireEvent.change(screen.getByLabelText("Ausgangsversion"), { target: { value: "v1" } });
     expect(screen.getAllByText("FIRST").length).toBeGreaterThan(0);

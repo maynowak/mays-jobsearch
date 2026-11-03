@@ -640,6 +640,38 @@ describe("APP-02 ApplicationsSection", () => {
     expect(screen.getByLabelText("Vergleichsversion")).toBeInTheDocument();
     expect(screen.getAllByText("Second saved letter").length).toBeGreaterThan(0);
   });
+
+  it("adopts a saved version through the real repository without creating a version or changing status", async () => {
+    const versions = [
+      {
+        versionId: "letter-v1",
+        jobId: job.jobId,
+        createdAt: NOW,
+        content: "Adopted letter",
+        source: "generated" as const,
+      },
+    ];
+    const application = draft();
+    const { onChanged } = renderSectionWithChanges([
+      { ...application, documents: { ...application.documents, coverLetterVersions: versions } },
+    ]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Als aktuellen Entwurf übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ja, Entwurf ersetzen" }));
+
+    await waitFor(() => {
+      const latest = onChanged.mock.calls.at(-1)?.[0] as SessionApplicationV1[] | undefined;
+      const updated = latest?.find((entry) => entry.localId === application.localId);
+      expect(updated?.documents.coverLetterDraft).toBe("Adopted letter");
+    });
+    const latest = onChanged.mock.calls.at(-1)?.[0] as SessionApplicationV1[];
+    const updated = latest.find((entry) => entry.localId === application.localId)!;
+    expect(updated.documents.coverLetterVersions).toHaveLength(1);
+    expect(updated.documents.coverLetterVersions[0].content).toBe("Adopted letter");
+    expect(updated.documents.documentStatus).toBe("draft");
+    expect(updated.status).toBe("draft");
+    expect(updated.statusHistory).toHaveLength(1);
+  });
   it("ignores a late operation after the repository/session changes", async () => {
     const base = createSessionApplicationRepository({ initial: [draft()] });
     let release!: () => void;

@@ -45,8 +45,12 @@ function version(id: string, content: string): CoverLetterVersionV1 {
   };
 }
 
-function makeApplication(versions: CoverLetterVersionV1[] = [], draft = "Original letter"): SessionApplicationV1 {
-  const base = createSessionApplication({ localId: "local-1", now: NOW, job, coverLetter: draft });
+function makeApplication(
+  versions: CoverLetterVersionV1[] = [],
+  draft = "Original letter",
+  localId = "local-1"
+): SessionApplicationV1 {
+  const base = createSessionApplication({ localId, now: NOW, job, coverLetter: draft });
   return { ...base, documents: { ...base.documents, coverLetterDraft: draft, coverLetterVersions: versions } };
 }
 
@@ -114,7 +118,7 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     expect(screen.getByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).toHaveValue("IMPROVED LETTER");
     expect(screen.getByRole("heading", { name: "Änderungen" })).toBeInTheDocument();
     expect(document.querySelector(".applications-letter-improvement__diff-text ins")).not.toBeNull();
-    expect(screen.getAllByText(/Nicht als Version gespeichert/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Nicht automatisch als Version gespeichert/).length).toBeGreaterThan(0);
   });
 
   it("uses the selected saved version as source", async () => {
@@ -171,7 +175,7 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
       })
     );
     const first = makeApplication([version("v1", "First")], "First draft");
-    const second = makeApplication([version("v2", "Second")], "Second draft");
+    const second = makeApplication([version("v2", "Second")], "Second draft", "local-2");
     const view = renderComparison(first);
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
@@ -274,6 +278,29 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     expect(onSaveVersion).toHaveBeenCalledTimes(1);
   });
 
+  it("reports unsaved proposal state to the parent navigation guard", async () => {
+    const onDirtyChange = vi.fn();
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    render(
+      <LangProvider>
+        <ApplicationLetterComparison
+          application={application}
+          models={models}
+          defaultModel="model-a"
+          recommendedModel="model-a"
+          onDirtyChange={onDirtyChange}
+        />
+      </LangProvider>
+    );
+    expect(onDirtyChange).toHaveBeenLastCalledWith(false);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(true));
+    fireEvent.click(screen.getByRole("button", { name: "Vorschlag verwerfen" }));
+    await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false));
+  });
+
   it("blocks double-click while saving a version", async () => {
     const application = makeApplication([version("v1", "Version one")], "Draft");
     let resolveSave!: (value: SessionApplicationV1) => void;
@@ -289,7 +316,112 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     fireEvent.click(saveButton);
     expect(onSaveVersion).toHaveBeenCalledTimes(1);
     resolveSave(application);
-    await screen.findByText(/Version .* gespeichert/);
+    await screen.findByText("Version 1 gespeichert.");
+  });
+
+  it("clears consent when the source version changes", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    renderComparison(application);
+    const consent = screen.getByRole("checkbox");
+    fireEvent.click(consent);
+    expect(consent).toBeChecked();
+    fireEvent.change(screen.getByLabelText("Ausgangsversion"), { target: { value: "v1" } });
+    await waitFor(() => expect(consent).not.toBeChecked());
+  });
+
+  it("shows the dedicated empty-answer message", async () => {
+    vi.mocked(generateCoverLetter).mockResolvedValueOnce({ letter: "   " });
+    renderComparison(makeApplication([version("v1", "Version one")], "Draft"));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/keinen verwendbaren Text/);
+    expect(screen.queryByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).not.toBeInTheDocument();
+  });
+
+  it("marks a saved proposal and disables a repeated unchanged save", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    const onSaveVersion = vi.fn(async (nextVersion) => ({
+      ...application,
+      documents: {
+        ...application.documents,
+        coverLetterVersions: [...application.documents.coverLetterVersions, nextVersion],
+      },
+      version: application.version + 1,
+    }));
+    renderComparison(application, { onSaveVersion });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Als neue Version speichern" }));
+    await screen.findByText("Version 2 gespeichert.");
+    expect(screen.getByRole("button", { name: "Als Version gespeichert" })).toBeDisabled();
+    expect(screen.getByText(/Als Version 2 gespeichert\. Weitere Änderungen/)).toBeInTheDocument();
+  });
+
+  it("moves focus into and back out of the adoption confirmation", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    renderComparison(application, {
+      onAdoptDraft: vi.fn(async () => application),
+    });
+    const trigger = screen.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(screen.getByRole("button", { name: "Ja, Entwurf ersetzen" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" })).toHaveFocus()
+    );
+  });
+
+  it("ignores a late save after an application switch and resets the save guard", async () => {
+    const first = makeApplication([version("v1", "First"), version("v1b", "First two")], "First draft");
+    const second = makeApplication([version("v2", "Second")], "Second draft", "local-2");
+    let resolveFirst!: (value: SessionApplicationV1) => void;
+    const onSaveVersion = vi.fn()
+      .mockImplementationOnce(() => new Promise<SessionApplicationV1>((resolve) => {
+        resolveFirst = resolve;
+      }))
+      .mockImplementationOnce(async (nextVersion) => ({
+        ...second,
+        documents: {
+          ...second.documents,
+          coverLetterVersions: [...second.documents.coverLetterVersions, nextVersion],
+        },
+        version: second.version + 1,
+      }));
+    const view = renderComparison(first, { onSaveVersion });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Als neue Version speichern" }));
+    expect(onSaveVersion).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <LangProvider>
+        <ApplicationLetterComparison
+          application={second}
+          models={models}
+          defaultModel="model-a"
+          recommendedModel="model-a"
+          onSaveVersion={onSaveVersion}
+        />
+      </LangProvider>
+    );
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Als neue Version speichern" }));
+    expect(onSaveVersion).toHaveBeenCalledTimes(2);
+
+    resolveFirst({
+      ...first,
+      documents: {
+        ...first.documents,
+        coverLetterVersions: [...first.documents.coverLetterVersions, version("v-first-late", "Late first")],
+      },
+      version: first.version + 1,
+    });
+    await waitFor(() => expect(screen.queryByText("Version 3 gespeichert.")).not.toBeInTheDocument());
   });
 
 });

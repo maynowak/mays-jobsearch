@@ -10045,7 +10045,19 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .applications-letter-improvement__diff-text ins {
   background: #dcfce7;
   color: #14532d;
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.applications-letter-comparison__adopt button,
+.applications-letter-improvement__actions button,
+.applications-letter-improvement__consent {
+  min-height: 44px;
+}
+
+.applications-letter-improvement__consent {
+  align-items: center;
 }
 
 .applications-letter-comparison__adopt {

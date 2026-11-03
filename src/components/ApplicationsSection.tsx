@@ -120,6 +120,7 @@ export default function ApplicationsSection({
   const [applications, setApplications] = useState<SessionApplicationV1[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [letterDirty, setLetterDirty] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<ApplicationFilter>("all");
   const [sort, setSort] = useState<ApplicationSort>("newest");
@@ -144,6 +145,7 @@ export default function ApplicationsSection({
     history: null,
   });
   const mountedRef = useRef(true);
+  const applicationsRef = useRef<SessionApplicationV1[]>([]);
   const repositoryRef = useRef(repository);
   const onChangedRef = useRef(onChanged);
   const operationsRef = useRef<Set<AbortController>>(new Set());
@@ -168,6 +170,7 @@ export default function ApplicationsSection({
 
   const notify = (next: SessionApplicationV1[]) => {
     if (!mountedRef.current || repositoryRef.current !== repository) return;
+    applicationsRef.current = next;
     setApplications(next);
     onChangedRef.current?.(next);
   };
@@ -180,6 +183,7 @@ export default function ApplicationsSection({
       .list({ signal: controller.signal })
       .then((page) => {
         if (!active) return;
+        applicationsRef.current = page.items;
         setApplications(page.items);
         onChangedRef.current?.(page.items);
       })
@@ -201,6 +205,7 @@ export default function ApplicationsSection({
     setEditError("");
     setPendingSubmit(false);
     setDeleteConfirmId(null);
+    setLetterDirty(false);
   }, [repository]);
 
   useEffect(() => {
@@ -218,6 +223,10 @@ export default function ApplicationsSection({
       return current;
     });
   }, [applications]);
+
+  useEffect(() => {
+    setLetterDirty(false);
+  }, [selectedId]);
 
   const metrics = useMemo(() => ({
     total: applications.length,
@@ -274,7 +283,38 @@ export default function ApplicationsSection({
   const selected = applications.find((application) => application.localId === selectedId) ?? null;
 
   const replace = (updated: SessionApplicationV1) => {
-    notify(applications.map((application) => (application.localId === updated.localId ? updated : application)));
+    const next = applicationsRef.current.map((application) =>
+      application.localId === updated.localId ? updated : application
+    );
+    notify(next);
+  };
+
+  const runResult = async <T,>(
+    action: (signal: AbortSignal, current: () => boolean) => Promise<T>
+  ): Promise<T> => {
+    if (runningRef.current) {
+      throw new ApplicationRepositoryError(
+        "Another application operation is already running",
+        "conflict"
+      );
+    }
+    runningRef.current = true;
+    setBusy(true);
+    const controller = new AbortController();
+    const repositoryAtStart = repository;
+    const current = () =>
+      mountedRef.current &&
+      repositoryRef.current === repositoryAtStart &&
+      !controller.signal.aborted;
+    operationsRef.current.add(controller);
+    setError("");
+    try {
+      return await action(controller.signal, current);
+    } finally {
+      operationsRef.current.delete(controller);
+      runningRef.current = false;
+      if (mountedRef.current) setBusy(false);
+    }
   };
 
   const run = async (
@@ -314,6 +354,10 @@ export default function ApplicationsSection({
       setError(t("applications.edit.finishFirst"));
       return false;
     }
+    if (letterDirty) {
+      setError(t("applications.letterComparison.finishFirst"));
+      return false;
+    }
     setSelectedId(id);
     setActiveTab("overview");
     setEditing(false);
@@ -328,6 +372,10 @@ export default function ApplicationsSection({
     if (tab === activeTab) return true;
     if (editing) {
       setError(t("applications.edit.finishFirst"));
+      return false;
+    }
+    if (letterDirty) {
+      setError(t("applications.letterComparison.finishFirst"));
       return false;
     }
     setActiveTab(tab);
@@ -513,25 +561,37 @@ export default function ApplicationsSection({
 
   const handleSaveLetterVersion = async (version: CoverLetterVersionV1): Promise<SessionApplicationV1> => {
     if (!selected) throw new Error("No application selected");
-    const updated = await repository.addCoverLetterVersion(selected.localId, {
-      expectedVersion: selected.version,
-      version,
+    return runResult(async (signal, current) => {
+      const updated = await repository.addCoverLetterVersion(selected.localId, {
+        expectedVersion: selected.version,
+        version,
+        signal,
+      });
+      if (!current()) {
+        throw new ApplicationRepositoryError("Application operation was aborted", "aborted");
+      }
+      replace(updated);
+      return updated;
     });
-    replace(updated);
-    return updated;
   };
 
   const handleAdoptLetterDraft = async (content: string): Promise<SessionApplicationV1> => {
     if (!selected) throw new Error("No application selected");
-    const updated = await repository.update(selected.localId, {
-      expectedVersion: selected.version,
-      changes: {
-        coverLetterDraft: content,
-        documentStatus: content.trim() ? "draft" : "missing",
-      },
+    return runResult(async (signal, current) => {
+      const updated = await repository.update(selected.localId, {
+        expectedVersion: selected.version,
+        changes: {
+          coverLetterDraft: content,
+          documentStatus: content.trim() ? "draft" : "missing",
+        },
+        signal,
+      });
+      if (!current()) {
+        throw new ApplicationRepositoryError("Application operation was aborted", "aborted");
+      }
+      replace(updated);
+      return updated;
     });
-    replace(updated);
-    return updated;
   };
 
   const handleSaveEdits = (changes: SessionApplicationUpdateChanges) => {
@@ -1043,8 +1103,10 @@ export default function ApplicationsSection({
                     models={models}
                     defaultModel={defaultModel}
                     recommendedModel={recommendedModel}
+                    busy={busy}
                     onSaveVersion={handleSaveLetterVersion}
                     onAdoptDraft={handleAdoptLetterDraft}
+                    onDirtyChange={setLetterDirty}
                   />
 
                   <section className="applications-block">

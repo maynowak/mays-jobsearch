@@ -22,6 +22,14 @@ const AUTHOR_NAME_PATTERN =
 const GERMAN_AUTHOR_NAME_PATTERN =
   /\b(?:Autorenname|autorenname|Künstlername|künstlername)\s*:\s*(\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2})/gu;
 
+// Cover-letter signatures are a high-risk path because the sender's name is
+// usually not labelled. Keep this context narrow: a closing phrase followed by
+// one name line. This avoids masking ordinary prose or job titles.
+const SIGNATURE_NAME_PATTERN =
+  /((?:Mit freundlichen Grüßen|Mit freundlichem Gruß|Freundliche Grüße|Beste Grüße|Herzliche Grüße|Kind regards|Best regards|Yours sincerely|Yours faithfully)[^\S\r\n]*,?[ \t]*(?:\r?\n)+[ \t]*)(\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2})(?=\s*(?:\r?\n|$))/giu;
+const SELF_NAME_PATTERN =
+  /\b(?:Mein Name ist|My name is|Ich heiße|Ich heisse)\s+(\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2})\b/giu;
+
 // CV headers often use all capitals (for example "MAY NOWAK · PROFESSIONAL
 // CV"). Only treat an all-caps pair as a name when it starts a line/header and
 // is immediately followed by a visual separator. This avoids replacing normal
@@ -145,6 +153,10 @@ function anonymizeNames(text: string): string {
   }
 
   const contextualNamesRemoved = titledNamesRemoved
+    .replace(SIGNATURE_NAME_PATTERN, "$1[NAME]")
+    .replace(SELF_NAME_PATTERN, (match) =>
+      match.replace(/\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}$/u, "[NAME]")
+    )
     .replace(LABELLED_NAME_PATTERN, "[NAME]")
     .replace(AUTHOR_NAME_PATTERN, (match) =>
       match.replace(/\p{Lu}[\p{Ll}]+(?:[\s'-]+\p{Lu}[\p{Ll}]+){1,2}$/u, "[NAME]")

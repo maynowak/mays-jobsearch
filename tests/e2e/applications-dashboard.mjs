@@ -421,11 +421,18 @@ async function runViewport(browser, name, viewport) {
   if (reviseRequest?.candidate?.mode !== "manual") throw new Error(`${name}: unexpected candidate mode`);
   await assertNoNavOverlap(page);
 
+  // Unsaved AI proposal: normal tab navigation must not silently discard it.
+  await page.getByRole("tab", { name: "Übersicht" }).click();
+  await page.getByText(/Bitte speichere oder verwerfe den KI-Vorschlag/).waitFor();
+  if ((await page.getByRole("tab", { name: "Dokumente" }).getAttribute("aria-selected")) !== "true") {
+    throw new Error(`${name}: tab switch discarded the unsaved AI proposal`);
+  }
+
   // LETTER-REVISION-01D: save the edited proposal and adopt it explicitly.
   await mkdir(letterAdoptionEvidenceDir, { recursive: true });
   await page.getByRole("button", { name: "Als neue Version speichern" }).click();
-  await page.getByText("Version 3 gespeichert.").waitFor();
-  await page.getByText("Version 3 gespeichert.").scrollIntoViewIfNeeded();
+  await page.getByText("Version 3 gespeichert.", { exact: true }).waitFor();
+  await page.getByText("Version 3 gespeichert.", { exact: true }).scrollIntoViewIfNeeded();
   await page.waitForFunction(() => {
     const select = document.querySelector(".applications-letter-comparison select");
     return select instanceof HTMLSelectElement && select.options.length === 4;

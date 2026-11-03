@@ -32,6 +32,22 @@ describe("anonymizeText", () => {
     );
   });
 
+  it("masks names in ordinary cover-letter signatures", () => {
+    expect(anonymizeText("Mit freundlichen Grüßen\nMay Nowak")).toBe(
+      "Mit freundlichen Grüßen\n[NAME]"
+    );
+    expect(anonymizeText("Kind regards,\nMay Nowak\n")).toBe(
+      "Kind regards,\n[NAME]\n"
+    );
+    expect(anonymizeText("Mein Name ist May Nowak.")).toBe("Mein Name ist [NAME].");
+  });
+
+  it("does not mask ordinary prose after a closing phrase", () => {
+    expect(anonymizeText("Mit freundlichen Grüßen\nIch freue mich auf Ihre Rückmeldung.")).toBe(
+      "Mit freundlichen Grüßen\nIch freue mich auf Ihre Rückmeldung."
+    );
+  });
+
   it("masks the first-line name at repeated headers and explicit author context", () => {
     const result = anonymizeText(
       "May Nowak\nSenior Software Architect\n\nMAY NOWAK · PROFESSIONAL CV\n" +
