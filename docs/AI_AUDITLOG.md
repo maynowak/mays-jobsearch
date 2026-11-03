@@ -1,3 +1,16 @@
+2026-11-03 · JM-APPLICATION-LETTER-REVISION-01E
+- Typ: Anschreiben/konsolidierte QA/Datenschutz/Release Readiness
+- Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: 01D `01836f7`; Branch `feature/jm-application-letter-revision-01e`; lokaler `main` `4364eab`.
+- Scope: 01A–01D vollständig geprüft; keine neue Produktfunktion, keine neue API/Persistenz, keine RIS-/AWS-/Cognito-/Provider-Aufrufe.
+- Korrekturen: Save/Adopt laufen über den gemeinsamen Parent-Operationsschutz (`runningRef`, `AbortSignal`, Session-/Repository-Check); `replace()` nutzt den aktuellen Anwendungs-Ref; verspätete Save-/Adopt-Antworten werden nach Bewerbungswechsel/Unmount verworfen; Doppelklick-/Konfliktpfade bleiben erhalten; unveränderter, bereits gespeicherter Vorschlag kann nicht erneut gespeichert werden.
+- Consent/Privacy: Consent wird bei Quellen-/Modellwechsel zurückgesetzt; Transparenztext nennt mögliche Fallback-Anbieter; „nicht automatisch gespeichert“ präzisiert; typische Signaturnamen (`Mit freundlichen Grüßen\n<Name>`, `Kind regards,\n<Name>`, `Mein Name ist …`) werden vor dem KI-Aufruf maskiert. Ausgangstext/Wunsch bleiben anonymisiert; keine Kontakt-/Gehalts-/Notiz-/CV-Übertragung.
+- Session/UI: `requestSeqRef`/`appIdRef`/`actionSeqRef`, `invalidate()`/Generation, `expectedVersion` unverändert; unsaved AI proposal blockiert normalen Tab-/Bewerbungswechsel; Adopt-Bestätigung mit Fokusführung; Diff-Einfügungen zusätzlich unterstrichen, nicht nur farbcodiert; Touch-Ziele 44 px.
+- Tests: Gesamtsuite **1254 passed/5 skipped**; Feature gezielt **69 passed**; Cover-Letter-API **23 passed**; TypeScript/Build/API-Syntax/`git diff --check` PASS; Applications-E2E 1440/390 + responsive 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; Mobile-Nav 390/430/768/1024/1440 PASS; Guest-CV 1440/390 PASS; JSON-Schema 15 gültig + negatives Fixture abgelehnt; keine Console-Errors; keine echten KI-/Provider-/Apify-/RIS-/AWS-Aufrufe.
+- Offen/Produktion: Exactly-once bei verlorener Antwort nicht garantiert; keine Live-Provider-Verifikation; keine serverseitige Anonymisierung/Faktenvalidierung; `/api/cover-letter` ohne Auth/IP-Quota; AI-Request ohne AbortSignal; keine dauerhafte RIS-Persistenz/Retention-Freigabe. **LOCAL INTEGRATION: READY; PRODUCTION: BLOCKED; NOT DEPLOYED.**
+- Git: Implementierung `1463525`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Logs: `docs/reports/JM-APPLICATION-LETTER-REVISION-01E.md`, `docs/reports/JM-APPLICATION-LETTER-REVISION-01-CONSOLIDATED.md`
+
 2026-11-03 · JM-APPLICATION-LETTER-REVISION-01D
 - Typ: Anschreiben/kontrollierte Versionsübernahme/Entwurfsübernahme
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
