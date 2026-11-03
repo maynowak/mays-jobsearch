@@ -961,7 +961,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
 
           <section id="cv-builder-languages">
             <Section title={t("cvBuilder.section.languages")} summaryText={`${draft.languages.length + draft.links.length}`}>
-              <h4>{t("cvBuilder.section.languages")}</h4>
+              <h4>{t("cvBuilder.languagesTitle")}</h4>
               {draft.languages.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.languages.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
@@ -1026,7 +1026,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
                 + {t("cvBuilder.addLanguage")}
               </button>
 
-              <h4>{t("cvBuilder.section.languages")} — Links</h4>
+              <h4>{t("cvBuilder.linksTitle")}</h4>
               {draft.links.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.links.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
