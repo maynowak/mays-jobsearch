@@ -13,9 +13,10 @@ interface Props {
   onGenerateLetter: (job: Job, prepare: string) => void;
   onAtsEvaluate?: (job: Job) => void;
   analyzingJobSlug?: string | null; // Job currently being analyzed in ATS overlay
+  expandAllSignal?: number;
 }
 
-export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEvaluate, analyzingJobSlug }: Props) {
+export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEvaluate, analyzingJobSlug, expandAllSignal = 0 }: Props) {
   const { t } = useLang();
   const [expanded, setExpanded] = useState(false);
   const [moreOpen, setMoreOpen] = useState<boolean>(() => matches.length === 0);
@@ -25,6 +26,12 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
   useEffect(() => {
     setMoreOpen(matches.length === 0);
   }, [matches.length]);
+
+  useEffect(() => {
+    if (!expandAllSignal) return;
+    setExpanded(true);
+    setMoreOpen(true);
+  }, [expandAllSignal]);
 
   if (matches.length === 0 && remainingJobs.length === 0) return null;
 
@@ -51,7 +58,7 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
     <section id="matches" className="results" aria-label={t("results.aria")}>
       {matches.length > 0 && (
         <div className="results-header">
-          <h2>{heading}</h2>
+          <h2 id="matches-heading" tabIndex={-1}>{heading}</h2>
           {subline && <p className="results-sub">{subline}</p>}
           {hasMore && (
             <button
@@ -62,6 +69,12 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
               {expanded ? t("results.collapse") : t("results.expandAll", { count: matches.length })}
             </button>
           )}
+        </div>
+      )}
+
+      {matches.length === 0 && remainingJobs.length > 0 && (
+        <div className="results-header">
+          <h2 id="matches-heading" tabIndex={-1}>{t("results.foundJobs")}</h2>
         </div>
       )}
 

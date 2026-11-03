@@ -38,6 +38,17 @@
 - Screenshots: `docs/reports/assets/JM-CV-BUILDER-01A/`.
 - Git: Domain `8f4ea9c`, Editor `739a495`, Session/Navigation `85cf61e`, E2E/responsive `14d24d2`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
 - Entscheidung: **CV-BUILDER-01A READY für 01B**; PDF, Persistenz, KI-Optimierung, ATS-Kopplung und RIS bleiben OPEN. **PRODUCTION: BLOCKED.**
+2026-11-03 · JM-SEARCH-RESULTS-MOBILE-UX-04
+- Typ: Mobile Stellensuche/Trefferanzeige/Ergebnissprung/KI-Aktionsbutton
+- Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `e098fbd`; `origin/main` `4364eab`; Branch `feature/jm-search-results-mobile-ux-04`.
+- Ergebnisübersicht: neue `SearchResultsSummary` mit tatsächlicher `foundJobs.length`, Singular/Plural, „Zu den … Stellen“ und einmaliger KI-Aktion. `matches` wird nicht zur Trefferzahl addiert; bei 0 Treffern keine Aktion, während laufender Suche keine veraltete Zahl.
+- Ergebnissprung: vorhandener `#matches`-Bereich, `resultsExpandAllSignal` öffnet eingeklappte Matches, Fokus auf `#matches-heading`, Sticky-/Reduced-Motion-Berücksichtigung; keine neue Suche/KI-Anfrage.
+- KI: vorhandener `handleMatchWithAI`/`busyRef`/Provider-Fallback unverändert; Lade-, Fehler- und Modell-Recovery-Pfade erhalten; doppelte Aktionen verhindert; `.match-btn` mit Cyan-Hervorhebung, 44 px, Fokus und Disabled-Zustand. Die Aktion liegt in der Ergebnisübersicht; SearchForm behält seine optionale Komponenten-API.
+- Tests: Gesamtsuite **1265 passed/5 skipped**; Summary **4**, App/Results/SearchForm **127**, Cover-Letter-API **23**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Search-Results-E2E PASS inkl. 1440/1024/768/430/390/320, Fokus, Lade-/Fehler-/Expand-Zustand; Guest-CV/Applications/Cover-Letter/Mobile-Nav-E2E PASS; keine Console-Errors, keine echten Provider-/RIS-/AWS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-SEARCH-RESULTS-MOBILE-UX-04/`.
+- Git: Feature `a0a7f00`, E2E/Screenshots `72c492c`, Screenshot-Aktualisierung `a8ec5be`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **SEARCH-RESULTS-MOBILE-UX-04 READY** für kontrollierte lokale Integration; **PRODUCTION BLOCKED.**
 
 2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05C-MAIN-INTEGRATION-01
 - Typ: Lokale Git-Integration/Regression/Dokumentation

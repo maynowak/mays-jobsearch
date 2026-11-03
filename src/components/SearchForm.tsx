@@ -91,11 +91,9 @@ export default function SearchForm({
       ? t("search.searching")
       : phase === "scoring"
         ? t("search.scoring")
-        : isMatching
-          ? t("search.matching")
-          : rematch
-            ? t("search.buttonRematch")
-            : t("search.button");
+        : rematch
+          ? t("search.buttonRematch")
+          : t("search.button");
 
   const toggleIn = (list: WorkMode[], mode: WorkMode): WorkMode[] =>
     list.includes(mode) ? list.filter((m) => m !== mode) : [...list, mode];

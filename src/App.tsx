@@ -16,6 +16,7 @@ import JobSources from "./components/JobSources";
 import ModelSelector from "./components/ModelSelector";
 import Status from "./components/Status";
 import Results from "./components/Results";
+import SearchResultsSummary from "./components/SearchResultsSummary";
 import AlertCard from "./components/AlertCard";
 import Footer from "./components/Footer";
 import LetterModal, { type LetterPreparationContext } from "./components/LetterModal";
@@ -170,6 +171,8 @@ export default function App() {
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [foundJobs, setFoundJobs] = useState<Job[]>([]);
+  const [resultsExpandAllSignal, setResultsExpandAllSignal] = useState(0);
+  const previousFoundJobsRef = useRef(false);
   const [profile, setProfile] = useState<Profile>({ ...INITIAL_MANUAL_PROFILE });
   const [letterJob, setLetterJob] = useState<{
     job: Job;
@@ -1738,6 +1741,41 @@ export default function App() {
 
   const hasResults = matches.length > 0 || foundJobs.length > 0;
 
+  useEffect(() => {
+    if (!hasFoundJobs || isSearching) {
+      previousFoundJobsRef.current = false;
+      return;
+    }
+    if (previousFoundJobsRef.current) return;
+    previousFoundJobsRef.current = true;
+    const summary = document.getElementById("search-results-summary");
+    if (!summary || typeof summary.scrollIntoView !== "function") return;
+    const reducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    summary.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [hasFoundJobs, isSearching]);
+
+  const jumpToSearchResults = () => {
+    setResultsExpandAllSignal((value) => value + 1);
+    const reveal = () => {
+      const section = document.getElementById("matches");
+      if (!section) return;
+      const reducedMotion =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      section.scrollIntoView({
+        behavior: reducedMotion ? "auto" : "smooth",
+        block: "start",
+      });
+      document.getElementById("matches-heading")?.focus({ preventScroll: true });
+    };
+    window.requestAnimationFrame(() => window.requestAnimationFrame(reveal));
+  };
+
   // JOBMATCHER-PROFILE-ROUTING-FIX-01: Der Landing-Early-Return darf die
   // Profilseite nicht abfangen (Defensiv-Guard zusätzlich zur Route oben).
   // WICHTIG: /auth/callback muss vor diesem Early-Return behandelt werden,
@@ -1792,7 +1830,6 @@ export default function App() {
         value={profile}
         onChange={handleProfileChange}
         onSubmit={handleSubmit}
-        onMatch={handleMatchWithAI}
         matching={isMatching}
         hasJobs={hasFoundJobs}
         rematch={canRematch}
@@ -3186,12 +3223,21 @@ export default function App() {
 
                 {hasResults ? (
                   <section className="results-workspace">
+                    {hasFoundJobs && !isSearching && (
+                      <SearchResultsSummary
+                        count={foundJobs.length}
+                        matching={isMatching}
+                        onJump={jumpToSearchResults}
+                        onMatch={() => void handleMatchWithAI()}
+                      />
+                    )}
                     <Results
                       matches={matches}
                       foundJobs={foundJobs}
                       onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
                       onAtsEvaluate={(job) => setAtsJob(job)}
                       analyzingJobSlug={atsJob?.slug ?? null}
+                      expandAllSignal={resultsExpandAllSignal}
                     />
                   </section>
                 ) : (
