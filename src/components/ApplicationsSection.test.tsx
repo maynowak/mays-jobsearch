@@ -462,10 +462,14 @@ describe("APP-02 ApplicationsSection", () => {
       followUp: { dueOn: calendarDate(-3), status: "open" as const, note: "Nachfassen" },
     };
     renderSection([overdueApplication, todayApplication]);
-    await screen.findByText("Overdue Job");
+    await screen.findAllByText("Overdue Job");
     expect(screen.getAllByText("Heute nachfassen").length).toBeGreaterThan(0);
     expect(screen.getAllByText("3 Tage überfällig").length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: /Overdue Job/ }));
+    const overdueListItem = Array.from(
+      document.querySelectorAll<HTMLButtonElement>(".applications-list__item")
+    ).find((button) => button.textContent?.includes("Overdue Job"));
+    expect(overdueListItem).toBeTruthy();
+    fireEvent.click(overdueListItem!);
     expect(screen.getByText("Nächste Wiedervorlage:")).toBeInTheDocument();
   });
 
@@ -524,6 +528,89 @@ describe("APP-02 ApplicationsSection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Wiedervorlage speichern" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/gültiges Wiedervorlagedatum/i);
     expect(onChanged).not.toHaveBeenCalled();
+  });
+
+  it("computes cockpit metrics and action-needed groups from current status and follow-ups", async () => {
+    const overdue = {
+      ...draft({ localId: "overdue", job: { ...job, jobId: "overdue", title: "Overdue Job" } }),
+      followUp: { dueOn: calendarDate(-2), status: "open" as const },
+    };
+    const dueToday = {
+      ...draft({ localId: "today", job: { ...job, jobId: "today", title: "Today Job" } }),
+      followUp: { dueOn: calendarDate(0), status: "open" as const },
+    };
+    const submittedApp = {
+      ...draft({ localId: "submitted", job: { ...job, jobId: "submitted", title: "Submitted Job" } }),
+      status: "submitted" as const,
+    };
+    const interviewApp = {
+      ...draft({ localId: "interview", job: { ...job, jobId: "interview", title: "Interview Job" } }),
+      status: "interview" as const,
+    };
+    renderSection([overdue, dueToday, submittedApp, interviewApp]);
+    await screen.findAllByText("Overdue Job");
+
+    const metric = (label: string) =>
+      screen
+        .getAllByText(label)
+        .map((element) => element.closest(".applications-metric-card"))
+        .find(Boolean);
+    expect(metric("Bewerbungen gesamt")).toHaveTextContent("4");
+    expect(metric("Entwürfe")).toHaveTextContent("2");
+    expect(metric("Versendet")).toHaveTextContent("1");
+    expect(metric("Gespräche")).toHaveTextContent("1");
+    expect(metric("Offene Wiedervorlagen")).toHaveTextContent("2");
+    expect(screen.getByText(/Überfällig \(1\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Heute fällig \(1\)/)).toBeInTheDocument();
+
+    const action = Array.from(document.querySelectorAll<HTMLButtonElement>(".applications-action-item"))
+      .find((button) => button.textContent?.includes("Overdue Job"));
+    expect(action).toBeTruthy();
+    fireEvent.click(action!);
+    expect(await screen.findByRole("tab", { name: "Kommunikation" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("uses one shared filter state for quick filters, select and reset", async () => {
+    const submittedApp = {
+      ...draft({ localId: "submitted", job: { ...job, jobId: "submitted", title: "Submitted Job" } }),
+      status: "submitted" as const,
+    };
+    const interviewApp = {
+      ...draft({ localId: "interview", job: { ...job, jobId: "interview", title: "Interview Job" } }),
+      status: "interview" as const,
+    };
+    renderSection([draft(), submittedApp, interviewApp]);
+    await screen.findByText("Submitted Job");
+
+    fireEvent.click(screen.getByRole("button", { name: "Entwürfe" }));
+    expect(screen.getByRole("button", { name: "Entwürfe" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("Statusfilter")).toHaveValue("draft");
+    expect(document.querySelectorAll(".applications-list__item")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Gespräche" }));
+    expect(document.querySelectorAll(".applications-list__item")).toHaveLength(1);
+    expect(screen.getByText("Interview Job")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle" }));
+    expect(document.querySelectorAll(".applications-list__item")).toHaveLength(3);
+  });
+
+  it("sorts open follow-ups before applications without a due action", async () => {
+    const future = {
+      ...draft({ localId: "future", job: { ...job, jobId: "future", title: "Future Job" } }),
+      followUp: { dueOn: calendarDate(5), status: "open" as const },
+    };
+    const overdue = {
+      ...draft({ localId: "overdue", job: { ...job, jobId: "overdue", title: "Overdue Job" } }),
+      followUp: { dueOn: calendarDate(-2), status: "open" as const },
+    };
+    const none = { ...draft({ localId: "none", job: { ...job, jobId: "none", title: "No Follow-up Job" } }) };
+    renderSection([none, future, overdue]);
+    await screen.findByText("No Follow-up Job");
+
+    fireEvent.change(screen.getByLabelText("Nach Datum sortieren"), { target: { value: "followUp" } });
+    const titles = Array.from(document.querySelectorAll<HTMLElement>(".applications-list__item strong")).map((node) => node.textContent);
+    expect(titles).toEqual(["Overdue Job", "Future Job", "No Follow-up Job"]);
   });
   it("ignores a late operation after the repository/session changes", async () => {
     const base = createSessionApplicationRepository({ initial: [draft()] });

@@ -21,6 +21,17 @@ interface Props {
 }
 
 type ApplicationTab = "overview" | "communication" | "documents" | "history";
+type ApplicationFilter = "all" | ApplicationStatus | "followUpOpen" | "followUpOverdue";
+type ApplicationSort = "newest" | "oldest" | "followUp";
+
+const QUICK_FILTERS: readonly { id: ApplicationFilter; labelKey: string }[] = [
+  { id: "all", labelKey: "applications.cockpit.all" },
+  { id: "draft", labelKey: "applications.cockpit.draft" },
+  { id: "submitted", labelKey: "applications.cockpit.submitted" },
+  { id: "interview", labelKey: "applications.cockpit.interview" },
+  { id: "followUpOpen", labelKey: "applications.cockpit.openFollowUps" },
+  { id: "followUpOverdue", labelKey: "applications.cockpit.overdue" },
+];
 
 const APPLICATION_TABS: readonly ApplicationTab[] = [
   "overview",
@@ -146,8 +157,8 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | ApplicationStatus>("all");
-  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [filter, setFilter] = useState<ApplicationFilter>("all");
+  const [sort, setSort] = useState<ApplicationSort>("newest");
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [interviewAt, setInterviewAt] = useState("");
@@ -244,9 +255,52 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
     });
   }, [applications]);
 
+  const metrics = useMemo(() => ({
+    total: applications.length,
+    draft: applications.filter((application) => application.status === "draft").length,
+    submitted: applications.filter((application) => application.status === "submitted").length,
+    interview: applications.filter((application) => application.status === "interview").length,
+    openFollowUps: applications.filter((application) => application.followUp?.status === "open").length,
+  }), [applications]);
+
+  const actionItems = useMemo(() => {
+    const groups = { overdue: [] as SessionApplicationV1[], today: [] as SessionApplicationV1[], soon: [] as SessionApplicationV1[] };
+    for (const application of applications) {
+      if (application.followUp?.status !== "open") continue;
+      const days = daysFromToday(application.followUp.dueOn);
+      if (days < 0) groups.overdue.push(application);
+      else if (days === 0) groups.today.push(application);
+      else if (days <= 7) groups.soon.push(application);
+    }
+    const byDue = (a: SessionApplicationV1, b: SessionApplicationV1) =>
+      (a.followUp?.dueOn ?? "").localeCompare(b.followUp?.dueOn ?? "") ||
+      a.localId.localeCompare(b.localId);
+    groups.overdue.sort(byDue);
+    groups.today.sort(byDue);
+    groups.soon.sort(byDue);
+    return groups;
+  }, [applications]);
+
   const visible = useMemo(() => {
-    const filtered = filter === "all" ? applications : applications.filter((application) => application.status === filter);
+    const filtered = applications.filter((application) => {
+      if (filter === "all") return true;
+      if (filter === "followUpOpen") return application.followUp?.status === "open";
+      if (filter === "followUpOverdue") {
+        return application.followUp?.status === "open" && daysFromToday(application.followUp.dueOn) < 0;
+      }
+      return application.status === filter;
+    });
     return [...filtered].sort((a, b) => {
+      if (sort === "followUp") {
+        const aFollowUp = a.followUp?.status === "open" ? a.followUp.dueOn : null;
+        const bFollowUp = b.followUp?.status === "open" ? b.followUp.dueOn : null;
+        if (aFollowUp !== bFollowUp) {
+          if (aFollowUp === null) return 1;
+          if (bFollowUp === null) return -1;
+          return aFollowUp.localeCompare(bFollowUp);
+        }
+        return (b.updatedAt.localeCompare(a.updatedAt)) || a.localId.localeCompare(b.localId);
+      }
       const aTime = Date.parse(a.applicationDate ?? a.createdAt);
       const bTime = Date.parse(b.applicationDate ?? b.createdAt);
       return sort === "newest" ? bTime - aTime : aTime - bTime;
@@ -291,10 +345,10 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
   const tabId = (tab: ApplicationTab) => `${tabBaseId}-tab-${tab}`;
   const panelId = (tab: ApplicationTab) => `${tabBaseId}-panel-${tab}`;
 
-  const selectApplication = (id: string) => {
+  const selectApplication = (id: string): boolean => {
     if (editing) {
       setError(t("applications.edit.finishFirst"));
-      return;
+      return false;
     }
     setSelectedId(id);
     setActiveTab("overview");
@@ -303,6 +357,7 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
     setPendingSubmit(false);
     setDeleteConfirmId(null);
     setError("");
+    return true;
   };
 
   const selectTab = (tab: ApplicationTab): boolean => {
@@ -581,21 +636,100 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
 
       {loading && <p role="status">{t("applications.loading")}</p>}
 
+      {!loading && applications.length > 0 && (
+        <div className="applications-cockpit">
+          <section className="applications-metrics" aria-labelledby="applications-metrics-title">
+            <h3 id="applications-metrics-title">{t("applications.cockpit.title")}</h3>
+            <div className="applications-metrics__grid">
+              {[
+                ["total", metrics.total, "applications.cockpit.total"],
+                ["draft", metrics.draft, "applications.cockpit.draft"],
+                ["submitted", metrics.submitted, "applications.cockpit.submitted"],
+                ["interview", metrics.interview, "applications.cockpit.interview"],
+                ["followUpOpen", metrics.openFollowUps, "applications.cockpit.openFollowUps"],
+              ].map(([key, count, labelKey]) => (
+                <div className="applications-metric-card" key={String(key)}>
+                  <strong>{String(count)}</strong>
+                  <span>{t(String(labelKey))}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="applications-action-needed" aria-labelledby="applications-action-title">
+            <h3 id="applications-action-title">{t("applications.cockpit.actionNeeded")}</h3>
+            {actionItems.overdue.length + actionItems.today.length + actionItems.soon.length === 0 ? (
+              <p className="applications-cockpit__empty">{t("applications.cockpit.noActions")}</p>
+            ) : (
+              <div className="applications-action-needed__groups">
+                {[
+                  ["overdue", actionItems.overdue, "applications.cockpit.overdue"],
+                  ["today", actionItems.today, "applications.cockpit.dueToday"],
+                  ["soon", actionItems.soon, "applications.cockpit.dueSoon"],
+                ].map(([kind, items, labelKey]) =>
+                  (items as SessionApplicationV1[]).length === 0 ? null : (
+                    <div className="applications-action-group" key={String(kind)}>
+                      <h4>{t(String(labelKey))} ({ (items as SessionApplicationV1[]).length })</h4>
+                      <ul>
+                        {(items as SessionApplicationV1[]).map((application) => (
+                          <li key={application.localId}>
+                            <button
+                              type="button"
+                              className="applications-action-item"
+                              onClick={() => {
+                                if (selectApplication(application.localId)) setActiveTab("communication");
+                              }}
+                            >
+                              <strong>{application.job.title}</strong>
+                              <span>{application.job.companyName}</span>
+                              <span>{application.followUp ? followUpShortLabel(application.followUp, locale, t) : ""}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {!loading && applications.length > 0 && (
+        <div className="applications-quick-filters" role="group" aria-label={t("applications.cockpit.quickFilters")}>
+          {QUICK_FILTERS.map(({ id, labelKey }) => (
+            <button
+              key={id}
+              type="button"
+              className={`applications-quick-filter${filter === id ? " applications-quick-filter--active" : ""}`}
+              aria-pressed={filter === id}
+              onClick={() => setFilter(id)}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="applications-controls">
         <label className="letter-field">
           <span>{t("applications.filter")}</span>
-          <select value={filter} onChange={(event) => setFilter(event.target.value as "all" | ApplicationStatus)}>
+          <select value={filter} onChange={(event) => setFilter(event.target.value as ApplicationFilter)}>
             <option value="all">{t("applications.filterAll")}</option>
             {STATUS_ORDER.map((status) => (
               <option key={status} value={status}>{statusLabel(t, status)}</option>
             ))}
+            <option value="followUpOpen">{t("applications.cockpit.openFollowUps")}</option>
+            <option value="followUpOverdue">{t("applications.cockpit.overdue")}</option>
           </select>
         </label>
         <label className="letter-field">
           <span>{t("applications.sort")}</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value as "newest" | "oldest")}>
+          <select value={sort} onChange={(event) => setSort(event.target.value as ApplicationSort)}>
             <option value="newest">{t("applications.sortNewest")}</option>
             <option value="oldest">{t("applications.sortOldest")}</option>
+            <option value="followUp">{t("applications.cockpit.sortFollowUp")}</option>
           </select>
         </label>
       </div>
