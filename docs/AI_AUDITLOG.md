@@ -1,3 +1,15 @@
+2026-11-03 · JM-APPLICATION-LETTER-REVISION-01D
+- Typ: Anschreiben/kontrollierte Versionsübernahme/Entwurfsübernahme
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Baseline: 01C `e29a7c9`; Branch `feature/jm-application-letter-revision-01d`; main `4364eab`.
+- Speicherung: KI-/bearbeiteter Vorschlag wird über bestehendes `ApplicationRepository.addCoverLetterVersion` mit `expectedVersion`, eigener `versionId` und `source:"revised"` gespeichert. Modell nur aus zuverlässigem Fallback-Trace; keine Schemaerweiterung. Neue Version erscheint sofort in der Vergleichsauswahl.
+- Entwurf: gespeicherte Version kann nach Bestätigung über bestehendes `update` als aktueller `coverLetterDraft` übernommen werden; keine neue Version/Statusänderung, Hinweis bei ungespeichertem Entwurf, Abbruch ohne Mutation.
+- Unveränderlichkeit: historische IDs/Inhalte/Zeitstempel bleiben unverändert; Vergleich/Bearbeitung/AI-Vorschau mutieren keine Version. `savingRef`/`adoptingRef`/deaktivierte Buttons gegen Doppelklick; `version_conflict` verständlich; keine Exactly-once-Behauptung bei verlorener Antwort, alte expectedVersion verhindert stille Doppelanlage.
+- Privacy/Session: keine neue KI-/Provider-/Backend-Anfrage beim Speichern/Übernehmen, keine neue Browser-Persistenz, Session-Isolation/Invalidierung unverändert.
+- Tests: ApplicationLetterImprovement **12**, ApplicationLetterComparison **6**, TextDiff **4**, ApplicationsSection **31**, Gesamtsuite **1245 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + responsive 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors.
+- Git: Implementierung `a0d106f`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-REVISION-01D.md`
+
 2026-11-03 · JM-APPLICATION-LETTER-REVISION-01C
 - Typ: Anschreiben-Versionierung/Text-Diff/manuelle Vorschlagsbearbeitung
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment, keine Übernahme/Speicherung
