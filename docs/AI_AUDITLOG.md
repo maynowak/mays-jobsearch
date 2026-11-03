@@ -1,3 +1,14 @@
+2026-11-03 · JM-APPLICATION-LETTER-REVISION-01A
+- Typ: Anschreiben-Versionierung/Versionsauswahl/Vergleichsansicht
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment, keine KI-Integration
+- Baseline: lokaler `main` `4364eab` (UX-04A–E, UX-05A/B, Full-Display-Fix); Branch `feature/jm-application-letter-revision-01a`.
+- Komponente: `ApplicationLetterComparison` im Dokumente-Tab. Ausgangs-/Vergleichsversion frei aus aktuellem Entwurf und vorhandenen `CoverLetterVersionV1`-Einträgen wählbar; Standard Entwurf vs. neueste Version; gleiche Auswahl wird erklärt; leere/eine/mehrere Versionen behandelt.
+- Daten: ausschließlich vorhandene `coverLetterVersions`; UI-State, keine neue Datenstruktur, keine Repository-Mutation, kein Auto-Save, keine Auto-Version, keine Textübernahme. Metadaten: Index, Datum, Herkunft (`generated|revised|manual`), Sprache/Modell nur wenn vorhanden, vollständige versionId.
+- Darstellung/Sicherheit: vollständige `<pre>`-Texte ohne Höhenlimit oder Kürzung, `white-space: pre-wrap`, sicheres Text-Rendering, Desktop zweispaltig/≤900px einspaltig; keine KI-/Provider-/Backend-/Persistenzänderung; Session-/Auth-/Stale-Schutz unverändert.
+- Tests: ApplicationLetterComparison **6 passed**, ApplicationsSection **31 passed**, Gesamtsuite **1229 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + Comparison-Responsive 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors.
+- Git: Implementierung `4d9e8e7`, Responsive-E2E `54f7fc2`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-REVISION-01A.md`
+
 2026-11-03 · JM-COVER-LETTER-FULL-DISPLAY-01
 - Typ: Anschreiben-Generierung/vollständige Anzeige
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
