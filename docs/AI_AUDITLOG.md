@@ -1,3 +1,14 @@
+2026-11-03 · JM-APPLICATION-LETTER-REVISION-MAIN-INTEGRATION-01
+- Typ: Lokale Git-Integration/Regression/Dokumentation
+- Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
+- Baseline: Feature `feature/jm-application-letter-revision-01e` @ `eb36d40`; lokaler/`origin` `main` @ `4364eab`; Merge-Base `4364eab`; 0 behind / 12 ahead; Working Tree clean.
+- Preflight: UX-04A–E (`65e314a`, `f5dd90a`, `aac997b`, `1d1eccd`, `72327e2`), UX-05A/B (`11815ad`, `9643dd1`), Full-Display-Fix `a1b2588` und `4364eab` waren bereits in `main`. Fast-Forward war möglich; kein Konflikt.
+- Integration: `git merge --ff-only feature/jm-application-letter-revision-01e`; Fast-Forward `4364eab..eb36d40`; kein Merge-Commit, keine History-Rewrites, 12 Commits integriert.
+- Regression: Erster `npm test -- --run` unter Volllast **1251 passed/3 failed/5 skipped** (nur bekannte `ManualSearchProfiles.*`-Timing-Tests); beide Dateien isoliert **12/12 passed**; stabiler vollständiger Lauf `--maxWorkers=2` **1254 passed/5 skipped**. Zusätzlich Feature/API gezielt **76 + 23 passed**, TypeScript/Build/API-Syntax/`git diff --check` PASS, Applications-E2E 1440/390 + responsive 1024/768/320 PASS, Cover-Letter-E2E 1440/390 PASS, Mobile-Nav und Guest-CV PASS, JSON-Schema 15 gültig + negatives Fixture abgelehnt; keine echten KI-/Provider-/Apify-/RIS-/AWS-Aufrufe.
+- Datenschutz/Produktion: Keine Änderung an Auth/RIS/AWS/Cognito/Providern/Persistenz. Produktionsblocker aus 01E bleiben bestehen: Live-Provider, serverseitige Anonymisierung/Faktenprüfung, Auth-/IP-Quota für `/api/cover-letter`, AI-`AbortSignal`, Provider-Log-Hygiene, RIS-Persistenz/Retention, Deployment-Freigabe. **PRODUCTION: BLOCKED.**
+- Git: `main` nach Fast-Forward `eb36d40`; Dokumentation in diesem Commit; `origin/main` bleibt `4364eab`. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-REVISION-MAIN-INTEGRATION-01.md`
+
 2026-11-03 · JM-APPLICATION-LETTER-REVISION-01E
 - Typ: Anschreiben/konsolidierte QA/Datenschutz/Release Readiness
 - Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
