@@ -1087,6 +1087,19 @@ const en: Dict = {
   "cvBuilder.error.limit_exceeded": "Too many entries.",
   "cvBuilder.error.invalid_level": "Please choose a valid language level.",
   "cvBuilder.counts": "{entries} entries · {errors} validation issues",
+  "cvBuilder.preview.title": "Live preview",
+  "cvBuilder.preview.aria": "Live CV preview",
+  "cvBuilder.preview.empty": "Your CV preview will appear here as soon as you add some content.",
+  "cvBuilder.preview.present": "Present",
+  "cvBuilder.preview.namePlaceholder": "Your Name",
+  "cvBuilder.preview.contact": "Contact details",
+  "cvBuilder.template.label": "Design template",
+  "cvBuilder.template.classic": "Classic",
+  "cvBuilder.template.modern": "Modern",
+  "cvBuilder.template.compact": "Compact",
+  "cvBuilder.view.edit": "Edit",
+  "cvBuilder.view.preview": "Preview",
+  "cvBuilder.view.group": "Editor and preview",
 };
 
 const de: Dict = {
@@ -2169,6 +2182,19 @@ const de: Dict = {
   "cvBuilder.error.limit_exceeded": "Zu viele Einträge.",
   "cvBuilder.error.invalid_level": "Bitte wähle einen gültigen Kenntnisstand.",
   "cvBuilder.counts": "{entries} Einträge · {errors} Validierungshinweise",
+  "cvBuilder.preview.title": "Live-Vorschau",
+  "cvBuilder.preview.aria": "Live-Vorschau des Lebenslaufs",
+  "cvBuilder.preview.empty": "Deine Lebenslauf-Vorschau erscheint hier, sobald du Inhalte ergänzt.",
+  "cvBuilder.preview.present": "heute",
+  "cvBuilder.preview.namePlaceholder": "Dein Name",
+  "cvBuilder.preview.contact": "Kontaktdaten",
+  "cvBuilder.template.label": "Designvorlage",
+  "cvBuilder.template.classic": "Klassisch",
+  "cvBuilder.template.modern": "Modern",
+  "cvBuilder.template.compact": "Kompakt",
+  "cvBuilder.view.edit": "Bearbeiten",
+  "cvBuilder.view.preview": "Vorschau",
+  "cvBuilder.view.group": "Editor und Vorschau",
 };
 
 const translations: Record<Lang, Dict> = { en, de };
