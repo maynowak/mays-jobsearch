@@ -17,6 +17,7 @@ describe('JM-PROFILE-CONTRACT-02: runtime validation', () => {
   });
 
   it('rejects invalid radius and enum values', () => {
+    expect(() => validateSearchConfiguration({ ...searchConfig, radiusKm: 5 })).not.toThrow();
     expect(() => validateSearchConfiguration({ ...searchConfig, radiusKm: 15 })).toThrowError(/radius/i);
     expect(() => validateSearchConfiguration({ ...searchConfig, workModes: ['remote', 'invalid'] })).toThrowError(/work mode/i);
   });

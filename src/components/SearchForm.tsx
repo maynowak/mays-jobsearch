@@ -32,6 +32,15 @@ interface Props {
 }
 
 type Mode = "manual" | "cv";
+type RadiusIntent = "unset" | "auto" | "manual" | "unlimited";
+
+const SKILL_EXAMPLES = ["Java", "Python", "AWS", "SQL"];
+
+function initialRadiusIntent(profile: Profile): RadiusIntent {
+  if (profile.radiusKm !== null && profile.radiusKm !== undefined) return "manual";
+  if ((profile.city ?? "").trim()) return "unlimited";
+  return "unset";
+}
 
 export default function SearchForm({
   phase,
@@ -64,11 +73,43 @@ export default function SearchForm({
   const [targetRolesText, setTargetRolesText] = useState<string>(() => formatTargetRoles(targetRoles ?? []));
   const parsedTargetRoles = parseTargetRoles(targetRolesText);
   const [selectedManualProfileId, setSelectedManualProfileId] = useState("");
+  const [radiusIntent, setRadiusIntent] = useState<RadiusIntent>(() => initialRadiusIntent(value));
   useEffect(() => {
     if (!authenticated || !manualProfiles.some((profile) => profile.id === selectedManualProfileId)) {
       setSelectedManualProfileId("");
     }
   }, [authenticated, manualProfiles, selectedManualProfileId]);
+  // External profile loads must win over the UI default. Direct city input is
+  // handled in handleCityValueChange and marks the 5 km value as "auto".
+  useEffect(() => {
+    if (value.radiusKm !== null && value.radiusKm !== undefined) {
+      if (radiusIntent === "unset" || (radiusIntent === "auto" && value.radiusKm !== 5)) {
+        setRadiusIntent("manual");
+      }
+      return;
+    }
+    if ((value.city ?? "").trim()) {
+      if (radiusIntent !== "unlimited") setRadiusIntent("unlimited");
+    } else if (radiusIntent !== "unset") {
+      setRadiusIntent("unset");
+    }
+  }, [radiusIntent, value.city, value.radiusKm]);
+
+  const handleCityValueChange = (city: string) => {
+    setSelectedManualProfileId("");
+    if (!city.trim() && radiusIntent === "auto") {
+      setRadiusIntent("unset");
+      onChange({ ...value, city, radiusKm: null });
+      return;
+    }
+    if (city.trim() && radiusIntent === "unset") {
+      setRadiusIntent("auto");
+      onChange({ ...value, city, radiusKm: 5 });
+      return;
+    }
+    onChange({ ...value, city });
+  };
+
   const {
     city: cityValue,
     suggestions,
@@ -79,10 +120,7 @@ export default function SearchForm({
     handleChange: handleCityChange,
     handleKeyDown: handleCityKeyDown,
     select: selectCity,
-  } = useCityAutocomplete(value.city, (city) => {
-    setSelectedManualProfileId("");
-    onChange({ ...value, city });
-  });
+  } = useCityAutocomplete(value.city, handleCityValueChange);
 
   const busy = phase !== "idle" || matching;
   const isMatching = matching;
@@ -154,6 +192,9 @@ export default function SearchForm({
     setSkillsText(searchConfig.skills ?? "");
     setTargetRolesText(formatTargetRoles(searchConfig.targetRoles ?? []));
     setShowAdvanced(Boolean(searchConfig.targetRoles?.length || searchConfig.city?.trim() || searchConfig.radiusKm !== null));
+    setRadiusIntent(
+      searchConfig.radiusKm === null || searchConfig.radiusKm === undefined ? "unlimited" : "manual"
+    );
     onChange({
       ...value,
       skills: searchConfig.skills ?? "",
@@ -236,8 +277,9 @@ export default function SearchForm({
 
       {mode === "manual" ? (
         <div id="manual-panel">
-        <div className="field">
-          <label htmlFor="skills">{t("search.skills")}</label>
+        <div className="field skills-field">
+          <label htmlFor="skills" className="visually-hidden">{t("search.skills")}</label>
+          <h3 className="skills-field__heading">{t("search.skillsHeading")}</h3>
           <div className="field-input-wrap">
             <input
               id="skills"
@@ -247,6 +289,7 @@ export default function SearchForm({
               onChange={handleSkillsChange}
               disabled={busy}
               autoComplete="off"
+              aria-describedby="skills-help skills-examples"
             />
             <FieldClear
               visible={skillsText.trim().length > 0}
@@ -254,6 +297,16 @@ export default function SearchForm({
               label={t("field.clear")}
               onClear={clearSkills}
             />
+          </div>
+          <p id="skills-help" className="field-hint skills-field__hint">{t("search.skillsHelp")}</p>
+          <div
+            id="skills-examples"
+            className="skills-field__examples"
+            aria-label={t("search.skillsExamplesLabel")}
+          >
+            {SKILL_EXAMPLES.map((skill) => (
+              <span key={skill} className="skills-field__example">{skill}</span>
+            ))}
           </div>
         </div>
 
@@ -322,6 +375,7 @@ export default function SearchForm({
                   aria-expanded={open}
                   aria-controls="city-suggestions"
                   aria-activedescendant={active >= 0 ? `city-option-${active}` : undefined}
+                  aria-describedby="city-help"
                 />
                 <FieldClear
                   visible={cityValue.trim().length > 0}
@@ -330,7 +384,15 @@ export default function SearchForm({
                   onClear={clearCity}
                 />
               </div>
-              <p className="field-hint">{t("search.cityHelp")}</p>
+              <p id="city-help" className="field-hint">
+                {value.radiusKm === null || value.radiusKm === undefined
+                  ? cityValue.trim()
+                    ? t("search.cityHelpUnlimited")
+                    : t("search.cityHelp")
+                  : value.radiusKm === 5
+                    ? t("search.cityHelp")
+                    : t("search.cityHelpRadius", { km: value.radiusKm })}
+              </p>
               {open && (
                 <ul id="city-suggestions" className="city-suggestions" role="listbox">
                   {loading && <li className="city-suggestion-status">{t("search.citySearching")}</li>}
@@ -370,7 +432,9 @@ export default function SearchForm({
                 onChange={(e) => {
                   setShowAdvanced(true);
                   setSelectedManualProfileId("");
-                  onChange({ ...value, radiusKm: e.target.value === "" ? null : Number(e.target.value) });
+                  const nextRadius = e.target.value === "" ? null : Number(e.target.value);
+                  setRadiusIntent(nextRadius === null ? "unlimited" : "manual");
+                  onChange({ ...value, radiusKm: nextRadius });
                 }}
                 disabled={busy}
               >

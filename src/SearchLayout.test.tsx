@@ -130,7 +130,7 @@ describe("SEARCH-WORLD-01: Search-World trägt Search-Bereich, kein Streifen am 
 
     fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "AWS" } });
     fireEvent.change(screen.getByLabelText("Zielrolle"), { target: { value: "Cloud Engineer" } });
-    fireEvent.change(screen.getByLabelText("Stadt oder PLZ"), { target: { value: "Berlin" } });
+    fireEvent.change(screen.getByLabelText("Suchort (Stadt oder PLZ)"), { target: { value: "Berlin" } });
     fireEvent.click(screen.getByRole("button", { name: "Meine Treffer finden" }));
 
     await waitFor(() => expect(container.querySelector(".results-workspace")).toBeTruthy());

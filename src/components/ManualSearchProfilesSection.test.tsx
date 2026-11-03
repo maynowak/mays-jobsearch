@@ -282,4 +282,22 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
     renderSection();
     expect(screen.getByText(/Noch kein manuelles Suchprofil/)).toBeTruthy();
   });
+
+  it("offers and saves a 5 km radius in a manual search profile", () => {
+    const { onSave } = renderSection();
+    fireEvent.click(screen.getByRole("button", { name: "Neues Suchprofil" }));
+    fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: "Nahbereich" } });
+    fireEvent.change(screen.getByLabelText("Skills / Keywords"), { target: { value: "React" } });
+    fireEvent.change(screen.getByLabelText("Stadt"), { target: { value: "Berlin" } });
+    const radius = screen.getByLabelText("Radius") as HTMLSelectElement;
+    expect(Array.from(radius.options).map((option) => option.value)).toContain("5");
+    fireEvent.change(radius, { target: { value: "5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        searchConfig: expect.objectContaining({ city: "Berlin", radiusKm: 5 }),
+      }),
+      null
+    );
+  });
 });

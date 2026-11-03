@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import type { Profile } from "../types";
 import type { ManualSearchProfile } from "../lib/manualSearchProfiles";
@@ -60,12 +60,16 @@ function StatefulForm({
   matching = false,
   hasJobs = false,
   onSubmit,
+  manualProfiles = [],
+  authenticated = false,
 }: {
   initial?: Profile;
   onMatch?: () => void;
   matching?: boolean;
   hasJobs?: boolean;
   onSubmit?: (p: Profile) => void;
+  manualProfiles?: ManualSearchProfile[];
+  authenticated?: boolean;
 }) {
   const [value, setValue] = useState<Profile>(initial);
   return (
@@ -79,6 +83,8 @@ function StatefulForm({
         matching={matching}
         hasJobs={hasJobs}
         onWorkflowStart={() => undefined}
+        manualProfiles={manualProfiles}
+        authenticated={authenticated}
       />
     </LangProvider>
   );
@@ -95,8 +101,8 @@ describe("SearchForm is a controlled component", () => {
     fireEvent.change(screen.getByLabelText("Zielrolle"), { target: { value: "Frontend" } });
     expect(onChange).toHaveBeenCalledWith(baseProfile({ targetRoles: ["Frontend"] }));
 
-    fireEvent.change(screen.getByLabelText("Stadt oder PLZ"), { target: { value: "Berlin" } });
-    expect(onChange).toHaveBeenCalledWith(baseProfile({ city: "Berlin" }));
+    fireEvent.change(screen.getByLabelText("Suchort (Stadt oder PLZ)"), { target: { value: "Berlin" } });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ city: "Berlin", radiusKm: 5 }));
   });
 
   it("sendet getrimmte Werte über onSubmit", () => {
@@ -121,7 +127,7 @@ describe("SearchForm is a controlled component", () => {
     renderForm(value, vi.fn(), vi.fn());
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("aws");
     expect((screen.getByLabelText("Zielrolle") as HTMLInputElement).value).toBe("Frontend");
-    expect((screen.getByLabelText("Stadt oder PLZ") as HTMLInputElement).value).toBe("Berlin");
+    expect((screen.getByLabelText("Suchort (Stadt oder PLZ)") as HTMLInputElement).value).toBe("Berlin");
   });
 });
 
@@ -213,7 +219,7 @@ describe("Eingabefeld löschen (×-Button)", () => {
     clears.forEach((btn) => fireEvent.click(btn));
     expect((screen.getByLabelText("Skills") as HTMLInputElement).value).toBe("");
     expect((screen.getByLabelText("Zielrolle") as HTMLInputElement).value).toBe("");
-    expect((screen.getByLabelText("Stadt oder PLZ") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("Suchort (Stadt oder PLZ)") as HTMLInputElement).value).toBe("");
     expect(screen.queryByRole("button", { name: "Eingabe löschen" })).toBeNull();
   });
 });
@@ -314,20 +320,21 @@ describe("BROWSER-BUG-03: Leerzeichen im manuellen Skill-Input", () => {
 });
 
 describe("Suchparameter-Erweiterung (UI, Step 7)", () => {
-  it("1: Umkreis-Dropdown mit 10/25/50/100 km wird angezeigt", () => {
+  it("1: Umkreis-Dropdown mit 5/10/25/50/100 km wird angezeigt", () => {
     renderForm(empty, vi.fn(), vi.fn());
     const select = screen.getByLabelText("Umkreis") as HTMLSelectElement;
-    expect(Array.from(select.options).map((o) => o.value)).toEqual(["", "10", "25", "50", "100"]);
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(["", "5", "10", "25", "50", "100"]);
+    expect(screen.getByText("5 km")).toBeTruthy();
     expect(screen.getByText("10 km")).toBeTruthy();
     expect(screen.getByText("25 km")).toBeTruthy();
     expect(screen.getByText("50 km")).toBeTruthy();
     expect(screen.getByText("100 km")).toBeTruthy();
   });
 
-  it("2-5: Umkreis 10/25/50/100 km sind auswählbar und werden per onChange gemeldet", () => {
+  it("2-5: Umkreis 5/10/25/50/100 km sind auswählbar und werden per onChange gemeldet", () => {
     const onChange = vi.fn();
     renderForm(empty, onChange, vi.fn());
-    for (const radius of ["10", "25", "50", "100"]) {
+    for (const radius of ["5", "10", "25", "50", "100"]) {
       fireEvent.change(screen.getByLabelText("Umkreis"), { target: { value: radius } });
       expect(onChange).toHaveBeenLastCalledWith(
         expect.objectContaining({ radiusKm: Number(radius) })
@@ -372,5 +379,114 @@ describe("Suchparameter-Erweiterung (UI, Step 7)", () => {
     fireEvent.click(screen.getByLabelText("Vollzeit"));
     expect((screen.getByLabelText("Vollzeit") as HTMLInputElement).checked).toBe(false);
     expect((screen.getByLabelText("Teilzeit") as HTMLInputElement).checked).toBe(true);
+  });
+});
+
+describe("JM-SEARCH-UX-03: skills guidance", () => {
+  it("shows the prominent heading, help text and examples while keeping the parser contract", () => {
+    const onSubmit = vi.fn();
+    render(<StatefulForm onSubmit={onSubmit} />);
+    expect(screen.getByText("Welche Fähigkeiten bringst du mit?")).toBeInTheDocument();
+    expect(screen.getByText("Gib deine Kenntnisse ein, z. B. Java, Python, AWS oder SQL.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Beispiele für Fähigkeiten").textContent).toContain("Java");
+    const input = screen.getByLabelText("Skills") as HTMLInputElement;
+    expect(input).toHaveAttribute("aria-describedby", "skills-help skills-examples");
+
+    fireEvent.change(input, { target: { value: "Spring Boot" } });
+    fireEvent.click(screen.getByRole("button", { name: "Meine Treffer finden" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ skills: "Spring, Boot" }));
+  });
+});
+
+describe("JM-SEARCH-UX-03: 5 km default and radius intent", () => {
+  const manualProfile = (
+    id: string,
+    radiusKm: number | null,
+    city = "Berlin"
+  ): ManualSearchProfile => ({
+    id,
+    schemaVersion: 1,
+    name: id,
+    origin: "manual",
+    searchConfig: { ...baseProfile(), city, radiusKm },
+    matchingPreferences: { requiredSkills: [], preferredSkills: [], excludedTerms: [] },
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  });
+
+  it("keeps no radius without a location and sets 5 km on first location input", () => {
+    const onSubmit = vi.fn();
+    render(<StatefulForm onSubmit={onSubmit} />);
+    const radius = screen.getByLabelText("Umkreis") as HTMLSelectElement;
+    expect(radius.value).toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Meine Treffer finden" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ city: "", radiusKm: null }));
+
+    fireEvent.change(screen.getByLabelText("Suchort (Stadt oder PLZ)"), { target: { value: "Berlin" } });
+    expect(radius.value).toBe("5");
+    expect(screen.getByText(/Standardmäßig werden 5 km vorgeschlagen/)).toBeInTheDocument();
+  });
+
+  it("never overwrites a consciously selected 10 km radius on later location changes", () => {
+    render(<StatefulForm />);
+    const city = screen.getByLabelText("Suchort (Stadt oder PLZ)");
+    const radius = screen.getByLabelText("Umkreis") as HTMLSelectElement;
+
+    fireEvent.change(city, { target: { value: "Berlin" } });
+    fireEvent.change(radius, { target: { value: "10" } });
+    fireEvent.change(city, { target: { value: "Hamburg" } });
+
+    expect(radius.value).toBe("10");
+    expect(screen.getByText(/Aktuell sind 10 km ausgewählt/)).toBeInTheDocument();
+  });
+
+  it("keeps a consciously unlimited radius unlimited", () => {
+    render(<StatefulForm />);
+    const city = screen.getByLabelText("Suchort (Stadt oder PLZ)");
+    const radius = screen.getByLabelText("Umkreis") as HTMLSelectElement;
+
+    fireEvent.change(city, { target: { value: "Berlin" } });
+    fireEvent.change(radius, { target: { value: "" } });
+    fireEvent.change(city, { target: { value: "München" } });
+
+    expect(radius.value).toBe("");
+    expect(screen.getByText(/Aktuell ist die Entfernung nicht begrenzt/)).toBeInTheDocument();
+  });
+
+  it("clears an automatic 5 km radius when the location is removed", () => {
+    render(<StatefulForm />);
+    const city = screen.getByLabelText("Suchort (Stadt oder PLZ)");
+    const radius = screen.getByLabelText("Umkreis") as HTMLSelectElement;
+
+    fireEvent.change(city, { target: { value: "Berlin" } });
+    expect(radius.value).toBe("5");
+    const cityField = city.closest(".field") as HTMLElement;
+    fireEvent.click(within(cityField).getByRole("button", { name: "Eingabe löschen" }));
+
+    expect(radius.value).toBe("");
+    expect(screen.getByText(/Standardmäßig werden 5 km vorgeschlagen/)).toBeInTheDocument();
+  });
+
+  it("preserves saved profile radii and saved unlimited profiles", () => {
+    render(
+      <StatefulForm
+        authenticated
+        manualProfiles={[manualProfile("Profil 50", 50), manualProfile("Profil egal", null)]}
+      />
+    );
+    const profileSelect = screen.getByLabelText("Profil") as HTMLSelectElement;
+    const city = screen.getByLabelText("Suchort (Stadt oder PLZ)");
+    const radius = screen.getByLabelText("Umkreis") as HTMLSelectElement;
+
+    fireEvent.change(profileSelect, { target: { value: "Profil 50" } });
+    expect(radius.value).toBe("50");
+    fireEvent.change(city, { target: { value: "Potsdam" } });
+    expect(radius.value).toBe("50");
+
+    fireEvent.change(profileSelect, { target: { value: "Profil egal" } });
+    expect(radius.value).toBe("");
+    fireEvent.change(city, { target: { value: "Dresden" } });
+    expect(radius.value).toBe("");
   });
 });

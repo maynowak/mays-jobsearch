@@ -15,6 +15,7 @@
     "test:e2e:cv-builder": "node tests/e2e/cv-builder.mjs",
     "test:e2e:cv-builder-pdf": "node tests/e2e/cv-builder-pdf.mjs",
     "test:e2e:search-results": "node tests/e2e/search-results-mobile-ux.mjs",
+    "test:e2e:search-ux": "node tests/e2e/search-ux-03.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",

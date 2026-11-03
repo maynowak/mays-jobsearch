@@ -63,10 +63,14 @@ function setupFetchMock(overrides = {}) {
     arbeitnowJobs = [baseArbeitnowJob],
     apifyRecords = [baseApifyRecord],
     datasetFresh = false,
+    geocode = false,
   } = overrides;
 
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
+    if (geocode && u.includes("nominatim.openstreetmap.org")) {
+      return new Response(JSON.stringify([{ lat: "50.1", lon: "8.6" }]), { status: 200 });
+    }
     if (u.includes("arbeitnow.com")) {
       return new Response(JSON.stringify({ data: arbeitnowJobs }), { status: 200 });
     }
@@ -241,5 +245,24 @@ describe("Job Sources Registry (sources/index.mjs)", () => {
     const result = await source.fetchJobs({ skills: "", targetRole: "Test", city: "" });
     expect(result.jobs.length).toBeGreaterThan(0);
     expect(result.jobs[0].source).toContain("example-jobs");
+  });
+
+  it("N) 5 km radius reaches the Apify actor input", async () => {
+    setupFetchMock({ geocode: true });
+    await fetchAllJobs({
+      paidSourcesAllowed: true,
+      skills: "react",
+      targetRole: "frontend",
+      city: "Berlin",
+      radiusKm: "5",
+    });
+    const runCall = vi.mocked(globalThis.fetch).mock.calls.find(([url]) =>
+      String(url).includes("/v2/acts/")
+    );
+    expect(runCall).toBeTruthy();
+    const body = JSON.parse(String(runCall?.[1]?.body));
+    expect(body.radiusKm).toBe(5);
+    expect(body.latitude).toBeCloseTo(50.1);
+    expect(body.longitude).toBeCloseTo(8.6);
   });
 });

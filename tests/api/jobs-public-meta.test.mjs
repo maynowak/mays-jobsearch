@@ -74,4 +74,23 @@ describe("GET /api/jobs public metadata boundary", () => {
     expect(logged).toContain("presentParams");
     errorSpy.mockRestore();
   });
+
+  it("passes a 5 km radius and the location to the existing search pipeline", async () => {
+    vi.mocked(fetchAllJobs).mockClear();
+    const { default: handler } = await import("../../api/jobs.mjs");
+    const response = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+      setHeader: vi.fn(),
+    };
+
+    await handler(
+      { method: "GET", query: { skills: "react", city: "Berlin", radiusKm: "5" } },
+      response
+    );
+
+    expect(fetchAllJobs).toHaveBeenCalledWith(
+      expect.objectContaining({ city: "Berlin", radiusKm: 5 })
+    );
+  });
 });

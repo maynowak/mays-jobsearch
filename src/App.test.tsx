@@ -331,7 +331,7 @@ describe("Explizites AI-Matching nach Jobsuche (Step 22)", () => {
 
       fireEvent.change(screen.getByLabelText("Skills"), { target: { value: "aws" } });
       fireEvent.change(screen.getByLabelText("Zielrolle"), { target: { value: "Engineer" } });
-      fireEvent.change(screen.getByLabelText("Stadt oder PLZ"), { target: { value: "Berlin" } });
+      fireEvent.change(screen.getByLabelText("Suchort (Stadt oder PLZ)"), { target: { value: "Berlin" } });
       fireEvent.click(screen.getByText("Meine Treffer finden"));
 
       await screen.findByText("AWS Engineer");
