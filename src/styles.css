@@ -10176,3 +10176,323 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   color: #14532d;
   font-size: var(--text-sm);
 }
+
+/* CV-BUILDER-01A: session-only structured CV editor. */
+.cv-builder-open {
+  margin-top: 10px;
+}
+
+.cv-builder-modal__box {
+  max-width: 1100px;
+  max-height: 92vh;
+}
+
+.cv-builder-modal__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+}
+
+.cv-builder-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 20px 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.cv-builder-validation-summary {
+  margin: 12px 20px 0;
+  color: #991b1b;
+  font-weight: 700;
+}
+
+.cv-builder-counts {
+  margin: 8px 20px 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.cv-builder-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin: 12px 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cv-builder-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-link);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cv-builder-nav a:hover,
+.cv-builder-nav a:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cv-builder-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.cv-builder-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.cv-builder-section > summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.cv-builder-section > summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.cv-builder-section__meta {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cv-builder-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 14px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.cv-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.cv-builder-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cv-builder-field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cv-builder-field > span {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.cv-builder-field input,
+.cv-builder-field select,
+.cv-builder-field textarea,
+.cv-builder-section textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.cv-builder-field input:focus-visible,
+.cv-builder-field select:focus-visible,
+.cv-builder-field textarea:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cv-builder-field input[aria-invalid="true"],
+.cv-builder-field select[aria-invalid="true"],
+.cv-builder-field textarea[aria-invalid="true"] {
+  border-color: #b91c1c;
+}
+
+.cv-builder-field-error {
+  margin: 0;
+  color: #991b1b;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.cv-builder-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.cv-builder-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 3%, var(--surface));
+}
+
+.cv-builder-entry legend {
+  padding: 0 4px;
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.cv-builder-empty-entry {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.cv-builder-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.cv-builder-checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-sm);
+}
+
+.cv-builder-checkbox input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.cv-builder-entry-actions,
+.cv-builder-remove-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.cv-builder-entry-actions .btn-ghost,
+.cv-builder-remove-confirm .btn-ghost {
+  min-height: 44px;
+}
+
+.cv-builder-remove-confirm {
+  padding: 8px 10px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+.cv-builder-remove-yes {
+  border-color: #b91c1c;
+  color: #991b1b;
+}
+
+.cv-builder-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cv-builder-tags li {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.cv-builder-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.cv-builder-footer .letter-btn {
+  margin-top: 0;
+  min-height: 44px;
+}
+
+@media (max-width: 700px) {
+  .cv-builder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-builder-sections {
+    padding: 12px;
+  }
+
+  .cv-builder-notice,
+  .cv-builder-nav,
+  .cv-builder-validation-summary,
+  .cv-builder-counts {
+    margin-inline: 12px;
+  }
+
+  .cv-builder-modal__head {
+    padding: 14px 12px;
+  }
+
+  .cv-builder-footer {
+    padding: 12px;
+  }
+
+  .cv-builder-nav a,
+  .cv-builder-footer .letter-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
