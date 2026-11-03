@@ -1,4 +1,5 @@
 import { useLang } from "../i18n";
+import type { CvBuilderTemplate } from "../lib/cvBuilder/templates";
 import {
   isCvBuilderEntryEmpty,
   type CvBuilderDraftV1,
@@ -6,7 +7,7 @@ import {
   type CvBuilderExperienceV1,
 } from "../lib/cvBuilder/contractTypes";
 
-export type CvBuilderTemplate = "classic" | "modern" | "compact";
+export type { CvBuilderTemplate };
 
 interface Props {
   draft: CvBuilderDraftV1;

@@ -10466,6 +10466,18 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   min-height: 44px;
 }
 
+.cv-builder-footer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.cv-builder-footer > .letter-review-success,
+.cv-builder-footer > .letter-review-warning {
+  flex: 1 0 100%;
+}
+
 @media (max-width: 700px) {
   .cv-builder-grid {
     grid-template-columns: 1fr;

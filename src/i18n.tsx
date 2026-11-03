@@ -1007,7 +1007,7 @@ const en: Dict = {
   "cvBuilder.title": "Structured CV editor",
   "cvBuilder.intro": "Create and edit your CV directly in the browser. No upload and no account are required.",
   "cvBuilder.sessionNote": "Your CV is currently edited only during the active session and is not stored permanently. A reload clears the draft.",
-  "cvBuilder.pdfNote": "PDF download will be added in a later development phase.",
+  "cvBuilder.pdfNote": "PDF export happens locally in your browser. No CV data is sent to a server.",
   "cvBuilder.close": "Close CV editor",
   "cvBuilder.closeFooter": "Close",
   "cvBuilder.sections": "CV sections",
@@ -1100,6 +1100,12 @@ const en: Dict = {
   "cvBuilder.view.edit": "Edit",
   "cvBuilder.view.preview": "Preview",
   "cvBuilder.view.group": "Editor and preview",
+  "cvBuilder.exportPdf": "Download as PDF",
+  "cvBuilder.exporting": "Creating PDF…",
+  "cvBuilder.exportSuccess": "PDF created.",
+  "cvBuilder.exportError": "The PDF could not be created.",
+  "cvBuilder.exportNoData": "Please add some CV content before exporting.",
+  "cvBuilder.exportInvalid": "Please check the marked fields before exporting.",
 };
 
 const de: Dict = {
@@ -2102,7 +2108,7 @@ const de: Dict = {
   "cvBuilder.title": "Strukturierter Lebenslauf-Editor",
   "cvBuilder.intro": "Erstelle und bearbeite deinen Lebenslauf direkt im Browser. Kein Upload und kein Konto erforderlich.",
   "cvBuilder.sessionNote": "Dein Lebenslauf wird derzeit nur während der aktuellen Sitzung bearbeitet und nicht dauerhaft gespeichert. Beim Neuladen wird der Entwurf verworfen.",
-  "cvBuilder.pdfNote": "Der PDF-Download wird in einer kommenden Entwicklungsphase ergänzt.",
+  "cvBuilder.pdfNote": "Der PDF-Export erfolgt lokal im Browser. Es werden keine Lebenslaufdaten an einen Server übertragen.",
   "cvBuilder.close": "Lebenslauf-Editor schließen",
   "cvBuilder.closeFooter": "Schließen",
   "cvBuilder.sections": "Lebenslauf-Abschnitte",
@@ -2195,6 +2201,12 @@ const de: Dict = {
   "cvBuilder.view.edit": "Bearbeiten",
   "cvBuilder.view.preview": "Vorschau",
   "cvBuilder.view.group": "Editor und Vorschau",
+  "cvBuilder.exportPdf": "Als PDF herunterladen",
+  "cvBuilder.exporting": "PDF wird erstellt…",
+  "cvBuilder.exportSuccess": "PDF wurde erstellt.",
+  "cvBuilder.exportError": "Das PDF konnte nicht erstellt werden.",
+  "cvBuilder.exportNoData": "Bitte ergänze zuerst Lebenslaufdaten.",
+  "cvBuilder.exportInvalid": "Bitte prüfe die markierten Felder vor dem Export.",
 };
 
 const translations: Record<Lang, Dict> = { en, de };

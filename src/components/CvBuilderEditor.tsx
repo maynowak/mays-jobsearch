@@ -8,6 +8,7 @@ import {
   createLanguageEntry,
   createLinkEntry,
   createProjectEntry,
+  hasCvBuilderContent,
   isCvBuilderEntryEmpty,
   type CvBuilderDraftV1,
   type CvBuilderLanguageLevel,
@@ -19,7 +20,11 @@ import {
   type CvBuilderValidationError,
 } from "../lib/cvBuilder/validation";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
-import CvBuilderPreview, { type CvBuilderTemplate } from "./CvBuilderPreview";
+import CvBuilderPreview from "./CvBuilderPreview";
+import {
+  CV_BUILDER_TEMPLATES,
+  type CvBuilderTemplate,
+} from "../lib/cvBuilder/templates";
 
 interface Props {
   draft: CvBuilderDraftV1;
@@ -334,17 +339,21 @@ function Section({
 }
 
 export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const editorPaneRef = useRef<HTMLDivElement>(null);
   const previewHeadingRef = useRef<HTMLHeadingElement>(null);
   const viewMountedRef = useRef(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const exportingRef = useRef(false);
   const addRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [focusAfterRemove, setFocusAfterRemove] = useState<string | null>(null);
   const [template, setTemplate] = useState<CvBuilderTemplate>("classic");
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState("");
+  const [exportError, setExportError] = useState("");
   const errors = useMemo(() => validateCvBuilderDraft(draft), [draft]);
   const errorCount = errors.length;
   const entryCount =
@@ -424,6 +433,33 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
   const removeAt = <T,>(list: T[], index: number): T[] =>
     list.filter((_, entryIndex) => entryIndex !== index);
 
+  const handleExportPdf = async () => {
+    if (exportingRef.current) return;
+    setExportMessage("");
+    setExportError("");
+    if (errorCount > 0) {
+      setExportError(t("cvBuilder.exportInvalid"));
+      return;
+    }
+    if (!hasCvBuilderContent(draft)) {
+      setExportError(t("cvBuilder.exportNoData"));
+      return;
+    }
+    exportingRef.current = true;
+    setExporting(true);
+    try {
+      const pdfExport = await import("../lib/cvBuilder/pdfExport");
+      const bytes = await pdfExport.createCvBuilderPdf(draft, template, { language: lang });
+      pdfExport.downloadCvBuilderPdf(bytes, pdfExport.cvBuilderFileName(draft));
+      setExportMessage(t("cvBuilder.exportSuccess"));
+    } catch {
+      setExportError(t("cvBuilder.exportError"));
+    } finally {
+      exportingRef.current = false;
+      setExporting(false);
+    }
+  };
+
   const emptyLabel = (entry: Record<string, unknown>) =>
     isCvBuilderEntryEmpty(entry) ? <p className="cv-builder-empty-entry">{t("cvBuilder.emptyEntry")}</p> : null;
 
@@ -492,7 +528,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
             </button>
           </div>
           <div className="cv-builder-template-switch" role="group" aria-label={t("cvBuilder.template.label")}>
-            {(["classic", "modern", "compact"] as const).map((entry) => (
+            {CV_BUILDER_TEMPLATES.map((entry) => (
               <button
                 key={entry}
                 type="button"
@@ -1182,9 +1218,22 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
 
         <div className="cv-builder-footer">
           <p className="cv-builder-hint">{t("cvBuilder.sectionHint")}</p>
-          <button type="button" className="letter-btn" onClick={onClose}>
-            {t("cvBuilder.closeFooter")}
-          </button>
+          <div className="cv-builder-footer__actions">
+            <button
+              type="button"
+              className="letter-btn cv-builder-export"
+              onClick={() => void handleExportPdf()}
+              disabled={exporting || errorCount > 0 || !hasCvBuilderContent(draft)}
+              aria-busy={exporting}
+            >
+              {exporting ? t("cvBuilder.exporting") : t("cvBuilder.exportPdf")}
+            </button>
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              {t("cvBuilder.closeFooter")}
+            </button>
+          </div>
+          {exportMessage && <p className="letter-review-success" role="status">{exportMessage}</p>}
+          {exportError && <p className="letter-review-warning" role="alert">{exportError}</p>}
         </div>
       </div>
     </div>

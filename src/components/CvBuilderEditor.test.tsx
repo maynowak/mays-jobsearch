@@ -39,7 +39,7 @@ describe("CV-BUILDER-01A editor", () => {
     render(<Harness />);
     expect(screen.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).toBeInTheDocument();
     expect(screen.getByText(/nur während der aktuellen Sitzung bearbeitet/)).toBeInTheDocument();
-    expect(screen.getByText(/PDF-Download wird in einer kommenden Entwicklungsphase ergänzt/)).toBeInTheDocument();
+    expect(screen.getByText(/PDF-Export erfolgt lokal im Browser/)).toBeInTheDocument();
     expect(screen.getByText("0 Einträge · 0 Validierungshinweise")).toBeInTheDocument();
   });
 
