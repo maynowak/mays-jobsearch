@@ -489,4 +489,19 @@ describe("JM-SEARCH-UX-03: 5 km default and radius intent", () => {
     fireEvent.change(city, { target: { value: "Dresden" } });
     expect(radius.value).toBe("");
   });
+
+  it("disables the skills field while a search is running", () => {
+    render(
+      <LangProvider>
+        <SearchForm
+          phase="searching"
+          value={empty}
+          onChange={vi.fn()}
+          onSubmit={vi.fn()}
+          onWorkflowStart={() => undefined}
+        />
+      </LangProvider>
+    );
+    expect(screen.getByLabelText("Skills")).toBeDisabled();
+  });
 });

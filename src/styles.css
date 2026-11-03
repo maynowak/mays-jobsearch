@@ -2888,12 +2888,21 @@ body {
 
 .skills-field input {
   min-height: 44px;
-  border-color: color-mix(in srgb, var(--accent) 32%, var(--border-form));
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.skills-field input:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 72%, var(--brand));
 }
 
 .skills-field input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .skills-field .field-input-wrap > input {
