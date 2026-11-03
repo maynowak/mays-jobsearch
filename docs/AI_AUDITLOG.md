@@ -1,3 +1,15 @@
+2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05C-MAIN-INTEGRATION-01
+- Typ: Lokale Git-Integration/Regression/Dokumentation
+- Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
+- Baseline: Feature `feature/jm-application-management-ux-05c` @ `956b685`; lokaler `main` @ `7f71459`; `origin/main` @ `4364eab`; Profile-Handoff `bf4b47f`; Merge-Base `7f71459`; 0 behind / 4 ahead; Working Tree clean.
+- Preflight: `bf4b47f` und `7f71459` sind Vorfahren von `956b685`; UX-04A–E, UX-05A/B, LETTER-REVISION-01A–E, Full-Display-Fix, Profile-Handoff und UX-05C enthalten. Fast-Forward möglich, keine Konflikte.
+- Integration: `git merge --ff-only feature/jm-application-management-ux-05c`; Fast-Forward `7f71459..956b685`; 4 Commits (`8dd5651`, `bf4b47f`, `547fdda`, `956b685`); kein Merge-Commit, keine History-Rewrites.
+- Regression auf main: **1261 passed/5 skipped** (`--maxWorkers=2`); API/Provider **56 passed**; TypeScript/Build/API-Syntax/`git diff --check` PASS; Applications-E2E 1440/390 + responsive 1024/768/430/320 PASS; Cover-Letter-E2E 1440/390 PASS; Mobile-Nav und Guest-CV PASS; keine Console-Errors. Kein Timing-Flake im finalen Lauf; keine Tests deaktiviert.
+- Funktion: Applications-E2E deckt Anschreiben → Übernahme → `/profil?tab=applications` → Dokumente → KI-Verbesserung → Vergleich → neue Version speichern ab; Einzelbewerbung wird nach Navigation automatisch ausgewählt.
+- Sicherheit/Produktion: Session-only, Repository-/Versions-/Consent-/Anonymisierungsgrenzen unverändert. Produktionsblocker bleiben: Live-Provider, serverseitige Anonymisierung/Faktenprüfung, `/api/cover-letter`-Missbrauchsschutz, Provider-Log-Hygiene, AI-Abbruchsignal, RIS-Persistenz/Retention, Exactly-once-Grenzen, Deployment-Freigabe. **PRODUCTION: BLOCKED.**
+- Git: `main` nach Fast-Forward `956b685`; Dokumentation in diesem Commit; `origin/main` bleibt `4364eab`. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-05C-MAIN-INTEGRATION-01.md`
+
 2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05C
 - Typ: Bewerbungsplattform/visuelles Feintuning/Bedienbarkeit/UI-Abschlussprüfung
 - Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
