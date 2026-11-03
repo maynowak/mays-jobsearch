@@ -1,3 +1,16 @@
+2026-11-03 · JM-CV-SEARCH-MAIN-CONSOLIDATION-01
+- Typ: Lokale Main-Integration / Regression / Dokumentation
+- Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
+- Baseline: lokaler `main` `e098fbd`; `origin/main` `4364eab`; Integrationsbranch `integration/jm-cv-search-main-01`.
+- Preflight: Merge-Base für CV-Builder und Search-UX jeweils `e098fbd`; `main...CV` 0/12, `main...Search` 0/4; 01A→01B→01C und main→Search als Ancestor bestätigt; keine vorhandene Integrationsbranch.
+- Integration: CV-Builder per `git merge --ff-only feature/jm-cv-builder-01c` (`e098fbd..15f86fb`, 12 Commits); Search-UX per `git merge --no-ff feature/jm-search-results-mobile-ux-04`; Merge-Commit `33ca514` mit Eltern `15f86fb` und `6321100`; kein Rebase/Reset/Stash/History-Rewrite.
+- Konflikte: `docs/AI_AUDITLOG.md` (beide Eintragsblöcke erhalten), `package.json` (alle CV- und Search-E2E-Skripte erhalten), `src/styles.css` (CV-01A/01B/01C- und Search-Blöcke vollständig zusammengeführt, Klammerbilanz/Build/E2E PASS). Keine pauschale `--ours`/`--theirs`-Auflösung. `App.tsx`, `i18n.tsx`, `SearchForm.tsx`, `Results.tsx` konfliktfrei.
+- Integrität: CV-Builder-E2E Gast+Auth PASS; PDF-E2E Gast/Auth, Classic/Modern/Compact, 4/4/3 Seiten, mobil 3, EN 4, Auth 1 Seite, A4/Seitenzahlen/Unicode/Text-Extraktion PASS; Search-Results-E2E PASS inkl. 1440/1024/768/430/390/320, Trefferzahl, `#matches`-Sprung, Fokus, Expand, KI-Lade-/Fehlerpfad, Reduced Motion; Guest-CV/Applications/Cover-Letter/Mobile-Nav PASS; keine Console-Errors/Overflows; keine echten KI-/Provider-/AWS-/RIS-/Apify-Aufrufe.
+- Regression: Gesamtsuite **1304 passed/5 skipped** (`--maxWorkers=2`, 122 Testdateien passed/3 skipped); TypeScript/Build/`git diff --check`/API-Syntax PASS; Testzahlen der Einzelbranches nicht addiert.
+- Git: Integration vor Dokumentation `33ca514`, 17 Commits gegenüber `main`; Dokumentation in diesem Commit; `origin/main` bleibt `4364eab`. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Entscheidung: **LOCAL MAIN INTEGRATION: COMPLETE** nach Fast-Forward des lokalen `main`; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-CV-SEARCH-MAIN-CONSOLIDATION-01.md`
+
 2026-11-03 · JM-CV-BUILDER-01C
 - Typ: Lebenslauf-Werkstatt / lokaler PDF-Export / A4-Seitenumbruch / Qualitätsprüfung
 - Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
@@ -38,6 +51,7 @@
 - Screenshots: `docs/reports/assets/JM-CV-BUILDER-01A/`.
 - Git: Domain `8f4ea9c`, Editor `739a495`, Session/Navigation `85cf61e`, E2E/responsive `14d24d2`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
 - Entscheidung: **CV-BUILDER-01A READY für 01B**; PDF, Persistenz, KI-Optimierung, ATS-Kopplung und RIS bleiben OPEN. **PRODUCTION: BLOCKED.**
+
 2026-11-03 · JM-SEARCH-RESULTS-MOBILE-UX-04
 - Typ: Mobile Stellensuche/Trefferanzeige/Ergebnissprung/KI-Aktionsbutton
 - Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
