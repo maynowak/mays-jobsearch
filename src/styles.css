@@ -9983,3 +9983,67 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   color: var(--muted);
   font-size: var(--text-sm);
 }
+
+/* LETTER-REVISION-01C: editable proposal and word diff */
+.applications-letter-improvement__editor {
+  width: 100%;
+  min-height: 260px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  resize: vertical;
+  overflow: hidden;
+}
+
+.applications-letter-improvement__editor:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.applications-letter-improvement__diff {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.applications-letter-improvement__diff h5 {
+  margin: 0;
+}
+
+.applications-letter-improvement__diff-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.applications-letter-improvement__diff-text {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.applications-letter-improvement__diff-text del {
+  background: #fee2e2;
+  color: #7f1d1d;
+  text-decoration: line-through;
+}
+
+.applications-letter-improvement__diff-text ins {
+  background: #dcfce7;
+  color: #14532d;
+  text-decoration: none;
+}

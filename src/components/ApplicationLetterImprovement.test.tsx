@@ -88,7 +88,8 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     expect(button).toBeEnabled();
     fireEvent.click(button);
 
-    await screen.findByText("IMPROVED LETTER");
+    const proposal = await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    expect(proposal).toHaveValue("IMPROVED LETTER");
     expect(generateCoverLetter).toHaveBeenCalledTimes(1);
     const [request, attempt] = vi.mocked(generateCoverLetter).mock.calls[0];
     expect(attempt).toBe(1);
@@ -102,7 +103,9 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     expect(request.revision?.draft_anonymized).toBe(true);
 
     expect(screen.getAllByText("Current letter").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("IMPROVED LETTER").length).toBeGreaterThan(0);
+    expect(screen.getByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).toHaveValue("IMPROVED LETTER");
+    expect(screen.getByRole("heading", { name: "Änderungen" })).toBeInTheDocument();
+    expect(document.querySelector(".applications-letter-improvement__diff-text ins")).not.toBeNull();
     expect(screen.getAllByText(/Nicht als Version gespeichert/).length).toBeGreaterThan(0);
   });
 
@@ -111,7 +114,7 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     fireEvent.change(screen.getByLabelText("Ausgangsversion"), { target: { value: "v1" } });
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
-    await screen.findByText("IMPROVED LETTER");
+    expect(await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).toHaveValue("IMPROVED LETTER");
     expect(vi.mocked(generateCoverLetter).mock.calls[0][0].revision?.draft_text).toBe("ANON:Version one");
   });
 
@@ -119,9 +122,9 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     renderComparison(makeApplication([version("v1", "Version one")], "Draft"));
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
-    await screen.findByText("IMPROVED LETTER");
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
     fireEvent.click(screen.getByRole("button", { name: "Vorschlag verwerfen" }));
-    expect(screen.queryByText("IMPROVED LETTER")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).not.toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
   });
 
@@ -132,7 +135,7 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/Verbesserung konnte nicht erstellt werden/);
     expect(screen.getByText("Draft")).toBeInTheDocument();
-    expect(screen.queryByText("IMPROVED LETTER")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).not.toBeInTheDocument();
   });
 
   it("does not issue a second request when the action is clicked twice while pending", async () => {
@@ -149,7 +152,7 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     fireEvent.click(button);
     expect(generateCoverLetter).toHaveBeenCalledTimes(1);
     resolveRequest({ letter: "AFTER PENDING" });
-    await screen.findByText("AFTER PENDING");
+    expect(await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).toHaveValue("AFTER PENDING");
   });
 
   it("does not show a late proposal after switching applications", async () => {
@@ -175,7 +178,28 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
       </LangProvider>
     );
     resolveRequest({ letter: "LATE PROPOSAL" });
-    await waitFor(() => expect(screen.queryByText("LATE PROPOSAL")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).not.toBeInTheDocument());
     expect(screen.getByText("Second draft")).toBeInTheDocument();
   });
+  it("updates the diff while the proposal is edited without changing the original", async () => {
+    renderComparison(makeApplication([version("v1", "Version one")], "Original letter"));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    const proposal = await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.change(proposal, { target: { value: "Manually edited proposal" } });
+    expect(proposal).toHaveValue("Manually edited proposal");
+    expect(screen.getAllByText("Original letter").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Änderungen" })).toBeInTheDocument();
+    expect(document.querySelector(".applications-letter-improvement__diff-text ins")).not.toBeNull();
+  });
+
+  it("shows no-change state when source and proposal are identical", async () => {
+    vi.mocked(generateCoverLetter).mockResolvedValueOnce({ letter: "Current letter" });
+    renderComparison(makeApplication([], "Current letter"));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    expect(screen.getByText("Keine Änderungen.")).toBeInTheDocument();
+  });
+
 });

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type { ModelOption } from "../types";
 import {
@@ -9,6 +9,7 @@ import {
   withModelFallback,
 } from "../api";
 import { anonymizeText } from "../lib/anonymize";
+import { diffText } from "../lib/textDiff";
 import {
   MAX_REVISION_DRAFT_LENGTH,
   MAX_REVISION_FEEDBACK_LENGTH,
@@ -70,6 +71,7 @@ export default function ApplicationLetterComparison({
   const [improveError, setImproveError] = useState("");
   const [improving, setImproving] = useState(false);
   const requestSeqRef = useRef(0);
+  const suggestionRef = useRef<HTMLTextAreaElement>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
   const appIdRef = useRef(application.localId);
@@ -120,6 +122,19 @@ export default function ApplicationLetterComparison({
       requestSeqRef.current += 1;
     };
   }, []);
+
+  const suggestionDiff = useMemo(
+    () => (improvement ? diffText(improvement.sourceText, improvement.suggestion) : null),
+    [improvement]
+  );
+
+  useEffect(() => {
+    if (!improvement) return;
+    const editor = suggestionRef.current;
+    if (!editor) return;
+    editor.style.height = "auto";
+    editor.style.height = `${editor.scrollHeight}px`;
+  }, [improvement]);
 
   const optionLabel = (version: CoverLetterVersionV1, index: number): string =>
     t("applications.letterComparison.versionOption", {
@@ -437,9 +452,54 @@ export default function ApplicationLetterComparison({
               </section>
               <section className="applications-letter-comparison__panel" aria-labelledby={`${selectFromId}-improvement-suggestion`}>
                 <h4 id={`${selectFromId}-improvement-suggestion`}>{t("letter.improve.suggestion")}</h4>
-                <pre className="applications-letter-comparison__text">{improvement.suggestion}</pre>
+                <label className="letter-field">
+                  <span>{t("letter.improve.editLabel")}</span>
+                  <textarea
+                    ref={suggestionRef}
+                    className="applications-letter-improvement__editor"
+                    value={improvement.suggestion}
+                    onChange={(event) =>
+                      setImprovement((current) =>
+                        current ? { ...current, suggestion: event.target.value } : current
+                      )
+                    }
+                    aria-label={t("letter.improve.editLabel")}
+                  />
+                </label>
               </section>
             </div>
+            {suggestionDiff && (
+              <section className="applications-letter-improvement__diff" aria-labelledby={`${selectFromId}-improvement-diff`}>
+                <h5 id={`${selectFromId}-improvement-diff`}>{t("letter.improve.changes")}</h5>
+                <p className="applications-letter-improvement__diff-summary">
+                  {suggestionDiff.changeGroups === 0
+                    ? t("letter.improve.noChanges")
+                    : [
+                        t("letter.improve.kept", { count: suggestionDiff.kept }),
+                        t("letter.improve.added", { count: suggestionDiff.added }),
+                        t("letter.improve.removed", { count: suggestionDiff.removed }),
+                        t("letter.improve.changeGroups", { count: suggestionDiff.changeGroups }),
+                      ].join(" · ")}
+                </p>
+                {suggestionDiff.truncated && (
+                  <p className="letter-hint">{t("letter.improve.diffTruncated")}</p>
+                )}
+                <div
+                  className="applications-letter-improvement__diff-text"
+                  aria-label={t("letter.improve.diffAria")}
+                >
+                  {suggestionDiff.segments.map((segment, index) =>
+                    segment.type === "removed" ? (
+                      <del key={index}>{segment.text}</del>
+                    ) : segment.type === "added" ? (
+                      <ins key={index}>{segment.text}</ins>
+                    ) : (
+                      <span key={index}>{segment.text}</span>
+                    )
+                  )}
+                </div>
+              </section>
+            )}
             <div className="applications-letter-improvement__actions">
               <button type="button" className="btn-ghost" onClick={() => void handleImprove()} disabled={improving}>
                 {t("letter.improve.again")}

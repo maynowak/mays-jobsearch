@@ -15,6 +15,7 @@ const ux05aEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-M
 const ux05bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05B");
 const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01A");
 const letterImprovementEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01B");
+const letterDiffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01C");
 const improvedLetter = `AI IMPROVED PROPOSAL\n\n${"Ich bringe relevante Erfahrung und klare Kommunikation mit. ".repeat(12)}\nAI END`;
 const longLetter = [
   "Sehr geehrte Damen und Herren,",
@@ -389,9 +390,30 @@ async function runViewport(browser, name, viewport) {
   await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(letterImprovementEvidenceDir, `${name}-improvement.png`), fullPage: false });
   await page.getByRole("button", { name: "Verbesserung vorschlagen" }).click();
-  await page.getByText(/AI END/).waitFor();
+  await page.getByRole("textbox", { name: "KI-Vorschlag bearbeiten", exact: true }).waitFor();
   await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(letterImprovementEvidenceDir, `${name}-proposal.png`), fullPage: false });
+  await mkdir(letterDiffEvidenceDir, { recursive: true });
+  const proposalEditor = page.getByRole("textbox", { name: "KI-Vorschlag bearbeiten", exact: true });
+  await proposalEditor.waitFor();
+  if ((await page.locator(".applications-letter-improvement__diff-text del").count()) === 0) {
+    throw new Error(`${name}: removed-word diff is missing`);
+  }
+  if ((await page.locator(".applications-letter-improvement__diff-text ins").count()) === 0) {
+    throw new Error(`${name}: added-word diff is missing`);
+  }
+  const proposalBox = await proposalEditor.evaluate((element) => ({ scrollHeight: element.scrollHeight, clientHeight: element.clientHeight }));
+  if (proposalBox.scrollHeight > proposalBox.clientHeight + 2) {
+    throw new Error(`${name}: editable proposal is clipped`);
+  }
+  await page.locator(".applications-letter-improvement__diff").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: resolve(letterDiffEvidenceDir, `${name}-diff.png`), fullPage: false });
+  await proposalEditor.fill(`${await proposalEditor.inputValue()}\n\nMANUAL EDIT`);
+  await page.waitForTimeout(100);
+  await page.locator(".applications-letter-improvement__diff").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: resolve(letterDiffEvidenceDir, `${name}-edited.png`), fullPage: false });
   const reviseRequest = coverLetterBodies.at(-1);
   if (reviseRequest?.operation !== "revise") throw new Error(`${name}: improvement did not use revise`);
   if (reviseRequest?.revision?.draft_anonymized !== true) throw new Error(`${name}: draft was not marked anonymised`);
@@ -399,7 +421,7 @@ async function runViewport(browser, name, viewport) {
   await assertNoNavOverlap(page);
   await checkImprovementResponsive(page, viewport);
   await page.getByRole("button", { name: "Vorschlag verwerfen" }).click();
-  await page.getByText(/AI END/).waitFor({ state: "detached" });
+  await page.getByRole("textbox", { name: "KI-Vorschlag bearbeiten", exact: true }).waitFor({ state: "detached" });
   await page.getByRole("tab", { name: "Übersicht" }).click();
 
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();
