@@ -1,3 +1,16 @@
+2026-11-03 · JM-APPLICATION-LETTER-REVISION-01B
+- Typ: Anschreiben-Verwaltung/KI-Verbesserung/temporäre Vorschau
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment, keine echte KI-Anfrage
+- Baseline: 01A `0fa6941`; Branch `feature/jm-application-letter-revision-01b`; main `4364eab`.
+- API: vorhandener `POST /api/cover-letter` mit `operation:"revise"`, `generateCoverLetter` + `withModelFallback`, ausgewähltes `options.model`; keine neue API/Provider/Credentials.
+- Daten/Privacy: Ausgangsfassung (Entwurf/Version) und Wunsch werden mit `anonymizeText()` anonymisiert; `draft_anonymized:true` erst danach. Keine CV-Datei, Kontakt-/Gehaltsdaten, persönlichen Notizen oder erfundenen Kandidatendaten. Manueller Kandidatenkontext leer. Erforderliche Checkbox-Einwilligung; ohne Einwilligung kein Request. Transparenzhinweis inkl. Fallback-Provider.
+- Vorschau: KI-Antwort nur lokaler React-State; Ausgangstext + Vorschlag vollständig; keine Änderung an Draft/Versionen/Status/History/Repository, kein Auto-Save, keine Persistenz. Verwerfen entfernt nur den Vorschlag.
+- Async/Session: `inFlightRef` gegen Doppelklick, `requestSeqRef` gegen verspätete Antworten, Reset/Invalidierung bei Bewerbungs-/Quellen-/Unmount-Wechsel; Fehler lassen Original unverändert.
+- UI/A11y: Modellauswahl, Wunsch, Consent, Aktion, Vorschau, erneut/verwerfen; Desktop zweispaltig/mobil einspaltig; 1440/1024/768/390/320 ohne Overflow, Navbar-BBox PASS.
+- Tests: ApplicationLetterImprovement **6**, ApplicationLetterComparison **6**, ApplicationsSection **31**, Gesamtsuite **1235 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors.
+- Git: Implementierung `b394e37`, Responsive-E2E `579b5b9`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-REVISION-01B.md`
+
 2026-11-03 · JM-APPLICATION-LETTER-REVISION-01A
 - Typ: Anschreiben-Versionierung/Versionsauswahl/Vergleichsansicht
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment, keine KI-Integration
