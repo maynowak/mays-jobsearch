@@ -1,3 +1,16 @@
+2026-11-03 · JM-SEARCH-NAV-UX-FINALIZATION-01
+- Typ: Skills-Design-Korrektur / Such-/Navigations-UX / lokale Main-Integration
+- Status: **READY für lokale Main-Integration** — kein Push, kein Deployment
+- Baseline: `feature/jm-nav-scroll-ux-02` `3aa3062`; lokaler `main` `7e4858c`; `origin/main` `4364eab`; Branch `feature/jm-search-nav-ux-finalization-01`.
+- Ursache: Der UX-03-Skills-Container war türkis, der eigentliche Input-Rahmen nutzte aber `color-mix(accent 32%, border-form)` und den beige-grauen `--surface-form`-Hintergrund.
+- Korrektur: `.skills-field input` erhält dauerhaft `border-color: var(--accent)`, dezenten türkisen Hintergrund, 1-px-Innenkontur, Hover-/Fokus-Verstärkung und 3-px-Fokusring; 1-px-Grundrahmen bleibt layoutstabil. Andere Formularfelder unverändert; Parser, Chips und Löschbutton unverändert.
+- Accessibility: Label, sichtbare Überschrift, Hilfetext, Beispiel-Chips, `aria-describedby`, Textkontrast, 44-px-Input/Löschbutton, Tastaturfokus und Disabled-Zustand geprüft.
+- Tests: Gesamtsuite **1321 passed/5 skipped** (`--maxWorkers=2`, 123 Testdateien passed/3 skipped); SearchForm **31 passed**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Finalization-E2E 1440/390/320 inkl. türkisem Rahmen, Fokus, Chips, Löschbutton, Tastatur und Overflow PASS; Nav-Scroll/Search-Results/Applications/Cover-Letter/Guest-CV/Mobile-Nav/CV-Builder/CV-PDF PASS; keine Console-Errors; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-SEARCH-NAV-UX-FINALIZATION-01/` inkl. Vorher-Vergleich aus UX-03.
+- Git: Implementierung `80c1c5d`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **SEARCH/NAV UX READY**; Applications-Ausnahme aus NAV-SCROLL-UX-02 bleibt unverändert; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-SEARCH-NAV-UX-FINALIZATION-01.md`
+
 2026-11-03 · JM-NAV-SCROLL-UX-02
 - Typ: Intelligente Hauptnavigation / Scroll-Verhalten / Schnellnavigation
 - Status: **READY für lokale Main-Integration** — kein Push, Merge oder Deployment
