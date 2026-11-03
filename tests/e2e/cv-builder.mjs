@@ -7,6 +7,7 @@ import playwright from "playwright";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-CV-BUILDER-01A");
+const previewEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-CV-BUILDER-01B");
 const port = 5205;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
@@ -120,7 +121,9 @@ async function fillExperience(page) {
   await dialog.getByLabel("Arbeitgeber").fill("Beispiel GmbH");
   await dialog.getByLabel("Beginn (Monat/Jahr)").fill("2020-03");
   await dialog.getByLabel("Aktuell laufend").check();
-  await dialog.getByLabel("Tätigkeiten / Beschreibung").fill("React, TypeScript und barrierefreie UI-Komponenten.");
+  await dialog.getByLabel("Tätigkeiten / Beschreibung").fill(
+    "React, TypeScript und barrierefreie UI-Komponenten.\n\nAufbau eines Designsystems, Mentoring im Team und enge Zusammenarbeit mit Produkt und Design."
+  );
 
   await dialog.getByRole("button", { name: "+ Berufserfahrung hinzufügen" }).click();
   await dialog.getByLabel("Position").nth(1).fill("Frontend Entwicklerin");
@@ -172,6 +175,24 @@ async function runGuest(browser) {
   await page.locator(".cv-builder-sections").scrollIntoViewIfNeeded();
   await page.screenshot({ path: resolve(evidenceDir, "desktop-1440-education-skills.png"), fullPage: false });
 
+  await mkdir(previewEvidenceDir, { recursive: true });
+  await page.locator(".cv-builder-modal__box").evaluate((element) => { element.scrollTop = 0; });
+  const preview = page.locator(".cv-preview");
+  for (const [button, slug] of [["Klassisch", "classic"], ["Modern", "modern"], ["Kompakt", "compact"]]) {
+    await page.getByRole("button", { name: button }).click();
+    const actual = await preview.getAttribute("data-template");
+    if (actual !== slug) throw new Error(`preview template ${slug} not active`);
+    await page.getByText("Alex Beispiel", { exact: true }).last().waitFor();
+    await preview.screenshot({
+      path: resolve(previewEvidenceDir, `desktop-1440-${slug}.png`),
+    });
+  }
+  await page.getByRole("button", { name: "Klassisch" }).click();
+  await page.screenshot({
+    path: resolve(previewEvidenceDir, "desktop-1440-editor-live-preview.png"),
+    fullPage: false,
+  });
+
   // Normal close/reopen: App state must keep the structured draft in memory.
   await builderDialog(page).getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
@@ -193,9 +214,28 @@ async function runGuest(browser) {
   await page.getByText(/nur während der aktuellen Sitzung bearbeitet/).scrollIntoViewIfNeeded();
   await page.screenshot({ path: resolve(evidenceDir, "mobile-390-session-note.png"), fullPage: false });
 
+  await page.getByRole("button", { name: "Vorschau" }).click();
+  await page.screenshot({ path: resolve(previewEvidenceDir, "mobile-390-view-toggle.png"), fullPage: false });
+  for (const [button, slug] of [["Klassisch", "classic"], ["Modern", "modern"], ["Kompakt", "compact"]]) {
+    await page.getByRole("button", { name: button }).click();
+    if ((await preview.getAttribute("data-template")) !== slug) {
+      throw new Error(`mobile preview template ${slug} not active`);
+    }
+    await preview.screenshot({
+      path: resolve(previewEvidenceDir, `mobile-390-${slug}.png`),
+    });
+  }
+  await page.getByRole("button", { name: "Bearbeiten" }).click();
+  if ((await builderDialog(page).getByLabel("Vollständiger Name").inputValue()) !== "Alex Beispiel") {
+    throw new Error("mobile view switch lost editor data");
+  }
+
   for (const width of [1024, 768, 430, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await checkNoOverflow(page, `width-${width}`);
+    await page.getByRole("button", { name: "Vorschau" }).click();
+    await checkNoOverflow(page, `width-${width}-preview`);
+    await page.getByRole("button", { name: "Bearbeiten" }).click();
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
