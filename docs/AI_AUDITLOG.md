@@ -1,3 +1,13 @@
+2026-11-03 · JM-APPLICATION-LETTER-REVISION-01C
+- Typ: Anschreiben-Versionierung/Text-Diff/manuelle Vorschlagsbearbeitung
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment, keine Übernahme/Speicherung
+- Baseline: 01B `e0f513e`; Branch `feature/jm-application-letter-revision-01c`; main `4364eab`.
+- Diff: neues `src/lib/textDiff.ts` (wortbasiert, gleich/entfernt/hinzugefügt, Zähler, Änderungsstellen, bounded fallback); sichere React-Textknoten mit `<del>`/`<ins>`, kein HTML-Injection. Vorschlag editierbar, Diff aktualisiert live; Original bleibt unverändert.
+- Vorschlag: weiterhin ausschließlich React-State; keine Änderung an `coverLetterDraft`/`coverLetterVersions`/Status/History/Repository, keine Persistenz, kein Auto-Save, keine automatische Übernahme. 01B-Consent/Anonymisierung/Provider-Fallback und Request-/Session-Schutz unverändert.
+- Tests: TextDiff **4**, ApplicationLetterImprovement **8**, ApplicationLetterComparison **6**, ApplicationsSection **31**, Gesamtsuite **1241 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + responsive 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors.
+- Git: Implementierung `efc4634`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-REVISION-01C.md`
+
 2026-11-03 · JM-APPLICATION-LETTER-REVISION-01B
 - Typ: Anschreiben-Verwaltung/KI-Verbesserung/temporäre Vorschau
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment, keine echte KI-Anfrage
