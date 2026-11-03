@@ -7,6 +7,7 @@ import playwright from "playwright";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-UX-01");
+const handoffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-PROFILE-HANDOFF-01");
 const longLetter = [
   "Sehr geehrte Damen und Herren,",
   "vielen Dank für die Einladung. " + "Ich freue mich sehr über die Möglichkeit, das Team kennenzulernen. ".repeat(18),
@@ -262,6 +263,15 @@ async function runViewport(browser, name, viewport) {
     throw new Error(`${name}: selected model was not sent`);
   }
   await page.screenshot({ path: resolve(evidenceDir, `${name}-letter-generated.png`), fullPage: false });
+  await mkdir(handoffEvidenceDir, { recursive: true });
+  await page.getByRole("heading", { name: "Deine Bewerbungen im Blick behalten" }).waitFor();
+  await page.getByRole("heading", { name: "Deine Bewerbungen im Blick behalten" }).scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Anmelden / Registrieren" }).waitFor();
+  await page.getByText(/ausschließlich während der aktiven Sitzung/).waitFor();
+  await page.screenshot({
+    path: resolve(handoffEvidenceDir, `${name}-guest-handoff.png`),
+    fullPage: false,
+  });
 
   // JM-COVER-LETTER-UX-01: visible revision path, explicit action only.
   await page.getByLabel("Was möchtest du am Anschreiben verbessern?").fill("Bitte kürzer.");

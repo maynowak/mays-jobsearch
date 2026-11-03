@@ -52,6 +52,8 @@ export interface LetterPreparationContext {
   candidateDraft?: LetterCandidateDraft;
 }
 
+export type LetterApplicationAdoptionResult = "created" | "updated";
+
 interface Props {
   job: Job;
   prepare: string;
@@ -66,16 +68,21 @@ interface Props {
   initialContext?: LetterPreparationContext | null;
   onAddCv?: (file: File, context: LetterPreparationContext) => void;
   onProcessCv?: (id: string, context: LetterPreparationContext) => void;
+  isAuthenticated?: boolean;
+  hasSessionApplications?: boolean;
+  onSignIn?: () => void;
+  onOpenApplications?: () => void;
   onAdoptAsApplication?: (payload: {
     job: Job;
     letter: string;
     cvReference?: { cvId: string; label?: string };
-  }) => void;
+  }) => Promise<LetterApplicationAdoptionResult>;
   hasApplicationDraft?: boolean;
   onClose: () => void;
 }
 
 type LetterPhase = "intro" | "loading" | "done" | "error";
+type LetterTextStatus = "created" | "revised" | "edited";
 
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -94,12 +101,17 @@ export default function LetterModal({
   initialContext,
   onAddCv,
   onProcessCv,
+  isAuthenticated,
+  hasSessionApplications = false,
+  onSignIn,
+  onOpenApplications,
   onAdoptAsApplication,
   hasApplicationDraft = false,
   onClose,
 }: Props) {
   const { t, lang } = useLang();
   void prepare; // CL-01 compatibility; interview prompts are no longer part of the letter.
+  const authenticated = isAuthenticated ?? Boolean(onAdoptAsApplication);
   const headingId = useId();
   const helpId = useId();
   const cvGroupId = useId();
@@ -161,6 +173,12 @@ export default function LetterModal({
   const [generationError, setGenerationError] = useState("");
   const [generatedText, setGeneratedText] = useState("");
   const [edited, setEdited] = useState(false);
+  const [letterTextStatus, setLetterTextStatus] = useState<LetterTextStatus | null>(null);
+  const [adoptionResult, setAdoptionResult] = useState<LetterApplicationAdoptionResult | null>(null);
+  const [adoptionError, setAdoptionError] = useState("");
+  const [adopting, setAdopting] = useState(false);
+  const [loginConfirm, setLoginConfirm] = useState(false);
+  const adoptingRef = useRef(false);
   const [regenerateWarning, setRegenerateWarning] = useState(false);
   const [reviseWarning, setReviseWarning] = useState(false);
   const [modelFailure, setModelFailure] = useState(false);
@@ -209,6 +227,12 @@ export default function LetterModal({
     setGenerationError("");
     setGeneratedText("");
     setEdited(false);
+    setLetterTextStatus(null);
+    setAdoptionResult(null);
+    setAdoptionError("");
+    setAdopting(false);
+    adoptingRef.current = false;
+    setLoginConfirm(false);
     setRegenerateWarning(false);
     setReviseWarning(false);
     setModelFailure(false);
@@ -226,6 +250,12 @@ export default function LetterModal({
     setLetter("");
     setGeneratedText("");
     setEdited(false);
+    setLetterTextStatus(null);
+    setAdoptionResult(null);
+    setAdoptionError("");
+    setAdopting(false);
+    adoptingRef.current = false;
+    setLoginConfirm(false);
     setRegenerateWarning(false);
     setGenerationError("");
   }, [
@@ -464,6 +494,9 @@ export default function LetterModal({
       setLetter(nextLetter);
       setGeneratedText(nextLetter);
       setEdited(false);
+      setLetterTextStatus(operation === "revise" ? "revised" : "created");
+      setAdoptionResult(null);
+      setAdoptionError("");
       setFallbackNote(usedFallback);
       if (usedFallback) {
         const successfulModel = attempts.find((attempt) => attempt.ok)?.model;
@@ -567,6 +600,9 @@ export default function LetterModal({
   const handleLetterChange = (value: string) => {
     setLetter(value);
     setEdited(value !== generatedText);
+    setLetterTextStatus("edited");
+    setAdoptionResult(null);
+    setAdoptionError("");
     setRegenerateWarning(false);
     setReviseWarning(false);
   };
@@ -614,6 +650,37 @@ export default function LetterModal({
     a.download = `${t("letter.fileName")}-${fileName}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleAdoptAsApplication = async () => {
+    if (!onAdoptAsApplication || adoptingRef.current || !letter.trim() || !job.url) return;
+    adoptingRef.current = true;
+    setAdopting(true);
+    setAdoptionError("");
+    setAdoptionResult(null);
+    try {
+      const result = await onAdoptAsApplication({
+        job,
+        letter,
+        ...(selectedCv && selectedCvReady
+          ? { cvReference: { cvId: selectedCv.id, label: selectedCv.name } }
+          : {}),
+      });
+      setAdoptionResult(result === "updated" ? "updated" : "created");
+    } catch {
+      setAdoptionError(t("letter.handoff.failed"));
+    } finally {
+      adoptingRef.current = false;
+      setAdopting(false);
+    }
+  };
+
+  const handleGuestSignIn = () => {
+    if (hasSessionApplications && !loginConfirm) {
+      setLoginConfirm(true);
+      return;
+    }
+    onSignIn?.();
   };
 
   const jobName = [job.title, job.company_name].filter(Boolean).join(" @ ");
@@ -1059,6 +1126,11 @@ export default function LetterModal({
 
         {phase === "done" && (
           <div className="letter-editor-wrap">
+            {letterTextStatus && (
+              <p className="letter-review-success letter-text-status" role="status">
+                {t(`letter.status.${letterTextStatus}`)}
+              </p>
+            )}
             <textarea
               ref={editorRef}
               className="letter-editor"
@@ -1066,6 +1138,7 @@ export default function LetterModal({
               onChange={(event) => handleLetterChange(event.target.value)}
               maxLength={MAX_REVISION_DRAFT_LENGTH}
               aria-label={t("letter.editorAria")}
+              disabled={adopting}
             />
             <p className="letter-hint">{t("letter.editHint")}</p>
             <label className="letter-field letter-feedback">
@@ -1092,6 +1165,66 @@ export default function LetterModal({
           </div>
         )}
 
+        {phase === "done" && (authenticated ? Boolean(adoptionResult || adoptionError) : true) && (
+          <section className="letter-handoff" aria-labelledby={`${headingId}-handoff`}>
+            {authenticated ? (
+              <>
+                {adoptionResult && (
+                  <div className="letter-handoff__success" role="status">
+                    <h5 id={`${headingId}-handoff`}>{t("letter.handoff.ready")}</h5>
+                    <p>
+                      {adoptionResult === "updated"
+                        ? t("letter.handoff.updated")
+                        : t("letter.handoff.created")}
+                    </p>
+                    {onOpenApplications && (
+                      <button type="button" className="letter-btn" onClick={onOpenApplications}>
+                        {t("letter.handoff.openApplications")}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {adoptionError && (
+                  <p className="letter-review-warning" role="alert">
+                    {adoptionError}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="letter-handoff__guest">
+                <h5 id={`${headingId}-handoff`}>{t("letter.handoff.guestTitle")}</h5>
+                <p>{t("letter.handoff.guestText")}</p>
+                <p className="letter-hint">{t("letter.handoff.guestSession")}</p>
+                {loginConfirm ? (
+                  <div className="letter-handoff__confirm" role="alert">
+                    <p>{t("letter.handoff.loginWarning")}</p>
+                    <div className="letter-handoff__actions">
+                      <button
+                        type="button"
+                        className="letter-btn"
+                        onClick={() => onSignIn?.()}
+                      >
+                        {t("letter.handoff.loginContinue")}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => setLoginConfirm(false)}
+                      >
+                        {t("applications.cancel")}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" className="letter-btn" onClick={handleGuestSignIn}>
+                    {t("letter.handoff.loginAction")}
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
         {phase === "done" && (
           <div className="modal-actions">
             {onAdoptAsApplication && (
@@ -1107,20 +1240,14 @@ export default function LetterModal({
                 <button
                   type="button"
                   className="btn-ghost"
-                  disabled={!letter.trim() || !job.url}
-                  onClick={() =>
-                    onAdoptAsApplication({
-                      job,
-                      letter,
-                      ...(selectedCv && selectedCvReady
-                        ? { cvReference: { cvId: selectedCv.id, label: selectedCv.name } }
-                        : {}),
-                    })
-                  }
+                  disabled={!letter.trim() || !job.url || adopting}
+                  onClick={() => void handleAdoptAsApplication()}
                 >
-                  {hasApplicationDraft
-                    ? t("letter.updateApplicationDraft")
-                    : t("letter.adoptApplication")}
+                  {adopting
+                    ? t("letter.handoff.adopting")
+                    : hasApplicationDraft
+                      ? t("letter.updateApplicationDraft")
+                      : t("letter.adoptApplication")}
                 </button>
               </div>
             )}

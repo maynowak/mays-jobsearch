@@ -734,42 +734,42 @@ export default function App() {
     handleCvProcess(id);
   };
 
-  const handleAdoptLetterAsApplication = (payload: {
+  const handleAdoptLetterAsApplication = async (payload: {
     job: Job;
     letter: string;
     cvReference?: { cvId: string; label?: string };
-  }) => {
+  }): Promise<"created" | "updated"> => {
     const existing = sessionApplicationForJob(sessionApplications, payload.job.slug);
     const epoch = sessionEpochRef.current;
 
     if (existing) {
-      void applicationRepository
-        .update(existing.localId, {
+      try {
+        const updated = await applicationRepository.update(existing.localId, {
           expectedVersion: existing.version,
           changes: {
             coverLetterDraft: payload.letter,
             documentStatus: payload.letter.trim() ? "draft" : existing.documents.documentStatus,
             ...(payload.cvReference ? { cvReference: payload.cvReference } : {}),
           },
-        })
-        .then((updated) => {
-          if (sessionEpochRef.current !== epoch) return;
-          setSessionApplications((current) =>
-            current.map((application) =>
-              application.localId === updated.localId ? updated : application
-            )
-          );
-          setStatus({ type: "info", message: t("applications.updatedNotice") });
-        })
-        .catch(() => {
-          if (sessionEpochRef.current !== epoch) return;
-          setStatus({ type: "error", message: t("applications.actionError") });
         });
-      return;
+        if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
+        setSessionApplications((current) =>
+          current.map((application) =>
+            application.localId === updated.localId ? updated : application
+          )
+        );
+        setStatus({ type: "info", message: t("applications.updatedNotice") });
+        return "updated";
+      } catch (err) {
+        if (sessionEpochRef.current === epoch) {
+          setStatus({ type: "error", message: t("applications.actionError") });
+        }
+        throw err;
+      }
     }
 
-    void applicationRepository
-      .create({
+    try {
+      const application = await applicationRepository.create({
         idempotencyKey: `adopt:${payload.job.slug}`,
         coverLetter: payload.letter,
         cvReference: payload.cvReference,
@@ -781,20 +781,21 @@ export default function App() {
           source: payload.job.source ?? [],
           originalUrl: payload.job.url,
         },
-      })
-      .then((application) => {
-        if (sessionEpochRef.current !== epoch) return;
-        setSessionApplications((current) =>
-          current.some((item) => item.localId === application.localId)
-            ? current.map((item) => (item.localId === application.localId ? application : item))
-            : [...current, application]
-        );
-        setStatus({ type: "info", message: t("applications.createdNotice") });
-      })
-      .catch(() => {
-        if (sessionEpochRef.current !== epoch) return;
-        setStatus({ type: "error", message: t("applications.actionError") });
       });
+      if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
+      setSessionApplications((current) =>
+        current.some((item) => item.localId === application.localId)
+          ? current.map((item) => (item.localId === application.localId ? application : item))
+          : [...current, application]
+      );
+      setStatus({ type: "info", message: t("applications.createdNotice") });
+      return "created";
+    } catch (err) {
+      if (sessionEpochRef.current === epoch) {
+        setStatus({ type: "error", message: t("applications.actionError") });
+      }
+      throw err;
+    }
   };
 
   // CV-PROFILE-LISTS-04 (Privacy): Alle CV-Daten entfernen — Session-Listen
@@ -3221,6 +3222,16 @@ export default function App() {
               initialContext={letterJob.context}
               onAddCv={handleAddCvFromLetter}
               onProcessCv={handleProcessCvFromLetter}
+              isAuthenticated={isAuth}
+              hasSessionApplications={sessionApplications.length > 0}
+              onSignIn={() => {
+                setLetterJob(null);
+                navigateInApp("/anmelden");
+              }}
+              onOpenApplications={() => {
+                setLetterJob(null);
+                navigateInApp("/profil?tab=applications");
+              }}
               onAdoptAsApplication={isAuth ? handleAdoptLetterAsApplication : undefined}
               hasApplicationDraft={Boolean(
                 sessionApplicationForJob(sessionApplications, letterJob.job.slug)

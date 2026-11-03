@@ -13,10 +13,29 @@ const renderDashboard = () =>
 describe('MAYS-UI-S2: Aurora dashboard preview', () => {
   beforeEach(() => {
     localStorage.setItem('mj-lang', 'de');
+    window.history.replaceState({}, '', '/');
   });
 
   afterEach(() => {
     cleanup();
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('opens the applications section from the existing profile query', () => {
+    window.history.replaceState({}, '', '/profil?tab=applications');
+    render(
+      <LangProvider>
+        <DashboardV2
+          user={DEMO_USER}
+          isDemo
+          applicationsSection={<section aria-label="Meine Bewerbungen">Inhalt</section>}
+        />
+      </LangProvider>
+    );
+
+    expect(screen.getByRole('region', { name: 'Meine Bewerbungen' })).toBeTruthy();
+    const navigation = screen.getByRole('navigation', { name: 'Navigieren' });
+    expect(navigation.querySelector('[aria-current="page"]')).toHaveTextContent('Bewerbungen');
   });
 
   it('renders the complete translated demo content', () => {

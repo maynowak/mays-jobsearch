@@ -492,7 +492,7 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
   });
 
   it("adopts an existing letter as an application draft without another AI call", async () => {
-    const onAdoptAsApplication = vi.fn();
+    const onAdoptAsApplication = vi.fn().mockResolvedValue("created");
     renderModal({ onAdoptAsApplication });
     fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
     await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
@@ -507,13 +507,14 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
         letter: "Dear hiring team,",
       })
     );
+    expect(await screen.findByText("Dein Bewerbungsentwurf ist bereit.")).toBeInTheDocument();
     expect(withModelFallback).toHaveBeenCalledTimes(1);
     expect(generateCoverLetter).toHaveBeenCalledTimes(1);
   });
 
   it("passes the selected CV reference into the local application draft", async () => {
     const cv = makeCv({ processedAt: Date.now(), hash: "a".repeat(64), name: "selected.pdf" });
-    const onAdoptAsApplication = vi.fn();
+    const onAdoptAsApplication = vi.fn().mockResolvedValue("created");
     renderModal({ cvDocuments: [cv], onAdoptAsApplication });
     fireEvent.click(screen.getByLabelText(/selected\.pdf/));
     fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
@@ -528,7 +529,7 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
   });
 
   it("shows an existing draft with a check and still allows updating it", async () => {
-    const onAdoptAsApplication = vi.fn();
+    const onAdoptAsApplication = vi.fn().mockResolvedValue("updated");
     renderModal({ onAdoptAsApplication, hasApplicationDraft: true });
     fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
     await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
@@ -545,6 +546,104 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
 
     fireEvent.click(button);
     expect(onAdoptAsApplication).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the guest handoff and warns before sign-in when session applications exist", async () => {
+    const onSignIn = vi.fn();
+    renderModal({
+      isAuthenticated: false,
+      hasSessionApplications: true,
+      onSignIn,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    expect(screen.getByRole("heading", { name: "Deine Bewerbungen im Blick behalten" })).toBeInTheDocument();
+    expect(screen.getByText(/ausschließlich während der aktiven Sitzung/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Anmelden / Registrieren" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/Nicht gespeicherte Bewerbungsentwürfe dieser Sitzung/);
+    expect(onSignIn).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Weiter zur Anmeldung" }));
+    expect(onSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the existing sign-in callback directly for guests without session applications", async () => {
+    const onSignIn = vi.fn();
+    renderModal({ isAuthenticated: false, onSignIn });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Anmelden / Registrieren" }));
+    expect(onSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows created/edited status and opens the existing applications view after adoption", async () => {
+    const onAdoptAsApplication = vi.fn().mockResolvedValue("created");
+    const onOpenApplications = vi.fn();
+    renderModal({
+      isAuthenticated: true,
+      onAdoptAsApplication,
+      onOpenApplications,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    expect(screen.getByText("Anschreiben erstellt.")).toBeInTheDocument();
+    fireEvent.change(editor, { target: { value: "Edited letter" } });
+    expect(screen.getByText("Anschreiben bearbeitet.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }));
+    await screen.findByRole("heading", { name: "Dein Bewerbungsentwurf ist bereit." });
+    expect(screen.getByText("Bewerbungsentwurf erfolgreich übernommen.")).toBeInTheDocument();
+    expect(editor).toHaveValue("Edited letter");
+    fireEvent.click(screen.getByRole("button", { name: "Meine Bewerbungen öffnen" }));
+    expect(onOpenApplications).toHaveBeenCalledTimes(1);
+    expect(withModelFallback).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the update status for an existing application draft", async () => {
+    const onAdoptAsApplication = vi.fn().mockResolvedValue("updated");
+    renderModal({
+      isAuthenticated: true,
+      onAdoptAsApplication,
+      hasApplicationDraft: true,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben im Bewerbungsentwurf aktualisieren" }));
+    expect(await screen.findByText("Bestehender Bewerbungsentwurf aktualisiert.")).toBeInTheDocument();
+  });
+
+  it("keeps the letter unchanged and offers retry when adoption fails", async () => {
+    const onAdoptAsApplication = vi.fn().mockRejectedValue(new Error("repository down"));
+    renderModal({ isAuthenticated: true, onAdoptAsApplication });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    const editor = await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.click(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Übernahme als Bewerbungsentwurf ist fehlgeschlagen/);
+    expect(editor).toHaveValue("Dear hiring team,");
+    expect(screen.queryByText("Dein Bewerbungsentwurf ist bereit.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" })).toBeEnabled();
+  });
+
+  it("does not create a second application draft on double-click", async () => {
+    let resolveAdopt!: (value: "created" | "updated") => void;
+    const onAdoptAsApplication = vi.fn(
+      () => new Promise<"created" | "updated">((resolve) => {
+        resolveAdopt = resolve;
+      })
+    );
+    renderModal({ isAuthenticated: true, onAdoptAsApplication });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    const adopt = screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" });
+    fireEvent.click(adopt);
+    fireEvent.click(adopt);
+    expect(onAdoptAsApplication).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Dein Bewerbungsentwurf ist bereit.")).not.toBeInTheDocument();
+    resolveAdopt("created");
+    expect(await screen.findByText("Bewerbungsentwurf erfolgreich übernommen.")).toBeInTheDocument();
   });
 
   it("shows an error state and allows an explicit retry", async () => {

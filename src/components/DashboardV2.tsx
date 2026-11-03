@@ -28,9 +28,26 @@ export const DEMO_USER: DashboardUser = {
   name: 'Dev Demo User',
 };
 
+const DASHBOARD_TABS = [
+  'overview',
+  'profile',
+  'cv',
+  'applications',
+  'preferences',
+  'settings',
+] as const;
+
+function initialDashboardTab(): string {
+  if (typeof window === 'undefined') return 'overview';
+  const requested = new URLSearchParams(window.location.search).get('tab');
+  return requested && DASHBOARD_TABS.includes(requested as (typeof DASHBOARD_TABS)[number])
+    ? requested
+    : 'overview';
+}
+
 const DashboardV2 = ({ user, isDemo, onLogout, cvSection, applicationsSection, preferencesSection }: DashboardV2Props) => {
   const { t } = useLang();
-  const [activeId, setActiveId] = useState('overview');
+  const [activeId, setActiveId] = useState(initialDashboardTab);
   const navigationItems: readonly DashboardNavigationItem[] = [
     { id: 'overview', label: t('dashboard.nav.overview') },
     { id: 'profile', label: t('dashboard.nav.myProfile') },

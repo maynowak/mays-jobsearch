@@ -17,6 +17,7 @@ const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPL
 const letterImprovementEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01B");
 const letterDiffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01C");
 const letterAdoptionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01D");
+const profileHandoffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-PROFILE-HANDOFF-01");
 const improvedLetter = `AI IMPROVED PROPOSAL\n\n${"Ich bringe relevante Erfahrung und klare Kommunikation mit. ".repeat(12)}\nAI END`;
 const longLetter = [
   "Sehr geehrte Damen und Herren,",
@@ -129,16 +130,6 @@ async function preparePage(browser, viewport) {
   return { context, page, consoleErrors, coverLetterBodies };
 }
 
-async function openDashboard(page, mobile) {
-  if (mobile) {
-    await page.locator(".burger").click();
-    await page.getByRole("link", { name: "Profil" }).click();
-  } else {
-    await page.getByRole("link", { name: "Profil" }).click();
-  }
-  await page.waitForSelector(".dashboard-v2");
-}
-
 async function assertNoNavOverlap(page) {
   const overlaps = await page.evaluate(() => {
     const nav = document.querySelector(".navbar");
@@ -223,7 +214,6 @@ async function checkResponsiveLayouts(page, originalViewport) {
 }
 
 async function runViewport(browser, name, viewport) {
-  const mobile = viewport.width < 768;
   const { context, page, consoleErrors, coverLetterBodies } = await preparePage(browser, viewport);
   await page.goto(`${base}/search`, { waitUntil: "networkidle" });
   await page.fill("#skills", "AWS Fullstack");
@@ -245,13 +235,16 @@ async function runViewport(browser, name, viewport) {
     return editor instanceof HTMLTextAreaElement && editor.value.length > 0;
   });
   await page.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }).click();
-  await page.getByRole("button", { name: "Schließen" }).click();
-  await page.waitForSelector('[role="dialog"]', { state: "detached" });
-
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(200);
-  await openDashboard(page, mobile);
-  await page.getByRole("button", { name: "Bewerbungen" }).click();
+  await page.getByRole("heading", { name: "Dein Bewerbungsentwurf ist bereit." }).waitFor();
+  await page.getByRole("heading", { name: "Dein Bewerbungsentwurf ist bereit." }).scrollIntoViewIfNeeded();
+  await mkdir(profileHandoffEvidenceDir, { recursive: true });
+  await page.screenshot({ path: resolve(profileHandoffEvidenceDir, `${name}-adoption-ready.png`), fullPage: false });
+  await page.getByRole("button", { name: "Meine Bewerbungen öffnen" }).click();
+  await page.waitForFunction(
+    () =>
+      window.location.pathname === "/profil" &&
+      new URLSearchParams(window.location.search).get("tab") === "applications"
+  );
   await page.waitForSelector(".applications-section");
   await page.getByText("Diese Bewerbungen sind derzeit nur in der aktuellen Sitzung verfügbar").waitFor();
   await page.getByText("Senior Fullstack Developer (w/m/d)").first().waitFor();
