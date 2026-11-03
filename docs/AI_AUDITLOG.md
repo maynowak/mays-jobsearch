@@ -1,3 +1,16 @@
+2026-11-03 · JM-CV-BUILDER-01A
+- Typ: Strukturierter Lebenslauf-Editor / Domain Foundation / Session-State / UI
+- Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `e098fbd`; `origin/main` `4364eab`; Branch `feature/jm-cv-builder-01a`.
+- Domain: neues `CvBuilderDraftV1` (`schemaVersion:1`) mit persönlichen Angaben, Profil, Erfahrung, Ausbildung, Skills, Projekten, Zertifikaten, Sprachen und Links; stabile IDs, Monats-/Jahresdaten, laufende Einträge, keine File/Hash/RIS/React-Abhängigkeit. `CvDocument` bleibt unverändert.
+- Validierung: eigenständige Domain-Schicht für Längen, E-Mail, http(s)-URLs, `YYYY-MM`, Enddatum/Startdatum, laufende Einträge, Duplikate und Limits; leere Einträge werden erkannt, aber nicht auto-gelöscht.
+- Editor: `CvBuilderEditor` mit aufklappbaren Abschnitten, dynamischen Einträgen, Add/Edit/Reorder/Remove, Bestätigung, Fokusführung, Labels, `aria-invalid`/`aria-describedby`, Session-/PDF-Hinweis.
+- Session/Navigation: Entwurf ausschließlich in App-Memory; Gast-Einstieg aus CV-Bereich, Auth-Einstieg im Profil; Schließen/Wiederöffnen erhält den Entwurf, Reload verwirft ihn; `beforeunload`-Schutz; Auth-Wechsel (`iss+sub`) leert Entwurf und schließt Editor. Keine localStorage/sessionStorage/IndexedDB/Backend-/KI-Nutzung.
+- Tests: Gesamtsuite **1281 passed/5 skipped**; Domain+Editor **19**, Auth-Isolation **1**, Cover-Letter-API **23**; TypeScript/Build/`git diff --check`/API-Syntax PASS; CV-Builder-E2E Gast + Auth PASS, responsive 1440/1024/768/430/390/320 PASS; Applications/Profile/Cover-Letter/Mobile-Nav/Guest-CV-E2E PASS; keine Console-Errors; keine echten KI-/Provider-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-CV-BUILDER-01A/`.
+- Git: Domain `8f4ea9c`, Editor `739a495`, Session/Navigation `85cf61e`, E2E/responsive `14d24d2`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **CV-BUILDER-01A READY für 01B**; PDF, Persistenz, KI-Optimierung, ATS-Kopplung und RIS bleiben OPEN. **PRODUCTION: BLOCKED.**
+
 2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05C-MAIN-INTEGRATION-01
 - Typ: Lokale Git-Integration/Regression/Dokumentation
 - Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
