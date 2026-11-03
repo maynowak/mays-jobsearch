@@ -14,6 +14,8 @@ const ux04dEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-M
 const ux05aEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05A");
 const ux05bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05B");
 const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01A");
+const letterImprovementEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01B");
+const improvedLetter = `AI IMPROVED PROPOSAL\n\n${"Ich bringe relevante Erfahrung und klare Kommunikation mit. ".repeat(12)}\nAI END`;
 const longLetter = [
   "Sehr geehrte Damen und Herren,",
   "vielen Dank für Ihre Einladung. " + "Ich freue mich sehr über die Möglichkeit, das Team kennenzulernen. ".repeat(18),
@@ -103,6 +105,7 @@ async function preparePage(browser, viewport) {
   );
   const page = await context.newPage();
   const consoleErrors = [];
+  const coverLetterBodies = [];
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
@@ -113,10 +116,15 @@ async function preparePage(browser, viewport) {
     if (url.pathname === "/api/job-details") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not needed", code: "not_mocked" }) });
     if (url.pathname === "/api/profile") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ skills: ["AWS"], experienceLevel: "Senior", targetRoles: ["Fullstack Developer"], location: "Frankfurt" }) });
     if (url.pathname === "/api/match") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(matches) });
-    if (url.pathname === "/api/cover-letter") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ letter: longLetter }) });
+    if (url.pathname === "/api/cover-letter") {
+      const body = route.request().postDataJSON();
+      coverLetterBodies.push(body);
+      const letter = body?.operation === "revise" ? improvedLetter : longLetter;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ letter }) });
+    }
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not mocked" }) });
   });
-  return { context, page, consoleErrors };
+  return { context, page, consoleErrors, coverLetterBodies };
 }
 
 async function openDashboard(page, mobile) {
@@ -200,7 +208,7 @@ async function checkResponsiveLayouts(page, originalViewport) {
 
 async function runViewport(browser, name, viewport) {
   const mobile = viewport.width < 768;
-  const { context, page, consoleErrors } = await preparePage(browser, viewport);
+  const { context, page, consoleErrors, coverLetterBodies } = await preparePage(browser, viewport);
   await page.goto(`${base}/search`, { waitUntil: "networkidle" });
   await page.fill("#skills", "AWS Fullstack");
   await page.click("#find-btn");
@@ -356,6 +364,27 @@ async function runViewport(browser, name, viewport) {
   const comparisonClipped = await comparisonText.evaluate((element) => element.scrollHeight > element.clientHeight + 2);
   if (comparisonClipped) throw new Error(`${name}: comparison text is clipped`);
   await checkComparisonResponsive(page, viewport);
+
+  // LETTER-REVISION-01B: explicit, consent-gated AI improvement preview.
+  await mkdir(letterImprovementEvidenceDir, { recursive: true });
+  const improvement = page.locator(".applications-letter-improvement");
+  await improvement.scrollIntoViewIfNeeded();
+  await page.locator(".applications-letter-improvement select").selectOption("mock-model");
+  await page.getByRole("textbox", { name: "Verbesserungswunsch", exact: true }).fill("Bitte den Einstieg persönlicher formulieren.");
+  await page.getByRole("checkbox").check();
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: resolve(letterImprovementEvidenceDir, `${name}-improvement.png`), fullPage: false });
+  await page.getByRole("button", { name: "Verbesserung vorschlagen" }).click();
+  await page.getByText(/AI END/).waitFor();
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: resolve(letterImprovementEvidenceDir, `${name}-proposal.png`), fullPage: false });
+  const reviseRequest = coverLetterBodies.at(-1);
+  if (reviseRequest?.operation !== "revise") throw new Error(`${name}: improvement did not use revise`);
+  if (reviseRequest?.revision?.draft_anonymized !== true) throw new Error(`${name}: draft was not marked anonymised`);
+  if (reviseRequest?.candidate?.mode !== "manual") throw new Error(`${name}: unexpected candidate mode`);
+  await assertNoNavOverlap(page);
+  await page.getByRole("button", { name: "Vorschlag verwerfen" }).click();
+  await page.getByText(/AI END/).waitFor({ state: "detached" });
   await page.getByRole("tab", { name: "Übersicht" }).click();
 
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();

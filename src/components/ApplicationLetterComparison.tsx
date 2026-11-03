@@ -1,5 +1,18 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useLang } from "../i18n";
+import type { ModelOption } from "../types";
+import {
+  ApiError,
+  generateCoverLetter,
+  isFreeQuotaExceeded,
+  isModelUnavailable,
+  withModelFallback,
+} from "../api";
+import { anonymizeText } from "../lib/anonymize";
+import {
+  MAX_REVISION_DRAFT_LENGTH,
+  MAX_REVISION_FEEDBACK_LENGTH,
+} from "../lib/coverLetterRequest";
 import type {
   CoverLetterVersionV1,
 } from "../lib/applications/contractTypes";
@@ -7,6 +20,20 @@ import type { SessionApplicationV1 } from "../lib/applications/sessionApplicatio
 
 interface Props {
   application: SessionApplicationV1;
+  models?: ModelOption[];
+  defaultModel?: string | null;
+  recommendedModel?: string | null;
+}
+
+interface Improvement {
+  applicationId: string;
+  sourceId: Selection;
+  sourceLabel: string;
+  sourceText: string;
+  suggestion: string;
+  model: string | null;
+  receivedAt: string;
+  usedFallback: boolean;
 }
 
 type Selection = "current" | string;
@@ -21,7 +48,12 @@ function sourceLabel(t: (key: string) => string, source: CoverLetterVersionV1["s
   return t(`applications.letterComparison.source.${source}`);
 }
 
-export default function ApplicationLetterComparison({ application }: Props) {
+export default function ApplicationLetterComparison({
+  application,
+  models = [],
+  defaultModel = null,
+  recommendedModel = null,
+}: Props) {
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
   const selectFromId = useId();
@@ -31,11 +63,46 @@ export default function ApplicationLetterComparison({ application }: Props) {
   const latestVersionId = versions.at(-1)?.versionId ?? "current";
   const [fromId, setFromId] = useState<Selection>("current");
   const [toId, setToId] = useState<Selection>(latestVersionId);
+  const [model, setModel] = useState<string>(defaultModel ?? models[0]?.id ?? "");
+  const [feedback, setFeedback] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [improvement, setImprovement] = useState<Improvement | null>(null);
+  const [improveError, setImproveError] = useState("");
+  const [improving, setImproving] = useState(false);
+  const requestSeqRef = useRef(0);
+  const inFlightRef = useRef(false);
+  const mountedRef = useRef(true);
+  const appIdRef = useRef(application.localId);
 
   useEffect(() => {
     setFromId("current");
     setToId(latestVersionId);
+    appIdRef.current = application.localId;
+    requestSeqRef.current += 1;
+    inFlightRef.current = false;
+    setImproving(false);
+    setImprovement(null);
+    setImproveError("");
+    setFeedback("");
+    setConsent(false);
   }, [application.localId, versionSignature, latestVersionId]);
+
+  useEffect(() => {
+    const preferred = defaultModel && models.some((entry) => entry.id === defaultModel)
+      ? defaultModel
+      : models[0]?.id ?? "";
+    setModel((current) =>
+      models.some((entry) => entry.id === current) ? current : preferred
+    );
+  }, [defaultModel, models]);
+
+  useEffect(() => {
+    requestSeqRef.current += 1;
+    inFlightRef.current = false;
+    setImproving(false);
+    setImprovement(null);
+    setImproveError("");
+  }, [fromId]);
 
   useEffect(() => {
     if (fromId !== "current" && !versions.some((version) => version.versionId === fromId)) {
@@ -45,6 +112,14 @@ export default function ApplicationLetterComparison({ application }: Props) {
       setToId(latestVersionId);
     }
   }, [fromId, latestVersionId, toId, versions]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      requestSeqRef.current += 1;
+    };
+  }, []);
 
   const optionLabel = (version: CoverLetterVersionV1, index: number): string =>
     t("applications.letterComparison.versionOption", {
@@ -73,6 +148,123 @@ export default function ApplicationLetterComparison({ application }: Props) {
       version,
       index: version ? index : null,
     };
+  };
+
+  const resolvedFrom = resolve(fromId);
+
+  const improvementError = (err: unknown): string => {
+    if (isFreeQuotaExceeded(err)) return t("model.quotaExceeded");
+    if (isModelUnavailable(err)) return t("model.unavailable");
+    if (err instanceof ApiError && err.code === "bad_ai_response") return t("letter.improve.empty");
+    return t("letter.improve.error");
+  };
+
+  const handleImprove = async () => {
+    if (inFlightRef.current || improving) return;
+    if (!resolvedFrom.content.trim()) {
+      setImproveError(t("letter.improve.emptySource"));
+      return;
+    }
+    if (resolvedFrom.content.length > MAX_REVISION_DRAFT_LENGTH) {
+      setImproveError(t("letter.improve.tooLong"));
+      return;
+    }
+    if (!model) {
+      setImproveError(t("letter.improve.noModels"));
+      return;
+    }
+    if (!consent) {
+      setImproveError(t("letter.improve.error"));
+      return;
+    }
+
+    const source = resolvedFrom;
+    const requestAppId = appIdRef.current;
+    const requestSourceId = fromId;
+    const requestId = requestSeqRef.current + 1;
+    requestSeqRef.current = requestId;
+    inFlightRef.current = true;
+    setImproving(true);
+    setImproveError("");
+
+    const request = {
+      job: {
+        title: application.job.title,
+        company_name: application.job.companyName,
+        location: application.job.location,
+        url: application.job.originalUrl,
+        source: application.job.source,
+        tags: [],
+        description: "",
+        description_origin: "original" as const,
+      },
+      candidate: {
+        mode: "manual" as const,
+        skills: [],
+        experience: "",
+        qualifications: "",
+        motivation: "",
+      },
+      options: {
+        language: (lang === "de" ? "German" : "English") as "German" | "English",
+        style: "professional" as const,
+        length: "one_page" as const,
+        target_roles: [],
+        model,
+      },
+      operation: "revise" as const,
+      revision: {
+        draft_text: anonymizeText(source.content),
+        draft_anonymized: true,
+        ...(feedback.trim() ? { feedback: anonymizeText(feedback.trim()) } : {}),
+      },
+    };
+
+    try {
+      const result = await withModelFallback({
+        initialModel: model,
+        availableModels: models.map((entry) => entry.id),
+        recommendedModel,
+        request: (selectedModel, attempt) =>
+          generateCoverLetter(
+            { ...request, options: { ...request.options, model: selectedModel } },
+            attempt
+          ),
+      });
+      if (
+        !mountedRef.current ||
+        requestSeqRef.current !== requestId ||
+        appIdRef.current !== requestAppId
+      ) {
+        return;
+      }
+      const suggestion = String(result.data.letter ?? "").trim();
+      if (!suggestion) throw new Error(t("letter.improve.empty"));
+      setImprovement({
+        applicationId: requestAppId,
+        sourceId: requestSourceId,
+        sourceLabel: source.label,
+        sourceText: source.content,
+        suggestion,
+        model: result.attempts.find((attempt) => attempt.ok)?.model ?? model,
+        receivedAt: new Date().toISOString(),
+        usedFallback: result.usedFallback,
+      });
+    } catch (err) {
+      if (
+        !mountedRef.current ||
+        requestSeqRef.current !== requestId ||
+        appIdRef.current !== requestAppId
+      ) {
+        return;
+      }
+      setImproveError(improvementError(err));
+    } finally {
+      if (requestSeqRef.current === requestId) {
+        inFlightRef.current = false;
+        setImproving(false);
+      }
+    }
   };
 
   const renderPanel = (side: "from" | "to", selection: Selection) => {
@@ -177,6 +369,96 @@ export default function ApplicationLetterComparison({ application }: Props) {
           </div>
         </>
       )}
+
+      <section className="applications-letter-improvement" aria-labelledby="applications-letter-improvement-title">
+        <h4 id="applications-letter-improvement-title">{t("letter.improve.title")}</h4>
+        <p className="applications-letter-improvement__source">
+          <strong>{t("letter.improve.source")}:</strong> {resolvedFrom.label}
+        </p>
+        {models.length === 0 ? (
+          <p className="letter-hint">{t("letter.improve.noModels")}</p>
+        ) : (
+          <label className="letter-field">
+            <span>{t("letter.improve.model")}</span>
+            <select value={model} onChange={(event) => setModel(event.target.value)} disabled={improving}>
+              {models.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label className="letter-field">
+          <span>{t("letter.improve.feedback")}</span>
+          <textarea
+            value={feedback}
+            onChange={(event) => setFeedback(event.target.value)}
+            rows={3}
+            maxLength={MAX_REVISION_FEEDBACK_LENGTH}
+            placeholder={t("letter.improve.feedbackPlaceholder")}
+            disabled={improving}
+          />
+        </label>
+        <p className="letter-hint applications-letter-improvement__privacy">{t("letter.improve.privacy")}</p>
+        <label className="applications-letter-improvement__consent">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(event) => setConsent(event.target.checked)}
+            disabled={improving}
+          />
+          <span>{t("letter.improve.consent")}</span>
+        </label>
+        <div className="applications-letter-improvement__actions">
+          <button
+            type="button"
+            className="letter-btn"
+            onClick={() => void handleImprove()}
+            disabled={improving || !consent || !model || !resolvedFrom.content.trim()}
+          >
+            {t("letter.improve.action")}
+          </button>
+        </div>
+        {!resolvedFrom.content.trim() && <p className="letter-hint">{t("letter.improve.emptySource")}</p>}
+        {improveError && <p className="letter-review-warning" role="alert">{improveError}</p>}
+        {improvement && (
+          <section className="applications-letter-improvement__preview" aria-labelledby="applications-letter-improvement-preview-title">
+            <h5 id="applications-letter-improvement-preview-title">{t("letter.improve.suggestion")}</h5>
+            <p className="letter-hint">
+              {t("letter.improve.notSaved")}
+              {improvement.model ? ` · ${improvement.model}` : ""}
+            </p>
+            {improvement.usedFallback && <p className="letter-hint">{t("model.fallbackNote")}</p>}
+            <div className="applications-letter-comparison__panels">
+              <section className="applications-letter-comparison__panel" aria-labelledby={`${selectFromId}-improvement-original`}>
+                <h4 id={`${selectFromId}-improvement-original`}>{improvement.sourceLabel}</h4>
+                <pre className="applications-letter-comparison__text">{improvement.sourceText}</pre>
+              </section>
+              <section className="applications-letter-comparison__panel" aria-labelledby={`${selectFromId}-improvement-suggestion`}>
+                <h4 id={`${selectFromId}-improvement-suggestion`}>{t("letter.improve.suggestion")}</h4>
+                <pre className="applications-letter-comparison__text">{improvement.suggestion}</pre>
+              </section>
+            </div>
+            <div className="applications-letter-improvement__actions">
+              <button type="button" className="btn-ghost" onClick={() => void handleImprove()} disabled={improving}>
+                {t("letter.improve.again")}
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  setImprovement(null);
+                  setImproveError("");
+                }}
+                disabled={improving}
+              >
+                {t("letter.improve.discard")}
+              </button>
+            </div>
+          </section>
+        )}
+      </section>
     </section>
   );
 }

@@ -2958,6 +2958,9 @@ export default function App() {
       key={authProfileKey ?? "guest"}
       repository={applicationRepository}
       onChanged={setSessionApplications}
+      models={models}
+      defaultModel={defaultModel}
+      recommendedModel={recommendedModel}
     />
   );
 

@@ -5,6 +5,7 @@ import type {
   SessionApplicationV1,
 } from "../lib/applications/sessionApplications";
 import type { ApplicationRepository } from "../lib/applications/repositoryTypes";
+import type { ModelOption } from "../types";
 import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
 import type {
   ApplicationFollowUpV1,
@@ -26,6 +27,9 @@ import {
 interface Props {
   repository: ApplicationRepository;
   onChanged?: (applications: SessionApplicationV1[]) => void;
+  models?: ModelOption[];
+  defaultModel?: string | null;
+  recommendedModel?: string | null;
 }
 
 type ApplicationTab = "overview" | "communication" | "documents" | "history";
@@ -103,7 +107,13 @@ function errorLabel(t: (key: string) => string, err: unknown): string {
   return t("applications.actionError");
 }
 
-export default function ApplicationsSection({ repository, onChanged }: Props) {
+export default function ApplicationsSection({
+  repository,
+  onChanged,
+  models = [],
+  defaultModel = null,
+  recommendedModel = null,
+}: Props) {
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
   const [applications, setApplications] = useState<SessionApplicationV1[]>([]);
@@ -1004,7 +1014,12 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                     ))}
                   </section>
 
-                  <ApplicationLetterComparison application={selected} />
+                  <ApplicationLetterComparison
+                    application={selected}
+                    models={models}
+                    defaultModel={defaultModel}
+                    recommendedModel={recommendedModel}
+                  />
 
                   <section className="applications-block">
                     <h4>{t("applications.exportTitle")}</h4>

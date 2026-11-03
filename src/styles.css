@@ -9918,3 +9918,68 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     grid-template-columns: 1fr;
   }
 }
+
+/* LETTER-REVISION-01B: temporary AI improvement preview */
+.applications-letter-improvement {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.applications-letter-improvement > h4 {
+  margin: 0;
+}
+
+.applications-letter-improvement__source {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.applications-letter-improvement__privacy {
+  margin: 0;
+}
+
+.applications-letter-improvement__consent {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--text);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.applications-letter-improvement__consent input {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.applications-letter-improvement__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.applications-letter-improvement__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+
+.applications-letter-improvement__preview > h5 {
+  margin: 0;
+}
+
+.applications-letter-improvement__preview > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
