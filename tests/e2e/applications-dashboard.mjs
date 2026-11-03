@@ -13,6 +13,7 @@ const ux04cEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-M
 const ux04dEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04D");
 const ux05aEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05A");
 const ux05bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05B");
+const ux05cEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05C");
 const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01A");
 const letterImprovementEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01B");
 const letterDiffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01C");
@@ -166,7 +167,7 @@ async function assertNoNavOverlapWhileScrolling(page) {
 }
 
 async function checkImprovementResponsive(page, originalViewport) {
-  for (const width of [1024, 768, 320]) {
+  for (const width of [1024, 768, 430, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.locator(".applications-letter-improvement").scrollIntoViewIfNeeded();
     await page.waitForTimeout(80);
@@ -180,7 +181,7 @@ async function checkImprovementResponsive(page, originalViewport) {
 }
 
 async function checkComparisonResponsive(page, originalViewport) {
-  for (const width of [1024, 768, 320]) {
+  for (const width of [1024, 768, 430, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.locator(".applications-letter-comparison").scrollIntoViewIfNeeded();
     await page.waitForTimeout(80);
@@ -194,7 +195,7 @@ async function checkComparisonResponsive(page, originalViewport) {
 }
 
 async function checkResponsiveLayouts(page, originalViewport) {
-  for (const width of [1024, 768, 320]) {
+  for (const width of [1024, 768, 430, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(100);
@@ -234,6 +235,7 @@ async function runViewport(browser, name, viewport) {
     const editor = document.querySelector('textarea[aria-label="Bearbeitbares Anschreiben"]');
     return editor instanceof HTMLTextAreaElement && editor.value.length > 0;
   });
+  await page.screenshot({ path: resolve(ux05cEvidenceDir, `${name}-letter-dialog.png`), fullPage: false });
   await page.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }).click();
   await page.getByRole("heading", { name: "Dein Bewerbungsentwurf ist bereit." }).waitFor();
   await page.getByRole("heading", { name: "Dein Bewerbungsentwurf ist bereit." }).scrollIntoViewIfNeeded();
@@ -254,17 +256,21 @@ async function runViewport(browser, name, viewport) {
   await page.locator(".applications-section").scrollIntoViewIfNeeded();
   await mkdir(evidenceDir, { recursive: true });
   await mkdir(ux04bEvidenceDir, { recursive: true });
+  await mkdir(ux05cEvidenceDir, { recursive: true });
   await page.screenshot({ path: resolve(evidenceDir, `${name}-overview.png`), fullPage: false });
   await page.screenshot({ path: resolve(ux04bEvidenceDir, `${name}-overview.png`), fullPage: false });
   await mkdir(ux05aEvidenceDir, { recursive: true });
   await page.screenshot({ path: resolve(ux05aEvidenceDir, `${name}-cockpit.png`), fullPage: false });
+  await page.screenshot({ path: resolve(ux05cEvidenceDir, `${name}-cockpit.png`), fullPage: false });
   await mkdir(ux05bEvidenceDir, { recursive: true });
   await page.locator(".applications-list").scrollIntoViewIfNeeded();
   await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(ux05bEvidenceDir, `${name}-cards.png`), fullPage: false });
+  await page.screenshot({ path: resolve(ux05cEvidenceDir, `${name}-cards.png`), fullPage: false });
   await page.locator(".applications-detail").scrollIntoViewIfNeeded();
   await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(ux05bEvidenceDir, `${name}-selected.png`), fullPage: false });
+  await page.screenshot({ path: resolve(ux05cEvidenceDir, `${name}-details.png`), fullPage: false });
   await page.getByRole("button", { name: "Entwürfe" }).click();
   await page.getByRole("button", { name: "Entwürfe" }).evaluate((element) => {
     if (element.getAttribute("aria-pressed") !== "true") throw new Error("Quick filter not active");
@@ -293,6 +299,9 @@ async function runViewport(browser, name, viewport) {
     await page.waitForTimeout(100);
     await assertNoNavOverlap(page);
     await page.screenshot({ path: resolve(ux04cEvidenceDir, `${name}-${slug}.png`), fullPage: false });
+    if (tab === "Dokumente") {
+      await page.screenshot({ path: resolve(ux05cEvidenceDir, `${name}-documents.png`), fullPage: false });
+    }
   }
   await page.getByRole("tab", { name: "Übersicht" }).click();
   await page.getByRole("tabpanel", { name: "Übersicht" }).waitFor();
@@ -403,6 +412,7 @@ async function runViewport(browser, name, viewport) {
   await page.locator(".applications-letter-improvement__diff").scrollIntoViewIfNeeded();
   await page.waitForTimeout(100);
   await page.screenshot({ path: resolve(letterDiffEvidenceDir, `${name}-diff.png`), fullPage: false });
+  await page.screenshot({ path: resolve(ux05cEvidenceDir, `${name}-ai-comparison.png`), fullPage: false });
   await proposalEditor.fill(`${await proposalEditor.inputValue()}\n\nMANUAL EDIT`);
   await page.waitForTimeout(100);
   await page.locator(".applications-letter-improvement__diff").scrollIntoViewIfNeeded();

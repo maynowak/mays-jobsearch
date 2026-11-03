@@ -563,7 +563,13 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     fireEvent.click(screen.getByRole("button", { name: "Anmelden / Registrieren" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(/Nicht gespeicherte Bewerbungsentwürfe dieser Sitzung/);
+    expect(screen.getByRole("button", { name: "Weiter zur Anmeldung" })).toHaveFocus();
     expect(onSignIn).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Anmelden / Registrieren" })).toHaveFocus()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Anmelden / Registrieren" }));
     fireEvent.click(screen.getByRole("button", { name: "Weiter zur Anmeldung" }));
     expect(onSignIn).toHaveBeenCalledTimes(1);
   });
@@ -593,7 +599,8 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(screen.getByText("Anschreiben bearbeitet.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }));
-    await screen.findByRole("heading", { name: "Dein Bewerbungsentwurf ist bereit." });
+    const ready = await screen.findByRole("heading", { name: "Dein Bewerbungsentwurf ist bereit." });
+    await waitFor(() => expect(ready).toHaveFocus());
     expect(screen.getByText("Bewerbungsentwurf erfolgreich übernommen.")).toBeInTheDocument();
     expect(editor).toHaveValue("Edited letter");
     fireEvent.click(screen.getByRole("button", { name: "Meine Bewerbungen öffnen" }));

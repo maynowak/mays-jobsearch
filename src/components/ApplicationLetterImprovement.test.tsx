@@ -137,6 +137,9 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
     fireEvent.click(screen.getByRole("button", { name: "Vorschlag verwerfen" }));
     expect(screen.queryByRole("textbox", { name: "KI-Vorschlag bearbeiten" })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Verbesserung vorschlagen" })).toHaveFocus()
+    );
     expect(screen.getByText("Draft")).toBeInTheDocument();
   });
 
@@ -227,7 +230,8 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     const editor = await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
     fireEvent.change(editor, { target: { value: "Edited AI proposal" } });
     fireEvent.click(screen.getByRole("button", { name: "Als neue Version speichern" }));
-    await screen.findByText("Version 2 gespeichert.");
+    const savedStatus = await screen.findByText("Version 2 gespeichert.");
+    await waitFor(() => expect(savedStatus).toHaveFocus());
     expect(onSaveVersion).toHaveBeenCalledTimes(1);
     const saved = onSaveVersion.mock.calls[0][0];
     expect(saved.source).toBe("revised");
@@ -259,7 +263,8 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     expect(onAdoptDraft).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" }));
     fireEvent.click(screen.getByRole("button", { name: "Ja, Entwurf ersetzen" }));
-    await screen.findByText("Version als aktueller Entwurf übernommen.");
+    const adoptedStatus = await screen.findByText("Version als aktueller Entwurf übernommen.");
+    await waitFor(() => expect(adoptedStatus).toHaveFocus());
     expect(onAdoptDraft).toHaveBeenCalledWith("Version one");
   });
 

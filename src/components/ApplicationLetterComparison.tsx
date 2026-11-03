@@ -102,6 +102,8 @@ export default function ApplicationLetterComparison({
   const savingRef = useRef(false);
   const adoptingRef = useRef(false);
   const suggestionRef = useRef<HTMLTextAreaElement>(null);
+  const improveButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreImproveFocusRef = useRef(false);
   const actionStatusRef = useRef<HTMLParagraphElement>(null);
   const adoptConfirmRef = useRef<HTMLButtonElement>(null);
   const adoptTriggerRef = useRef<HTMLButtonElement>(null);
@@ -215,6 +217,12 @@ export default function ApplicationLetterComparison({
   useEffect(() => {
     if (actionMessage) actionStatusRef.current?.focus();
   }, [actionMessage]);
+
+  useEffect(() => {
+    if (improvement || !restoreImproveFocusRef.current) return;
+    restoreImproveFocusRef.current = false;
+    improveButtonRef.current?.focus();
+  }, [improvement]);
 
   const handleSaveVersion = async () => {
     if (!improvement || !onSaveVersion || savingRef.current || adoptingRef.current || improving || busy) return;
@@ -687,6 +695,7 @@ export default function ApplicationLetterComparison({
         </label>
         <div className="applications-letter-improvement__actions">
           <button
+            ref={improveButtonRef}
             type="button"
             className="letter-btn"
             onClick={() => void handleImprove()}
@@ -771,6 +780,7 @@ export default function ApplicationLetterComparison({
                 type="button"
                 className="btn-ghost"
                 onClick={() => {
+                  restoreImproveFocusRef.current = true;
                   setImprovement(null);
                   setImproveError("");
                   setActionMessage("");

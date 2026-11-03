@@ -179,6 +179,11 @@ export default function LetterModal({
   const [adopting, setAdopting] = useState(false);
   const [loginConfirm, setLoginConfirm] = useState(false);
   const adoptingRef = useRef(false);
+  const adoptionStatusRef = useRef<HTMLHeadingElement>(null);
+  const adoptionErrorRef = useRef<HTMLParagraphElement>(null);
+  const loginTriggerRef = useRef<HTMLButtonElement>(null);
+  const loginConfirmRef = useRef<HTMLButtonElement>(null);
+  const restoreLoginFocusRef = useRef(false);
   const [regenerateWarning, setRegenerateWarning] = useState(false);
   const [reviseWarning, setReviseWarning] = useState(false);
   const [modelFailure, setModelFailure] = useState(false);
@@ -284,6 +289,25 @@ export default function LetterModal({
       setCvChoice("none");
     }
   }, [cvDocuments, selectedCvId]);
+
+  useEffect(() => {
+    if (adoptionResult) adoptionStatusRef.current?.focus();
+  }, [adoptionResult]);
+
+  useEffect(() => {
+    if (adoptionError) adoptionErrorRef.current?.focus();
+  }, [adoptionError]);
+
+  useEffect(() => {
+    if (loginConfirm) {
+      loginConfirmRef.current?.focus();
+      return;
+    }
+    if (restoreLoginFocusRef.current) {
+      restoreLoginFocusRef.current = false;
+      loginTriggerRef.current?.focus();
+    }
+  }, [loginConfirm]);
 
   useEffect(() => {
     return () => {
@@ -1171,8 +1195,13 @@ export default function LetterModal({
               <>
                 {adoptionResult && (
                   <div className="letter-handoff__success" role="status">
-                    <h5 id={`${headingId}-handoff`}>{t("letter.handoff.ready")}</h5>
-                    <p>
+                    <h5
+                      ref={adoptionStatusRef}
+                      id={`${headingId}-handoff`}
+                      tabIndex={-1}
+                    >
+                      {t("letter.handoff.ready")}
+                    </h5>                    <p>
                       {adoptionResult === "updated"
                         ? t("letter.handoff.updated")
                         : t("letter.handoff.created")}
@@ -1185,7 +1214,7 @@ export default function LetterModal({
                   </div>
                 )}
                 {adoptionError && (
-                  <p className="letter-review-warning" role="alert">
+                  <p ref={adoptionErrorRef} className="letter-review-warning" role="alert" tabIndex={-1}>
                     {adoptionError}
                   </p>
                 )}
@@ -1200,6 +1229,7 @@ export default function LetterModal({
                     <p>{t("letter.handoff.loginWarning")}</p>
                     <div className="letter-handoff__actions">
                       <button
+                        ref={loginConfirmRef}
                         type="button"
                         className="letter-btn"
                         onClick={() => onSignIn?.()}
@@ -1209,14 +1239,17 @@ export default function LetterModal({
                       <button
                         type="button"
                         className="btn-ghost"
-                        onClick={() => setLoginConfirm(false)}
+                        onClick={() => {
+                          restoreLoginFocusRef.current = true;
+                          setLoginConfirm(false);
+                        }}
                       >
                         {t("applications.cancel")}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button type="button" className="letter-btn" onClick={handleGuestSignIn}>
+                  <button type="button" className="letter-btn" onClick={handleGuestSignIn} ref={loginTriggerRef}>
                     {t("letter.handoff.loginAction")}
                   </button>
                 )}
