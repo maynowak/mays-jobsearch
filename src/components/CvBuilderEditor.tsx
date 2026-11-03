@@ -19,6 +19,7 @@ import {
   type CvBuilderValidationError,
 } from "../lib/cvBuilder/validation";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
+import CvBuilderPreview, { type CvBuilderTemplate } from "./CvBuilderPreview";
 
 interface Props {
   draft: CvBuilderDraftV1;
@@ -336,9 +337,14 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
   const { t } = useLang();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const editorPaneRef = useRef<HTMLDivElement>(null);
+  const previewHeadingRef = useRef<HTMLHeadingElement>(null);
+  const viewMountedRef = useRef(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const addRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [focusAfterRemove, setFocusAfterRemove] = useState<string | null>(null);
+  const [template, setTemplate] = useState<CvBuilderTemplate>("classic");
+  const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
   const errors = useMemo(() => validateCvBuilderDraft(draft), [draft]);
   const errorCount = errors.length;
   const entryCount =
@@ -364,6 +370,15 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
     addRefs.current[focusAfterRemove]?.focus();
     setFocusAfterRemove(null);
   }, [focusAfterRemove, draft]);
+
+  useEffect(() => {
+    if (!viewMountedRef.current) {
+      viewMountedRef.current = true;
+      return;
+    }
+    if (mobileView === "preview") previewHeadingRef.current?.focus();
+    else editorPaneRef.current?.focus();
+  }, [mobileView]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -457,6 +472,40 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
           {t("cvBuilder.counts", { entries: entryCount, errors: errorCount })}
         </p>
 
+        <div className="cv-builder-toolbar">
+          <div className="cv-builder-view-switch" role="group" aria-label={t("cvBuilder.view.group")}>
+            <button
+              type="button"
+              aria-pressed={mobileView === "edit"}
+              className={mobileView === "edit" ? "active" : ""}
+              onClick={() => setMobileView("edit")}
+            >
+              {t("cvBuilder.view.edit")}
+            </button>
+            <button
+              type="button"
+              aria-pressed={mobileView === "preview"}
+              className={mobileView === "preview" ? "active" : ""}
+              onClick={() => setMobileView("preview")}
+            >
+              {t("cvBuilder.view.preview")}
+            </button>
+          </div>
+          <div className="cv-builder-template-switch" role="group" aria-label={t("cvBuilder.template.label")}>
+            {(["classic", "modern", "compact"] as const).map((entry) => (
+              <button
+                key={entry}
+                type="button"
+                aria-pressed={template === entry}
+                className={template === entry ? "active" : ""}
+                onClick={() => setTemplate(entry)}
+              >
+                {t(`cvBuilder.template.${entry}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <nav className="cv-builder-nav" aria-label={t("cvBuilder.sections")}>
           {[
             ["personal", "cvBuilder.section.personal"],
@@ -476,6 +525,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
                 const section = document.getElementById(`cv-builder-${key}`);
                 const details = section?.querySelector("details");
                 if (details) details.open = true;
+                setMobileView("edit");
                 section?.scrollIntoView({ block: "start", behavior: "smooth" });
               }}
             >
@@ -484,7 +534,15 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
           ))}
         </nav>
 
-        <div className="cv-builder-sections">
+        <div className="cv-builder-workspace" data-view={mobileView}>
+          <div
+            ref={editorPaneRef}
+            className="cv-builder-editor-pane"
+            role="region"
+            aria-label={t("cvBuilder.view.edit")}
+            tabIndex={-1}
+          >
+            <div className="cv-builder-sections">
           <section id="cv-builder-personal">
             <Section
               title={t("cvBuilder.section.personal")}
@@ -1107,6 +1165,19 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
               </button>
             </Section>
           </section>
+        </div>
+          </div>
+
+          <div
+            className="cv-builder-preview-pane"
+            role="region"
+            aria-label={t("cvBuilder.preview.aria")}
+          >
+            <h4 ref={previewHeadingRef} tabIndex={-1}>
+              {t("cvBuilder.preview.title")}
+            </h4>
+            <CvBuilderPreview draft={draft} template={template} />
+          </div>
         </div>
 
         <div className="cv-builder-footer">
