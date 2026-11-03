@@ -172,6 +172,20 @@ async function assertNoNavOverlapWhileScrolling(page) {
   await page.waitForTimeout(60);
 }
 
+async function checkImprovementResponsive(page, originalViewport) {
+  for (const width of [1024, 768, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.locator(".applications-letter-improvement").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(80);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1
+    );
+    if (overflow) throw new Error(`AI improvement overflow at ${width}px`);
+  }
+  await page.setViewportSize(originalViewport);
+  await page.waitForTimeout(80);
+}
+
 async function checkComparisonResponsive(page, originalViewport) {
   for (const width of [1024, 768, 320]) {
     await page.setViewportSize({ width, height: 900 });
@@ -383,6 +397,7 @@ async function runViewport(browser, name, viewport) {
   if (reviseRequest?.revision?.draft_anonymized !== true) throw new Error(`${name}: draft was not marked anonymised`);
   if (reviseRequest?.candidate?.mode !== "manual") throw new Error(`${name}: unexpected candidate mode`);
   await assertNoNavOverlap(page);
+  await checkImprovementResponsive(page, viewport);
   await page.getByRole("button", { name: "Vorschlag verwerfen" }).click();
   await page.getByText(/AI END/).waitFor({ state: "detached" });
   await page.getByRole("tab", { name: "Übersicht" }).click();
