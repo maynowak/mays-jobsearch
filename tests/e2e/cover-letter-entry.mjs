@@ -7,6 +7,12 @@ import playwright from "playwright";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-UX-01");
+const longLetter = [
+  "Sehr geehrte Damen und Herren,",
+  "vielen Dank für die Einladung. " + "Ich freue mich sehr über die Möglichkeit, das Team kennenzulernen. ".repeat(18),
+  "Mit freundlichen Grüßen",
+  "MIT-FREUNDLICHEN-GRUESSEN",
+].join("\n\n");
 const fixturePdf = resolve(repoRoot, "tests/fixtures/cv/synthetic-cv.pdf");
 const port = 5201;
 const base = `http://localhost:${port}`;
@@ -136,7 +142,7 @@ async function runViewport(browser, name, viewport) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ letter: "Sehr geehrte Damen und Herren,\n\nvielen Dank für die Einladung." }),
+        body: JSON.stringify({ letter: longLetter }),
       });
     }
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not mocked", code: "not_mocked" }) });
@@ -228,8 +234,15 @@ async function runViewport(browser, name, viewport) {
   await page.getByRole("button", { name: "Anschreiben generieren" }).click();
   await page.waitForFunction(() => {
     const editor = document.querySelector('textarea[aria-label="Bearbeitbares Anschreiben"]');
-    return editor instanceof HTMLTextAreaElement && editor.value.includes("vielen Dank für die Einladung.");
+    return editor instanceof HTMLTextAreaElement && editor.value.includes("MIT-FREUNDLICHEN-GRUESSEN");
   });
+  const editorBox = await page.locator('textarea[aria-label="Bearbeitbares Anschreiben"]').evaluate((editor) => ({
+    scrollHeight: editor.scrollHeight,
+    clientHeight: editor.clientHeight,
+  }));
+  if (editorBox.scrollHeight > editorBox.clientHeight + 2) {
+    throw new Error(`${name}: generated letter is clipped in the editor`);
+  }
   if (coverLetterCalls !== 1) throw new Error(`${name}: expected one cover-letter call, got ${coverLetterCalls}`);
   if (profileCalls !== 1) throw new Error(`${name}: generation made an additional profile request`);
   const coverBody = JSON.stringify(coverLetterBodies[0] || {});

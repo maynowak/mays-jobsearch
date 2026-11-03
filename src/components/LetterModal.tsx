@@ -108,6 +108,7 @@ export default function LetterModal({
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const requestSeqRef = useRef(0);
   const inFlightRef = useRef(false);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
 
   const initialContextForJob =
     initialContext && initialContext.jobSlug === job.slug ? initialContext : null;
@@ -260,6 +261,16 @@ export default function LetterModal({
       inFlightRef.current = false;
     };
   }, []);
+
+  // Keep the generated letter fully visible. A fixed-height textarea hides the
+  // lower part of long letters behind its internal scrollbar.
+  useEffect(() => {
+    if (phase !== "done") return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.style.height = "auto";
+    editor.style.height = `${editor.scrollHeight}px`;
+  }, [letter, phase]);
 
   // Dialog focus, background scroll lock and focus restoration.
   // The heading is focused with preventScroll; focusing the generate button
@@ -1049,6 +1060,7 @@ export default function LetterModal({
         {phase === "done" && (
           <div className="letter-editor-wrap">
             <textarea
+              ref={editorRef}
               className="letter-editor"
               value={letter}
               onChange={(event) => handleLetterChange(event.target.value)}
