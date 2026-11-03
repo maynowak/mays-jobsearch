@@ -10047,3 +10047,16 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   color: #14532d;
   text-decoration: none;
 }
+
+.applications-letter-comparison__adopt {
+  margin-top: 10px;
+}
+
+.letter-review-success {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid #15803d;
+  background: #f0fdf4;
+  color: #14532d;
+  font-size: var(--text-sm);
+}

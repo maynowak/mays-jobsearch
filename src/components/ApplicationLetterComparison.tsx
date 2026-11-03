@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type { ModelOption } from "../types";
+import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
 import {
   ApiError,
   generateCoverLetter,
@@ -24,6 +25,8 @@ interface Props {
   models?: ModelOption[];
   defaultModel?: string | null;
   recommendedModel?: string | null;
+  onSaveVersion?: (version: CoverLetterVersionV1) => Promise<SessionApplicationV1>;
+  onAdoptDraft?: (content: string) => Promise<SessionApplicationV1>;
 }
 
 interface Improvement {
@@ -49,18 +52,31 @@ function sourceLabel(t: (key: string) => string, source: CoverLetterVersionV1["s
   return t(`applications.letterComparison.source.${source}`);
 }
 
+function localVersionId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `letter-${crypto.randomUUID()}`;
+  }
+  return `letter-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function actionErrorLabel(t: (key: string) => string, err: unknown): string {
+  if (err instanceof ApplicationRepositoryError) return t(`applications.error.${err.code}`);
+  return t("letter.improve.error");
+}
+
 export default function ApplicationLetterComparison({
   application,
   models = [],
   defaultModel = null,
   recommendedModel = null,
+  onSaveVersion,
+  onAdoptDraft,
 }: Props) {
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
   const selectFromId = useId();
   const selectToId = useId();
   const versions = application.documents.coverLetterVersions;
-  const versionSignature = versions.map((version) => version.versionId).join("|");
   const latestVersionId = versions.at(-1)?.versionId ?? "current";
   const [fromId, setFromId] = useState<Selection>("current");
   const [toId, setToId] = useState<Selection>(latestVersionId);
@@ -70,7 +86,14 @@ export default function ApplicationLetterComparison({
   const [improvement, setImprovement] = useState<Improvement | null>(null);
   const [improveError, setImproveError] = useState("");
   const [improving, setImproving] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [adopting, setAdopting] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [adoptConfirm, setAdoptConfirm] = useState<string | null>(null);
   const requestSeqRef = useRef(0);
+  const savingRef = useRef(false);
+  const adoptingRef = useRef(false);
   const suggestionRef = useRef<HTMLTextAreaElement>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
@@ -87,7 +110,12 @@ export default function ApplicationLetterComparison({
     setImproveError("");
     setFeedback("");
     setConsent(false);
-  }, [application.localId, versionSignature, latestVersionId]);
+    setSaving(false);
+    setAdopting(false);
+    setActionMessage("");
+    setActionError("");
+    setAdoptConfirm(null);
+  }, [application.localId]);
 
   useEffect(() => {
     const preferred = defaultModel && models.some((entry) => entry.id === defaultModel)
@@ -104,6 +132,9 @@ export default function ApplicationLetterComparison({
     setImproving(false);
     setImprovement(null);
     setImproveError("");
+    setActionMessage("");
+    setActionError("");
+    setAdoptConfirm(null);
   }, [fromId]);
 
   useEffect(() => {
@@ -122,6 +153,69 @@ export default function ApplicationLetterComparison({
       requestSeqRef.current += 1;
     };
   }, []);
+
+  const handleSaveVersion = async () => {
+    if (!improvement || !onSaveVersion || savingRef.current || adoptingRef.current) return;
+    const content = improvement.suggestion.trim();
+    if (!content) {
+      setActionError(t("letter.improve.empty"));
+      return;
+    }
+    if (content.length > 50_000) {
+      setActionError(t("letter.improve.tooLong"));
+      return;
+    }
+    savingRef.current = true;
+    setSaving(true);
+    setActionError("");
+    setActionMessage("");
+    try {
+      const updated = await onSaveVersion({
+        versionId: localVersionId(),
+        jobId: application.job.jobId,
+        createdAt: new Date().toISOString(),
+        content,
+        source: "revised",
+        language: lang,
+        ...(improvement.model ? { model: improvement.model } : {}),
+      });
+      setActionMessage(
+        t("letter.improve.saved", {
+          number: updated.documents.coverLetterVersions.length,
+        })
+      );
+      setToId(updated.documents.coverLetterVersions.at(-1)?.versionId ?? "current");
+    } catch (err) {
+      setActionError(actionErrorLabel(t, err));
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  const handleAdoptDraft = async (versionId: string) => {
+    if (!onAdoptDraft || adoptingRef.current || savingRef.current) return;
+    const version = versions.find((entry) => entry.versionId === versionId);
+    if (!version) return;
+    adoptingRef.current = true;
+    setAdopting(true);
+    setActionError("");
+    setActionMessage("");
+    try {
+      await onAdoptDraft(version.content);
+      setActionMessage(t("letter.improve.adopted"));
+      setAdoptConfirm(null);
+    } catch (err) {
+      setActionError(actionErrorLabel(t, err));
+    } finally {
+      adoptingRef.current = false;
+      setAdopting(false);
+    }
+  };
+
+  const draftNotSaved = !versions.some(
+    (version) => version.content === application.documents.coverLetterDraft
+  );
 
   const suggestionDiff = useMemo(
     () => (improvement ? diffText(improvement.sourceText, improvement.suggestion) : null),
@@ -321,6 +415,43 @@ export default function ApplicationLetterComparison({
         <pre className="applications-letter-comparison__text">
           {resolved.content || t("applications.letterComparison.emptyText")}
         </pre>
+        {side === "to" && resolved.version && onAdoptDraft && (
+          <div className="applications-letter-comparison__adopt">
+            {adoptConfirm === resolved.version.versionId ? (
+              <div className="applications-confirm" role="alert">
+                <p>
+                  {t("letter.improve.adoptConfirm")}
+                  {draftNotSaved ? ` ${t("letter.improve.draftNotSaved")}` : ""}
+                </p>
+                <button
+                  type="button"
+                  className="letter-btn"
+                  onClick={() => void handleAdoptDraft(resolved.version!.versionId)}
+                  disabled={adopting || saving}
+                >
+                  {t("letter.improve.adoptConfirmYes")}
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setAdoptConfirm(null)}
+                  disabled={adopting || saving}
+                >
+                  {t("applications.cancel")}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setAdoptConfirm(resolved.version!.versionId)}
+                disabled={adopting || saving}
+              >
+                {t("letter.improve.adoptDraft")}
+              </button>
+            )}
+          </div>
+        )}
       </section>
     );
   };
@@ -510,14 +641,28 @@ export default function ApplicationLetterComparison({
                 onClick={() => {
                   setImprovement(null);
                   setImproveError("");
+                  setActionMessage("");
+                  setActionError("");
                 }}
-                disabled={improving}
+                disabled={improving || saving || adopting}
               >
                 {t("letter.improve.discard")}
               </button>
+              {onSaveVersion && (
+                <button
+                  type="button"
+                  className="letter-btn"
+                  onClick={() => void handleSaveVersion()}
+                  disabled={improving || saving || adopting || !improvement.suggestion.trim()}
+                >
+                  {saving ? t("letter.improve.saving") : t("letter.improve.saveVersion")}
+                </button>
+              )}
             </div>
           </section>
         )}
+        {actionMessage && <p className="letter-review-success" role="status">{actionMessage}</p>}
+        {actionError && <p className="letter-review-warning" role="alert">{actionError}</p>}
       </section>
     </section>
   );

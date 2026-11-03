@@ -4,6 +4,7 @@ import { LangProvider } from "../i18n";
 import ApplicationLetterComparison from "./ApplicationLetterComparison";
 import { generateCoverLetter } from "../api";
 import { createSessionApplication, type SessionApplicationV1 } from "../lib/applications/sessionApplications";
+import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
 import type { ApplicationJobReferenceV1, CoverLetterVersionV1 } from "../lib/applications/contractTypes";
 
 vi.mock("../api", async (importOriginal) => {
@@ -51,7 +52,13 @@ function makeApplication(versions: CoverLetterVersionV1[] = [], draft = "Origina
 
 const models = [{ id: "model-a", name: "Model A" }];
 
-function renderComparison(application: SessionApplicationV1) {
+function renderComparison(
+  application: SessionApplicationV1,
+  callbacks: {
+    onSaveVersion?: (version: Parameters<NonNullable<React.ComponentProps<typeof ApplicationLetterComparison>["onSaveVersion"]>>[0]) => Promise<SessionApplicationV1>;
+    onAdoptDraft?: (content: string) => Promise<SessionApplicationV1>;
+  } = {}
+) {
   return render(
     <LangProvider>
       <ApplicationLetterComparison
@@ -59,6 +66,7 @@ function renderComparison(application: SessionApplicationV1) {
         models={models}
         defaultModel="model-a"
         recommendedModel="model-a"
+        {...callbacks}
       />
     </LangProvider>
   );
@@ -200,6 +208,88 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
     await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
     expect(screen.getByText("Keine Änderungen.")).toBeInTheDocument();
+  });
+
+  it("saves the edited AI proposal as a revised version through the existing callback", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    const onSaveVersion = vi.fn(async (nextVersion) => ({
+      ...application,
+      documents: { ...application.documents, coverLetterVersions: [...application.documents.coverLetterVersions, nextVersion] },
+      version: application.version + 1,
+    }));
+    const view = renderComparison(application, { onSaveVersion });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    const editor = await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.change(editor, { target: { value: "Edited AI proposal" } });
+    fireEvent.click(screen.getByRole("button", { name: "Als neue Version speichern" }));
+    await screen.findByText("Version 2 gespeichert.");
+    expect(onSaveVersion).toHaveBeenCalledTimes(1);
+    const saved = onSaveVersion.mock.calls[0][0];
+    expect(saved.source).toBe("revised");
+    expect(saved.content).toBe("Edited AI proposal");
+    expect(saved.model).toBe("model-a");
+    expect(saved.versionId).not.toBe("v1");
+    expect(application.documents.coverLetterVersions).toHaveLength(1);
+    expect(application.documents.coverLetterVersions[0].content).toBe("Version one");
+    view.rerender(
+      <LangProvider>
+        <ApplicationLetterComparison application={await onSaveVersion.mock.results[0].value} models={models} defaultModel="model-a" recommendedModel="model-a" onSaveVersion={onSaveVersion} />
+      </LangProvider>
+    );
+    expect(screen.getAllByRole("option", { name: /Version 2/ }).length).toBeGreaterThan(0);
+  });
+
+  it("requires confirmation before adopting a version as the current draft", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    const onAdoptDraft = vi.fn(async (content) => ({
+      ...application,
+      documents: { ...application.documents, coverLetterDraft: content, documentStatus: "draft" as const },
+      version: application.version + 1,
+    }));
+    renderComparison(application, { onAdoptDraft });
+    fireEvent.click(screen.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" }));
+    expect(screen.getByText(/Den aktuellen Anschreibenentwurf durch diese Version ersetzen/)).toBeInTheDocument();
+    expect(onAdoptDraft).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(onAdoptDraft).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ja, Entwurf ersetzen" }));
+    await screen.findByText("Version als aktueller Entwurf übernommen.");
+    expect(onAdoptDraft).toHaveBeenCalledWith("Version one");
+  });
+
+  it("keeps the proposal on a save conflict and does not issue a second save", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    const onSaveVersion = vi.fn().mockRejectedValue(
+      new ApplicationRepositoryError("conflict", "version_conflict")
+    );
+    renderComparison(application, { onSaveVersion });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    const editor = await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    fireEvent.click(screen.getByRole("button", { name: "Als neue Version speichern" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/zwischenzeitlich geändert/i);
+    expect(editor).toHaveValue("IMPROVED LETTER");
+    expect(onSaveVersion).toHaveBeenCalledTimes(1);
+  });
+
+  it("blocks double-click while saving a version", async () => {
+    const application = makeApplication([version("v1", "Version one")], "Draft");
+    let resolveSave!: (value: SessionApplicationV1) => void;
+    const onSaveVersion = vi.fn(() => new Promise<SessionApplicationV1>((resolve) => {
+      resolveSave = resolve;
+    }));
+    renderComparison(application, { onSaveVersion });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
+    await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
+    const saveButton = screen.getByRole("button", { name: "Als neue Version speichern" });
+    fireEvent.click(saveButton);
+    fireEvent.click(saveButton);
+    expect(onSaveVersion).toHaveBeenCalledTimes(1);
+    resolveSave(application);
+    await screen.findByText(/Version .* gespeichert/);
   });
 
 });

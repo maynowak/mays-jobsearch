@@ -11,6 +11,7 @@ import type {
   ApplicationFollowUpV1,
   ApplicationSalaryV1,
   ApplicationStatus,
+  CoverLetterVersionV1,
 } from "../lib/applications/contractTypes";
 import { ApplicationValidationError } from "../lib/applications/applicationValidation";
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
@@ -508,6 +509,29 @@ export default function ApplicationsSection({
       },
       (message) => setFollowUpError(message)
     );
+  };
+
+  const handleSaveLetterVersion = async (version: CoverLetterVersionV1): Promise<SessionApplicationV1> => {
+    if (!selected) throw new Error("No application selected");
+    const updated = await repository.addCoverLetterVersion(selected.localId, {
+      expectedVersion: selected.version,
+      version,
+    });
+    replace(updated);
+    return updated;
+  };
+
+  const handleAdoptLetterDraft = async (content: string): Promise<SessionApplicationV1> => {
+    if (!selected) throw new Error("No application selected");
+    const updated = await repository.update(selected.localId, {
+      expectedVersion: selected.version,
+      changes: {
+        coverLetterDraft: content,
+        documentStatus: content.trim() ? "draft" : "missing",
+      },
+    });
+    replace(updated);
+    return updated;
   };
 
   const handleSaveEdits = (changes: SessionApplicationUpdateChanges) => {
@@ -1019,6 +1043,8 @@ export default function ApplicationsSection({
                     models={models}
                     defaultModel={defaultModel}
                     recommendedModel={recommendedModel}
+                    onSaveVersion={handleSaveLetterVersion}
+                    onAdoptDraft={handleAdoptLetterDraft}
                   />
 
                   <section className="applications-block">

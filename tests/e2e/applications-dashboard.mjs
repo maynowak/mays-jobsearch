@@ -16,6 +16,7 @@ const ux05bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-M
 const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01A");
 const letterImprovementEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01B");
 const letterDiffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01C");
+const letterAdoptionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01D");
 const improvedLetter = `AI IMPROVED PROPOSAL\n\n${"Ich bringe relevante Erfahrung und klare Kommunikation mit. ".repeat(12)}\nAI END`;
 const longLetter = [
   "Sehr geehrte Damen und Herren,",
@@ -418,6 +419,26 @@ async function runViewport(browser, name, viewport) {
   if (reviseRequest?.operation !== "revise") throw new Error(`${name}: improvement did not use revise`);
   if (reviseRequest?.revision?.draft_anonymized !== true) throw new Error(`${name}: draft was not marked anonymised`);
   if (reviseRequest?.candidate?.mode !== "manual") throw new Error(`${name}: unexpected candidate mode`);
+  await assertNoNavOverlap(page);
+
+  // LETTER-REVISION-01D: save the edited proposal and adopt it explicitly.
+  await mkdir(letterAdoptionEvidenceDir, { recursive: true });
+  await page.getByRole("button", { name: "Als neue Version speichern" }).click();
+  await page.getByText("Version 3 gespeichert.").waitFor();
+  await page.getByText("Version 3 gespeichert.").scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => {
+    const select = document.querySelector(".applications-letter-comparison select");
+    return select instanceof HTMLSelectElement && select.options.length === 4;
+  });
+  await page.screenshot({ path: resolve(letterAdoptionEvidenceDir, `${name}-saved.png`), fullPage: false });
+  await page.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" }).click();
+  await page.getByText(/Den aktuellen Anschreibenentwurf durch diese Version ersetzen/).waitFor();
+  await page.getByText(/Den aktuellen Anschreibenentwurf durch diese Version ersetzen/).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: resolve(letterAdoptionEvidenceDir, `${name}-adopt-confirm.png`), fullPage: false });
+  await page.getByRole("button", { name: "Ja, Entwurf ersetzen" }).click();
+  await page.getByText("Version als aktueller Entwurf übernommen.").waitFor();
+  await page.getByText("Version als aktueller Entwurf übernommen.").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: resolve(letterAdoptionEvidenceDir, `${name}-adopted.png`), fullPage: false });
   await assertNoNavOverlap(page);
   await checkImprovementResponsive(page, viewport);
   await page.getByRole("button", { name: "Vorschlag verwerfen" }).click();
