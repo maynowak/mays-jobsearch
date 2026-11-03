@@ -1,3 +1,17 @@
+2026-11-03 · JM-COVER-LETTER-PROFILE-HANDOFF-01
+- Typ: Anschreiben/Profilnavigation/Anmeldungshinweis/Bewerbungsverwaltung
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `7f71459`; `origin/main` `4364eab`; Branch `feature/jm-cover-letter-profile-handoff-01`.
+- Gast: dezenter Hinweis „Deine Bewerbungen im Blick behalten“, Erklärung der Bewerbungsverwaltung über das Profil, „Anmelden / Registrieren“ über bestehende Route `/anmelden`. Session-only-Hinweis und keine Garantie dauerhafter Speicherung. Bei vorhandenen Sitzungsbewerbungen zusätzliche Bestätigung vor dem Auth-Wechsel mit Hinweis auf Verwerfen der Sitzungsdaten und fehlende automatische Migration.
+- Angemeldet: nach bestätigter Repository-Übernahme „Dein Bewerbungsentwurf ist bereit.“, Status neu/aktualisiert, Aktion „Meine Bewerbungen öffnen“ über bestehendes `/profil?tab=applications`; `DashboardV2` liest den vorhandenen `tab`-Parameter. Keine neue Route, keine zweite Bewerbung, `adoptingRef`/Idempotenz/`expectedVersion`.
+- Status: „Anschreiben erstellt.“, „Anschreiben überarbeitet.“, „Anschreiben bearbeitet.“, Übernahme erfolgreich/aktualisiert/fehlgeschlagen. Erfolg erst nach aufgelöster Repository-Operation; Fehler lässt Anschreiben unverändert.
+- Privacy/Session: unverändert Session-only; Auth-Identitätswechsel invalidiert Anwendungsrepository/Session und schließt den Dialog. Keine neue Persistenz, keine Migration, keine neuen KI-/Provider-/AWS-/RIS-/Apify-Aufrufe.
+- Tests: erster Volllastlauf **1259 passed/2 failed/5 skipped** (nur bekannte `ManualSearchProfiles.*`-Timing-Fehler); isoliert **12/12 passed**; stabiler vollständiger Lauf `--maxWorkers=2` **1261 passed/5 skipped**. App **96**, LetterModal/Dashboard **63**, Cover-Letter-API **23**; TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + responsive 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors.
+- Screenshots: `docs/reports/assets/JM-COVER-LETTER-PROFILE-HANDOFF-01/`.
+- Git: Implementierung `8dd5651`, Dokumentation/Screenshots in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-COVER-LETTER-PROFILE-HANDOFF-01.md`
+- Offen/Produktion: weiterhin Session-only, keine dauerhafte Speicherung/Migration, keine Live-Auth-/Provider-/RIS-/Retention-Freigabe. **PRODUCTION: BLOCKED.**
+
 2026-11-03 · JM-APPLICATION-LETTER-REVISION-MAIN-INTEGRATION-01
 - Typ: Lokale Git-Integration/Regression/Dokumentation
 - Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
