@@ -1,3 +1,17 @@
+2026-11-03 · JM-APPLICATION-LETTER-OPTIONS-01
+- Typ: Anschreiben-Werkstatt / Sprache / Schreibstil / Länge / Bewerbungsverwaltung
+- Status: **READY für lokale Main-Integration** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `09a6971`; `origin/main` `4364eab`; Branch `feature/jm-application-letter-options-01`.
+- API-Vertrag: bestehende `CoverLetterGenerationOptions` weiterverwendet; `style` um validierten Wert `formal` erweitert (`ALLOWED_STYLES`, Prompt-Guidance, TS-Typ, DE/EN, LetterModal und Improvement-UI). Keine zweite KI-Integration.
+- UI: Sprache (Deutsch/Englisch, unabhängig von UI-Sprache), Stil (professional/warm/concise/formal), Länge (short/one_page/detailed), vorhandene Modellauswahl und Verbesserungswunsch; responsive 2-/1-Spalten-Layout, 44-px-Selects.
+- Semantik: Optionswechsel lösen keinen KI-Aufruf aus; sie setzen Consent zurück und verwerfen Vorschau/Request-Sequence. Gespeicherte Ausgangsversionen mit Sprache `de`/`en` liefern einen Anfangswert; fehlende Metadaten werden nicht erfunden. Neue Versionen speichern die gewählte Sprache; Stil/Länge bleiben reine Anfrageoptionen ohne Schemaerweiterung.
+- Privacy/Session: Consent, Anonymisierung von Draft und Feedback, Provider-Fallback-Transparenz, Doppelklick-/Save-/Adopt-/Stale-Schutz unverändert; keine automatische Speicherung, keine neue Persistenz, keine RIS-/AWS-Aufrufe.
+- Tests: Gesamtsuite **1328 passed/5 skipped** (`--maxWorkers=2`, 123 Testdateien passed/3 skipped); Cover-Letter-API **25 passed**, ApplicationLetterImprovement **23 passed**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Applications-E2E 1440/390 + responsive 1024/768/430/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-APPLICATION-LETTER-OPTIONS-01/`.
+- Git: Implementierung `3e10171`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **APPLICATION-LETTER-OPTIONS-01 READY**; Stil/Länge nicht historisch versioniert (dokumentierter Finding); **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-OPTIONS-01.md`
+
 2026-11-03 · JM-SEARCH-NAV-UX-FINALIZATION-01
 - Typ: Skills-Design-Korrektur / Such-/Navigations-UX / lokale Main-Integration
 - Status: **READY für lokale Main-Integration** — kein Push, kein Deployment
