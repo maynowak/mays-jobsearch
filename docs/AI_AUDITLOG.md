@@ -1,3 +1,17 @@
+2026-11-03 · JM-SEARCH-UX-03
+- Typ: Suchmaske / Skills-Hervorhebung / Suchort / Standardumkreis
+- Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `7e4858c`; `origin/main` `4364eab`; Branch `feature/jm-search-ux-03`.
+- Skills: sichtbare Hervorhebung mit Überschrift, türkisfarbenem Akzent, Hilfetext, Beispiel-Chips, Fokusring, 44-px-Eingabe/Löschbutton, `aria-describedby`; bestehende Parser-Semantik und Mehrwort-Skills (`Spring Boot`) unverändert.
+- Suchort: Label „Suchort (Stadt oder PLZ)“; dynamischer Hinweis für Standard/5 km, konkrete km-Werte und bewusst unbegrenzt; Radius bei Ortseingabe direkt sichtbar.
+- Radius: `RADIUS_KM_OPTIONS = [5,10,25,50,100]`; UI-Zustände `unset|auto|manual|unlimited`; erste Ortseingabe setzt 5 km nur bei `unset`; manuelle 10/50 km und „Entfernung egal“ bleiben erhalten; Leeren eines automatischen Radius setzt `null`; geladene Profile/externe Werte werden nicht überschrieben; ohne Ort kein Geo-Filter.
+- Kompatibilität: Profilvalidierung, CV-Suchprofile, manuelle Suchprofile, `/api/jobs`, `fetchAllJobs` und Apify-Input (`latitude`/`longitude`/`radiusKm`) geprüft; keine neue Provider-/KI-/Persistenz-/Auth-Funktion.
+- Tests: Gesamtsuite **1314 passed/5 skipped** (`--maxWorkers=2`); SearchForm **30**, CV-Suchprofil **3**, manuelle Suchprofile **13**, Profilvalidierung/API/Adapter PASS; TypeScript/Build/`git diff --check`/API-Syntax PASS; Search-UX-03-E2E, Search-Results, Guest-CV, Applications, Cover-Letter, Mobile-Nav, CV-Builder und CV-PDF PASS; keine Console-Errors; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-SEARCH-UX-03/`.
+- Git: Implementierung `9827456`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **JM-SEARCH-UX-03 READY**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-SEARCH-UX-03.md`
+
 2026-11-03 · JM-CV-SEARCH-MAIN-CONSOLIDATION-01
 - Typ: Lokale Main-Integration / Regression / Dokumentation
 - Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
