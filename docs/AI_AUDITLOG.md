@@ -1,3 +1,15 @@
+2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05B
+- Typ: Bewerbungsverwaltung/kompakte Bewerbungskarten/Listennavigation
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Baseline: UX-05A `bad2b93`; Branch `feature/jm-application-management-ux-05b`; main `b897259`; origin/main `e1f0347`.
+- Komponenten: neue `ApplicationCard`-Komponente als einzelner nativer Button; gemeinsame Follow-up-Logik nach `src/lib/applications/followUp.ts` konsolidiert. Karte zeigt Titel/Arbeitgeber/Ort/Status/Datum bzw. Erstellt-Datum/Follow-up; ausgewählte Karte mit `aria-current`, Haken und seitlicher Markierung; lange Titel über title/aria-label vollständig zugänglich.
+- Status/Follow-up: bestehende Status-Enums und UX-04D-Kalendersemantik; textliche Statuschips, keine Statusänderung per Chip, erledigte Follow-ups nicht als offen, überfällig textlich markiert. UX-05A-Kennzahlen/Handlungsbedarf/Filter/Sortierung bleiben erhalten.
+- A11y/Responsive: Tastaturfokus, sichtbare Fokuszustände, keine verschachtelten Buttons, Touch-Flächen, mobile Karten, 1440/1024/768/390/320 ohne Overflow, Navbar-BBox PASS.
+- Sicherheit: Repository/Session-/Versions-/Stale-/Doppelaktionsschutz unverändert; keine neue Persistenz, keine Backend-/RIS-/AWS-/KI-/Apify-Aufrufe.
+- Tests: ApplicationCard **6 passed**, ApplicationsSection **30 passed**, Gesamtsuite **1222 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors.
+- Git: Implementierung `9643dd1`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-05B.md`
+
 2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05A
 - Typ: Bewerbungs-Cockpit/Statusübersicht/Schnellfilter
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
