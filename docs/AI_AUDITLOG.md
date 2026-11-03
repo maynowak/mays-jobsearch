@@ -1,3 +1,16 @@
+2026-11-03 · JM-CV-BUILDER-01B
+- Typ: Lebenslauf-Werkstatt / Live-Vorschau / Designvorlagen / responsive Darstellung
+- Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: 01A `2ae42e4`; lokaler `main` `e098fbd`; `origin/main` `4364eab`; Branch `feature/jm-cv-builder-01b`.
+- Architektur: `CvBuilderDraftV1` bleibt einzige Datenquelle. `CvBuilderPreview` rendert dieselben Daten in classic/modern/compact; Vorlagenwechsel ändert keine Daten, IDs oder Domain-Objekte. Designauswahl ist lokaler UI-State.
+- Vorschau: Name/Rolle/Kontakt, Profil, Erfahrung, Ausbildung, Skills, Projekte, Zertifikate, Sprachen und Links; leere Abschnitte/blanke Einträge werden ausgelassen; Monats-/Jahresdaten (`03/2019 – 10/2024`, `heute`/`Present`), sichere Links, keine HTML-Injektion, keine erfundenen Daten, keine feste Höhe/Kürzung.
+- Layout: Desktop Editor + Vorschau zweispaltig; ab 900 px mobile Bearbeiten-/Vorschau-Umschaltung; Formulare einspaltig; keine horizontalen Überläufe; Vorlagenwechsel und Ansichtswechsel erhalten den Draft.
+- Session/Privacy: unverändert App-Memory, Gast/Auth, Auth-Isolation, Reload-Verwurf, `beforeunload`; keine Browser-Persistenz, keine KI-/Provider-/Backend-/RIS-/AWS-Aufrufe.
+- Tests: Gesamtsuite **1291 passed/5 skipped**; Preview/Editor/Domain/Auth **30**, Cover-Letter-API **23**; TypeScript/Build/`git diff --check`/API-Syntax PASS; CV-Builder-E2E Gast + Auth PASS, responsive 1440/1024/768/430/390/320 PASS; Guest-CV/Applications/Cover-Letter/Mobile-Nav-E2E PASS; keine Console-Errors.
+- Screenshots: `docs/reports/assets/JM-CV-BUILDER-01B/`.
+- Git: Preview `9dbb737`, Editor/Templates `de6949c`, E2E/Screenshots `5a58413`, responsive fix `088166f`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **CV-BUILDER-01B READY für 01C**; PDF, Persistenz, KI-Optimierung, ATS-Kopplung und RIS bleiben OPEN. **PRODUCTION: BLOCKED.**
+
 2026-11-03 · JM-CV-BUILDER-01A
 - Typ: Strukturierter Lebenslauf-Editor / Domain Foundation / Session-State / UI
 - Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
