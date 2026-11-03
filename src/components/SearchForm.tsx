@@ -25,6 +25,7 @@ interface Props {
   // CV-Workflow (Pfad B, Overlay) weiter — Modellwahl/Consent/Profil-Erstellung
   // laufen dort; die Suchmaske braucht keine Modell- und CV-Listen-Props mehr.
   onWorkflowStart: (file: File) => void;
+  onOpenBuilder?: () => void;
   openCvUpload?: boolean;
   manualProfiles?: ManualSearchProfile[];
   authenticated?: boolean;
@@ -42,6 +43,7 @@ export default function SearchForm({
   hasJobs = false,
   rematch,
   onWorkflowStart,
+  onOpenBuilder,
   openCvUpload = false,
   manualProfiles = [],
   authenticated = false,
@@ -456,6 +458,7 @@ export default function SearchForm({
       ) : (
         <CvUpload
           onManual={() => setMode("manual")}
+          onOpenBuilder={onOpenBuilder}
           onWorkflowStart={onWorkflowStart}
         />
       )}

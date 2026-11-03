@@ -32,6 +32,7 @@ import DashboardV2AuthenticatedPreview from "./components/DashboardV2Authenticat
 import DashboardV2CvSection from "./components/DashboardV2CvSection";
 import ApplicationsSection from "./components/ApplicationsSection";
 import CvDocumentList from "./components/CvDocumentList";
+import CvBuilderEditor from "./components/CvBuilderEditor";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
@@ -55,6 +56,11 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
 import { beginNewApplicationSession, createSessionApplicationRepository } from "./lib/applications/sessionRepository";
+import {
+  createEmptyCvBuilderDraft,
+  hasCvBuilderContent,
+  type CvBuilderDraftV1,
+} from "./lib/cvBuilder/contractTypes";
 import { isDevOnlyRoute } from "./lib/devRoute";
 import { buildCvSearchProfile } from "./lib/cvSearchConfig";
 import { partitionCvFiles, validateCvFile } from "./lib/cvFileValidation";
@@ -172,16 +178,21 @@ export default function App() {
   } | null>(null);
   const [sessionApplications, setSessionApplications] = useState<SessionApplicationV1[]>([]);
   const [applicationRepository, setApplicationRepository] = useState(() => createSessionApplicationRepository());
+  // CV-BUILDER-01A: structured CV draft is session-only App state. It is not
+  // a CvDocument, has no File/hash/processedAt and is never persisted.
+  const [cvBuilderDraft, setCvBuilderDraft] = useState<CvBuilderDraftV1>(createEmptyCvBuilderDraft);
+  const [cvBuilderOpen, setCvBuilderOpen] = useState(false);
+  const cvBuilderHasContent = hasCvBuilderContent(cvBuilderDraft);
 
   useEffect(() => {
-    if (sessionApplications.length === 0) return;
+    if (sessionApplications.length === 0 && !cvBuilderHasContent) return;
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", warnBeforeUnload);
     return () => window.removeEventListener("beforeunload", warnBeforeUnload);
-  }, [sessionApplications.length]);
+  }, [sessionApplications.length, cvBuilderHasContent]);
   const [pendingLetterContext, setPendingLetterContext] = useState<{
     job: Job;
     prepare: string;
@@ -276,6 +287,8 @@ export default function App() {
       beginNewApplicationSession();
       setSessionApplications([]);
       setApplicationRepository(createSessionApplicationRepository());
+      setCvBuilderDraft(createEmptyCvBuilderDraft());
+      setCvBuilderOpen(false);
       setStatus(null);
     }
     previousAuthProfileKeyRef.current = authProfileKey;
@@ -1784,6 +1797,7 @@ export default function App() {
         hasJobs={hasFoundJobs}
         rematch={canRematch}
         onWorkflowStart={handleCvUploadStart}
+        onOpenBuilder={() => setCvBuilderOpen(true)}
         openCvUpload={new URLSearchParams(window.location.search).get("cv") === "upload"}
         manualProfiles={manualProfiles}
         authenticated={isAuth && identityVerified}
@@ -2915,6 +2929,14 @@ export default function App() {
       : cvOverlayNode ?? cvProcessingCard
   );
 
+  const cvBuilderNode = cvBuilderOpen ? (
+    <CvBuilderEditor
+      draft={cvBuilderDraft}
+      onChange={setCvBuilderDraft}
+      onClose={() => setCvBuilderOpen(false)}
+    />
+  ) : null;
+
   // CV-PROFILE-LISTS-01: Zum Profil-Overlay gehoeriges Dokument aufloesen
   const profilesDoc = profilesDocId
     ? (cvState.documents.find((d) => d.id === profilesDocId) ?? null)
@@ -2938,6 +2960,7 @@ export default function App() {
       onSelectSearchProfile={handleDashboardSearchProfileSelect}
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
       onOpenCvUpload={() => navigateInApp("/search?cv=upload")}
+      onOpenCvBuilder={() => setCvBuilderOpen(true)}
       onAssignUnassigned={handleAssignUnassignedAts}
     />
   );
@@ -3034,6 +3057,7 @@ export default function App() {
           />
         </main>
         {cvProcessingUI}
+        {cvBuilderNode}
         <Footer />
       </ErrorBoundary>
     );
@@ -3055,6 +3079,7 @@ export default function App() {
           />
         </main>
         {cvProcessingUI}
+        {cvBuilderNode}
         <Footer />
       </ErrorBoundary>
     );
@@ -3076,6 +3101,7 @@ export default function App() {
           />
         </main>
         {cvProcessingUI}
+        {cvBuilderNode}
         <Footer />
       </ErrorBoundary>
     );
@@ -3299,6 +3325,7 @@ export default function App() {
               }
             />
           )}
+          {cvBuilderNode}
           <Footer />
           {/* SEARCH-WORLD-09: Halbrundes Podium als letzter visueller Abschluss.
               Das BESTEHENDE Boden-Element wird hier weiterverwendet und nur

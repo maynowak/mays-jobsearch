@@ -5,6 +5,7 @@ import { validateCvFile } from "../lib/cvFileValidation";
 
 interface Props {
   onManual: () => void;
+  onOpenBuilder?: () => void;
   // CV-UPLOAD-UX-01: Nach der lokalen Validierung startet die App direkt den
   // CV-Workflow (Pfad B) im Overlay — Einwilligung, Modellwahl, Anonymisierung
   // und Profil-Erstellung laufen dort einheitlich. Kein Inline-Consent und
@@ -13,7 +14,7 @@ interface Props {
   onWorkflowStart: (file: File) => void;
 }
 
-export default function CvUpload({ onManual, onWorkflowStart }: Props) {
+export default function CvUpload({ onManual, onOpenBuilder, onWorkflowStart }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
@@ -137,6 +138,11 @@ export default function CvUpload({ onManual, onWorkflowStart }: Props) {
       <button type="button" className="btn-ghost cv-manual" onClick={onManual}>
         {t("cv.manual")}
       </button>
+      {onOpenBuilder && (
+        <button type="button" className="btn-ghost cv-builder-open" onClick={onOpenBuilder}>
+          {t("cvBuilder.open")}
+        </button>
+      )}
     </div>
   );
 }

@@ -25,6 +25,7 @@ interface Props {
   onSelectSearchProfile: (id: string | null) => void;
   onSelectAtsProfile: (id: string | null) => void;
   onOpenCvUpload: () => void;
+  onOpenCvBuilder?: () => void;
   // JM-ATS-OVERLAY-PARITY-08A: same session-adapter handler as the search page.
   onAssignUnassigned?: (
     cvHash: string,
@@ -50,6 +51,7 @@ const DashboardV2CvSection = ({
   onSelectSearchProfile,
   onSelectAtsProfile,
   onOpenCvUpload,
+  onOpenCvBuilder,
   onAssignUnassigned,
 }: Props) => {
   const { t } = useLang();
@@ -71,6 +73,11 @@ const DashboardV2CvSection = ({
           <button type="button" className="btn-ghost" onClick={onOpenCvUpload}>
             {t('cv.openUpload')}
           </button>
+          {onOpenCvBuilder && (
+            <button type="button" className="btn-ghost" onClick={onOpenCvBuilder}>
+              {t('cvBuilder.open')}
+            </button>
+          )}
         </div>
         <span className="ui-badge ui-badge-soon">{t('dashboard.cvSession')}</span>
       </div>
