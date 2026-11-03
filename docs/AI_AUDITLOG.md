@@ -1,3 +1,16 @@
+2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05C
+- Typ: Bewerbungsplattform/visuelles Feintuning/Bedienbarkeit/UI-Abschlussprüfung
+- Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: `feature/jm-cover-letter-profile-handoff-01` @ `bf4b47f`; lokaler `main` `7f71459`; `origin/main` `4364eab`; Branch `feature/jm-application-management-ux-05c`.
+- Audit: UX-04A–E, UX-05A/B, LETTER-REVISION-01A–E und PROFILE-HANDOFF-01 geprüft. Keine neuen Produktfunktionen, keine Änderung an Repository/Session/Versionierung/Consent/Anonymisierung.
+- P1-Korrekturen: mobile Kennzahlen kompakter (3 Spalten bei 390/430, 2 bei ≤360), Schnellfilter 44 px, Fokus nach Übernahme/Login-Abbruch/Vorschlag-Verwerfen wiederhergestellt.
+- P2-Korrekturen: Detail-Statusfarben an Kartenstatus aligned, LetterModal-Schließen 44 px.
+- Offen/nicht blockierend: Schnellfilter und Statusfilter teilen weiterhin State (bewusst), aktueller Entwurf erscheint in Dokumentenblock und Vergleich (bewusst), Löschen bleibt Ghost-Stil.
+- Tests: vollständig **1261 passed/5 skipped** (`--maxWorkers=2`); gezielt **119 passed**; Cover-Letter-API **23 passed**; TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + responsive 1024/768/430/320 PASS; Cover-Letter-E2E 1440/390 PASS; Mobile-Nav und Guest-CV PASS; keine Console-Errors; keine echten KI-/Provider-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05C/` (Cockpit, Karten, Details, Dokumente, KI-Vergleich, Anschreiben-Dialog; je Desktop/Mobil).
+- Git: Implementierung `547fdda`, Dokumentation/Screenshots in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **UI-05C READY** für kontrollierte lokale Main-Integration; **PRODUCTION BLOCKED.** Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-05C.md`
+
 2026-11-03 · JM-COVER-LETTER-PROFILE-HANDOFF-01
 - Typ: Anschreiben/Profilnavigation/Anmeldungshinweis/Bewerbungsverwaltung
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
