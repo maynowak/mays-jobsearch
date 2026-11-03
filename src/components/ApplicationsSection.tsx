@@ -14,6 +14,13 @@ import type {
 import { ApplicationValidationError } from "../lib/applications/applicationValidation";
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
 import ApplicationEditForm from "./ApplicationEditForm";
+import ApplicationCard from "./ApplicationCard";
+import {
+  daysFromToday,
+  followUpShortLabel,
+  followUpSummaryLabel,
+  isValidCalendarDate,
+} from "../lib/applications/followUp";
 
 interface Props {
   repository: ApplicationRepository;
@@ -74,61 +81,6 @@ function formatApplicationDate(value: string | undefined, locale: string): strin
   if (!match) return value;
   const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(date);
-}
-
-function localCalendarDate(date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function isValidCalendarDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
-
-function daysFromToday(dueOn: string): number {
-  const due = Date.parse(`${dueOn}T00:00:00.000Z`);
-  const today = Date.parse(`${localCalendarDate()}T00:00:00.000Z`);
-  return Math.round((due - today) / 86_400_000);
-}
-
-function formatFollowUpDue(dueOn: string, locale: string): string {
-  return formatApplicationDate(`${dueOn}T00:00:00.000Z`, locale);
-}
-
-function followUpShortLabel(
-  followUp: ApplicationFollowUpV1,
-  locale: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
-): string {
-  if (followUp.status === "completed") return t("applications.followUp.completed");
-  const days = daysFromToday(followUp.dueOn);
-  if (days < 0) {
-    return days === -1
-      ? t("applications.followUp.overdueOne")
-      : t("applications.followUp.overdueMany", { count: Math.abs(days) });
-  }
-  if (days === 0) return t("applications.followUp.dueToday");
-  return t("applications.followUp.dueOn", { date: formatFollowUpDue(followUp.dueOn, locale) });
-}
-
-function followUpSummaryLabel(
-  followUp: ApplicationFollowUpV1,
-  locale: string,
-  t: (key: string, vars?: Record<string, string | number>) => string
-): string {
-  if (followUp.status === "completed") return t("applications.followUp.completed");
-  const days = daysFromToday(followUp.dueOn);
-  if (days < 0) {
-    return days === -1
-      ? t("applications.followUp.overdueOne")
-      : t("applications.followUp.overdueMany", { count: Math.abs(days) });
-  }
-  if (days === 0) return t("applications.followUp.dueToday");
-  return formatFollowUpDue(followUp.dueOn, locale);
 }
 
 function formatSalary(
@@ -744,29 +696,11 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
           <ul className="applications-list" aria-label={t("applications.listAria")}>
             {visible.length === 0 ? <li className="applications-empty">{t("applications.noFilterResults")}</li> : visible.map((application) => (
               <li key={application.localId}>
-                <button
-                  type="button"
-                  className={`applications-list__item${selected?.localId === application.localId ? " applications-list__item--active" : ""}`}
-                  onClick={() => selectApplication(application.localId)}
-                >
-                  <strong>{application.job.title}</strong>
-                  <span>{application.job.companyName}</span>
-                  <span>{statusLabel(t, application.status)}</span>
-                  <span>{formatDate(application.createdAt, locale)}</span>
-                  {application.followUp?.status === "open" && (
-                    <span
-                      className={`applications-followup-tag${
-                        daysFromToday(application.followUp.dueOn) < 0
-                          ? " applications-followup-tag--overdue"
-                          : daysFromToday(application.followUp.dueOn) === 0
-                            ? " applications-followup-tag--today"
-                            : ""
-                      }`}
-                    >
-                      {followUpShortLabel(application.followUp, locale, t)}
-                    </span>
-                  )}
-                </button>
+                <ApplicationCard
+                  application={application}
+                  selected={selected?.localId === application.localId}
+                  onSelect={() => selectApplication(application.localId)}
+                />
               </li>
             ))}
           </ul>
