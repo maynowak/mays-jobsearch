@@ -57,6 +57,7 @@ describe("Results: gefunden / bewertet / angezeigt", () => {
 
     expect(document.querySelectorAll(".match-card").length).toBe(0);
     expect(document.querySelectorAll(".remaining-card").length).toBe(66);
+    expect(screen.getByRole("heading", { name: "Gefundene Stellen" })).toBeInTheDocument();
     expect(screen.getByText(/konnten aber gerade nicht per KI bewertet werden/)).toBeTruthy();
   });
 
