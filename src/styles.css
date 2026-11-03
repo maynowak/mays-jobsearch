@@ -10830,7 +10830,7 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   font-size: 0.76rem;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   .cv-builder-workspace {
     grid-template-columns: 1fr;
   }

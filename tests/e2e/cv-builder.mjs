@@ -233,9 +233,11 @@ async function runGuest(browser) {
   for (const width of [1024, 768, 430, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await checkNoOverflow(page, `width-${width}`);
-    await page.getByRole("button", { name: "Vorschau" }).click();
-    await checkNoOverflow(page, `width-${width}-preview`);
-    await page.getByRole("button", { name: "Bearbeiten" }).click();
+    if (width <= 900) {
+      await page.getByRole("button", { name: "Vorschau" }).click();
+      await checkNoOverflow(page, `width-${width}-preview`);
+      await page.getByRole("button", { name: "Bearbeiten" }).click();
+    }
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
