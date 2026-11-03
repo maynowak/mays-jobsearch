@@ -1,3 +1,18 @@
+2026-11-03 · JM-NAV-SCROLL-UX-02
+- Typ: Intelligente Hauptnavigation / Scroll-Verhalten / Schnellnavigation
+- Status: **READY für lokale Main-Integration** — kein Push, Merge oder Deployment
+- Baseline: `feature/jm-search-ux-03` `a467d63`; lokaler `main` `7e4858c`; `origin/main` `4364eab`; Branch `feature/jm-nav-scroll-ux-02`.
+- Navigation: richtungsabhängige, passive Scroll-Erkennung mit `requestAnimationFrame`, Hysterese (12 px runter / 6 px hoch), Ausblenden erst >80 px, Einblenden bei jeder kurzen Aufwärtsbewegung, Top-Reset, Scroll-Restoration-Initialisierung, Listener-/RAF-Cleanup. Navbarhöhe dynamisch über `--navbar-height`/`ResizeObserver`; keine Layout-Sprünge.
+- Hamburger/Fokus: bestehendes Portal, Fokusfalle, Escape, Outside-Click, Fokus-Rückgabe, Login/Logout/Profil/Sprache unverändert; bei offenem Menü bleibt die Navbar sichtbar; Fokus in die Navbar hebt den Hidden-Zustand auf.
+- Back-to-top: neuer 44×44-Button „↑ Nach oben“ ab 480 px/langer Seite, Safe-Area-Position, sanftes Scrollen, bei Reduced Motion sofort, Fokus auf Markenlink; keine Route/Reload/Datenverlust.
+- Applications: bestehende `position: relative`-Ausnahme bewusst beibehalten, weil eine sticky Variante Filter/Selects/Karten überlagerte; Back-to-top bleibt als Rückweg. Keine pauschale fixed-Umstellung.
+- Ergebnissprung: `#matches`, Fokus, Sticky-/Reduced-Motion-Verhalten und bestehende Search-Results-E2E unverändert PASS.
+- Tests: Gesamtsuite **1320 passed/5 skipped** (`--maxWorkers=2`, 123 Testdateien passed/3 skipped); Navbar-Scroll **6 passed**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Nav-Scroll-E2E 1440/1024/768/430/390/320, Hamburger/Fokus, Reduced Motion PASS; Search-Results/Applications/Cover-Letter/Guest-CV/Mobile-Nav/CV-Builder/CV-PDF PASS; keine Console-Errors; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-NAV-SCROLL-UX-02/`.
+- Git: Implementierung `2cba196`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **NAV-SCROLL-UX-02 READY**; Applications-Ausnahme als offener Finding dokumentiert; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-NAV-SCROLL-UX-02.md`
+
 2026-11-03 · JM-SEARCH-UX-03
 - Typ: Suchmaske / Skills-Hervorhebung / Suchort / Standardumkreis
 - Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
