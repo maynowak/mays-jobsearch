@@ -152,10 +152,12 @@ describe("APP-02 ApplicationsSection", () => {
     renderSection([draft()]);
     fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
     await screen.findByRole("button", { name: "Aktuellen Entwurf als Version speichern" });
-    expect(screen.getByText(/Anschreiben-Versionen/).closest("p")).toHaveTextContent("0");
+    const versionCount = () =>
+      screen.getAllByText(/Anschreiben-Versionen/).map((node) => node.closest("p")).find(Boolean);
+    expect(versionCount()).toHaveTextContent("0");
     fireEvent.click(screen.getByRole("button", { name: "Aktuellen Entwurf als Version speichern" }));
     await waitFor(() =>
-      expect(screen.getByText(/Anschreiben-Versionen/).closest("p")).toHaveTextContent("1")
+      expect(versionCount()).toHaveTextContent("1")
     );
     expect(screen.getAllByText("Entwurf").length).toBeGreaterThan(0);
   });
@@ -611,6 +613,32 @@ describe("APP-02 ApplicationsSection", () => {
     fireEvent.change(screen.getByLabelText("Nach Datum sortieren"), { target: { value: "followUp" } });
     const titles = Array.from(document.querySelectorAll<HTMLElement>(".applications-list__item strong")).map((node) => node.textContent);
     expect(titles).toEqual(["Overdue Job", "Future Job", "No Follow-up Job"]);
+  });
+
+  it("shows the letter comparison in the documents tab", async () => {
+    const versions = [
+      {
+        versionId: "letter-v1",
+        jobId: job.jobId,
+        createdAt: NOW,
+        content: "First saved letter",
+        source: "generated" as const,
+      },
+      {
+        versionId: "letter-v2",
+        jobId: job.jobId,
+        createdAt: "2026-11-03T11:00:00.000Z",
+        content: "Second saved letter",
+        source: "revised" as const,
+      },
+    ];
+    const application = draft();
+    renderSection([{ ...application, documents: { ...application.documents, coverLetterVersions: versions } }]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    expect(screen.getByRole("heading", { name: "Anschreiben-Versionen vergleichen" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Ausgangsversion")).toBeInTheDocument();
+    expect(screen.getByLabelText("Vergleichsversion")).toBeInTheDocument();
+    expect(screen.getAllByText("Second saved letter").length).toBeGreaterThan(0);
   });
   it("ignores a late operation after the repository/session changes", async () => {
     const base = createSessionApplicationRepository({ initial: [draft()] });

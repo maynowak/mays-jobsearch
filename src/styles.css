@@ -9835,3 +9835,86 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   color: var(--text);
   font-size: 0.76rem;
 }
+
+/* LETTER-REVISION-01A: read-only cover-letter version comparison */
+.applications-letter-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.applications-letter-comparison > h4 {
+  margin: 0;
+}
+
+.applications-letter-comparison__selectors,
+.applications-letter-comparison__panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.applications-letter-comparison__panel {
+  min-width: 0;
+}
+
+.applications-letter-comparison__panel h4 {
+  margin: 0 0 4px;
+}
+
+.applications-letter-comparison__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+  margin: 8px 0;
+  font-size: 0.8rem;
+}
+
+.applications-letter-comparison__meta div {
+  min-width: 0;
+}
+
+.applications-letter-comparison__meta dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.applications-letter-comparison__meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.applications-letter-comparison__text {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.applications-letter-comparison__same {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 900px) {
+  .applications-letter-comparison__selectors,
+  .applications-letter-comparison__panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .applications-letter-comparison__meta {
+    grid-template-columns: 1fr;
+  }
+}

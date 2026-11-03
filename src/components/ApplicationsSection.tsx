@@ -15,6 +15,7 @@ import { ApplicationValidationError } from "../lib/applications/applicationValid
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
 import ApplicationEditForm from "./ApplicationEditForm";
 import ApplicationCard from "./ApplicationCard";
+import ApplicationLetterComparison from "./ApplicationLetterComparison";
 import {
   daysFromToday,
   followUpShortLabel,
@@ -1002,6 +1003,8 @@ export default function ApplicationsSection({ repository, onChanged }: Props) {
                       </details>
                     ))}
                   </section>
+
+                  <ApplicationLetterComparison application={selected} />
 
                   <section className="applications-block">
                     <h4>{t("applications.exportTitle")}</h4>

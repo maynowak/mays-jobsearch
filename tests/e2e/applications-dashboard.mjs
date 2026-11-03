@@ -13,6 +13,13 @@ const ux04cEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-M
 const ux04dEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-04D");
 const ux05aEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05A");
 const ux05bEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-MANAGEMENT-UX-05B");
+const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01A");
+const longLetter = [
+  "Sehr geehrte Damen und Herren,",
+  "vielen Dank für Ihre Einladung. " + "Ich freue mich sehr über die Möglichkeit, das Team kennenzulernen. ".repeat(18),
+  "Mit freundlichen Grüßen",
+  "MIT-FREUNDLICHEN-GRUESSEN",
+].join("\n\n");
 const followUpDate = (() => {
   const date = new Date();
   date.setDate(date.getDate() - 1);
@@ -106,7 +113,7 @@ async function preparePage(browser, viewport) {
     if (url.pathname === "/api/job-details") return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not needed", code: "not_mocked" }) });
     if (url.pathname === "/api/profile") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ skills: ["AWS"], experienceLevel: "Senior", targetRoles: ["Fullstack Developer"], location: "Frankfurt" }) });
     if (url.pathname === "/api/match") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(matches) });
-    if (url.pathname === "/api/cover-letter") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ letter: "Sehr geehrte Damen und Herren,\n\nvielen Dank für Ihre Einladung." }) });
+    if (url.pathname === "/api/cover-letter") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ letter: longLetter }) });
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not mocked" }) });
   });
   return { context, page, consoleErrors };
@@ -310,6 +317,31 @@ async function runViewport(browser, name, viewport) {
   await page.screenshot({ path: resolve(ux05bEvidenceDir, `${name}-overdue-filter.png`), fullPage: false });
   await page.getByRole("button", { name: "Alle" }).click();
   await assertNoNavOverlap(page);
+
+  // LETTER-REVISION-01A: save two synthetic versions and compare them.
+  await mkdir(letterRevisionEvidenceDir, { recursive: true });
+  await page.getByRole("tab", { name: "Dokumente" }).click();
+  const saveVersion = page.getByRole("button", { name: "Aktuellen Entwurf als Version speichern" });
+  await saveVersion.click();
+  await page.locator(".applications-letter-comparison").waitFor();
+  await saveVersion.click();
+  await page.waitForFunction(() => {
+    const select = document.querySelector(".applications-letter-comparison select");
+    return select instanceof HTMLSelectElement && select.options.length === 3;
+  });
+  const comparisonPanel = page.locator(".applications-letter-comparison");
+  await comparisonPanel.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
+  await page.screenshot({ path: resolve(letterRevisionEvidenceDir, `${name}-current-vs-version.png`), fullPage: false });
+  const comparisonSelects = page.locator(".applications-letter-comparison select");
+  await comparisonSelects.nth(0).selectOption({ index: 1 });
+  await comparisonSelects.nth(1).selectOption({ index: 2 });
+  await page.screenshot({ path: resolve(letterRevisionEvidenceDir, `${name}-two-versions.png`), fullPage: false });
+  await page.screenshot({ path: resolve(letterRevisionEvidenceDir, `${name}-selectors.png`), fullPage: false });
+  const comparisonText = comparisonPanel.locator(".applications-letter-comparison__text").first();
+  const comparisonClipped = await comparisonText.evaluate((element) => element.scrollHeight > element.clientHeight + 2);
+  if (comparisonClipped) throw new Error(`${name}: comparison text is clipped`);
+  await page.getByRole("tab", { name: "Übersicht" }).click();
 
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();
   await page.getByText("Hast du diese Bewerbung tatsächlich abgeschickt?").waitFor();
