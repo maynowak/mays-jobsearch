@@ -1,3 +1,18 @@
+2026-11-03 · JM-CV-BUILDER-01C
+- Typ: Lebenslauf-Werkstatt / lokaler PDF-Export / A4-Seitenumbruch / Qualitätsprüfung
+- Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
+- Baseline: 01B `16e7080`; 01A `2ae42e4`; lokaler `main` `e098fbd`; `origin/main` `4364eab`; Branch `feature/jm-cv-builder-01c`.
+- Bibliothek: `pdf-lib@1.17.1` (MIT) + `@pdf-lib/fontkit@1.1.1` (MIT); DejaVu Sans/Serif (Bitstream-Vera-Lizenz) als lokale Font-Assets. PDF.js bleibt ausschließlich Textextraktion, keine PDF-Erzeugung. Dynamischer Import hält den PDF-Chunk aus dem initialen Editor-Bundle.
+- Export: `createCvBuilderPdf` validiert den vorhandenen `CvBuilderDraftV1`, erzeugt ein echtes A4-PDF (`595.28 × 841.89 pt`) mit auswählbarem Text, eingebetteten Schriften, Seitenzahlen und kontrollierten Umbrüchen. Drei Vorlagen (classic/modern/compact) verwenden dieselbe Datenbasis; keine Inhalts-/ID-/Reihenfolgeänderung beim Vorlagenwechsel. Dateiname sicher bereinigt, Standard `Lebenslauf.pdf`.
+- UI: „Als PDF herunterladen“/“Download as PDF“ in der Fußleiste; Gast und Auth; Validierungs-/Leerzustand deaktiviert den Export; Erfolg/Fehler als Status/Alert; 44-px-Touch-Ziel und responsive 390-px-Darstellung.
+- Seiten/Ausgabe: Ein-, Zwei- und Drei-Seiten-Fälle über die PDF-API; E2E erzeugt echte PDFs (klassisch 4, modern 4, kompakt 3, mobil 3, englisch 4, authentifiziert 1 Seite) und prüft Text mit `pdfinfo`/`pdftotext`, inklusive Umlauten/Unicode, Abschnitten, Daten, Seitenzahlen und fehlenden Ersatzzeichen.
+- Privacy/AI/Data-Flow: keine neue Persistenz, keine neue Sitzung, kein Login-Zwang, keine Backend-/KI-/Provider-/RIS-/AWS-/Apify-Anfrage beim Export, keine CV-Datenübertragung; Draft bleibt App-Memory; Auth-Isolation unverändert. Keine Änderung an `docs/AI_AUDITLOG.md`-Regeln erforderlich, da keine KI-/Privacy-/Data-Flow-Änderung entsteht.
+- Tests: Gesamtsuite **1300 passed/5 skipped** (`--maxWorkers=2`); PDF-Domain/Editor gezielt **18 passed**; TypeScript/Build/`git diff --check`/API-Syntax PASS; CV-Builder-E2E Gast+Auth PASS; neuer PDF-E2E Gast/Auth, drei Vorlagen, mobil 390 px, englische UI PASS; keine Console-Errors; keine unerwarteten API-Aufrufe außer bestehendem `/api/models`; keine echten KI-/Provider-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots/PDFs: `docs/reports/assets/JM-CV-BUILDER-01C/`.
+- Git: Implementierung `ef24e3a`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **CV-BUILDER-01C READY für die nächste lokale CV-Builder-Phase**; Persistenz, KI-Optimierung, ATS-Kopplung und RIS bleiben OPEN. **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-CV-BUILDER-01C.md`
+
 2026-11-03 · JM-CV-BUILDER-01B
 - Typ: Lebenslauf-Werkstatt / Live-Vorschau / Designvorlagen / responsive Darstellung
 - Status: **ABGESCHLOSSEN UND LOKAL VERIFIZIERT** — kein Push, Merge oder Deployment
