@@ -1,3 +1,16 @@
+2026-11-03 · JM-APPLICATION-MANAGEMENT-UX-05A
+- Typ: Bewerbungs-Cockpit/Statusübersicht/Schnellfilter
+- Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Deployment
+- Baseline: UX-04E `b6e5bed`; Branch `feature/jm-application-management-ux-05a`; lokaler `main` `b897259`; origin/main `e1f0347`.
+- Kennzahlen: Gesamt, Entwürfe (`draft`), Versendet (`submitted`), Gespräche (`interview`), offene Wiedervorlagen. Ausschließlich aus der vorhandenen Collection, keine Zusatzabfragen/-zähler. Wiedervorlagen unabhängig vom Status.
+- Handlungsbedarf: überfällig, heute fällig, nächste 7 lokale Kalendertage; erledigte ausgeschlossen; leerer Zustand; Klick öffnet Bewerbung + Kommunikation unter Beachtung des UX-04C-Editierschutzes.
+- Filter/Sortierung: gemeinsame Schnellfilter (Alle/Entwürfe/Versendet/Gespräche/Offene Wiedervorlagen/Überfällig) und bestehender Statusfilter nutzen denselben UI-State; keine Repository-Mutation. Neue deterministische Sortierung „Nächste Wiedervorlage“; bestehende Sortierungen/Default erhalten.
+- Responsive/A11y: Kartenraster 5/3/2 Spalten, Filterumbruch, 1440/1024/768/390/320 ohne Overflow, Navbar-BBox PASS, sichtbare Fokuszustände/`aria-pressed`.
+- Sicherheit: Repository/Session-Generation/AbortSignal/invalidate/expectedVersion/Stale-/Doppelaktionsschutz unverändert; keine neue Persistenz, keine Backend-/RIS-/AWS-/KI-/Apify-Aufrufe.
+- Tests: ApplicationsSection **30 passed**, Gesamtsuite **1216 passed/5 skipped**, TypeScript/Build/`git diff --check` PASS; Applications-E2E 1440/390 + 1024/768/320 PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors.
+- Git: Implementierung `11815ad`, Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Log: `docs/reports/JM-APPLICATION-MANAGEMENT-UX-05A.md`
+
 2026-11-02 · JM-APPLICATION-MANAGEMENT-UX-04E
 - Typ: UX-Konsolidierung/Regression/Release Readiness
 - Status: **READY für lokale main-Integration** — kein Merge, kein Deployment
