@@ -184,9 +184,10 @@ body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
-  /* DASHBOARD-08: Einheitliche Slide-Animation für top (0 ↔ -70px), damit
-     Ein- und Ausblenden beidseitig animiert statt einzuschnappen. */
-  transition: top 0.2s ease;
+  /* JM-NAV-SCROLL-UX-02: dynamic height variable keeps the sticky element
+     in document flow; showing/hiding never causes a layout jump. */
+  transition: top 0.22s ease;
+  will-change: top;
 }
 
 /* Small hamburger button that appears when scrolled down */
@@ -222,21 +223,69 @@ body {
   background: rgba(255, 255, 255, 0.9);
 }
 
-/* DASHBOARD-08 (Reparatur der bisher toten Regel): Die Klasse `scrolled`
-   wird per JS nur noch auf Dashboard-Routen gesetzt (Navbar hideOnScroll).
-   WICHTIG: bewusst position: sticky (NICHT fixed wie früher) — die Navbar
-   verlässt so niemals den Dokumenten-Flow, es gibt keinen Layout-Sprung
-   beim Ein-/Ausblenden. top: -70px schiebt die 61px hohe Navbar
-   (inkl. 1px Rahmen) vollständig über den Viewport-Rand hinaus; beim
-   Zurückscrollen unter 50px fällt sie über denselben Schwellwert wieder
-   ein. Dadurch überlagert die sticky Navbar die Dashboard-Überschrift
-   beim Scrollen nie (Überschrift beginnt erst 72px unter der Navbar). */
+/* JM-NAV-SCROLL-UX-02: hidden state uses the dynamic navbar height so normal
+   and glass variants slide fully out without a layout jump. */
 .navbar.scrolled {
-  top: -70px;
+  top: calc(0px - var(--navbar-height, 70px));
 }
 
 .navbar.scrolled .hamburger-small {
   display: block;
+}
+
+/* JM-NAV-SCROLL-UX-02: accessible floating back-to-top action. */
+.back-to-top {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent));
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.back-to-top:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+}
+
+.back-to-top:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.back-to-top > span[aria-hidden="true"] {
+  font-size: 1.15em;
+  line-height: 1;
+}
+
+@media (max-width: 430px) {
+  .back-to-top {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    padding-inline: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar,
+  .back-to-top {
+    transition: none;
+  }
 }
 
 /* Compact navbar visible at top (no .scrolled class) */
@@ -1188,10 +1237,9 @@ body {
   box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
 }
 
-/* Hide-on-scroll: die Basis setzt top:-60px, die Glass-Leiste ist durch das
-   12px padding-top jedoch hoeher — sonst bliebe ein Streifen sichtbar. */
+/* Glass variant uses the same transform-based hide state. */
 .navbar-glass.scrolled {
-  top: -74px;
+  top: calc(0px - var(--navbar-height, 70px));
 }
 
 /* TOP-MENU-02: Glass-Mode EN/DE mittig, Rechtsgruppe rechts */

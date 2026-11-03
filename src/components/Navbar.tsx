@@ -61,22 +61,39 @@ interface Props {
   route: NavbarRoute;
   /** Use the glass presentation on routes with a visual hero background. */
   glass?: boolean;
-  /** DASHBOARD-08: Auf Dashboard-Routen beim Scrollen nach unten ausblenden
-      (versteckt die Überschrift nicht hinter der sticky Navbar). Andere
-      Routen bleiben unverändert, da die Klasse dort nie angewendet wird. */
+  /** JM-NAV-SCROLL-UX-02: direction-aware hide-on-scroll is enabled by
+      default; `false` opts a route out of the smart scroll behavior. */
   hideOnScroll?: boolean;
   onNavigate?: (href: string) => void;
 }
 
-export default function Navbar({ route, glass = false, hideOnScroll = false, onNavigate }: Props) {
+export default function Navbar({ route, glass = false, hideOnScroll = true, onNavigate }: Props) {
   const { t } = useLang();
   const auth = useAuth();
   const isMobile = useMobileNav();
   const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const brandRef = useRef<HTMLAnchorElement>(null);
   const previousAuthRef = useRef(auth?.isAuthenticated);
+  const isOpenRef = useRef(isOpen);
+  const smartScrollEnabled = hideOnScroll !== false;
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const updateHeight = () => {
+      header.style.setProperty("--navbar-height", `${header.offsetHeight}px`);
+    };
+    updateHeight();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
   const close = useCallback(() => {
     setIsOpen((open) => {
       if (open) {
@@ -92,6 +109,11 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
       return;
     }
   }, [isMobile]);
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+    if (isOpen) setIsHidden(false);
+  }, [isOpen]);
 
   useEffect(() => {
     if (previousAuthRef.current === auth?.isAuthenticated) return;
@@ -118,50 +140,74 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
     };
   }, [isOpen, close]);
 
-  // Mobile navbar scroll behavior
+  // JM-NAV-SCROLL-UX-02: direction-aware navigation. Down hides after a
+  // deliberate distance; a small upward movement reveals it again, regardless
+  // of the absolute scroll position. The listener is passive and coalesces
+  // updates through one animation frame.
   useEffect(() => {
-    let lastScroll = window.scrollY;
-    let ticking = false;
-    const threshold = 50;
+    if (!smartScrollEnabled) return;
+    let lastScroll = Math.max(0, window.scrollY);
+    let frame: number | null = null;
 
     const updateScroll = () => {
-      const currentScroll = window.scrollY;
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          if (currentScroll > lastScroll && currentScroll > threshold) {
-            // Scrolling down past threshold
-            setIsScrolled(true);
-          } else if (currentScroll < lastScroll && currentScroll < threshold) {
-            // Scrolling up past threshold
-            setIsScrolled(false);
-          }
-          lastScroll = currentScroll <= 0 ? 0 : currentScroll;
-          ticking = false;
-        });
-        ticking = true;
+      frame = null;
+      const currentScroll = Math.max(0, window.scrollY);
+      const delta = currentScroll - lastScroll;
+      lastScroll = currentScroll;
+
+      const pageIsLong = document.documentElement.scrollHeight > window.innerHeight * 1.5;
+      setShowBackToTop(pageIsLong && currentScroll > 480);
+
+      if (isOpenRef.current || headerRef.current?.contains(document.activeElement)) {
+        setIsHidden(false);
+        return;
+      }
+      if (currentScroll <= 0) {
+        setIsHidden(false);
+        return;
+      }
+      if (delta >= 12 && currentScroll > 80) {
+        setIsHidden(true);
+        return;
+      }
+      if (delta <= -6) {
+        setIsHidden(false);
       }
     };
 
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(updateScroll);
-      }
+      if (frame !== null) return;
+      frame = requestAnimationFrame(updateScroll);
     };
 
-    // DASHBOARD-08: Bei geladener/restoreter Scrollposition (z. B. Browser-
-    // Scrollrestauration oder Direktsprung) sofort den passenden Zustand
-    // setzen — sonst bliebe die Navbar bis zum ersten echten Scroll-event
-    // sichtbar und könnte die Überschrift überlagern.
-    if (window.scrollY > threshold) {
-      setIsScrolled(true);
-    }
+    // Browser scroll restoration / deep links: start in the appropriate state
+    // without waiting for the next scroll event.
+    if (window.scrollY > 80) setIsHidden(true);
+    setShowBackToTop(
+      document.documentElement.scrollHeight > window.innerHeight * 1.5 && window.scrollY > 480
+    );
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      if (frame !== null) cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [smartScrollEnabled]);
+
+  const toggleMenu = () => {
+    setIsOpen((open) => {
+      if (!open) setIsHidden(false);
+      return !open;
+    });
+  };
+
+  const scrollToTop = () => {
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    brandRef.current?.focus({ preventScroll: true });
+  };
 
   // TOP-MENU-01: Linkliste kommt aus dem zentralen Modul. Pro Route sind nur
   // die dort freigegebenen Links sichtbar (Landingpage z.B. ohne Alerts).
@@ -227,15 +273,18 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
   const isGlass = glass || route === "matcher" || route === "register" || route === "login";
 
   return (
+    <>
     <header
-      className={`navbar${isGlass ? " navbar-glass" : ""}${hideOnScroll && isScrolled ? " scrolled" : ""}`}
+      ref={headerRef}
+      className={`navbar${isGlass ? " navbar-glass" : ""}${smartScrollEnabled && isHidden && !isOpen ? " scrolled" : ""}`}
+      onFocusCapture={() => setIsHidden(false)}
     >
       {/* TOP-MENU-02: Reihenfolge
           Glass-Mode (/search): Brand links, rechte Gruppe mit EN/DE zuerst,
           dann Links, dann Login. EN/DE hat margin-left:auto.
           Nicht-Glass: Brand links, EN/DE zentriert, Links + Login rechts. */}
       <nav className="nav-inner" aria-label={t("nav.aria")}>
-        <a href="/" className="navbar-title navbar-title-left">
+        <a ref={brandRef} href="/" className="navbar-title navbar-title-left">
           May&rsquo;s Job Matcher
         </a>
 
@@ -326,8 +375,8 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
             <button
               ref={burgerRef}
               type="button"
-              className={`burger${isOpen ? " burger-open" : ""} ${isScrolled ? "hamburger-small" : ""}`}
-              onClick={() => setIsOpen((v) => !v)}
+              className={`burger${isOpen ? " burger-open" : ""} ${isHidden && !isOpen ? "hamburger-small" : ""}`}
+              onClick={toggleMenu}
               aria-expanded={isOpen}
               aria-controls="mobile-navigation"
               aria-haspopup="dialog"
@@ -391,5 +440,18 @@ export default function Navbar({ route, glass = false, hideOnScroll = false, onN
         )}
       </nav>
     </header>
+    {showBackToTop && !isOpen && createPortal(
+      <button
+        type="button"
+        className="back-to-top"
+        onClick={scrollToTop}
+        aria-label={t("nav.backToTop")}
+      >
+        <span aria-hidden="true">↑</span>
+        <span>{t("nav.backToTop")}</span>
+      </button>,
+      document.body
+    )}
+    </>
   );
 }

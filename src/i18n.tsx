@@ -11,6 +11,7 @@ const en: Dict = {
   "nav.alerts": "Alerts",
   "nav.menuOpen": "Open menu",
   "nav.menuClose": "Close menu",
+  "nav.backToTop": "Back to top",
   "lang.aria": "Language",
 
   "hero.tagline":
@@ -1125,6 +1126,7 @@ const de: Dict = {
   "nav.alerts": "Benachrichtigungen",
   "nav.menuOpen": "Menü öffnen",
   "nav.menuClose": "Menü schließen",
+  "nav.backToTop": "Nach oben",
   "lang.aria": "Sprache",
 
   "hero.tagline":
