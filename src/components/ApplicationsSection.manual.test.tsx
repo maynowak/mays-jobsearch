@@ -110,8 +110,12 @@ describe("ApplicationsSection manual application entry", () => {
   });
 
   it("does not create a duplicate draft for an existing manual job", async () => {
-    const uuidSpy = vi.spyOn(crypto, "randomUUID").mockReturnValue("duplicate");
-    const built = buildManualJob({ description: validDescription }, "manual:duplicate");
+    const duplicateUuid = "00000000-0000-4000-8000-000000000000";
+    const uuidSpy = vi.spyOn(crypto, "randomUUID").mockReturnValue(duplicateUuid);
+    const built = buildManualJob(
+      { description: validDescription },
+      `manual:${duplicateUuid}`
+    );
     const existing = createSessionApplication({
       localId: "local-existing",
       now: "2026-11-04T10:00:00.000Z",
