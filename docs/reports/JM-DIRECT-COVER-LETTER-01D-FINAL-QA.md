@@ -38,7 +38,6 @@ relevanten E2E-Suiten PASS.
 | Branch | `feature/jm-direct-cover-letter-01c` |
 | HEAD vor QA | `b229bf3` |
 | HEAD nach QA-Korrekturen | `38a6238` |
-| HEAD nach QA-Dokumentation | `49160b1` |
 | Working Tree vor QA | clean |
 | `main` | `7a4a64e` |
 | `origin/main` | `4364eab` |
