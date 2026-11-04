@@ -1,7 +1,7 @@
 2026-11-04 · JM-DIRECT-COVER-LETTER-01D
 - Typ: Final Integration / QA / Regression / Merge-Readiness
 - Status: **READY**; **MAIN MERGE: READY FOR REVIEW**; **PRODUCTION: BLOCKED** — kein Merge, kein Deployment
-- Baseline: Branch `feature/jm-direct-cover-letter-01c`; HEAD vor QA `b229bf3`; lokaler `main` `7a4a64e`; `origin/main` `4364eab`; Merge-Basis `7a4a64e`; 0 behind / 11 ahead; Working Tree vor QA clean.
+- Baseline: Branch `feature/jm-direct-cover-letter-01c`; HEAD vor QA `b229bf3`; lokaler `main` `7a4a64e`; `origin/main` `4364eab`; Merge-Basis `7a4a64e`; `main` ist Ancestor; Working Tree vor QA clean.
 - Reports: 01A/01B/01C vorhanden und gelesen; Phase-C-Aussagen gegen Code/Tests verifiziert.
 - Integration: Auth-E2E 1440/1024/768/430/390/320 mit manueller Stelle, URL/ohne URL, Generieren, Bearbeiten, erster und zweiter Adoption, Versionshistorie, Refresh, Dokumenten-Tab und genau einer Bewerbung. Gast-E2E 1024/768/430/390/320 ohne Adoption. Alle PASS.
 - Versionierung: `generated`/`revised`/`manual`, Sprache, Modell, stabile `jobId`; erste Version beim Create, weitere beim Update, alte Versionen erhalten; keine Version durch Einfügen/Öffnen/Generieren/Bearbeiten.

@@ -38,13 +38,13 @@ relevanten E2E-Suiten PASS.
 | Branch | `feature/jm-direct-cover-letter-01c` |
 | HEAD vor QA | `b229bf3` |
 | HEAD nach QA-Korrekturen | `38a6238` |
-| HEAD nach QA-Dokumentation | `dc9d80a` |
+| HEAD nach QA-Dokumentation | `49160b1` |
 | Working Tree vor QA | clean |
 | `main` | `7a4a64e` |
 | `origin/main` | `4364eab` |
 | Remote-Feature-Branch vor QA | `b229bf3` |
 | Merge-Basis zu `main` | `7a4a64e` |
-| Divergenz `main...HEAD` | 0 behind / 11 ahead |
+| Divergenz `main...HEAD` | 0 behind; `main` ist Ancestor |
 | `main` Ancestor von HEAD | ja |
 | Konfliktprognose | keine; Fast-Forward möglich |
 
@@ -307,7 +307,7 @@ Job-ID oder URL zu verlangen. Das bleibt ein separater Backend-Handoff.
 
 - Merge-Basis: `7a4a64e`.
 - `main` ist Ancestor von `feature/jm-direct-cover-letter-01c`.
-- 0 behind / 11 ahead.
+- 0 behind; `main` ist Ancestor.
 - Keine Konfliktprognose; Fast-Forward möglich.
 - Änderungsumfang: 40 Nicht-Asset-Dateien, 3640 Insertions / 106 Deletions.
 - Keine Änderungen an `main`, RIS, AWS, Cognito, CloudFront, DNS oder
