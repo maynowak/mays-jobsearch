@@ -3,6 +3,10 @@ import type { Job } from "../types";
 import { useLang } from "../i18n";
 import {
   MAX_MANUAL_DESCRIPTION_LENGTH,
+  MANUAL_COMPANY_FALLBACK,
+  MANUAL_COMPANY_FALLBACK_EN,
+  MANUAL_TITLE_FALLBACK,
+  MANUAL_TITLE_FALLBACK_EN,
   buildManualJob,
   createManualJobId,
   type ManualJobErrors,
@@ -24,7 +28,7 @@ function completenessKey(completeness: DescriptionCompleteness): string {
 }
 
 export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const ids = useId();
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [jobId] = useState(createManualJobId);
@@ -71,7 +75,11 @@ export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
     event.preventDefault();
     const result = buildManualJob(
       { description, title, company, location, url },
-      jobId
+      jobId,
+      {
+        title: lang === "de" ? MANUAL_TITLE_FALLBACK : MANUAL_TITLE_FALLBACK_EN,
+        company: lang === "de" ? MANUAL_COMPANY_FALLBACK : MANUAL_COMPANY_FALLBACK_EN,
+      }
     );
     setErrors(result.errors);
     setGenerated(false);

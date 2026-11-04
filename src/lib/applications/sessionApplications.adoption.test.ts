@@ -100,6 +100,20 @@ describe("session cover-letter adoption", () => {
     })).toThrowError(/version/i);
   });
 
+  it("rejects adoption after the session was invalidated", async () => {
+    const repo = createSessionApplicationRepository();
+    const created = await repo.create({
+      job,
+      coverLetter: "Erste Fassung",
+      coverLetterVersion: version({ content: "Erste Fassung" }),
+    });
+    repo.invalidate();
+    await expect(repo.adoptCoverLetter(created.localId, {
+      expectedVersion: created.version,
+      version: version({ versionId: "letter-after-reset" }),
+    })).rejects.toMatchObject({ code: "session_ended" });
+  });
+
   it("uses the current repository state and appends versions", async () => {
     const repo = createSessionApplicationRepository();
     const created = await repo.create({

@@ -55,6 +55,18 @@ describe("NewApplicationForm", () => {
     expect(job.descriptionPlain).toBe(job.description);
   });
 
+  it("uses English neutral fallbacks in the English UI", () => {
+    localStorage.setItem("mj-lang", "en");
+    const { onGenerate } = renderForm();
+    fireEvent.change(screen.getByLabelText(/Job description/), {
+      target: { value: validDescription },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate cover letter" }));
+    const job = onGenerate.mock.calls[0][0];
+    expect(job.title).toBe("Speculative application");
+    expect(job.company_name).toBe("Company not specified");
+  });
+
   it("uses neutral fallbacks for missing title and company", () => {
     const { onGenerate } = renderForm();
     fireEvent.change(screen.getByLabelText(/Stellenbeschreibung/), {

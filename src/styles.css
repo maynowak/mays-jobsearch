@@ -9415,6 +9415,11 @@ body {
   align-items: flex-start;
 }
 
+.letter-application-adopt .btn-ghost,
+.letter-handoff button {
+  min-height: 44px;
+}
+
 .letter-application-adopt--existing {
   padding: 10px 12px;
   border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--border));

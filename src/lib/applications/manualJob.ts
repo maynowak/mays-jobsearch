@@ -14,6 +14,8 @@ export const MANUAL_JOB_SOURCE = "manual";
 export const MANUAL_JOB_PREFIX = "manual:";
 export const MANUAL_TITLE_FALLBACK = "Initiativbewerbung";
 export const MANUAL_COMPANY_FALLBACK = "Unternehmen nicht angegeben";
+export const MANUAL_TITLE_FALLBACK_EN = "Speculative application";
+export const MANUAL_COMPANY_FALLBACK_EN = "Company not specified";
 export const MAX_MANUAL_DESCRIPTION_LENGTH = MAX_DESCRIPTION_INPUT_LENGTH;
 export const MAX_MANUAL_URL_LENGTH = 2000;
 
@@ -74,7 +76,8 @@ function normalizedUrl(value: string | undefined): { url?: string; invalid?: boo
 
 export function buildManualJob(
   input: ManualJobInput,
-  jobId: string = createManualJobId()
+  jobId: string = createManualJobId(),
+  fallbacks: { title?: string; company?: string } = {}
 ): ManualJobResult {
   const rawDescription = String(input.description ?? "");
   const errors: ManualJobErrors = {};
@@ -97,8 +100,10 @@ export function buildManualJob(
   const urlResult = normalizedUrl(input.url);
   if (urlResult.invalid) errors.url = "invalid";
 
-  const title = String(input.title ?? "").trim() || MANUAL_TITLE_FALLBACK;
-  const company = String(input.company ?? "").trim() || MANUAL_COMPANY_FALLBACK;
+  const title = String(input.title ?? "").trim() ||
+    fallbacks.title || MANUAL_TITLE_FALLBACK;
+  const company = String(input.company ?? "").trim() ||
+    fallbacks.company || MANUAL_COMPANY_FALLBACK;
   const location = locationList(input.location);
   const url = urlResult.url ?? "";
   const jobOrigin: ApplicationJobOrigin = "manual";
