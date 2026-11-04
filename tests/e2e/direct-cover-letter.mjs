@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-DIRECT-COVER-LETTER-01C");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-DIRECT-COVER-LETTER-01D");
 const port = 5207;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
@@ -144,6 +144,12 @@ async function runViewport(browser, name, viewport, options) {
       .fill("https://example.com/jobs/manual-e2e");
   }
 
+  await mkdir(evidenceDir, { recursive: true });
+  await page.screenshot({
+    path: resolve(evidenceDir, `${name}-form.png`),
+    fullPage: false,
+  });
+
   await page
     .getByRole("button", {
       name: label(options.lang, "Anschreiben generieren", "Generate cover letter"),
@@ -199,10 +205,20 @@ async function runViewport(browser, name, viewport, options) {
       ),
     });
     await adoptButton.waitFor();
+    const adoptBox = await adoptButton.boundingBox();
+    if (!adoptBox || adoptBox.height < 44) {
+      throw new Error(`${name}: adoption button below 44px`);
+    }
     await adoptButton.click();
     await page.getByText(
       label(options.lang, "Dein Bewerbungsentwurf ist bereit.", "Your application draft is ready.")
     ).waitFor();
+    const focusedSuccess = await page.evaluate(() =>
+      String(document.activeElement?.textContent ?? "")
+    );
+    if (!/Bewerbungsentwurf ist bereit|application draft is ready/i.test(focusedSuccess)) {
+      throw new Error(`${name}: adoption success status was not focused`);
+    }
     await mkdir(evidenceDir, { recursive: true });
     await page.screenshot({
       path: resolve(evidenceDir, `${name}-adopted-success.png`),
@@ -220,9 +236,50 @@ async function runViewport(browser, name, viewport, options) {
     });
     await page.locator(".applications-letter-comparison").scrollIntoViewIfNeeded();
     await page.waitForTimeout(100);
-    await mkdir(evidenceDir, { recursive: true });
     await page.screenshot({
       path: resolve(evidenceDir, `${name}-adopted-documents.png`),
+      fullPage: false,
+    });
+    if (await page.locator(".applications-list__item").count() !== 1) {
+      throw new Error(`${name}: first adoption did not produce exactly one application`);
+    }
+
+    // Second explicit adoption must update the same application and append a
+    // version instead of creating a duplicate.
+    await page.locator(".applications-new").getByRole("button", {
+      name: label(options.lang, "Anschreiben generieren", "Generate cover letter"),
+    }).click();
+    await page.locator('[role="dialog"]').waitFor();
+    await page.locator('[role="dialog"]').getByRole("button", {
+      name: label(options.lang, "Anschreiben generieren", "Generate cover letter"),
+    }).click();
+    await page.getByRole("textbox", {
+      name: label(options.lang, "Bearbeitbares Anschreiben", "Editable cover letter"),
+    }).waitFor();
+    if (coverLetterBodies.length !== 2) {
+      throw new Error(`${name}: expected second generation request, got ${coverLetterBodies.length}`);
+    }
+    await page.getByRole("button", {
+      name: /Als Bewerbungsentwurf übernehmen|Anschreiben im Bewerbungsentwurf aktualisieren|Adopt as application draft|Update cover letter in application draft/,
+    }).click();
+    await page.getByText(
+      label(options.lang, "Dein Bewerbungsentwurf ist bereit.", "Your application draft is ready.")
+    ).waitFor();
+    await page.getByRole("button", {
+      name: label(options.lang, "Dokumente öffnen", "Open documents"),
+    }).click();
+    await page.waitForFunction(() => {
+      const comparison = document.querySelector(".applications-letter-comparison");
+      const select = comparison?.querySelector("select");
+      return select instanceof HTMLSelectElement && select.options.length >= 3;
+    });
+    if (await page.locator(".applications-list__item").count() !== 1) {
+      throw new Error(`${name}: second adoption created a duplicate application`);
+    }
+    await page.locator(".applications-letter-comparison").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    await page.screenshot({
+      path: resolve(evidenceDir, `${name}-updated-documents.png`),
       fullPage: false,
     });
     await assertNoOverflow(page, name);
@@ -309,6 +366,31 @@ try {
       auth: true,
       lang: "de",
       withUrl: true,
+    });
+    await runViewport(browser, "desktop-1024-auth", { width: 1024, height: 900 }, {
+      auth: true,
+      lang: "en",
+      withUrl: false,
+    });
+    await runViewport(browser, "tablet-768-auth", { width: 768, height: 900 }, {
+      auth: true,
+      lang: "de",
+      withUrl: false,
+    });
+    await runViewport(browser, "mobile-430-auth", { width: 430, height: 900 }, {
+      auth: true,
+      lang: "en",
+      withUrl: true,
+    });
+    await runViewport(browser, "mobile-390-auth", { width: 390, height: 844 }, {
+      auth: true,
+      lang: "de",
+      withUrl: false,
+    });
+    await runViewport(browser, "mobile-320-auth", { width: 320, height: 700 }, {
+      auth: true,
+      lang: "en",
+      withUrl: false,
     });
     await runViewport(browser, "desktop-1024-guest", { width: 1024, height: 900 }, {
       auth: false,
