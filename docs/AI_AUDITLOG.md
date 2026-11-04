@@ -1,3 +1,16 @@
+2026-11-04 · JM-DIRECT-COVER-LETTER-MAIN-01
+- Typ: Final Merge Review / kontrollierte lokale Main-Integration / Regression
+- Status: **INTEGRATED LOCAL MAIN**; **PRODUCTION: BLOCKED** — kein Push, kein Deployment
+- Baseline: `main` `7a4a64e`; Feature `feature/jm-direct-cover-letter-01c` `f148b3f`; `origin/feature` `b229bf3`; `origin/main` `4364eab`; Merge-Basis `7a4a64e`; Working Tree clean.
+- Merge-Review: 0 behind / 14 ahead; `main` Ancestor; keine RIS-/AWS-/Cognito-/CloudFront-/DNS-/Deployment-Dateien; fachlicher Diff geprüft. Ein Docs-Trailing-Whitespace im Phase-D-Report wurde vor dem Merge als `f36def7` bereinigt (15 integrierte Commits: 14 Feature/QA + 1 Docs-Cleanup).
+- Integration: `git merge --ff-only feature/jm-direct-cover-letter-01c`; Fast-Forward `7a4a64e..f36def7`; keine Konflikte, kein Merge-Commit, keine History-Rewrites.
+- Funktion: manuelles Formular, vollständige Beschreibung, optionale URL, bestehende LetterModal-/KI-Pipeline, Auth-Adoption, gesperrte Gastadoption, erste/zweite Version, keine Duplikate, Refresh ohne Reload, Dokumenten-Navigation, Session-Isolation, Consent unverändert, keine RIS-Persistenz.
+- Tests auf main: Gesamtsuite **1378 passed/5 skipped** (132 Testdateien passed/3 skipped); `npm run build`, `node --check api/cover-letter.mjs`, `node --check tests/e2e/direct-cover-letter.mjs`, `git diff --check` PASS; Direct-Cover-Letter-E2E 11 Viewports PASS; Applications-/Cover-Letter-/CV-Builder-/CV-PDF-/Search-Results-/Mobile-Nav-/Profile-Consent-E2E PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Git: finaler lokaler `main` `f36def7`; `origin/main` unverändert `4364eab`; Feature-Branch `f36def7`; `origin/feature` `b229bf3`; Working Tree clean; kein Push, kein Deployment.
+- Offen: Exactly-once über Tabs/Clients, session-lokale Beschreibung/Reload, „Als Entwurf anlegen“, RIS-Handoff für manuelle Referenzen, Live-Provider-Verifikation, vollständiger Auth-Wechsel mitten in Adoption nicht als Browser-E2E geprüft.
+- Entscheidung: **DIRECT-COVER-LETTER: INTEGRATED**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-DIRECT-COVER-LETTER-MAIN-01.md`
+
 2026-11-04 · JM-DIRECT-COVER-LETTER-01D
 - Typ: Final Integration / QA / Regression / Merge-Readiness
 - Status: **READY**; **MAIN MERGE: READY FOR REVIEW**; **PRODUCTION: BLOCKED** — kein Merge, kein Deployment
