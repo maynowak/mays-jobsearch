@@ -1,3 +1,20 @@
+2026-11-04 · JM-CV-MANAGEMENT-MAIN-01
+- Typ: Final Review / lokale Fast-Forward-Integration / vollständige Regression
+- Status: **INTEGRATED LOCAL MAIN**; **LOCAL MAIN: VERIFIED**; **PRODUCTION: BLOCKED** — kein Push, kein Deployment
+- Baseline vor Beginn: `main` `cb10666`; `origin/main` `4364eab`; 02A `069e6d3`; 02B `4b9eac8`; 02C `36b2626`; Feature `feature/jm-cv-management-02c`; Working Tree clean; fremder Worktree `Mays-Jobsearch` unverändert.
+- Preflight: Merge-Base `cb10666`; `main...feature` 0 behind / 9 ahead; `main` Ancestor bestätigt; 02A/02B/02C als Ancestors bestätigt; vollständiger Feature-Diff geprüft.
+- Integrationsreview: keine Änderungen unter `api/**`, keine Terraform-/CDK-/AWS-/Cognito-/CloudFront-/RIS-Dateien, keine Secrets/.env-Änderungen, keine neue Persistenz; 48 Dateien, +4127/−80; bestehende Uploaded-CV-/Cover-Letter-Pipeline erhalten.
+- Integration: `git switch main`; `git merge --ff-only feature/jm-cv-management-02c`; Fast-Forward `cb10666..36b2626`; 9 Commits; keine Konflikte, kein Merge-Commit, keine History-Rewrites. Integrations-HEAD `36b2626`; `origin/main` bleibt `4364eab`.
+- Datenschutz: Builder-CVs session-only; Serializer nur berufliche Felder; Kontakt/Links/unbekannte Felder ausgeschlossen; Freitext über bestehende Anonymisierung plus Redaktion bekannter Werte; Vorschau vor expliziter Generierung; keine automatische Modellanfrage; keine vollständigen CV-Profile in Logs; keine vollständige Anonymitätsgarantie.
+- CV-Referenzen: `ApplicationCvReferenceV1.cvSource?: "uploaded" | "builder"`; Legacy ohne Feld = uploaded; keine RIS-IDs/PDF-Bytes/vollständigen CV-Daten; Anschreibenversionen bleiben erhalten; gelöschte Builder-CVs „nicht verfügbar“ ohne automatische Ersatzauswahl; Zuordnungsänderung ohne neue Version/KI.
+- Auth-Isolation: `iss+sub`, Repository-Invalidierung/Session-Epoch, Profil-/Draft-Leerung, LetterModal-Schließung, aktueller Resolver, Stale-Schutz; gezielte Auth-/Race-/Repository-Tests 3 Dateien/12 Tests PASS; vollständiger Browser-Identitätswechsel mitten in laufender Generierung bleibt Restrisiko.
+- Regression auf main: Gesamtsuite **1414 passed/5 skipped** (137 Testdateien passed/3 skipped, `--maxWorkers=2`); `npm run build` und `git diff --check` PASS; bekannter ApplicationsSection-Timeout in diesem Lauf nicht aufgetreten, nicht deaktiviert und keine globalen Timeouts erhöht.
+- E2E auf main: CV-Management-02B/02C, CV-Builder, CV-PDF, Cover-Letter, Direct-Cover-Letter, Manual-Application-Draft, Applications, Profile-/Consent und Mobile-Nav PASS; responsive 1440/1024/768/430/390/320 inkl. CV-Liste, Editor, LetterModal-Auswahl, Bewerbungsdetails, Orphan-Referenzen, Fokus/Touch/Overflow PASS; keine echten KI-/Provider-/RIS-/AWS-/Apify-Aufrufe.
+- Offen: Session-only/Reload-Verlust, Exactly-once über Tabs/Clients, eingeschränkter Gastzugang zur Profilliste, RIS-CV-Ressourcen-/Ownership-Vertrag, keine vollständige Anonymitätsgarantie, bekannter ApplicationsSection-Timeout, keine Live-Provider-/RIS-/AWS-Verifikation.
+- Git: Integration `36b2626`; Dokumentation in separatem Commit; Working Tree nach Regression clean; kein Push, kein Merge auf Remote, kein Deployment.
+- Entscheidung: **CV-MANAGEMENT-02A–02C: INTEGRATED**; **LOCAL MAIN: VERIFIED**; **RIS PERSISTENCE: BLOCKED**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-CV-MANAGEMENT-MAIN-01.md`
+
 2026-11-04 · JM-CV-MANAGEMENT-02C
 - Typ: Builder-Lebensläufe / LetterModal-Integration / Application-CV-Referenz / Orphan-Semantik / Datenschutz
 - Status: **IMPLEMENTED LOCAL**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
