@@ -1,3 +1,19 @@
+2026-11-04 · JM-MANUAL-APPLICATION-DRAFT-01
+- Typ: Manuelle Bewerbungsentwürfe / Wiedereinstieg in LetterModal / Session-Versionierung
+- Status: **IMPLEMENTED LOCAL**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `99e4105`; `origin/main` `4364eab`; Branch `feature/jm-manual-application-draft-01`; Working Tree vor Beginn clean.
+- Entwurf: neue Aktion „Als Entwurf anlegen“ im bestehenden `NewApplicationForm`, nur authentifiziert. `repository.create` mit manueller Referenz und leerem Anschreiben; `coverLetterVersions=[]`, `documentStatus=missing`, keine KI-Anfrage, keine dauerhafte Speicherung.
+- Wiedereinstieg: „Anschreiben erstellen“ im Dokumenten-Tab manueller Bewerbungen. Vorhandener `manualJobSession`-Eintrag öffnet das bestehende `LetterModal`; fehlender Kontext zeigt `ManualJobDescriptionPrompt` und verlangt erneute Eingabe, ohne KI-Autostart.
+- Duplikatschutz: `findByJob` vor Create; vorhandener Entwurf wird ausgewählt, kein zweiter angelegt. Adoption nutzt weiterhin `findByJob`, `expectedVersion` und `adoptCoverLetter`.
+- Versionierung: Entwurf ohne Version; erste Adoption erzeugt Version 1; weitere Adoption erweitert Historie; keine Version durch Entwurf/Öffnen/Generieren/Bearbeiten.
+- Session/Datenschutz: `manualJobSession` bleibt speicherintern; Reset bei Identitätswechsel; keine localStorage-/IndexedDB-/Backend-/RIS-Persistenz; keine Consent-Änderung; Gäste ohne Entwurfsaktion.
+- Tests: Gesamtsuite **1384 passed/5 skipped** (132 Testdateien passed/3 skipped); gezielter Lauf **26 passed** (3 Dateien); `npm run build`, `node --check api/cover-letter.mjs`, `node --check tests/e2e/manual-application-draft.mjs`, `git diff --check` PASS; neues Manual-Application-Draft-E2E 6 Auth-/5 Gast-Viewports PASS; Direct-Cover-Letter-/Applications-/Cover-Letter-/CV-Builder-/Search-Results-/Profile-Consent-E2E PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-MANUAL-APPLICATION-DRAFT-01/` (11 Dateien). Fremde Screenshot-Änderungen aus bestehenden E2E-Skripten wurden vor dem Commit zurückgesetzt.
+- Git: Implementierung `4070be2`; Tests/E2E `3d6faae`; Dokumentation in diesem Commit. Kein Push, kein Merge, kein Deployment.
+- Offen: session-lokaler Entwurf/Beschreibung nach Reload, Exactly-once über Tabs/Clients, RIS-Handoff für manuelle Referenzen, Live-Provider-Verifikation, Gastbereich-Produktentscheidung.
+- Entscheidung: **MANUAL APPLICATION DRAFT READY für Main-Review**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-MANUAL-APPLICATION-DRAFT-01.md`
+
 2026-11-04 · JM-DIRECT-COVER-LETTER-MAIN-01
 - Typ: Final Merge Review / kontrollierte lokale Main-Integration / Regression
 - Status: **INTEGRATED LOCAL MAIN**; **PRODUCTION: BLOCKED** — kein Push, kein Deployment
