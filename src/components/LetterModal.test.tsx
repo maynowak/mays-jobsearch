@@ -1016,4 +1016,31 @@ describe("JM-COVER-LETTER-UX-01: local model choice and guided revision", () => 
       screen.getByRole("button", { name: "Mit Kommentar verbessern" })
     ).toBeInTheDocument();
   });
+
+  it("uses a complete manual description and locks Phase B adoption clearly", async () => {
+    const manualJob: Job = {
+      ...job,
+      slug: "manual:phase-b",
+      title: "Initiativbewerbung",
+      company_name: "Unternehmen nicht angegeben",
+      url: "",
+      source: ["manual"],
+      description: fullDescription,
+      descriptionPlain: fullDescription,
+    };
+    renderModal({
+      job: manualJob,
+      adoptionLocked: true,
+      onAdoptAsApplication: vi.fn(),
+    });
+    expect(screen.getByText(/keine KI-Anfrage/)).toBeInTheDocument();
+    generate();
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    const [request] = vi.mocked(generateCoverLetter).mock.calls[0];
+    expect(request.job.description).toBe(fullDescription);
+    expect(request.job.source).toEqual(["manual"]);
+    expect(request.job.url).toBe("");
+    expect(screen.getByText("Übernahme noch nicht verfügbar")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Als Bewerbungsentwurf übernehmen/ })).toBeNull();
+  });
 });

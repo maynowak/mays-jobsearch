@@ -67,6 +67,19 @@ describe('MAYS-UI-S3: authenticated dashboard preview', () => {
     expect(screen.queryByText('dev@example.com')).toBeNull();
   });
 
+  it('keeps the session applications entry available to guests without claiming auth', () => {
+    render(
+      <LangProvider>
+        <DashboardV2AuthenticatedPreview
+          applicationsSection={<div>Session applications</div>}
+        />
+      </LangProvider>
+    );
+    expect(screen.getByText('Du bist nicht angemeldet.')).toBeTruthy();
+    expect(screen.getByText('Session applications')).toBeTruthy();
+    expect(screen.queryByText('dev@example.com')).toBeNull();
+  });
+
   it('renders existing claims and routes logout through signOut', () => {
     authState.value = {
       isLoading: false,

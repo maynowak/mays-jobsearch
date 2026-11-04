@@ -379,6 +379,28 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.body.letter).not.toContain("**");
   });
 
+  it("keeps unknown employer and fallback title neutral", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        job: {
+          ...validBody.job,
+          title: "Initiativbewerbung",
+          company_name: "Unternehmen nicht angegeben",
+          description: "Du entwickelst React-Anwendungen und bringst Erfahrung mit TypeScript mit.",
+        },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("If the employer is missing or marked as not specified");
+    expect(prompt).toContain("generic fallback title such as \"Initiativbewerbung\"");
+    expect(prompt).toContain("never invent an employer");
+  });
+
   it("supports the formal style and length guidance", async () => {
     const res = makeRes();
     await handler(
