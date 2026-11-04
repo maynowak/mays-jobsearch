@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Job } from "../types";
+import type { ApplicationJobReferenceV1 } from "../lib/applications/contractTypes";
 import { useLang } from "../i18n";
 import {
   MAX_MANUAL_DESCRIPTION_LENGTH,
@@ -21,13 +22,20 @@ import {
 interface Props {
   onGenerate: (job: Job) => void;
   onCancel: () => void;
+  canSaveDraft?: boolean;
+  onSaveDraft?: (job: Job, reference: ApplicationJobReferenceV1) => Promise<void>;
 }
 
 function completenessKey(completeness: DescriptionCompleteness): string {
   return `applications.new.completeness.${completeness}`;
 }
 
-export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
+export default function NewApplicationForm({
+  onGenerate,
+  onCancel,
+  canSaveDraft = false,
+  onSaveDraft,
+}: Props) {
   const { t, lang } = useLang();
   const ids = useId();
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -40,6 +48,8 @@ export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
   const [errors, setErrors] = useState<ManualJobErrors>({});
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [draftBusy, setDraftBusy] = useState(false);
+  const [draftError, setDraftError] = useState("");
 
   const normalized = useMemo(
     () => normalizeDescriptionText(description),
@@ -60,8 +70,18 @@ export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
   const resetErrors = () => {
     setErrors({});
     setGenerated(false);
+    setDraftError("");
     setCancelConfirm(false);
   };
+
+  const validate = () => buildManualJob(
+    { description, title, company, location, url },
+    jobId,
+    {
+      title: lang === "de" ? MANUAL_TITLE_FALLBACK : MANUAL_TITLE_FALLBACK_EN,
+      company: lang === "de" ? MANUAL_COMPANY_FALLBACK : MANUAL_COMPANY_FALLBACK_EN,
+    }
+  );
 
   const handleCancel = () => {
     if (dirty && !cancelConfirm) {
@@ -73,16 +93,10 @@ export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    const result = buildManualJob(
-      { description, title, company, location, url },
-      jobId,
-      {
-        title: lang === "de" ? MANUAL_TITLE_FALLBACK : MANUAL_TITLE_FALLBACK_EN,
-        company: lang === "de" ? MANUAL_COMPANY_FALLBACK : MANUAL_COMPANY_FALLBACK_EN,
-      }
-    );
+    const result = validate();
     setErrors(result.errors);
     setGenerated(false);
+    setDraftError("");
     if (!result.job || !result.reference) return;
     saveManualJobSession({
       id: jobId,
@@ -92,6 +106,29 @@ export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
     });
     setGenerated(true);
     onGenerate(result.job);
+  };
+
+  const handleSaveDraft = async () => {
+    if (!onSaveDraft || draftBusy) return;
+    const result = validate();
+    setErrors(result.errors);
+    setGenerated(false);
+    setDraftError("");
+    if (!result.job || !result.reference) return;
+    saveManualJobSession({
+      id: jobId,
+      job: result.job,
+      reference: result.reference,
+      updatedAt: new Date().toISOString(),
+    });
+    setDraftBusy(true);
+    try {
+      await onSaveDraft(result.job, result.reference);
+    } catch {
+      setDraftError(t("applications.new.draftError"));
+    } finally {
+      setDraftBusy(false);
+    }
   };
 
   const errorText = (field: keyof ManualJobErrors): string => {
@@ -225,6 +262,9 @@ export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
       </div>
       <p className="applications-new__hint">{t("applications.new.noAiHint")}</p>
       <p className="applications-new__hint">{t("applications.new.phaseCNote")}</p>
+      {draftError && (
+        <p className="applications-new__error" role="alert">{draftError}</p>
+      )}
 
       {cancelConfirm && (
         <div className="applications-confirm" role="alert">
@@ -242,6 +282,18 @@ export default function NewApplicationForm({ onGenerate, onCancel }: Props) {
         <button type="submit" className="letter-btn">
           {t("applications.new.generate")}
         </button>
+        {canSaveDraft && onSaveDraft && (
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => void handleSaveDraft()}
+            disabled={draftBusy}
+          >
+            {draftBusy
+              ? t("applications.new.savingDraft")
+              : t("applications.new.saveDraft")}
+          </button>
+        )}
         <button type="button" className="btn-ghost" onClick={handleCancel}>
           {t("applications.cancel")}
         </button>

@@ -9,6 +9,7 @@ import type { Job, ModelOption } from "../types";
 import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
 import type {
   ApplicationFollowUpV1,
+  ApplicationJobReferenceV1,
   ApplicationSalaryV1,
   ApplicationStatus,
   CoverLetterVersionV1,
@@ -19,6 +20,8 @@ import ApplicationEditForm from "./ApplicationEditForm";
 import ApplicationCard from "./ApplicationCard";
 import ApplicationLetterComparison from "./ApplicationLetterComparison";
 import NewApplicationForm from "./NewApplicationForm";
+import ManualJobDescriptionPrompt from "./ManualJobDescriptionPrompt";
+import { getManualJobSession } from "../lib/applications/manualJobSession";
 import { sourceLabels } from "./SourceBadge";
 import {
   daysFromToday,
@@ -34,6 +37,7 @@ interface Props {
   defaultModel?: string | null;
   recommendedModel?: string | null;
   onOpenLetter?: (job: Job) => void;
+  isAuthenticated?: boolean;
   refreshToken?: number;
   navigationTarget?: {
     localId?: string | null;
@@ -123,6 +127,7 @@ export default function ApplicationsSection({
   defaultModel = null,
   recommendedModel = null,
   onOpenLetter,
+  isAuthenticated = false,
   refreshToken = 0,
   navigationTarget = null,
 }: Props) {
@@ -142,7 +147,10 @@ export default function ApplicationsSection({
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [newApplicationError, setNewApplicationError] = useState("");
+  const [newApplicationNotice, setNewApplicationNotice] = useState("");
   const [newApplicationOpen, setNewApplicationOpen] = useState(false);
+  const [manualDescriptionTarget, setManualDescriptionTarget] =
+    useState<SessionApplicationV1 | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState("");
@@ -225,6 +233,8 @@ export default function ApplicationsSection({
     setLetterDirty(false);
     setNewApplicationOpen(false);
     setNewApplicationError("");
+    setNewApplicationNotice("");
+    setManualDescriptionTarget(null);
   }, [repository]);
 
   useEffect(() => {
@@ -245,6 +255,7 @@ export default function ApplicationsSection({
 
   useEffect(() => {
     setLetterDirty(false);
+    setManualDescriptionTarget(null);
   }, [selectedId]);
 
   useEffect(() => {
@@ -746,6 +757,63 @@ export default function ApplicationsSection({
     onOpenLetter(job);
   };
 
+  const handleSaveManualDraft = async (
+    job: Job,
+    reference: ApplicationJobReferenceV1
+  ) => {
+    if (!isAuthenticated) {
+      setNewApplicationError(t("applications.new.authRequired"));
+      throw new Error("Authentication required");
+    }
+    try {
+      const existing = await repository.findByJob(job.slug);
+      if (existing) {
+        setSelectedId(existing.localId);
+        setActiveTab("overview");
+        setNewApplicationNotice(t("applications.new.draftExisting"));
+        setNewApplicationOpen(false);
+        return;
+      }
+      const application = await repository.create({
+        job: reference,
+        coverLetter: "",
+      });
+      const page = await repository.list();
+      notify(page.items);
+      setSelectedId(application.localId);
+      setActiveTab("overview");
+      setNewApplicationNotice(t("applications.new.draftCreated"));
+      setNewApplicationOpen(false);
+    } catch (err) {
+      setNewApplicationError(errorLabel(t, err));
+      throw err;
+    }
+  };
+
+  const handleOpenLetterForApplication = (application: SessionApplicationV1) => {
+    if (!isAuthenticated) {
+      setError(t("applications.new.authRequired"));
+      return;
+    }
+    if (!onOpenLetter) {
+      setError(t("applications.new.unavailable"));
+      return;
+    }
+    const session = getManualJobSession(application.job.jobId);
+    if (session) {
+      setError("");
+      onOpenLetter(session.job);
+      return;
+    }
+    setManualDescriptionTarget(application);
+    setActiveTab("documents");
+  };
+
+  const handleManualDescriptionReady = (job: Job) => {
+    setManualDescriptionTarget(null);
+    if (onOpenLetter) onOpenLetter(job);
+  };
+
   return (
     <section className="applications-section" aria-labelledby="applications-title">
       <div className="applications-section__head">
@@ -762,6 +830,7 @@ export default function ApplicationsSection({
           aria-controls="applications-new-form"
           onClick={() => {
             setNewApplicationError("");
+            setNewApplicationNotice("");
             setNewApplicationOpen((current) => !current);
           }}
         >
@@ -774,12 +843,17 @@ export default function ApplicationsSection({
           <NewApplicationForm
             onGenerate={handleOpenManualLetter}
             onCancel={() => setNewApplicationOpen(false)}
+            canSaveDraft={isAuthenticated}
+            onSaveDraft={handleSaveManualDraft}
           />
         </div>
       )}
 
       {newApplicationError && (
         <p className="applications-new__error" role="alert">{newApplicationError}</p>
+      )}
+      {newApplicationNotice && (
+        <p className="applications-new__ok" role="status">{newApplicationNotice}</p>
       )}
 
       {loading && <p role="status">{t("applications.loading")}</p>}
@@ -1174,6 +1248,29 @@ export default function ApplicationsSection({
                   aria-labelledby={tabId("documents")}
                   tabIndex={0}
                 >
+                  {isAuthenticated &&
+                    (selected.job.jobOrigin === "manual" ||
+                      selected.job.source.includes("manual")) && (
+                      <div className="applications-documents-actions">
+                        <button
+                          type="button"
+                          className="letter-btn"
+                          onClick={() => handleOpenLetterForApplication(selected)}
+                        >
+                          {t("applications.createLetter")}
+                        </button>
+                      </div>
+                    )}
+
+                  {manualDescriptionTarget?.localId === selected.localId && (
+                    <ManualJobDescriptionPrompt
+                      key={`${selected.localId}-description`}
+                      application={selected}
+                      onReady={handleManualDescriptionReady}
+                      onCancel={() => setManualDescriptionTarget(null)}
+                    />
+                  )}
+
                   <section className="applications-block">
                     <h4>{t("applications.section.documents")}</h4>
                     <p><strong>{t("applications.documentStatus")}:</strong> {t(`applications.documentStatus.${selected.documents.documentStatus}`)}</p>

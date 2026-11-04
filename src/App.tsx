@@ -3067,6 +3067,7 @@ export default function App() {
       defaultModel={defaultModel}
       recommendedModel={recommendedModel}
       onOpenLetter={(job) => setLetterJob({ job, prepare: "" })}
+      isAuthenticated={isAuth}
       refreshToken={applicationRefreshToken}
       navigationTarget={applicationNavigation}
     />

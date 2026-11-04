@@ -942,6 +942,20 @@ body {
   min-height: 44px;
 }
 
+.applications-documents-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.applications-documents-actions button {
+  min-height: 44px;
+}
+
+.applications-description-prompt {
+  margin: 0;
+}
+
 @media (max-width: 700px) {
   .applications-new__grid {
     grid-template-columns: 1fr;
