@@ -1,3 +1,15 @@
+2026-11-04 · JM-APPLICATION-LETTER-NAV-02
+- Typ: Bewerbungsverwaltung / Anschreiben-Navigation nach Speicherung und Entwurfsübernahme
+- Status: **READY für lokale Main-Integration** — kein Push, Merge oder Deployment
+- Baseline: `feature/jm-application-letter-options-01` `8003af8`; lokaler `main` `09a6971`; `origin/main` `4364eab`; Branch `feature/jm-application-letter-nav-02`.
+- Navigation: Nach bestätigter Version gespeichert: „Anschreiben-Version erfolgreich gespeichert.“ mit „Version vergleichen“ (neue Version als Vergleich, Scroll/Fokus), „Zur Bewerbungsübersicht“ (bestehender Übersicht-Tab, Fokus auf Bewerbungsüberschrift) und „Alle Bewerbungen anzeigen“ (Liste, Fokus auf ausgewählte Bewerbung). Nach Entwurfsübernahme: „Aktueller Anschreibenentwurf wurde aktualisiert.“ mit „Entwurf öffnen“ (Entwurfsblock öffnen/fokussieren), Übersicht und Liste.
+- Sicherheit: Erfolgsaktionen nur nach bestätigter Speicherung/Übernahme; Fehler/Versionskonflikt ohne Erfolgsnavigation; Kontextwechsel setzt Erfolgszustand zurück; `letterDirty`-/Tab-/Bewerbungswechsel-Schutz, expectedVersion, Session-Generation, Request-Sequence, Stale-Schutz und unveränderliche Versionen bleiben erhalten; keine Repository-Mutation durch Navigation, keine neue Route/Persistenz/KI.
+- Tests: Gesamtsuite **1328 passed/5 skipped** (`--maxWorkers=2`, 123 Testdateien passed/3 skipped); ApplicationLetterImprovement **23 passed**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Applications-E2E 1440/390 + responsive 1024/768/430/320 inkl. Speicher-/Übernahme-Aktionen, Fokus und Scroll PASS; Cover-Letter-E2E 1440/390 PASS; keine Console-Errors; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-APPLICATION-LETTER-NAV-02/`.
+- Git: Implementierung `325d111`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **APPLICATION-LETTER-NAV-02 READY**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-NAV-02.md`
+
 2026-11-03 · JM-APPLICATION-LETTER-OPTIONS-01
 - Typ: Anschreiben-Werkstatt / Sprache / Schreibstil / Länge / Bewerbungsverwaltung
 - Status: **READY für lokale Main-Integration** — kein Push, Merge oder Deployment
