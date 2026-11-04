@@ -1,3 +1,18 @@
+2026-11-04 · JM-PROFILE-STORAGE-CONSENT-01
+- Typ: Datenschutz & Datenspeicherung / Einwilligungsvorbereitung für registrierte Benutzer
+- Status: **READY für lokale Main-Integration (Vorbereitung)**; **AKTIVE CONSENT-PERSISTENZ: BLOCKED** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `fb55198`; `origin/main` `4364eab`; Branch `feature/jm-profile-storage-consent-01`.
+- Bestandsaufnahme: Cognito/OIDC und `iss + sub`-Ableitung vorhanden; kein serverseitiger Consent-Dienst, keine Consent-API, keine produktive RIS-Persistenz, keine freigegebene Retention/Erasure.
+- Vertrag: neues `src/lib/storageConsent.ts` (`schemaVersion:1`) mit Zwecken `cv_storage`, `application_storage`, `search_profile_storage`, Zuständen `not_requested|granted|declined|withdrawn|reconsent_required`, Owner nur aus verifiziertem `iss + sub`, serverautoritativen Zeitstempeln, versionierten Consent-/Privacy-Texten und auditfähigen Metadaten ohne Dokumentinhalte. `STORAGE_CONSENT_BACKEND_AVAILABLE = false`.
+- UI: bestehender Einstellungen-Tab aktiviert; Bereich „Datenschutz & Datenspeicherung“ mit Vorbereitungshinweis, Identitätsstatus, drei unabhängigen Kategorien, Trennung von Kontodaten/KI/Session/RIS, Widerrufs-/Export-/Löschhinweisen und deaktivierten Datenkontrollen. Zusätzlicher Vorbereitungshinweis auf der Profilübersicht mit direktem Einstieg. Keine aktive Checkbox, keine lokale Dauerzustimmung.
+- Auth/Session: Gäste sehen keine Speicherfreigabe; Demo/unverifizierte Claims ohne Consent-Zuordnung; keine Benutzerübernahme, keine Migration, keine neue Persistenz, keine Änderung an bestehenden KI-Consent-/Session-Grenzen.
+- Backend-Handoff: `docs/contracts/JM-RIS-STORAGE-CONSENT-HANDOFF-V1.md` mit Identitäts-, API-, Audit-, Widerrufs-, Retention-/Erasure- und RIS-Verifikationsanforderungen.
+- Tests: Gesamtsuite **1337 passed/5 skipped** (`--maxWorkers=2`, 125 Testdateien passed/3 skipped); Storage-Consent-Vertrag **4**, UI **4**, Dashboard/Auth **15**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Profile-Storage-Consent-E2E 1440/390, Guest-Profil, Applications, Cover-Letter, Mobile-Nav, CV-Builder und Search-Results PASS; keine Console-Errors; keine echten Cognito-/RIS-/AWS-/KI-/Provider-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-PROFILE-STORAGE-CONSENT-01/`.
+- Git: Implementierung `eeade3f`; Profilhinweis `59cbb64`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **PROFILE-STORAGE-CONSENT-01 READY (Vorbereitung)**; **AKTIVE CONSENT-PERSISTENZ: BLOCKED**; **PRODUCTION: BLOCKED.**
+- Logs: `docs/reports/JM-PROFILE-STORAGE-CONSENT-01.md`, `docs/contracts/JM-RIS-STORAGE-CONSENT-HANDOFF-V1.md`
+
 2026-11-04 · JM-APPLICATION-LETTER-MAIN-CONSOLIDATION-02
 - Typ: Lokale Main-Integration / Regression / Dokumentation
 - Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
