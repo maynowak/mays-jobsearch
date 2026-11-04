@@ -31,9 +31,12 @@ const DashboardV2AuthenticatedPreview = ({ cvSection, applicationsSection, prefe
 
   if (!auth.isAuthenticated) {
     return (
-      <div className="dashboard-v2-state">
+      <div className="dashboard-v2-state dashboard-v2-state--guest">
         <p>{t('profile.notAuthenticated')}</p>
         <Button onClick={() => void signIn(auth)}>{t('auth.loginTitle')}</Button>
+        {applicationsSection ? (
+          <div className="dashboard-v2-state__applications">{applicationsSection}</div>
+        ) : null}
       </div>
     );
   }

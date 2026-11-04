@@ -57,6 +57,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
 import { beginNewApplicationSession, createSessionApplicationRepository } from "./lib/applications/sessionRepository";
+import { beginNewManualJobSession } from "./lib/applications/manualJobSession";
+import { isManualJob } from "./lib/applications/manualJob";
 import {
   createEmptyCvBuilderDraft,
   hasCvBuilderContent,
@@ -288,6 +290,7 @@ export default function App() {
       setPendingLetterContext(null);
       applicationRepository.invalidate();
       beginNewApplicationSession();
+      beginNewManualJobSession();
       setSessionApplications([]);
       setApplicationRepository(createSessionApplicationRepository());
       setCvBuilderDraft(createEmptyCvBuilderDraft());
@@ -785,6 +788,12 @@ export default function App() {
     }
 
     try {
+      const manual = isManualJob(payload.job);
+      const source = payload.job.source?.length
+        ? payload.job.source
+        : manual
+          ? ["manual"]
+          : [];
       const application = await applicationRepository.create({
         idempotencyKey: `adopt:${payload.job.slug}`,
         coverLetter: payload.letter,
@@ -794,8 +803,9 @@ export default function App() {
           title: payload.job.title,
           companyName: payload.job.company_name,
           location: payload.job.location ?? [],
-          source: payload.job.source ?? [],
-          originalUrl: payload.job.url,
+          source,
+          ...(payload.job.url ? { originalUrl: payload.job.url } : {}),
+          ...(manual ? { jobOrigin: "manual" as const } : {}),
         },
       });
       if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
@@ -3022,8 +3032,44 @@ export default function App() {
       models={models}
       defaultModel={defaultModel}
       recommendedModel={recommendedModel}
+      onOpenLetter={(job) => setLetterJob({ job, prepare: "" })}
     />
   );
+
+  const letterModalNode = letterJob ? (
+    <LetterModal
+      key={letterJob.job.slug}
+      job={letterJob.job}
+      prepare={letterJob.prepare}
+      profile={profile}
+      model={effectiveModel}
+      modelsState={modelsState}
+      models={models}
+      defaultModel={defaultModel}
+      availableModels={models.map((model) => model.id)}
+      recommendedModel={recommendedModel}
+      cvDocuments={cvState.documents}
+      initialContext={letterJob.context}
+      onAddCv={handleAddCvFromLetter}
+      onProcessCv={handleProcessCvFromLetter}
+      isAuthenticated={isAuth}
+      hasSessionApplications={sessionApplications.length > 0}
+      onSignIn={() => {
+        setLetterJob(null);
+        navigateInApp("/anmelden");
+      }}
+      onOpenApplications={() => {
+        setLetterJob(null);
+        navigateInApp("/profil?tab=applications");
+      }}
+      onAdoptAsApplication={isAuth ? handleAdoptLetterAsApplication : undefined}
+      hasApplicationDraft={Boolean(
+        sessionApplicationForJob(sessionApplications, letterJob.job.slug)
+      )}
+      adoptionLocked={isManualJob(letterJob.job)}
+      onClose={() => setLetterJob(null)}
+    />
+  ) : null;
 
 // SEARCH-WORLD-09: Das halbrunde Podium (bisher `.search-world__floor`) ist der
   // LETZTE visuelle Abschluss der Future Search World und liegt hinter dem Footer.
@@ -3095,6 +3141,7 @@ export default function App() {
         </main>
         {cvProcessingUI}
         {cvBuilderNode}
+        {letterModalNode}
         <Footer />
       </ErrorBoundary>
     );
@@ -3117,6 +3164,7 @@ export default function App() {
         </main>
         {cvProcessingUI}
         {cvBuilderNode}
+        {letterModalNode}
         <Footer />
       </ErrorBoundary>
     );
@@ -3139,6 +3187,7 @@ export default function App() {
         </main>
         {cvProcessingUI}
         {cvBuilderNode}
+        {letterModalNode}
         <Footer />
       </ErrorBoundary>
     );
@@ -3278,39 +3327,7 @@ export default function App() {
       )}
       {route !== "impressum" && (
         <>
-          {letterJob && (
-            <LetterModal
-              key={letterJob.job.slug}
-              job={letterJob.job}
-              prepare={letterJob.prepare}
-              profile={profile}
-              model={effectiveModel}
-              modelsState={modelsState}
-              models={models}
-              defaultModel={defaultModel}
-              availableModels={models.map((model) => model.id)}
-              recommendedModel={recommendedModel}
-              cvDocuments={cvState.documents}
-              initialContext={letterJob.context}
-              onAddCv={handleAddCvFromLetter}
-              onProcessCv={handleProcessCvFromLetter}
-              isAuthenticated={isAuth}
-              hasSessionApplications={sessionApplications.length > 0}
-              onSignIn={() => {
-                setLetterJob(null);
-                navigateInApp("/anmelden");
-              }}
-              onOpenApplications={() => {
-                setLetterJob(null);
-                navigateInApp("/profil?tab=applications");
-              }}
-              onAdoptAsApplication={isAuth ? handleAdoptLetterAsApplication : undefined}
-              hasApplicationDraft={Boolean(
-                sessionApplicationForJob(sessionApplications, letterJob.job.slug)
-              )}
-              onClose={() => setLetterJob(null)}
-            />
-          )}
+          {letterModalNode}
 
           {atsJob && (activeAtsEntry || profile) && (
             <ATSModal

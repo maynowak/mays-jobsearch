@@ -483,7 +483,7 @@ export default function ApplicationLetterComparison({
         title: application.job.title,
         company_name: application.job.companyName,
         location: application.job.location,
-        url: application.job.originalUrl,
+        url: application.job.originalUrl ?? "",
         source: application.job.source,
         tags: [],
         description: "",

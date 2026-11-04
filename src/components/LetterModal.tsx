@@ -78,6 +78,7 @@ interface Props {
     cvReference?: { cvId: string; label?: string };
   }) => Promise<LetterApplicationAdoptionResult>;
   hasApplicationDraft?: boolean;
+  adoptionLocked?: boolean;
   onClose: () => void;
 }
 
@@ -107,6 +108,7 @@ export default function LetterModal({
   onOpenApplications,
   onAdoptAsApplication,
   hasApplicationDraft = false,
+  adoptionLocked = false,
   onClose,
 }: Props) {
   const { t, lang } = useLang();
@@ -1190,9 +1192,14 @@ export default function LetterModal({
           </div>
         )}
 
-        {phase === "done" && (authenticated ? Boolean(adoptionResult || adoptionError) : true) && (
+        {phase === "done" && (adoptionLocked || (authenticated ? Boolean(adoptionResult || adoptionError) : true)) && (
           <section className="letter-handoff" aria-labelledby={`${headingId}-handoff`}>
-            {authenticated ? (
+            {adoptionLocked ? (
+              <div className="letter-handoff__guest" role="note">
+                <h5 id={`${headingId}-handoff`}>{t("letter.handoff.phaseCLockedTitle")}</h5>
+                <p>{t("letter.handoff.phaseCLocked")}</p>
+              </div>
+            ) : authenticated ? (
               <>
                 {adoptionResult && (
                   <div className="letter-handoff__success" role="status">
@@ -1261,7 +1268,7 @@ export default function LetterModal({
 
         {phase === "done" && (
           <div className="modal-actions">
-            {onAdoptAsApplication && (
+            {!adoptionLocked && onAdoptAsApplication && (
               <div
                 className={`letter-application-adopt${hasApplicationDraft ? " letter-application-adopt--existing" : ""}`}
               >

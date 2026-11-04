@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:e2e:guest-cv": "node tests/e2e/guest-cv-workflow.mjs",
     "test:e2e:cover-letter": "node tests/e2e/cover-letter-entry.mjs",
+    "test:e2e:direct-cover-letter": "node tests/e2e/direct-cover-letter.mjs",
     "test:e2e:mobile-nav": "node tests/e2e/mobile-nav.mjs",
     "test:e2e:applications": "node tests/e2e/applications-dashboard.mjs",
     "test:e2e:cv-builder": "node tests/e2e/cv-builder.mjs",

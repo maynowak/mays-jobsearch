@@ -5,7 +5,7 @@ import type {
   SessionApplicationV1,
 } from "../lib/applications/sessionApplications";
 import type { ApplicationRepository } from "../lib/applications/repositoryTypes";
-import type { ModelOption } from "../types";
+import type { Job, ModelOption } from "../types";
 import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
 import type {
   ApplicationFollowUpV1,
@@ -18,6 +18,8 @@ import { canTransitionApplicationStatus } from "../lib/applications/applicationD
 import ApplicationEditForm from "./ApplicationEditForm";
 import ApplicationCard from "./ApplicationCard";
 import ApplicationLetterComparison from "./ApplicationLetterComparison";
+import NewApplicationForm from "./NewApplicationForm";
+import { sourceLabels } from "./SourceBadge";
 import {
   daysFromToday,
   followUpShortLabel,
@@ -31,6 +33,7 @@ interface Props {
   models?: ModelOption[];
   defaultModel?: string | null;
   recommendedModel?: string | null;
+  onOpenLetter?: (job: Job) => void;
 }
 
 type ApplicationTab = "overview" | "communication" | "documents" | "history";
@@ -114,6 +117,7 @@ export default function ApplicationsSection({
   models = [],
   defaultModel = null,
   recommendedModel = null,
+  onOpenLetter,
 }: Props) {
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
@@ -130,6 +134,8 @@ export default function ApplicationsSection({
   const [interviewNote, setInterviewNote] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [newApplicationError, setNewApplicationError] = useState("");
+  const [newApplicationOpen, setNewApplicationOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState("");
@@ -209,6 +215,8 @@ export default function ApplicationsSection({
     setPendingSubmit(false);
     setDeleteConfirmId(null);
     setLetterDirty(false);
+    setNewApplicationOpen(false);
+    setNewApplicationError("");
   }, [repository]);
 
   useEffect(() => {
@@ -710,6 +718,15 @@ export default function ApplicationsSection({
       ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
     : [];
 
+  const handleOpenManualLetter = (job: Job) => {
+    if (!onOpenLetter) {
+      setNewApplicationError(t("applications.new.unavailable"));
+      return;
+    }
+    setNewApplicationError("");
+    onOpenLetter(job);
+  };
+
   return (
     <section className="applications-section" aria-labelledby="applications-title">
       <div className="applications-section__head">
@@ -719,7 +736,32 @@ export default function ApplicationsSection({
             {t("applications.sessionOnly")}
           </p>
         </div>
+        <button
+          type="button"
+          className="letter-btn applications-new__open"
+          aria-expanded={newApplicationOpen}
+          aria-controls="applications-new-form"
+          onClick={() => {
+            setNewApplicationError("");
+            setNewApplicationOpen((current) => !current);
+          }}
+        >
+          + {t("applications.new.open")}
+        </button>
       </div>
+
+      {newApplicationOpen && (
+        <div id="applications-new-form">
+          <NewApplicationForm
+            onGenerate={handleOpenManualLetter}
+            onCancel={() => setNewApplicationOpen(false)}
+          />
+        </div>
+      )}
+
+      {newApplicationError && (
+        <p className="applications-new__error" role="alert">{newApplicationError}</p>
+      )}
 
       {loading && <p role="status">{t("applications.loading")}</p>}
 
@@ -933,7 +975,7 @@ export default function ApplicationsSection({
 
                       <section className="applications-block">
                         <h4>{t("applications.section.job")}</h4>
-                        <p><strong>{t("applications.sources")}:</strong> {selected.job.source.join(", ") || "-"}</p>
+                        <p><strong>{t("applications.sources")}:</strong> {sourceLabels(selected.job.source, t).join(" · ") || "-"}</p>
                         <p><strong>{t("applications.jobId")}:</strong> {selected.job.jobId}</p>
                       </section>
 
