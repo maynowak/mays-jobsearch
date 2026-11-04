@@ -62,7 +62,14 @@ export interface SessionCreateInput {
   job: SessionApplicationV1["job"];
   coverLetter: string;
   cvReference?: SessionApplicationV1["documents"]["cvReference"];
+  coverLetterVersion?: CoverLetterVersionV1;
   idempotencyKey?: string;
+  signal?: AbortSignal;
+}
+
+export interface SessionAdoptCoverLetterInput {
+  expectedVersion: number;
+  version: CoverLetterVersionV1;
   signal?: AbortSignal;
 }
 
@@ -238,6 +245,10 @@ export interface ApplicationRepository {
   addCoverLetterVersion(
     localId: string,
     input: SessionCoverLetterVersionInput
+  ): Promise<SessionApplicationV1>;
+  adoptCoverLetter(
+    localId: string,
+    input: SessionAdoptCoverLetterInput
   ): Promise<SessionApplicationV1>;
   export(localId: string, signal?: AbortSignal): Promise<SessionApplicationExportV1>;
   delete(localId: string, input: SessionDeleteInput): Promise<ApplicationDeletionResult>;

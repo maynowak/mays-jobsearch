@@ -59,6 +59,8 @@ import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/appli
 import { beginNewApplicationSession, createSessionApplicationRepository } from "./lib/applications/sessionRepository";
 import { beginNewManualJobSession } from "./lib/applications/manualJobSession";
 import { isManualJob } from "./lib/applications/manualJob";
+import { ApplicationRepositoryError } from "./lib/applications/repositoryTypes";
+import type { CoverLetterVersionV1 } from "./lib/applications/contractTypes";
 import {
   createEmptyCvBuilderDraft,
   hasCvBuilderContent,
@@ -183,6 +185,12 @@ export default function App() {
   } | null>(null);
   const [sessionApplications, setSessionApplications] = useState<SessionApplicationV1[]>([]);
   const [applicationRepository, setApplicationRepository] = useState(() => createSessionApplicationRepository());
+  const [applicationRefreshToken, setApplicationRefreshToken] = useState(0);
+  const [applicationNavigation, setApplicationNavigation] = useState<{
+    localId?: string | null;
+    tab?: "overview" | "communication" | "documents" | "history";
+  } | null>(null);
+  const lastAdoptedApplicationIdRef = useRef<string | null>(null);
   // CV-BUILDER-01A: structured CV draft is session-only App state. It is not
   // a CvDocument, has no File/hash/processedAt and is never persisted.
   const [cvBuilderDraft, setCvBuilderDraft] = useState<CvBuilderDraftV1>(createEmptyCvBuilderDraft);
@@ -293,6 +301,9 @@ export default function App() {
       beginNewManualJobSession();
       setSessionApplications([]);
       setApplicationRepository(createSessionApplicationRepository());
+      setApplicationRefreshToken(0);
+      setApplicationNavigation(null);
+      lastAdoptedApplicationIdRef.current = null;
       setCvBuilderDraft(createEmptyCvBuilderDraft());
       setCvBuilderOpen(false);
       setStatus(null);
@@ -757,65 +768,88 @@ export default function App() {
     job: Job;
     letter: string;
     cvReference?: { cvId: string; label?: string };
+    versionSource?: "generated" | "revised" | "manual";
+    language?: "de" | "en";
+    model?: string | null;
   }): Promise<"created" | "updated"> => {
-    const existing = sessionApplicationForJob(sessionApplications, payload.job.slug);
     const epoch = sessionEpochRef.current;
+    const createdAt = new Date().toISOString();
+    const versionId =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? `letter-${crypto.randomUUID()}`
+        : `letter-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const version: CoverLetterVersionV1 = {
+      versionId,
+      jobId: payload.job.slug,
+      createdAt,
+      content: payload.letter,
+      source: payload.versionSource ?? "manual",
+      ...(payload.language ? { language: payload.language } : {}),
+      ...(payload.model ? { model: payload.model } : {}),
+    };
+    const manual = isManualJob(payload.job);
+    const source = payload.job.source?.length
+      ? payload.job.source
+      : manual
+        ? ["manual"]
+        : [];
+    const jobReference = {
+      jobId: payload.job.slug,
+      title: payload.job.title,
+      companyName: payload.job.company_name,
+      location: payload.job.location ?? [],
+      source,
+      ...(payload.job.url ? { originalUrl: payload.job.url } : {}),
+      ...(manual ? { jobOrigin: "manual" as const } : {}),
+    };
 
-    if (existing) {
+    const apply = (application: SessionApplicationV1) => {
+      lastAdoptedApplicationIdRef.current = application.localId;
+      setSessionApplications((current) =>
+        current.some((item) => item.localId === application.localId)
+          ? current.map((item) =>
+              item.localId === application.localId ? application : item
+            )
+          : [...current, application]
+      );
+      setApplicationRefreshToken((current) => current + 1);
+      setStatus({ type: "info", message: t("applications.adoptedNotice") });
+    };
+
+    const adoptExisting = async (existing: SessionApplicationV1) => {
+      const updated = await applicationRepository.adoptCoverLetter(existing.localId, {
+        expectedVersion: existing.version,
+        version,
+      });
+      if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
+      apply(updated);
+      return "updated" as const;
+    };
+
+    try {
+      const existing = await applicationRepository.findByJob(payload.job.slug);
+      if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
+      if (existing) return await adoptExisting(existing);
+
       try {
-        const updated = await applicationRepository.update(existing.localId, {
-          expectedVersion: existing.version,
-          changes: {
-            coverLetterDraft: payload.letter,
-            documentStatus: payload.letter.trim() ? "draft" : existing.documents.documentStatus,
-            ...(payload.cvReference ? { cvReference: payload.cvReference } : {}),
-          },
+        const application = await applicationRepository.create({
+          idempotencyKey: `adopt:${payload.job.slug}`,
+          coverLetter: payload.letter,
+          cvReference: payload.cvReference,
+          coverLetterVersion: version,
+          job: jobReference,
         });
         if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
-        setSessionApplications((current) =>
-          current.map((application) =>
-            application.localId === updated.localId ? updated : application
-          )
-        );
-        setStatus({ type: "info", message: t("applications.updatedNotice") });
-        return "updated";
+        apply(application);
+        return "created";
       } catch (err) {
-        if (sessionEpochRef.current === epoch) {
-          setStatus({ type: "error", message: t("applications.actionError") });
+        if (err instanceof ApplicationRepositoryError && err.code === "idempotency_conflict") {
+          const current = await applicationRepository.findByJob(payload.job.slug);
+          if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
+          if (current) return await adoptExisting(current);
         }
         throw err;
       }
-    }
-
-    try {
-      const manual = isManualJob(payload.job);
-      const source = payload.job.source?.length
-        ? payload.job.source
-        : manual
-          ? ["manual"]
-          : [];
-      const application = await applicationRepository.create({
-        idempotencyKey: `adopt:${payload.job.slug}`,
-        coverLetter: payload.letter,
-        cvReference: payload.cvReference,
-        job: {
-          jobId: payload.job.slug,
-          title: payload.job.title,
-          companyName: payload.job.company_name,
-          location: payload.job.location ?? [],
-          source,
-          ...(payload.job.url ? { originalUrl: payload.job.url } : {}),
-          ...(manual ? { jobOrigin: "manual" as const } : {}),
-        },
-      });
-      if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
-      setSessionApplications((current) =>
-        current.some((item) => item.localId === application.localId)
-          ? current.map((item) => (item.localId === application.localId ? application : item))
-          : [...current, application]
-      );
-      setStatus({ type: "info", message: t("applications.createdNotice") });
-      return "created";
     } catch (err) {
       if (sessionEpochRef.current === epoch) {
         setStatus({ type: "error", message: t("applications.actionError") });
@@ -3033,6 +3067,8 @@ export default function App() {
       defaultModel={defaultModel}
       recommendedModel={recommendedModel}
       onOpenLetter={(job) => setLetterJob({ job, prepare: "" })}
+      refreshToken={applicationRefreshToken}
+      navigationTarget={applicationNavigation}
     />
   );
 
@@ -3059,6 +3095,18 @@ export default function App() {
         navigateInApp("/anmelden");
       }}
       onOpenApplications={() => {
+        setApplicationNavigation({
+          localId: lastAdoptedApplicationIdRef.current,
+          tab: "overview",
+        });
+        setLetterJob(null);
+        navigateInApp("/profil?tab=applications");
+      }}
+      onOpenApplicationDocuments={() => {
+        setApplicationNavigation({
+          localId: lastAdoptedApplicationIdRef.current,
+          tab: "documents",
+        });
         setLetterJob(null);
         navigateInApp("/profil?tab=applications");
       }}
@@ -3066,7 +3114,6 @@ export default function App() {
       hasApplicationDraft={Boolean(
         sessionApplicationForJob(sessionApplications, letterJob.job.slug)
       )}
-      adoptionLocked={isManualJob(letterJob.job)}
       onClose={() => setLetterJob(null)}
     />
   ) : null;

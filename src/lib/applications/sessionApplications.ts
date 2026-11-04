@@ -57,8 +57,15 @@ export interface CreateSessionApplicationInput {
   job: ApplicationJobReferenceV1;
   coverLetter: string;
   cvReference?: ApplicationDocumentsV1["cvReference"];
+  /** Optional first version, written in the same local create operation. */
+  coverLetterVersion?: CoverLetterVersionV1;
   now: ISODateTime;
   localId: string;
+}
+
+export interface AdoptSessionCoverLetterInput {
+  expectedVersion: number;
+  version: CoverLetterVersionV1;
 }
 
 export interface SessionStatusInput {
@@ -114,11 +121,15 @@ function next(application: SessionApplicationV1, expectedVersion: number, at: IS
 
 export function createSessionApplication(input: CreateSessionApplicationInput): SessionApplicationV1 {
   if (!input.localId.trim()) throw new ApplicationValidationError("A local application id is required");
+  if (input.coverLetterVersion && input.coverLetterVersion.jobId !== input.job.jobId) {
+    throw new ApplicationValidationError("Cover-letter version belongs to another job");
+  }
+  const versions = input.coverLetterVersion ? [clone(input.coverLetterVersion)] : [];
   const draftInput: CreateApplicationDraftInputV1 = {
     job: clone(input.job),
     documents: {
       coverLetterDraft: input.coverLetter,
-      coverLetterVersions: [],
+      coverLetterVersions: versions,
       documentStatus: input.coverLetter.trim() ? "draft" : "missing",
       ...(input.cvReference ? { cvReference: clone(input.cvReference) } : {}),
     },
@@ -133,7 +144,7 @@ export function createSessionApplication(input: CreateSessionApplicationInput): 
     job: clone(input.job),
     documents: {
       coverLetterDraft: input.coverLetter,
-      coverLetterVersions: [],
+      coverLetterVersions: versions,
       documentStatus: input.coverLetter.trim() ? "draft" : "missing",
       ...(input.cvReference ? { cvReference: clone(input.cvReference) } : {}),
     },
@@ -143,6 +154,38 @@ export function createSessionApplication(input: CreateSessionApplicationInput): 
     statusHistory: [{ at: input.now, from: null, to: "draft" }],
     history: [],
     version: 1,
+  };
+}
+
+export function adoptSessionCoverLetter(
+  application: SessionApplicationV1,
+  input: AdoptSessionCoverLetterInput
+): SessionApplicationV1 {
+  assertLocalVersion(application, input.expectedVersion);
+  if (input.version.jobId !== application.job.jobId) {
+    throw new ApplicationValidationError("Cover-letter version belongs to another job");
+  }
+  if (!Number.isFinite(Date.parse(input.version.createdAt))) {
+    throw new ApplicationValidationError("Invalid cover-letter version timestamp");
+  }
+  const content = assertText(input.version.content, "coverLetterVersion.content", 50000);
+  if (application.documents.coverLetterVersions.some(
+    (version) => version.versionId === input.version.versionId
+  )) {
+    throw new ApplicationValidationError("Duplicate cover-letter version ID");
+  }
+  const base = next(application, input.expectedVersion, input.version.createdAt);
+  return {
+    ...base,
+    documents: {
+      ...base.documents,
+      coverLetterDraft: content,
+      coverLetterVersions: [
+        ...base.documents.coverLetterVersions,
+        clone(input.version),
+      ],
+      documentStatus: content.trim() ? "draft" : base.documents.documentStatus,
+    },
   };
 }
 

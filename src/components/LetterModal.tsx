@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CvDocument, Job, ModelOption, Profile } from "../types";
+import type { CoverLetterVersionSource } from "../lib/applications/contractTypes";
 import { generateCoverLetter, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 import type { ModelsState } from "../hooks/useAvailableModels";
@@ -76,9 +77,13 @@ interface Props {
     job: Job;
     letter: string;
     cvReference?: { cvId: string; label?: string };
+    versionSource?: CoverLetterVersionSource;
+    language?: "de" | "en";
+    model?: string | null;
   }) => Promise<LetterApplicationAdoptionResult>;
   hasApplicationDraft?: boolean;
   adoptionLocked?: boolean;
+  onOpenApplicationDocuments?: () => void;
   onClose: () => void;
 }
 
@@ -109,6 +114,7 @@ export default function LetterModal({
   onAdoptAsApplication,
   hasApplicationDraft = false,
   adoptionLocked = false,
+  onOpenApplicationDocuments,
   onClose,
 }: Props) {
   const { t, lang } = useLang();
@@ -679,11 +685,17 @@ export default function LetterModal({
   };
 
   const handleAdoptAsApplication = async () => {
-    if (!onAdoptAsApplication || adoptingRef.current || !letter.trim() || !job.url) return;
+    if (!onAdoptAsApplication || adoptingRef.current || !letter.trim() || adoptionResult) return;
     adoptingRef.current = true;
     setAdopting(true);
     setAdoptionError("");
     setAdoptionResult(null);
+    const versionSource: CoverLetterVersionSource =
+      letterTextStatus === "created"
+        ? "generated"
+        : letterTextStatus === "revised"
+          ? "revised"
+          : "manual";
     try {
       const result = await onAdoptAsApplication({
         job,
@@ -691,6 +703,9 @@ export default function LetterModal({
         ...(selectedCv && selectedCvReady
           ? { cvReference: { cvId: selectedCv.id, label: selectedCv.name } }
           : {}),
+        versionSource,
+        language: lang,
+        model: activeModel,
       });
       setAdoptionResult(result === "updated" ? "updated" : "created");
     } catch {
@@ -1219,6 +1234,11 @@ export default function LetterModal({
                         {t("letter.handoff.openApplications")}
                       </button>
                     )}
+                    {onOpenApplicationDocuments && (
+                      <button type="button" className="btn-ghost" onClick={onOpenApplicationDocuments}>
+                        {t("letter.handoff.openDocuments")}
+                      </button>
+                    )}
                   </div>
                 )}
                 {adoptionError && (
@@ -1281,7 +1301,7 @@ export default function LetterModal({
                 <button
                   type="button"
                   className="btn-ghost"
-                  disabled={!letter.trim() || !job.url || adopting}
+                  disabled={!letter.trim() || adopting || Boolean(adoptionResult)}
                   onClick={() => void handleAdoptAsApplication()}
                 >
                   {adopting

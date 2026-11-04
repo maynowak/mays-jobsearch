@@ -3,6 +3,7 @@ import type {
   ApplicationListQuery,
   ApplicationPage,
   ApplicationRepository,
+  SessionAdoptCoverLetterInput,
   SessionCoverLetterVersionInput,
   SessionCreateInput,
   SessionDeleteInput,
@@ -16,6 +17,7 @@ import {
   addSessionFeedback,
   addSessionInterview,
   addSessionNote,
+  adoptSessionCoverLetter,
   createSessionApplication,
   deleteSessionApplication,
   exportSessionApplication,
@@ -160,6 +162,7 @@ export function createSessionApplicationRepository(
           job: input.job,
           coverLetter: input.coverLetter,
           cvReference: input.cvReference,
+          coverLetterVersion: input.coverLetterVersion,
         });
         applications = [...applications, created];
         if (input.idempotencyKey) idempotency.set(input.idempotencyKey, created.localId);
@@ -236,6 +239,21 @@ export function createSessionApplicationRepository(
       try {
         return replace(
           addSessionCoverLetterVersion(find(localId), {
+            expectedVersion: input.expectedVersion,
+            version: input.version,
+          })
+        );
+      } catch (err) {
+        throw mapError(err);
+      }
+    },
+
+    async adoptCoverLetter(localId: string, input: SessionAdoptCoverLetterInput): Promise<SessionApplicationV1> {
+      assertActive();
+      assertAbort(input.signal);
+      try {
+        return replace(
+          adoptSessionCoverLetter(find(localId), {
             expectedVersion: input.expectedVersion,
             version: input.version,
           })

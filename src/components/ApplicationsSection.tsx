@@ -34,6 +34,11 @@ interface Props {
   defaultModel?: string | null;
   recommendedModel?: string | null;
   onOpenLetter?: (job: Job) => void;
+  refreshToken?: number;
+  navigationTarget?: {
+    localId?: string | null;
+    tab?: ApplicationTab;
+  } | null;
 }
 
 type ApplicationTab = "overview" | "communication" | "documents" | "history";
@@ -118,6 +123,8 @@ export default function ApplicationsSection({
   defaultModel = null,
   recommendedModel = null,
   onOpenLetter,
+  refreshToken = 0,
+  navigationTarget = null,
 }: Props) {
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
@@ -159,6 +166,7 @@ export default function ApplicationsSection({
   const onChangedRef = useRef(onChanged);
   const operationsRef = useRef<Set<AbortController>>(new Set());
   const runningRef = useRef(false);
+  const appliedNavigationRef = useRef<Props["navigationTarget"]>(null);
 
   useEffect(() => {
     onChangedRef.current = onChanged;
@@ -207,7 +215,7 @@ export default function ApplicationsSection({
       active = false;
       controller.abort();
     };
-  }, [repository, t]);
+  }, [repository, t, refreshToken]);
 
   useEffect(() => {
     setEditing(false);
@@ -238,6 +246,17 @@ export default function ApplicationsSection({
   useEffect(() => {
     setLetterDirty(false);
   }, [selectedId]);
+
+  useEffect(() => {
+    if (!navigationTarget || appliedNavigationRef.current === navigationTarget) return;
+    const targetFound =
+      !navigationTarget.localId ||
+      applications.some((application) => application.localId === navigationTarget.localId);
+    if (!targetFound) return;
+    appliedNavigationRef.current = navigationTarget;
+    if (navigationTarget.tab) setActiveTab(navigationTarget.tab);
+    if (navigationTarget.localId) setSelectedId(navigationTarget.localId);
+  }, [navigationTarget, applications]);
 
   const metrics = useMemo(() => ({
     total: applications.length,
