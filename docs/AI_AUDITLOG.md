@@ -1,3 +1,18 @@
+2026-11-04 · JM-DIRECT-COVER-LETTER-01A
+- Typ: Discovery / Read-only Bestandsaufnahme / Anschreiben- und Bewerbungsintegration
+- Status: **DISCOVERY COMPLETE — STOP**; keine Implementierung, kein Push, kein Merge, kein Deployment
+- Baseline: lokaler `main` `7a4a64e`; `origin/main` `4364eab`; neuer Arbeitsbranch `feature/jm-direct-cover-letter-01`; Arbeitsbaum clean.
+- Preflight: integrierter main-Worktree `mays-jobsearch-consolidation` verwendet; der separate Worktree `Mays-Jobsearch` auf `fix/cover-letter-model-fallback` blieb unverändert. AI-Auditlog, Development Workflow und Architecture gelesen.
+- Explore-Agent: `LetterModal`, `coverLetterRequest`, `jobDescriptionReview`, `api.ts`, `api/cover-letter.mjs`, `ApplicationsSection`, `App`-`letterJob`/Adoption, `ApplicationLetterComparison` und Tests inventarisiert. Bestehende Pipeline ist vollständig wiederverwendbar: Description-Review, CV-Auswahl, Modell-Fallback, Generate/Revise, Editor, Adoptions-Callback, Session-Epoch und Stale-Schutz vorhanden.
+- Contract-Agent: `ApplicationJobReferenceV1` erlaubt derzeit keine manuelle Stelle: `title`, `companyName`, `source` und `originalUrl` sind auf TS-, JSON-Schema- und Laufzeit-Ebene verpflichtend; `originalUrl` muss http(s) sein; zusätzliche Felder werden abgelehnt. Synthetische `manual:<opaque>`-`jobId` und `source:["manual"]` sind strukturell möglich, aber nicht deklariert.
+- Zentrale Lücken: kein `onOpenLetter`/„+ Neue Bewerbung“-Einstieg in `ApplicationsSection`; `ApplicationLetterComparison` ist revise-only; `LetterModal` verwendet eingefügten `descriptionInput` ohne expliziten Review nicht als Beschreibung; `ApplicationsSection` lädt nur einmal und bleibt nach externer Adoption stale; App-Adoption nutzt Snapshot statt `findByJob`.
+- Minimaler Integrationsweg: manuelles Job-Mapping mit `jobOrigin:"manual"`, optionaler URL, `source:["manual"]`, stabilem Session-`jobId`, neutralen Titel-/Firmen-Fallbacks; vorhandenen `LetterModal` zentral über `App` öffnen; Refresh-Token nach Adoption; bestehende `/api/cover-letter`-Pipeline unverändert.
+- Sicherheit/Privacy: eingefügte Beschreibung bleibt untrusted data; keine HTML-Ausführung, kein externer URL-Abruf, kein Modellaufruf beim Einfügen/Speichern; CV optional und nur anonymisiert; keine neue Persistenz, keine RIS-/AWS-/Cognito-Änderung.
+- Tests Baseline: 6 Dateien / **143 passed** (`ApplicationsSection`, `LetterModal`, `applicationDomain`, `sessionApplications`, `sessionRepository`, `tests/api/cover-letter.test.mjs`); `npm run build` PASS; `node --check api/cover-letter.mjs` PASS; `git diff --check` PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Offene Entscheidungen: Contract-Änderung für `originalUrl?`/`jobOrigin`; Titel-/Firmen-Fallbacks; Beschreibungspersistenz; Refresh-/Adoptions-Race; Auth-/Gastverhalten; optionale `CoverLetterVersionV1`; `manual`-Source-Anzeige; keine Live-E2E-Verifikation.
+- Log: `docs/reports/JM-DIRECT-COVER-LETTER-01A.md`
+- Entscheidung: **PHASE A COMPLETE / STOP**; **IMPLEMENTATION: NOT STARTED**; **PRODUCTION: BLOCKED.**
+
 2026-11-04 · JM-PROFILE-STORAGE-CONSENT-MAIN-01
 - Typ: Lokale Main-Integration / Datenschutz- und Consent-Vorbereitung / Regression
 - Status: **LOCAL MAIN INTEGRATION COMPLETE**; **ACTIVE CONSENT PERSISTENCE: BLOCKED** — kein Push, kein Deployment
