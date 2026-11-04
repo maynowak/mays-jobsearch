@@ -1,3 +1,22 @@
+2026-11-04 · JM-DIRECT-COVER-LETTER-01B
+- Typ: Manuelle Stellenanzeige / Datenvertrag / LetterModal-Handoff / lokale Phase B
+- Status: **IMPLEMENTED LOCAL — PHASE B COMPLETE**; **APPLICATION ADOPTION: BLOCKED**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
+- Baseline: Discovery `bc68866`; lokaler `main` `7a4a64e`; `origin/main` `4364eab`; Branch `feature/jm-direct-cover-letter-01b`; Arbeitsbaum vor Beginn clean.
+- Vertrag: `ApplicationJobReferenceV1` um optionales `jobOrigin: "source" | "manual"` und optionales `originalUrl` erweitert. Importierte Quellen behalten die URL-Pflicht; manuelle Stellen dürfen ohne URL existieren, echte http(s)-URLs sind erlaubt. `source: ["manual"]`, stabile Session-ID `manual:<opaque>`, keine erfundene externe Job-ID.
+- Session: neuer rein speicherinterner `manualJobSession`-Store, keyed by manual ID; Reset bei Auth-/Identitätswechsel; keine localStorage-/sessionStorage-/IndexedDB-/Backend-Speicherung.
+- UI: `+ Neue Bewerbung` in `ApplicationsSection`, neues `NewApplicationForm` mit großem Beschreibungstextfeld, optionalen Titel-/Firmen-/Standort-/URL-Feldern, lokaler Validierung, HTML-Bereinigung, 20.000-Zeichen-Grenze, neutralen Fallbacks und Dirty-State-Abbruch. Keine vorgetäuschte „Als Bewerbung speichern“-Aktion.
+- Handoff: bestehende `LetterModal`-Instanz über `onOpenLetter`/`letterJob`; `letterModalNode` wird jetzt auch in Profil-/Dashboard-Zweigen gerendert (vorher nur Default-Return). Vollständige Beschreibung wird als `job.description`/`descriptionPlain` übergeben. Bestehende Modell-, CV-, Consent-, Anonymisierungs- und Fehlerpfade unverändert.
+- Adoption: für manuelle Stellen in Phase B über `adoptionLocked` gesperrt und verständlich gekennzeichnet; Text bleibt bearbeitbar, kopierbar und herunterladbar.
+- Gast/Auth: Gastprofil rendert die session-only ApplicationsSection, damit Gäste die manuelle Anzeige nutzen und generieren können; Übernahme bleibt gesperrt. Keine automatische Anmeldung, keine Gastdatenmigration.
+- Source: `SourceBadge`/Bewerbungsdetails kennen `source.manual` („Manuell hinzugefügt“); manuelle Stellen ohne URL rendern keinen Original-Link. Importierte Quellen unverändert.
+- Prompt: bestehende `/api/cover-letter`-Pipeline um neutrale Anrede bei unbekanntem Arbeitgeber und Schutz vor der Behandlung von „Initiativbewerbung“ als bestätigte Rolle ergänzt.
+- Tests: Gesamtsuite **1369 passed/5 skipped** (131 Testdateien passed/3 skipped); gezielte neue/angepasste Suite **112 passed** (9 Dateien); `npm run build`, `node --check api/cover-letter.mjs`, JSON-Schema-Parse und `git diff --check` PASS; neue Direct-Cover-Letter-E2E 1440/1024/768/430/390/320 PASS; bestehende Applications-/Cover-Letter-/CV-Builder-/Search-Results-/Mobile-Nav-E2E PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-DIRECT-COVER-LETTER-01B/`. Durch bestehende E2E-Skripte entstandene fremde Screenshot-Änderungen wurden vor dem Commit zurückgesetzt.
+- Git: Vertrag `725d9eb`; UI/Integration `fb6f6c6`; Tests `9ff4dd8`; Dokumentation in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Offen für Phase C: sichere manuelle Adoption, Refresh nach Adoption, `findByJob`-Race, Beschreibungspersistenz/Verbesserungskontext, `CoverLetterVersion`-Semantik, RIS-Akzeptanz von `jobOrigin`/optionaler URL, Gastbereich-Produktentscheidung.
+- Entscheidung: **DIRECT-COVER-LETTER-01B READY für Phase C**; **APPLICATION ADOPTION: Noch nicht freigegeben**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-DIRECT-COVER-LETTER-01B.md`
+
 2026-11-04 · JM-DIRECT-COVER-LETTER-01A
 - Typ: Discovery / Read-only Bestandsaufnahme / Anschreiben- und Bewerbungsintegration
 - Status: **DISCOVERY COMPLETE — STOP**; keine Implementierung, kein Push, kein Merge, kein Deployment
