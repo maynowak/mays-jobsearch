@@ -128,6 +128,26 @@ async function runAuthenticated(browser, width, height, name) {
   return { name, overflow, consoleErrors };
 }
 
+
+async function runResponsive(browser) {
+  const results = [];
+  for (const width of [1024, 768, 430, 320]) {
+    const { context, page, consoleErrors } = await preparePage(browser, { width, height: 900 }, true);
+    await page.goto(`${base}/profil`, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Einstellungen" }).click();
+    await page.getByRole("heading", { name: "Datenschutz & Datenspeicherung" }).waitFor();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    if (overflow > 0) throw new Error(`responsive ${width}: overflow ${overflow}px`);
+    const action = page.getByRole("button", { name: "Speicherfreigaben anzeigen" });
+    const box = await action.boundingBox();
+    if (!box || box.height < 44) throw new Error(`responsive ${width}: action below 44px`);
+    if (consoleErrors.length) throw new Error(`responsive ${width}: console errors ${consoleErrors.join(" | ")}`);
+    results.push({ width, overflow });
+    await context.close();
+  }
+  return results;
+}
+
 async function runGuest(browser) {
   const { context, page, consoleErrors } = await preparePage(browser, { width: 390, height: 844 }, false);
   await page.goto(`${base}/profil`, { waitUntil: "networkidle" });
@@ -149,7 +169,8 @@ try {
   const desktop = await runAuthenticated(browser, 1440, 1000, "desktop-1440");
   const mobile = await runAuthenticated(browser, 390, 844, "mobile-390");
   const guest = await runGuest(browser);
-  console.log(JSON.stringify({ status: "PASS", desktop, mobile, guest }, null, 2));
+  const responsive = await runResponsive(browser);
+  console.log(JSON.stringify({ status: "PASS", desktop, mobile, guest, responsive }, null, 2));
 } finally {
   if (browser) await browser.close();
   try {
