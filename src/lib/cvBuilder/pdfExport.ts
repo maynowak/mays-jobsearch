@@ -574,9 +574,8 @@ export async function createCvBuilderPdf(
   return doc.save();
 }
 
-export function cvBuilderFileName(draft: CvBuilderDraftV1): string {
-  const raw = draft.personal.fullName?.trim() || "Lebenslauf";
-  const safe = raw
+function safeCvFileNamePart(value: string): string {
+  return value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[<>:"/\\|?*.\u0000-\u001f]+/g, "-")
@@ -584,7 +583,15 @@ export function cvBuilderFileName(draft: CvBuilderDraftV1): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 80);
+}
+
+export function cvBuilderProfileFileName(name: string): string {
+  const safe = safeCvFileNamePart(String(name ?? "").trim() || "Lebenslauf");
   return safe && safe !== "Lebenslauf" ? `Lebenslauf-${safe}.pdf` : "Lebenslauf.pdf";
+}
+
+export function cvBuilderFileName(draft: CvBuilderDraftV1): string {
+  return cvBuilderProfileFileName(draft.personal.fullName?.trim() || "Lebenslauf");
 }
 
 export function downloadCvBuilderPdf(bytes: Uint8Array, fileName: string): void {

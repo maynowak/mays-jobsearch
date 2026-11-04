@@ -66,6 +66,15 @@ import {
   hasCvBuilderContent,
   type CvBuilderDraftV1,
 } from "./lib/cvBuilder/contractTypes";
+import type { CvBuilderTemplate } from "./lib/cvBuilder/templates";
+import {
+  beginNewCvBuilderSession,
+  createCvBuilderProfileRepository,
+} from "./lib/cvBuilder/profileRepository";
+import {
+  cloneCvBuilderDraft,
+  type CvBuilderProfileV1,
+} from "./lib/cvBuilder/profileTypes";
 import { isDevOnlyRoute } from "./lib/devRoute";
 import { buildCvSearchProfile } from "./lib/cvSearchConfig";
 import { partitionCvFiles, validateCvFile } from "./lib/cvFileValidation";
@@ -147,7 +156,7 @@ interface JobDataset {
 }
 
 export default function App() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   // Route aus URL ableiten (reaktiv bei Navigation)
   const route: NavbarRoute = (() => {
     const path = window.location.pathname;
@@ -191,21 +200,33 @@ export default function App() {
     tab?: "overview" | "communication" | "documents" | "history";
   } | null>(null);
   const lastAdoptedApplicationIdRef = useRef<string | null>(null);
-  // CV-BUILDER-01A: structured CV draft is session-only App state. It is not
-  // a CvDocument, has no File/hash/processedAt and is never persisted.
+  // CV-BUILDER-02B: structured CV profiles are session-only. The editor uses
+  // a working draft; repository updates happen on explicit save.
+  const cvProfileRepositoryRef = useRef<ReturnType<typeof createCvBuilderProfileRepository> | null>(null);
+  if (!cvProfileRepositoryRef.current) {
+    cvProfileRepositoryRef.current = createCvBuilderProfileRepository();
+  }
+  const [cvProfiles, setCvProfiles] = useState<CvBuilderProfileV1[]>(() =>
+    cvProfileRepositoryRef.current?.list() ?? []
+  );
+  const [cvBuilderProfileId, setCvBuilderProfileId] = useState<string | null>(null);
   const [cvBuilderDraft, setCvBuilderDraft] = useState<CvBuilderDraftV1>(createEmptyCvBuilderDraft);
+  const [cvBuilderTemplate, setCvBuilderTemplate] = useState<CvBuilderTemplate>("classic");
   const [cvBuilderOpen, setCvBuilderOpen] = useState(false);
+  const [cvBuilderDirty, setCvBuilderDirty] = useState(false);
+  const [cvBuilderSaving, setCvBuilderSaving] = useState(false);
+  const [cvBuilderSaveError, setCvBuilderSaveError] = useState("");
   const cvBuilderHasContent = hasCvBuilderContent(cvBuilderDraft);
 
   useEffect(() => {
-    if (sessionApplications.length === 0 && !cvBuilderHasContent) return;
+    if (sessionApplications.length === 0 && !cvBuilderHasContent && cvProfiles.length === 0) return;
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", warnBeforeUnload);
     return () => window.removeEventListener("beforeunload", warnBeforeUnload);
-  }, [sessionApplications.length, cvBuilderHasContent]);
+  }, [sessionApplications.length, cvBuilderHasContent, cvProfiles.length]);
   const [pendingLetterContext, setPendingLetterContext] = useState<{
     job: Job;
     prepare: string;
@@ -304,8 +325,17 @@ export default function App() {
       setApplicationRefreshToken(0);
       setApplicationNavigation(null);
       lastAdoptedApplicationIdRef.current = null;
+      beginNewCvBuilderSession();
+      cvProfileRepositoryRef.current?.invalidate();
+      cvProfileRepositoryRef.current = createCvBuilderProfileRepository();
+      setCvProfiles([]);
+      setCvBuilderProfileId(null);
       setCvBuilderDraft(createEmptyCvBuilderDraft());
+      setCvBuilderTemplate("classic");
       setCvBuilderOpen(false);
+      setCvBuilderDirty(false);
+      setCvBuilderSaving(false);
+      setCvBuilderSaveError("");
       setStatus(null);
     }
     previousAuthProfileKeyRef.current = authProfileKey;
@@ -885,6 +915,14 @@ export default function App() {
     setConsentDismissed(false);
     setLetterJob(null);
     setPendingLetterContext(null);
+    cvProfileRepositoryRef.current?.clear();
+    setCvProfiles([]);
+    setCvBuilderProfileId(null);
+    setCvBuilderDraft(createEmptyCvBuilderDraft());
+    setCvBuilderTemplate("classic");
+    setCvBuilderOpen(false);
+    setCvBuilderDirty(false);
+    setCvBuilderSaveError("");
     if (manualShowsRemovedProfile) {
       setProfile({ ...INITIAL_MANUAL_PROFILE });
     }
@@ -919,6 +957,155 @@ export default function App() {
       cvProfile: null,
       inferredSkills: [],
     });
+  };
+
+  const refreshCvProfiles = (): CvBuilderProfileV1[] => {
+    const profiles = cvProfileRepositoryRef.current?.list() ?? [];
+    setCvProfiles(profiles);
+    return profiles;
+  };
+
+  const handleCreateCvProfile = () => {
+    const name = t("cvBuilder.profiles.defaultName", { count: cvProfiles.length + 1 });
+    try {
+      const profile = cvProfileRepositoryRef.current?.create({ name });
+      if (!profile) return;
+      refreshCvProfiles();
+      setCvBuilderProfileId(profile.cvId);
+      setCvBuilderDraft(createEmptyCvBuilderDraft());
+      setCvBuilderTemplate(profile.template);
+      setCvBuilderOpen(true);
+      setCvBuilderDirty(false);
+      setCvBuilderSaveError("");
+    } catch (err) {
+      setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
+    }
+  };
+
+  const handleAdoptCvDraft = () => {
+    if (!hasCvBuilderContent(cvBuilderDraft)) return;
+    const name = t("cvBuilder.profiles.defaultName", { count: cvProfiles.length + 1 });
+    try {
+      const profile = cvProfileRepositoryRef.current?.create({
+        name,
+        cvData: cvBuilderDraft,
+        template: cvBuilderTemplate,
+      });
+      if (!profile) return;
+      refreshCvProfiles();
+      setCvBuilderProfileId(profile.cvId);
+      setCvBuilderDraft(cloneCvBuilderDraft(profile.cvData));
+      setCvBuilderTemplate(profile.template);
+      setCvBuilderOpen(true);
+      setCvBuilderDirty(false);
+      setCvBuilderSaveError("");
+    } catch (err) {
+      setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
+    }
+  };
+
+  const handleEditCvProfile = (cvId: string) => {
+    const profile = cvProfileRepositoryRef.current?.get(cvId);
+    if (!profile) {
+      setStatus({ type: "error", message: t("cvBuilder.profiles.error") });
+      return;
+    }
+    setCvBuilderProfileId(profile.cvId);
+    setCvBuilderDraft(cloneCvBuilderDraft(profile.cvData));
+    setCvBuilderTemplate(profile.template);
+    setCvBuilderOpen(true);
+    setCvBuilderDirty(false);
+    setCvBuilderSaveError("");
+  };
+
+  const handleSaveCvProfile = async () => {
+    if (!cvBuilderProfileId || !cvProfileRepositoryRef.current) return;
+    const current = cvProfileRepositoryRef.current.get(cvBuilderProfileId);
+    if (!current) {
+      setCvBuilderSaveError(t("cvBuilder.profiles.error"));
+      throw new Error("CV profile was not found");
+    }
+    setCvBuilderSaving(true);
+    setCvBuilderSaveError("");
+    try {
+      const updated = cvProfileRepositoryRef.current.update(
+        current.cvId,
+        current.version,
+        { cvData: cvBuilderDraft, template: cvBuilderTemplate }
+      );
+      refreshCvProfiles();
+      setCvBuilderDraft(cloneCvBuilderDraft(updated.cvData));
+      setCvBuilderTemplate(updated.template);
+      setCvBuilderDirty(false);
+    } catch (err) {
+      setCvBuilderSaveError(err instanceof Error ? err.message : t("cvBuilder.profiles.error"));
+      throw err;
+    } finally {
+      setCvBuilderSaving(false);
+    }
+  };
+
+  const handleDuplicateCvProfile = (cvId: string) => {
+    const profile = cvProfileRepositoryRef.current?.get(cvId);
+    if (!profile) {
+      setStatus({ type: "error", message: t("cvBuilder.profiles.error") });
+      return;
+    }
+    try {
+      cvProfileRepositoryRef.current?.duplicate(
+        cvId,
+        profile.version,
+        t("cvBuilder.profiles.duplicateName", { name: profile.name })
+      );
+      refreshCvProfiles();
+      setStatus({ type: "info", message: t("cvBuilder.profiles.duplicated") });
+    } catch (err) {
+      setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
+      throw err;
+    }
+  };
+
+  const handleRenameCvProfile = (cvId: string, name: string) => {
+    const profile = cvProfileRepositoryRef.current?.get(cvId);
+    if (!profile) throw new Error(t("cvBuilder.profiles.error"));
+    cvProfileRepositoryRef.current?.rename(cvId, profile.version, name);
+    refreshCvProfiles();
+  };
+
+  const handleDeleteCvProfile = (cvId: string) => {
+    const profile = cvProfileRepositoryRef.current?.get(cvId);
+    if (!profile) throw new Error(t("cvBuilder.profiles.error"));
+    cvProfileRepositoryRef.current?.delete(cvId, profile.version);
+    refreshCvProfiles();
+    if (cvBuilderProfileId === cvId) {
+      setCvBuilderProfileId(null);
+      setCvBuilderDraft(createEmptyCvBuilderDraft());
+      setCvBuilderTemplate("classic");
+      setCvBuilderOpen(false);
+      setCvBuilderDirty(false);
+      setCvBuilderSaveError("");
+    }
+    setStatus({ type: "info", message: t("cvBuilder.profiles.deleted") });
+  };
+
+  const handleDownloadCvProfile = (cvId: string) => {
+    const profile = cvProfileRepositoryRef.current?.get(cvId);
+    if (!profile) return;
+    void import("./lib/cvBuilder/pdfExport")
+      .then(async (pdfExport) => {
+        const bytes = await pdfExport.createCvBuilderPdf(
+          profile.cvData,
+          profile.template,
+          { language: lang }
+        );
+        pdfExport.downloadCvBuilderPdf(
+          bytes,
+          pdfExport.cvBuilderProfileFileName(profile.name)
+        );
+      })
+      .catch(() => {
+        setStatus({ type: "error", message: t("cvBuilder.exportError") });
+      });
   };
 
   // CV-UPLOAD-UX-08: gespeichertes Suchprofil im Profil-Step vorbefuellt
@@ -3013,8 +3200,23 @@ export default function App() {
   const cvBuilderNode = cvBuilderOpen ? (
     <CvBuilderEditor
       draft={cvBuilderDraft}
-      onChange={setCvBuilderDraft}
-      onClose={() => setCvBuilderOpen(false)}
+      onChange={(draft) => {
+        setCvBuilderDraft(draft);
+        setCvBuilderDirty(true);
+      }}
+      onClose={() => {
+        setCvBuilderOpen(false);
+        setCvBuilderDirty(false);
+      }}
+      initialTemplate={cvBuilderTemplate}
+      onTemplateChange={(template) => {
+        setCvBuilderTemplate(template);
+        setCvBuilderDirty(true);
+      }}
+      onSave={handleSaveCvProfile}
+      dirty={cvBuilderDirty}
+      saving={cvBuilderSaving}
+      saveError={cvBuilderSaveError}
     />
   ) : null;
 
@@ -3041,7 +3243,17 @@ export default function App() {
       onSelectSearchProfile={handleDashboardSearchProfileSelect}
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
       onOpenCvUpload={() => navigateInApp("/search?cv=upload")}
-      onOpenCvBuilder={() => setCvBuilderOpen(true)}
+      onOpenCvBuilder={handleCreateCvProfile}
+      cvProfiles={cvProfiles}
+      activeCvProfileId={cvBuilderProfileId}
+      canAdoptCvDraft={hasCvBuilderContent(cvBuilderDraft) && cvProfiles.length === 0}
+      onCreateCvProfile={handleCreateCvProfile}
+      onAdoptCvDraft={handleAdoptCvDraft}
+      onEditCvProfile={handleEditCvProfile}
+      onDuplicateCvProfile={handleDuplicateCvProfile}
+      onRenameCvProfile={handleRenameCvProfile}
+      onDeleteCvProfile={handleDeleteCvProfile}
+      onDownloadCvProfile={handleDownloadCvProfile}
       onAssignUnassigned={handleAssignUnassignedAts}
     />
   );

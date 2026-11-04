@@ -30,6 +30,12 @@ interface Props {
   draft: CvBuilderDraftV1;
   onChange: (draft: CvBuilderDraftV1) => void;
   onClose: () => void;
+  initialTemplate?: CvBuilderTemplate;
+  onTemplateChange?: (template: CvBuilderTemplate) => void;
+  onSave?: () => Promise<void> | void;
+  dirty?: boolean;
+  saving?: boolean;
+  saveError?: string;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -338,7 +344,17 @@ function Section({
   );
 }
 
-export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
+export default function CvBuilderEditor({
+  draft,
+  onChange,
+  onClose,
+  initialTemplate = "classic",
+  onTemplateChange,
+  onSave,
+  dirty = false,
+  saving = false,
+  saveError = "",
+}: Props) {
   const { t, lang } = useLang();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -349,8 +365,9 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
   const exportingRef = useRef(false);
   const addRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [focusAfterRemove, setFocusAfterRemove] = useState<string | null>(null);
-  const [template, setTemplate] = useState<CvBuilderTemplate>("classic");
+  const [template, setTemplate] = useState<CvBuilderTemplate>(initialTemplate);
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+  const [closeConfirm, setCloseConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
   const [exportError, setExportError] = useState("");
@@ -389,11 +406,41 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
     else editorPaneRef.current?.focus();
   }, [mobileView]);
 
+  const requestClose = () => {
+    if (dirty && onSave) {
+      setCloseConfirm(true);
+      return;
+    }
+    onClose();
+  };
+
+  const saveCurrent = async () => {
+    if (!onSave || saving) return;
+    await onSave();
+  };
+
+  const saveAndClose = async () => {
+    if (!onSave || saving) return;
+    try {
+      await onSave();
+      setCloseConfirm(false);
+      onClose();
+    } catch {
+      // The parent keeps the editor open and reports the conflict.
+    }
+  };
+
+  const selectTemplate = (next: CvBuilderTemplate) => {
+    setTemplate(next);
+    onTemplateChange?.(next);
+  };
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        if (closeConfirm) setCloseConfirm(false);
+        else requestClose();
         return;
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
@@ -413,7 +460,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [onClose, dirty, onSave, closeConfirm, saving]);
 
   const updatePersonal = (key: keyof CvBuilderDraftV1["personal"], value: string) => {
     onChange({ ...draft, personal: { ...draft.personal, [key]: value } });
@@ -467,7 +514,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
     <div
       className="modal cv-builder-modal"
       onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) requestClose();
       }}
     >
       <div
@@ -488,7 +535,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
             type="button"
             className="modal-close"
             aria-label={t("cvBuilder.close")}
-            onClick={onClose}
+            onClick={requestClose}
           >
             ×
           </button>
@@ -534,7 +581,7 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
                 type="button"
                 aria-pressed={template === entry}
                 className={template === entry ? "active" : ""}
-                onClick={() => setTemplate(entry)}
+                onClick={() => selectTemplate(entry)}
               >
                 {t(`cvBuilder.template.${entry}`)}
               </button>
@@ -1219,6 +1266,17 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
         <div className="cv-builder-footer">
           <p className="cv-builder-hint">{t("cvBuilder.sectionHint")}</p>
           <div className="cv-builder-footer__actions">
+            {onSave && (
+              <button
+                type="button"
+                className="letter-btn"
+                onClick={() => void saveCurrent()}
+                disabled={saving}
+                aria-busy={saving}
+              >
+                {saving ? t("cvBuilder.saving") : t("cvBuilder.save")}
+              </button>
+            )}
             <button
               type="button"
               className="letter-btn cv-builder-export"
@@ -1228,12 +1286,30 @@ export default function CvBuilderEditor({ draft, onChange, onClose }: Props) {
             >
               {exporting ? t("cvBuilder.exporting") : t("cvBuilder.exportPdf")}
             </button>
-            <button type="button" className="btn-ghost" onClick={onClose}>
+            <button type="button" className="btn-ghost" onClick={requestClose}>
               {t("cvBuilder.closeFooter")}
             </button>
           </div>
+          {saveError && <p className="letter-review-warning" role="alert">{saveError}</p>}
           {exportMessage && <p className="letter-review-success" role="status">{exportMessage}</p>}
           {exportError && <p className="letter-review-warning" role="alert">{exportError}</p>}
+          {closeConfirm && (
+            <div className="cv-builder-unsaved" role="alertdialog" aria-label={t("cvBuilder.unsavedTitle")}>
+              <h4>{t("cvBuilder.unsavedTitle")}</h4>
+              <p>{t("cvBuilder.unsavedText")}</p>
+              <div className="cv-builder-footer__actions">
+                <button type="button" className="letter-btn" onClick={() => void saveAndClose()} disabled={saving}>
+                  {saving ? t("cvBuilder.saving") : t("cvBuilder.saveAndClose")}
+                </button>
+                <button type="button" className="btn-ghost" onClick={onClose}>
+                  {t("cvBuilder.discardAndClose")}
+                </button>
+                <button type="button" className="btn-ghost" onClick={() => setCloseConfirm(false)}>
+                  {t("cvBuilder.keepEditing")}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -3,8 +3,10 @@ import type { CvDocument, StatusMessage } from '../types';
 import { useLang } from '../i18n';
 import { readCvProfileLists } from '../lib/cvProfileStore';
 import CvDocumentList from './CvDocumentList';
+import CvBuilderProfileList from './CvBuilderProfileList';
 import CvProfilesOverlay from './CvProfilesOverlay';
 import Status from './Status';
+import type { CvBuilderProfileV1 } from '../lib/cvBuilder/profileTypes';
 
 interface Props {
   documents: CvDocument[];
@@ -26,6 +28,16 @@ interface Props {
   onSelectAtsProfile: (id: string | null) => void;
   onOpenCvUpload: () => void;
   onOpenCvBuilder?: () => void;
+  cvProfiles?: CvBuilderProfileV1[];
+  activeCvProfileId?: string | null;
+  canAdoptCvDraft?: boolean;
+  onCreateCvProfile?: () => void;
+  onAdoptCvDraft?: () => void;
+  onEditCvProfile?: (cvId: string) => void;
+  onDuplicateCvProfile?: (cvId: string) => void;
+  onRenameCvProfile?: (cvId: string, name: string) => void;
+  onDeleteCvProfile?: (cvId: string) => void;
+  onDownloadCvProfile?: (cvId: string) => void;
   // JM-ATS-OVERLAY-PARITY-08A: same session-adapter handler as the search page.
   onAssignUnassigned?: (
     cvHash: string,
@@ -52,6 +64,16 @@ const DashboardV2CvSection = ({
   onSelectAtsProfile,
   onOpenCvUpload,
   onOpenCvBuilder,
+  cvProfiles = [],
+  activeCvProfileId = null,
+  canAdoptCvDraft = false,
+  onCreateCvProfile,
+  onAdoptCvDraft,
+  onEditCvProfile,
+  onDuplicateCvProfile,
+  onRenameCvProfile,
+  onDeleteCvProfile,
+  onDownloadCvProfile,
   onAssignUnassigned,
 }: Props) => {
   const { t } = useLang();
@@ -87,6 +109,22 @@ const DashboardV2CvSection = ({
       </div>
 
       <Status status={message ?? null} />
+
+      {onCreateCvProfile && onEditCvProfile && onDuplicateCvProfile &&
+        onRenameCvProfile && onDeleteCvProfile && onDownloadCvProfile && (
+          <CvBuilderProfileList
+            profiles={cvProfiles}
+            activeCvId={activeCvProfileId}
+            canAdoptDraft={canAdoptCvDraft}
+            onCreate={onCreateCvProfile}
+            onAdoptDraft={onAdoptCvDraft}
+            onEdit={onEditCvProfile}
+            onDuplicate={onDuplicateCvProfile}
+            onRename={onRenameCvProfile}
+            onDelete={onDeleteCvProfile}
+            onDownload={onDownloadCvProfile}
+          />
+        )}
 
       {documents.length > 0 && (
         <div className="field dashboard-v2__cv-picker">

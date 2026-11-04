@@ -10850,6 +10850,142 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   flex: 1 0 100%;
 }
 
+.cv-builder-unsaved {
+  flex: 1 0 100%;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.cv-builder-unsaved p {
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.cv-builder-unsaved button {
+  min-height: 44px;
+}
+
+.cv-builder-profiles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+
+.cv-builder-profiles__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cv-builder-profiles__head h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.cv-builder-profiles__head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.cv-builder-profiles__create-actions,
+.cv-builder-profiles__actions,
+.cv-builder-profiles__rename-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cv-builder-profiles__create-actions button,
+.cv-builder-profiles__actions button {
+  min-height: 44px;
+}
+
+.cv-builder-profiles__empty {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.cv-builder-profiles__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cv-builder-profiles__item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.cv-builder-profiles__item.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.cv-builder-profiles__info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.cv-builder-profiles__info strong,
+.cv-builder-profiles__info span {
+  overflow-wrap: anywhere;
+}
+
+.cv-builder-profiles__info span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.cv-builder-profiles__status {
+  color: var(--text-warning, #8a5a00) !important;
+  font-weight: 700;
+}
+
+.cv-builder-profiles__rename {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cv-builder-profiles__confirm {
+  flex: 1 0 100%;
+  padding: 10px;
+  border: 1px solid var(--danger-border, #b91c1c);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger-bg, #fee2e2) 55%, var(--surface));
+}
+
+.cv-builder-profiles__confirm p {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 700px) {
   .cv-builder-grid {
     grid-template-columns: 1fr;
