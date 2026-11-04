@@ -14,6 +14,7 @@ They contain no real applicant data, no CV files and no credentials.
 - `application.follow-up.json` — optional open follow-up
 - `application.update-follow-up.json` — versioned follow-up update input
 - `application.create-draft.json` — create input
+- `application.manual-job.json` — manual job without an external URL
 - `application.update-draft.json` — versioned update input
 - `application.transition.json` — explicit submit transition input
 - `application.export.json` — owner-scoped export envelope

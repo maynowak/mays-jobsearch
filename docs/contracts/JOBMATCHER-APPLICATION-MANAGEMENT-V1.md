@@ -75,14 +75,21 @@ interface ApplicationV1 {
 
 ```typescript
 interface ApplicationJobReferenceV1 {
-  jobId: string;       // stable source-specific job key, not application ID
+  jobId: string;       // stable source-specific or session-local key, not application ID
   title: string;
   companyName: string;
   location: string[];
   source: string[];
-  originalUrl: string; // http(s), validated
+  originalUrl?: string; // required for source jobs; optional for manual jobs
+  jobOrigin?: "source" | "manual"; // missing means "source" for compatibility
 }
 ```
+
+Manual jobs use `source: ["manual"]`, a session-local
+`manual:<opaque-id>` key and a neutral title/company fallback. They must not
+invent an external job ID or URL. A user-supplied manual URL is optional and,
+when present, must be http(s). Imported source jobs keep the existing required
+URL rule.
 
 ### 3.2 Documents
 

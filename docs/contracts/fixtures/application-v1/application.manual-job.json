@@ -1,0 +1,16 @@
+{
+  "job": {
+    "jobId": "manual:session-opaque-id",
+    "title": "Initiativbewerbung",
+    "companyName": "Unternehmen nicht angegeben",
+    "location": [],
+    "source": [
+      "manual"
+    ],
+    "jobOrigin": "manual"
+  },
+  "documents": {
+    "coverLetterDraft": "",
+    "documentStatus": "missing"
+  }
+}

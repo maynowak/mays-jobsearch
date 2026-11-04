@@ -16,7 +16,7 @@
     "JobReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["jobId", "title", "companyName", "location", "source", "originalUrl"],
+      "required": ["jobId", "title", "companyName", "location", "source"],
       "properties": {
         "jobId": { "$ref": "#/$defs/OpaqueId" },
         "title": { "type": "string", "minLength": 1, "maxLength": 500 },
@@ -31,8 +31,20 @@
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1, "maxLength": 100 }
         },
-        "originalUrl": { "type": "string", "format": "uri", "pattern": "^https?://" }
-      }
+        "originalUrl": { "type": "string", "format": "uri", "pattern": "^https?://" },
+        "jobOrigin": { "type": "string", "enum": ["source", "manual"] }
+      },
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "properties": { "jobOrigin": { "const": "manual" } },
+              "required": ["jobOrigin"]
+            }
+          },
+          "then": { "required": ["originalUrl"] }
+        }
+      ]
     },
     "CVReference": {
       "type": "object",

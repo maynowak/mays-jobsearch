@@ -19,7 +19,8 @@ The server resource is `ApplicationV1` from
 - `schemaVersion: 1`
 - server-generated `applicationId`
 - server-derived `ownerId`
-- `job` reference
+- `job` reference (source jobs with required URL, or manual jobs with optional
+  `originalUrl` and `jobOrigin: "manual"`)
 - `documents` (cover-letter draft/versions, optional CV reference, document status)
 - application information, salary, optional follow-up, status, status history,
   timeline

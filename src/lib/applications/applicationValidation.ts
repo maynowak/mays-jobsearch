@@ -114,14 +114,30 @@ const readVersion = (value: unknown, field: string): number => {
 
 function validateJob(value: unknown): ApplicationJobReferenceV1 {
   if (!isRecord(value)) throw new ApplicationValidationError("job must be an object");
-  assertKeys(value, ["jobId", "title", "companyName", "location", "source", "originalUrl"], "job.");
+  assertKeys(
+    value,
+    ["jobId", "title", "companyName", "location", "source", "originalUrl", "jobOrigin"],
+    "job."
+  );
+  const jobOrigin = value.jobOrigin === undefined
+    ? undefined
+    : readEnum(value.jobOrigin, ["source", "manual"] as const, "job.jobOrigin");
+  const originalUrl = value.originalUrl === undefined || value.originalUrl === ""
+    ? undefined
+    : readUrl(value.originalUrl, "job.originalUrl");
+  if (jobOrigin !== "manual" && !originalUrl) {
+    throw new ApplicationValidationError(
+      "job.originalUrl is required for source jobs"
+    );
+  }
   return {
     jobId: readString(value.jobId, "job.jobId", { maxLength: 500 }),
     title: readString(value.title, "job.title", { maxLength: 500 }),
     companyName: readString(value.companyName, "job.companyName", { maxLength: 500 }),
     location: readStringList(value.location, "job.location"),
     source: readStringList(value.source, "job.source", { allowEmpty: false }),
-    originalUrl: readUrl(value.originalUrl, "job.originalUrl"),
+    ...(originalUrl ? { originalUrl } : {}),
+    ...(jobOrigin ? { jobOrigin } : {}),
   };
 }
 

@@ -24,14 +24,19 @@ export type DocumentStatus = "missing" | "draft" | "ready";
 export type CoverLetterVersionSource = "generated" | "revised" | "manual";
 export type ApplicationHistoryKind = "feedback" | "interview" | "note";
 
+export type ApplicationJobOrigin = "source" | "manual";
+
 export interface ApplicationJobReferenceV1 {
-  /** Stable source-specific job key, never the application ID. */
+  /** Stable source-specific or session-local job key, never the application ID. */
   jobId: OpaqueId;
   title: string;
   companyName: string;
   location: string[];
   source: string[];
-  originalUrl: string;
+  /** Optional for manual jobs; required and http(s)-validated for source jobs. */
+  originalUrl?: string;
+  /** Optional for backward compatibility; missing means "source". */
+  jobOrigin?: ApplicationJobOrigin;
 }
 
 export interface ApplicationCvReferenceV1 {
