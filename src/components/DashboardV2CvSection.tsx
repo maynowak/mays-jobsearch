@@ -31,6 +31,7 @@ interface Props {
   cvProfiles?: CvBuilderProfileV1[];
   activeCvProfileId?: string | null;
   canAdoptCvDraft?: boolean;
+  assignedCvIds?: string[];
   onCreateCvProfile?: () => void;
   onAdoptCvDraft?: () => void;
   onEditCvProfile?: (cvId: string) => void;
@@ -67,6 +68,7 @@ const DashboardV2CvSection = ({
   cvProfiles = [],
   activeCvProfileId = null,
   canAdoptCvDraft = false,
+  assignedCvIds = [],
   onCreateCvProfile,
   onAdoptCvDraft,
   onEditCvProfile,
@@ -116,6 +118,7 @@ const DashboardV2CvSection = ({
             profiles={cvProfiles}
             activeCvId={activeCvProfileId}
             canAdoptDraft={canAdoptCvDraft}
+            assignedCvIds={assignedCvIds}
             onCreate={onCreateCvProfile}
             onAdoptDraft={onAdoptCvDraft}
             onEdit={onEditCvProfile}

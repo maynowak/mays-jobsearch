@@ -60,7 +60,10 @@ import { beginNewApplicationSession, createSessionApplicationRepository } from "
 import { beginNewManualJobSession } from "./lib/applications/manualJobSession";
 import { isManualJob } from "./lib/applications/manualJob";
 import { ApplicationRepositoryError } from "./lib/applications/repositoryTypes";
-import type { CoverLetterVersionV1 } from "./lib/applications/contractTypes";
+import type {
+  ApplicationCvReferenceV1,
+  CoverLetterVersionV1,
+} from "./lib/applications/contractTypes";
 import {
   createEmptyCvBuilderDraft,
   hasCvBuilderContent,
@@ -797,7 +800,7 @@ export default function App() {
   const handleAdoptLetterAsApplication = async (payload: {
     job: Job;
     letter: string;
-    cvReference?: { cvId: string; label?: string };
+    cvReference?: ApplicationCvReferenceV1;
     versionSource?: "generated" | "revised" | "manual";
     language?: "de" | "en";
     model?: string | null;
@@ -850,6 +853,7 @@ export default function App() {
       const updated = await applicationRepository.adoptCoverLetter(existing.localId, {
         expectedVersion: existing.version,
         version,
+        ...(payload.cvReference ? { cvReference: payload.cvReference } : {}),
       });
       if (sessionEpochRef.current !== epoch) throw new Error("Session ended");
       apply(updated);
@@ -3247,6 +3251,10 @@ export default function App() {
       cvProfiles={cvProfiles}
       activeCvProfileId={cvBuilderProfileId}
       canAdoptCvDraft={hasCvBuilderContent(cvBuilderDraft) && cvProfiles.length === 0}
+      assignedCvIds={sessionApplications.flatMap((application) => {
+        const reference = application.documents.cvReference;
+        return reference?.cvSource === "builder" ? [reference.cvId] : [];
+      })}
       onCreateCvProfile={handleCreateCvProfile}
       onAdoptCvDraft={handleAdoptCvDraft}
       onEditCvProfile={handleEditCvProfile}
@@ -3281,6 +3289,9 @@ export default function App() {
       onOpenLetter={(job) => setLetterJob({ job, prepare: "" })}
       isAuthenticated={isAuth}
       refreshToken={applicationRefreshToken}
+      cvDocuments={cvState.documents}
+      cvBuilderProfiles={cvProfiles}
+      onOpenCvProfile={handleEditCvProfile}
       navigationTarget={applicationNavigation}
     />
   );
@@ -3298,6 +3309,10 @@ export default function App() {
       availableModels={models.map((model) => model.id)}
       recommendedModel={recommendedModel}
       cvDocuments={cvState.documents}
+      cvBuilderProfiles={cvProfiles}
+      resolveCvBuilderProfile={(cvId) =>
+        cvProfileRepositoryRef.current?.get(cvId) ?? null
+      }
       initialContext={letterJob.context}
       onAddCv={handleAddCvFromLetter}
       onProcessCv={handleProcessCvFromLetter}

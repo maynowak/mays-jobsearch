@@ -141,13 +141,24 @@ function validateJob(value: unknown): ApplicationJobReferenceV1 {
   };
 }
 
+export function validateApplicationCvReference(value: unknown): void {
+  validateCvReference(value);
+}
+
 function validateCvReference(value: unknown): void {
   if (value === undefined) return;
   if (!isRecord(value)) throw new ApplicationValidationError("documents.cvReference must be an object");
-  assertKeys(value, ["cvId", "documentId", "label"], "documents.cvReference.");
+  assertKeys(
+    value,
+    ["cvId", "documentId", "label", "cvSource"],
+    "documents.cvReference."
+  );
   readString(value.cvId, "documents.cvReference.cvId", { maxLength: 500 });
   if (value.documentId !== undefined) readString(value.documentId, "documents.cvReference.documentId", { maxLength: 500 });
   if (value.label !== undefined) readString(value.label, "documents.cvReference.label", { allowEmpty: true, maxLength: 500 });
+  if (value.cvSource !== undefined) {
+    readEnum(value.cvSource, ["uploaded", "builder"] as const, "documents.cvReference.cvSource");
+  }
 }
 
 function validateSalary(value: unknown, field: string): ApplicationSalaryV1 {

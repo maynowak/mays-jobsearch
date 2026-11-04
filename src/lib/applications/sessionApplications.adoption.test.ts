@@ -84,6 +84,68 @@ describe("session cover-letter adoption", () => {
     expect(updated.version).toBe(2);
   });
 
+  it("updates the CV reference while preserving cover-letter versions", () => {
+    const application = createSessionApplication({
+      localId: "local-1",
+      now: NOW,
+      coverLetter: "Erste Fassung",
+      coverLetterVersion: version({ content: "Erste Fassung" }),
+      cvReference: { cvId: "cv-1", label: "Legacy upload" },
+      job,
+    });
+    const updated = adoptSessionCoverLetter(application, {
+      expectedVersion: 1,
+      version: version({ versionId: "letter-v2", content: "Zweite Fassung" }),
+      cvReference: {
+        cvId: "cvb-1",
+        label: "AWS Cloud Engineer",
+        cvSource: "builder",
+      },
+    });
+    expect(updated.documents.cvReference).toEqual({
+      cvId: "cvb-1",
+      label: "AWS Cloud Engineer",
+      cvSource: "builder",
+    });
+    expect(updated.documents.coverLetterVersions).toHaveLength(2);
+    expect(updated.documents.coverLetterVersions[0].content).toBe("Erste Fassung");
+  });
+
+  it("keeps legacy CV references without cvSource unchanged", () => {
+    const application = createSessionApplication({
+      localId: "local-1",
+      now: NOW,
+      coverLetter: "Erste Fassung",
+      coverLetterVersion: version({ content: "Erste Fassung" }),
+      cvReference: { cvId: "cv-1", label: "Legacy upload" },
+      job,
+    });
+    const updated = adoptSessionCoverLetter(application, {
+      expectedVersion: 1,
+      version: version({ versionId: "letter-v2" }),
+    });
+    expect(updated.documents.cvReference).toEqual({ cvId: "cv-1", label: "Legacy upload" });
+  });
+
+  it("rejects an invalid CV source", () => {
+    const application = createSessionApplication({
+      localId: "local-1",
+      now: NOW,
+      coverLetter: "Erste Fassung",
+      job,
+    });
+    expect(() =>
+      adoptSessionCoverLetter(application, {
+        expectedVersion: 1,
+        version: version({ versionId: "letter-v2" }),
+        cvReference: {
+          cvId: "cvb-1",
+          cvSource: "unknown" as never,
+        },
+      })
+    ).toThrowError(/cvSource/);
+  });
+
   it("rejects duplicate version IDs and foreign job IDs", () => {
     const application = createSessionApplication({
       localId: "local-1",

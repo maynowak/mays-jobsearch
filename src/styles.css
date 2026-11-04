@@ -6459,6 +6459,39 @@ body {
   font-weight: 700;
 }
 
+.letter-cv-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.letter-cv-builder h5 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.letter-cv-option input:disabled {
+  cursor: not-allowed;
+}
+
+.letter-cv-preview {
+  max-height: 220px;
+  margin: 8px 0 0;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2, var(--surface));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
 .letter-cv-actions {
   display: flex;
   flex-wrap: wrap;
@@ -10984,6 +11017,11 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .cv-builder-profiles__confirm p {
   margin: 0 0 8px;
   overflow-wrap: anywhere;
+}
+
+.cv-builder-profiles__warning {
+  color: var(--danger, #b91c1c);
+  font-weight: 700;
 }
 
 @media (max-width: 700px) {

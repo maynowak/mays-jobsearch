@@ -1,6 +1,14 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CvDocument, Job, ModelOption, Profile } from "../types";
-import type { CoverLetterVersionSource } from "../lib/applications/contractTypes";
+import type {
+  ApplicationCvReferenceV1,
+  CoverLetterVersionSource,
+} from "../lib/applications/contractTypes";
+import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
+import {
+  cvBuilderToAnonymizedText,
+  hasCvBuilderTextContent,
+} from "../lib/cvBuilder/toAnonymizedText";
 import { generateCoverLetter, isFreeQuotaExceeded, isModelUnavailable, withModelFallback } from "../api";
 import { useLang } from "../i18n";
 import type { ModelsState } from "../hooks/useAvailableModels";
@@ -30,7 +38,7 @@ import { type DescriptionOrigin } from "../lib/jobDescriptionReview";
 import SourceBadge from "./SourceBadge";
 import ModelSelector from "./ModelSelector";
 
-export type LetterCvChoice = "none" | "existing";
+export type LetterCvChoice = "none" | "existing" | "builder";
 
 export interface LetterCandidateDraft {
   skills: string;
@@ -49,6 +57,7 @@ export interface LetterPreparationContext {
   review: DescriptionReviewState | null;
   cvChoice: LetterCvChoice;
   selectedCvId: string | null;
+  selectedBuilderCvId?: string | null;
   model?: string | null;
   candidateDraft?: LetterCandidateDraft;
 }
@@ -66,6 +75,8 @@ interface Props {
   availableModels: string[];
   recommendedModel: string | null;
   cvDocuments?: CvDocument[];
+  cvBuilderProfiles?: CvBuilderProfileV1[];
+  resolveCvBuilderProfile?: (cvId: string) => CvBuilderProfileV1 | null;
   initialContext?: LetterPreparationContext | null;
   onAddCv?: (file: File, context: LetterPreparationContext) => void;
   onProcessCv?: (id: string, context: LetterPreparationContext) => void;
@@ -76,7 +87,7 @@ interface Props {
   onAdoptAsApplication?: (payload: {
     job: Job;
     letter: string;
-    cvReference?: { cvId: string; label?: string };
+    cvReference?: ApplicationCvReferenceV1;
     versionSource?: CoverLetterVersionSource;
     language?: "de" | "en";
     model?: string | null;
@@ -104,6 +115,8 @@ export default function LetterModal({
   availableModels,
   recommendedModel,
   cvDocuments = [],
+  cvBuilderProfiles = [],
+  resolveCvBuilderProfile,
   initialContext,
   onAddCv,
   onProcessCv,
@@ -152,6 +165,9 @@ export default function LetterModal({
   );
   const [selectedCvId, setSelectedCvId] = useState<string | null>(
     initialContextForJob?.selectedCvId ?? null
+  );
+  const [selectedBuilderCvId, setSelectedBuilderCvId] = useState<string | null>(
+    initialContextForJob?.selectedBuilderCvId ?? null
   );
   const [cvError, setCvError] = useState<string | null>(null);
   const [manualSkills, setManualSkills] = useState(
@@ -209,6 +225,20 @@ export default function LetterModal({
       ? cvDocuments.find((document) => document.id === selectedCvId) ?? null
       : null;
   const selectedCvReady = cvIsUsable(selectedCv);
+  const selectedBuilderProfile =
+    cvChoice === "builder" && selectedBuilderCvId
+      ? cvBuilderProfiles.find((profile) => profile.cvId === selectedBuilderCvId) ?? null
+      : null;
+  const selectedBuilderReady = Boolean(
+    selectedBuilderProfile && hasCvBuilderTextContent(selectedBuilderProfile.cvData)
+  );
+  const selectedBuilderPreview = useMemo(
+    () =>
+      selectedBuilderProfile
+        ? cvBuilderToAnonymizedText(selectedBuilderProfile.cvData, lang)
+        : "",
+    [selectedBuilderProfile, lang]
+  );
   const selectedDescription = visibleReview.selected;
   const selectedOrigin = (selectedDescription?.origin ?? "original") as DescriptionOrigin;
 
@@ -228,6 +258,7 @@ export default function LetterModal({
     setReview(null);
     setCvChoice("none");
     setSelectedCvId(null);
+    setSelectedBuilderCvId(null);
     setCvError(null);
     setManualSkills("");
     setManualExperience("");
@@ -274,6 +305,8 @@ export default function LetterModal({
   }, [
     cvChoice,
     selectedCvId,
+    selectedBuilderCvId,
+    selectedBuilderProfile?.updatedAt,
     descriptionInput,
     review,
     manualSkills,
@@ -297,6 +330,14 @@ export default function LetterModal({
       setCvChoice("none");
     }
   }, [cvDocuments, selectedCvId]);
+
+  useEffect(() => {
+    if (!selectedBuilderCvId) return;
+    if (!cvBuilderProfiles.some((profile) => profile.cvId === selectedBuilderCvId)) {
+      setSelectedBuilderCvId(null);
+      setCvChoice("none");
+    }
+  }, [cvBuilderProfiles, selectedBuilderCvId]);
 
   useEffect(() => {
     if (adoptionResult) adoptionStatusRef.current?.focus();
@@ -432,6 +473,19 @@ export default function LetterModal({
       setGenerationError(t("letter.cvNeedsProcessing"));
       return;
     }
+    if (cvChoice === "builder") {
+      const current = selectedBuilderCvId
+        ? resolveCvBuilderProfile?.(selectedBuilderCvId) ?? null
+        : null;
+      if (!current) {
+        setGenerationError(t("letter.builderCvMissing"));
+        return;
+      }
+      if (!hasCvBuilderTextContent(current.cvData)) {
+        setGenerationError(t("letter.builderCvEmptyError"));
+        return;
+      }
+    }
     if (operation === "revise" && !letter.trim()) {
       setGenerationError(t("letter.reviseNeedsDraft"));
       return;
@@ -446,7 +500,7 @@ export default function LetterModal({
     requestSeqRef.current = requestSeq;
     setGenerationError("");
     setPhase("loading");
-    setLoadingStage(selectedCv ? "cv" : "model");
+    setLoadingStage(selectedCv || cvChoice === "builder" ? "cv" : "model");
     setError("");
     setCopied(false);
     setFallbackNote(false);
@@ -456,7 +510,23 @@ export default function LetterModal({
 
     try {
       let cvText: string | undefined;
-      if (selectedCv) {
+      let builderProfile: CvBuilderProfileV1 | null = null;
+      if (cvChoice === "builder") {
+        builderProfile = selectedBuilderCvId
+          ? resolveCvBuilderProfile?.(selectedBuilderCvId) ?? null
+          : null;
+        if (!builderProfile) throw new Error(t("letter.builderCvMissing"));
+        if (!hasCvBuilderTextContent(builderProfile.cvData)) {
+          throw new Error(t("letter.builderCvEmptyError"));
+        }
+        const serialized = cvBuilderToAnonymizedText(builderProfile.cvData, lang).trim();
+        const anonymized = anonymizeText(serialized).trim();
+        if (!anonymized) throw new Error(t("letter.cvTextEmpty"));
+        if (anonymized.length > MAX_CV_TEXT_LENGTH) {
+          throw new Error(t("letter.cvTextTooLong"));
+        }
+        cvText = anonymized;
+      } else if (selectedCv) {
         // A processed CV already carries its anonymized text for this session.
         // Reusing it avoids a second PDF read and keeps the privacy boundary:
         // only anonymized text is sent to the cover-letter endpoint.
@@ -476,7 +546,7 @@ export default function LetterModal({
       if (requestSeq !== requestSeqRef.current) return;
 
       const candidate = {
-        mode: selectedCv ? ("cv" as const) : ("manual" as const),
+        mode: selectedCv || builderProfile ? ("cv" as const) : ("manual" as const),
         skills: splitManualList(manualSkills),
         experience: manualExperience.trim(),
         qualifications: manualQualifications.trim(),
@@ -583,6 +653,7 @@ export default function LetterModal({
     review,
     cvChoice,
     selectedCvId,
+    selectedBuilderCvId,
     model: selectedModel,
     candidateDraft: {
       skills: manualSkills,
@@ -599,12 +670,21 @@ export default function LetterModal({
   const handleNoCv = () => {
     setCvChoice("none");
     setSelectedCvId(null);
+    setSelectedBuilderCvId(null);
     setCvError(null);
   };
 
   const handleSelectCv = (id: string) => {
     setCvChoice("existing");
     setSelectedCvId(id);
+    setSelectedBuilderCvId(null);
+    setCvError(null);
+  };
+
+  const handleSelectBuilder = (id: string) => {
+    setCvChoice("builder");
+    setSelectedBuilderCvId(id);
+    setSelectedCvId(null);
     setCvError(null);
   };
 
@@ -686,6 +766,31 @@ export default function LetterModal({
 
   const handleAdoptAsApplication = async () => {
     if (!onAdoptAsApplication || adoptingRef.current || !letter.trim() || adoptionResult) return;
+    const builderAtAdoption =
+      cvChoice === "builder" && selectedBuilderCvId
+        ? resolveCvBuilderProfile?.(selectedBuilderCvId) ?? null
+        : null;
+    if (cvChoice === "builder" && !builderAtAdoption) {
+      setAdoptionError(t("letter.builderCvMissing"));
+      return;
+    }
+    if (cvChoice === "builder" && builderAtAdoption && !hasCvBuilderTextContent(builderAtAdoption.cvData)) {
+      setAdoptionError(t("letter.builderCvEmptyError"));
+      return;
+    }
+    const cvReference: ApplicationCvReferenceV1 | undefined = builderAtAdoption
+      ? {
+          cvId: builderAtAdoption.cvId,
+          label: builderAtAdoption.name,
+          cvSource: "builder",
+        }
+      : selectedCv && selectedCvReady
+        ? {
+            cvId: selectedCv.id,
+            label: selectedCv.name,
+            cvSource: "uploaded",
+          }
+        : undefined;
     adoptingRef.current = true;
     setAdopting(true);
     setAdoptionError("");
@@ -700,9 +805,7 @@ export default function LetterModal({
       const result = await onAdoptAsApplication({
         job,
         letter,
-        ...(selectedCv && selectedCvReady
-          ? { cvReference: { cvId: selectedCv.id, label: selectedCv.name } }
-          : {}),
+        ...(cvReference ? { cvReference } : {}),
         versionSource,
         language: lang,
         model: activeModel,
@@ -861,6 +964,36 @@ export default function LetterModal({
                 })
               )}
 
+              <div className="letter-cv-builder">
+                <h5>{t("letter.builderCvHeading")}</h5>
+                <p className="letter-hint">{t("letter.builderCvHint")}</p>
+                {cvBuilderProfiles.length === 0 ? (
+                  <p className="letter-hint">{t("letter.builderCvNone")}</p>
+                ) : (
+                  cvBuilderProfiles.map((builderProfile) => {
+                    const ready = hasCvBuilderTextContent(builderProfile.cvData);
+                    return (
+                      <label
+                        key={builderProfile.cvId}
+                        className={`letter-cv-option${cvChoice === "builder" && selectedBuilderCvId === builderProfile.cvId ? " letter-cv-option--selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name={cvGroupId}
+                          checked={cvChoice === "builder" && selectedBuilderCvId === builderProfile.cvId}
+                          onChange={() => handleSelectBuilder(builderProfile.cvId)}
+                          disabled={!ready}
+                        />
+                        <span className="letter-cv-name">{builderProfile.name}</span>
+                        <span className={`letter-cv-status${ready ? " letter-cv-status--processed" : ""}`}>
+                          {ready ? t("letter.builderCvReady") : t("letter.builderCvEmpty")}
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+
               <div className="letter-cv-actions">
                 <button
                   type="button"
@@ -898,6 +1031,18 @@ export default function LetterModal({
                   </p>
                   <p className="letter-hint">{t("letter.cvAnonymizeHint")}</p>
                   <p className="letter-hint">{t("letter.cvRawUnavailable")}</p>
+                </div>
+              )}
+              {selectedBuilderProfile && selectedBuilderReady && (
+                <div className="letter-cv-privacy">
+                  <p className="letter-hint">
+                    <strong>{t("letter.builderCvDataMinimized")}</strong>
+                  </p>
+                  <p className="letter-hint">{t("letter.builderCvDataMinimizedHint")}</p>
+                  <details>
+                    <summary>{t("letter.builderCvPreview")}</summary>
+                    <pre className="letter-cv-preview">{selectedBuilderPreview}</pre>
+                  </details>
                 </div>
               )}
               {cvError && (
@@ -1099,9 +1244,11 @@ export default function LetterModal({
                 </dd>
                 <dt>{t("letter.dataCv")}</dt>
                 <dd>
-                  {selectedCv
-                    ? `${selectedCv.name} · ${t("letter.cvAnonymized")}`
-                    : t("letter.cvNone")}
+                  {selectedBuilderProfile
+                    ? `${selectedBuilderProfile.name} · ${t("letter.builderCvSource")} · ${t("letter.cvAnonymized")}`
+                    : selectedCv
+                      ? `${selectedCv.name} · ${t("letter.uploadedCvSource")} · ${t("letter.cvAnonymized")}`
+                      : t("letter.cvNone")}
                 </dd>
                 <dt>{t("letter.dataManual")}</dt>
                 <dd>{manualSummary}</dd>

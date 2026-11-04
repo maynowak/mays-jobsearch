@@ -53,7 +53,8 @@
       "properties": {
         "cvId": { "$ref": "#/$defs/OpaqueId" },
         "documentId": { "$ref": "#/$defs/OpaqueId" },
-        "label": { "type": "string", "maxLength": 500 }
+        "label": { "type": "string", "maxLength": 500 },
+        "cvSource": { "type": "string", "enum": ["uploaded", "builder"] }
       }
     },
     "CoverLetterVersion": {

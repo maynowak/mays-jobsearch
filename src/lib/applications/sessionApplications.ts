@@ -1,6 +1,7 @@
 import type {
   ApplicationChannel,
   ApplicationContactV1,
+  ApplicationCvReferenceV1,
   ApplicationDocumentsV1,
   ApplicationFollowUpV1,
   ApplicationHistoryEntryV1,
@@ -16,6 +17,7 @@ import type {
 import { canTransitionApplicationStatus } from "./applicationDomain";
 import {
   ApplicationValidationError,
+  validateApplicationCvReference,
   validateCreateApplicationDraftInput,
   validateFollowUp,
 } from "./applicationValidation";
@@ -66,6 +68,7 @@ export interface CreateSessionApplicationInput {
 export interface AdoptSessionCoverLetterInput {
   expectedVersion: number;
   version: CoverLetterVersionV1;
+  cvReference?: ApplicationCvReferenceV1 | null;
 }
 
 export interface SessionStatusInput {
@@ -169,12 +172,21 @@ export function adoptSessionCoverLetter(
     throw new ApplicationValidationError("Invalid cover-letter version timestamp");
   }
   const content = assertText(input.version.content, "coverLetterVersion.content", 50000);
+  if (input.cvReference !== undefined && input.cvReference !== null) {
+    validateApplicationCvReference(input.cvReference);
+  }
   if (application.documents.coverLetterVersions.some(
     (version) => version.versionId === input.version.versionId
   )) {
     throw new ApplicationValidationError("Duplicate cover-letter version ID");
   }
   const base = next(application, input.expectedVersion, input.version.createdAt);
+  const cvReference =
+    input.cvReference === undefined
+      ? base.documents.cvReference
+      : input.cvReference === null
+        ? undefined
+        : clone(input.cvReference);
   return {
     ...base,
     documents: {
@@ -185,6 +197,7 @@ export function adoptSessionCoverLetter(
         clone(input.version),
       ],
       documentStatus: content.trim() ? "draft" : base.documents.documentStatus,
+      cvReference,
     },
   };
 }
@@ -252,6 +265,9 @@ export function updateSessionApplication(
 ): SessionApplicationV1 {
   if (changes.notes !== undefined) assertText(changes.notes, "notes", 10000, true);
   if (changes.coverLetterDraft !== undefined) assertText(changes.coverLetterDraft, "coverLetterDraft", 50000, true);
+  if (changes.cvReference !== undefined && changes.cvReference !== null) {
+    validateApplicationCvReference(changes.cvReference);
+  }
   if (changes.applicationDate !== undefined && changes.applicationDate !== null) {
     if (!Number.isFinite(Date.parse(changes.applicationDate))) {
       throw new ApplicationValidationError("Invalid application date");

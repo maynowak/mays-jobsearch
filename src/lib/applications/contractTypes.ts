@@ -39,11 +39,15 @@ export interface ApplicationJobReferenceV1 {
   jobOrigin?: ApplicationJobOrigin;
 }
 
+export type ApplicationCvSource = "uploaded" | "builder";
+
 export interface ApplicationCvReferenceV1 {
   /** Existing CV domain/document reference only; no PDF bytes or hash. */
   cvId: OpaqueId;
   documentId?: OpaqueId;
   label?: string;
+  /** Missing on legacy references, which are treated as uploaded CVs. */
+  cvSource?: ApplicationCvSource;
 }
 
 export interface CoverLetterVersionV1 {

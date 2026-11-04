@@ -10,6 +10,7 @@ interface Props {
   profiles: CvBuilderProfileV1[];
   activeCvId?: string | null;
   canAdoptDraft?: boolean;
+  assignedCvIds?: string[];
   onCreate: () => void;
   onAdoptDraft?: () => void;
   onEdit: (cvId: string) => void;
@@ -32,6 +33,7 @@ export default function CvBuilderProfileList({
   profiles,
   activeCvId = null,
   canAdoptDraft = false,
+  assignedCvIds = [],
   onCreate,
   onAdoptDraft,
   onEdit,
@@ -181,6 +183,11 @@ export default function CvBuilderProfileList({
                 {deleteId === profile.cvId && (
                   <div className="cv-builder-profiles__confirm" role="alertdialog" aria-label={t("cvBuilder.profiles.delete")}>
                     <p>{t("cvBuilder.profiles.deleteConfirm", { name: profile.name })}</p>
+                    {assignedCvIds.includes(profile.cvId) && (
+                      <p className="cv-builder-profiles__warning" role="alert">
+                        {t("cvBuilder.profiles.deleteAssignedWarning")}
+                      </p>
+                    )}
                     <div className="cv-builder-profiles__actions">
                       <button type="button" className="letter-btn" onClick={confirmDelete}>
                         {t("cvBuilder.profiles.deleteYes")}

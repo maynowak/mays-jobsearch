@@ -3,6 +3,7 @@ import type {
   AddApplicationFeedbackInputV1,
   AddApplicationInterviewInputV1,
   AddApplicationNoteInputV1,
+  ApplicationCvReferenceV1,
   ApplicationDeletionReceiptV1,
   ApplicationExportV1,
   ApplicationStatus,
@@ -70,6 +71,7 @@ export interface SessionCreateInput {
 export interface SessionAdoptCoverLetterInput {
   expectedVersion: number;
   version: CoverLetterVersionV1;
+  cvReference?: ApplicationCvReferenceV1 | null;
   signal?: AbortSignal;
 }
 

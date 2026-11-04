@@ -7,6 +7,9 @@ import { createSessionApplication, transitionSessionStatus, type SessionApplicat
 import { createSessionApplicationRepository } from "../lib/applications/sessionRepository";
 import { ApplicationRepositoryError, type ApplicationRepository } from "../lib/applications/repositoryTypes";
 import type { ApplicationJobReferenceV1 } from "../lib/applications/contractTypes";
+import type { CvDocument } from "../types";
+import { createEmptyCvBuilderDraft } from "../lib/cvBuilder/contractTypes";
+import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
 
 const NOW = "2026-11-02T10:00:00.000Z";
 const job: ApplicationJobReferenceV1 = {
@@ -41,12 +44,42 @@ function submitted(): SessionApplicationV1 {
 function Harness({
   initial,
   onChanged,
+  cvDocuments = [],
+  cvBuilderProfiles = [],
+  onOpenCvProfile,
 }: {
   initial: SessionApplicationV1[];
   onChanged?: (applications: SessionApplicationV1[]) => void;
+  cvDocuments?: CvDocument[];
+  cvBuilderProfiles?: CvBuilderProfileV1[];
+  onOpenCvProfile?: (cvId: string) => void;
 }) {
   const [repository] = useState(() => createSessionApplicationRepository({ initial }));
-  return <ApplicationsSection repository={repository} onChanged={onChanged} />;
+  return (
+    <ApplicationsSection
+      repository={repository}
+      onChanged={onChanged}
+      cvDocuments={cvDocuments}
+      cvBuilderProfiles={cvBuilderProfiles}
+      onOpenCvProfile={onOpenCvProfile}
+    />
+  );
+}
+
+function makeBuilderProfile(): CvBuilderProfileV1 {
+  const cvData = createEmptyCvBuilderDraft();
+  cvData.profile = { headline: "Cloud Engineer" };
+  cvData.skills = ["AWS"];
+  return {
+    schemaVersion: 1,
+    cvId: "cvb-1",
+    name: "AWS Cloud Engineer",
+    cvData,
+    template: "classic",
+    createdAt: NOW,
+    updatedAt: NOW,
+    version: 1,
+  };
 }
 
 function renderSection(initial: SessionApplicationV1[] = [draft()]) {
@@ -160,6 +193,59 @@ describe("APP-02 ApplicationsSection", () => {
       expect(versionCount()).toHaveTextContent("1")
     );
     expect(screen.getAllByText("Entwurf").length).toBeGreaterThan(0);
+  });
+
+  it("shows builder CV origin and allows changing the assignment without a model call", async () => {
+    const builder = makeBuilderProfile();
+    const application = {
+      ...draft(),
+      documents: {
+        ...draft().documents,
+        cvReference: { cvId: builder.cvId, label: builder.name, cvSource: "builder" as const },
+      },
+    };
+    const onChanged = vi.fn();
+    const onOpenCvProfile = vi.fn();
+    render(
+      <LangProvider>
+        <Harness
+          initial={[application]}
+          onChanged={onChanged}
+          cvBuilderProfiles={[builder]}
+          onOpenCvProfile={onOpenCvProfile}
+        />
+      </LangProvider>
+    );
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    expect(screen.getByText("Meine erstellten Lebensläufe")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Zugeordneten Lebenslauf öffnen" }));
+    expect(onOpenCvProfile).toHaveBeenCalledWith(builder.cvId);
+
+    fireEvent.change(screen.getByLabelText("Zugeordneten Lebenslauf ändern"), {
+      target: { value: "none" },
+    });
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    const latest = onChanged.mock.calls.at(-1)?.[0] as SessionApplicationV1[];
+    expect(latest[0].documents.cvReference).toBeUndefined();
+    expect(latest[0].documents.coverLetterVersions).toHaveLength(0);
+  });
+
+  it("marks a deleted builder CV reference as unavailable without selecting a replacement", async () => {
+    const application = {
+      ...draft(),
+      documents: {
+        ...draft().documents,
+        cvReference: { cvId: "cvb-missing", label: "Deleted CV", cvSource: "builder" as const },
+      },
+    };
+    renderSection([application]);
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+
+    expect(
+      screen.getAllByText("Der zugeordnete Lebenslauf ist nicht mehr verfügbar. Wähle ausdrücklich einen anderen.")
+    ).toHaveLength(2);
+    expect(screen.getByLabelText("Zugeordneten Lebenslauf ändern")).toHaveValue("builder:cvb-missing");
   });
 
   it("records feedback, interview and note without changing the status", async () => {

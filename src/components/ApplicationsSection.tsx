@@ -5,7 +5,9 @@ import type {
   SessionApplicationV1,
 } from "../lib/applications/sessionApplications";
 import type { ApplicationRepository } from "../lib/applications/repositoryTypes";
-import type { Job, ModelOption } from "../types";
+import type { CvDocument, Job, ModelOption } from "../types";
+import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
+import { hasCvBuilderTextContent } from "../lib/cvBuilder/toAnonymizedText";
 import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
 import type {
   ApplicationFollowUpV1,
@@ -39,6 +41,9 @@ interface Props {
   onOpenLetter?: (job: Job) => void;
   isAuthenticated?: boolean;
   refreshToken?: number;
+  cvDocuments?: CvDocument[];
+  cvBuilderProfiles?: CvBuilderProfileV1[];
+  onOpenCvProfile?: (cvId: string) => void;
   navigationTarget?: {
     localId?: string | null;
     tab?: ApplicationTab;
@@ -129,6 +134,9 @@ export default function ApplicationsSection({
   onOpenLetter,
   isAuthenticated = false,
   refreshToken = 0,
+  cvDocuments = [],
+  cvBuilderProfiles = [],
+  onOpenCvProfile,
   navigationTarget = null,
 }: Props) {
   const { t, lang } = useLang();
@@ -513,6 +521,33 @@ export default function ApplicationsSection({
     });
   };
 
+  const handleCvReferenceChange = (value: string) => {
+    if (!selected) return;
+    let cvReference: SessionApplicationV1["documents"]["cvReference"] | null = null;
+    if (value.startsWith("builder:")) {
+      const cvId = value.slice("builder:".length);
+      const profile = cvBuilderProfiles.find((entry) => entry.cvId === cvId);
+      if (!profile) return;
+      cvReference = { cvId: profile.cvId, label: profile.name, cvSource: "builder" };
+    } else if (value.startsWith("uploaded:")) {
+      const cvId = value.slice("uploaded:".length);
+      const document = cvDocuments.find((entry) => entry.id === cvId);
+      if (!document) return;
+      cvReference = { cvId: document.id, label: document.name, cvSource: "uploaded" };
+    } else if (value !== "none") {
+      return;
+    }
+    void run(async (signal, current) => {
+      const updated = await repository.update(selected.localId, {
+        expectedVersion: selected.version,
+        changes: { cvReference },
+        signal,
+      });
+      if (!current()) return;
+      replace(updated);
+    });
+  };
+
   const handleFeedback = () => {
     if (!selected || !feedback.trim()) return;
     void run(async (signal, current) => {
@@ -813,6 +848,27 @@ export default function ApplicationsSection({
     setManualDescriptionTarget(null);
     if (onOpenLetter) onOpenLetter(job);
   };
+
+  const selectedCvReference = selected?.documents.cvReference ?? null;
+  const selectedCvSource = selectedCvReference?.cvSource ?? "uploaded";
+  const selectedBuilderCv =
+    selectedCvReference && selectedCvSource === "builder"
+      ? cvBuilderProfiles.find((profile) => profile.cvId === selectedCvReference.cvId) ?? null
+      : null;
+  const selectedUploadedCv =
+    selectedCvReference && selectedCvSource === "uploaded"
+      ? cvDocuments.find((document) => document.id === selectedCvReference.cvId) ?? null
+      : null;
+  const selectedCvAvailable = selectedCvReference
+    ? selectedCvSource === "builder"
+      ? Boolean(selectedBuilderCv && hasCvBuilderTextContent(selectedBuilderCv.cvData))
+      : Boolean(selectedUploadedCv)
+    : true;
+  const selectedCvValue = selectedCvReference
+    ? selectedCvSource === "builder"
+      ? `builder:${selectedCvReference.cvId}`
+      : `uploaded:${selectedCvReference.cvId}`
+    : "none";
 
   return (
     <section className="applications-section" aria-labelledby="applications-title">
@@ -1274,7 +1330,74 @@ export default function ApplicationsSection({
                   <section className="applications-block">
                     <h4>{t("applications.section.documents")}</h4>
                     <p><strong>{t("applications.documentStatus")}:</strong> {t(`applications.documentStatus.${selected.documents.documentStatus}`)}</p>
-                    <p><strong>{t("applications.cvReference")}:</strong> {selected.documents.cvReference?.label || selected.documents.cvReference?.cvId || "-"}</p>
+                    <p>
+                      <strong>{t("applications.cvReference")}:</strong>{" "}
+                      {selectedCvReference?.label || selectedCvReference?.cvId || "-"}
+                    </p>
+                    <p>
+                      <strong>{t("applications.cvSource")}:</strong>{" "}
+                      {selectedCvReference
+                        ? t(
+                            selectedCvSource === "builder"
+                              ? "applications.cvSource.builder"
+                              : "applications.cvSource.uploaded"
+                          )
+                        : "-"}
+                    </p>
+                    {selectedCvReference && !selectedCvAvailable && (
+                      <p className="applications-session-note" role="alert">
+                        {t("applications.cvReferenceUnavailable")}
+                      </p>
+                    )}
+                    {selectedBuilderCv && onOpenCvProfile && (
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => onOpenCvProfile(selectedBuilderCv.cvId)}
+                      >
+                        {t("applications.openCvProfile")}
+                      </button>
+                    )}
+                    <label className="applications-field">
+                      <span>{t("applications.changeCvReference")}</span>
+                      <select
+                        value={selectedCvValue}
+                        onChange={(event) => handleCvReferenceChange(event.target.value)}
+                        disabled={busy}
+                      >
+                        <option value="none">{t("applications.cvNone")}</option>
+                        {selectedCvReference && !selectedCvAvailable && (
+                          <option value={selectedCvValue}>
+                            {t("applications.cvReferenceUnavailable")}
+                          </option>
+                        )}
+                        {cvDocuments.length > 0 && (
+                          <optgroup label={t("applications.cvSource.uploaded")}>
+                            {cvDocuments.map((document) => (
+                              <option key={`uploaded:${document.id}`} value={`uploaded:${document.id}`}>
+                                {document.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        {cvBuilderProfiles.length > 0 && (
+                          <optgroup label={t("applications.cvSource.builder")}>
+                            {cvBuilderProfiles.map((profile) => (
+                              <option
+                                key={`builder:${profile.cvId}`}
+                                value={`builder:${profile.cvId}`}
+                                disabled={!hasCvBuilderTextContent(profile.cvData)}
+                              >
+                                {profile.name}
+                                {hasCvBuilderTextContent(profile.cvData)
+                                  ? ""
+                                  : ` — ${t("applications.cvNotUsable")}`}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                    </label>
                     <details ref={draftDetailsRef}>
                       <summary>{t("applications.coverLetterDraft")}</summary>
                       <pre className="applications-cover-letter">{selected.documents.coverLetterDraft || "-"}</pre>

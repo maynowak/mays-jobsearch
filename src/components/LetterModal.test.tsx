@@ -8,6 +8,8 @@ import { resetCvProfileLists, saveCvAtsProfile, saveCvSearchProfile } from "../l
 import { extractPdfText } from "../lib/pdf";
 import { anonymizeText } from "../lib/anonymize";
 import type { CvDocument, Job, Profile } from "../types";
+import { createEmptyCvBuilderDraft } from "../lib/cvBuilder/contractTypes";
+import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
 
 vi.mock("../api", () => ({
   generateCoverLetter: vi.fn(),
@@ -53,6 +55,34 @@ function makeCv(overrides: Partial<CvDocument> = {}): CvDocument {
     size: 1024,
     selected: false,
     file: new File(["synthetic"], "my-cv.pdf", { type: "application/pdf" }),
+    ...overrides,
+  };
+}
+
+function makeBuilderProfile(
+  overrides: Partial<CvBuilderProfileV1> = {}
+): CvBuilderProfileV1 {
+  const cvData = createEmptyCvBuilderDraft();
+  cvData.personal = {
+    fullName: "Ada Beispiel",
+    email: "ada@example.invalid",
+    phone: "+49 30 123456",
+    location: "Berlin",
+  };
+  cvData.profile = {
+    headline: "Senior Frontend Engineer",
+    summary: "Ada Beispiel entwickelt React-Anwendungen.",
+  };
+  cvData.skills = ["React", "TypeScript"];
+  return {
+    schemaVersion: 1,
+    cvId: "cvb-1",
+    name: "AWS Cloud Engineer",
+    cvData,
+    template: "classic",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    version: 1,
     ...overrides,
   };
 }
@@ -135,6 +165,80 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(screen.getByLabelText(/my-cv\.pdf/)).not.toBeChecked();
     expect(screen.getByText("Hochgeladen — noch nicht verarbeitet")).toBeInTheDocument();
     expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("offers builder CVs without auto-selecting them", () => {
+    const builder = makeBuilderProfile();
+    renderModal({
+      cvBuilderProfiles: [builder],
+      resolveCvBuilderProfile: () => builder,
+    });
+
+    expect(screen.getByText("Meine erstellten Lebensläufe")).toBeInTheDocument();
+    expect(screen.getByLabelText(/AWS Cloud Engineer/)).not.toBeChecked();
+    expect(withModelFallback).not.toHaveBeenCalled();
+  });
+
+  it("uses only professional builder CV data and sends no contact details", async () => {
+    const builder = makeBuilderProfile();
+    renderModal({
+      cvBuilderProfiles: [builder],
+      resolveCvBuilderProfile: () => builder,
+    });
+
+    fireEvent.click(screen.getByLabelText(/AWS Cloud Engineer/));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+
+    expect(generateCoverLetter).toHaveBeenCalledTimes(1);
+    const [request] = vi.mocked(generateCoverLetter).mock.calls[0];
+    expect(request.candidate.cv_text).toContain("Senior Frontend Engineer");
+    expect(request.candidate.cv_text).toContain("React, TypeScript");
+    expect(request.candidate.cv_text).not.toContain("Ada Beispiel");
+    expect(request.candidate.cv_text).not.toContain("ada@example.invalid");
+    expect(request.candidate.cv_text).not.toContain("+49 30 123456");
+    expect(request.candidate.cv_anonymized).toBe(true);
+  });
+
+  it("blocks generation when the selected builder CV disappears", () => {
+    const builder = makeBuilderProfile();
+    renderModal({
+      cvBuilderProfiles: [builder],
+      resolveCvBuilderProfile: () => null,
+    });
+
+    fireEvent.click(screen.getByLabelText(/AWS Cloud Engineer/));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+
+    expect(generateCoverLetter).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Der gewählte Lebenslauf ist nicht mehr verfügbar. Wähle ausdrücklich einen anderen.")
+    ).toBeInTheDocument();
+  });
+
+  it("passes a builder CV reference into the local application draft", async () => {
+    const builder = makeBuilderProfile();
+    const onAdoptAsApplication = vi.fn().mockResolvedValue("created");
+    renderModal({
+      cvBuilderProfiles: [builder],
+      resolveCvBuilderProfile: () => builder,
+      onAdoptAsApplication,
+    });
+
+    fireEvent.click(screen.getByLabelText(/AWS Cloud Engineer/));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.click(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }));
+
+    expect(onAdoptAsApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cvReference: {
+          cvId: builder.cvId,
+          label: builder.name,
+          cvSource: "builder",
+        },
+      })
+    );
   });
 
   it("shows processed CV profile information without auto-selecting it", () => {
@@ -558,7 +662,7 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
 
     expect(onAdoptAsApplication).toHaveBeenCalledWith(
       expect.objectContaining({
-        cvReference: { cvId: cv.id, label: cv.name },
+        cvReference: { cvId: cv.id, label: cv.name, cvSource: "uploaded" },
       })
     );
   });

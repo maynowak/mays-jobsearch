@@ -101,6 +101,8 @@ interface ApplicationDocumentsV1 {
     cvId: string;          // existing CV domain/document reference
     documentId?: string;   // existing secure document reference
     label?: string;
+    // Missing on legacy references; treat as "uploaded".
+    cvSource?: "uploaded" | "builder";
   };
   documentStatus: "missing" | "draft" | "ready";
 }
