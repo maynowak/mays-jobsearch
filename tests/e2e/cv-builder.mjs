@@ -92,7 +92,7 @@ async function openBuilderFromProfile(page) {
   await page.goto(`${base}/profil`, { waitUntil: "networkidle" });
   await page.waitForSelector(".dashboard-v2");
   await page.getByRole("button", { name: "Lebenslauf" }).click();
-  await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
+  await page.getByRole("button", { name: "Lebenslauf erstellen", exact: true }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
 }
 
@@ -193,18 +193,7 @@ async function runGuest(browser) {
     fullPage: false,
   });
 
-  // Normal close/reopen: App state must keep the structured draft in memory.
-  await builderDialog(page).getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
-  await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
-  if ((await builderDialog(page).getByLabel("Vollständiger Name").inputValue()) !== "Alex Beispiel") {
-    throw new Error("draft was not retained after closing and reopening the editor");
-  }
-  await builderDialog(page).getByRole("button", { name: "Schließen", exact: true }).click();
-
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
-  await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   await checkNoOverflow(page, "mobile-390");
   await openSection(page, "Persönliche Angaben");
   await page.screenshot({ path: resolve(evidenceDir, "mobile-390-editor.png"), fullPage: false });
@@ -242,6 +231,10 @@ async function runGuest(browser) {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await builderDialog(page).getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.getByRole("heading", { name: "Ungespeicherte Änderungen" }).waitFor();
+  await page.getByRole("button", { name: "Weiter bearbeiten" }).click();
+  await builderDialog(page).getByRole("button", { name: "Lebenslauf speichern" }).click();
+  await builderDialog(page).getByRole("button", { name: "Schließen", exact: true }).click();
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("tab", { name: "Lebenslauf hochladen" }).click();
   await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
@@ -259,9 +252,13 @@ async function runAuthenticated(browser) {
   await openBuilderFromProfile(page);
   await fillPersonal(page);
   await builderDialog(page).getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
+  await page.getByRole("heading", { name: "Ungespeicherte Änderungen" }).waitFor();
+  await page.getByRole("button", { name: "Speichern und schließen" }).click();
+  await page.getByText("Lebenslauf 1").waitFor();
+  await page.locator(".cv-builder-profiles__item").first()
+    .getByRole("button", { name: "Bearbeiten" }).click();
   if ((await builderDialog(page).getByLabel("Vollständiger Name").inputValue()) !== "Alex Beispiel") {
-    throw new Error("authenticated draft was not retained");
+    throw new Error("authenticated CV profile was not retained");
   }
   await context.close();
   return { consoleErrors };

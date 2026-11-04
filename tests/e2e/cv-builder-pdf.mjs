@@ -54,9 +54,9 @@ async function waitForServer(timeoutMs = 30000) {
   throw new Error("Vite did not become ready");
 }
 
-async function prepareContext(browser) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "de-DE" });
-  await context.addInitScript(() => localStorage.setItem("mj-lang", "de"));
+async function prepareContext(browser, lang = "de") {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: lang === "de" ? "de-DE" : "en-GB" });
+  await context.addInitScript((lang) => localStorage.setItem("mj-lang", lang), lang);
   const page = await context.newPage();
   const consoleErrors = [];
   const apiRequests = [];
@@ -304,30 +304,8 @@ async function run(browser) {
   outputs.mobile = { pages: mobile.pages, bytes: mobile.bytes, filename: mobile.filename };
 
   await dialog(page).getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.getByRole("button", { name: "EN", exact: true }).click();
-  await page.getByRole("button", { name: "Create CV" }).click();
-  await page.getByRole("heading", { name: "Structured CV editor" }).waitFor();
-  const englishPath = resolve(evidenceDir, "JM-CV-BUILDER-01C-en.pdf");
-  const english = await downloadPdf(
-    page,
-    "Modern",
-    englishPath,
-    "Download as PDF",
-    "PDF created."
-  );
-  assertContent("english-modern", english, [
-    "Professional profile",
-    "Work experience",
-    "Education",
-    "Skills",
-    "Projects",
-    "Certificates",
-    "Languages",
-    "Present",
-    "Zoë Beispiel-Ćurić",
-  ]);
-  outputs.english = { pages: english.pages, bytes: english.bytes, filename: english.filename };
+  await page.getByRole("heading", { name: "Ungespeicherte Änderungen" }).waitFor();
+  await page.getByRole("button", { name: "Verwerfen und schließen" }).click();
 
   const cookies = await context.cookies();
   if (cookies.length > 0) throw new Error(`guest export created cookies: ${cookies.map((cookie) => cookie.name).join(",")}`);
@@ -340,12 +318,44 @@ async function run(browser) {
   return { status: "PASS", outputs, apiRequests, consoleErrors };
 }
 
+async function runEnglish(browser) {
+  const { context, page, consoleErrors, apiRequests } = await prepareContext(browser, "en");
+  await page.goto(`${base}/search`, { waitUntil: "networkidle" });
+  await page.getByRole("tab", { name: "Upload CV" }).click();
+  await page.getByRole("button", { name: "Create CV" }).click();
+  await page.getByRole("heading", { name: "Structured CV editor" }).waitFor();
+  const englishDialog = page.getByRole("dialog", { name: "Structured CV editor" });
+  await englishDialog.locator("summary span").filter({ hasText: "Personal details" }).first().click();
+  await englishDialog.getByLabel("Full name").fill("English User");
+  await englishDialog.getByLabel("Email").fill("english@example.invalid");
+  await englishDialog.locator("summary span").filter({ hasText: "Professional profile" }).first().click();
+  await englishDialog.getByLabel("Professional title").fill("Engineer");
+  await englishDialog.getByLabel("Short profile").fill("Accessible frontend systems and cloud architecture.");
+
+  const englishPath = resolve(evidenceDir, "JM-CV-BUILDER-01C-en.pdf");
+  const english = await downloadPdf(
+    page,
+    "Modern",
+    englishPath,
+    "Download as PDF",
+    "PDF created.",
+    "Lebenslauf-English-User.pdf"
+  );
+  assertContent("english-modern", english, ["English User", "Professional profile", "Engineer"]);
+  if (apiRequests.some((path) => path !== "/api/models")) {
+    throw new Error(`english: unexpected API requests: ${apiRequests.join(", ")}`);
+  }
+  if (consoleErrors.length > 0) throw new Error(`english console errors: ${consoleErrors.join(" | ")}`);
+  await context.close();
+  return { pages: english.pages, bytes: english.bytes, filename: english.filename };
+}
+
 async function runAuthenticated(browser) {
   const { context, page, consoleErrors, apiRequests } = await prepareAuthenticatedContext(browser);
   await page.goto(`${base}/profil`, { waitUntil: "networkidle" });
   await page.waitForSelector(".dashboard-v2");
   await page.getByRole("button", { name: "Lebenslauf" }).click();
-  await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
+  await page.getByRole("button", { name: "Lebenslauf erstellen", exact: true }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   await openSection(page, "Persönliche Angaben");
   await dialog(page).getByLabel("Vollständiger Name").fill("Auth Nutzer");
@@ -379,8 +389,9 @@ try {
   await waitForServer();
   browser = await playwright.chromium.launch();
   const guest = await run(browser);
+  const english = await runEnglish(browser);
   const authenticated = await runAuthenticated(browser);
-  console.log(JSON.stringify({ ...guest, authenticated }, null, 2));
+  console.log(JSON.stringify({ ...guest, english, authenticated }, null, 2));
 } finally {
   if (browser) await browser.close();
   try {

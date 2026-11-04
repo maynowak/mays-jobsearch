@@ -5,6 +5,7 @@ import { PDFDocument } from "pdf-lib";
 import {
   createCvBuilderPdf,
   cvBuilderFileName,
+  cvBuilderProfileFileName,
 } from "./pdfExport";
 import { createEmptyCvBuilderDraft, type CvBuilderDraftV1 } from "./contractTypes";
 
@@ -158,5 +159,7 @@ describe("CV-BUILDER-01C PDF export", () => {
     const draft = createEmptyCvBuilderDraft();
     draft.personal.fullName = '../Zoë: Beispiel?';
     expect(cvBuilderFileName(draft)).toBe("Lebenslauf-Zoe-Beispiel.pdf");
+    expect(cvBuilderProfileFileName('../Zoë: Beispiel?')).toBe("Lebenslauf-Zoe-Beispiel.pdf");
+    expect(cvBuilderProfileFileName('   ')).toBe("Lebenslauf.pdf");
   });
 });

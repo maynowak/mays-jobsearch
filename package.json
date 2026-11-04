@@ -12,6 +12,7 @@
     "test:e2e:cover-letter": "node tests/e2e/cover-letter-entry.mjs",
     "test:e2e:direct-cover-letter": "node tests/e2e/direct-cover-letter.mjs",
     "test:e2e:manual-application-draft": "node tests/e2e/manual-application-draft.mjs",
+    "test:e2e:cv-management-02b": "node tests/e2e/cv-management-02b.mjs",
     "test:e2e:mobile-nav": "node tests/e2e/mobile-nav.mjs",
     "test:e2e:applications": "node tests/e2e/applications-dashboard.mjs",
     "test:e2e:cv-builder": "node tests/e2e/cv-builder.mjs",
