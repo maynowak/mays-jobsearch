@@ -144,6 +144,9 @@ export default function ApplicationsSection({
     documents: null,
     history: null,
   });
+  const overviewHeadingRef = useRef<HTMLHeadingElement>(null);
+  const applicationsListRef = useRef<HTMLUListElement>(null);
+  const draftDetailsRef = useRef<HTMLDetailsElement>(null);
   const mountedRef = useRef(true);
   const applicationsRef = useRef<SessionApplicationV1[]>([]);
   const repositoryRef = useRef(repository);
@@ -381,6 +384,43 @@ export default function ApplicationsSection({
     setActiveTab(tab);
     setError("");
     return true;
+  };
+
+  const scrollToTarget = (target: HTMLElement | null) => {
+    if (!target) return;
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  };
+
+  const handleNavigateToOverview = () => {
+    if (!selectTab("overview")) return;
+    requestAnimationFrame(() => {
+      scrollToTarget(overviewHeadingRef.current);
+      overviewHeadingRef.current?.focus({ preventScroll: true });
+    });
+  };
+
+  const handleShowApplicationList = () => {
+    requestAnimationFrame(() => {
+      const list = applicationsListRef.current;
+      scrollToTarget(list);
+      list?.querySelector<HTMLButtonElement>(".applications-list__item--active")?.focus({
+        preventScroll: true,
+      });
+    });
+  };
+
+  const handleOpenDraft = () => {
+    if (!selectTab("documents")) return;
+    requestAnimationFrame(() => {
+      const details = draftDetailsRef.current;
+      if (!details) return;
+      details.open = true;
+      scrollToTarget(details);
+      details.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true });
+    });
   };
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: ApplicationTab) => {
@@ -788,7 +828,7 @@ export default function ApplicationsSection({
         </div>
       ) : (
         <div className="applications-layout">
-          <ul className="applications-list" aria-label={t("applications.listAria")}>
+          <ul ref={applicationsListRef} className="applications-list" aria-label={t("applications.listAria")}>
             {visible.length === 0 ? <li className="applications-empty">{t("applications.noFilterResults")}</li> : visible.map((application) => (
               <li key={application.localId}>
                 <ApplicationCard
@@ -804,7 +844,7 @@ export default function ApplicationsSection({
             <article className="applications-detail" aria-label={t("applications.detailAria")}>
               <div className="applications-detail__head">
                 <div>
-                  <h3>{selected.job.title}</h3>
+                  <h3 ref={overviewHeadingRef} tabIndex={-1}>{selected.job.title}</h3>
                   <p>{selected.job.companyName} · {selected.job.location.join(", ") || "-"}</p>
                 </div>
                 <div className="applications-detail__actions">
@@ -1077,7 +1117,7 @@ export default function ApplicationsSection({
                     <h4>{t("applications.section.documents")}</h4>
                     <p><strong>{t("applications.documentStatus")}:</strong> {t(`applications.documentStatus.${selected.documents.documentStatus}`)}</p>
                     <p><strong>{t("applications.cvReference")}:</strong> {selected.documents.cvReference?.label || selected.documents.cvReference?.cvId || "-"}</p>
-                    <details>
+                    <details ref={draftDetailsRef}>
                       <summary>{t("applications.coverLetterDraft")}</summary>
                       <pre className="applications-cover-letter">{selected.documents.coverLetterDraft || "-"}</pre>
                     </details>
@@ -1107,6 +1147,9 @@ export default function ApplicationsSection({
                     onSaveVersion={handleSaveLetterVersion}
                     onAdoptDraft={handleAdoptLetterDraft}
                     onDirtyChange={setLetterDirty}
+                    onNavigateToOverview={handleNavigateToOverview}
+                    onShowApplicationList={handleShowApplicationList}
+                    onOpenDraft={handleOpenDraft}
                   />
 
                   <section className="applications-block">

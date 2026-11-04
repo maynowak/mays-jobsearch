@@ -17,6 +17,7 @@ const ux05cEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-M
 const letterRevisionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01A");
 const letterImprovementEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01B");
 const letterOptionsEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-OPTIONS-01");
+const letterNavEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-NAV-02");
 const letterDiffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01C");
 const letterAdoptionEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-APPLICATION-LETTER-REVISION-01D");
 const profileHandoffEvidenceDir = resolve(repoRoot, "docs/reports/assets/JM-COVER-LETTER-PROFILE-HANDOFF-01");
@@ -387,6 +388,7 @@ async function runViewport(browser, name, viewport) {
   // LETTER-REVISION-01B: explicit, consent-gated AI improvement preview.
   await mkdir(letterImprovementEvidenceDir, { recursive: true });
   await mkdir(letterOptionsEvidenceDir, { recursive: true });
+  await mkdir(letterNavEvidenceDir, { recursive: true });
   const improvement = page.locator(".applications-letter-improvement");
   await improvement.scrollIntoViewIfNeeded();
   await page.getByLabel("Sprache des Anschreibens").selectOption("English");
@@ -444,25 +446,42 @@ async function runViewport(browser, name, viewport) {
   await mkdir(letterAdoptionEvidenceDir, { recursive: true });
   await page.getByRole("button", { name: "Als neue Version speichern" }).click();
   await page.getByText("Version 3 gespeichert.", { exact: true }).waitFor();
+  await page.getByText("Anschreiben-Version erfolgreich gespeichert.").waitFor();
   await page.getByText("Version 3 gespeichert.", { exact: true }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: resolve(letterNavEvidenceDir, `${name}-saved-actions.png`), fullPage: false });
   await page.waitForFunction(() => {
     const select = document.querySelector(".applications-letter-comparison select");
     return select instanceof HTMLSelectElement && select.options.length === 4;
   });
   await page.screenshot({ path: resolve(letterAdoptionEvidenceDir, `${name}-saved.png`), fullPage: false });
+  await page.getByRole("button", { name: "Version vergleichen" }).click();
+  const comparisonValue = await page.getByLabel("Vergleichsversion").inputValue();
+  if (comparisonValue === "current") throw new Error(`${name}: saved version was not selected for comparison`);
+  await page.waitForFunction(() => document.activeElement?.tagName === "SELECT");
   await page.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" }).click();
   await page.getByText(/Den aktuellen Anschreibenentwurf durch diese Version ersetzen/).waitFor();
   await page.getByText(/Den aktuellen Anschreibenentwurf durch diese Version ersetzen/).scrollIntoViewIfNeeded();
   await page.screenshot({ path: resolve(letterAdoptionEvidenceDir, `${name}-adopt-confirm.png`), fullPage: false });
   await page.getByRole("button", { name: "Ja, Entwurf ersetzen" }).click();
   await page.getByText("Version als aktueller Entwurf übernommen.").waitFor();
+  await page.getByText("Aktueller Anschreibenentwurf wurde aktualisiert.").waitFor();
   await page.getByText("Version als aktueller Entwurf übernommen.").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: resolve(letterNavEvidenceDir, `${name}-adopted-actions.png`), fullPage: false });
   await page.screenshot({ path: resolve(letterAdoptionEvidenceDir, `${name}-adopted.png`), fullPage: false });
   await assertNoNavOverlap(page);
   await checkImprovementResponsive(page, viewport);
-  await page.getByRole("button", { name: "Vorschlag verwerfen" }).click();
-  await page.getByRole("textbox", { name: "KI-Vorschlag bearbeiten", exact: true }).waitFor({ state: "detached" });
-  await page.getByRole("tab", { name: "Übersicht" }).click();
+  await page.getByRole("button", { name: "Alle Bewerbungen anzeigen" }).click();
+  await page.waitForFunction(() =>
+    document.activeElement?.classList.contains("applications-list__item")
+  );
+  await page.getByRole("button", { name: "Entwurf öffnen" }).click();
+  await page.waitForFunction(() => document.activeElement?.tagName === "SUMMARY");
+  await page.getByRole("button", { name: "Zur Bewerbungsübersicht" }).click();
+  await page.getByRole("tab", { name: "Übersicht" }).waitFor();
+  if ((await page.getByRole("tab", { name: "Übersicht" }).getAttribute("aria-selected")) !== "true") {
+    throw new Error(`${name}: overview navigation did not activate the overview tab`);
+  }
+  await page.waitForFunction(() => document.activeElement?.tagName === "H3");
 
   await page.getByRole("button", { name: "Beworben / Antwort ausstehend" }).click();
   await page.getByText("Hast du diese Bewerbung tatsächlich abgeschickt?").waitFor();

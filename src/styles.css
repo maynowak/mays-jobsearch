@@ -10238,6 +10238,35 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   align-items: center;
 }
 
+.applications-letter-improvement__success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.applications-letter-improvement__success-title {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.applications-letter-improvement__success-actions .letter-btn,
+.applications-letter-improvement__success-actions .btn-ghost {
+  min-height: 44px;
+}
+
+.applications-detail__head h3:focus-visible,
+.applications-detail__head h3:focus {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 .applications-letter-improvement__preview {
   display: flex;
   flex-direction: column;

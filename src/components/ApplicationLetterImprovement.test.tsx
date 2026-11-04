@@ -65,6 +65,9 @@ function renderComparison(
   callbacks: {
     onSaveVersion?: (version: Parameters<NonNullable<React.ComponentProps<typeof ApplicationLetterComparison>["onSaveVersion"]>>[0]) => Promise<SessionApplicationV1>;
     onAdoptDraft?: (content: string) => Promise<SessionApplicationV1>;
+    onOpenDraft?: () => void;
+    onNavigateToOverview?: () => void;
+    onShowApplicationList?: () => void;
   } = {}
 ) {
   return render(
@@ -228,7 +231,13 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
       documents: { ...application.documents, coverLetterVersions: [...application.documents.coverLetterVersions, nextVersion] },
       version: application.version + 1,
     }));
-    const view = renderComparison(application, { onSaveVersion });
+    const onNavigateToOverview = vi.fn();
+    const onShowApplicationList = vi.fn();
+    const view = renderComparison(application, {
+      onSaveVersion,
+      onNavigateToOverview,
+      onShowApplicationList,
+    });
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "Verbesserung vorschlagen" }));
     const editor = await screen.findByRole("textbox", { name: "KI-Vorschlag bearbeiten" });
@@ -244,12 +253,30 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     expect(saved.versionId).not.toBe("v1");
     expect(application.documents.coverLetterVersions).toHaveLength(1);
     expect(application.documents.coverLetterVersions[0].content).toBe("Version one");
+    const updated = await onSaveVersion.mock.results[0].value;
     view.rerender(
       <LangProvider>
-        <ApplicationLetterComparison application={await onSaveVersion.mock.results[0].value} models={models} defaultModel="model-a" recommendedModel="model-a" onSaveVersion={onSaveVersion} />
+        <ApplicationLetterComparison
+          application={updated}
+          models={models}
+          defaultModel="model-a"
+          recommendedModel="model-a"
+          onSaveVersion={onSaveVersion}
+          onNavigateToOverview={onNavigateToOverview}
+          onShowApplicationList={onShowApplicationList}
+        />
       </LangProvider>
     );
+    expect(screen.getByText("Anschreiben-Version erfolgreich gespeichert.")).toBeInTheDocument();
     expect(screen.getAllByRole("option", { name: /Version 2/ }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Version vergleichen" }));
+    await waitFor(() =>
+      expect((screen.getByLabelText("Vergleichsversion") as HTMLSelectElement).value).toBe(saved.versionId)
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Zur Bewerbungsübersicht" }));
+    expect(onNavigateToOverview).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Alle Bewerbungen anzeigen" }));
+    expect(onShowApplicationList).toHaveBeenCalledTimes(1);
   });
 
   it("requires confirmation before adopting a version as the current draft", async () => {
@@ -259,7 +286,8 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
       documents: { ...application.documents, coverLetterDraft: content, documentStatus: "draft" as const },
       version: application.version + 1,
     }));
-    renderComparison(application, { onAdoptDraft });
+    const onOpenDraft = vi.fn();
+    renderComparison(application, { onAdoptDraft, onOpenDraft });
     fireEvent.click(screen.getByRole("button", { name: "Als aktuellen Entwurf übernehmen" }));
     expect(screen.getByText(/Den aktuellen Anschreibenentwurf durch diese Version ersetzen/)).toBeInTheDocument();
     expect(onAdoptDraft).not.toHaveBeenCalled();
@@ -270,6 +298,9 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     const adoptedStatus = await screen.findByText("Version als aktueller Entwurf übernommen.");
     await waitFor(() => expect(adoptedStatus).toHaveFocus());
     expect(onAdoptDraft).toHaveBeenCalledWith("Version one");
+    expect(screen.getByText("Aktueller Anschreibenentwurf wurde aktualisiert.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Entwurf öffnen" }));
+    expect(onOpenDraft).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the proposal on a save conflict and does not issue a second save", async () => {
@@ -285,6 +316,7 @@ describe("LETTER-REVISION-01B AI improvement preview", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/zwischenzeitlich geändert/i);
     expect(editor).toHaveValue("IMPROVED LETTER");
     expect(onSaveVersion).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Anschreiben-Version erfolgreich gespeichert.")).toBeNull();
   });
 
   it("reports unsaved proposal state to the parent navigation guard", async () => {

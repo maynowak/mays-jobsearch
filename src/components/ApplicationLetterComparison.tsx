@@ -32,6 +32,9 @@ interface Props {
   onSaveVersion?: (version: CoverLetterVersionV1) => Promise<SessionApplicationV1>;
   onAdoptDraft?: (content: string) => Promise<SessionApplicationV1>;
   onDirtyChange?: (dirty: boolean) => void;
+  onNavigateToOverview?: () => void;
+  onShowApplicationList?: () => void;
+  onOpenDraft?: () => void;
 }
 
 interface Improvement {
@@ -78,6 +81,9 @@ export default function ApplicationLetterComparison({
   onSaveVersion,
   onAdoptDraft,
   onDirtyChange,
+  onNavigateToOverview,
+  onShowApplicationList,
+  onOpenDraft,
 }: Props) {
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
@@ -105,6 +111,8 @@ export default function ApplicationLetterComparison({
   const [adoptConfirm, setAdoptConfirm] = useState<string | null>(null);
   const [savedContent, setSavedContent] = useState<string | null>(null);
   const [savedVersionNumber, setSavedVersionNumber] = useState<number | null>(null);
+  const [savedVersionId, setSavedVersionId] = useState<string | null>(null);
+  const [successAction, setSuccessAction] = useState<"saved" | "adopted" | null>(null);
   const requestSeqRef = useRef(0);
   const actionSeqRef = useRef(0);
   const savingRef = useRef(false);
@@ -116,6 +124,8 @@ export default function ApplicationLetterComparison({
   const adoptConfirmRef = useRef<HTMLButtonElement>(null);
   const adoptTriggerRef = useRef<HTMLButtonElement>(null);
   const restoreAdoptFocusRef = useRef(false);
+  const comparisonRef = useRef<HTMLElement>(null);
+  const toSelectRef = useRef<HTMLSelectElement>(null);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
   const appIdRef = useRef(application.localId);
@@ -144,6 +154,8 @@ export default function ApplicationLetterComparison({
     setAdoptConfirm(null);
     setSavedContent(null);
     setSavedVersionNumber(null);
+    setSavedVersionId(null);
+    setSuccessAction(null);
   }, [application.localId]);
 
   useEffect(() => {
@@ -167,6 +179,8 @@ export default function ApplicationLetterComparison({
     setAdoptConfirm(null);
     setSavedContent(null);
     setSavedVersionNumber(null);
+    setSavedVersionId(null);
+    setSuccessAction(null);
   }, [fromId]);
 
   useEffect(() => {
@@ -180,6 +194,8 @@ export default function ApplicationLetterComparison({
     setActionError("");
     setSavedContent(null);
     setSavedVersionNumber(null);
+    setSavedVersionId(null);
+    setSuccessAction(null);
   }, [model]);
 
   useEffect(() => {
@@ -200,6 +216,8 @@ export default function ApplicationLetterComparison({
     setActionError("");
     setSavedContent(null);
     setSavedVersionNumber(null);
+    setSavedVersionId(null);
+    setSuccessAction(null);
   }, [letterLanguage, letterLength, letterStyle]);
 
   useEffect(() => {
@@ -281,16 +299,19 @@ export default function ApplicationLetterComparison({
     setSaving(true);
     setActionError("");
     setActionMessage("");
+    setSuccessAction(null);
+    setSavedVersionId(null);
+    const nextVersion: CoverLetterVersionV1 = {
+      versionId: localVersionId(),
+      jobId: application.job.jobId,
+      createdAt: new Date().toISOString(),
+      content,
+      source: "revised",
+      language: letterLanguage === "German" ? "de" : "en",
+      ...(improvement.model ? { model: improvement.model } : {}),
+    };
     try {
-      const updated = await onSaveVersion({
-        versionId: localVersionId(),
-        jobId: application.job.jobId,
-        createdAt: new Date().toISOString(),
-        content,
-        source: "revised",
-        language: letterLanguage === "German" ? "de" : "en",
-        ...(improvement.model ? { model: improvement.model } : {}),
-      });
+      const updated = await onSaveVersion(nextVersion);
       if (
         !mountedRef.current ||
         actionSeqRef.current !== requestSeq ||
@@ -301,6 +322,8 @@ export default function ApplicationLetterComparison({
       const number = updated.documents.coverLetterVersions.length;
       setSavedContent(content);
       setSavedVersionNumber(number);
+      setSavedVersionId(nextVersion.versionId);
+      setSuccessAction("saved");
       setActionMessage(t("letter.improve.saved", { number }));
       setToId(updated.documents.coverLetterVersions.at(-1)?.versionId ?? "current");
     } catch (err) {
@@ -330,6 +353,8 @@ export default function ApplicationLetterComparison({
     setAdopting(true);
     setActionError("");
     setActionMessage("");
+    setSuccessAction(null);
+    setSavedVersionId(null);
     try {
       await onAdoptDraft(version.content);
       if (
@@ -340,6 +365,7 @@ export default function ApplicationLetterComparison({
         return;
       }
       setActionMessage(t("letter.improve.adopted"));
+      setSuccessAction("adopted");
       restoreAdoptFocusRef.current = false;
       setAdoptConfirm(null);
     } catch (err) {
@@ -449,6 +475,8 @@ export default function ApplicationLetterComparison({
     inFlightRef.current = true;
     setImproving(true);
     setImproveError("");
+    setSuccessAction(null);
+    setSavedVersionId(null);
 
     const request = {
       job: {
@@ -632,7 +660,7 @@ export default function ApplicationLetterComparison({
   };
 
   return (
-    <section className="applications-letter-comparison" aria-labelledby="applications-letter-comparison-title">
+    <section ref={comparisonRef} className="applications-letter-comparison" aria-labelledby="applications-letter-comparison-title">
       <h4 id="applications-letter-comparison-title">{t("applications.letterComparison.title")}</h4>
       {versions.length === 0 ? (
         <>
@@ -667,6 +695,7 @@ export default function ApplicationLetterComparison({
             <label className="letter-field" htmlFor={selectToId}>
               <span>{t("applications.letterComparison.to")}</span>
               <select
+                ref={toSelectRef}
                 id={selectToId}
                 value={toId}
                 onChange={(event) => handleToChange(event.target.value)}
@@ -897,6 +926,51 @@ export default function ApplicationLetterComparison({
           <p ref={actionStatusRef} className="letter-review-success" role="status" tabIndex={-1}>
             {actionMessage}
           </p>
+        )}
+        {successAction && (
+          <div className="applications-letter-improvement__success-actions" role="group">
+            <p className="applications-letter-improvement__success-title" role="status">
+              {t(successAction === "saved" ? "letter.improve.savedTitle" : "letter.improve.adoptedTitle")}
+            </p>
+            <div className="applications-letter-improvement__actions">
+              {successAction === "saved" && savedVersionId && (
+                <button
+                  type="button"
+                  className="letter-btn"
+                  onClick={() => {
+                    setToId(savedVersionId);
+                    requestAnimationFrame(() => {
+                      const reduceMotion =
+                        typeof window.matchMedia === "function" &&
+                        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                      comparisonRef.current?.scrollIntoView?.({
+                        behavior: reduceMotion ? "auto" : "smooth",
+                        block: "start",
+                      });
+                      toSelectRef.current?.focus({ preventScroll: true });
+                    });
+                  }}
+                >
+                  {t("letter.improve.compareVersion")}
+                </button>
+              )}
+              {successAction === "adopted" && onOpenDraft && (
+                <button type="button" className="letter-btn" onClick={onOpenDraft}>
+                  {t("letter.improve.openDraft")}
+                </button>
+              )}
+              {onNavigateToOverview && (
+                <button type="button" className="btn-ghost" onClick={onNavigateToOverview}>
+                  {t("letter.improve.toOverview")}
+                </button>
+              )}
+              {onShowApplicationList && (
+                <button type="button" className="btn-ghost" onClick={onShowApplicationList}>
+                  {t("letter.improve.showAllApplications")}
+                </button>
+              )}
+            </div>
+          </div>
         )}
         {actionError && <p className="letter-review-warning" role="alert">{actionError}</p>}
       </section>
