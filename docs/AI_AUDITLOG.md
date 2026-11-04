@@ -1,3 +1,20 @@
+2026-11-04 · JM-DIRECT-COVER-LETTER-01C
+- Typ: Manuelle Bewerbungsübernahme / Versionierung / Refresh / Navigation / lokale Phase C
+- Status: **IMPLEMENTED LOCAL — PHASE C COMPLETE**; Adoption für authentifizierte manuelle Stellen freigegeben; **PRODUCTION: BLOCKED** — kein Merge/Deployment
+- Baseline: Phase B `f4a8e84`; lokaler `main` `7a4a64e`; `origin/main` `4364eab`; Branch `feature/jm-direct-cover-letter-01c`; Arbeitsbaum vor Beginn clean.
+- Adoption: `handleAdoptLetterAsApplication` liest den aktuellen Repository-Zustand über `findByJob`; neue Bewerbung wird mit erster `CoverLetterVersionV1` atomar im Session-Create angelegt; bestehende Bewerbung wird über `adoptCoverLetter` mit `expectedVersion` aktualisiert. Keine zweite Bewerbung bei Konflikt.
+- Versionierung: `generated`/`revised`/`manual` aus dem Letter-Status, Sprache `de`/`en`, aktives Modell und stabile manuelle `jobId`; ältere Versionen bleiben erhalten; keine Version durch Einfügen/Öffnen/Generieren/Bearbeiten.
+- Duplikatschutz: `adoptingRef`, deaktivierter Adoptionsbutton nach Erfolg, Idempotency-Key `adopt:<jobId>`, `expectedVersion`, idempotency-conflict-Recovery; Exactly-once über mehrere Tabs/Clients bleibt dokumentierte Einschränkung des In-Memory-Repositories.
+- Refresh/Navigation: `ApplicationsSection` erhält `refreshToken`; App erhöht ihn nach bestätigter Adoption. `navigationTarget` wird genau einmal angewendet, öffnet die neue/aktualisierte Bewerbung und optional den Dokumenten-Tab. `LetterModal` bietet „Meine Bewerbungen öffnen“ und „Dokumente öffnen“.
+- Session/Sicherheit: Session-Epoch und Repository-Invalidierung verhindern verspätete Mutationen nach Identitätswechsel; Gäste können generieren/bearbeiten/kopieren/downloaden, aber nicht adoptieren; keine Gastdatenmigration; keine RIS-/AWS-/Cognito-/Backend-Persistenz.
+- Optionaler Entwurf (STEP I): mit bestehendem Vertrag technisch anlegbar, aber ohne sicheren Wiedereinstieg in den Anschreiben-Assistenten für dieselbe manuelle Stelle als separates Arbeitspaket dokumentiert; keine neue Entwurfsverwaltung.
+- Tests: Gesamtsuite **1376 passed/5 skipped** (132 Testdateien passed/3 skipped); gezielter Phase-C-Lauf **112 passed** (5 Dateien); `npm run build`, `node --check api/cover-letter.mjs`, `node --check tests/e2e/direct-cover-letter.mjs` und `git diff --check` PASS; Direct-Cover-Letter-E2E 1440 Auth (Adoption+Dokumente) und 1024/768/430/390/320 Gast PASS; Applications-/Cover-Letter-/CV-Builder-/Search-Results-/Mobile-Nav-E2E PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-DIRECT-COVER-LETTER-01C/` (13 Dateien). Fremde Screenshot-Änderungen aus bestehenden E2E-Skripten wurden vor dem Commit zurückgesetzt.
+- Git: Implementierung `a658523`; Tests/angepasste E2E-Versionszählung `53da795`; Dokumentation in diesem Commit. Push nur auf den Feature-Branch gemäß ausdrücklicher Benutzerfreigabe; **kein Merge, kein Deployment**.
+- Offen: Exactly-once über Tabs/Clients, session-lokale Beschreibung nach Reload, Verbesserungskontext, separater „Als Entwurf anlegen“-Ablauf, RIS-Akzeptanz von `jobOrigin`/optionaler URL, Gastbereich-Produktentscheidung.
+- Entscheidung: **DIRECT-COVER-LETTER-01C READY für Phase D**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-DIRECT-COVER-LETTER-01C.md`
+
 2026-11-04 · JM-DIRECT-COVER-LETTER-01B
 - Typ: Manuelle Stellenanzeige / Datenvertrag / LetterModal-Handoff / lokale Phase B
 - Status: **IMPLEMENTED LOCAL — PHASE B COMPLETE**; **APPLICATION ADOPTION: BLOCKED**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
