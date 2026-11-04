@@ -199,6 +199,7 @@ Unter `docs/reports/assets/JM-PROFILE-STORAGE-CONSENT-01/`:
 
 - Implementierung: `eeade3f` — `feat: add storage consent preparation area`
 - Profilhinweis: `59cbb64` — `feat: surface storage consent notice on profile`
+- Responsive E2E: `54b1277` — `test: verify storage consent responsive widths`
 - Dokumentation/Evidenz: dieser Commit
 - Branch: `feature/jm-profile-storage-consent-01`
 - Kein Push, Merge, Rebase, Stash, Reset oder Deployment

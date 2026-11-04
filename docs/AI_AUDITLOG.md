@@ -7,9 +7,9 @@
 - UI: bestehender Einstellungen-Tab aktiviert; Bereich „Datenschutz & Datenspeicherung“ mit Vorbereitungshinweis, Identitätsstatus, drei unabhängigen Kategorien, Trennung von Kontodaten/KI/Session/RIS, Widerrufs-/Export-/Löschhinweisen und deaktivierten Datenkontrollen. Zusätzlicher Vorbereitungshinweis auf der Profilübersicht mit direktem Einstieg. Keine aktive Checkbox, keine lokale Dauerzustimmung.
 - Auth/Session: Gäste sehen keine Speicherfreigabe; Demo/unverifizierte Claims ohne Consent-Zuordnung; keine Benutzerübernahme, keine Migration, keine neue Persistenz, keine Änderung an bestehenden KI-Consent-/Session-Grenzen.
 - Backend-Handoff: `docs/contracts/JM-RIS-STORAGE-CONSENT-HANDOFF-V1.md` mit Identitäts-, API-, Audit-, Widerrufs-, Retention-/Erasure- und RIS-Verifikationsanforderungen.
-- Tests: Gesamtsuite **1337 passed/5 skipped** (`--maxWorkers=2`, 125 Testdateien passed/3 skipped); Storage-Consent-Vertrag **4**, UI **4**, Dashboard/Auth **15**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Profile-Storage-Consent-E2E 1440/390, Guest-Profil, Applications, Cover-Letter, Mobile-Nav, CV-Builder und Search-Results PASS; keine Console-Errors; keine echten Cognito-/RIS-/AWS-/KI-/Provider-/Apify-Aufrufe.
+- Tests: Gesamtsuite **1337 passed/5 skipped** (`--maxWorkers=2`, 125 Testdateien passed/3 skipped); Storage-Consent-Vertrag **4**, UI **4**, Dashboard/Auth **15**; TypeScript/Build/`git diff --check`/API-Syntax PASS; Profile-Storage-Consent-E2E 1440/390/1024/768/430/320, Guest-Profil, Applications, Cover-Letter, Mobile-Nav, CV-Builder und Search-Results PASS; keine Console-Errors; keine echten Cognito-/RIS-/AWS-/KI-/Provider-/Apify-Aufrufe.
 - Screenshots: `docs/reports/assets/JM-PROFILE-STORAGE-CONSENT-01/`.
-- Git: Implementierung `eeade3f`; Profilhinweis `59cbb64`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Git: Implementierung `eeade3f`; Profilhinweis `59cbb64`; responsive E2E `54b1277`; Dokumentation/Evidenz in diesem Commit. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
 - Entscheidung: **PROFILE-STORAGE-CONSENT-01 READY (Vorbereitung)**; **AKTIVE CONSENT-PERSISTENZ: BLOCKED**; **PRODUCTION: BLOCKED.**
 - Logs: `docs/reports/JM-PROFILE-STORAGE-CONSENT-01.md`, `docs/contracts/JM-RIS-STORAGE-CONSENT-HANDOFF-V1.md`
 
