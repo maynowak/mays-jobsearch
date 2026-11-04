@@ -142,6 +142,17 @@ const DashboardV2 = ({
             </dl>
           </Card>
 
+          <Card className="dashboard-v2__storage-notice">
+            <div className="dashboard-v2__card-heading">
+              <h2>{t('privacyStorage.title')}</h2>
+              <Badge tone="soon">{t('privacyStorage.badge.preparing')}</Badge>
+            </div>
+            <p>{t('privacyStorage.notice')}</p>
+            <Button variant="ghost" onClick={() => setActiveId('settings')}>
+              {t('privacyStorage.openSettings')}
+            </Button>
+          </Card>
+
           <Card className="dashboard-v2__status-card">
             <div className="dashboard-v2__card-heading">
               <h2>{t('dashboard.accountStatus')}</h2>

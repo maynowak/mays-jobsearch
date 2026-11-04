@@ -1168,6 +1168,7 @@ const en: Dict = {
   "privacyStorage.actions.erasure": "Request deletion",
   "privacyStorage.actions.withdraw": "Withdraw consent",
   "privacyStorage.actions.unavailable": "These controls are prepared but not active until a verified consent backend is available.",
+  "privacyStorage.openSettings": "View privacy & storage",
 };
 
 const de: Dict = {
@@ -2331,6 +2332,7 @@ const de: Dict = {
   "privacyStorage.actions.erasure": "Löschung beantragen",
   "privacyStorage.actions.withdraw": "Einwilligung widerrufen",
   "privacyStorage.actions.unavailable": "Diese Bedienelemente sind vorbereitet, aber erst mit einem verifizierten Consent-Backend aktiv.",
+  "privacyStorage.openSettings": "Datenschutz & Speicherung ansehen",
 };
 
 const translations: Record<Lang, Dict> = { en, de };

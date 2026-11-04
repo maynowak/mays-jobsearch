@@ -167,9 +167,10 @@ describe('MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences navigation', () => {
     expect(within(upcoming).queryByText('Job-Präferenzen')).toBeNull();
   });
 
-  it("opens the preparation-only privacy and storage settings area", () => {
+  it("informs the user on the profile overview and opens the preparation-only storage area", () => {
     renderDashboard();
-    fireEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+    expect(screen.getByText(/wird vorbereitet und ist derzeit noch nicht verfügbar/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Datenschutz & Speicherung ansehen" }));
     expect(screen.getByRole("heading", { name: "Datenschutz & Datenspeicherung" })).toBeInTheDocument();
     expect(screen.getByText(/wird vorbereitet und ist derzeit noch nicht verfügbar/)).toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).toBeNull();

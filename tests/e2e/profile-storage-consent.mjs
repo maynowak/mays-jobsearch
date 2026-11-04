@@ -99,6 +99,8 @@ async function preparePage(browser, viewport, authenticated) {
 async function runAuthenticated(browser, width, height, name) {
   const { context, page, consoleErrors } = await preparePage(browser, { width, height }, true);
   await page.goto(`${base}/profil`, { waitUntil: "networkidle" });
+  await page.getByText(/wird vorbereitet und ist derzeit noch nicht verfügbar/).waitFor();
+  await page.screenshot({ path: resolve(evidenceDir, `${name}-profile-notice.png`), fullPage: false });
   await page.getByRole("button", { name: "Einstellungen" }).click();
   await page.getByRole("heading", { name: "Datenschutz & Datenspeicherung" }).waitFor();
   await page.getByText(/Die dauerhafte Speicherung deiner Bewerbungsunterlagen wird vorbereitet/).waitFor();
