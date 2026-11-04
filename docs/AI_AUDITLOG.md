@@ -1,3 +1,24 @@
+2026-11-04 · JM-CV-MANAGEMENT-02C
+- Typ: Builder-Lebensläufe / LetterModal-Integration / Application-CV-Referenz / Orphan-Semantik / Datenschutz
+- Status: **IMPLEMENTED LOCAL**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `cb10666`; `origin/main` `4364eab`; 02B `feature/jm-cv-management-02b` `4b9eac8`; neuer Branch `feature/jm-cv-management-02c`; Working Tree vor Beginn clean.
+- Zwei Quellen: bestehende `CvDocument`-Uploads und `CvBuilderProfileV1`-Profile bleiben getrennt; keine Konvertierung, keine künstlichen `File`-Objekte, keine zweite CV- oder Anschreiben-Engine.
+- Serializer: `cvBuilderToAnonymizedText` in `src/lib/cvBuilder/toAnonymizedText.ts`; deterministisch, ohne Netzwerk, nur berufliche Felder; persönliche Felder/Links/unbekannte Felder ausgeschlossen; Freitext über bestehende `anonymizeText` plus Redaktion bekannter Name-/Kontakt-/Ortswerte und URLs; `hasCvBuilderTextContent` markiert leere/nicht verwendbare Profile.
+- LetterModal: Auswahl `none|existing|builder`; Builder-Liste mit Name/Status; leere Profile nicht auswählbar; fehlende Profile werden ohne automatische Ersatzauswahl zurückgesetzt; Resolver liest vor Generierung/Übernahme den aktuellen Repository-Zustand; Vorschau des vorgesehenen datensparsamen Texts; CV-Auswahl löst keinen KI-Aufruf aus; Änderungen invalidieren den Entwurf.
+- Datenschutzfluss: Auswahl -> aktuelles Profil -> Inhaltsprüfung -> Serialisierung -> bestehende Anonymisierung -> Vorschau -> ausdrückliche Generierung -> bestehende API. Keine vollständigen CV-Profile in Logs, keine ungeprüften Kontaktdaten, keine Fremddaten, keine stille Weiterverwendung alter Freigaben.
+- Application-Vertrag: `ApplicationCvReferenceV1.cvSource?: "uploaded" | "builder"`; fehlendes Feld bleibt Legacy-`uploaded`; keine CV-Daten/PDF-Bytes/künstliche RIS-IDs in der Bewerbung. Adoption verknüpft die CV-Referenz mit der neuen Anschreibenversion, ohne bestehende Versionen zu überschreiben.
+- Löschsemantik Option A: Löschen eines zugeordneten Builder-CV nach Warnung erlaubt; Bewerbung/Anschreibenversionen bleiben; Referenz wird als nicht verfügbar behandelt; keine automatische Ersatzauswahl; keine verwaiste Referenz für neue KI-Anfragen; andere Bewerbungen unverändert.
+- Bewerbungsansicht: CV-Name, Quelle, Warnung bei fehlender Referenz, „Zugeordneten Lebenslauf öffnen“ und explizite CV-Zuordnungsänderung über `expectedVersion`; keine neue Version, kein KI-Aufruf, keine neue Bewerbung.
+- Session/Auth: Repository-Invalidierung und Profil-Leerung bei Identitätswechsel; LetterModal wird geschlossen; Resolver/Props invalidieren laufende Anfragen bei Profiländerung/-löschung; keine E-Mail-Identität, keine Gastmigration.
+- Tests: Gesamtsuite **1414 passed/5 skipped** (137 Testdateien passed/3 skipped); Serializer **5**, LetterModal **58**, ApplicationsSection **34**, Adoption **10**; `npm run build`, `git diff --check`, `node --check tests/e2e/cv-management-02c.mjs` PASS.
+- E2E: neues `cv-management-02c` 1440/1024/768/430/390/320 PASS; CV-Management-02B-/CV-Builder-/CV-PDF-/Cover-Letter-/Direct-Cover-Letter-/Manual-Draft-/Applications-/Mobile-Nav-/Profile-Consent-E2E PASS; keine echten KI-/Provider-/RIS-/AWS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-CV-MANAGEMENT-02C/` (6 Dateien).
+- RIS-Handoff: Builder-ID `cvb-<uuid>`, Uploaded-ID bestehende Dokumentreferenz, `cvSource`, Ownership über `iss+sub`, Application-Version unabhängig von CV-Version, Lösch-/Unavailable-Semantik und Consent-Abhängigkeiten dokumentiert; keine RIS-/AWS-Implementierung, keine dauerhafte Speicherung.
+- Git: Serializer `11fccfe`; LetterModal/Application-Integration `899fc94`; E2E `4ad2e90`; Dokumentation in diesem Commit. Kein Push, kein Merge, kein Deployment.
+- Offen: Session-only-Verlust bei Reload, Exactly-once über Tabs/Clients, Gastzugang zur Profilliste, RIS-Verifikation erst mit CV-Ressourcenvertrag, keine vollständige Anonymitätsgarantie, bekannter ApplicationsSection-Test-Timeout.
+- Entscheidung: **CV-MANAGEMENT-02C READY für Main-Review**; **ACTIVE RIS PERSISTENCE: BLOCKED**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-CV-MANAGEMENT-02C.md`
+
 2026-11-04 · JM-CV-MANAGEMENT-02B
 - Typ: Mehrere Lebensläufe / Session-Profile / Editor-Integration / CV-Verwaltung
 - Status: **IMPLEMENTED LOCAL**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
