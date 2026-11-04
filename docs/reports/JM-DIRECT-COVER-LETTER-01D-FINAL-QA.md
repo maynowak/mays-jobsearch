@@ -314,7 +314,7 @@ Job-ID oder URL zu verlangen. Das bleibt ein separater Backend-Handoff.
 - Testabdeckung: vollständige Suite plus 11-Viewport-Direct-Cover-Letter-E2E
   und bestehende E2E-Suiten.
 
-**MAIN MERGE: READY FOR REVIEW.**  
+**MAIN MERGE: READY FOR REVIEW.**
 Kein Merge wurde ausgeführt.
 
 ## 18. Produktionsstatus
