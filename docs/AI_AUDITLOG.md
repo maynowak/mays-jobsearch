@@ -1,3 +1,15 @@
+2026-11-04 · JM-CV-MANAGEMENT-02A
+- Typ: Read-only Discovery / CV-Datenvertrag / Integrationsplanung
+- Status: **DISCOVERY COMPLETE**; keine Produktimplementierung, kein Push, Merge oder Deployment
+- Baseline: lokaler `main` `cb10666`; `origin/main` `4364eab`; Branch `feature/jm-cv-management-02a`; Working Tree vor Beginn clean.
+- Bestand: `CvDocument` (hochgeladene PDF, File/hash/letterText) und `CvBuilderDraftV1` (strukturiert, ohne Root-Name/Template/Version) sind getrennt. App hält genau einen `cvBuilderDraft`; Editor-Template ist lokaler UI-State; Vorschau/PDF nutzen draft+template; Auth-Reset leert den Draft.
+- Befunde: keine Profilliste, keine stabile CV-ID/Name/Version, kein Template im Datenmodell, kein Deep-Clone-Duplicate, kein Builder-CV-zu-Text-Serializer, LetterModal wählt nur `CvDocument`, ApplicationCvReference hat keine CV-Quelle, Löschsemantik für zugeordnete CVs offen, RIS kann Builder-CV-Referenzen ohne CV-Ressource nicht verifizieren.
+- Vorschlag: `CvBuilderProfileV1` (`cvId`, `name`, `cvData`, `template`, `createdAt`, `updatedAt`, `version`) als Envelope um bestehende `CvBuilderDraftV1`; In-Memory-Repository mit expectedVersion; Deep-Clone-Duplicate; Liste in `DashboardV2CvSection`; optional `cvSource` in ApplicationCvReference; Builder-Auswahl im LetterModal erst nach Serializer.
+- Datenschutz: session-only, keine localStorage-/IndexedDB-/Backend-/RIS-Speicherung, keine Consent-Aktivierung, keine KI bei Editor-/Listen-/PDF-Aktionen, Anonymisierung nur bei expliziter Anschreiben-Generierung.
+- Tests Baseline: Gesamtsuite **1384 passed/5 skipped** (historisch auf main); gezielte CV-Suite **55 passed** (`CvBuilderEditor`, `CvBuilderEditorPdf`, `CvBuilderPreview`, `CvBuilderAuthIsolation`, `CvDocumentList`, `DashboardV2CvSection`, `validation`, `pdfExport`); bekannter intermittierender `ApplicationsSection.test.tsx`-Timeout dokumentiert, keine Tests deaktiviert.
+- Entscheidung: **CV-MANAGEMENT-02A READY für Implementierung (02B, session-only)**; **CV-MANAGEMENT-02B: NOT STARTED**; **ACTIVE RIS PERSISTENCE: BLOCKED**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-CV-MANAGEMENT-02A.md`
+
 2026-11-04 · JM-MANUAL-APPLICATION-DRAFT-MAIN-01
 - Typ: Merge-Review / lokale Main-Integration / Regression
 - Status: **INTEGRATED LOCAL MAIN**; **LOCAL MAIN: VERIFIED**; **PRODUCTION: BLOCKED** — kein Push, kein Deployment
