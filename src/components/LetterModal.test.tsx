@@ -512,6 +512,41 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
     expect(generateCoverLetter).toHaveBeenCalledTimes(1);
   });
 
+  it("adopts a manual job without URL and sends version metadata", async () => {
+    const manualJob: Job = {
+      ...job,
+      slug: "manual:adopt-no-url",
+      title: "Initiativbewerbung",
+      company_name: "Unternehmen nicht angegeben",
+      url: "",
+      source: ["manual"],
+      description: fullDescription,
+      descriptionPlain: fullDescription,
+    };
+    const onAdoptAsApplication = vi.fn().mockResolvedValue("created");
+    const onOpenApplicationDocuments = vi.fn();
+    renderModal({
+      job: manualJob,
+      onAdoptAsApplication,
+      onOpenApplicationDocuments,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));
+    await screen.findByRole("textbox", { name: "Bearbeitbares Anschreiben" });
+    fireEvent.click(screen.getByRole("button", { name: "Als Bewerbungsentwurf übernehmen" }));
+
+    expect(onAdoptAsApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        job: expect.objectContaining({ slug: "manual:adopt-no-url", url: "" }),
+        versionSource: "generated",
+        language: "de",
+        model: "model-x",
+      })
+    );
+    await screen.findByText("Dein Bewerbungsentwurf ist bereit.");
+    fireEvent.click(screen.getByRole("button", { name: "Dokumente öffnen" }));
+    expect(onOpenApplicationDocuments).toHaveBeenCalledTimes(1);
+  });
+
   it("passes the selected CV reference into the local application draft", async () => {
     const cv = makeCv({ processedAt: Date.now(), hash: "a".repeat(64), name: "selected.pdf" });
     const onAdoptAsApplication = vi.fn().mockResolvedValue("created");

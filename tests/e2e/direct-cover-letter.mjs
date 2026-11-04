@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-DIRECT-COVER-LETTER-01B");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-DIRECT-COVER-LETTER-01C");
 const port = 5207;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
@@ -166,12 +166,6 @@ async function runViewport(browser, name, viewport, options) {
     name: label(options.lang, "Bearbeitbares Anschreiben", "Editable cover letter"),
   });
   await editor.waitFor();
-  const lockedText = label(
-    options.lang,
-    "Übernahme noch nicht verfügbar",
-    "Application adoption not yet available"
-  );
-  await page.getByText(lockedText).waitFor();
   if (coverLetterBodies.length !== 1) {
     throw new Error(`${name}: expected one cover-letter request, got ${coverLetterBodies.length}`);
   }
@@ -195,6 +189,59 @@ async function runViewport(browser, name, viewport, options) {
     path: resolve(evidenceDir, `${name}-generated.png`),
     fullPage: false,
   });
+
+  if (options.auth) {
+    const adoptButton = page.getByRole("button", {
+      name: label(
+        options.lang,
+        "Als Bewerbungsentwurf übernehmen",
+        "Adopt as application draft"
+      ),
+    });
+    await adoptButton.waitFor();
+    await adoptButton.click();
+    await page.getByText(
+      label(options.lang, "Dein Bewerbungsentwurf ist bereit.", "Your application draft is ready.")
+    ).waitFor();
+    await mkdir(evidenceDir, { recursive: true });
+    await page.screenshot({
+      path: resolve(evidenceDir, `${name}-adopted-success.png`),
+      fullPage: false,
+    });
+    await page
+      .getByRole("button", { name: label(options.lang, "Dokumente öffnen", "Open documents") })
+      .click();
+    await page.locator(".applications-section").waitFor();
+    await page.getByText(label(options.lang, "Initiativbewerbung", "Speculative application")).first().waitFor();
+    await page.waitForFunction(() => {
+      const comparison = document.querySelector(".applications-letter-comparison");
+      const select = comparison?.querySelector("select");
+      return select instanceof HTMLSelectElement && select.options.length >= 2;
+    });
+    await page.locator(".applications-letter-comparison").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    await mkdir(evidenceDir, { recursive: true });
+    await page.screenshot({
+      path: resolve(evidenceDir, `${name}-adopted-documents.png`),
+      fullPage: false,
+    });
+    await assertNoOverflow(page, name);
+    if (consoleErrors.length) {
+      throw new Error(`${name}: console errors: ${consoleErrors.join(" | ")}`);
+    }
+    await context.close();
+    return;
+  }
+
+  const guestLogin = page.getByRole("button", {
+    name: label(options.lang, "Anmelden / Registrieren", "Sign in / Register"),
+  });
+  await guestLogin.waitFor();
+  if (await page.getByRole("button", {
+    name: /Als Bewerbungsentwurf übernehmen|Adopt as application draft/,
+  }).count()) {
+    throw new Error(`${name}: guest adoption action must not be available`);
+  }
 
   await page
     .getByRole("button", { name: label(options.lang, "Schließen", "Close") })

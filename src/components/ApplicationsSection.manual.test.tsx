@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import ApplicationsSection from "./ApplicationsSection";
 import { createSessionApplicationRepository } from "../lib/applications/sessionRepository";
@@ -60,7 +60,7 @@ describe("ApplicationsSection manual application entry", () => {
     renderSection();
     fireEvent.click(await screen.findByRole("button", { name: /Neue Bewerbung/ }));
     expect(screen.queryByRole("button", { name: /Als Bewerbung speichern/ })).toBeNull();
-    expect(screen.getByText(/Phase C/)).toBeInTheDocument();
+    expect(screen.getByText(/erst nach der ausdrücklichen Übernahme/)).toBeInTheDocument();
   });
 
   it("shows a manual source and renders no invalid URL link", async () => {
@@ -85,5 +85,38 @@ describe("ApplicationsSection manual application entry", () => {
     );
     expect(await screen.findByText("Manuell hinzugefügt")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Originalanzeige öffnen" })).toBeNull();
+  });
+
+  it("reloads after adoption and can target the documents tab", async () => {
+    const repository = createSessionApplicationRepository();
+    const view = render(
+      <LangProvider>
+        <ApplicationsSection repository={repository} refreshToken={0} />
+      </LangProvider>
+    );
+    expect(await screen.findByText("Noch keine Bewerbungen")).toBeInTheDocument();
+    const application = await repository.create({
+      job: {
+        jobId: "manual:test-refresh",
+        title: "Initiativbewerbung",
+        companyName: "Unternehmen nicht angegeben",
+        location: [],
+        source: ["manual"],
+        jobOrigin: "manual",
+      },
+      coverLetter: "Ein Anschreiben.",
+    });
+    view.rerender(
+      <LangProvider>
+        <ApplicationsSection
+          repository={repository}
+          refreshToken={1}
+          navigationTarget={{ localId: application.localId, tab: "documents" }}
+        />
+      </LangProvider>
+    );
+    await waitFor(() => expect(screen.getAllByText("Initiativbewerbung").length).toBeGreaterThan(0));
+    const documentsTab = await screen.findByRole("tab", { name: "Dokumente" });
+    expect(documentsTab).toHaveAttribute("aria-selected", "true");
   });
 });

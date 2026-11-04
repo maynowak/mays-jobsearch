@@ -369,7 +369,7 @@ async function runViewport(browser, name, viewport) {
   await saveVersion.click();
   await page.waitForFunction(() => {
     const select = document.querySelector(".applications-letter-comparison select");
-    return select instanceof HTMLSelectElement && select.options.length === 3;
+    return select instanceof HTMLSelectElement && select.options.length === 4;
   });
   const comparisonPanel = page.locator(".applications-letter-comparison");
   await comparisonPanel.scrollIntoViewIfNeeded();
@@ -445,13 +445,13 @@ async function runViewport(browser, name, viewport) {
   // LETTER-REVISION-01D: save the edited proposal and adopt it explicitly.
   await mkdir(letterAdoptionEvidenceDir, { recursive: true });
   await page.getByRole("button", { name: "Als neue Version speichern" }).click();
-  await page.getByText("Version 3 gespeichert.", { exact: true }).waitFor();
+  await page.getByText("Version 4 gespeichert.", { exact: true }).waitFor();
   await page.getByText("Anschreiben-Version erfolgreich gespeichert.").waitFor();
-  await page.getByText("Version 3 gespeichert.", { exact: true }).scrollIntoViewIfNeeded();
+  await page.getByText("Version 4 gespeichert.", { exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: resolve(letterNavEvidenceDir, `${name}-saved-actions.png`), fullPage: false });
   await page.waitForFunction(() => {
     const select = document.querySelector(".applications-letter-comparison select");
-    return select instanceof HTMLSelectElement && select.options.length === 4;
+    return select instanceof HTMLSelectElement && select.options.length === 5;
   });
   await page.screenshot({ path: resolve(letterAdoptionEvidenceDir, `${name}-saved.png`), fullPage: false });
   await page.getByRole("button", { name: "Version vergleichen" }).click();
