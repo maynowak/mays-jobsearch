@@ -1,3 +1,21 @@
+2026-11-04 · JM-DIRECT-COVER-LETTER-01D
+- Typ: Final Integration / QA / Regression / Merge-Readiness
+- Status: **READY**; **MAIN MERGE: READY FOR REVIEW**; **PRODUCTION: BLOCKED** — kein Merge, kein Deployment
+- Baseline: Branch `feature/jm-direct-cover-letter-01c`; HEAD vor QA `b229bf3`; lokaler `main` `7a4a64e`; `origin/main` `4364eab`; Merge-Basis `7a4a64e`; 0 behind / 10 ahead; Working Tree vor QA clean.
+- Reports: 01A/01B/01C vorhanden und gelesen; Phase-C-Aussagen gegen Code/Tests verifiziert.
+- Integration: Auth-E2E 1440/1024/768/430/390/320 mit manueller Stelle, URL/ohne URL, Generieren, Bearbeiten, erster und zweiter Adoption, Versionshistorie, Refresh, Dokumenten-Tab und genau einer Bewerbung. Gast-E2E 1024/768/430/390/320 ohne Adoption. Alle PASS.
+- Versionierung: `generated`/`revised`/`manual`, Sprache, Modell, stabile `jobId`; erste Version beim Create, weitere beim Update, alte Versionen erhalten; keine Version durch Einfügen/Öffnen/Generieren/Bearbeiten.
+- Idempotenz: `expectedVersion`, `adoptingRef`, deaktivierter Adoptionsbutton, Idempotency-Key, Konfliktrecovery; Doppelklick/erneute Adoption getestet. Exactly-once über Tabs/Clients bleibt dokumentierte In-Memory-Grenze.
+- Session/Auth: Session-Epoch, Repository-Invalidierung und `session_ended` getestet; vollständiger E2E-Auth-Wechsel mitten in Adoption nicht simuliert, Restrisiko dokumentiert. Gäste ohne Adoptionsaktion.
+- Gefundene Defekte: (D-QA-01) Adoptionsbutton unter 44 px Touch-Höhe; (D-QA-02) deutsche Fallback-Titel/Firmen in englischer UI. Korrigiert in `34ee0fa`; QA-Matrix in `38a6238`.
+- Tests: Gesamtsuite **1378 passed/5 skipped** (132 Testdateien passed/3 skipped); `npm run build`, `node --check api/cover-letter.mjs`, `node --check tests/e2e/direct-cover-letter.mjs`, `git diff --check` PASS; Direct-Cover-Letter-E2E 11 Viewports PASS; Applications-/Cover-Letter-/CV-Builder-/Search-Results-/Mobile-Nav-E2E PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Responsive/A11y: Auth und Gast 1024/768/430/390/320 sowie Auth 1440; kein Overflow; Adoptionsbutton ≥44 px; Fokus auf Erfolgsstatus; bestehende Dialog-/Escape-/Fokus-Tests. Kein separates Axe-Audit.
+- Screenshots: `docs/reports/assets/JM-DIRECT-COVER-LETTER-01D/` (40 Dateien). Fremde Screenshot-Änderungen aus bestehenden E2E-Skripten wurden vor dem Commit zurückgesetzt.
+- Git: QA-Fixes `34ee0fa`, `38a6238`; Dokumentation in diesem Commit. Kein Push nach Phase D, kein Merge, kein Deployment.
+- Offen: Exactly-once über Tabs/Clients, session-lokale Beschreibung nach Reload, Verbesserungskontext, „Als Entwurf anlegen“, RIS-Handoff für `jobOrigin`/optionale URL, Gastbereich-Produktentscheidung, Live-Provider-/RIS-Verifikation.
+- Entscheidung: **JM-DIRECT-COVER-LETTER-01D READY**; **MAIN MERGE: READY FOR REVIEW**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-DIRECT-COVER-LETTER-01D-FINAL-QA.md`
+
 2026-11-04 · JM-DIRECT-COVER-LETTER-01C
 - Typ: Manuelle Bewerbungsübernahme / Versionierung / Refresh / Navigation / lokale Phase C
 - Status: **IMPLEMENTED LOCAL — PHASE C COMPLETE**; Adoption für authentifizierte manuelle Stellen freigegeben; **PRODUCTION: BLOCKED** — kein Merge/Deployment
