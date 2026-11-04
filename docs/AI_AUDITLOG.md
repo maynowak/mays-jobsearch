@@ -1,3 +1,20 @@
+2026-11-04 · JM-CV-MANAGEMENT-02B
+- Typ: Mehrere Lebensläufe / Session-Profile / Editor-Integration / CV-Verwaltung
+- Status: **IMPLEMENTED LOCAL**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
+- Baseline: Discovery `069e6d3`; lokaler `main` `cb10666`; `origin/main` `4364eab`; Branch `feature/jm-cv-management-02b`; Working Tree vor Beginn clean.
+- Profilvertrag: `CvBuilderProfileV1` (`schemaVersion`, `cvId`, `name`, `cvData: CvBuilderDraftV1`, `template`, `createdAt`, `updatedAt`, `version`); bestehende CV-Struktur wiederverwendet; defensive Deep Copies; Name-/Template-/Timestamp-/Version-Validierung.
+- Repository: In-Memory `CvBuilderProfileRepository` mit list/get/create/update/rename/duplicate/delete/clear/invalidate, `expectedVersion`, Session-Generation, `not_found`/`id_conflict`/`version_conflict`/`session_ended`; Deep-Clone-Duplicate ohne geteilte Referenzen.
+- UI: „Meine Lebensläufe“ in `DashboardV2CvSection` mit Name, Design, letzter Änderung, Erstellen/Bearbeiten/Duplizieren/Umbenennen/PDF/Löschen mit Bestätigung; leere Profile markiert; bestehender Einzeldraft explizit übernehmbar; Template pro Profil.
+- Editor: `CvBuilderEditor` mit initialTemplate/onTemplateChange/onSave/dirty/saving/saveError; Speichern mit expectedVersion; Dirty-Dialog „Speichern und schließen“/„Verwerfen und schließen“/„Weiter bearbeiten“; keine automatische Profilerstellung.
+- PDF: bestehende `createCvBuilderPdf(profile.cvData, profile.template, language)`; sichere Dateinamen über `cvBuilderProfileFileName`; keine Profilmutation.
+- Auth/Session: Profile nur im Arbeitsspeicher; Reset invalidiert Repository und leert Profile/Draft/Template/Dirty-State; `handleCvRemoveData` leert auch Builder-Profile; keine localStorage-/IndexedDB-/Backend-/RIS-Speicherung; keine Gastdatenmigration.
+- Tests: Gesamtsuite **1400 passed/5 skipped** (136 Testdateien passed/3 skipped); gezielte CV-Suite **71 passed** (12 Dateien); `npm run build`, `node --check tests/e2e/cv-management-02b.mjs`, `git diff --check` PASS; CV-Management-E2E 1440/1024/768/430/390/320 PASS; CV-Builder-/CV-PDF-/Applications-/Cover-Letter-/Direct-Cover-Letter-/Manual-Draft-/Profile-Consent-/Mobile-Nav-E2E PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-CV-MANAGEMENT-02B/` (6 Dateien). Fremde Screenshot-Änderungen aus bestehenden E2E-Skripten wurden vor dem Commit zurückgesetzt.
+- Git: Profil/Repository `aa9b7fe`; UI/Editor `6fa1361`; Tests/E2E `360a5e5`; Dokumentation in diesem Commit. Kein Push, kein Merge, kein Deployment.
+- Offen: Gastzugang zur Profilliste nur über authentifiziertes Dashboard; LetterModal-/Builder-CV-Auswahl und Serializer erst 02C; ApplicationCvReference unverändert; keine dauerhafte/RIS-Persistenz; Exactly-once über Tabs/Clients begrenzt; bekannte ApplicationsSection-Testintermittenz.
+- Entscheidung: **CV-MANAGEMENT-02B READY für Phase 02C**; **LETTERMODAL-INTEGRATION: NOT STARTED**; **ACTIVE RIS PERSISTENCE: BLOCKED**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-CV-MANAGEMENT-02B.md`
+
 2026-11-04 · JM-CV-MANAGEMENT-02A
 - Typ: Read-only Discovery / CV-Datenvertrag / Integrationsplanung
 - Status: **DISCOVERY COMPLETE**; keine Produktimplementierung, kein Push, Merge oder Deployment
