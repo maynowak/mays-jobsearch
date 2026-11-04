@@ -1,3 +1,15 @@
+2026-11-04 · JM-APPLICATION-LETTER-MAIN-CONSOLIDATION-02
+- Typ: Lokale Main-Integration / Regression / Dokumentation
+- Status: **LOCAL MAIN INTEGRATION COMPLETE** — kein Push, kein Deployment
+- Baseline: lokaler `main` `09a6971`; `origin/main` `4364eab`; Options-01 `8003af8`; Nav-02 `f962ef8`; Branch `feature/jm-application-letter-nav-02`.
+- Preflight: Merge-Base `09a6971`; `main...Nav-02` 0 behind / 4 ahead; `09a6971` und `8003af8` als Ancestors bestätigt; Arbeitsbaum clean.
+- Integration: `git merge --ff-only feature/jm-application-letter-nav-02`; Fast-Forward `09a6971..f962ef8`; 4 Commits (`3e10171`, `8003af8`, `325d111`, `f962ef8`); kein Merge-Commit, keine History-Rewrites, keine Konflikte.
+- Funktion: Sprache/Stil/Länge/Modell/Consent sowie Versionsvergleich, Entwurfsöffnung, Bewerbungsübersicht und Bewerbungsliste geprüft; Navigation erzeugt keine neue Bewerbung/Version; expectedVersion/Session-/Stale-/Dirty-Schutz unverändert.
+- Regression: Gesamtsuite **1328 passed/5 skipped** (`--maxWorkers=2`, 123 Testdateien passed/3 skipped); TypeScript/Build/`git diff --check`/API-Syntax PASS; Applications-E2E 1440/390 + responsive 1024/768/430/320, Cover-Letter, Search-Results, Mobile-Nav, Guest-CV, CV-Builder und CV-PDF PASS; keine Console-Errors; keine echten KI-/Provider-/AWS-/RIS-/Apify-Aufrufe.
+- Git: Integrationsstand `f962ef8`; Dokumentation in diesem Commit; `origin/main` bleibt `4364eab`. **NICHT GEPUSHT / NICHT DEPLOYED.**
+- Entscheidung: **LOCAL MAIN INTEGRATION: COMPLETE**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-APPLICATION-LETTER-MAIN-CONSOLIDATION-02.md`
+
 2026-11-04 · JM-APPLICATION-LETTER-NAV-02
 - Typ: Bewerbungsverwaltung / Anschreiben-Navigation nach Speicherung und Entwurfsübernahme
 - Status: **READY für lokale Main-Integration** — kein Push, Merge oder Deployment
