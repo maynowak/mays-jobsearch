@@ -1,3 +1,17 @@
+2026-11-04 · JM-MANUAL-APPLICATION-DRAFT-MAIN-01
+- Typ: Merge-Review / lokale Main-Integration / Regression
+- Status: **INTEGRATED LOCAL MAIN**; **LOCAL MAIN: VERIFIED**; **PRODUCTION: BLOCKED** — kein Push, kein Deployment
+- Baseline: `main` `99e4105`; Feature `feature/jm-manual-application-draft-01` `b4dfdcf`; `origin/main` `4364eab`; Merge-Basis `99e4105`; Working Tree clean; 0 behind / 3 ahead; `main` Ancestor.
+- Integration: `git merge --ff-only feature/jm-manual-application-draft-01`; Fast-Forward `99e4105..b4dfdcf`; keine Konflikte, kein Merge-Commit, keine History-Rewrites.
+- Post-Merge-Fix: TypeScript-Fehler im neuen `crypto.randomUUID`-Testmock (kein gültiger UUID-Typ); Test auf gültige UUID umgestellt, Build PASS; Korrektur `a359907` auf main. Keine Produktfunktion geändert.
+- Funktion: Entwurf erstellen ohne Anschreiben/Version, Übersicht/Details, Dokumenten-Tab, „Anschreiben erstellen“, LetterModal-Wiedereinstieg, stabile manuelle ID, spätere Adoption/Version 1, Historie, Duplikatschutz, fehlender Kontext → erneute Eingabe, Gast ohne Entwurf/Adoption, Session-Isolation.
+- Tests: Gesamtsuite **1384 passed/5 skipped** (132 Testdateien passed/3 skipped); erster Lauf mit einem bekannten Timing-Flake in `ApplicationsSection.test.tsx`, isoliert und im zweiten Gesamtlauf PASS; `npm run build`, `node --check api/cover-letter.mjs`, `node --check tests/e2e/manual-application-draft.mjs`, `git diff --check` PASS; Manual-Draft-/Direct-Cover-Letter-/Applications-/Cover-Letter-/CV-Builder-/CV-PDF-/Search-Results-/Mobile-Nav-/Profile-Consent-E2E PASS; keine echten Provider-/KI-/AWS-/RIS-/Apify-Aufrufe.
+- Datenschutz: Entwürfe session-only, keine localStorage-/IndexedDB-/Backend-/RIS-Speicherung, keine Consent-Aktivierung, keine KI beim Entwurf, keine erfundene Beschreibung.
+- Git: finaler Integrations-/Fix-HEAD `a359907`; `origin/main` unverändert `4364eab`; Feature-Branch `b4dfdcf`; Working Tree clean; kein Push, kein Deployment.
+- Offen: Reload-Verlust von Session-Daten, Exactly-once über Tabs/Clients, kein dauerhafter Wiedereinstieg, RIS-Handoff für manuelle Referenzen, Live-Provider-/RIS-/AWS-Verifikation, intermittierender ApplicationsSection-Test.
+- Entscheidung: **MANUAL APPLICATION DRAFT: INTEGRATED**; **LOCAL MAIN: VERIFIED**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-MANUAL-APPLICATION-DRAFT-MAIN-01.md`
+
 2026-11-04 · JM-MANUAL-APPLICATION-DRAFT-01
 - Typ: Manuelle Bewerbungsentwürfe / Wiedereinstieg in LetterModal / Session-Versionierung
 - Status: **IMPLEMENTED LOCAL**; **PRODUCTION: BLOCKED** — kein Push, Merge oder Deployment
