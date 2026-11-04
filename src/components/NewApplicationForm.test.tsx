@@ -33,6 +33,31 @@ describe("NewApplicationForm", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("creates a draft without an AI request", async () => {
+    const onSaveDraft = vi.fn().mockResolvedValue(undefined);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(
+      <LangProvider>
+        <NewApplicationForm
+          onGenerate={vi.fn()}
+          onCancel={vi.fn()}
+          canSaveDraft
+          onSaveDraft={onSaveDraft}
+        />
+      </LangProvider>
+    );
+    fireEvent.change(screen.getByLabelText(/Stellenbeschreibung/), {
+      target: { value: validDescription },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Als Entwurf anlegen" }));
+    await vi.waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
+    const [job, reference] = onSaveDraft.mock.calls[0];
+    expect(job.description).toBe(validDescription);
+    expect(reference.jobId).toBe(job.slug);
+    expect(reference.jobOrigin).toBe("manual");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("requires a description", () => {
     const { onGenerate } = renderForm();
     fireEvent.click(screen.getByRole("button", { name: "Anschreiben generieren" }));

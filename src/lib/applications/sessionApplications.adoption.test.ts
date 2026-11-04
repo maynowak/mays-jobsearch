@@ -45,6 +45,22 @@ describe("session cover-letter adoption", () => {
     expect(application.version).toBe(1);
   });
 
+  it("adds the first version to an existing draft without a version", () => {
+    const application = createSessionApplication({
+      localId: "local-draft",
+      now: NOW,
+      coverLetter: "",
+      job,
+    });
+    expect(application.documents.coverLetterVersions).toHaveLength(0);
+    const updated = adoptSessionCoverLetter(application, {
+      expectedVersion: 1,
+      version: version({ versionId: "letter-first", content: "Erste Fassung" }),
+    });
+    expect(updated.documents.coverLetterVersions).toHaveLength(1);
+    expect(updated.documents.coverLetterDraft).toBe("Erste Fassung");
+  });
+
   it("adds a version and updates the draft without losing history", () => {
     const application = createSessionApplication({
       localId: "local-1",

@@ -4,6 +4,11 @@ import { LangProvider } from "../i18n";
 import ApplicationsSection from "./ApplicationsSection";
 import { createSessionApplicationRepository } from "../lib/applications/sessionRepository";
 import { createSessionApplication } from "../lib/applications/sessionApplications";
+import { buildManualJob } from "../lib/applications/manualJob";
+import {
+  clearManualJobSession,
+  saveManualJobSession,
+} from "../lib/applications/manualJobSession";
 
 const validDescription =
   "Du entwickelst React-Anwendungen und bringst Erfahrung mit TypeScript und barrierefreien Oberflächen mit.";
@@ -20,6 +25,7 @@ function renderSection(onOpenLetter = vi.fn()) {
 
 beforeEach(() => {
   localStorage.setItem("mj-lang", "de");
+  clearManualJobSession();
 });
 
 afterEach(() => {
@@ -56,11 +62,154 @@ describe("ApplicationsSection manual application entry", () => {
     expect(screen.queryByLabelText(/Stellenbeschreibung/)).toBeNull();
   });
 
-  it("does not pretend to save an application in Phase B", async () => {
+  it("offers the draft action only to authenticated users", async () => {
     renderSection();
     fireEvent.click(await screen.findByRole("button", { name: /Neue Bewerbung/ }));
-    expect(screen.queryByRole("button", { name: /Als Bewerbung speichern/ })).toBeNull();
-    expect(screen.getByText(/erst nach der ausdrücklichen Übernahme/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Als Entwurf anlegen" })).toBeNull();
+    cleanup();
+
+    render(
+      <LangProvider>
+        <ApplicationsSection
+          repository={createSessionApplicationRepository()}
+          onOpenLetter={vi.fn()}
+          isAuthenticated
+        />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Neue Bewerbung/ }));
+    expect(screen.getByRole("button", { name: "Als Entwurf anlegen" })).toBeInTheDocument();
+  });
+
+  it("creates a session draft without a cover-letter version", async () => {
+    const repository = createSessionApplicationRepository();
+    const onOpenLetter = vi.fn();
+    render(
+      <LangProvider>
+        <ApplicationsSection
+          repository={repository}
+          onOpenLetter={onOpenLetter}
+          isAuthenticated
+        />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Neue Bewerbung/ }));
+    fireEvent.change(screen.getByLabelText(/Stellenbeschreibung/), {
+      target: { value: validDescription },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Als Entwurf anlegen" }));
+    await waitFor(() =>
+      expect(screen.getByText("Bewerbungsentwurf für diese Sitzung angelegt.")).toBeInTheDocument()
+    );
+    const page = await repository.list();
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0].documents.coverLetterDraft).toBe("");
+    expect(page.items[0].documents.coverLetterVersions).toHaveLength(0);
+    expect(page.items[0].documents.documentStatus).toBe("missing");
+    expect(onOpenLetter).not.toHaveBeenCalled();
+  });
+
+  it("does not create a duplicate draft for an existing manual job", async () => {
+    const uuidSpy = vi.spyOn(crypto, "randomUUID").mockReturnValue("duplicate");
+    const built = buildManualJob({ description: validDescription }, "manual:duplicate");
+    const existing = createSessionApplication({
+      localId: "local-existing",
+      now: "2026-11-04T10:00:00.000Z",
+      coverLetter: "",
+      job: built.reference!,
+    });
+    const repository = createSessionApplicationRepository({ initial: [existing] });
+    render(
+      <LangProvider>
+        <ApplicationsSection
+          repository={repository}
+          onOpenLetter={vi.fn()}
+          isAuthenticated
+        />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Neue Bewerbung/ }));
+    fireEvent.change(screen.getByLabelText(/Stellenbeschreibung/), {
+      target: { value: validDescription },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Als Entwurf anlegen" }));
+    await waitFor(() =>
+      expect(screen.getByText("Für diese Stelle besteht bereits ein Bewerbungsentwurf.")).toBeInTheDocument()
+    );
+    expect((await repository.list()).items).toHaveLength(1);
+    uuidSpy.mockRestore();
+  });
+
+  it("opens LetterModal for an existing draft with the session description", async () => {
+    const built = buildManualJob({ description: validDescription }, "manual:context-1");
+    expect(built.job).not.toBeNull();
+    expect(built.reference).not.toBeNull();
+    const application = createSessionApplication({
+      localId: "local-context",
+      now: "2026-11-04T10:00:00.000Z",
+      coverLetter: "",
+      job: built.reference!,
+    });
+    saveManualJobSession({
+      id: "manual:context-1",
+      job: built.job!,
+      reference: built.reference!,
+      updatedAt: "2026-11-04T10:00:00.000Z",
+    });
+    const repository = createSessionApplicationRepository({ initial: [application] });
+    const onOpenLetter = vi.fn();
+    render(
+      <LangProvider>
+        <ApplicationsSection
+          repository={repository}
+          onOpenLetter={onOpenLetter}
+          isAuthenticated
+        />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben erstellen" }));
+    expect(onOpenLetter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        slug: "manual:context-1",
+        description: validDescription,
+      })
+    );
+  });
+
+  it("asks for the description again when the session context is missing", async () => {
+    const built = buildManualJob({ description: validDescription }, "manual:missing-context");
+    const application = createSessionApplication({
+      localId: "local-missing-context",
+      now: "2026-11-04T10:00:00.000Z",
+      coverLetter: "",
+      job: built.reference!,
+    });
+    clearManualJobSession();
+    const repository = createSessionApplicationRepository({ initial: [application] });
+    const onOpenLetter = vi.fn();
+    render(
+      <LangProvider>
+        <ApplicationsSection
+          repository={repository}
+          onOpenLetter={onOpenLetter}
+          isAuthenticated
+        />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben erstellen" }));
+    expect(screen.getByText("Stellenbeschreibung erforderlich")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: /Stellenbeschreibung/ }), {
+      target: { value: validDescription },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben-Assistent öffnen" }));
+    expect(onOpenLetter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        slug: "manual:missing-context",
+        description: validDescription,
+      })
+    );
   });
 
   it("shows a manual source and renders no invalid URL link", async () => {
