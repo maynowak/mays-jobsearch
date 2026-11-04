@@ -1,3 +1,15 @@
+2026-11-04 · JM-PROFILE-STORAGE-CONSENT-MAIN-01
+- Typ: Lokale Main-Integration / Datenschutz- und Consent-Vorbereitung / Regression
+- Status: **LOCAL MAIN INTEGRATION COMPLETE**; **ACTIVE CONSENT PERSISTENCE: BLOCKED** — kein Push, kein Deployment
+- Baseline: lokaler `main` `fb55198`; `origin/main` `4364eab`; Consent-Branch `a1553d5`; Merge-Base `fb55198`.
+- Preflight: `main...Consent` 0 behind / 5 ahead; `fb55198` als Ancestor bestätigt; Arbeitsbaum clean; Worktrees geprüft.
+- Integration: `git merge --ff-only feature/jm-profile-storage-consent-01`; Fast-Forward `fb55198..a1553d5`; 5 Commits (`eeade3f`, `59cbb64`, `7df37e8`, `54b1277`, `a1553d5`); kein Merge-Commit, keine History-Rewrites, keine Konflikte.
+- Funktion: Profilhinweis, Einstellungen/Datenschutzbereich, drei unabhängige Zwecke, Identitätsstatus, deaktivierte Datenkontrollen, keine aktive Checkbox, keine dauerhafte Speicherung; Auth-Isolation und bestehende KI-Consent-Grenzen unverändert.
+- Regression: Gesamtsuite **1337 passed/5 skipped** (`--maxWorkers=2`, 125 Testdateien passed/3 skipped); TypeScript/Build/`git diff --check`/API-Syntax PASS; Profile-Consent-E2E 1440/1024/768/430/390/320, Guest-Profil, Applications, Cover-Letter, CV-Builder, CV-PDF, Search-Results und Mobile-Nav PASS; keine Console-Errors; keine echten Cognito-/RIS-/AWS-/KI-/Provider-/Apify-Aufrufe.
+- Git: Integrationsstand `a1553d5`; Dokumentation in diesem Commit; `origin/main` bleibt `4364eab`. **NICHT GEPUSHT / NICHT GEMERGT / NICHT DEPLOYED.**
+- Entscheidung: **LOCAL MAIN INTEGRATION: COMPLETE**; **ACTIVE CONSENT PERSISTENCE: BLOCKED**; **PRODUCTION: BLOCKED.**
+- Log: `docs/reports/JM-PROFILE-STORAGE-CONSENT-MAIN-01.md`
+
 2026-11-04 · JM-PROFILE-STORAGE-CONSENT-01
 - Typ: Datenschutz & Datenspeicherung / Einwilligungsvorbereitung für registrierte Benutzer
 - Status: **READY für lokale Main-Integration (Vorbereitung)**; **AKTIVE CONSENT-PERSISTENZ: BLOCKED** — kein Push, Merge oder Deployment
