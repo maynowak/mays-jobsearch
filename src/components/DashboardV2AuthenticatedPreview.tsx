@@ -4,6 +4,7 @@ import { signIn, signOut } from '../lib/authFlow';
 import DashboardV2, { type DashboardUser } from './DashboardV2';
 import type { ReactNode } from 'react';
 import Button from './ui/Button';
+import { deriveStorageConsentOwner } from '../lib/storageConsent';
 
 interface Props {
   cvSection?: ReactNode;
@@ -38,6 +39,7 @@ const DashboardV2AuthenticatedPreview = ({ cvSection, applicationsSection, prefe
   }
 
   const profile = auth.user?.profile;
+  const storageConsentIdentityVerified = Boolean(deriveStorageConsentOwner(true, profile));
   const user: DashboardUser = {
     sub: typeof profile?.sub === 'string' ? profile.sub : undefined,
     email: typeof profile?.email === 'string' ? profile.email : undefined,
@@ -57,6 +59,7 @@ const DashboardV2AuthenticatedPreview = ({ cvSection, applicationsSection, prefe
       cvSection={cvSection}
       applicationsSection={applicationsSection}
       preferencesSection={preferencesSection}
+      storageConsentIdentityVerified={storageConsentIdentityVerified}
     />
   );
 };

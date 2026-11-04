@@ -7,7 +7,7 @@ interface MockAuth {
   isLoading: boolean;
   isAuthenticated: boolean;
   error?: Error;
-  user?: { profile: { sub?: string; email?: string; name?: string } };
+  user?: { profile: { iss?: string; sub?: string; email?: string; name?: string } };
   signinRedirect: ReturnType<typeof vi.fn>;
   signoutRedirect: ReturnType<typeof vi.fn>;
 }
@@ -72,12 +72,15 @@ describe('MAYS-UI-S3: authenticated dashboard preview', () => {
       isLoading: false,
       isAuthenticated: true,
       error: undefined,
-      user: { profile: { sub: 'auth-sub', email: 'auth@example.invalid', name: 'Auth Test User' } },
+      user: { profile: { iss: 'https://issuer.example.invalid', sub: 'auth-sub', email: 'auth@example.invalid', name: 'Auth Test User' } },
       signinRedirect: vi.fn(),
       signoutRedirect: vi.fn(),
     };
     renderPreview();
     expect(screen.getByText('auth@example.invalid')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Einstellungen' }));
+    expect(screen.getByText(/Identität über das angemeldete Konto verifiziert/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Mein Profil' }));
     fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
     expect(signOutMock).toHaveBeenCalledWith(authState.value);
     expect(screen.queryByText('DEV-MODUS: Demo-Daten')).toBeNull();

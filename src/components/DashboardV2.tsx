@@ -5,6 +5,7 @@ import Badge from './ui/Badge';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import DashboardNavigation, { type DashboardNavigationItem } from './ui/DashboardNavigation';
+import StorageConsentSection from './StorageConsentSection';
 
 export interface DashboardUser {
   sub?: string;
@@ -20,6 +21,7 @@ export interface DashboardV2Props {
   applicationsSection?: ReactNode;
   // MAYS-SEARCH-PROFILE-MANUAL-01: "Job-Praferenzen" (manuelle Suchprofile).
   preferencesSection?: ReactNode;
+  storageConsentIdentityVerified?: boolean;
 }
 
 export const DEMO_USER: DashboardUser = {
@@ -45,7 +47,15 @@ function initialDashboardTab(): string {
     : 'overview';
 }
 
-const DashboardV2 = ({ user, isDemo, onLogout, cvSection, applicationsSection, preferencesSection }: DashboardV2Props) => {
+const DashboardV2 = ({
+  user,
+  isDemo,
+  onLogout,
+  cvSection,
+  applicationsSection,
+  preferencesSection,
+  storageConsentIdentityVerified = false,
+}: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
   const navigationItems: readonly DashboardNavigationItem[] = [
@@ -64,7 +74,7 @@ const DashboardV2 = ({ user, isDemo, onLogout, cvSection, applicationsSection, p
       badge: preferencesSection ? undefined : t('dashboard.soon'),
       disabled: !preferencesSection,
     },
-    { id: 'settings', label: t('dashboard.nav.settings'), badge: t('dashboard.soon'), disabled: true },
+    { id: 'settings', label: t('dashboard.nav.settings') },
   ];
 
   return (
@@ -102,7 +112,9 @@ const DashboardV2 = ({ user, isDemo, onLogout, cvSection, applicationsSection, p
         </Card>
 
         <main className="dashboard-v2__main">
-          {activeId === 'cv' && cvSection ? cvSection : activeId === 'applications' && applicationsSection ? applicationsSection : activeId === 'preferences' && preferencesSection ? preferencesSection : (
+          {activeId === 'cv' && cvSection ? cvSection : activeId === 'applications' && applicationsSection ? applicationsSection : activeId === 'preferences' && preferencesSection ? preferencesSection : activeId === 'settings' ? (
+            <StorageConsentSection identityVerified={storageConsentIdentityVerified} />
+          ) : (
             <>
           <Card variant="primary" className="dashboard-v2__profile-card">
             <div className="dashboard-v2__card-heading">

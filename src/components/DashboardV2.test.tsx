@@ -166,4 +166,12 @@ describe('MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences navigation', () => {
     const upcoming = screen.getByRole('heading', { name: 'Zukünftige Funktionen' }).closest('.aurora-card') as HTMLElement;
     expect(within(upcoming).queryByText('Job-Präferenzen')).toBeNull();
   });
+
+  it("opens the preparation-only privacy and storage settings area", () => {
+    renderDashboard();
+    fireEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+    expect(screen.getByRole("heading", { name: "Datenschutz & Datenspeicherung" })).toBeInTheDocument();
+    expect(screen.getByText(/wird vorbereitet und ist derzeit noch nicht verfügbar/)).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+  });
 });
