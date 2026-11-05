@@ -26,6 +26,7 @@ Compact, repo-specific guidance for OpenCode sessions. Only keep what changes be
 - The only RIS egress is the server-side BFF under `api/ris/`. No RIS code imports, no RIS database access, no token translation, no shared Cognito mutation.
 - `RIS_PARTNER_CREDENTIAL` / `X-Api-Credential` is server-only; never in `VITE_*`, browser bundles, logs, or reports.
 - Integration evidence must come from this repository (code, tests, mock server) and the publicly agreed contract. RIS-internal observations are out of scope and must not be used as proof.
+- RIS test access requires a server-side issuer+sub allowlist (`RIS_TEST_USER_ALLOWLIST`); empty/missing denies. It is an additional test gate, not a substitute for RIS partner authorization.
 - If a task appears to require RIS internals: **STOP** and request a separate, explicit mandate. Do not cross the boundary.
 
 ## Architecture quirks

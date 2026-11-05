@@ -1,4 +1,4 @@
-import { risConfig } from "../_lib/ris/config.mjs";
+import { isAllowedTestUser, risConfig } from "../_lib/ris/config.mjs";
 import { RisAuthError, verifyAccessToken } from "../_lib/ris/auth.mjs";
 import { RisClientError, applicationPath, risRequest } from "../_lib/ris/client.mjs";
 import {
@@ -133,6 +133,15 @@ export default async function handler(req, res) {
     }
     const code = err instanceof RisAuthError ? err.code : "invalid_token";
     return fail(res, 401, code, "Authentication is invalid");
+  }
+
+  if (!isAllowedTestUser(identity, cfg)) {
+    return fail(
+      res,
+      403,
+      "test_user_not_allowed",
+      "This test user is not enabled for RIS application storage"
+    );
   }
 
   const query = queryOf(req);

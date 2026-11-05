@@ -38,7 +38,9 @@ describe("Mays-RIS boundary (static proof)", () => {
     for (const file of files()) {
       expect(file.content, file.path).not.toMatch(/execute-api\.[a-z0-9-]+\.amazonaws\.com/i);
       if (file.path.startsWith("src/")) {
-        expect(file.content, file.path).not.toMatch(/RIS_API_BASE_URL|RIS_PARTNER_CREDENTIAL/);
+        expect(file.content, file.path).not.toMatch(
+          /RIS_API_BASE_URL|RIS_PARTNER_CREDENTIAL|RIS_TEST_USER_ALLOWLIST/
+        );
       }
     }
   });
@@ -58,6 +60,16 @@ describe("Mays-RIS boundary (static proof)", () => {
     expect(client).toBeTruthy();
     expect(client.content).toContain('const DEFAULT_BASE_URL = "/api/ris/applications"');
     expect(client.content).not.toMatch(/https?:\/\//);
+  });
+
+
+  it("has no client-side test-user allowlist", () => {
+    for (const file of files()) {
+      if (!file.path.startsWith("src/")) continue;
+      expect(file.content, file.path).not.toMatch(
+        /VITE_RIS_REMOTE_TEST_SUBS|VITE_RIS_APPLICATIONS_REMOTE|RIS_TEST_USER_ALLOWLIST/
+      );
+    }
   });
 
   it("documents that RIS is external in AGENTS.md", () => {

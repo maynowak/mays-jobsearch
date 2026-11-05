@@ -96,6 +96,12 @@ beforeEach(() => {
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
   process.env.RIS_COGNITO_ISSUER = ISSUER;
   process.env.RIS_COGNITO_CLIENT_ID = CLIENT;
+  process.env.RIS_TEST_USER_ALLOWLIST = [
+    `${ISSUER}|user-1`,
+    `${ISSUER}|user-A`,
+    `${ISSUER}|user-B`,
+    `${ISSUER}|user-real`,
+  ].join(",");
   risResponse = response(200, { application: risApplication() });
   fetchMock = vi.fn(async (url) => {
     if (String(url).includes("/.well-known/jwks.json")) return response(200, { keys: [jwk] });
@@ -113,6 +119,7 @@ afterEach(() => {
   delete process.env.RIS_API_CREDENTIAL;
   delete process.env.RIS_COGNITO_ISSUER;
   delete process.env.RIS_COGNITO_CLIENT_ID;
+  delete process.env.RIS_TEST_USER_ALLOWLIST;
 });
 
 describe("/api/ris/applications", () => {
@@ -531,6 +538,54 @@ describe("/api/ris/applications", () => {
     );
     expect(res.statusCode).toBe(201);
     expect(risCalls()[0][1].headers["X-Api-Credential"]).toBe("ris_alias_credential");
+  });
+
+
+  it("verweigert den Zugriff ohne Allowlist (fail-closed)", async () => {
+    delete process.env.RIS_TEST_USER_ALLOWLIST;
+    const res = makeRes();
+    await handler(
+      { method: "GET", headers: { authorization: `Bearer ${token()}` }, query: {} },
+      res
+    );
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe("test_user_not_allowed");
+    expect(risCalls()).toHaveLength(0);
+  });
+
+  it("verweigert einen nicht erlaubten Testbenutzer", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${token({ sub: "intruder" })}` },
+        query: {},
+      },
+      res
+    );
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe("test_user_not_allowed");
+    expect(risCalls()).toHaveLength(0);
+  });
+
+  it("bindet die Allowlist an Issuer und sub, nicht nur an sub", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token({
+            sub: "user-1",
+            iss: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_OTHER",
+          })}`,
+        },
+        query: {},
+      },
+      res
+    );
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe("invalid_issuer");
+    expect(risCalls()).toHaveLength(0);
   });
 
   it("gibt weder Token noch Credential in der Antwort aus", async () => {

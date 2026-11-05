@@ -1,3 +1,22 @@
+2026-11-05 · JM-RIS-BRANCH-RECONCILIATION-01
+- Typ: Branch-Reconciliation/Security-Allowlist/Regression
+- Status: COMPLETE — **LOCAL VERIFIED · NO MERGE · NO PUSH**; alter Branch unverändert
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: lokaler `main` `bef81b9`; neuer Branch `feature/jm-ris-testuser-allowlist-reconciliation-01`; alter Branch `origin/feature/jm-ris-integration-gap-closure-01` @ `656566b` nur gelesen.
+- Übernommen: ausschließlich die Idee einer Testbenutzer-Allowlist, serverseitig neu umgesetzt als `RIS_TEST_USER_ALLOWLIST` (`<issuer>|<sub>`), Prüfung nach JWT-Verifikation, exakte Issuer+sub-Bindung, fehlende/leere Liste → 403 `test_user_not_allowed`, keine RIS-Anfrage.
+- Nicht übernommen: `api/ris/[...path].mjs`-Catch-all, alternative `src/lib/applications/ris/*`-Architektur, `VITE_RIS_REMOTE_TEST_SUBS`/`VITE_RIS_APPLICATIONS_REMOTE` (Client-Allowlist), `location.join`/`source[0]`-Lossy-Mapping, `ownerId=""`, Deployment-Claims.
+- Sicherheit: bestehende JWT-Prüfung (RS256/JWKS, Issuer, Client, `token_use`, `exp`, `nbf`, `sub`) bleibt; Allowlist ist zusätzliche Testzugangsbeschränkung, kein Ersatz für RIS-Partnerberechtigungen; Flags default OFF; keine echten Benutzerkennungen im Repo.
+- Tests: BFF **29/29**, Boundary **6/6**, Gesamtsuite **1502 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** lokal; RIS-Live weiterhin separat blockiert.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit auf Reconciliation-Branch; 4 untracked Dokumente unangetastet; kein Merge, kein Push.
+- Geänderte Dateien: `api/_lib/ris/config.mjs`, `api/ris/applications.mjs`, `tests/api/ris-applications.test.mjs`, `tests/api/ris-boundary.test.mjs`, `.env.example`, `AGENTS.md`, `docs/reports/JM-RIS-BRANCH-RECONCILIATION-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-/AWS-/Cognito-/CloudFront-/Terraform-Änderung, keine echten RIS-Requests, kein Deployment, kein Push/Merge.
+- Offene Punkte: echter Allowlist-Wert serverseitig setzen; RIS-Partnerressourcen/Authorizer/Surface; Vercel-Env; Live-E2E-Freigabe.
+- Nächste Aktionen: Review des Reconciliation-Branches; Merge/Push nur mit separater Freigabe.
+- Resume-Punkt: Allowlist lokal implementiert und getestet; alter Branch unverändert.
+- Log: `docs/reports/JM-RIS-BRANCH-RECONCILIATION-01.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-GAP-CLOSURE-01
 - Typ: Gap-Audit/Vercel-Env/Readiness
 - Status: COMPLETE — **GAP OPEN · NO MUTATIONS · LIVE E2E BLOCKED**; kein Push, kein Deployment
