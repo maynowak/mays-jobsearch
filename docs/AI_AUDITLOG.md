@@ -581,6 +581,17 @@
 - Git: Branch `feature/jm-application-management-03-readiness`; `ea57e9c`/`0d9ef8d`/`89e877c` initiale APP-03-Schritte, `24bf818` Konsolidierung Repository-/Remote-/Migrationsgrenzen und Invalidation, `c12d7a4`/`ec7abfa`/`6a20b08` RIS-Handoff, APP-03E-Dokumentation in `e76f976`.
 - Offen/Blockiert: RIS-Backend/Persistenz, serverseitige `ApplicationV1`-Erstellung, Live-Auth-Matrix, Retention/Datenschutz-Freigabe, Browser-/BFF-Delegation; referenzierte RIS-Dokumente/Branch im lokalen Checkout nicht vorhanden und nicht verifiziert. **NICHT DEPLOYED.**
 - Log: `docs/reports/JM-APPLICATION-MANAGEMENT-03.md`
+2026-11-05 · JM-PROFILE-CACHE-RETIREMENT-DOCS-01
+- Typ: Dokumentation/Privacy-Transparenz/i18n/Regression
+- Status: COMPLETE — lokal verifiziert; kein Push, kein Merge, kein Deployment
+- Baseline: lokaler `main` `63b5965`; `origin/main` `4364eab` (abweichend, nicht synchronisiert); Branch `feature/jm-profile-cache-retirement-docs-01`; Cache-Removal `049edda` als Vorfahre bestätigt.
+- Cache-Status: `api/profile.mjs` ohne `cacheGet`/`cacheSet`/Key-Builder; `src/api.ts` sendet keinen Client-Hash; `tests/api/profile-no-cache.test.mjs` belegt einen AI-Aufruf je Anfrage. Andere Redis-Namespaces (Jobs, Detail, Geo, Usage, Alerts) bleiben unverändert.
+- Änderungen: `cv.privacyNote` DE/EN korrigiert (Text kann an externen KI-Anbieter; gewählter Modus entscheidet; keine Anonymitätsgarantie). Löschdialog „Endgültig entfernen“ → „Aus dieser Sitzung entfernen“; Confirm/Hint nennen CV-Builder-Profile und die Provider-Grenze. Datenschutzerklärung §14 als Entwurf mit vier getrennten Ebenen. Drei Cache-Berichte mit SUPERSEDED-Hinweis. Purge-Bericht: CODE REMOVAL VERIFIED / LEGACY NOT VERIFIED / PURGE BLOCKED.
+- Privacy/Data-Flow: keine neue Strecke, kein Provider-/AWS-/RIS-Zugriff, keine Persistenz-, Cookie- oder Auth-Änderung; keine echten CV-/Provider-Daten. Rechtsprüfung PENDING, Dokument nicht veröffentlicht.
+- Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` PASS; `git diff --check` PASS; Guest-CV-E2E 1440/390 PASS (1 `/api/profile`, 0 Login, keine Console-Errors); Profile-Storage-Consent-E2E 768/430/320 PASS. Erster Lauf mit `node_modules`-Symlink: 8 Vite-`fs.allow`-Artefaktfehler, nach Materialisierung grün.
+- Offen: Legacy-Redis-Purge BLOCKED; Rechtsprüfung PENDING; `origin/main` divergiert; dokumentierter `ApplicationsSection`-Timeout im Lauf nicht aufgetreten.
+- Log: `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01.md`
+
 2026-11-02 · JM-COVER-LETTER-CV-REUSE-01
 - Typ: Anschreiben-Generierung/bereits verarbeiteter CV/Session-Text-Wiederverwendung
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Live-Provider-Test, kein Deployment
