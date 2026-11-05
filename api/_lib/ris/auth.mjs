@@ -32,7 +32,15 @@ async function loadJwks(issuer, fetchImpl) {
   const cached = jwksCache.get(url);
   if (cached && cached.expiresAt > Date.now()) return cached.keys;
 
-  const response = await fetchImpl(url, { headers: { Accept: "application/json" } });
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    throw new RisAuthError("jwks_unavailable", "JWKS is unavailable");
+  }
   if (!response.ok) throw new RisAuthError("jwks_unavailable", "JWKS is unavailable");
   const body = await response.json().catch(() => null);
   const keys = body && Array.isArray(body.keys) ? body.keys : [];
@@ -72,6 +80,9 @@ export async function verifyAccessToken(token, cfg, fetchImpl = globalThis.fetch
   }
   if (typeof payload.exp !== "number" || payload.exp * 1000 <= Date.now()) {
     throw new RisAuthError("token_expired", "Token has expired");
+  }
+  if (typeof payload.nbf === "number" && payload.nbf * 1000 > Date.now() + 60000) {
+    throw new RisAuthError("token_not_yet_valid", "Token is not valid yet");
   }
 
   const keys = await loadJwks(cfg.issuer, fetchImpl);

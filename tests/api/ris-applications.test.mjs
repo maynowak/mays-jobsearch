@@ -322,6 +322,188 @@ describe("/api/ris/applications", () => {
     expect(String(risCalls()[0][0])).toContain("/metrics");
   });
 
+
+  it("lehnt abgelaufene Tokens ab", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${token({ exp: Math.floor(Date.now() / 1000) - 10 })}` },
+        query: {},
+      },
+      res
+    );
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe("token_expired");
+  });
+
+  it("lehnt eine ungültige Signatur ab", async () => {
+    const other = generateKeyPairSync("rsa", { modulusLength: 2048 });
+    const [header, payload] = token().split(".");
+    const signature = cryptoSign(
+      "RSA-SHA256",
+      Buffer.from(`${header}.${payload}`),
+      other.privateKey
+    ).toString("base64url");
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${header}.${payload}.${signature}` },
+        query: {},
+      },
+      res
+    );
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe("invalid_signature");
+  });
+
+  it("lehnt ID-Tokens ab", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${token({ token_use: "id" })}` },
+        query: {},
+      },
+      res
+    );
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe("invalid_token_use");
+  });
+
+  it("lehnt Tokens ohne sub ab", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${token({ sub: "" })}` },
+        query: {},
+      },
+      res
+    );
+    expect(res.statusCode).toBe(401);
+    expect(res.body.code).toBe("invalid_subject");
+  });
+
+  it("meldet JWKS-Ausfall als 503, nicht als 401", async () => {
+    fetchMock.mockImplementation(async (url) => {
+      if (String(url).includes("/.well-known/jwks.json")) return response(503, {});
+      return risResponse;
+    });
+    const res = makeRes();
+    await handler(
+      { method: "GET", headers: { authorization: `Bearer ${token()}` }, query: {} },
+      res
+    );
+    expect(res.statusCode).toBe(503);
+    expect(res.body.code).toBe("unavailable");
+  });
+
+  it("lehnt unbekannte Aktionen ab", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${token()}` },
+        query: { action: "unknown" },
+      },
+      res
+    );
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe("invalid_action");
+  });
+
+  it("lehnt Pfadmanipulation in applicationId ab", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${token()}` },
+        query: { id: "../../etc/passwd" },
+      },
+      res
+    );
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe("invalid_application_id");
+  });
+
+  it("lehnt nicht erlaubte Methoden ab", async () => {
+    const res = makeRes();
+    await handler(
+      { method: "PUT", headers: { authorization: `Bearer ${token()}` }, query: {} },
+      res
+    );
+    expect(res.statusCode).toBe(405);
+  });
+
+  it("lehnt zu große Bodies ab", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token()}` },
+        query: {},
+        body: {
+          job: {
+            jobId: "job-1",
+            title: "Test",
+            companyName: "Synthetic",
+            location: ["Darmstadt"],
+            source: ["synthetic"],
+          },
+          notes: "x".repeat(210000),
+        },
+      },
+      res
+    );
+    expect(res.statusCode).toBe(413);
+    expect(res.body.code).toBe("payload_too_large");
+  });
+
+
+  it("bindet ownerId an sub, nicht an E-Mail oder Browserwerte", async () => {
+    risResponse = response(200, { application: risApplication() });
+    const first = makeRes();
+    await handler(
+      { method: "GET", headers: { authorization: `Bearer ${token({ sub: "user-A", email: "same@example.invalid" })}` }, query: { id: "app-1" } },
+      first
+    );
+    const second = makeRes();
+    await handler(
+      { method: "GET", headers: { authorization: `Bearer ${token({ sub: "user-B", email: "same@example.invalid" })}` }, query: { id: "app-1" } },
+      second
+    );
+    expect(first.body.application.ownerId).toBe("user-A");
+    expect(second.body.application.ownerId).toBe("user-B");
+  });
+
+  it("ignoriert ownerId aus dem Browser-Body", async () => {
+    risResponse = response(201, { application: risApplication() });
+    const res = makeRes();
+    await handler(
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token({ sub: "user-real" })}` },
+        query: {},
+        body: {
+          ownerId: "victim",
+          job: {
+            jobId: "job-1",
+            title: "Test",
+            companyName: "Synthetic",
+            location: ["Darmstadt"],
+            source: ["synthetic"],
+          },
+        },
+      },
+      res
+    );
+    expect(res.body.application.ownerId).toBe("user-real");
+    const payload = JSON.parse(risCalls()[0][1].body);
+    expect(payload).not.toHaveProperty("ownerId");
+  });
+
   it("gibt weder Token noch Credential in der Antwort aus", async () => {
     const res = makeRes();
     const bearer = token();

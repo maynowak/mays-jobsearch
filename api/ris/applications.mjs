@@ -36,7 +36,18 @@ function readBody(req) {
 }
 
 async function bodyOf(req) {
-  if (req.body && typeof req.body === "object") return req.body;
+  if (typeof req.body === "string") {
+    if (req.body.length > MAX_BODY_BYTES) throw new Error("body_too_large");
+    try {
+      return req.body ? JSON.parse(req.body) : {};
+    } catch {
+      throw new Error("invalid_json");
+    }
+  }
+  if (req.body && typeof req.body === "object") {
+    if (JSON.stringify(req.body).length > MAX_BODY_BYTES) throw new Error("body_too_large");
+    return req.body;
+  }
   return readBody(req);
 }
 
@@ -117,6 +128,9 @@ export default async function handler(req, res) {
   try {
     identity = await verifyAccessToken(token, cfg);
   } catch (err) {
+    if (err instanceof RisAuthError && err.code === "jwks_unavailable") {
+      return fail(res, 503, "unavailable", "Authentication service is unavailable");
+    }
     const code = err instanceof RisAuthError ? err.code : "invalid_token";
     return fail(res, 401, code, "Authentication is invalid");
   }
@@ -124,6 +138,12 @@ export default async function handler(req, res) {
   const query = queryOf(req);
   const id = typeof query.id === "string" ? query.id : "";
   const action = typeof query.action === "string" ? query.action : "";
+
+  const actionAllowed =
+    !action ||
+    (req.method === "GET" && (action === "export" || action === "metrics")) ||
+    (req.method === "POST" && (action === "status" || action === "history" || action === "cover-letter"));
+  if (!actionAllowed) return fail(res, 422, "invalid_action", "action is invalid");
 
   try {
     if (req.method === "GET") {

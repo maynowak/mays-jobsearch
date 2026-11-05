@@ -1,3 +1,27 @@
+2026-11-05 · JM-RIS-INTEGRATION-01F
+- Typ: Security-/Integrations-/Regressionsprüfung
+- Status: COMPLETE — **SECURITY PASS (lokal) · RIS-DEV LIVE NOT AUTHORIZED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `362592d`; Integration 01A–01E; RIS lokal `5ebefbd`; RIS-DEV unverändert.
+- Scope: vollständiger Datenfluss Cognito → UI → Repository → Remote-Adapter → BFF → Mock-RIS; Migration; Consent; Partnerabhängigkeiten.
+- Auth/Isolation: JWKS-RS256, Issuer, Client, `token_use=access`, `exp`, `nbf`, `sub`; E-Mail nicht Identität; Browser-`ownerId` ignoriert; Tenant nicht aus Browser; Credential nur serverseitig. Gleiche E-Mail mit unterschiedlichen `sub` → getrennte `ownerId`.
+- Härtung: JWKS-Ausfall → **503** (nicht 401), JWKS-Timeout 5 s, `nbf`-Prüfung, Body-Limit auch für geparste Objekte (413), unbekannte Aktion → 422, Pfadmanipulation → 422, PUT → 405.
+- BFF: Server-/Browser-Flag default OFF, feste HTTPS-Basis, Pfad-/ID-Allowlist, kein offener Proxy, 10-s-Timeout, keine Retries, Error-Mapping, keine Secret-/Token-Leaks.
+- ApplicationV1: List/Detail/Create/Update/Status/Export/Delete/Metrics lokal verifiziert; `addFeedback`/`addInterview`/`addNote`/`addCoverLetterVersion` bewusst **nicht unterstützt**.
+- Migration: explizite Bestätigung, Consent fail-closed, Kompatibilitätsblocker, stabile Idempotenz, Duplikat-CONFLICT, Teilübertragung, lokale Daten bleiben erhalten, Logout/Benutzerwechsel verworfen.
+- No-Loss: **PARTIAL** — mehrere Standorte/Quellen, manuelle Stellen, Builder-CV, History/StatusHistory über Initial, Notes > 10.000 und fehlende URL werden blockiert.
+- RIS-Partner: Partner Application Registry/APIProfile/Credential/Tenant/Entitlements/Offer/Grant/Agenten-API sind dokumentiert; Verfügbarkeit auf `ris-dev` **NOT LIVE VERIFIED**; `RIS-DEV2-TEST-IDENTITY-04D` meldet Provisioning BLOCKED. Keine neue Registrierung/Credential-Ausstellung.
+- Tests: BFF **25/25**, Migration **16/16**, Dialog **2/2**, Adapter **21/21**, Bridge **12/12**, UI **2/2**, Gesamtsuite **1492 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** für lokale Security/Regression; **APPLICATIONV1 CONTRACT: PARTIAL**, **NO-LOSS: PARTIAL**, **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Security-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `api/_lib/ris/auth.mjs`, `api/ris/applications.mjs`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01F-SECURITY-REGRESSION.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine produktive Speicherung.
+- Offene Punkte: Partnerregistrierung/APIProfile/Credential/Tenant/Entitlement, Surface, echter Server-Consent, History-/Cover-Letter-Transfer, Cleanup, E2E-Freigabe.
+- Nächste Aktionen: 01G nur mit separater Freigabe; keine automatische Fortsetzung.
+- Resume-Punkt: Security-/Regressionsprüfung abgeschlossen; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01F-SECURITY-REGRESSION.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-01E
 - Typ: Session-Migration/Consent-Gate/Mock-Integration
 - Status: COMPLETE — **SESSION MIGRATION LOCAL VERIFIED · STORAGE GATE FAIL-CLOSED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
