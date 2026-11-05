@@ -129,7 +129,7 @@ Diese Punkte sind durch die Integration **nicht** erledigt.
 ## 9. Finaler Stand
 
 - Integrations-HEAD: **`998bb95`**
-- Dokumentations-Commit: siehe Git-Historie
+- Dokumentations-Commit: **`6289fc2`**
   (`docs: record third-party license main integration`)
 - Lokaler `main`: nach Dokumentation = Dokumentations-Commit
 - `origin/main`: **`0fa799e`**

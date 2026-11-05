@@ -14,7 +14,7 @@
 - Offene Findings unverändert: sechs dekorative Assets ohne Herkunftsnachweis; Transitiv-Lizenztexte nicht vollständig geprüft; Rechtsprüfung PENDING; Apache-2.0-Wahl für `dompurify` dokumentieren.
 - Klassifikation: **GREEN** für Integration/Regression; Lizenzinventar **PARTIAL**, Asset-Herkunft **REVIEW REQUIRED**, Legal **PENDING**.
 - Terraform-Checks: keine ausgeführt (nicht im Scope).
-- Git-Status: Working Tree clean; Integrations-HEAD `998bb95`; Dokumentation in separatem Commit; kein Push.
+- Git-Status: Working Tree clean; Integrations-HEAD `998bb95`; Dokumentation `6289fc2`; kein Push.
 - Geänderte Dateien: `package.json`, `package-lock.json`, `THIRD-PARTY-NOTICES.md`, `docs/reports/JM-THIRD-PARTY-LICENSE-INVENTORY-01.md` (integriert), `docs/reports/JM-THIRD-PARTY-LICENSE-MAIN-01.md`, `docs/AI_AUDITLOG.md`.
 - Bestätigung: keine Änderung an Produktcode, API, Dependencies, Font-Binaries, Secrets, Redis-/RIS-/AWS-/Terraform-/Cognito-/CloudFront-Konfiguration; keine echten Provider-/AWS-/Redis-Aufrufe.
 - Offene Fragen: Asset-Herkunft; vollständige Lizenztexte; Rechtsprüfung; Push-Freigabe.
