@@ -1366,7 +1366,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
 
     // Endgueltig entfernen: Dokumente + Listen weg, CV-Menue schliesst sich
     fireEvent.click(screen.getByRole("button", { name: "CV-Daten entfernen" }));
-    fireEvent.click(screen.getByRole("button", { name: "Endgültig entfernen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aus dieser Sitzung entfernen" }));
     await waitFor(() => expect(screen.queryByText("Deine Lebensläufe")).toBeNull());
     expect(screen.queryByRole("button", { name: "Profile anzeigen" })).toBeNull();
     // Dropzone ist wieder der sichtbare Einstieg (erneutes Hochladen)
@@ -1630,7 +1630,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
 
     async function removeCvData() {
       fireEvent.click(screen.getByRole("button", { name: "CV-Daten entfernen" }));
-      fireEvent.click(screen.getByRole("button", { name: "Endgültig entfernen" }));
+      fireEvent.click(screen.getByRole("button", { name: "Aus dieser Sitzung entfernen" }));
       await waitFor(() => expect(screen.queryByText("Deine Lebensläufe")).toBeNull());
     }
 

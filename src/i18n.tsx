@@ -68,7 +68,7 @@ const en: Dict = {
   "cv.dropZoneAlt": "or choose a PDF",
   "cv.dropZoneOver": "Drop PDF here",
   "cv.privacyNote":
-    "Private: Your PDF stays on your device. Only the extracted, anonymized text is sent to the AI to create your profile.",
+    "Private: Your PDF is read locally in your browser for this feature. The extracted text may be sent to an external AI provider to create your profile. Whether personal details are removed first depends on the anonymization option you choose; with “Not anonymized” they may be included. Complete anonymity cannot be guaranteed.",
   "cv.notPdf": "Please select a PDF file.",
   "cv.emptyFile":
     "This PDF file is empty (0 bytes) and cannot be processed. Please select a valid PDF file.",
@@ -207,9 +207,9 @@ const en: Dict = {
   "cv.profilesPrivacyNote":
     "Local only: lists are kept in this session's memory, cleared 12 hours after processing, and removed automatically on reload.",
   "cv.removeData": "Remove CV data",
-  "cv.removeDataConfirm": "Really remove all CV documents and saved profile lists?",
-  "cv.removeDataHint": "Note: you will need to upload your CVs again afterwards.",
-  "cv.removeDataConfirmButton": "Remove permanently",
+  "cv.removeDataConfirm": "Really remove all CV documents, saved profile lists and CV builder profiles from this session?",
+  "cv.removeDataHint": "Note: you will need to upload your CVs again afterwards. Data already sent to an AI provider is not deleted by this action.",
+  "cv.removeDataConfirmButton": "Remove from this session",
   "cv.atsProfileSaved": "ATS profile “{name}” saved. You can now select it in the CV area.",
   "cv.profilesRegionAria": "Saved profiles of this CV",
   "cv.chooseSearchProfile": "Search profile for this CV",
@@ -1340,7 +1340,7 @@ const de: Dict = {
   "cv.dropZoneAlt": "oder PDF auswählen",
   "cv.dropZoneOver": "PDF hier ablegen",
   "cv.privacyNote":
-    "Privat: Die PDF bleibt auf deinem Gerät. Nur der gelesene, anonymisierte Text wird zur Profilerstellung an die KI gesendet.",
+    "Privat: Deine PDF wird für diese Funktion lokal in deinem Browser ausgelesen. Der ausgelesene Text kann zur Profilerstellung an einen externen KI-Anbieter übermittelt werden. Ob personenbezogene Angaben vorher entfernt werden, hängt von deiner gewählten Anonymisierungsoption ab; bei „Nicht anonymisiert“ können sie enthalten sein. Eine vollständige Anonymität kann nicht garantiert werden.",
   "cv.notPdf": "Bitte wähle eine PDF-Datei aus.",
   "cv.emptyFile":
     "Diese PDF-Datei ist leer (0 Byte) und kann nicht verarbeitet werden. Bitte wähle eine gültige PDF-Datei.",
@@ -1479,9 +1479,9 @@ const de: Dict = {
   "cv.profilesPrivacyNote":
     "Nur lokal: Listen bleiben im Speicher dieser Session, werden 12 Stunden nach der Verarbeitung geleert und beim Neuladen automatisch entfernt.",
   "cv.removeData": "CV-Daten entfernen",
-  "cv.removeDataConfirm": "Alle CV-Dokumente und gespeicherten Profil-Listen wirklich entfernen?",
-  "cv.removeDataHint": "Hinweis: Die Lebensläufe müssen danach erneut hochgeladen werden.",
-  "cv.removeDataConfirmButton": "Endgültig entfernen",
+  "cv.removeDataConfirm": "Alle CV-Dokumente, gespeicherten Profil-Listen und CV-Builder-Profile aus dieser Sitzung entfernen?",
+  "cv.removeDataHint": "Hinweis: Die Lebensläufe müssen danach erneut hochgeladen werden. Bereits an einen KI-Anbieter übermittelte Daten werden dadurch nicht gelöscht.",
+  "cv.removeDataConfirmButton": "Aus dieser Sitzung entfernen",
   "cv.atsProfileSaved": "ATS-Profil „{name}“ gespeichert. Du kannst es jetzt im CV-Bereich auswählen.",
   "cv.profilesRegionAria": "Gespeicherte Profile dieses CVs",
   "cv.chooseSearchProfile": "Suchprofil dieses Lebenslaufs",
