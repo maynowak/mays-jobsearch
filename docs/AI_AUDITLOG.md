@@ -1,3 +1,27 @@
+2026-11-05 · JM-THIRD-PARTY-LICENSE-INVENTORY-01
+- Typ: License-Compliance/Inventur/Metadaten/Regression
+- Status: COMPLETE — **THIRD-PARTY INVENTORY: PARTIAL** (npm + DejaVu verifiziert, Assets teilweise offen); kein Push, kein Merge, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: lokaler `main` `005a372`; `origin/main` `0fa799e` (98 ahead / 0 behind); Branch `feature/jm-third-party-license-inventory-01`; isolierter Worktree; Working Tree clean; fremder Checkout `7eb779a` unverändert.
+- Scope: Drittsoftware-Inventur, Lizenzmetadaten, DejaVu-Prüfung, Asset-Inventur, `package.json`-/Lockfile-Lizenzfeld, Regression.
+- Abgeschlossene Abschnitte: Preflight; npm-Direktabhängigkeiten; transitive Abhängigkeiten; DejaVu; Assets; `THIRD-PARTY-NOTICES.md`; `package.json`/Lockfile; Konsistenz; Regression; Audit.
+- Befunde: 8 Runtime- und 14 Dev-Direktabhängigkeiten; 197 Lockfile-Einträge; **0 fehlende Lizenzmetadaten**. Verteilung u. a. MIT 132, Apache-2.0 23, MPL-2.0 12, LGPL-3.0-or-later 10. Auffälligkeiten ausschließlich Dev/Build oder optional (`lightningcss` MPL-2.0, `@img/sharp-libvips-*` LGPL, `@img/sharp-wasm32` composite); Laufzeit nur `dompurify` dual (MPL-2.0 OR Apache-2.0, Apache wählbar).
+- DejaVu: 4 TTFs + `DejaVu.LICENSE.txt`, Einbindung in `src/lib/cvBuilder/pdfExport.ts`; Bitstream-Vera-Lizenz für die Fonts, `debian/*`-Abschnitt GPL-2+ nur für Verpackung; Hinweise unverändert; **VERIFIED**.
+- Assets: eigene Screenshots VERIFIED; sechs dekorative Assets ohne Herkunftsnachweis REVIEW REQUIRED (nicht entfernt, nicht umbenannt).
+- Metadaten: `package.json` und Lockfile-Root erhalten `"license": "AGPL-3.0-only"`; keine Feld-/Versions-/Dependency-/Script-Änderung; JSON- und Lockfile-Konsistenz PASS.
+- AGPL: `LICENSE.md` unverändert, SPDX `AGPL-3.0-only`, Copyright unverändert, keine Einschränkung bestehender Rechte; Fremdsoftware bleibt unter eigenen Lizenzen.
+- Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` und `git diff --check` PASS; Dependency-Keys/-Versionen unverändert; bekannte `ApplicationsSection`-Timeout nicht aufgetreten.
+- Klassifikation: **YELLOW** — Inventur teilweise vollständig; Legal Review PENDING.
+- Terraform-Checks: keine ausgeführt (nicht im Scope).
+- Git-Status: Working Tree clean; Commits `484129c`, `bb52a3b`, Dokumentation in separatem Commit; `main` bleibt `005a372`.
+- Geänderte Dateien: `package.json`, `package-lock.json`, `THIRD-PARTY-NOTICES.md`, `docs/reports/JM-THIRD-PARTY-LICENSE-INVENTORY-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Änderung an `api/**`, `src/**`, `tests/**`, `scripts/**`, Dependencies, Font-Binaries, AWS/Terraform/RIS/Cognito/CloudFront, Redis, Secrets; keine echten Provider-/AWS-/Redis-Aufrufe.
+- Offene Fragen: Herkunft/Lizenz der sechs dekorativen Assets; vollständige Transitiv-Lizenztexte; Apache-2.0-Wahl für `dompurify`; rechtliche Gesamtprüfung.
+- Risiken: ungeklärte Asset-Lizenzen; Metadaten ersetzen keine Volltextprüfung; MPL/LGPL im Dev-Tooling bei Veröffentlichung von Build-Artefakten.
+- Nächste Aktionen: Asset-Herkunft klären; Lizenztexte stichprobenartig prüfen; Rechtsprüfung; Push/Merge nur mit Freigabe.
+- Resume-Punkt: Branch `feature/jm-third-party-license-inventory-01`, Working Tree clean; Auftrag abgeschlossen.
+- Log: `docs/reports/JM-THIRD-PARTY-LICENSE-INVENTORY-01.md`
+
 2026-11-05 · JM-REMOTE-MAIN-MERGE-02
 - Typ: Git-Integration/Lizenzintegrität/Regression/Audit
 - Status: COMPLETE — **LOCAL MAIN: VERIFIED**; kein Push, kein Deployment
