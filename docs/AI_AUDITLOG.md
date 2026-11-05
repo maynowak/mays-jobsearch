@@ -1,3 +1,26 @@
+2026-11-05 · JM-RIS-INTEGRATION-01C
+- Typ: Remote-Adapter/Session-Kompatibilität/Contract-Tests
+- Status: COMPLETE — **REMOTE ADAPTER LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `67af66a`; BFF aus 01B; Session-Repository unverändert; RIS-DEV unverändert (`PARTNER_SURFACE_ENABLED=false`).
+- Scope: Implementierung des RIS-Remote-Adapters für `ApplicationPersistencePort`, Mock-/Contract-Tests, Regression.
+- Implementiert: `list`, `get`, `create`, `update`, `transitionStatus`, `export`, `delete`, `metrics` (konkret). Bewusst **nicht** implementiert: `addFeedback`/`addInterview`/`addNote`/`addCoverLetterVersion` — der BFF liefert nur `{history}`/`{version}`, keine vollständige `ApplicationV1`.
+- Mapping: BFF bleibt autoritativ; Adapter validiert Antwortform, prüft `notes` ≤ 10.000 und `expectedVersion` ≥ 1 vor dem Request; keine Rundung von Gehaltswerten; Delete-Receipt lokal nach bestätigtem `{deleted:true}`.
+- Identität: Access-Token pro Request über Provider, nie gespeichert; `ownerId` aus verifizierter Session; `invalidate()` + globale Session-Generation verwerfen verspätete Antworten; keine Browser-Tenant-/Owner-Werte.
+- Version/Idempotenz: Server-`applicationId`, `expectedVersion`, 409 → `version_conflict` ohne Auto-Override, stabiler `Idempotency-Key`, kein Auto-Retry.
+- Fehler: 401/403/404/409/422/429/502/503 → `unauthorized`/`forbidden`/`not_found`/`version_conflict`/`idempotency_conflict`/`conflict`/`validation_error`/`unavailable`; Logout → `session_ended`; Abbruch → `aborted`.
+- Feature-Flag: `createRisApplicationRepository({enabled:false})` = keine Requests; UI-Flag `VITE_RIS_APPLICATION_STORAGE_ENABLED` default false; kein Auto-Transfer, kein stilles Umschalten.
+- Tests: Adapter **21/21**, BFF **14/14**, Gesamtsuite **1449 passed / 5 skipped**, Build und `git diff --check` PASS. Ein früherer Volllauf hatte 1 nicht reproduzierbaren Flake; Folgelauf grün; keine Tests deaktiviert.
+- Klassifikation: **GREEN** für den lokalen Adapter; **APPLICATIONV1 CONTRACT: PARTIAL**, **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `src/lib/applications/risRemoteRepository.ts`, `...test.ts`, `repositoryTypes.ts`, `api/ris/applications.mjs`, `api/_lib/ris/client.mjs`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01C-REMOTE-ADAPTER.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine Session-Repository-Änderung.
+- Offene Punkte: History-/Cover-Letter-Adapter, `statusHistory` im Detail, RIS-DEV-Partnerbindung/Credential/Tenant/Surface, Metrics live, Datenschutz-/Rechtsfreigabe.
+- Nächste Aktionen: 01D (UI-Anbindung) erst nach separater Freigabe; 01G weiterhin gesperrt.
+- Resume-Punkt: Remote-Adapter implementiert und mock-getestet; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01C-REMOTE-ADAPTER.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-01B
 - Typ: Auth-/BFF-Vorbereitung/Integration/Regression
 - Status: COMPLETE — **BFF LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment

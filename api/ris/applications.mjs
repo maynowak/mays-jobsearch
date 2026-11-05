@@ -127,6 +127,10 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === "GET") {
+      if (action === "metrics") {
+        const data = await callRis(cfg, token, "GET", applicationPath(cfg, "", "/metrics"));
+        return send(res, 200, data);
+      }
       if (action === "export") {
         if (!id) return fail(res, 422, "invalid_request", "id is required");
         const data = await callRis(cfg, token, "GET", applicationPath(cfg, id, "/export"));

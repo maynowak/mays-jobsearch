@@ -138,6 +138,7 @@ export interface ApplicationReadOptions {
 export interface ApplicationListOptions extends ApplicationReadOptions {
   cursor?: string;
   limit?: number;
+  status?: ApplicationStatus;
 }
 
 export interface ApplicationPageV1 {

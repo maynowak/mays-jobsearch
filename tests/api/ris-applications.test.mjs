@@ -306,6 +306,22 @@ describe("/api/ris/applications", () => {
     expect(res.body.code).toBe("unavailable");
   });
 
+  it("liefert Metrics über den BFF", async () => {
+    risResponse = response(200, { metrics: { total: 2 } });
+    const res = makeRes();
+    await handler(
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${token()}` },
+        query: { action: "metrics" },
+      },
+      res
+    );
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ metrics: { total: 2 } });
+    expect(String(risCalls()[0][0])).toContain("/metrics");
+  });
+
   it("gibt weder Token noch Credential in der Antwort aus", async () => {
     const res = makeRes();
     const bearer = token();

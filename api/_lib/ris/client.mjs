@@ -1,4 +1,4 @@
-const ALLOWED_SUFFIX = new Set(["", "/status", "/history", "/cover-letter-versions", "/export"]);
+const ALLOWED_SUFFIX = new Set(["", "/status", "/history", "/cover-letter-versions", "/export", "/metrics"]);
 
 export class RisClientError extends Error {
   constructor(code, status, message) {
