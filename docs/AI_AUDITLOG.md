@@ -1,3 +1,26 @@
+2026-11-05 · JM-WORKTREE-CONSOLIDATION-01
+- Typ: Repo-Hygiene/Worktree-Konsolidierung/Audit
+- Status: COMPLETE — **Mays-Jobsearch ist jetzt der `main`-Arbeitscheckout**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Primär-Checkout `fix/cover-letter-model-fallback` @ `7eb779a` mit 17 Änderungen/9 untracked; `main` @ `9b9f9aa`; drei zusätzliche Worktrees (`consolidation`, `retirement-docs`, `license-inventory`); `origin/main` `0fa799e`.
+- Scope: Zusammenführung der Arbeitskopien, Entfernen redundanter Worktrees, Übernahme der Agenten-Konfiguration, Auditlog im Arbeitsverzeichnis.
+- Abgeschlossene Abschnitte: Backup; Stash; Worktree-Entfernung; Prune; Branchwechsel; Agenten-Config; Wiederherstellung eindeutiger Dokumente; Audit.
+- Aktionen: Vollbackup nach `/tmp/opencode/mays-jobsearch-dirty-2026-11-05/` (2,5 MB, inkl. `tracked.patch`); `stash@{0}` (`backup: pre-main-switch 2026-11-05`); `git worktree remove` für `retirement-docs`, `license-inventory`, `consolidation`; `git worktree prune`; `git switch main`; Agenten-Frontmatter/`opencode.json` übernommen und als `04a5d9a` committet.
+- Integrität: beide Feature-Branches (`3f56568`, `998bb95`) waren Vorfahren von `main`; keine einzigartigen Commits/ungespeicherten Änderungen in den entfernten Worktrees. Produktcode gegenüber `9b9f9aa` unverändert.
+- Wiederhergestellt (untracked): `docs/mays_job_matcher_datenschutzerklaerung_1.0.txt`, `docs/mays_job_matcher_datenschutzprinzipien.txt`, `docs/reports/JOBMATCHER-RIS-COGNITO-INTEGRATION-01-EXECUTION_LOG.md`, `docs/screenshotsfordev/AWS-CodeexampleCognito.md`.
+- Nicht zurückgespielt (nur Backup): `privacy_content.txt` (exakte Dublette), Root-`main.tsx` (kein Vite-Entry), drei nicht referenzierte Bilder.
+- Tests: keine erneut ausgeführt (kein Produktcode geändert); letzte Gesamtsuite auf `9b9f9aa`: **1414 passed / 5 skipped**.
+- Klassifikation: **GREEN** — Konsolidierung ohne Datenverlust.
+- Terraform-Checks: keine ausgeführt (nicht im Scope).
+- Git-Status: Branch `main`; HEAD `04a5d9a`; 4 untracked Dokumente; ein Worktree; `origin/main` `0fa799e`; 104 Commits vor Remote (vor Dokumentations-Commit).
+- Geänderte Dateien: `.opencode/agents/*.md`, `opencode.json` (Commit `04a5d9a`), `docs/reports/JM-WORKTREE-CONSOLIDATION-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Änderung an Produktcode, API, Dependencies, Secrets, Redis/RIS/AWS/Terraform/Cognito/CloudFront; kein Push, kein Deployment.
+- Offene Fragen: Zuordnung der vier untracked Dokumente; Löschung von Backup/Stash erst nach Prüfung; Push-Freigabe.
+- Risiken: Backup liegt außerhalb des Repos; Stash `wip-examine` (vorbestehend) unangetastet.
+- Nächste Aktionen: untracked Dokumente entscheiden; danach optional Push mit Freigabe.
+- Resume-Punkt: Arbeitsverzeichnis `Mays-Jobsearch` auf `main`, Working Tree bis auf vier untracked Dokumente clean.
+- Log: `docs/reports/JM-WORKTREE-CONSOLIDATION-01.md`
+
 2026-11-05 · JM-THIRD-PARTY-LICENSE-MAIN-01
 - Typ: Git-Integration/Lizenzintegrität/Regression/Audit
 - Status: COMPLETE — **LOCAL MAIN: VERIFIED**; kein Push, kein Deployment
