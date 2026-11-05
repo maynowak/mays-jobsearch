@@ -223,9 +223,10 @@ zurückgesetzt; sie sind nicht Teil der Commits.
 | `3b68393` | `docs: align privacy declaration with retired CV profile cache` |
 | `870f94c` | `docs: mark retired CV cache reports as historical` |
 | `653dc65` | `docs: separate legacy Redis purge status from code removal` |
-| _(folgt)_ | `docs: record CV cache retirement documentation cleanup` |
+| `b4799b6` | `docs: record CV cache retirement documentation cleanup` |
 
 Branch: `feature/jm-profile-cache-retirement-docs-01`, Basis `63b5965`.
+Finaler Branch-HEAD vor diesem Nachtrag: `b4799b6`.
 **Kein Push. Kein PR. Kein Merge. Kein Deployment.**
 
 ---
