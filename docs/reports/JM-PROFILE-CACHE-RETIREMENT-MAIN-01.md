@@ -192,9 +192,10 @@ Working Tree danach clean. Keine echten Provider-/Redis-/AWS-/RIS-Aufrufe.
 ## 12. Finaler lokaler Main-HEAD
 
 - Integrations-HEAD (Fast-Forward-Ziel): **`3f56568`**
-- Dokumentations-Commit auf `main`: siehe Git-Historie
+- Dokumentations-Commit auf `main`: **`bb22a46`**
   (`docs: record cache retirement main integration`)
-- Finaler `main`-HEAD nach Dokumentation: siehe `git log -1`
+- Finaler `main`-HEAD nach Dokumentation: `bb22a46` plus nachfolgender
+  Nachweis-Commit; exakter Wert über `git log -1`
 - `origin/main`: **`0fa799e`** (nicht integriert)
 - Working Tree: **clean**
 

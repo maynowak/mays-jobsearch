@@ -12,7 +12,7 @@
 - Remote: `git ls-remote` → `0fa799e`; `git fetch --no-tags origin main` aktualisierte nur die Referenz; danach lokal **93 ahead / 4 behind**; 4 Remote-Commits, netto 5 Lizenzdateien, keine Überlappung mit den Änderungen. Kein Pull/Merge/Rebase/Push.
 - Klassifikation: **GREEN** für Integration und Regression; **Legacy-Purge BLOCKED**, **Legal PENDING**, **Remote REVIEW REQUIRED**.
 - Terraform-Checks: keine ausgeführt (nicht im Scope).
-- Git-Status: Working Tree clean; integrierter HEAD `3f56568`; Dokumentation in separatem Commit; `origin/main` `0fa799e`.
+- Git-Status: Working Tree clean; integrierter HEAD `3f56568`; Dokumentation `bb22a46`; `origin/main` `0fa799e`.
 - Geänderte Dateien: `docs/reports/JM-PROFILE-CACHE-RETIREMENT-MAIN-01.md`, `docs/AI_AUDITLOG.md`.
 - Bestätigung: keine Änderung an Produktlogik, `api/**`, `scripts/**`, AWS/Terraform/RIS/Cognito/CloudFront, Redis-Konfiguration, Secrets, Provider-Ansteuerung; keine neue Persistenz, Cookies oder Lösch-API; keine echten Provider-/Redis-/AWS-Daten.
 - Offene Fragen: Produktions-Redis-Ziel für Legacy-Purge; Rechtsprüfung; Auflösung der Remote-Divergenz; Alt-Deployments.
