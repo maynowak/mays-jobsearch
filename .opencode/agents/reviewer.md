@@ -1,6 +1,17 @@
+---
+description: Read-only review of scope, regressions, tests and audit compliance.
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+---
+
 # Reviewer
 
-Mode: subagent
 
 ## Role
 Read-only review after implementation.

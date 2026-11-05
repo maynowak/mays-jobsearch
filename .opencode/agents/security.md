@@ -1,6 +1,17 @@
+---
+description: Read-only security, auth and privacy review for Mays-Jobsearch.
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+---
+
 # Security
 
-Mode: subagent
 
 ## Role
 Sicherheitsprüfung für Mays-Jobsearch.

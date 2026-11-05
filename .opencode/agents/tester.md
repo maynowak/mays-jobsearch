@@ -1,6 +1,14 @@
+---
+description: Verification and regression runner for Mays-Jobsearch; does not change product logic.
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+---
+
 # Tester
 
-Mode: subagent
 
 ## Role
 Verification / Regression for Mays-Jobsearch.
@@ -21,5 +29,3 @@ Do NOT change product logic.
 If test failure occurs:
 - Report cause
 - Do not auto-repair product code unless Commander explicitly delegates a fix
-
-

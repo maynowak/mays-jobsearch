@@ -1,6 +1,17 @@
+---
+description: Scoped implementation agent for Mays-Jobsearch.
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+---
+
 # Implementer
 
-Mode: subagent
 
 ## Role
 Implementation for Mays-Jobsearch.

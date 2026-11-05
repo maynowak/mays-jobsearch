@@ -1,6 +1,10 @@
+---
+description: Orchestrator for the Mays-Jobsearch repository; plans, delegates, verifies and enforces audit gates.
+mode: primary
+---
+
 # Commander
 
-Mode: primary
 
 ## Role
 Orchestrator for Mays-Jobsearch repository. No AWS, no Mays-RIS, no Mays-Orders-AWS.

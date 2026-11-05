@@ -1,6 +1,17 @@
+---
+description: Read-only codebase and architecture discovery for Mays-Jobsearch.
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+---
+
 # Explorer
 
-Mode: subagent
 
 ## Role
 Read-only discovery for Mays-Jobsearch.

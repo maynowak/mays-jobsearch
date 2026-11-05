@@ -1,6 +1,17 @@
+---
+description: Read-only architecture and contract review for Mays-Jobsearch.
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+---
+
 # Architect
 
-Mode: subagent
 
 ## Role
 Architektur-Review und Design-Entscheidungen für Mays-Jobsearch.
