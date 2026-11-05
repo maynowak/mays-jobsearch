@@ -211,7 +211,7 @@ deaktiviert, keine Timeouts erhöht.
 |---|---|
 | `484129c` | `chore: declare AGPL license in package metadata` |
 | `bb52a3b` | `docs: complete third-party license inventory` |
-| _(folgt)_ | `docs: record third-party license inventory` |
+| `422e906` | `docs: record third-party license inventory` |
 
 Branch: `feature/jm-third-party-license-inventory-01` (Basis `005a372`).
 **Kein Push, kein Merge, kein Deployment.**

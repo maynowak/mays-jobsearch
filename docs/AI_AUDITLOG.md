@@ -13,7 +13,7 @@
 - Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` und `git diff --check` PASS; Dependency-Keys/-Versionen unverändert; bekannte `ApplicationsSection`-Timeout nicht aufgetreten.
 - Klassifikation: **YELLOW** — Inventur teilweise vollständig; Legal Review PENDING.
 - Terraform-Checks: keine ausgeführt (nicht im Scope).
-- Git-Status: Working Tree clean; Commits `484129c`, `bb52a3b`, Dokumentation in separatem Commit; `main` bleibt `005a372`.
+- Git-Status: Working Tree clean; Commits `484129c`, `bb52a3b`, Dokumentation `422e906`; `main` bleibt `005a372`.
 - Geänderte Dateien: `package.json`, `package-lock.json`, `THIRD-PARTY-NOTICES.md`, `docs/reports/JM-THIRD-PARTY-LICENSE-INVENTORY-01.md`, `docs/AI_AUDITLOG.md`.
 - Bestätigung: keine Änderung an `api/**`, `src/**`, `tests/**`, `scripts/**`, Dependencies, Font-Binaries, AWS/Terraform/RIS/Cognito/CloudFront, Redis, Secrets; keine echten Provider-/AWS-/Redis-Aufrufe.
 - Offene Fragen: Herkunft/Lizenz der sechs dekorativen Assets; vollständige Transitiv-Lizenztexte; Apache-2.0-Wahl für `dompurify`; rechtliche Gesamtprüfung.
