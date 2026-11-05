@@ -1,3 +1,24 @@
+2026-11-05 · JM-RIS-INTEGRATION-GAP-CLOSURE-01
+- Typ: Gap-Audit/Vercel-Env/Readiness
+- Status: COMPLETE — **GAP OPEN · NO MUTATIONS · LIVE E2E BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `3e60010`; `origin/main` `fec135c`; **9 ahead / 0 behind**; Pull ist No-op; 4 untracked Dokumente unangetastet.
+- Vercel: linked `maymilly/mays-job-matcher`; `RIS_API_KEY` nur in Production vorhanden; `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED` fehlen; `mays-jobsearch`-Projekt ohne Env; `.env.local` ohne RIS-Variablen.
+- RIS-DEV (read-only): Partner Applications/APIProfiles/Credentials/Offers/Entitlements/Profiles/Applications = 0; Agent Catalog 2; `PARTNER_SURFACE_ENABLED=false`; Authorizer `ojbmoiYGM`/`7ldh…`; Testbenutzer im Jobsearch-Pool (`sub 93a43852-…`), kein `custom:tenant_id`, kein Grant.
+- Gaps: G1 Provisionierung (Trust Anchor fehlt), G2 Authorizer für Jobsearch-Pool/Client, G3 Surface, G4 Testbenutzer-Grant, G5 Tenant-Claim, G6 Vercel-Env, G7 BFF nicht im Produktionsstand (9 lokale Commits nicht gepusht), G8 History/Cover-Letter, G9 Server-Consent.
+- Schließungsreihenfolge: Trust Anchor → APIProfile/Credential/Partner/Offer/Grant → Authorizer → Surface-Testfenster → Vercel-Env → Push/Deploy-Freigabe → synthetischer E2E.
+- E2E-Pfad: Vercel Production-Env (`vercel env pull`/`vercel dev` oder Preview); Key allein genügt nicht; ohne G1–G3 endet er bei 401/503. Kein E2E gestartet.
+- Tests: Build und Gesamtsuite bereits auf diesem Stand: **1498 passed / 5 skipped**; keine neuen Tests (Dokumentation).
+- Klassifikation: **YELLOW / BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Dokumentations-Commit; 4 untracked Dokumente bleiben; kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-Env-Mutation, keine RIS-/AWS-/Terraform-/Cognito-/DNS-Mutation, keine echten RIS-Writes, kein Deployment.
+- Offene Punkte: Trust Anchor, Authorizer-Entscheidung, Surface-Fenster, Vercel-Env (Key-Zuordnung), Push/Deploy, E2E-Freigabe.
+- Nächste Aktionen: RIS-Owner-Freigabe/Trust Anchor; danach Provisionierung und Vercel-Env; erst dann E2E.
+- Resume-Punkt: Gaps dokumentiert; Anschluss blockiert.
+- Log: `docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`
+
 2026-11-05 · RIS-JOBSEARCH-DEV-CONNECT-01
 - Typ: Read-only RIS-DEV-Verifikation/Provisionierungsplan
 - Status: COMPLETE — **GAP VERIFIED · PROVISIONING BLOCKED**; keine Mutation, kein Push
