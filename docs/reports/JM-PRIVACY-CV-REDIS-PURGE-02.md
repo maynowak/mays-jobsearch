@@ -6,6 +6,24 @@
 **Deployment:** keines
 **Produktions-Redis:** nicht beschrieben, nicht gelöscht
 
+## Statusabgrenzung (2026-11-05, JM-PROFILE-CACHE-RETIREMENT-DOCS-01)
+
+```text
+CACHE REMOVAL FROM PRODUCT CODE:   VERIFIED (`049edda`)
+LEGACY REDIS DATA REMOVAL:         NOT VERIFIED
+PRODUCTION PURGE:                  BLOCKED
+```
+
+- In diesem Schritt wurden **keine** Redis-Operationen ausgeführt: kein `SCAN`,
+  kein `DELETE`, kein Purge-Skript gegen echte Infrastruktur, keine Änderung an
+  Secrets, Vercel-Umgebung oder Credentials.
+- Eine 30-Tage-TTL kann alte Einträge automatisch auslaufen lassen. Ohne
+  geprüfte Zeitpunkte der letzten Schreibvorgänge ist das tatsächliche
+  Ablaufdatum jedoch nicht bekannt. Der reine Zeitablauf wird **nicht** als
+  Nachweis einer vollständigen Löschung gewertet.
+- Das bestehende Purge-Werkzeug bleibt unverändert; es wird keine neue
+  Lösch-API benötigt.
+
 ## 1. Produktionsstand
 
 ### 1.1 Vercel Production
