@@ -20,6 +20,14 @@ Compact, repo-specific guidance for OpenCode sessions. Only keep what changes be
 - Cron: `/api/cron/digest` daily `0 7 * * *` → `vercel.json:7-12`
 - Build identity injected via `buildInfo.ts` into Vite/vitest (`__APP_VERSION__`, `__APP_ENV__`, `__APP_COMMIT_SHA__`, `__APP_BRANCH__`)
 
+## External system boundary — Mays-RIS
+- Mays-RIS is a separately operated external service. This repository consumes it only through the documented HTTP contract.
+- Never inspect, read, clone, or modify the Mays-RIS repository, AWS account, DynamoDB, Lambda, API Gateway, Cognito, CloudFront/DNS, or its credentials. Never run AWS CLI/SDK calls against RIS.
+- The only RIS egress is the server-side BFF under `api/ris/`. No RIS code imports, no RIS database access, no token translation, no shared Cognito mutation.
+- `RIS_PARTNER_CREDENTIAL` / `X-Api-Credential` is server-only; never in `VITE_*`, browser bundles, logs, or reports.
+- Integration evidence must come from this repository (code, tests, mock server) and the publicly agreed contract. RIS-internal observations are out of scope and must not be used as proof.
+- If a task appears to require RIS internals: **STOP** and request a separate, explicit mandate. Do not cross the boundary.
+
 ## Architecture quirks
 - Provider router: `api/_lib/providers/index.mjs` aggregates free models from OpenRouter (primary) and EdenAI (optional). Provider-level fallback on quota exhaustion only; model-level errors propagate.
 - Model selection is locked while search/scoring runs (`ModelSelector` disables during phase).

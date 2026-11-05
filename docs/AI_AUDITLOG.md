@@ -1,3 +1,22 @@
+2026-11-05 · JM-RIS-BOUNDARY-01
+- Typ: Governance/Boundary/Incident/Remediation
+- Status: COMPLETE — **YELLOW**; Prozessvorfall dokumentiert; keine RIS-/AWS-Mutation; kein Push
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `d60ce6a`.
+- Incident: Im Rahmen der RIS-Readiness-Vorbereitung wurden read-only AWS-Abfragen im RIS-DEV-Account `240571105849` und Einsichten in das lokale RIS-Repo durchgeführt, ohne separates ausdrückliches Mandat. Kategorien: DynamoDB-Metadaten/Items, Lambda-Env-Flags, API-Gateway-Routen/Authorizer, Cognito-Pool-/Client-/Testbenutzer-Metadaten. Keine Mutation, keine Secrets/Tokens, keine RIS-Repo-Änderung, keine echten RIS-Requests.
+- Impact: Konkrete RIS-Interna sind **quarantänisiert** und werden nicht als Jobsearch-Evidenz verwendet/reproduziert. Die Aussage „Jobsearch nutzt RIS nur über den öffentlichen Vertrag“ wird künftig ausschließlich Jobsearch-seitig belegt.
+- Remediation: `AGENTS.md` Abschnitt „External system boundary — Mays-RIS“; `.opencode/agents/commander.md` Constraint; statischer Boundary-Test `tests/api/ris-boundary.test.mjs` (kein AWS SDK/RIS-Code, keine execute-api-URL, Credential nur serverseitig, ein Browser-Egress, AGENTS-Regel).
+- Tests: Boundary **5/5 PASS**; Gesamtsuite **1497 passed / 5 skipped**; Build und `git diff --check` PASS.
+- Klassifikation: **YELLOW** (Prozessvorfall, keine Daten-/Produktänderung).
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Governance-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `AGENTS.md`, `.opencode/agents/commander.md`, `tests/api/ris-boundary.test.mjs`, `docs/reports/JM-RIS-BOUNDARY-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests, keine Secrets/Tokens gelesen oder ausgegeben.
+- Offene Punkte: RIS-Partner-Attestation (API-Version/OpenAPI, Issuer/Audience, Partner-/Credential-/Offer-/Grant-/Entitlement-Prozess, Surface-Status, Consent/Retention, Testbenutzer, Cleanup); danach separater Live-E2E-Auftrag.
+- Nächste Aktionen: Attestation vom RIS-Team anfordern; keine weiteren RIS-Interna; Live-E2E bleibt gesperrt.
+- Resume-Punkt: Grenze dokumentiert und technisch getestet; RIS-DEV LIVE unverändert NOT AUTHORIZED.
+- Log: `docs/reports/JM-RIS-BOUNDARY-01.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-01F
 - Typ: Security-/Integrations-/Regressionsprüfung
 - Status: COMPLETE — **SECURITY PASS (lokal) · RIS-DEV LIVE NOT AUTHORIZED**; kein Push, kein Deployment
