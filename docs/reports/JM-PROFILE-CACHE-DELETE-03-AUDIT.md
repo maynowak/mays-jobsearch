@@ -1,5 +1,17 @@
 # JM-PROFILE-CACHE-DELETE-03-AUDIT
 
+> **HISTORICAL STATUS — SUPERSEDED FOR CURRENT CV PROFILE CACHE IMPLEMENTATION**
+>
+> Dieser Bericht beschreibt den früheren Zustand mit einem serverseitigen
+> CV-Profil-Cache (`cv-profile:<sha256>`). Der Cache wurde mit Commit
+> `049edda` aus dem Produktcode entfernt; neue CV-Profilanfragen laufen ohne
+> Redis-Profil-Cache. Die hier vorgeschlagene V2-Architektur wurde **nicht**
+> implementiert und ist derzeit **nicht erforderlich**. Mögliche historische
+> Redis-Einträge sind ein separates Thema (`JM-PRIVACY-CV-REDIS-PURGE-02`,
+> Status BLOCKED). Die ursprünglichen Befunde, Empfehlungen und Zeitpunkte
+> bleiben unverändert als Sicherheits- und Entscheidungshistorie erhalten;
+> nichts davon gilt rückwirkend als genehmigt.
+
 **Art:** Security-/Privacy-Audit (read-only, Architekturentscheidung vorbereitend)
 **Bekannte Baseline:** `c246868`
 **Re-Verifikation:** `aec3ef9` (2026-10-31) — `git diff c246868..aec3ef9 -- api src` ist leer; alle Befunde
