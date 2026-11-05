@@ -1,3 +1,23 @@
+2026-11-05 · JM-GIT-SAFETY-RULE-01
+- Typ: Governance/Git-Safety/Agent-Konfiguration
+- Status: COMPLETE — Regel ergänzt; keine Produkt-/Codeänderung
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: `main` `fff0a37`; `origin/main` `0fa799e`; Working Tree bis auf vier bewusst untracked Dokumente clean.
+- Scope: `AGENTS.md` (globale Agentenregel) und `.opencode/agents/commander.md` (Orchestrator-Constraint).
+- Änderung: Branches — lokal und remote, auch bereits gemergte — dürfen nur nach ausdrücklicher Nutzerfreigabe gelöscht werden. Worktrees dürfen nur nach Prüfung auf clean + vollständig gemergt entfernt werden; im Zweifel bleiben sie. Ein Worktree ist ein zweiter Checkout, keine separate Arbeitskopie.
+- Grund: Nach der Worktree-Konsolidierung bestand Sorge vor versehentlichem Verlust von Branch-/Worktree-Arbeit.
+- Auswirkung: keine Änderung an Produktcode, API, Dependencies, Cache, Redis/RIS/AWS/Terraform/Cognito/CloudFront; reine Prozessregel.
+- Tests: keine (Dokumentation/Konfiguration); `git diff --check` PASS.
+- Klassifikation: **GREEN**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: nach Commit clean bis auf die vier untracked Dokumente; kein Push.
+- Geänderte Dateien: `AGENTS.md`, `.opencode/agents/commander.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Branches gelöscht, keine Worktrees entfernt, kein Push, kein Deployment.
+- Offene Fragen: keiner; bestehende Branches und Stashes bleiben unangetastet.
+- Nächste Aktionen: keine automatische; Branch-Löschung nur auf ausdrückliche Anweisung.
+- Resume-Punkt: Regel ist aktiv; `main` unverändert funktionsfähig.
+- Log: Dieser Auditlog-Eintrag (kein separater Bericht).
+
 2026-11-05 · JM-PRIVACY-CACHE-STATEMENT-FIX-01
 - Typ: Legal-Text/Privacy-Transparenz/Fix
 - Status: COMPLETE — Website-Texte korrigiert; **keine Veröffentlichung**, kein Deployment

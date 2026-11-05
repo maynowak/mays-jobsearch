@@ -52,6 +52,8 @@ All keys server-side only. Key vars:
 
 ## Development workflow
 - Work directly on `main` unless explicitly asked to use a branch.
+- Never delete local or remote branches — including already merged ones — without explicit user approval.
+- Remove a worktree only after verifying it is clean and fully merged; when in doubt, keep it. A worktree is a second checkout, not a separate copy of the work.
 - Keep commits small and clear.
 - Production deploy is `vercel --prod` from `main` only.
 - Deployment identity must match: Vercel deployment commit == footer Build SHA. Do not assume Git HEAD equals deployed artifact.

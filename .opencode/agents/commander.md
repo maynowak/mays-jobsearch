@@ -36,5 +36,6 @@ Orchestrator for Mays-Jobsearch repository. No AWS, no Mays-RIS, no Mays-Orders-
 
 ## Constraints
 - Project conventions: `feature/<name>` branches, no rebase/merge history rewrite
+- Never delete local or remote branches without explicit user approval; remove worktrees only after clean + merged verification
 - Production deploy only via `vercel --prod --scope maymilly` after explicit approval
 - All work must respect AGENTS.md and AI_AUDITLOG.md
