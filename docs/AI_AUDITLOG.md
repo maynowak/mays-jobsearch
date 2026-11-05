@@ -1,3 +1,25 @@
+2026-11-05 · JM-RIS-INTEGRATION-01B
+- Typ: Auth-/BFF-Vorbereitung/Integration/Regression
+- Status: COMPLETE — **BFF LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `fec135c`; RIS lokal `5ebefbd` (enthält `c28c668`, R08 `e0a3fe4`); `ris-dev` R08-Apply 52/4/0/0, `PARTNER_SURFACE_ENABLED=false`.
+- Scope: Testbenutzer-/Cognito-Prüfung, RIS-DEV-Autorisierungsstatus, Endpoint-Matrix, lokaler BFF mit Mock-RIS, Regression.
+- Phase A: Cognito-JWKS öffentlich erreichbar (HTTP 200, 2 Keys); Issuer/Client aus Code verifiziert; tatsächliche Login-/Token-Prüfung **BLOCKED** (IAM `DescribeUserPoolClient` verweigert; Passwort bewusst nicht über unsicheren Shell-Kanal verwendet). Keine Zugangsdaten dokumentiert.
+- Phase B: AWS-Identität `992382612204` ist nicht der ris-dev-Account `240571105849`; kein Zugriff auf Registry/Credential/Tenant. Partner-Registrierung NOT VERIFIED, Credential BLOCKED, Surface nicht live verifiziert (Quelle: DISABLED).
+- Phase C: alle ApplicationV1-Routen im RIS-Code implementiert, auf ris-dev2 historisch verifiziert, auf ris-dev deployt, live **BLOCKED** (503).
+- Phase D: BFF unter `api/ris/applications.mjs` mit `api/_lib/ris/{config,auth,client,map}.mjs`; Feature standardmäßig OFF; JWT-RS256/JWKS-Verifikation; Credential nur serverseitig; feste Pfad-Allowlist; kein offener Proxy; 10 s Timeout; keine Retries; explizite 422 bei nicht verlustfreiem Mapping (`location[]`/`source[]` >1, Builder-CV, `imported`); Status→`stage`; Delete-Receipt lokal.
+- Phase E: BFF-Mock-Tests **13/13 PASS**; Gesamtsuite **1427 passed / 5 skipped**; `npm run build`, `git diff --check`, `node --check` PASS. Erster Lauf scheiterte an fehlendem `pdf-lib` im alten `node_modules`; nach `npm ci` grün (keine Versionsänderung, kein `audit fix`).
+- Sicherheit: keine Tokens/Credentials in Antworten/Logs; kein Wildcard-CORS; `no-store`; Body-Limit 200 KB; `ownerId` aus verifiziertem `sub`.
+- Klassifikation: **YELLOW** — BFF lokal verifiziert; Live-Identität/Partnerbindung BLOCKED.
+- Terraform-Checks: keine ausgeführt (keine Infrastrukturmutation).
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `.env.example`, `api/_lib/ris/*.mjs`, `api/ris/applications.mjs`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01B-TESTUSER-AND-BFF.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten Bewerberdaten, keine echten RIS-Calls.
+- Offene Voraussetzungen: Partner-Registrierung, Credential, Tenant, Surface-Freigabe, synthetische RIS-Identität, Cleanup, explizite Write-Freigabe, Timeline-/API-Drift-Entscheidungen.
+- Nächste Aktionen: ris-dev-Partnerbindung/Credential/Tenant bereitstellen; danach 01C–01F lokal; 01G nur mit separater Freigabe.
+- Resume-Punkt: BFF implementiert und mock-getestet; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01B-TESTUSER-AND-BFF.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-01A
 - Typ: Integration/Contract-Audit/Identity-Reconciliation
 - Status: COMPLETE — **APPLICATION CONTRACT: PARTIAL · IDENTITY: BLOCKED**; keine Implementierung, keine AWS-/Terraform-/Cognito-Änderung, kein Push
