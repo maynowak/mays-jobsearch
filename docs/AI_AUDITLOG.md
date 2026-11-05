@@ -1,3 +1,24 @@
+2026-11-05 · JM-PROFILE-CACHE-RETIREMENT-DOCS-01
+- Typ: Dokumentation/Privacy-Transparenz/i18n/Regression
+- Status: COMPLETE — lokal verifiziert; kein Push, kein Merge, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: lokaler `main` `63b5965`; `origin/main` `4364eab` (abweichend, nicht synchronisiert); Branch `feature/jm-profile-cache-retirement-docs-01`; Cache-Removal `049edda` als Vorfahre bestätigt; isolierter Worktree `mays-jobsearch-retirement-docs`; verschmutzter Alt-Checkout unverändert.
+- Scope: Bereinigung überholter Cache-Dokumentation und Datenschutztexte nach Retirement des serverseitigen CV-Profil-Caches; i18n DE/EN; Regression; Audit.
+- Abgeschlossene Abschnitte: Preflight; Cache-Status; i18n; Datenschutzerklärung; Superseded-Hinweise; Purge-Abgrenzung; Regression; Audit/Commit.
+- Befunde/Fixes: `api/profile.mjs` ohne `cacheGet`/`cacheSet`/Key-Builder; `src/api.ts` ohne Client-Hash; AI-Aufruf je Anfrage (`tests/api/profile-no-cache.test.mjs`). `cv.privacyNote` DE/EN korrigiert (Text kann an externen KI-Anbieter; gewählter Modus entscheidet; keine Anonymitätsgarantie). Löschdialog „Endgültig entfernen“ → „Aus dieser Sitzung entfernen“; Confirm/Hint nennen CV-Builder-Profile und Provider-Grenze. Datenschutzerklärung §14 als Entwurf mit vier getrennten Ebenen. Drei Cache-Berichte mit SUPERSEDED-Hinweis. Purge-Bericht: CODE REMOVAL VERIFIED / LEGACY NOT VERIFIED / PURGE BLOCKED.
+- Evidence: `api/profile.mjs:1-137`; `src/api.ts:275-288`; `tests/api/profile-no-cache.test.mjs`; `src/i18n.tsx`; `src/App.test.tsx`; `docs/mays_job_matcher_datenschutzerklaerung_1.0.md`; `docs/reports/JM-PROFILE-CACHE-DELETE-03-*.md`; `docs/reports/JM-PRIVACY-CV-REDIS-PURGE-02.md`.
+- Klassifikation: **GREEN** für diesen Dokumentationsauftrag; **Legacy-Redis-Purge separat BLOCKED**.
+- Terraform-Checks: keine ausgeführt (nicht im Scope; keine Infrastrukturänderung).
+- Git-Status: Working Tree clean; 6 Commits auf dem Feature-Branch; finaler HEAD `53e32ad` (Basis `63b5965`).
+- Geänderte Dateien: `src/i18n.tsx`, `src/App.test.tsx` (nur Button-Label), `docs/mays_job_matcher_datenschutzerklaerung_1.0.md`, `docs/reports/JM-PROFILE-CACHE-DELETE-03-{AUDIT,DESIGN-GATE,SECURITY-DECISION-04}.md`, `docs/reports/JM-PRIVACY-CV-REDIS-PURGE-02.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Änderung an `api/**`, `scripts/**`, AWS/Terraform/RIS/Cognito/CloudFront, Redis-Konfiguration, Secrets, KI-Provider-Implementierung; keine neue Persistenz, Cookies oder Auth-Pfade. Keine echten CV-/Provider-/Redis-Daten.
+- Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` PASS; `git diff --check` PASS; Guest-CV-E2E 1440/390 PASS (1 `/api/profile`, 0 Login, keine Console-Errors); Profile-Storage-Consent-E2E 768/430/320 PASS. Erster Lauf mit `node_modules`-Symlink: 8 Vite-`fs.allow`-Artefaktfehler, nach Materialisierung grün.
+- Offene Fragen: Produktions-Redis-Ziel für Legacy-Purge; Rechtsprüfung der Datenschutzerklärung; Umgang mit `origin/main`-Divergenz; Alt-Deployments mit cachendem Code.
+- Risiken: historische `cv-profile:`-Einträge bis TTL/Purge; Provider-seitige Aufbewahrung nicht kontrollierbar; Datenschutzerklärung noch nicht veröffentlicht/freigegeben.
+- Nächste Aktionen: Rechtsprüfung; separater Purge-Freigabeauftrag; Push/Merge des Feature-Branches nur mit ausdrücklicher Freigabe.
+- Resume-Punkt: Branch `feature/jm-profile-cache-retirement-docs-01` @ `53e32ad`, Working Tree clean; nächster Schritt = Review-/Push-Freigabe.
+- Log: `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01-EXECUTION_LOG.md`
+
 2026-11-04 · JM-CV-MANAGEMENT-MAIN-01
 - Typ: Final Review / lokale Fast-Forward-Integration / vollständige Regression
 - Status: **INTEGRATED LOCAL MAIN**; **LOCAL MAIN: VERIFIED**; **PRODUCTION: BLOCKED** — kein Push, kein Deployment
@@ -581,17 +602,6 @@
 - Git: Branch `feature/jm-application-management-03-readiness`; `ea57e9c`/`0d9ef8d`/`89e877c` initiale APP-03-Schritte, `24bf818` Konsolidierung Repository-/Remote-/Migrationsgrenzen und Invalidation, `c12d7a4`/`ec7abfa`/`6a20b08` RIS-Handoff, APP-03E-Dokumentation in `e76f976`.
 - Offen/Blockiert: RIS-Backend/Persistenz, serverseitige `ApplicationV1`-Erstellung, Live-Auth-Matrix, Retention/Datenschutz-Freigabe, Browser-/BFF-Delegation; referenzierte RIS-Dokumente/Branch im lokalen Checkout nicht vorhanden und nicht verifiziert. **NICHT DEPLOYED.**
 - Log: `docs/reports/JM-APPLICATION-MANAGEMENT-03.md`
-2026-11-05 · JM-PROFILE-CACHE-RETIREMENT-DOCS-01
-- Typ: Dokumentation/Privacy-Transparenz/i18n/Regression
-- Status: COMPLETE — lokal verifiziert; kein Push, kein Merge, kein Deployment
-- Baseline: lokaler `main` `63b5965`; `origin/main` `4364eab` (abweichend, nicht synchronisiert); Branch `feature/jm-profile-cache-retirement-docs-01`; Cache-Removal `049edda` als Vorfahre bestätigt.
-- Cache-Status: `api/profile.mjs` ohne `cacheGet`/`cacheSet`/Key-Builder; `src/api.ts` sendet keinen Client-Hash; `tests/api/profile-no-cache.test.mjs` belegt einen AI-Aufruf je Anfrage. Andere Redis-Namespaces (Jobs, Detail, Geo, Usage, Alerts) bleiben unverändert.
-- Änderungen: `cv.privacyNote` DE/EN korrigiert (Text kann an externen KI-Anbieter; gewählter Modus entscheidet; keine Anonymitätsgarantie). Löschdialog „Endgültig entfernen“ → „Aus dieser Sitzung entfernen“; Confirm/Hint nennen CV-Builder-Profile und die Provider-Grenze. Datenschutzerklärung §14 als Entwurf mit vier getrennten Ebenen. Drei Cache-Berichte mit SUPERSEDED-Hinweis. Purge-Bericht: CODE REMOVAL VERIFIED / LEGACY NOT VERIFIED / PURGE BLOCKED.
-- Privacy/Data-Flow: keine neue Strecke, kein Provider-/AWS-/RIS-Zugriff, keine Persistenz-, Cookie- oder Auth-Änderung; keine echten CV-/Provider-Daten. Rechtsprüfung PENDING, Dokument nicht veröffentlicht.
-- Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` PASS; `git diff --check` PASS; Guest-CV-E2E 1440/390 PASS (1 `/api/profile`, 0 Login, keine Console-Errors); Profile-Storage-Consent-E2E 768/430/320 PASS. Erster Lauf mit `node_modules`-Symlink: 8 Vite-`fs.allow`-Artefaktfehler, nach Materialisierung grün.
-- Offen: Legacy-Redis-Purge BLOCKED; Rechtsprüfung PENDING; `origin/main` divergiert; dokumentierter `ApplicationsSection`-Timeout im Lauf nicht aufgetreten.
-- Log: `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01.md`
-
 2026-11-02 · JM-COVER-LETTER-CV-REUSE-01
 - Typ: Anschreiben-Generierung/bereits verarbeiteter CV/Session-Text-Wiederverwendung
 - Status: **IMPLEMENTIERT UND LOKAL VERIFIZIERT** — kein Live-Provider-Test, kein Deployment
