@@ -1,3 +1,25 @@
+2026-11-05 · JM-PRIVACY-CACHE-STATEMENT-FIX-01
+- Typ: Legal-Text/Privacy-Transparenz/Fix
+- Status: COMPLETE — Website-Texte korrigiert; **keine Veröffentlichung**, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: `main` `e33f054`; `origin/main` `0fa799e`; vier untracked Dokumente bewusst belassen; Stash `backup: pre-main-switch 2026-11-05` und `/tmp`-Backup unverändert.
+- Scope: ausschließlich die falsche Aussage über einen serverseitigen CV-Profil-Cache in den öffentlichen Datenschutzseiten.
+- Befund: `public/legal/datenschutz.md` und `public/datenschutz/index.html` behaupteten weiterhin einen „zeitlich begrenzten serverseitigen Cache für strukturierte Profilinformationen“. Der Cache wurde mit `049edda` entfernt; die Docs-Fassung wurde mit `3b68393` aktualisiert, die Website nicht.
+- Änderung: genau ein Satz je Datei ersetzt durch „… zeitlich begrenzte browserseitige Profilzustände dokumentiert; neue CV-Profilanfragen werden ohne einen serverseitigen Profil-Cache verarbeitet.“ Keine weitere Textänderung, keine Umschreibung der Erklärung.
+- Bewusst nicht geändert: `docs/mays_job_matcher_datenschutzerklaerung_1.0.txt` (alte Website-Kopie) und `docs/mays_job_matcher_datenschutzprinzipien.txt` (identisch mit Markdown) — Entscheidung: behalten, vorerst nicht committen. Kein neuer RIS-Gate-Bericht (bereits dokumentiert).
+- Privacy/Data-Flow: keine Änderung der Verarbeitung; der Text beschreibt nun den cachefreien Ist-Zustand. Keine Aussage über vollständige Löschung historischer Einträge oder Provider-Daten.
+- Tests: keine automatisierten Tests (statischer Text); `git diff --check` PASS; Diff umfasst ausschließlich zwei Zeilen.
+- Klassifikation: **GREEN** für die Textkorrektur; **Legal Review PENDING** vor Veröffentlichung.
+- Terraform-Checks: keine ausgeführt (nicht im Scope).
+- Git-Status: nach Commit clean bis auf die vier bewusst untracked Dokumente; kein Push.
+- Geänderte Dateien: `public/legal/datenschutz.md`, `public/datenschutz/index.html`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Änderung an Produktcode, API, Dependencies, Cache-Verhalten, Redis/RIS/AWS/Terraform/Cognito/CloudFront, Secrets; keine RIS-Aktivierung.
+- Offene Fragen: Datenschutz-/Rechtsprüfung der geänderten öffentlichen Fassung; Zuordnung der vier untracked Dokumente; dauerhafte Sicherung von Stash/Backup.
+- Risiken: Website und Docs-Entwurf sind nun inhaltlich konsistent zum cachefreien Stand; historische Redis-Einträge bleiben separat ungeklärt; Veröffentlichung erst nach Rechtsprüfung.
+- Nächste Aktionen: Rechtsprüfung; danach Veröffentlichung separat freigeben.
+- Resume-Punkt: `main` nach diesem Commit, Working Tree bis auf vier untracked Dokumente clean.
+- Log: Dieser Auditlog-Eintrag (kein separater Bericht, da Gate bereits dokumentiert).
+
 2026-11-05 · JM-WORKTREE-CONSOLIDATION-01
 - Typ: Repo-Hygiene/Worktree-Konsolidierung/Audit
 - Status: COMPLETE — **Mays-Jobsearch ist jetzt der `main`-Arbeitscheckout**; kein Push, kein Deployment
