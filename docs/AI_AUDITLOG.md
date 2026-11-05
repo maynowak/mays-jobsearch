@@ -1,3 +1,22 @@
+2026-11-05 · JM-RIS-INTEGRATION-01A
+- Typ: Integration/Contract-Audit/Identity-Reconciliation
+- Status: COMPLETE — **APPLICATION CONTRACT: PARTIAL · IDENTITY: BLOCKED**; keine Implementierung, keine AWS-/Terraform-/Cognito-Änderung, kein Push
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `fec135c` (4 untracked Dokumente unangetastet); RIS lokal `5ebefbd`, enthält `c28c668` und R08 `e0a3fe4`; `ris-dev` R08-Apply 52/4/0/0, `PARTNER_SURFACE_ENABLED=false`.
+- Scope: Phase 01A — Endpoint-, Feld- und Identitätsabgleich zwischen vorhandener Jobsearch-Bewerbungsverwaltung und RIS ApplicationV1.
+- Befunde: RIS-Routen `/v1/partner/me/applications` (Create/List/Detail/Patch/Status/History/Cover-Letter/Export/Delete) vorhanden; Dual-Auth JWT + `X-Api-Credential`. Jobsearch-Issuer/Client (`ZURSMpD2O`/`5hb3…`) ist auf `ris-dev` nicht als Partner autorisiert; kein Credential, kein Tenant, Surface geschlossen (503). Frontend sendet derzeit kein Access-Token an eigene API-Routen.
+- Contract-GAPs: `location[]`→`string`, `source[]`→`string`, `jobOrigin` nicht erlaubt, `cvSource` (builder) nicht erlaubt, `statusHistory`/`history` nicht in Detail/List, Delete nur 204 ohne Receipt; OpenAPI-Drift bei `job.url` und `CoverLetterVersion.source`.
+- Mapping: Jobsearch-Status ↔ RIS `stage` verlustfrei; RIS `status` wird serverseitig abgeleitet.
+- Klassifikation: **YELLOW / BLOCKED** — keine reale RIS-Anbindung ohne Identitäts- und Feldentscheidungen.
+- Terraform-Checks: keine ausgeführt (read-only; keine Infrastruktur im Scope).
+- Git-Status: Dokumentations-Commit; Working Tree behält die vier untracked Dokumente; kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-INTEGRATION-01A-CONTRACT.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Änderung an Produktcode, API, Dependencies, RIS-Repo, AWS/Terraform/RIS/Cognito/CloudFront/DNS, Secrets; keine echten Daten.
+- Offene Entscheidungen: location/source-Mapping, jobOrigin, builder-CV, Timeline-Abruf, Delete-Receipt, OpenAPI-Korrektur, Partner-Registrierung/Credential/Tenant.
+- Nächste Aktionen: Entscheidungen + ris-dev-Partnerfreigabe; erst danach 01B–01F mit lokalen Mock-Tests.
+- Resume-Punkt: Phase 01A dokumentiert; 01B NICHT begonnen.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01A-CONTRACT.md`
+
 2026-11-05 · JM-ENTWICKLUNGSREPORT-KONSOLIDIERT-2026-11-05
 - Typ: Dokumentation/Konsolidierung/Statusbericht
 - Status: COMPLETE — Bericht ins Repository übernommen; Dokumentations-Push
