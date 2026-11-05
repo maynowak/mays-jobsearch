@@ -35,7 +35,8 @@ export type ApplicationRepositoryErrorCode =
   | "forbidden"
   | "conflict"
   | "capacity_exceeded"
-  | "session_ended";
+  | "session_ended"
+  | "not_supported";
 
 export class ApplicationRepositoryError extends Error {
   readonly code: ApplicationRepositoryErrorCode;

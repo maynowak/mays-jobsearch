@@ -1,3 +1,24 @@
+2026-11-05 · JM-RIS-INTEGRATION-01D
+- Typ: UI-Integration/Remote-Preview/Session-Kompatibilität/Regression
+- Status: COMPLETE — **UI REPOSITORY INTEGRATION LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `68ae5de`; Remote-Adapter 01C; BFF 01B; Session-Repository unverändert; RIS-DEV unverändert.
+- Scope: bestehende `ApplicationsSection` an `ApplicationRepository`/`ApplicationPersistencePort` anbinden; SESSION und REMOTE_PREVIEW lokal.
+- Modus: SESSION ist Default; REMOTE_PREVIEW nur bei `VITE_RIS_APPLICATION_STORAGE_ENABLED=true` + verifizierter Anmeldung + Access-Token; Gast/Logout bleibt SESSION. Kein automatischer Remote-Zugriff, kein Auto-Transfer, kein stilles Umschalten.
+- Implementierung: `remoteSessionRepository.ts` als Brücke (`ApplicationV1` ↔ `SessionApplicationV1`, `applicationId` ↔ UI-`localId`); UI-Hinweis „Remote/RIS“ statt „nur diese Sitzung“; Löschdialog unterscheidet Sitzungsentwurf/gespeicherte Bewerbung; 409 löst Listen-Reload aus.
+- Unterstützt: List/Get/Create/Update/Status/Export/Delete/Metrics. Bewusst `not_supported`: addHistory, addCoverLetterVersion, adoptCoverLetter (BFF liefert keine vollständige `ApplicationV1`); UI zeigt verständlichen Hinweis, keine Scheinspeicherung.
+- Identität: Token pro Request, `ownerId` aus verifiziertem `sub`, `invalidate()` + globale Session-Generation, verspätete Antworten verworfen, keine Session-/Remote-Datenvermischung.
+- Tests: Bridge **12/12**, UI **2/2**, Adapter **21/21**, BFF **14/14**, Gesamtsuite **1463 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** für lokale UI-Integration; **APPLICATIONV1 CONTRACT: PARTIAL**, **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `src/App.tsx`, `src/components/ApplicationsSection.tsx`, `ApplicationsSection.remote.test.tsx`, `src/lib/applications/remoteSessionRepository.ts`, `.test.ts`, `repositoryTypes.ts`, `sessionApplications.ts`, `src/i18n.tsx`, `docs/reports/JM-RIS-INTEGRATION-01D-UI-HANDOFF.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine Session-Repository-Regression.
+- Offene Punkte: History-/Cover-Letter-Vertrag, `statusHistory` im Detail, 01E-Migration/Consent, RIS-DEV-Partnerbindung.
+- Nächste Aktionen: 01E erst nach separater Freigabe; 01G weiterhin gesperrt.
+- Resume-Punkt: UI kann lokal zwischen Session und Remote-Preview wechseln; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01D-UI-HANDOFF.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-01C
 - Typ: Remote-Adapter/Session-Kompatibilität/Contract-Tests
 - Status: COMPLETE — **REMOTE ADAPTER LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment

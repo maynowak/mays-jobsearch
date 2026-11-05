@@ -34,6 +34,7 @@ import {
 
 interface Props {
   repository: ApplicationRepository;
+  storageMode?: "session" | "remote";
   onChanged?: (applications: SessionApplicationV1[]) => void;
   models?: ModelOption[];
   defaultModel?: string | null;
@@ -127,6 +128,7 @@ function errorLabel(t: (key: string) => string, err: unknown): string {
 
 export default function ApplicationsSection({
   repository,
+  storageMode = "session",
   onChanged,
   models = [],
   defaultModel = null,
@@ -385,6 +387,16 @@ export default function ApplicationsSection({
       await action(controller.signal, current);
     } catch (err) {
       if (!current()) return;
+      if (err instanceof ApplicationRepositoryError && err.code === "version_conflict") {
+        void repository
+          .list()
+          .then((page) => {
+            if (!current()) return;
+            applicationsRef.current = page.items;
+            setApplications(page.items);
+          })
+          .catch(() => {});
+      }
       const message = errorLabel(t, err);
       if (onError) onError(message, err);
       else setError(message);
@@ -876,7 +888,7 @@ export default function ApplicationsSection({
         <div>
           <h2 id="applications-title">{t("dashboard.nav.applications")}</h2>
           <p className="applications-session-note" role="note">
-            {t("applications.sessionOnly")}
+            {storageMode === "remote" ? t("applications.remoteNotice") : t("applications.sessionOnly")}
           </p>
         </div>
         <button
@@ -1480,7 +1492,7 @@ export default function ApplicationsSection({
               <div className="applications-danger">
                 {deleteConfirmId === selected.localId ? (
                   <div role="alert">
-                    <p>{t("applications.deleteConfirm")}</p>
+                    <p>{storageMode === "remote" ? t("applications.deleteConfirmRemote") : t("applications.deleteConfirm")}</p>
                     <button type="button" className="letter-btn" onClick={() => handleDelete(selected.localId)} disabled={busy}>
                       {t("applications.deleteYes")}
                     </button>
@@ -1490,7 +1502,7 @@ export default function ApplicationsSection({
                   </div>
                 ) : (
                   <button type="button" className="btn-ghost" onClick={() => setDeleteConfirmId(selected.localId)} disabled={busy}>
-                    {t("applications.delete")}
+                    {storageMode === "remote" ? t("applications.deleteRemote") : t("applications.delete")}
                   </button>
                 )}
               </div>
