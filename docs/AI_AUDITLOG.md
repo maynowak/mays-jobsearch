@@ -1,3 +1,27 @@
+2026-11-05 · JM-REMOTE-MAIN-MERGE-02
+- Typ: Git-Integration/Lizenzintegrität/Regression/Audit
+- Status: COMPLETE — **LOCAL MAIN: VERIFIED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: lokaler `main` `9f0e3a1`; `origin/main` `0fa799e` (`ls-remote` identisch); Merge-Base `4364eab`; 95 ahead / 4 behind; Working Tree clean; fremder Checkout `7eb779a` unverändert.
+- Scope: kontrollierte lokale Integration der vier Remote-Commits (Lizenzdokumente), Integritätskontrolle und vollständige Regression.
+- Abgeschlossene Abschnitte: Preflight; Lizenzintegrität; `--no-ff --no-commit`-Merge; Commit; Integritätskontrolle; Regression; E2E; Audit.
+- Merge: `git merge --no-ff --no-commit origin/main` ohne Konflikte; staged ausschließlich 5 neue Lizenzdateien (+146); Commit `639ed87` mit Parents `9f0e3a1` und `0fa799e`; kein Rebase/Squash/Cherry-Pick/History-Rewrite.
+- Lizenz: `LICENSE.md` byte-identisch (`b6d1928…`), SPDX `AGPL-3.0-only`, Copyright unverändert; neue Dokumente ([`LICENSING.md`], [`COMMERCIAL-LICENSING.md`], [`LICENSE-HISTORY.md`], [`PREMIUM-SERVICES.md`], [`THIRD-PARTY-NOTICES.md`]) schränken AGPL-Rechte nicht ein; kommerzielle Nutzung bleibt erlaubt.
+- Produkt: `git diff 9f0e3a1..HEAD -- api src tests package.json package-lock.json` leer; Cache-Retirement, Datenschutztexte, „Aus dieser Sitzung entfernen“, CV-/Bewerbungsfunktionen unverändert; keine RIS-Persistenz.
+- Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` PASS; `git diff --check` und Range-Check PASS; `node --check` API PASS; **11 E2E-Suiten PASS** (CV-Builder, CV-Management 02B/02C, CV-PDF, Cover-Letter, Direct-Cover-Letter, Manual-Application-Draft, Applications, Profile-/Consent, Guest-CV, Mobile-Nav). E2E-Screenshots zurückgesetzt.
+- Divergenz nach Merge: **96 ahead / 0 behind**; `origin/main` vollständig enthalten.
+- Offen: Drittsoftware-Inventar unvollständig (DejaVu nicht gelistet); `package.json` ohne `license`-Feld; Rechtsprüfung PENDING; Premium-Zukunftsfunktionen nur Planung.
+- Klassifikation: **GREEN** für Merge/Regression; **Lizenzinventar REVIEW REQUIRED**, **Legal PENDING**.
+- Terraform-Checks: keine ausgeführt (nicht im Scope).
+- Git-Status: Working Tree clean; Merge-HEAD `639ed87`; Dokumentation in separatem Commit; kein Push.
+- Geänderte Dateien: 5 neue Lizenzdokumente (Merge), `docs/reports/JM-REMOTE-MAIN-MERGE-02.md` und `docs/AI_AUDITLOG.md` (Dokumentation).
+- Bestätigung: keine Änderung an Produktcode, API, Session-Repository, Consent, Cache-Verhalten, Secrets, Redis-/RIS-/AWS-/Terraform-/Cognito-/CloudFront-Konfiguration; keine echten Provider-/AWS-/Redis-Aufrufe.
+- Offene Fragen: vollständiges Drittsoftware-Inventar; `package.json`-Lizenzfeld; Rechtsprüfung; Push-Freigabe.
+- Risiken: unvollständige Third-Party-Notice; Remote-Push würde 96 Commits veröffentlichen (nicht freigegeben).
+- Nächste Aktionen: Lizenzinventar/`package.json` separat klären; Rechtsprüfung; Push nur mit separater Freigabe.
+- Resume-Punkt: lokaler `main` nach Dokumentations-Commit, Working Tree clean; Auftrag abgeschlossen.
+- Log: `docs/reports/JM-REMOTE-MAIN-MERGE-02.md`
+
 2026-11-05 · JM-PROFILE-CACHE-RETIREMENT-MAIN-01
 - Typ: Git-Review/lokale Main-Integration/Regression/Audit
 - Status: COMPLETE — **LOCAL MAIN: VERIFIED**; kein Push, kein Deployment
