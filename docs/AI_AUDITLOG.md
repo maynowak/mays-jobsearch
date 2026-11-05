@@ -1,3 +1,26 @@
+2026-11-05 · JM-PROFILE-CACHE-RETIREMENT-MAIN-01
+- Typ: Git-Review/lokale Main-Integration/Regression/Audit
+- Status: COMPLETE — **LOCAL MAIN: VERIFIED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: alter lokaler `main` `63b5965`; Feature `3f56568`; Merge-Base `63b5965`; 0 behind / 9 ahead; `origin/main` vor Fetch `4364eab`, tatsächlich `0fa799e`; Cache-Removal `049edda` als Vorfahre; fremder Alt-Checkout unverändert.
+- Scope: Final Review, Fast-Forward, Regression und Datenschutzprüfung der bereits abgeschlossenen Cache-Retirement-Dokumentation.
+- Abgeschlossene Abschnitte: Worktree-Preflight; Feature-Diff; FF-Integration; Gesamtsuite; Build; E2E; Remote-Abweichung; Datenschutzstatus; Audit.
+- Integration: `git merge --ff-only` im vorhandenen `main`-Worktree, `63b5965..3f56568`; kein Merge-Commit (ein Parent), keine Konflikte, kein Rebase/Reset/Stash/Clean.
+- Feature-Diff: 10 Dateien, +539/−11; nur `docs/**`, `src/i18n.tsx`, `src/App.test.tsx`; keine `api/**`-/`scripts/**`-/Terraform-/Infra-/.env-Änderung; keine Anonymizer-, Provider- oder Cache-Logik.
+- Datenschutz: Cache im Produktcode REMOVED; keine neuen Redis-CV-Profil-Einträge über den aktuellen Pfad; historische Keys NOT VERIFIED; produktiver Purge BLOCKED; lokale Datenentfernung IMPLEMENTED; Provider-Löschung NOT GUARANTEED; RIS UNCHANGED; Datenschutzerklärung DRAFT/LEGAL PENDING. Keine Vollständigkeits- oder Löschzusagen in den Texten.
+- Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` PASS; `git diff --check` und Range-Check PASS; Guest-CV-E2E 1440/390 PASS (1 `/api/profile`, 0 Login, keine Console-Errors); Profile-Storage-Consent-E2E 1024/768/430/320 PASS.
+- Remote: `git ls-remote` → `0fa799e`; `git fetch --no-tags origin main` aktualisierte nur die Referenz; danach lokal **93 ahead / 4 behind**; 4 Remote-Commits, netto 5 Lizenzdateien, keine Überlappung mit den Änderungen. Kein Pull/Merge/Rebase/Push.
+- Klassifikation: **GREEN** für Integration und Regression; **Legacy-Purge BLOCKED**, **Legal PENDING**, **Remote REVIEW REQUIRED**.
+- Terraform-Checks: keine ausgeführt (nicht im Scope).
+- Git-Status: Working Tree clean; integrierter HEAD `3f56568`; Dokumentation in separatem Commit; `origin/main` `0fa799e`.
+- Geänderte Dateien: `docs/reports/JM-PROFILE-CACHE-RETIREMENT-MAIN-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Änderung an Produktlogik, `api/**`, `scripts/**`, AWS/Terraform/RIS/Cognito/CloudFront, Redis-Konfiguration, Secrets, Provider-Ansteuerung; keine neue Persistenz, Cookies oder Lösch-API; keine echten Provider-/Redis-/AWS-Daten.
+- Offene Fragen: Produktions-Redis-Ziel für Legacy-Purge; Rechtsprüfung; Auflösung der Remote-Divergenz; Alt-Deployments.
+- Risiken: historische `cv-profile:`-Einträge bis TTL/Purge; Provider-Retention; unveröffentlichte Datenschutzerklärung; Remote-Divergenz.
+- Nächste Aktionen: Rechtsprüfung; separater Purge-Freigabeauftrag; separates Remote-Synchronisierungs-Review; Push/Deployment nur mit Freigabe.
+- Resume-Punkt: lokaler `main` nach Dokumentations-Commit, Working Tree clean; nächster Schritt = separater Remote-Review.
+- Log: `docs/reports/JM-PROFILE-CACHE-RETIREMENT-MAIN-01.md`
+
 2026-11-05 · JM-PROFILE-CACHE-RETIREMENT-DOCS-01
 - Typ: Dokumentation/Privacy-Transparenz/i18n/Regression
 - Status: COMPLETE — lokal verifiziert; kein Push, kein Merge, kein Deployment
