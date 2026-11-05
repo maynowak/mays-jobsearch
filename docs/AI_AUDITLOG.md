@@ -9,14 +9,14 @@
 - Evidence: `api/profile.mjs:1-137`; `src/api.ts:275-288`; `tests/api/profile-no-cache.test.mjs`; `src/i18n.tsx`; `src/App.test.tsx`; `docs/mays_job_matcher_datenschutzerklaerung_1.0.md`; `docs/reports/JM-PROFILE-CACHE-DELETE-03-*.md`; `docs/reports/JM-PRIVACY-CV-REDIS-PURGE-02.md`.
 - Klassifikation: **GREEN** für diesen Dokumentationsauftrag; **Legacy-Redis-Purge separat BLOCKED**.
 - Terraform-Checks: keine ausgeführt (nicht im Scope; keine Infrastrukturänderung).
-- Git-Status: Working Tree clean; 7 Commits auf dem Feature-Branch; Auditlog-Nachtrag `8020138`; Basis `63b5965`.
+- Git-Status: Working Tree clean; Auditlog-Nachtrag `8020138`; weitere Commits siehe Git-Historie; Basis `63b5965`.
 - Geänderte Dateien: `src/i18n.tsx`, `src/App.test.tsx` (nur Button-Label), `docs/mays_job_matcher_datenschutzerklaerung_1.0.md`, `docs/reports/JM-PROFILE-CACHE-DELETE-03-{AUDIT,DESIGN-GATE,SECURITY-DECISION-04}.md`, `docs/reports/JM-PRIVACY-CV-REDIS-PURGE-02.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
 - Bestätigung: keine Änderung an `api/**`, `scripts/**`, AWS/Terraform/RIS/Cognito/CloudFront, Redis-Konfiguration, Secrets, KI-Provider-Implementierung; keine neue Persistenz, Cookies oder Auth-Pfade. Keine echten CV-/Provider-/Redis-Daten.
 - Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` PASS; `git diff --check` PASS; Guest-CV-E2E 1440/390 PASS (1 `/api/profile`, 0 Login, keine Console-Errors); Profile-Storage-Consent-E2E 768/430/320 PASS. Erster Lauf mit `node_modules`-Symlink: 8 Vite-`fs.allow`-Artefaktfehler, nach Materialisierung grün.
 - Offene Fragen: Produktions-Redis-Ziel für Legacy-Purge; Rechtsprüfung der Datenschutzerklärung; Umgang mit `origin/main`-Divergenz; Alt-Deployments mit cachendem Code.
 - Risiken: historische `cv-profile:`-Einträge bis TTL/Purge; Provider-seitige Aufbewahrung nicht kontrollierbar; Datenschutzerklärung noch nicht veröffentlicht/freigegeben.
 - Nächste Aktionen: Rechtsprüfung; separater Purge-Freigabeauftrag; Push/Merge des Feature-Branches nur mit ausdrücklicher Freigabe.
-- Resume-Punkt: Branch `feature/jm-profile-cache-retirement-docs-01` @ `53e32ad`, Working Tree clean; nächster Schritt = Review-/Push-Freigabe.
+- Resume-Punkt: Branch `feature/jm-profile-cache-retirement-docs-01`, Working Tree clean; nächster Schritt = Review-/Push-Freigabe.
 - Log: `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01-EXECUTION_LOG.md`
 
 2026-11-04 · JM-CV-MANAGEMENT-MAIN-01
