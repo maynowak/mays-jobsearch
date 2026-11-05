@@ -3109,10 +3109,15 @@ Tests:
   Timeouts, separat grün.
 - `npm run build`: PASS; `node --check` BFF: PASS.
 
-Live-E2E: BLOCKED. Lokale Jobsearch-OIDC-Defaults (`ZURSMpD2O` / Client
-`5hb3...`) passen nicht zum live verifizierten RIS-DEV2-Authorizer
-(`K3dkdSipZ` / Audience `21j28...`); Vercel-Env nicht geprüft. Zusätzlich
-fehlen ein Jobsearch-Partner-Credential und ein Preview-BFF-Deployment.
-Keine AWS-/Cognito-/Terraform-Änderung, kein Push, kein Deploy.
+Live-E2E: NOT EXECUTED (deployment-gated). Die bestehende Jobsearch-OIDC-
+Konfiguration (`ZURSMpD2O` / Client `5hb3...`) ist die **ris-dev**-
+Konfiguration, funktioniert dort bereits und bleibt unverändert. Der
+vorhandene serverseitige RIS-Key bleibt ebenfalls unverändert; der BFF liest
+`RIS_API_BASE_URL`/`RIS_API_KEY` nur aus der Server-Umgebung und ersetzt keinen
+Key. In diesem Worktree fehlen `.env`-Server-Secrets und Vercel-Zugriff; der
+Branch ist noch nicht als Preview deployed. Daher konnten Login/Gateway/
+Logout/Benutzerwechsel nicht live ausgeführt werden. Keine Cognito-/Key-/
+AWS-/Terraform-Änderung, kein Merge/Deploy; Branch-Push gemäß
+`JM-RIS-GIT-PUBLISH-02` ist zulässig.
 
 Report: `docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`.

@@ -2,7 +2,7 @@
 
 ## Status
 
-**BFF + REMOTE ADAPTER IMPLEMENTED — MOCK-TESTS PASS — LIVE E2E BLOCKED**
+**BFF + REMOTE ADAPTER IMPLEMENTED — MOCK-TESTS PASS — LIVE E2E DEPLOYMENT-GATED**
 
 - Branch: `feature/jm-ris-integration-gap-closure-01`
 - Base: `origin/main` @ `fec135c`
@@ -122,28 +122,36 @@ Explizit nicht unterstützt (Fehler `unsupported`):
 | CV-PDF-Tests separat | 9 passed |
 | API-Syntax `node --check api/ris/[...path].mjs` | PASS |
 
-Vollsuite-Hinweis: Im parallelen Gesamtlauf traten zwei CV-PDF-Timeouts auf; dieselben Tests bestehen separat. Das ist ein bestehender Umgebungs-/Parallelitätsflake, nicht Teil dieser Änderung.
+Vollsuite-Hinweis: Im parallelen Gesamtlauf: **1414 passed, 5 failed, 11 skipped**.
+Die fünf Fehler sind zwei CV-PDF-Timeouts, zwei ManualSearchProfiles-
+Timeouts/Duplicate-Element und ein App-Privacy-Timeout. Alle fünf Tests
+bestehen einzeln (CV-PDF 9/9, ManualSearchProfiles 8/8, App-Privacy 1/1).
+Keine Tests wurden deaktiviert, keine globalen Timeouts erhöht. Das ist ein
+bestehender Umgebungs-/Parallelitätsflake, nicht Teil dieser Änderung.
 
 ## 7. Live-E2E-Status
 
-**BLOCKED** aus zwei Gründen:
+**In diesem Worktree NICHT AUSGEFÜHRT — deployment-gated, nicht config-blocked.**
 
-1. **Cognito-Vertrag:** Die lokale Jobsearch-OIDC-Konfiguration zeigt auf
-   `eu-central-1_ZURSMpD2O` / Client `5hb3f6dj5ialg77jf4blur9g6g`. Der live
-   verifizierte RIS-DEV2-Authorizer erwartet
-   `eu-central-1_K3dkdSipZ` / Audience `21j28p71vogg0m41tcue0ib3l4`.
-   Ob das Vercel-Deployment die Jobsearch-Env auf den RIS-Pool überschreibt,
-   ist ohne Vercel-Zugriff **nicht verifiziert**. Ein Token aus dem falschen
-   Pool wird von RIS mit 401 abgelehnt.
-2. **Kein Jobsearch-Partner-Credential/BFF-Deployment:** `RIS_API_KEY` und
-   `RIS_API_BASE_URL` sind lokal nicht gesetzt. Die RIS-Testcredentials aus
-   Phase 27 wurden widerrufen. Ein Live-Test benötigt einen eigenen
-   Jobsearch-Partner/APIProfile/Credential sowie ein Preview-Deployment — beides
-   ist ohne separate Freigabe nicht zulässig.
+- Die bestehende Jobsearch-OIDC-Konfiguration
+  `eu-central-1_ZURSMpD2O` / Client `5hb3f6dj5ialg77jf4blur9g6g` ist die
+  **ris-dev**-Konfiguration. Sie funktioniert dort bereits und bleibt
+  unverändert. Sie ist kein Fehler und wird nicht auf den RIS-DEV2-Pool
+  umgestellt.
+- Der vorhandene serverseitige RIS-Key der ris-dev-Integration bleibt
+  unverändert. Der BFF liest `RIS_API_BASE_URL` und `RIS_API_KEY` aus der
+  Server-Umgebung und ersetzt, kopiert oder rotiert keinen bestehenden Key.
+- Dieser lokale Worktree enthält keine `.env`-Server-Secrets und keinen
+  Vercel-Zugriff auf das bestehende ris-dev-Projekt. Der Branch ist noch nicht
+  als Preview deployed; deshalb konnten Login, echter Gateway-Aufruf,
+  Logout/Login und Benutzerwechsel von hier aus nicht live ausgeführt werden.
+- Die RIS-DEV2-Authorizer-Werte (`K3dkdSipZ` / Audience `21j28...`) sind
+  Evidence der RIS-DEV2-Tests, keine Vorgabe für die Jobsearch-ris-dev-
+  Konfiguration.
 
-Daher wurden Anmeldung, echter Gateway-Aufruf, Logout/Login und
-Benutzerwechsel nicht live ausgeführt. Sie sind als nächstes Integrationsgate
-dokumentiert.
+Keine Cognito-, Key- oder RIS-Konfigurationsänderung war oder ist Teil dieses
+Branches. Das verbleibende Gate ist die Preview-Deployment-Verifikation mit dem
+bestehenden ris-dev-BFF/Key.
 
 ## 8. Datenschutz / Consent
 
@@ -157,12 +165,13 @@ dokumentiert.
 
 ## 9. Offene Arbeitspakete
 
-1. Ziel-Cognito-Issuer/-Client zwischen Jobsearch-Deployment und RIS DEV2
-   verbindlich abgleichen (ohne unautorisierte Cognito-Änderung).
-2. Eigenen synthetischen Jobsearch-Partner + APIProfile + Credential über den
-   RIS-Trust-Anchor provisionieren.
-3. BFF in einem Preview-Deployment mit `RIS_API_BASE_URL`/`RIS_API_KEY`
-   konfigurieren.
+1. Bestehende Jobsearch-ris-dev-OIDC-Konfiguration (`ZURSMpD2O` /
+   `5hb3...`) unverändert lassen; keine Cognito-Änderung.
+2. Vorhandenen ris-dev-Partner/Key read-only auf Gültigkeit und Jobsearch-
+   Bindung prüfen; keinen neuen Key anlegen oder austauschen, solange der
+   bestehende gültig ist.
+3. BFF in einem Preview-Deployment des bestehenden ris-dev-Projekts mit den
+   vorhandenen `RIS_API_BASE_URL`/`RIS_API_KEY`-Env-Werten aktivieren.
 4. Live-E2E: Login, Create, Reload/List, Update, Export, Delete,
    Logout/Login/Benutzerwechsel, Fremdzugriff.
 5. Danach Status-/History-/Cover-Letter-Versionen nur nach separater
@@ -173,5 +182,6 @@ dokumentiert.
 
 - Keine `ris-dev`-Änderung.
 - Keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-/ACM-Änderung.
-- Kein Push/Merge/Produktionsdeployment.
+- Kein Merge und kein Produktionsdeployment; Branch-Push gemäß
+  `JM-RIS-GIT-PUBLISH-02` ist zulässig.
 - Keine Secrets in Git, Reports oder Logs.
