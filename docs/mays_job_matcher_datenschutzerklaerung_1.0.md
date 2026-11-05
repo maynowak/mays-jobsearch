@@ -1,3 +1,4 @@
+<!-- ENTWURF zur Datenschutz-/Rechtsprüfung (2026-11-05, JM-PROFILE-CACHE-RETIREMENT-DOCS-01). Nicht veröffentlicht. -->
 DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER
 Stand: 10. Oktober 2026
 
@@ -58,7 +59,15 @@ Für Anmeldung, Sicherheit und die Nutzung einzelner Funktionen können technisc
 Abhängig von der genutzten Funktion können technische Dienstleister Daten erhalten, insbesondere Hosting-, Cloud-, Authentifizierungs-, E-Mail- und KI-Anbieter. Bei Übermittlungen in Staaten außerhalb des Europäischen Wirtschaftsraums sind die Anforderungen der Art. 44 ff. DSGVO einzuhalten. Ob ein Angemessenheitsbeschluss, ein gültiger EU-US Data Privacy Framework-Eintrag oder geeignete Garantien wie Standardvertragsklauseln einschlägig sind, ist für jeden tatsächlich eingesetzten Empfänger zu prüfen. Eine abschließende Empfängerliste und die zugehörigen Garantien müssen vor Veröffentlichung ergänzt werden.
 
 14. SPEICHERDAUER UND LÖSCHUNG
-Wir speichern personenbezogene Daten grundsätzlich nur so lange, wie es für den jeweiligen Zweck erforderlich ist oder gesetzliche Pflichten eine weitere Aufbewahrung verlangen. Die tatsächlichen Speicherfristen unterscheiden sich je nach Funktion und Dienstleister. Im Projekt sind beispielsweise zeitlich begrenzte browserseitige Profilzustände sowie ein zeitlich begrenzter serverseitiger Cache für strukturierte Profilinformationen dokumentiert. Für andere Datenbestände, insbesondere Benachrichtigungen, Protokolle und einzelne RIS-Datensätze, müssen konkrete Fristen noch geprüft werden.
+Wir speichern personenbezogene Daten grundsätzlich nur so lange, wie es für den jeweiligen Zweck erforderlich ist oder gesetzliche Pflichten eine weitere Aufbewahrung verlangen. Die tatsächlichen Speicherfristen unterscheiden sich je nach Funktion und Dienstleister.
+
+Für die CV-Profilverarbeitung gilt derzeit: Neue Profilanfragen werden ohne einen serverseitigen Profil-Cache verarbeitet; die daraus erzeugten strukturierten Profildaten werden nicht in Redis gespeichert. Lokale Browserzustände, etwa CV-Dokumente und benannte Profil-Listen, sind zeitlich begrenzt und können vom Nutzer aus der Sitzung entfernt werden.
+
+Frühere Versionen der Anwendung konnten strukturierte Profilinformationen unter einem aus dem CV-Text abgeleiteten Schlüssel in Redis zwischenspeichern. Solche historischen Einträge können noch vorhanden sein; ihre tatsächliche und vollständige Löschung ist nicht bestätigt. Sie unterliegen der damals gesetzten Ablauffrist; eine vollständige Entfernung allein aus dem Zeitablauf wird nicht zugesichert.
+
+Bereits an externe KI-Anbieter übermittelte Inhalte unterliegen deren eigenen Verarbeitungs- und Aufbewahrungsbedingungen. Eine Löschung im Browser oder in der Anwendung wirkt nicht automatisch auf diese Daten.
+
+Eine freiwillige Speicherung in RIS ist von der technischen CV-Profilverarbeitung getrennt und derzeit nicht aktiviert. Für andere Datenbestände, insbesondere Benachrichtigungen, Protokolle und einzelne RIS-Datensätze, müssen konkrete Fristen noch geprüft werden.
 
 Für bestimmte Daten in RIS existiert ein technischer Löschprozess. Dieser umfasst jedoch nicht automatisch alle Datenbestände von May’s Job Matcher oder alle externen Dienstleister. Eine vollständige Löschung kann zudem gesetzlichen Aufbewahrungspflichten und technisch notwendigen Restfristen unterliegen. Bitte wenden Sie sich für Löschanfragen an die unten genannte Kontaktadresse.
 
