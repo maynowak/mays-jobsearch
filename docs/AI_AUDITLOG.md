@@ -1,3 +1,25 @@
+2026-11-05 · JM-RIS-INTEGRATION-01-ABSCHLUSS
+- Typ: Consolidation/Final Report/Integration
+- Status: COMPLETE — **LOCAL VERIFIED · JOBSEARCH DEV2 E2E BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `da10601`; RIS öffentlich `5ebefbd` (R08 `e0a3fe4`, Referenz `c28c668`); keine RIS-AWS-Abfragen in diesem Lauf.
+- Phasen: 01A `92be5c1`, 01B `67af66a`, 01C `68ae5de`, 01D `a3c9a04`, 01E `362592d`, 01F `d60ce6a`, Boundary `da10601`.
+- Implementierung: BFF `/api/ris/applications` (List/Detail/Create/Update/Status/Export/Delete/Metrics/Action-Routen), Remote-Adapter, UI-Modi SESSION/REMOTE_PREVIEW, Migration mit Consent-Gate.
+- Vertrag: `location[]`/`source[]` nur genau 1 Wert; manuelle Stellen/Builder-CV blockiert; `status`↔`stage` gemappt; `statusHistory`/`history` im Detail GAP; Delete nur lokales Receipt; `addFeedback`/`addInterview`/`addNote`/`addCoverLetterVersion` bewusst nicht unterstützt.
+- Identität: Jobsearch `ZURSMpD2O`/`5hb3…`; DEV2 öffentlich `K3dkdSipZ`/`21j28…`; RIS-DEV historisch `ojbmoiYGM`/`7ldh…`. Keine automatische JWT-Kompatibilität; RIS muss Jobsearch-Issuer/Client autorisieren. `custom:tenant_id`-Vertrag (Access vs. ID Token) offen.
+- Live: RIS-interner DEV2-E2E PASS; **Jobsearch-spezifischer DEV2-Pfad BLOCKED** (keine Partnerbindung/Credential/Tenant); `ris-dev` Quellenkonflikt (Apply vs. Hands-on-Handoff „live inventory BLOCKED“). Keine AWS-Abfragen.
+- Ergänzung: `RIS_API_KEY`/`RIS_API_CREDENTIAL` als serverseitige Credential-Aliase zusätzlich zu `RIS_PARTNER_CREDENTIAL`.
+- Tests: BFF **26/26**, Migration **16/16**, Dialog **2/2**, Adapter **21/21**, Bridge **12/12**, UI **2/2**, Boundary **5/5**, Gesamtsuite **1498 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** lokal; **JOBSEARCH DEV2 E2E: BLOCKED**; **CONTRACT: PARTIAL** (History/Cover-Letter); **NO-LOSS: PARTIAL**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Abschluss-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `api/_lib/ris/config.mjs`, `.env.example`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01-ABSCHLUSS.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine produktive Speicherung.
+- Offene Punkte: RIS-Attestation Issuer/Client; Partner-Credential/Tenant; Grant für Testbenutzer-`sub`; Tenant-Claim-Klärung; Surface-Aktivierung; History-/Cover-Letter-Vertrag; Server-Consent; E2E-Freigabe.
+- Nächste Aktionen: Attestation/Binding vom RIS-Team; danach separater synthetischer DEV2-E2E; kein automatischer Live-Test.
+- Resume-Punkt: Integration lokal abgeschlossen; Live-Pfad unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01-ABSCHLUSS.md`
+
 2026-11-05 · JM-RIS-BOUNDARY-01
 - Typ: Governance/Boundary/Incident/Remediation
 - Status: COMPLETE — **YELLOW**; Prozessvorfall dokumentiert; keine RIS-/AWS-Mutation; kein Push

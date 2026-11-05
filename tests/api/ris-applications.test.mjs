@@ -109,6 +109,8 @@ afterEach(() => {
   delete process.env.RIS_APPLICATION_STORAGE_ENABLED;
   delete process.env.RIS_API_BASE_URL;
   delete process.env.RIS_PARTNER_CREDENTIAL;
+  delete process.env.RIS_API_KEY;
+  delete process.env.RIS_API_CREDENTIAL;
   delete process.env.RIS_COGNITO_ISSUER;
   delete process.env.RIS_COGNITO_CLIENT_ID;
 });
@@ -502,6 +504,33 @@ describe("/api/ris/applications", () => {
     expect(res.body.application.ownerId).toBe("user-real");
     const payload = JSON.parse(risCalls()[0][1].body);
     expect(payload).not.toHaveProperty("ownerId");
+  });
+
+
+  it("akzeptiert RIS_API_KEY als Server-Credential-Alias", async () => {
+    delete process.env.RIS_PARTNER_CREDENTIAL;
+    process.env.RIS_API_KEY = "ris_alias_credential";
+    risResponse = response(201, { application: risApplication() });
+    const res = makeRes();
+    await handler(
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token()}` },
+        query: {},
+        body: {
+          job: {
+            jobId: "job-1",
+            title: "Test",
+            companyName: "Synthetic",
+            location: ["Darmstadt"],
+            source: ["synthetic"],
+          },
+        },
+      },
+      res
+    );
+    expect(res.statusCode).toBe(201);
+    expect(risCalls()[0][1].headers["X-Api-Credential"]).toBe("ris_alias_credential");
   });
 
   it("gibt weder Token noch Credential in der Antwort aus", async () => {

@@ -22,7 +22,9 @@ export function risConfig(env = process.env) {
 
   const base = httpsUrl(env.RIS_API_BASE_URL);
   const issuer = httpsUrl(env.RIS_COGNITO_ISSUER);
-  const credential = String(env.RIS_PARTNER_CREDENTIAL ?? "").trim();
+  const credential = String(
+    env.RIS_PARTNER_CREDENTIAL ?? env.RIS_API_KEY ?? env.RIS_API_CREDENTIAL ?? ""
+  ).trim();
   const clientId = String(env.RIS_COGNITO_CLIENT_ID ?? "").trim();
 
   if (!base || !issuer || !credential || !clientId) {
