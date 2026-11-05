@@ -3077,3 +3077,42 @@ Einschraenkung: /profil mit echtem Cognito-Login ohne Zugangsdaten nicht
 testbar; pre-auth-Render (Navbar+Footer) verifiziert, /dev/dashboard ist
 die volle Layout-Entsprechung.
 Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
+
+## JM-RIS-INTEGRATION-GAP-CLOSURE-01 — RIS ApplicationV1 BFF + Adapter
+
+Datum: 2026-11-05
+Branch: `feature/jm-ris-integration-gap-closure-01` (Basis `origin/main@fec135c`)
+
+Umgesetzt:
+
+- Server-side BFF `api/ris/[...path].mjs` für die live verifizierten
+  RIS-ApplicationV1-Routen (List/Create/Get/Patch/Export/Delete/Metrics).
+- Partner-Key ausschließlich serverseitig (`RIS_API_KEY`); der Browser sendet
+  nur den Benutzer-Access-Token.
+- Timeout, standardisiertes Fehler-Mapping, 501 für nicht verifizierte
+  Status-/History-/Cover-Letter-Routen.
+- Mapping des tatsächlichen RIS-JSON auf Jobsearch-DTOs (Status, Job-Felder,
+  Dokumente, Salary, Follow-up, Export, Delete).
+- Remote-Adapter für `ApplicationPersistencePort`/`ApplicationRepository`:
+  List, Get, Create, Update, Export, Delete, Metrics, Pagination, Idempotenz,
+  `expectedVersion`, Session-Invalidierung.
+- Opt-in UI-Modus nur für explizit gelistete synthetische Test-Subjects
+  (`VITE_RIS_APPLICATIONS_REMOTE`, `VITE_RIS_REMOTE_TEST_SUBS`); keine
+  automatische Migration lokaler Entwürfe; sichtbarer Konto-/Testhinweis.
+
+Tests:
+
+- Adapter: 11 passed.
+- BFF mit Mock-RIS (`node --test`): 7 passed.
+- Anwendungs-/UI-bezogene Vitest-Suite: 200 passed.
+- CV-PDF-Tests separat: 9 passed; im parallelen Gesamtlauf zwei bekannte
+  Timeouts, separat grün.
+- `npm run build`: PASS; `node --check` BFF: PASS.
+
+Live-E2E: BLOCKED. Lokale Jobsearch-OIDC-Defaults (`ZURSMpD2O` / Client
+`5hb3...`) passen nicht zum live verifizierten RIS-DEV2-Authorizer
+(`K3dkdSipZ` / Audience `21j28...`); Vercel-Env nicht geprüft. Zusätzlich
+fehlen ein Jobsearch-Partner-Credential und ein Preview-BFF-Deployment.
+Keine AWS-/Cognito-/Terraform-Änderung, kein Push, kein Deploy.
+
+Report: `docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`.
