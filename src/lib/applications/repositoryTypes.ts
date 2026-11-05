@@ -35,7 +35,8 @@ export type ApplicationRepositoryErrorCode =
   | "forbidden"
   | "conflict"
   | "capacity_exceeded"
-  | "session_ended";
+  | "session_ended"
+  | "unsupported";
 
 export class ApplicationRepositoryError extends Error {
   readonly code: ApplicationRepositoryErrorCode;
@@ -138,11 +139,21 @@ export interface ApplicationReadOptions {
 export interface ApplicationListOptions extends ApplicationReadOptions {
   cursor?: string;
   limit?: number;
+  status?: ApplicationStatus;
 }
 
 export interface ApplicationPageV1 {
   items: ApplicationV1[];
   nextCursor: string | null;
+}
+
+export interface ApplicationMetricsV1 {
+  total: number;
+  drafts: number;
+  submitted: number;
+  interviews: number;
+  openFollowUps: number;
+  overdueFollowUps: number;
 }
 
 /**
@@ -153,6 +164,7 @@ export interface ApplicationPageV1 {
  */
 export interface ApplicationPersistencePort {
   list(options?: ApplicationListOptions): Promise<ApplicationPageV1>;
+  metrics(options?: ApplicationReadOptions): Promise<ApplicationMetricsV1>;
   get(applicationId: string, options?: ApplicationReadOptions): Promise<ApplicationV1>;
   create(
     input: CreateApplicationDraftInputV1,

@@ -50,7 +50,7 @@ export interface SessionApplicationExportV1 {
   schemaVersion: 1;
   exportedAt: ISODateTime;
   /** Explicitly distinguishes a local preview from a server resource. */
-  localDraft: true;
+  localDraft: boolean;
   note: string;
   application: SessionApplicationV1;
 }

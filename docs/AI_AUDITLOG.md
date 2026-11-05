@@ -3077,3 +3077,66 @@ Einschraenkung: /profil mit echtem Cognito-Login ohne Zugangsdaten nicht
 testbar; pre-auth-Render (Navbar+Footer) verifiziert, /dev/dashboard ist
 die volle Layout-Entsprechung.
 Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
+
+## JM-RIS-INTEGRATION-GAP-CLOSURE-01 — RIS ApplicationV1 BFF + Adapter
+
+Datum: 2026-11-05
+Branch: `feature/jm-ris-integration-gap-closure-01` (Basis `origin/main@fec135c`)
+
+Umgesetzt:
+
+- Server-side BFF `api/ris/[...path].mjs` für die live verifizierten
+  RIS-ApplicationV1-Routen (List/Create/Get/Patch/Export/Delete/Metrics).
+- Partner-Key ausschließlich serverseitig (`RIS_API_KEY`); der Browser sendet
+  nur den Benutzer-Access-Token.
+- Timeout, standardisiertes Fehler-Mapping, 501 für nicht verifizierte
+  Status-/History-/Cover-Letter-Routen.
+- Mapping des tatsächlichen RIS-JSON auf Jobsearch-DTOs (Status, Job-Felder,
+  Dokumente, Salary, Follow-up, Export, Delete).
+- Remote-Adapter für `ApplicationPersistencePort`/`ApplicationRepository`:
+  List, Get, Create, Update, Export, Delete, Metrics, Pagination, Idempotenz,
+  `expectedVersion`, Session-Invalidierung.
+- Opt-in UI-Modus nur für explizit gelistete synthetische Test-Subjects
+  (`VITE_RIS_APPLICATIONS_REMOTE`, `VITE_RIS_REMOTE_TEST_SUBS`); keine
+  automatische Migration lokaler Entwürfe; sichtbarer Konto-/Testhinweis.
+
+Tests:
+
+- Adapter: 11 passed.
+- BFF mit Mock-RIS (`node --test`): 7 passed.
+- Anwendungs-/UI-bezogene Vitest-Suite: 200 passed.
+- CV-PDF-Tests separat: 9 passed; im parallelen Gesamtlauf zwei bekannte
+  Timeouts, separat grün.
+- `npm run build`: PASS; `node --check` BFF: PASS.
+
+Live-E2E: NOT EXECUTED (deployment-gated). Die bestehende Jobsearch-OIDC-
+Konfiguration (`ZURSMpD2O` / Client `5hb3...`) ist die **ris-dev**-
+Konfiguration, funktioniert dort bereits und bleibt unverändert. Der
+vorhandene serverseitige RIS-Key bleibt ebenfalls unverändert; der BFF liest
+`RIS_API_BASE_URL`/`RIS_API_KEY` nur aus der Server-Umgebung und ersetzt keinen
+Key. In diesem Worktree fehlen `.env`-Server-Secrets und Vercel-Zugriff; der
+Branch ist noch nicht als Preview deployed. Daher konnten Login/Gateway/
+Logout/Benutzerwechsel nicht live ausgeführt werden. Keine Cognito-/Key-/
+AWS-/Terraform-Änderung, kein Merge/Deploy; Branch-Push gemäß
+`JM-RIS-GIT-PUBLISH-02` ist zulässig.
+
+Report: `docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`.
+
+## JM-RIS-GIT-PUBLISH-02 — GitHub Branch und PR
+
+Datum: 2026-11-05
+Branch: `feature/jm-ris-integration-gap-closure-01`
+Veröffentlicht: `242c4c9` (Feature-Implementierung), `3f1665f` (ris-dev-Kontext-Korrektur)
+Remote-HEAD: `3f1665f210a65e4efa24744484d447fb28685655`
+
+- Upstream/Tracking: `origin/feature/jm-ris-integration-gap-closure-01`
+- Kein Force-Push.
+- PR #1: https://github.com/maynowak/mays-jobsearch/pull/1
+- Basis: `main` @ `fec135c`; PR-Head bei Erstellung: `3f1665f`; 2 Commits, 15 Dateien.
+- GitHub mergeable_state: `unstable`; keine CI-Statuses/Checks vorhanden.
+- Scope/Secrets: keine echten Tokens/Keys, keine `.env`-/Credential-Dateien im Diff; `.env.example` enthält nur Platzhalter.
+- Gesamttest: 1414 passed, 5 failed under parallel load, 11 skipped. Die fünf Fehler (2 CV-PDF-Timeouts, 2 ManualSearchProfiles-Timeouts/Duplicate-Element, 1 App-Privacy-Timeout) bestehen einzeln; keine Tests deaktiviert, keine globalen Timeouts erhöht.
+- Zielkontext: bestehende Jobsearch-ris-dev-OIDC-Konfiguration (`ZURSMpD2O` / Client `5hb3...`) und vorhandener serverseitiger RIS-Key bleiben unverändert. Der BFF liest `RIS_API_BASE_URL`/`RIS_API_KEY` nur aus der Server-Umgebung.
+- Live-E2E: weiterhin deployment-gated; die tatsächliche Jobsearch-Partnerbindung in RIS ist nicht nachgewiesen. Kein Merge, kein Deploy, keine AWS-/Cognito-/Terraform-Mutation.
+
+`docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`.

@@ -34,6 +34,8 @@ import {
 
 interface Props {
   repository: ApplicationRepository;
+  /** True only when the repository is the opt-in RIS ApplicationV1 adapter. */
+  remote?: boolean;
   onChanged?: (applications: SessionApplicationV1[]) => void;
   models?: ModelOption[];
   defaultModel?: string | null;
@@ -127,6 +129,7 @@ function errorLabel(t: (key: string) => string, err: unknown): string {
 
 export default function ApplicationsSection({
   repository,
+  remote = false,
   onChanged,
   models = [],
   defaultModel = null,
@@ -876,7 +879,7 @@ export default function ApplicationsSection({
         <div>
           <h2 id="applications-title">{t("dashboard.nav.applications")}</h2>
           <p className="applications-session-note" role="note">
-            {t("applications.sessionOnly")}
+            {remote ? t("applications.remoteNote") : t("applications.sessionOnly")}
           </p>
         </div>
         <button

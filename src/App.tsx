@@ -57,6 +57,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
 import { beginNewApplicationSession, createSessionApplicationRepository } from "./lib/applications/sessionRepository";
+import { createRisApplicationRepository } from "./lib/applications/ris/risRepository";
+import { risRemoteEnabledFor } from "./lib/applications/ris/risMode";
 import { beginNewManualJobSession } from "./lib/applications/manualJobSession";
 import { isManualJob } from "./lib/applications/manualJob";
 import { ApplicationRepositoryError } from "./lib/applications/repositoryTypes";
@@ -197,6 +199,7 @@ export default function App() {
   } | null>(null);
   const [sessionApplications, setSessionApplications] = useState<SessionApplicationV1[]>([]);
   const [applicationRepository, setApplicationRepository] = useState(() => createSessionApplicationRepository());
+  const [applicationRemoteMode, setApplicationRemoteMode] = useState(false);
   const [applicationRefreshToken, setApplicationRefreshToken] = useState(0);
   const [applicationNavigation, setApplicationNavigation] = useState<{
     localId?: string | null;
@@ -287,7 +290,30 @@ export default function App() {
   // identity fallback because identical addresses must not merge users.
   const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
   const identityVerified = isVerifiedAuthProfileKey(authProfileKey);
+  const authUserRef = useRef(auth.user);
+  authUserRef.current = auth.user;
+  const remoteSub = typeof auth.user?.profile?.sub === "string"
+    ? auth.user.profile.sub
+    : undefined;
+  const remoteEligible = risRemoteEnabledFor(remoteSub);
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
+
+  // Opt-in remote mode for explicitly allow-listed synthetic test subjects.
+  // Local session drafts are never migrated automatically; the remote list
+  // simply replaces the visible collection for this test identity.
+  useEffect(() => {
+    if (!remoteEligible) {
+      setApplicationRemoteMode(false);
+      return;
+    }
+    const remote = createRisApplicationRepository({
+      getAccessToken: () => authUserRef.current?.access_token,
+    });
+    setApplicationRepository(remote);
+    setApplicationRemoteMode(true);
+    setApplicationRefreshToken((value) => value + 1);
+    return () => remote.invalidate();
+  }, [authProfileKey, remoteEligible]);
   // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
   // apply late results after a user switch/logout.
   const sessionEpochRef = useRef(0);
@@ -3282,6 +3308,7 @@ export default function App() {
     <ApplicationsSection
       key={authProfileKey ?? "guest"}
       repository={applicationRepository}
+      remote={applicationRemoteMode}
       onChanged={setSessionApplications}
       models={models}
       defaultModel={defaultModel}
