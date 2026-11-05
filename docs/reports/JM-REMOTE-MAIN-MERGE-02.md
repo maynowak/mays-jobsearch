@@ -164,8 +164,7 @@ main...origin/main: 96 ahead / 0 behind
 ## 11. Finaler Main-HEAD
 
 - Merge-Commit: **`639ed87`**
-- Dokumentations-Commit: siehe Git-Historie
-  (`docs: record remote main merge`)
+- Dokumentations-Commit: **`cf9eba2`** (`docs: record remote main merge`)
 - Working Tree: **clean**
 - Feature-Branch: unverändert `3f56568`
 
