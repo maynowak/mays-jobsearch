@@ -1,3 +1,23 @@
+2026-11-05 · RIS-JOBSEARCH-DEV-CONNECT-01
+- Typ: Read-only RIS-DEV-Verifikation/Provisionierungsplan
+- Status: COMPLETE — **GAP VERIFIED · PROVISIONING BLOCKED**; keine Mutation, kein Push
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `a6412a4`; AWS read-only `240571105849` (`user/Mayaws`), `eu-central-1`.
+- Befund: Auf `ris-dev` sind Partner Applications, APIProfiles, Credentials, Offers, Entitlements, Partner-/User-Profiles und Applications **0**; Agent Catalog **2** (`jobsearch-agent`, `reference_agent`). Lambda `PARTNER_SURFACE_ENABLED=false`, Erasure/Ledger false. Human JWT Authorizer: Issuer `eu-central-1_ojbmoiYGM`, Audience `7ldhihlpdgsgcl3puvu4oi7ksv`.
+- Testbenutzer: Jobsearch-Pool `ZURSMpD2O`, Client `5hb3…`, `sub 93a43852-a051-7036-28e3-0eee4362cffb`, CONFIRMED/verified, **kein `custom:tenant_id`**; nicht im RIS-Pool.
+- Konsequenz: Jobsearch-Token wird vom aktuellen Authorizer nicht akzeptiert; Partnerroute bleibt 503; ohne Partnerressourcen kein ApplicationV1.
+- Anschlussplan: (1) owner-only `RIS_ADMIN_AUTHORIZATION_FILE` für `arn:aws:iam::240571105849:user/Mayaws`/admin/Tenant `mays-ris-dev` out-of-band; (2) `ris-admin apiprofile create/activate`; (3) `credential issue` in sichere Datei; (4) `partner create` mit Jobsearch-Client; (5) `offer create` + `offer grant` für Testbenutzer-sub; (6) JWT-Authorizer für Jobsearch-Pool/Client (Option A) oder Wechsel auf RIS-Pool-Client (Option B); (7) `PARTNER_SURFACE_ENABLED=true` im Testfenster; (8) Jobsearch-BFF-Env.
+- Identitätsentscheidung: Option A (RIS autorisiert Jobsearch-Pool/Client) bevorzugt; Option B ändert Jobsearch-Login; Token-Übersetzung abgelehnt. Tenant-Claim muss über Registry/Credential aufgelöst werden.
+- Klassifikation: **YELLOW / BLOCKED** — Read-only-Nachweis vollständig; Provisionierung und E2E nicht freigegeben.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Dokumentations-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `docs/reports/RIS-JOBSEARCH-DEV-CONNECT-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine Partnerregistrierung, keine Credential-Erzeugung/Rotation, keine Offer-/Grant-Mutation, keine echten RIS-Writes/Bewerberdaten.
+- Offene Punkte: Trust Anchor, Provisionierung, Authorizer-Option, Surface-Fenster, Tenant-Claim, Server-Consent, E2E-Freigabe.
+- Nächste Aktionen: RIS-Owner liefert Trust Anchor/Freigabe; danach Provisionierung und separater synthetischer E2E.
+- Resume-Punkt: Ist-Zustand und Anschlussplan dokumentiert; Live-Anschluss BLOCKED.
+- Log: `docs/reports/RIS-JOBSEARCH-DEV-CONNECT-01.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-01-ABSCHLUSS
 - Typ: Consolidation/Final Report/Integration
 - Status: COMPLETE — **LOCAL VERIFIED · JOBSEARCH DEV2 E2E BLOCKED**; kein Push, kein Deployment
