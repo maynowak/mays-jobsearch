@@ -9,7 +9,7 @@
 - Evidence: `api/profile.mjs:1-137`; `src/api.ts:275-288`; `tests/api/profile-no-cache.test.mjs`; `src/i18n.tsx`; `src/App.test.tsx`; `docs/mays_job_matcher_datenschutzerklaerung_1.0.md`; `docs/reports/JM-PROFILE-CACHE-DELETE-03-*.md`; `docs/reports/JM-PRIVACY-CV-REDIS-PURGE-02.md`.
 - Klassifikation: **GREEN** für diesen Dokumentationsauftrag; **Legacy-Redis-Purge separat BLOCKED**.
 - Terraform-Checks: keine ausgeführt (nicht im Scope; keine Infrastrukturänderung).
-- Git-Status: Working Tree clean; 6 Commits auf dem Feature-Branch; finaler HEAD `53e32ad` (Basis `63b5965`).
+- Git-Status: Working Tree clean; 7 Commits auf dem Feature-Branch; Auditlog-Nachtrag `8020138`; Basis `63b5965`.
 - Geänderte Dateien: `src/i18n.tsx`, `src/App.test.tsx` (nur Button-Label), `docs/mays_job_matcher_datenschutzerklaerung_1.0.md`, `docs/reports/JM-PROFILE-CACHE-DELETE-03-{AUDIT,DESIGN-GATE,SECURITY-DECISION-04}.md`, `docs/reports/JM-PRIVACY-CV-REDIS-PURGE-02.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01.md`, `docs/reports/JM-PROFILE-CACHE-RETIREMENT-DOCS-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
 - Bestätigung: keine Änderung an `api/**`, `scripts/**`, AWS/Terraform/RIS/Cognito/CloudFront, Redis-Konfiguration, Secrets, KI-Provider-Implementierung; keine neue Persistenz, Cookies oder Auth-Pfade. Keine echten CV-/Provider-/Redis-Daten.
 - Tests: Gesamtsuite **1414 passed / 5 skipped**; `npm run build` PASS; `git diff --check` PASS; Guest-CV-E2E 1440/390 PASS (1 `/api/profile`, 0 Login, keine Console-Errors); Profile-Storage-Consent-E2E 768/430/320 PASS. Erster Lauf mit `node_modules`-Symlink: 8 Vite-`fs.allow`-Artefaktfehler, nach Materialisierung grün.

@@ -14,6 +14,7 @@ kein Merge, kein Deployment. Legacy-Redis-Purge bleibt separat **BLOCKED**.
 - Branch: `feature/jm-profile-cache-retirement-docs-01`
 - Basis: lokaler `main` `63b5965`
 - HEAD vor diesem Log-Commit: `53e32ad`
+- Auditlog-Nachtrag: `8020138`
 - `origin/main`: `4364eab` (abweichend; nicht synchronisiert)
 - Worktree: `/home/dci-student/projects/mays-jobsearch-retirement-docs`
 - Verschmutzter Alt-Checkout `Mays-Jobsearch` (`fix/cover-letter-model-fallback`)
@@ -144,6 +145,7 @@ Keine ausgeführt (nicht im Scope; keine Infrastrukturänderung).
 | `653dc65` | Legacy-Redis-Status |
 | `b4799b6` | Bericht + Auditlog |
 | `53e32ad` | Commit-Nachtrag im Bericht |
+| `8020138` | Auditlog-Platzierung und Audit-Pflichtangaben |
 
 ## Geänderte Dateien
 
