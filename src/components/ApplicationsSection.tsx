@@ -4,7 +4,7 @@ import type {
   SessionApplicationUpdateChanges,
   SessionApplicationV1,
 } from "../lib/applications/sessionApplications";
-import type { ApplicationRepository } from "../lib/applications/repositoryTypes";
+import type { ApplicationMigrationPortV1, ApplicationRepository } from "../lib/applications/repositoryTypes";
 import type { CvDocument, Job, ModelOption } from "../types";
 import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
 import { hasCvBuilderTextContent } from "../lib/cvBuilder/toAnonymizedText";
@@ -20,6 +20,7 @@ import { ApplicationValidationError } from "../lib/applications/applicationValid
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
 import ApplicationEditForm from "./ApplicationEditForm";
 import ApplicationCard from "./ApplicationCard";
+import ApplicationMigrationDialog from "./ApplicationMigrationDialog";
 import ApplicationLetterComparison from "./ApplicationLetterComparison";
 import NewApplicationForm from "./NewApplicationForm";
 import ManualJobDescriptionPrompt from "./ManualJobDescriptionPrompt";
@@ -35,6 +36,7 @@ import {
 interface Props {
   repository: ApplicationRepository;
   storageMode?: "session" | "remote";
+  migration?: Pick<ApplicationMigrationPortV1, "preview" | "commit">;
   onChanged?: (applications: SessionApplicationV1[]) => void;
   models?: ModelOption[];
   defaultModel?: string | null;
@@ -129,6 +131,7 @@ function errorLabel(t: (key: string) => string, err: unknown): string {
 export default function ApplicationsSection({
   repository,
   storageMode = "session",
+  migration,
   onChanged,
   models = [],
   defaultModel = null,
@@ -144,6 +147,7 @@ export default function ApplicationsSection({
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
   const [applications, setApplications] = useState<SessionApplicationV1[]>([]);
+  const [migrationOpen, setMigrationOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [letterDirty, setLetterDirty] = useState(false);
@@ -889,6 +893,15 @@ export default function ApplicationsSection({
           <h2 id="applications-title">{t("dashboard.nav.applications")}</h2>
           <p className="applications-session-note" role="note">
             {storageMode === "remote" ? t("applications.remoteNotice") : t("applications.sessionOnly")}
+            {migration && storageMode !== "remote" && applications.length ? (
+              <button
+                type="button"
+                className="btn-ghost applications-migration-open"
+                onClick={() => setMigrationOpen(true)}
+              >
+                {t("applications.migration.action")}
+              </button>
+            ) : null}
           </p>
         </div>
         <button
@@ -1510,6 +1523,14 @@ export default function ApplicationsSection({
           ) : null}
         </div>
       )}
+      {migration ? (
+        <ApplicationMigrationDialog
+          open={migrationOpen}
+          applications={applications}
+          port={migration}
+          onClose={() => setMigrationOpen(false)}
+        />
+      ) : null}
     </section>
   );
 }

@@ -1,3 +1,25 @@
+2026-11-05 · JM-RIS-INTEGRATION-01E
+- Typ: Session-Migration/Consent-Gate/Mock-Integration
+- Status: COMPLETE — **SESSION MIGRATION LOCAL VERIFIED · STORAGE GATE FAIL-CLOSED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `a3c9a04`; Remote-Adapter 01C, UI 01D, BFF 01B; Session-Repository unverändert.
+- Scope: ausdrücklich gestarteter Handoff bestehender Session-Bewerbungen in den Remote-Port; Vorschau, Kompatibilität, Duplikate, Bestätigung, Idempotenz, Teilübertragung.
+- Implementierung: `applicationMigration.ts` implementiert `ApplicationMigrationPortV1`; additive Vertragsfelder (`confirmed`, Item-Status, Preview-Items, Result-Statuses, `followUp` im Create); Dialog `ApplicationMigrationDialog` + Button in `ApplicationsSection`; App übergibt Migration nur bei `VITE_RIS_APPLICATION_MIGRATION_MOCK=true` + Auth + Access-Token (Default false).
+- No-Loss: blockiert mehrere Standorte/Quellen, manuelle Stellen, Builder-CV, History/StatusHistory > Initial, Notes > 10.000, fehlende Quell-URL. Inkompatible bleiben lokal und werden nicht übertragen.
+- Consent: `consentSource` muss `simulated` sein; `server`/fehlende Freigabe → `storage_consent_required`; keine künstlichen Receipts; UI-Checkbox ist nur Bestätigung, keine Serverfreigabe.
+- Idempotenz/Duplikate: `<migrationKey>:<localId>` stabil; kein neuer Key nach Timeout; Remote-List-Abgleich (max. 5 Seiten); Duplikate → CONFLICT ohne Auto-Merge; bestätigte `applicationId` wird nur im Migrationskontext zugeordnet.
+- Isolation: verifiziertes `sub`, Session-Generation + `invalidate()`, verspätete Antworten verworfen, keine Übernahme zwischen Benutzern.
+- Tests: Migration **16/16**, Dialog **2/2**, Adapter **21/21**, BFF **14/14**, UI-Bridge **12/12**, Gesamtsuite **1481 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** für lokale Migration; **NO-LOSS: PARTIAL** (inkompatible Datensätze blockiert); **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `src/lib/applications/applicationMigration.ts`, `.test.ts`, `repositoryTypes.ts`, `contractTypes.ts`, `src/components/ApplicationMigrationDialog.tsx`, `.test.tsx`, `ApplicationsSection.tsx`, `src/App.tsx`, `src/i18n.tsx`, `.env.example`, `docs/reports/JM-RIS-INTEGRATION-01E-SESSION-MIGRATION.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine Session-Regression.
+- Offene Punkte: echter Server-Consent, History-/Cover-Letter-Transfer, `statusHistory` im Detail, RIS-DEV-Partnerbindung, Rechtsprüfung, manuelle Stellen/Builder-CVs.
+- Nächste Aktionen: 01F (Security/Regression) erst nach separater Freigabe; 01G weiterhin gesperrt.
+- Resume-Punkt: Migration lokal implementiert und getestet; Live-/Consent-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01E-SESSION-MIGRATION.md`
+
 2026-11-05 · JM-RIS-INTEGRATION-01D
 - Typ: UI-Integration/Remote-Preview/Session-Kompatibilität/Regression
 - Status: COMPLETE — **UI REPOSITORY INTEGRATION LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment

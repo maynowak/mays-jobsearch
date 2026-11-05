@@ -36,7 +36,8 @@ export type ApplicationRepositoryErrorCode =
   | "conflict"
   | "capacity_exceeded"
   | "session_ended"
-  | "not_supported";
+  | "not_supported"
+  | "storage_consent_required";
 
 export class ApplicationRepositoryError extends Error {
   readonly code: ApplicationRepositoryErrorCode;
@@ -200,6 +201,26 @@ export interface ApplicationPersistencePort {
 
 export interface ApplicationMigrationSelectionV1 {
   localIds: string[];
+  /** Must be set by the explicit user confirmation step. */
+  confirmed?: boolean;
+}
+
+export type ApplicationMigrationItemStatus =
+  | "LOCAL_ONLY"
+  | "READY"
+  | "INCOMPATIBLE"
+  | "CONFIRMATION_REQUIRED"
+  | "TRANSFERRING"
+  | "CONFIRMATION_PENDING"
+  | "TRANSFERRED"
+  | "FAILED"
+  | "CONFLICT";
+
+export interface ApplicationMigrationPreviewItemV1 {
+  localId: string;
+  status: ApplicationMigrationItemStatus;
+  reasons: string[];
+  duplicate: boolean;
 }
 
 export interface ApplicationMigrationPreviewV1 {
@@ -207,11 +228,13 @@ export interface ApplicationMigrationPreviewV1 {
   drafts: SessionApplicationV1[];
   duplicateJobIds: string[];
   warnings: string[];
+  items: ApplicationMigrationPreviewItemV1[];
 }
 
 export interface ApplicationMigrationResultV1 {
   succeeded: Array<{ localId: string; applicationId: string; version: number }>;
   failed: Array<{ localId: string; reason: string }>;
+  statuses?: ApplicationMigrationPreviewItemV1[];
 }
 
 /**

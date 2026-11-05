@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "./lib/scrollLock";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal, EmploymentType } from "./types";
@@ -58,6 +58,7 @@ import { useAvailableModels } from "./hooks/useAvailableModels";
 import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
 import { beginNewApplicationSession, createSessionApplicationRepository } from "./lib/applications/sessionRepository";
 import { createRemoteApplicationRepository } from "./lib/applications/remoteSessionRepository";
+import { createApplicationMigration } from "./lib/applications/applicationMigration";
 import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
 import { beginNewManualJobSession } from "./lib/applications/manualJobSession";
 import { isManualJob } from "./lib/applications/manualJob";
@@ -198,6 +199,8 @@ export default function App() {
     context?: LetterPreparationContext;
   } | null>(null);
   const [sessionApplications, setSessionApplications] = useState<SessionApplicationV1[]>([]);
+  const sessionApplicationsRef = useRef(sessionApplications);
+  sessionApplicationsRef.current = sessionApplications;
   const [applicationRepository, setApplicationRepository] = useState(() => createSessionApplicationRepository());
   const [applicationRefreshToken, setApplicationRefreshToken] = useState(0);
   const [applicationNavigation, setApplicationNavigation] = useState<{
@@ -307,6 +310,26 @@ export default function App() {
   // `iss` + `sub` is the stable identity combination. Email is not used as an
   // identity fallback because identical addresses must not merge users.
   const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
+  const migrationMockEnabled =
+    String(import.meta.env.VITE_RIS_APPLICATION_MIGRATION_MOCK ?? "").toLowerCase() === "true";
+  const applicationMigration = useMemo(() => {
+    if (!migrationMockEnabled || !isAuth || !authRef.current?.user?.access_token) return null;
+    const port = createRisApplicationRepository({
+      enabled: true,
+      getAccessToken: async () => authRef.current?.user?.access_token ?? null,
+      getOwnerId: () => authRef.current?.user?.profile?.sub ?? null,
+    });
+    return createApplicationMigration({
+      sessionRepository: {
+        get: async (localId) =>
+          sessionApplicationsRef.current.find((application) => application.localId === localId) ?? null,
+      },
+      remotePort: port,
+      storageConsent: async () => true,
+      consentSource: "simulated",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [migrationMockEnabled, isAuth, authProfileKey]);
   const identityVerified = isVerifiedAuthProfileKey(authProfileKey);
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
   // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
@@ -3318,6 +3341,7 @@ export default function App() {
       key={authProfileKey ?? "guest"}
       repository={applicationRepository}
       storageMode={applicationStorageMode}
+      migration={applicationMigration ?? undefined}
       onChanged={setSessionApplications}
       models={models}
       defaultModel={defaultModel}
