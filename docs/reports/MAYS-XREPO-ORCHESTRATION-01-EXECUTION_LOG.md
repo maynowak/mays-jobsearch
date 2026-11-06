@@ -2,7 +2,7 @@
 
 ## 1. Current status
 
-`GATE 05 COMPLETE — GREEN (local QA); Gates 06–07 pending`
+`GATE 06 COMPLETE — GREEN (PR readiness); Gate 07 E2E pending`
 
 ## 2. Audit date/time
 
@@ -149,3 +149,21 @@ Gate 04 complete. Next: Gate 05 local QA matrix and full verification.
 ## Updated resume point
 
 Gate 05 complete. Next: Gate 06 PR readiness.
+
+
+## Gate 06 — PR Readiness
+
+- Status: `COMPLETE — GREEN (PR readiness)`
+- Jobsearch draft PR: https://github.com/maynowak/mays-jobsearch/pull/2
+- RIS draft PR: https://github.com/maynowak/Mays-Recruiting-Intelligence-System/pull/6
+- Both PRs are based on their repository's `main`; no merge, no auto-merge, no deployment command.
+- Jobsearch `origin/main` advanced from `fec135c` to `7a3d2ea` during the task. Resolved by a normal merge commit `45c1e02` (no rebase, no force-push); the PR is now `MERGEABLE`/`UNSTABLE` only because Vercel preview checks are still reporting.
+- RIS PR is `MERGEABLE`/`CLEAN`; no checks are configured.
+- Diff audit: only the intended xrepo files, audit reports, and no product/API/Terraform changes.
+- Secret audit: only references to secret *names* (`XREPO_APP_ID`, `XREPO_APP_PRIVATE_KEY`), no secret values, tokens, or credentials.
+- Jobsearch PR creation triggered the repository's existing Vercel preview integration; this is platform behavior, not a manual Vercel configuration/deployment change.
+- PR body records `IMPLEMENTED / E2E PENDING` and the remaining live setup.
+
+## Updated resume point
+
+Gate 06 complete. Next: Gate 07 E2E readiness. Live dispatch remains blocked until workflows are on both default branches and app credentials exist.
