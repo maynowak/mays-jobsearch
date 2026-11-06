@@ -1,5 +1,7 @@
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_PATH = "/v1/partner/me/applications";
+const CONSENT_PATH = "/v1/partner/me/consents";
+const CONSENT_PURPOSE = "application-storage";
 
 function httpsUrl(value) {
   try {
@@ -34,15 +36,10 @@ export function isAllowedTestUser(identity, cfg) {
 }
 
 /**
- * RIS BFF configuration is server-only. Nothing here is exposed to VITE_*.
- * The feature is disabled unless explicitly enabled and fully configured.
+ * Shared server-only connection data for the RIS partner surface. Both the
+ * application-storage BFF and the consent BFF reuse exactly these values.
  */
-export function risConfig(env = process.env) {
-  const enabled = String(env.RIS_APPLICATION_STORAGE_ENABLED ?? "").toLowerCase() === "true";
-  if (!enabled) {
-    return { enabled: false, error: "ris_disabled" };
-  }
-
+function sharedRisConfig(env) {
   const base = httpsUrl(env.RIS_API_BASE_URL);
   const issuer = httpsUrl(env.RIS_COGNITO_ISSUER);
   const credential = String(
@@ -50,14 +47,10 @@ export function risConfig(env = process.env) {
   ).trim();
   const clientId = String(env.RIS_COGNITO_CLIENT_ID ?? "").trim();
 
-  if (!base || !issuer || !credential || !clientId) {
-    return { enabled: true, error: "missing_config" };
-  }
+  if (!base || !issuer || !credential || !clientId) return null;
 
   return {
-    enabled: true,
     baseUrl: base.toString().replace(/\/+$/, ""),
-    path: DEFAULT_PATH,
     issuer: issuer.toString().replace(/\/+$/, ""),
     clientId,
     credential,
@@ -67,15 +60,49 @@ export function risConfig(env = process.env) {
 }
 
 /**
- * Consent service configuration. The notice version is owned by the server
- * (env), never by the client: a browser cannot invent a version that RIS
- * would accept.
+ * Application-storage BFF configuration. Disabled unless
+ * RIS_APPLICATION_STORAGE_ENABLED is explicitly true.
+ */
+export function risConfig(env = process.env) {
+  const enabled = String(env.RIS_APPLICATION_STORAGE_ENABLED ?? "").toLowerCase() === "true";
+  if (!enabled) {
+    return { enabled: false, error: "ris_disabled" };
+  }
+
+  const shared = sharedRisConfig(env);
+  if (!shared) {
+    return { enabled: true, error: "missing_config" };
+  }
+
+  return {
+    enabled: true,
+    ...shared,
+    path: DEFAULT_PATH,
+  };
+}
+
+/**
+ * Consent BFF configuration. It has its own activation switch and does not
+ * depend on RIS_APPLICATION_STORAGE_ENABLED. The notice version is owned by
+ * the server (env), never by the client.
  */
 export function risConsentConfig(env = process.env) {
+  const enabled = String(env.RIS_CONSENT_SERVICE_ENABLED ?? "").toLowerCase() === "true";
   const noticeVersion = String(env.RIS_CONSENT_NOTICE_VERSION ?? "").trim();
-  return {
-    path: "/v1/partner/me/consents",
-    purpose: "application-storage",
+  const consent = {
+    path: CONSENT_PATH,
+    purpose: CONSENT_PURPOSE,
     noticeVersion: noticeVersion || null,
   };
+
+  if (!enabled) {
+    return { enabled: false, error: "consent_disabled", ...consent };
+  }
+
+  const shared = sharedRisConfig(env);
+  if (!shared) {
+    return { enabled: true, error: "missing_config", ...consent };
+  }
+
+  return { enabled: true, ...shared, ...consent };
 }

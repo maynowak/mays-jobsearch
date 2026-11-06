@@ -92,6 +92,7 @@ function risApplication(overrides = {}) {
 beforeEach(() => {
   __resetJwksCache();
   process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
+  process.env.RIS_CONSENT_SERVICE_ENABLED = "false";
   process.env.RIS_API_BASE_URL = "https://ris.example.invalid";
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
   process.env.RIS_COGNITO_ISSUER = ISSUER;
@@ -113,6 +114,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   delete process.env.RIS_APPLICATION_STORAGE_ENABLED;
+  delete process.env.RIS_CONSENT_SERVICE_ENABLED;
   delete process.env.RIS_API_BASE_URL;
   delete process.env.RIS_PARTNER_CREDENTIAL;
   delete process.env.RIS_API_KEY;
@@ -132,6 +134,7 @@ describe("/api/ris/applications", () => {
 
   it("lehnt bei deaktiviertem Feature ab", async () => {
     process.env.RIS_APPLICATION_STORAGE_ENABLED = "false";
+    process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
     const res = makeRes();
     await handler({ method: "GET", headers: { authorization: `Bearer ${token()}` }, query: {} }, res);
     expect(res.statusCode).toBe(503);

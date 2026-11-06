@@ -116,6 +116,7 @@ function risCalls() {
 beforeEach(() => {
   __resetJwksCache();
   process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
+  process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
   process.env.RIS_API_BASE_URL = "https://ris.example.invalid";
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
   process.env.RIS_COGNITO_ISSUER = ISSUER;
@@ -135,6 +136,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   for (const key of [
     "RIS_APPLICATION_STORAGE_ENABLED",
+    "RIS_CONSENT_SERVICE_ENABLED",
     "RIS_API_BASE_URL",
     "RIS_PARTNER_CREDENTIAL",
     "RIS_COGNITO_ISSUER",

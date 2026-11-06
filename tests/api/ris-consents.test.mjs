@@ -49,7 +49,8 @@ function risCalls() {
 
 beforeEach(() => {
   __resetJwksCache();
-  process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
+  process.env.RIS_APPLICATION_STORAGE_ENABLED = "false";
+  process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
   process.env.RIS_API_BASE_URL = "https://ris.example.invalid";
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
   process.env.RIS_COGNITO_ISSUER = ISSUER;
@@ -70,9 +71,9 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   for (const key of [
-    "RIS_APPLICATION_STORAGE_ENABLED", "RIS_API_BASE_URL", "RIS_PARTNER_CREDENTIAL",
-    "RIS_COGNITO_ISSUER", "RIS_COGNITO_CLIENT_ID", "RIS_TEST_USER_ALLOWLIST",
-    "RIS_CONSENT_NOTICE_VERSION",
+    "RIS_APPLICATION_STORAGE_ENABLED", "RIS_CONSENT_SERVICE_ENABLED", "RIS_API_BASE_URL",
+    "RIS_PARTNER_CREDENTIAL", "RIS_COGNITO_ISSUER", "RIS_COGNITO_CLIENT_ID",
+    "RIS_TEST_USER_ALLOWLIST", "RIS_CONSENT_NOTICE_VERSION",
   ]) delete process.env[key];
 });
 
@@ -81,6 +82,25 @@ describe("/api/ris/consents", () => {
     const res = makeRes();
     await handler({ method: "GET", headers: {}, query: {} }, res);
     expect(res.statusCode).toBe(401);
+  });
+
+  it("bleibt deaktiviert, wenn nur Application-Storage aktiviert ist", async () => {
+    process.env.RIS_CONSENT_SERVICE_ENABLED = "false";
+    process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
+    const res = makeRes();
+    await handler({ method: "GET", headers: { authorization: `Bearer ${token()}` }, query: {} }, res);
+    expect(res.statusCode).toBe(503);
+    expect(res.body.code).toBe("consent_disabled");
+    expect(risCalls()).toHaveLength(0);
+  });
+
+  it("meldet missing_config, wenn Consent aktiviert aber Verbindungsdaten fehlen", async () => {
+    delete process.env.RIS_API_BASE_URL;
+    const res = makeRes();
+    await handler({ method: "GET", headers: { authorization: `Bearer ${token()}` }, query: {} }, res);
+    expect(res.statusCode).toBe(503);
+    expect(res.body.code).toBe("missing_config");
+    expect(risCalls()).toHaveLength(0);
   });
 
   it("lehnt fremden Issuer ab", async () => {

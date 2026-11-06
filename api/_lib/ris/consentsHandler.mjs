@@ -4,7 +4,7 @@
 // browser cannot invent a version. Identity comes from the verified access
 // token, never from the body.
 
-import { isAllowedTestUser, risConfig, risConsentConfig } from "./config.mjs";
+import { isAllowedTestUser, risConsentConfig } from "./config.mjs";
 import { RisAuthError, verifyAccessToken } from "./auth.mjs";
 import { RisClientError, risRequest } from "./client.mjs";
 
@@ -59,9 +59,9 @@ function upstreamFailure(res, result) {
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
 
-  const cfg = risConfig();
-  if (!cfg.enabled) return fail(res, 503, "ris_disabled", "RIS application storage is disabled");
-  if (cfg.error) return fail(res, 503, "missing_config", "RIS application storage is not configured");
+  const cfg = risConsentConfig();
+  if (!cfg.enabled) return fail(res, 503, "consent_disabled", "RIS consent service is disabled");
+  if (cfg.error) return fail(res, 503, "missing_config", "RIS consent service is not configured");
 
   const token = bearer(req);
   if (!token) return fail(res, 401, "unauthenticated", "Authentication is required");
@@ -79,54 +79,53 @@ export default async function handler(req, res) {
     return fail(res, 403, "test_user_not_allowed", "This test user is not enabled for RIS consent storage");
   }
 
-  const consent = risConsentConfig();
   const query = queryOf(req);
   const action = typeof query.action === "string" ? query.action : "";
 
   try {
     if (req.method === "GET" && action === "history") {
-      const purpose = String(query.purpose ?? consent.purpose);
+      const purpose = String(query.purpose ?? cfg.purpose);
       const limit = Math.min(Math.max(Number.parseInt(query.limit ?? "50", 10) || 50, 1), 100);
       const result = await risRequest(
-        { ...cfg, path: consent.path },
+        { ...cfg, path: cfg.path },
         token, "GET",
-        `${consent.path}/history?purpose=${encodeURIComponent(purpose)}&limit=${limit}`,
+        `${cfg.path}/history?purpose=${encodeURIComponent(purpose)}&limit=${limit}`,
       );
       if (result.status >= 400) return upstreamFailure(res, result);
       return send(res, 200, result.data);
     }
     if (req.method === "GET") {
-      const purpose = String(query.purpose ?? consent.purpose);
+      const purpose = String(query.purpose ?? cfg.purpose);
       const result = await risRequest(
-        { ...cfg, path: consent.path },
+        { ...cfg, path: cfg.path },
         token, "GET",
-        `${consent.path}?purpose=${encodeURIComponent(purpose)}`,
+        `${cfg.path}?purpose=${encodeURIComponent(purpose)}`,
       );
       if (result.status >= 400) return upstreamFailure(res, result);
       const item = (result.data?.items ?? []).find((x) => x.purpose === purpose) ?? null;
-      return send(res, 200, { consent: item, noticeVersion: consent.noticeVersion });
+      return send(res, 200, { consent: item, noticeVersion: cfg.noticeVersion });
     }
     if (req.method === "POST") {
       const body = await bodyOf(req);
       if (!body || typeof body !== "object") return fail(res, 422, "invalid_body", "Request body is invalid");
-      const purpose = String(body.purpose ?? consent.purpose);
-      if (purpose !== consent.purpose) return fail(res, 422, "unknown_purpose", "Purpose is not supported");
+      const purpose = String(body.purpose ?? cfg.purpose);
+      if (purpose !== cfg.purpose) return fail(res, 422, "unknown_purpose", "Purpose is not supported");
       if (action === "withdraw") {
         const result = await risRequest(
-          { ...cfg, path: consent.path }, token, "POST",
-          `${consent.path}/withdraw`, { purpose },
+          { ...cfg, path: cfg.path }, token, "POST",
+          `${cfg.path}/withdraw`, { purpose },
         );
         if (result.status >= 400) return upstreamFailure(res, result);
         return send(res, 200, result.data);
       }
-      const noticeVersion = consent.noticeVersion;
+      const noticeVersion = cfg.noticeVersion;
       if (!noticeVersion) {
         return fail(res, 503, "notice_version_not_mapped",
           "The consent notice version has not been approved for this app yet");
       }
       const result = await risRequest(
-        { ...cfg, path: consent.path }, token, "POST",
-        consent.path, { purpose, noticeVersion },
+        { ...cfg, path: cfg.path }, token, "POST",
+        cfg.path, { purpose, noticeVersion },
       );
       if (result.status >= 400) return upstreamFailure(res, result);
       return send(res, 200, result.data);
