@@ -12,7 +12,7 @@
 | Element | Wert |
 |---|---|
 | Branch | `feature/jm-ris-testuser-allowlist-reconciliation-01` |
-| HEAD | `2382ab42f6892fe95dc055acb265ae40d495baaa` |
+| HEAD | `2382ab4` (Allowlist) · `48b8049` (dieser Report) |
 | Lokaler `main` | `bef81b9` |
 | Reconciliation-Branch vs. main | **1 Commit ahead / 0 behind** |
 | Working Tree | clean bis auf 4 bewusst untracked Dokumente |
@@ -112,6 +112,7 @@ Vertragsbeweis verwendet.
 | Clientseitige Allowlist | **nicht vorhanden** |
 | Aktueller Testbenutzer | **BLOCKED** — keine gültige, aktuell bestätigte Testidentität und kein Allowlist-Wert in Vercel |
 | Synthetic Identity aus RIS-LIVE-E2E-04 | **nicht vorausgesetzt**; laut Bericht gelöscht |
+| RIS-LIVE-E2E-04-Report im Jobsearch-Repo | **nicht vorhanden** — nur in diesem Readiness-Report referenziert; **nicht als verifizierte Evidence verwendet** |
 | Allowlist-Wert in Vercel | **fehlt** |
 
 **TEST USER: BLOCKED. SERVER-SIDE ALLOWLIST: VERIFIED (Code), NOT CONFIGURED (Vercel).**
@@ -224,7 +225,7 @@ RIS CHANGES:
   NONE
 
 GIT COMMIT:
-  see git log -1 (report commit)
+  48b8049 (report) + folgender Docs-Commit
 
 PUSH:
   NOT AUTHORIZED

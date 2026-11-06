@@ -2,10 +2,10 @@
 - Typ: Vercel-/BFF-/Contract-Readiness (read-only)
 - Status: COMPLETE — **VERCEL PREVIEW BLOCKED · NO MUTATIONS · LIVE E2E NOT EXECUTED**; kein Push/Deploy
 - Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
-- Git-Baseline: `feature/jm-ris-testuser-allowlist-reconciliation-01` @ `2382ab4`; lokaler `main` `bef81b9`; 1 ahead / 0 behind; 4 untracked Dokumente unangetastet.
+- Git-Baseline: `feature/jm-ris-testuser-allowlist-reconciliation-01` @ `2382ab4` (Allowlist) / `48b8049` (Report); lokaler `main` `bef81b9`; 1 ahead / 0 behind; 4 untracked Dokumente unangetastet.
 - Vercel: Linked Project `maymilly/mays-job-matcher`; `RIS_API_KEY` vorhanden als Secret in Production + Development, **nicht Preview**; `RIS_PARTNER_CREDENTIAL`, `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK` fehlen. Separates Projekt `maymilly/mays-jobsearch` ohne Env.
 - BFF: serverseitige JWT-/Issuer-/Client-/Allowlist-Prüfung, HTTPS-Zwang, `X-Api-Credential`, Feature-Flags default OFF, keine Client-Allowlist, kein Catch-all. `RIS_API_KEY`-Alias im Code unterstützt.
-- Contract: ApplicationV1-Endpunkte und Fehlermapping lokal/mock verifiziert; offizielle RIS-Partnerdokumentation, Preview-Base-URL, registrierte Issuer/Client-/Credential-/Tenant-Bindung und Testidentität nicht bestätigt. Historische RIS-interne Beobachtungen nicht als Vertragsbeweis verwendet.
+- Contract: ApplicationV1-Endpunkte und Fehlermapping lokal/mock verifiziert; offizielle RIS-Partnerdokumentation, Preview-Base-URL, registrierte Issuer/Client-/Credential-/Tenant-Bindung und Testidentität nicht bestätigt. Historische RIS-interne Beobachtungen nicht als Vertragsbeweis verwendet. **RIS-LIVE-E2E-04 ist im Jobsearch-Repo nicht als eigener Report vorhanden; nur referenziert, nicht als Evidence verwendet.**
 - Tests: BFF **29/29**, Boundary **6/6** (35/35); `node --check` PASS; `npm run build` PASS; Vollsuite seriell **1502 passed / 5 skipped**; paralleler Default-Lauf mit 2 unabhängigen Timeout-Flakes, isoliert PASS.
 - Klassifikation: **PARTIAL / PREVIEW BLOCKED**; BFF-Security und Boundary lokal PASS; Live E2E nicht freigegeben.
 - Terraform-Checks: keine ausgeführt.
