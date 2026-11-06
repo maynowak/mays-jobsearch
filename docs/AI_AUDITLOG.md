@@ -1,3 +1,13 @@
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — WORKSPACE PATH CORRECTION
+- Typ: Workspace-/Path-Correction
+- Status: Canonical working directory corrected; no feature change
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Alt: `/home/dci-student/projects/Mays-Jobsearch` (außerhalb des Orchestrierungs-Workspaces; auf `main` zurückgestellt).
+- Neu: `/home/dci-student/projects/mays-xrepo-orchestration/repos/mays-jobsearch`.
+- Regel: Alle Repo-Arbeiten müssen unter `/home/dci-student/projects/mays-xrepo-orchestration` bleiben.
+- Bestätigung: kein Branch gelöscht, kein Force-Push, kein Produkt-/Infra-Change; Feature-Branch weiterhin auf `origin`.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
 2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — POST-GATE HARDENING
 - Typ: Security-Hardening/Receiver-Idempotenz
 - Status: **GREEN (local) / E2E PENDING / BLOCKED FOR LIVE**
