@@ -65,3 +65,17 @@ export function risConfig(env = process.env) {
     timeoutMs: Number(env.RIS_API_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS,
   };
 }
+
+/**
+ * Consent service configuration. The notice version is owned by the server
+ * (env), never by the client: a browser cannot invent a version that RIS
+ * would accept.
+ */
+export function risConsentConfig(env = process.env) {
+  const noticeVersion = String(env.RIS_CONSENT_NOTICE_VERSION ?? "").trim();
+  return {
+    path: "/v1/partner/me/consents",
+    purpose: "application-storage",
+    noticeVersion: noticeVersion || null,
+  };
+}
