@@ -16,6 +16,12 @@ export interface RisConsent {
   version: number;
 }
 
+export interface RisConsentState {
+  consent: RisConsent | null;
+  noticeVersion: string | null;
+  grantAllowed: boolean;
+}
+
 export class RisConsentApiError extends Error {
   readonly code?: string;
   readonly status?: number;
@@ -49,9 +55,17 @@ async function request<T>(token: string, init: RequestInit, search = ""): Promis
   return payload as T;
 }
 
-export async function fetchRisConsent(token: string): Promise<RisConsent | null> {
-  const data = await request<{ consent: RisConsent | null }>(token, { method: "GET" });
-  return data.consent;
+export async function fetchRisConsent(token: string): Promise<RisConsentState> {
+  const data = await request<{
+    consent: RisConsent | null;
+    noticeVersion?: string | null;
+    grantAllowed?: boolean;
+  }>(token, { method: "GET" });
+  return {
+    consent: data.consent ?? null,
+    noticeVersion: data.noticeVersion ?? null,
+    grantAllowed: data.grantAllowed === true,
+  };
 }
 
 export async function grantRisConsent(token: string): Promise<RisConsent> {

@@ -114,6 +114,16 @@ describe("/api/ris/consents", () => {
     await handler({ method: "GET", headers: { authorization: `Bearer ${token()}` }, query: {} }, res);
     expect(res.statusCode).toBe(200);
     expect(res.body.consent.status).toBe("NOT_GRANTED");
+    expect(res.body.grantAllowed).toBe(false);
+  });
+
+  it("bestätigt grantAllowed nur mit serverseitiger Notice-Version", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    const res = makeRes();
+    await handler({ method: "GET", headers: { authorization: `Bearer ${token()}` }, query: {} }, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.noticeVersion).toBe("1.0");
+    expect(res.body.grantAllowed).toBe(true);
   });
 
   it("blockiert Grant ohne freigegebene Erklärungsversion", async () => {

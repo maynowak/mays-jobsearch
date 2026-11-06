@@ -18,6 +18,7 @@ export default function StorageConsentLive() {
   const auth = useAuth();
   const token = auth.user?.access_token ?? "";
   const [consent, setConsent] = useState<RisConsent | null>(null);
+  const [grantAllowed, setGrantAllowed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Array<Record<string, unknown>> | null>(null);
@@ -26,7 +27,11 @@ export default function StorageConsentLive() {
     let active = true;
     if (!token) return;
     fetchRisConsent(token)
-      .then((value) => { if (active) setConsent(value); })
+      .then((state) => {
+        if (!active) return;
+        setConsent(state.consent);
+        setGrantAllowed(state.grantAllowed);
+      })
       .catch((err) => { if (active) setError(messageOf(err)); });
     return () => { active = false; };
   }, [token]);
@@ -44,6 +49,7 @@ export default function StorageConsentLive() {
   };
 
   const status = consent?.status ?? "NOT_GRANTED";
+  const canGrant = grantAllowed && status !== "GRANTED";
 
   return (
     <section className="storage-consent__block" aria-labelledby="storage-consent-live-title">
@@ -53,11 +59,16 @@ export default function StorageConsentLive() {
         {consent?.noticeVersion ? ` (Textversion ${consent.noticeVersion})` : ""}
       </p>
       {error && <p role="alert">{error}</p>}
+      {!grantAllowed && status !== "GRANTED" && (
+        <p className="field-hint" role="note">
+          Die Einwilligungs-Textversion ist noch nicht freigegeben. Die Zustimmung ist gesperrt.
+        </p>
+      )}
       <div className="storage-consent__actions">
         <button
           type="button"
           className="btn-ghost"
-          disabled={busy || status === "GRANTED"}
+          disabled={busy || !canGrant}
           onClick={() => run(() => grantRisConsent(token))}
         >
           Speicherung zustimmen

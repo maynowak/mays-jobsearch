@@ -103,7 +103,11 @@ export default async function handler(req, res) {
       );
       if (result.status >= 400) return upstreamFailure(res, result);
       const item = (result.data?.items ?? []).find((x) => x.purpose === purpose) ?? null;
-      return send(res, 200, { consent: item, noticeVersion: cfg.noticeVersion });
+      return send(res, 200, {
+        consent: item,
+        noticeVersion: cfg.noticeVersion,
+        grantAllowed: Boolean(cfg.noticeVersion),
+      });
     }
     if (req.method === "POST") {
       const body = await bodyOf(req);
