@@ -1,3 +1,20 @@
+2026-11-06 · MAYS-XREPO-ROLLOUT-01B — APP AUTH VERIFICATION
+- Typ: GitHub-App-Authentifizierung/Token-/Permissions-Prüfung
+- Status: **NOT VERIFIED** für Token-Ausstellung/Permissions; Rollout **BLOCKED**
+- Audit-Zeitpunkt: 2026-11-06T17:00:10+01:00 (Europe/Berlin)
+- Git-Baseline: Jobsearch `138297e` (Basis `7a3d2ea`); RIS `b23635b` (Basis `c28c668`); beide clean.
+- App: `mays-xrepo-orchestration-app` existiert; öffentliche App-Seite HTTP 200 und weist sie als private GitHub App aus. REST-App-Endpoint mit User-Token 404 (privat).
+- Secrets: `XREPO_APP_ID`/`XREPO_APP_PRIVATE_KEY` in beiden Repos vorhanden (nur Existenz/Metadaten; keine Werte gelesen/ausgegeben).
+- Token-Ausstellung für beide Repos: **NOT VERIFIED** — kein App-JWT/Private-Key lokal; `/app` und `/repos/.../installation` 401 mit User-Token.
+- Effektive Permissions / Repository-Zuordnung: **NOT VERIFIED** — benötigt `GET /installation` bzw. `/installation/repositories` mit Installation-Token.
+- Workflows: statisch korrekt (Sender Contents write/Issues read; Receiver Contents read/Issues read; Ziel-Issue via `GITHUB_TOKEN`); keine PAT-Referenzen.
+- Minimaler Actions-Prüfweg dokumentiert; nicht hinzugefügt/ausgeführt, weil `workflow_dispatch` eine Workflow-Datei auf dem Default-Branch voraussetzt.
+- Tests: 69/69 PASS in beiden Repos.
+- Vercel: PR #2 Draft `MERGEABLE`/`UNSTABLE`, Output-Fehler `dpl_CdTNAN1LuNcFGUfMPVtPuMZTq6M3`/`dpl_4mPQkgVyNvUQuJqAWn7e9WFhdsWR`; PR #6 Draft `MERGEABLE`/`CLEAN`.
+- Bestätigung: keine Secrets/Tokens ausgegeben, keine Credentials erzeugt/erweitert, kein Merge, Deployment, Live-Dispatch, keine Infrastruktur-/Test-Issue-Änderung.
+- Bericht: `docs/reports/MAYS-XREPO-ROLLOUT-01B-EXECUTION_LOG.md`.
+- Resume-Punkt: App-Verifikationsworkflow nach Default-Branch-Freigabe ausführen; danach ROLLOUT-01A wiederholen.
+
 2026-11-06 · MAYS-XREPO-ROLLOUT-01A — READINESS CHECK
 - Typ: Rollout-Readiness/App-/Secret-/PR-/Vercel-Prüfung
 - Status: **BLOCKED**
