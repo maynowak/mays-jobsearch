@@ -1,5 +1,14 @@
 # Changelog
 
+Unreleased — 2026-11-06
+
+- Fixed the Vercel production deployment failure
+  `exceeded_serverless_functions_per_deployment` by removing the deprecated
+  `GET /api/model` endpoint, keeping the project within the Hobby limit of 12
+  serverless functions. The client now reads the resolved default from
+  `GET /api/models` (`recommendedModel`/`defaultModel`). No other API or
+  frontend behavior changed.
+
 Unreleased — 2026-10-29
 
 - Fixed CV anonymization so the selected anonymized text is always used for the

@@ -1,3 +1,21 @@
+2026-11-06 · JM-VERCEL-FUNCTION-LIMIT-01
+- Typ: Deployment-Fix/Function-Consolidation
+- Status: COMPLETE — **LOCAL FIX VERIFIED · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `7a3d2ea`; `origin/main` `7a3d2ea`; **0 ahead / 0 behind**; 4 untracked Dokumente unangetastet.
+- Root Cause: Vercel-Deployments (Production/Preview) endeten mit `exceeded_serverless_functions_per_deployment` — 13 Functions unter `api/**/*.mjs` (ohne `_lib`), Hobby-Limit 12.
+- Fix: deprecated `api/model.mjs` entfernt; `fetchModel` liest nun `/api/models` und nutzt `recommendedModel ?? defaultModel`; Function-Zahl 12; keine `vercel.json`-/Env-Änderung.
+- API/Data-Flow: `/api/model` entfällt; `/api/models` bleibt unverändert; kein neuer AI-Call, kein neuer externer Datenfluss, keine neuen personenbezogenen Daten, keine Secrets.
+- Docs: `docs/ARCHITECTURE.md`, `docs/API_CONTRACT.md`, `docs/API_INVENTORY.md`, `docs/AGENTS.md`, `docs/AI_CONTEXT.md`, `docs/CHANGELOG.md` aktualisiert.
+- Tests: `npm run build` PASS; Gesamtsuite **1502 passed / 5 skipped**; `node --check` alle `api/**/*.mjs` PASS; `git diff --check` PASS.
+- Git-Status: lokaler Commit; 4 untracked Dokumente unangetastet; kein Push, kein Deployment.
+- Geänderte Dateien: `api/model.mjs` (gelöscht), `src/api.ts`, `src/hooks/useAvailableModels.ts`, `docs/ARCHITECTURE.md`, `docs/API_CONTRACT.md`, `docs/API_INVENTORY.md`, `docs/AGENTS.md`, `docs/AI_CONTEXT.md`, `docs/CHANGELOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/Terraform-Änderung, keine Vercel-Env-Mutation, kein Deployment, kein Push.
+- Offene Punkte: Push und Production-Deploy separat freigeben; danach Vercel-Deployment-Status prüfen.
+- Nächste Aktionen: Betreiberfreigabe für Push/Deploy.
+- Resume-Punkt: Function-Zahl 12, lokal verifiziert.
+- Log: diese Datei.
+
 2026-11-06 · JM-RIS-VERCEL-TEST-ENV-05-MAIN
 - Typ: Main-Integration/Readiness/Audit
 - Status: COMPLETE — **FAST-FORWARD NACH MAIN · PREVIEW ENV BLOCKED**; kein Push, kein Deployment

@@ -77,7 +77,7 @@ Vercel Functions (api/*.mjs)
 - `src/App.tsx` — root component and central state: route, phase, status, matches, profile, letter modal, selected model.
 - `src/api.ts` — typed fetch wrappers for all endpoints.
 - `src/types.ts` — shared TypeScript contracts (`Job`, `Profile`, `Match`, `ModelsResponse`, …).
-- `src/hooks/useAvailableModels.ts` — loads the free-model catalogue (`/api/models`, with a module-level cache and a `/api/model` fallback).
+- `src/hooks/useAvailableModels.ts` — loads the free-model catalogue (`/api/models`, with a module-level cache; a failed catalogue load is retried once).
 - `src/styles.css` — design tokens and global styles.
 
 Flow:
@@ -115,8 +115,7 @@ Provider resolution and fallback:
 Normalized error codes (`api/_lib/providers/errors.mjs`): `model_unavailable`, `quota_exhausted`, `free_quota_exceeded`, `rate_limited`, `timeout`, `network_error`, `authentication_failed`, `model_invalid`, `bad_request`, `bad_ai_response`, `key_invalid`, `insufficient_credits`, `limit_reached`, `missing_key`, `models_unavailable`, `model_not_free`. The existing frontend codes are preserved unchanged.
 
 - `api/_lib/model.mjs` resolves the configured defaults (`OPENROUTER_MODEL` / `EDENAI_MODEL` env, falling back to default constants) — the recommended model is always resolved dynamically against the current free catalogue and may change.
-- `api/models.mjs` exposes `GET /api/models` → `{ models, providers, defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`.
-- `api/model.mjs` exposes `GET /api/model` → `{ model }` (resolved default).
+- `api/models.mjs` exposes `GET /api/models` → `{ models, providers, defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`. The resolved default is available as `recommendedModel`; the legacy `/api/model` endpoint was removed to stay within the Vercel Hobby limit of 12 serverless functions.
 
 Frontend behavior:
 
@@ -466,7 +465,6 @@ Low-level Apify API client: `startApifyRun`, `waitForRun`, `readDataset`.
 | `/api/jobs` | GET | Combined, filtered jobs from all enabled job sources |
 | `/api/profile` | POST | Extract structured search profile from CV text (cached by hash) |
 | `/api/models` | GET | Free model catalogue + default/fallback/recommended |
-| `/api/model` | GET | Resolved default model |
 | `/api/match` | POST | AI scores max 10 preselected candidates; meta distinguishes found/evaluated/displayed |
 | `/api/cover-letter` | POST | AI cover letter for one job |
 | `/api/alerts` | POST / DELETE / GET | Manage digest subscriptions |

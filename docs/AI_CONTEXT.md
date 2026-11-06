@@ -12,7 +12,7 @@ A job search assistant with AI-powered matching, cover-letter generation and dai
 - Multi-city search: completed
 - AI cover-letter generator: completed
 - Daily job alerts: implemented (needs Upstash + Resend keys for real delivery)
-- Model info display: completed (`/api/models` + `/api/model`, Provider-Router OpenRouter↔EdenAI mit `withModelFallback`)
+- Model info display: completed (`/api/models`, Provider-Router OpenRouter↔EdenAI mit `withModelFallback`)
 - Job-Source-Registry: `arbeitnow, greenhouse, adzuna, jobspipe, theirstack`, Public-ATS, Apify-Actor (Arbeitsagentur); Suche mit `radiusKm/workMode/employmentType` + Geocoding (`meta.geo`)
 - CV-Workflows: Upload + `/api/profile`, ATS-Analyse, CV-Improvement (`/apply`, `/reanalyze`, `/match-impact`), Job-Details-Enrichment
 - Cost-Guard + Usage: `GET /api/usage` (token-geschützt), Monthly-/User-Limits (AI-Requests, Apify-Runs, Source-Credits)

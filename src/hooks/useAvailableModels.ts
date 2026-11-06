@@ -64,6 +64,7 @@ export function useAvailableModels() {
 
         if (!list) {
           try {
+            // Retry the catalogue once and fall back to its resolved default.
             configured = await fetchModel();
           } catch {
             configured = null;

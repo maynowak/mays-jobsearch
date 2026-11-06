@@ -268,8 +268,15 @@ export async function fetchModels(): Promise<ModelsResponse> {
 }
 
 export async function fetchModel(): Promise<string> {
-  const data = await apiFetch<{ model: string }>("/api/model");
-  return data.model;
+  // `/api/model` was removed to stay within the Vercel Hobby limit of 12
+  // serverless functions. `/api/models` already exposes the same resolved
+  // default as `recommendedModel`.
+  const data = await apiFetch<ModelsResponse>("/api/models");
+  const model = data.recommendedModel ?? data.defaultModel;
+  if (!model) {
+    throw new ApiError("Couldn't resolve a default model.", 502, "models_unavailable");
+  }
+  return model;
 }
 
 export async function createProfile(
