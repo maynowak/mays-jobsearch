@@ -1,3 +1,20 @@
+2026-11-06 · JM-RIS-CONSENT-CONFIG-SEPARATION-04
+- Typ: Consent-/Application-Aktivierungstrennung
+- Status: COMPLETE — **LOCAL VERIFIED · CONSENT INDEPENDENT · APPLICATIONS STILL OFF · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `40356e6`; `origin/main` `f59aa4b`; **1 ahead / 0 behind**; nur Haupt-Worktree; 4 untracked Dokumente unangetastet.
+- Konfiguration: gemeinsamer `sharedRisConfig()` für API-Basis-URL, Partner-Credential, Cognito-Issuer/Client, Allowlist und Timeout; neuer Schalter `RIS_CONSENT_SERVICE_ENABLED` (Default OFF); Applications bleibt an `RIS_APPLICATION_STORAGE_ENABLED` gebunden.
+- Consent-Handler: nutzt `risConsentConfig()`; deaktiviert → `503 consent_disabled`; fehlende gemeinsame Konfiguration → `503 missing_config`; Authentifizierung, Allowlist, Zweckvalidierung und `RIS_CONSENT_NOTICE_VERSION` unverändert; ohne Notice-Version kein Grant.
+- Verhaltensmatrix: OFF/OFF beide deaktiviert; ON/OFF Consent erlaubt, Applications gesperrt; OFF/ON Consent gesperrt, Applications unverändert; ON/ON beide erreichbar.
+- Tests: Applications **29/29**, Consents **9/9**, Routing **11/11**, Config-Separation **6/6**; Gesamtsuite **1528 passed / 5 skipped**; Build PASS; API-Syntax PASS; `git diff --check` PASS.
+- Vercel-Build: **12 Functions** unverändert, inkl. `api/ris/router.func`; keine zusätzliche Function; `vercel.json`/Router unverändert.
+- Geänderte Dateien: `api/_lib/ris/config.mjs`, `api/_lib/ris/consentsHandler.mjs`, `.env.example`, `docs/DEPLOYMENT.md`, `tests/api/ris-applications.test.mjs`, `tests/api/ris-consents.test.mjs`, `tests/api/ris-routing.test.mjs`, `tests/api/ris-config-separation.test.mjs`, `docs/reports/JM-RIS-CONSENT-CONFIG-SEPARATION-04.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/CloudFront-/DNS-/Terraform-Änderung, keine Vercel-Env-Mutation, kein Deployment, kein Push, keine produktive Speicherung, keine echten RIS-Requests.
+- Offene Punkte: rechtliche/betriebliche Freigabe der Notice-Version; Preview-Secret-Isolation; Testbenutzer/Allowlist; separater Preview-/E2E-Auftrag.
+- Nächste Aktionen: Code-/Test-Commit und Doku-Commit; danach separater Preview-Test mit Consent ON/Application OFF.
+- Resume-Punkt: Consent unabhängig aktivierbar; Applications weiterhin gesperrt.
+- Log: `docs/reports/JM-RIS-CONSENT-CONFIG-SEPARATION-04.md`
+
 2026-11-06 · JM-RIS-VERCEL-FUNCTION-CONSOLIDATION-03
 - Typ: Vercel-Function-Konsolidierung/API-Kompatibilität
 - Status: COMPLETE — **LOCAL VERIFIED · 13→12 FUNCTIONS · NO PUSH · NO DEPLOYMENT**
