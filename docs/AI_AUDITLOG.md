@@ -1,3 +1,17 @@
+2026-11-06 · MAYS-XREPO-APP-SETUP-01 — APP/SECRET READINESS
+- Typ: GitHub-App-Readiness/Secret-Existenz/Rollout-Readiness
+- Status: **BLOCKED FOR LIVE**; keine App-/Secret-Einrichtung bestätigt
+- Audit-Zeitpunkt: 2026-11-06T12:55:51+01:00 (Europe/Berlin)
+- Git-Baseline: Jobsearch `67913ec` (Basis `7a3d2ea`, 17/0); RIS `438fa4f` (Basis `c28c668`, 15/0); beide clean.
+- App: Sollkonfiguration `Mays Cross-Repository Orchestrator`, nur `maynowak`, nur Jobsearch/RIS, Contents Read/Write, Issues Read-only, keine Webhooks/Extras. Keine Installation mit User-Token verifizierbar (`/app` 401, `/users/maynowak/installations` 404); Kandidaten-App-URLs 404.
+- Secrets: `actions/secrets.total_count=0` in beiden Repos; `XREPO_APP_ID`/`XREPO_APP_PRIVATE_KEY` fehlen; keine Werte gelesen/ausgegeben.
+- Workflows: Sender nutzt App-Token `Contents: write`/`Issues: read`; Receiver `Contents: read`/`Issues: read`; Ziel-Issue über `GITHUB_TOKEN`; keine PAT-Referenzen.
+- Tests: 69/69 PASS in beiden Repos; JSON/YAML/diff PASS.
+- Rollout: Jobsearch PR #2 Draft, `MERGEABLE`/`UNSTABLE` (Vercel-Preview-Output-Fehler); RIS PR #6 Draft, `MERGEABLE`/`CLEAN`; keine Review-Freigabe, kein Merge.
+- Bestätigung: kein Merge, kein Deployment, kein Live-Dispatch, keine AWS-/Terraform-/Cognito-/CloudFront-/Vercel-Produktions-/Mays-Orders-Änderung, kein PAT.
+- Bericht: `docs/reports/MAYS-XREPO-APP-SETUP-01-EXECUTION_LOG.md`.
+- Resume-Punkt: App manuell erstellen/installieren, beide Secrets setzen, Preflight wiederholen.
+
 2026-11-06 · MAYS-XREPO-E2E-01 — STEPS D/E/F APP READINESS + ROLLOUT GATE
 - Typ: App-Readiness/Rollout-Gate/E2E-Blocker
 - Status: **BLOCKED FOR LIVE**; E2E-01F `NOT EXECUTED`
