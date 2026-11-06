@@ -1,3 +1,19 @@
+2026-11-06 · MAYS-XREPO-E2E-01 — STEPS B/C HARDENING + LOCAL VERIFICATION
+- Typ: Protocol-Hardening/Statusmaschine/Rework-Limit/Rejection/Local QA
+- Status: **HARDENING COMPLETE — LOCAL VERIFIED — E2E BLOCKED FOR LIVE**
+- Audit-Zeitpunkt: 2026-11-06T11:05:30+01:00 (Europe/Berlin)
+- Commit: `5ff6850` (`feat(xrepo): enforce status transitions and rework limits`).
+- Statusmaschine: `REQUESTED`/`BLOCKED` als Start; `BLOCKED`/`COMPLETED` terminal; `COMPLETED` nur nach `VERIFIED`; erlaubte Übergänge explizit; `IMPLEMENTATION_READY -> VERIFIED` für die geforderte E2E-Sequenz zulässig.
+- Rework: max. drei `REWORK_REQUIRED`; das vierte wird mit Rejection-Marker abgelehnt und fail-closed beendet.
+- Rejections: Konflikt, ungültiger Übergang und Rework-Limit erzeugen einen Rejection-Kommentar ohne State-Marker; Retry eines bereits abgelehnten Events erzeugt keinen zweiten Kommentar.
+- State-Marker: `<!-- mays-xrepo:state:<taskId>:<sequence>:<status> -->`; Legacy-Marker ohne Status → `state_unreadable`.
+- Evidence: `IMPLEMENTATION_READY`/`VERIFIED`/`COMPLETED` verlangen Commit-Evidence mit exaktem `source.commit`; Issue-Evidence wird über die Quell-API verifiziert; test-only Evidence reicht nicht.
+- Tests: `./scripts/xrepo/run_local_qa.sh` → **69/69 PASS**, 0 FAIL, 0 SKIP; JSON/YAML/diff PASS.
+- Klassifikation: **LOCAL VERIFIED**; Live weiterhin **BLOCKED FOR LIVE**.
+- Geänderte Dateien: `scripts/xrepo/validate_event.py`, `scripts/xrepo/apply_event.py`, `scripts/xrepo/test_validate_event.py`, `scripts/xrepo/test_apply_event.py`, `docs/xrepo/MAYS-XREPO-V1.md`, `docs/xrepo/fixtures/valid-implementation-ready.json`, QA-/E2E-Reports, Auditlog.
+- Bestätigung: kein Live-Dispatch, kein Merge, keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Vercel-Konfigurations-/Mays-Orders-Änderung.
+- Resume-Punkt: E2E-01D/E/F offen; Live-Test `NOT EXECUTED`.
+
 2026-11-06 · MAYS-XREPO-E2E-01 — STEP A PREFLIGHT
 - Typ: E2E-Preflight/PR/Issue/Workflow/App-Readiness
 - Status: **PREFLIGHT COMPLETE — E2E BLOCKED FOR LIVE**
