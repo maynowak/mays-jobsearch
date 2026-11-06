@@ -1,3 +1,22 @@
+2026-11-06 · JM-RIS-VERCEL-TEST-ENV-05-MAIN
+- Typ: Main-Integration/Readiness/Audit
+- Status: COMPLETE — **FAST-FORWARD NACH MAIN · PREVIEW ENV BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `bef81b9`; Reconciliation-Branch `8e55ebd`; Fast-Forward `bef81b9..8e55ebd`; neuer lokaler `main` `8e55ebd`; `origin/main` `fec135c`; **13 ahead / 0 behind**.
+- Integriert: serverseitige `RIS_TEST_USER_ALLOWLIST` (Issuer+sub, fail-closed), Reconciliation-Report, Vercel-Readiness-Report, `docs/DEPLOYMENT.md`-RIS-Abschnitt.
+- Vercel: `RIS_API_KEY` vorhanden (Production + Development, **nicht Preview**); `RIS_PARTNER_CREDENTIAL`, `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK` fehlen. Preview bleibt **BLOCKED**.
+- Testbenutzer: synthetischer RIS-LIVE-E2E-04-Nutzer nicht vorausgesetzt; keine gültige Allowlist-Identität in Vercel. **BLOCKED**.
+- Tests auf `main`: BFF 29/29, Boundary 6/6, Gesamtsuite **1502 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **PARTIAL / PREVIEW BLOCKED**; BFF-Security/Boundary lokal PASS.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: `main` `8e55ebd` + Dokumentations-Commit; 4 untracked Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-VERCEL-TEST-ENV-05.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-Env-Mutation, keine RIS-/AWS-/Cognito-/Terraform-Änderung, keine echten RIS-Requests, kein Deployment, kein Push.
+- Offene Punkte: Zielprojekt/Preview-Env, Key-Zuordnung, Testbenutzer/Allowlist, RIS-Partnerbindung/Surface, Push/Deploy/E2E-Freigabe.
+- Nächste Aktionen: Betreiberfreigabe für Preview-Env und Testidentität; danach separater Preview-E2E.
+- Resume-Punkt: Readiness auf `main`; Preview-Env und Live-E2E blockiert.
+- Log: `docs/reports/JM-RIS-VERCEL-TEST-ENV-05.md`
+
 2026-11-06 · JM-RIS-VERCEL-TEST-ENV-05
 - Typ: Vercel-/BFF-/Contract-Readiness (read-only)
 - Status: COMPLETE — **VERCEL PREVIEW BLOCKED · NO MUTATIONS · LIVE E2E NOT EXECUTED**; kein Push/Deploy

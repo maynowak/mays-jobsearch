@@ -3,7 +3,7 @@
 **Art:** Read-only Vercel-/BFF-/Contract-Readiness
 **Datum:** 2026-11-06
 **Repository:** `Mays-Jobsearch`
-**Status:** **PARTIAL / PREVIEW BLOCKED · NO VERCEL MUTATION · NO LIVE E2E**
+**Status:** **PARTIAL / PREVIEW BLOCKED · NO VERCEL MUTATION · NO LIVE E2E · INTEGRATED INTO MAIN `8e55ebd`**
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Element | Wert |
 |---|---|
-| Branch | `feature/jm-ris-testuser-allowlist-reconciliation-01` |
-| HEAD | `2382ab4` (Allowlist) · `48b8049` (dieser Report) |
-| Lokaler `main` | `bef81b9` |
-| Reconciliation-Branch vs. main | **1 Commit ahead / 0 behind** |
+| Branch | `main` (integrated from `feature/jm-ris-testuser-allowlist-reconciliation-01`) |
+| HEAD | `8e55ebd` (Fast-Forward `bef81b9..8e55ebd`) |
+| Lokaler `main` | `8e55ebd` |
+| `main` vs. `origin/main` | **13 ahead / 0 behind** (kein Push) |
 | Working Tree | clean bis auf 4 bewusst untracked Dokumente |
 | Uncommitted | keine tracked Änderungen |
 | Merge/Push | nicht ausgeführt |
@@ -225,7 +225,7 @@ RIS CHANGES:
   NONE
 
 GIT COMMIT:
-  48b8049 (report) + folgender Docs-Commit
+  8e55ebd (main; ff from reconciliation branch) + folgender Docs-Commit
 
 PUSH:
   NOT AUTHORIZED
