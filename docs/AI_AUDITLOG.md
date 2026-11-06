@@ -1,3 +1,18 @@
+2026-11-06 · MAYS-XREPO-ROLLOUT-01A — READINESS CHECK
+- Typ: Rollout-Readiness/App-/Secret-/PR-/Vercel-Prüfung
+- Status: **BLOCKED**
+- Audit-Zeitpunkt: 2026-11-06T16:46:28+01:00 (Europe/Berlin)
+- Git-Baseline: Jobsearch `13e035f` (Basis `7a3d2ea`, 18/0); RIS `38d0a7e` (Basis `c28c668`, 16/0); beide clean.
+- Secrets: `XREPO_APP_ID` und `XREPO_APP_PRIVATE_KEY` in beiden Repos vorhanden (nur Existenz/Metadaten geprüft; keine Werte gelesen/ausgegeben).
+- App-Installation: **NOT VERIFIED**; `/app` 401, `/users/maynowak/installations` 404, `/repos/{owner}/{repo}/installation` 401; Kandidaten-App-Seiten 404. Keine app-authentifizierte Prüfung möglich.
+- Berechtigungen: **NOT VERIFIED**; statische Workflow-Prüfung entspricht dem Vertrag (Sender Contents write/Issues read; Receiver Contents read/Issues read; Ziel-Issue via `GITHUB_TOKEN`), ersetzt aber keinen Installationsnachweis.
+- PRs: #2 Draft, `MERGEABLE`/`UNSTABLE` (Vercel Output-Fehler `dpl_CdTNAN1LuNcFGUfMPVtPuMZTq6M3`, `dpl_4mPQkgVyNvUQuJqAWn7e9WFhdsWR`); #6 Draft, `MERGEABLE`/`CLEAN`; keine Review-Freigabe.
+- Tests: 69/69 PASS in beiden Repos; JSON/YAML/diff PASS.
+- Vercel: Build erfolgreich, Fehler bei `Deploying outputs... status ● Error`; keine xrepo-/Produktursache belegt, keine Vercel-Konfigurationsänderung.
+- Bestätigung: kein Merge, kein Deployment, kein Live-Dispatch, keine Infrastruktur-/Produktänderung, keine Branch-Löschung, keine Secret-Werte.
+- Bericht: `docs/reports/MAYS-XREPO-ROLLOUT-01A-EXECUTION_LOG.md`.
+- Resume-Punkt: App-authentifizierte Installations-/Permissionsprüfung, Vercel-Klärung, Review-/Rollout-Freigabe.
+
 2026-11-06 · MAYS-XREPO-APP-SETUP-01 — APP/SECRET READINESS
 - Typ: GitHub-App-Readiness/Secret-Existenz/Rollout-Readiness
 - Status: **BLOCKED FOR LIVE**; keine App-/Secret-Einrichtung bestätigt
