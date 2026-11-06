@@ -1,3 +1,18 @@
+2026-11-06 · JM-RIS-STORAGE-CONSENT-CONTRACT-01
+- Typ: Externe Contract-Anfrage/Consent-Gate
+- Status: OPEN — **RIS RESPONSE REQUIRED · NO IMPLEMENTATION · NO RIS ACCESS**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `dcbc973`; `origin/main` `7a3d2ea`; **2 ahead / 0 behind**; 4 untracked Dokumente unangetastet.
+- Inhalt: formale Anfrage an Mays-RIS zu bestehenden und neuen Storage-Consents (`application_storage`, `cv_storage`, `search_profile_storage`), Nachweisen/Versionen, Widerruf/Export/Löschung, ApplicationV1-Parametern und Support-Matrix zum Handoff `docs/contracts/JM-RIS-STORAGE-CONSENT-HANDOFF-V1.md`.
+- Grenzen: keine RIS-Repository-/AWS-Zugriffe, keine RIS-Interna, keine Secrets/JWTs/Passwörter/Benutzerkennungen, keine echten RIS-Requests, keine Aktivierung der dauerhaften Speicherung.
+- Tests: keine Codeänderung; `git diff --check` PASS.
+- Geänderte Dateien: `docs/contracts/JM-RIS-STORAGE-CONSENT-CONTRACT-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-/RIS-/AWS-/Cognito-/Terraform-Änderung, kein Deployment, kein Push.
+- Offene Punkte: RIS-Antwort zu Consent-Endpoints, Nachweisfeldern, Persistierungsbestätigung, Widerruf/Export/Löschung, ApplicationV1-Parametern und Support-Matrix.
+- Nächste Aktionen: Antwort von RIS einholen; danach Vertragslücken schließen und separaten Implementierungs-/E2E-Auftrag freigeben.
+- Resume-Punkt: Anfrage formuliert; keine RIS-Evidence vorhanden.
+- Log: `docs/contracts/JM-RIS-STORAGE-CONSENT-CONTRACT-01.md`
+
 2026-11-06 · JM-RIS-VERCEL-PREVIEW-CONFIG-06
 - Typ: Vercel-Preview-Konfiguration/Sicherheits-Gate
 - Status: BLOCKED — **PREVIEW SECRET ISOLATION BLOCKED · NO MUTATIONS · NO DEPLOYMENT**
