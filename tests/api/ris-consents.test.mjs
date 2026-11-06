@@ -3,7 +3,7 @@ import { generateKeyPairSync, sign as cryptoSign } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetJwksCache } from "../../api/_lib/ris/auth.mjs";
-import handler from "../../api/ris/consents.mjs";
+import handler from "../../api/_lib/ris/consentsHandler.mjs";
 
 const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: "jwk" }), kid: "test-key", alg: "RS256", use: "sig" };

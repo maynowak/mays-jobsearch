@@ -10,7 +10,22 @@
       "schedule": "0 7 * * *"
     }
   ],
+  "redirects": [
+    {
+      "source": "/api/ris/router",
+      "destination": "/404",
+      "permanent": false
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/api/ris/applications",
+      "destination": "/api/ris/router?__ris_applications=1"
+    },
+    {
+      "source": "/api/ris/consents",
+      "destination": "/api/ris/router?__ris_consents=1"
+    },
     {
       "source": "/search",
       "destination": "/index.html"

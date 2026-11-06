@@ -4,9 +4,9 @@
 // browser cannot invent a version. Identity comes from the verified access
 // token, never from the body.
 
-import { isAllowedTestUser, risConfig, risConsentConfig } from "../_lib/ris/config.mjs";
-import { RisAuthError, verifyAccessToken } from "../_lib/ris/auth.mjs";
-import { RisClientError, risRequest } from "../_lib/ris/client.mjs";
+import { isAllowedTestUser, risConfig, risConsentConfig } from "./config.mjs";
+import { RisAuthError, verifyAccessToken } from "./auth.mjs";
+import { RisClientError, risRequest } from "./client.mjs";
 
 function bearer(req) {
   const raw = req.headers?.authorization ?? req.headers?.Authorization ?? "";

@@ -1,3 +1,22 @@
+2026-11-06 · JM-RIS-VERCEL-FUNCTION-CONSOLIDATION-03
+- Typ: Vercel-Function-Konsolidierung/API-Kompatibilität
+- Status: COMPLETE — **LOCAL VERIFIED · 13→12 FUNCTIONS · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `f59aa4b`; `origin/main` `f59aa4b`; 0/0; 4 untracked Dokumente unangetastet.
+- Root Cause: Vercel Hobby erlaubt max. 12 Functions; 13 RIS-/API-Functions führten zu `exceeded_serverless_functions_per_deployment`.
+- Architektur: ein Einstiegspunkt `api/ris/router.mjs`; Handler logisch getrennt unter `api/_lib/ris/applicationsHandler.mjs` und `consentsHandler.mjs`; öffentliche URLs unverändert über zwei explizite Rewrites; direkter Router-Aufruf per 307 auf `/404`; kein Catch-all.
+- Routing-Sicherheit: genau ein internes Flag (`__ris_applications=1` bzw. `__ris_consents=1`); Pfad-/Flag-Mismatch und widersprüchliche Flags → 404; Client-Query kann den Handler nicht wechseln.
+- Kompatibilität: Applications- und Consent-Operationen, Auth/JWT/JWKS, Issuer/Client, Allowlist, Owner `iss + sub`, Idempotency, Versionskonflikte, Fehler-Mapping und `RIS_CONSENT_NOTICE_VERSION` unverändert; kein neues Consent-Enforcement.
+- Tests: Applications **29/29**, Consents **7/7**, Routing **11/11**; Gesamtsuite **1520 passed / 5 skipped**; `npm run build` PASS; `node --check` PASS; `git diff --check` PASS.
+- Vercel-Build: `vercel build --non-interactive` erfolgreich; **12 `.func`-Artefakte** inkl. `api/ris/router.func`; Build-Config mit zwei RIS-Rewrites und Router-Redirect verifiziert.
+- Einschränkung: `vercel dev` nutzt in diesem Vite-Projekt den Vite-Dev-Server und wandte Rewrites/dynamische API-Routen lokal nicht an; Runtime-Rewrite-Semantik bleibt Preview-Deployment-Test.
+- Geänderte Dateien: `api/ris/router.mjs`, `api/_lib/ris/applicationsHandler.mjs`, `api/_lib/ris/consentsHandler.mjs`, `vercel.json`, `tests/api/ris-applications.test.mjs`, `tests/api/ris-consents.test.mjs`, `tests/api/ris-routing.test.mjs`, `docs/reports/JM-RIS-VERCEL-FUNCTION-CONSOLIDATION-03.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/Terraform-Änderung, keine Vercel-Env-Mutation, kein Deployment, kein Push, keine produktive Speicherung.
+- Offene Punkte: Preview-Deployment-Test der Rewrites und des Router-Redirects; Preview-Secret-Isolation; Testbenutzer/Allowlist; Consent-Notice-Version bleibt DRAFT.
+- Nächste Aktionen: separater, freigegebener Preview-Deployment-Test; danach Deployment-Review.
+- Resume-Punkt: 12 Functions lokal verifiziert; Public APIs kompatibel.
+- Log: `docs/reports/JM-RIS-VERCEL-FUNCTION-CONSOLIDATION-03.md`
+
 2026-11-06 · JM-RIS-STORAGE-CONSENT-RESPONSE-02
 - Typ: External Contract Verification/Consent-Gate
 - Status: **WAITING_FOR_PROVIDER_RESPONSE** — keine offizielle RIS-Antwort, alle Consent-Funktionen `UNKNOWN`, keine Implementierung, keine Aktivierung

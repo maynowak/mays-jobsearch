@@ -1,6 +1,6 @@
-import { isAllowedTestUser, risConfig } from "../_lib/ris/config.mjs";
-import { RisAuthError, verifyAccessToken } from "../_lib/ris/auth.mjs";
-import { RisClientError, applicationPath, risRequest } from "../_lib/ris/client.mjs";
+import { isAllowedTestUser, risConfig } from "./config.mjs";
+import { RisAuthError, verifyAccessToken } from "./auth.mjs";
+import { RisClientError, applicationPath, risRequest } from "./client.mjs";
 import {
   RisMappingError,
   deletionReceipt,
@@ -12,7 +12,7 @@ import {
   toRisHistory,
   toRisPatch,
   toRisStatus,
-} from "../_lib/ris/map.mjs";
+} from "./map.mjs";
 
 const MAX_BODY_BYTES = 200000;
 const STAGES = new Set(["draft", "submitted", "feedback", "interview", "offer", "rejected", "withdrawn"]);
