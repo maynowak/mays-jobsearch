@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "./lib/scrollLock";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal, EmploymentType } from "./types";
@@ -57,6 +57,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useAvailableModels } from "./hooks/useAvailableModels";
 import { sessionApplicationForJob, type SessionApplicationV1 } from "./lib/applications/sessionApplications";
 import { beginNewApplicationSession, createSessionApplicationRepository } from "./lib/applications/sessionRepository";
+import { createRemoteApplicationRepository } from "./lib/applications/remoteSessionRepository";
+import { createApplicationMigration } from "./lib/applications/applicationMigration";
+import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
 import { beginNewManualJobSession } from "./lib/applications/manualJobSession";
 import { isManualJob } from "./lib/applications/manualJob";
 import { ApplicationRepositoryError } from "./lib/applications/repositoryTypes";
@@ -196,6 +199,8 @@ export default function App() {
     context?: LetterPreparationContext;
   } | null>(null);
   const [sessionApplications, setSessionApplications] = useState<SessionApplicationV1[]>([]);
+  const sessionApplicationsRef = useRef(sessionApplications);
+  sessionApplicationsRef.current = sessionApplications;
   const [applicationRepository, setApplicationRepository] = useState(() => createSessionApplicationRepository());
   const [applicationRefreshToken, setApplicationRefreshToken] = useState(0);
   const [applicationNavigation, setApplicationNavigation] = useState<{
@@ -266,6 +271,25 @@ export default function App() {
   // session profiles.
   const auth = useAuth() ?? { isAuthenticated: false, user: undefined };
   const isAuth = auth.isAuthenticated;
+  const [applicationStorageMode, setApplicationStorageMode] = useState<"session" | "remote">("session");
+  const authRef = useRef(auth);
+  authRef.current = auth;
+  // Remote persistence is opt-in and never activated silently. Guests and
+  // unconfigured environments always keep the session repository.
+  const createApplicationRepositoryForAuth = () => {
+    if (isRisRemoteStorageEnabled() && isAuth && authRef.current?.user?.access_token) {
+      setApplicationStorageMode("remote");
+      return createRemoteApplicationRepository(
+        createRisApplicationRepository({
+          enabled: true,
+          getAccessToken: async () => authRef.current?.user?.access_token ?? null,
+          getOwnerId: () => authRef.current?.user?.profile?.sub ?? null,
+        })
+      );
+    }
+    setApplicationStorageMode("session");
+    return createSessionApplicationRepository();
+  };
 
   // MAYS-SEARCH-PROFILE-MANUAL-01: unabhaengige manuelle Suchprofile.
   // In-Memory-Repository nur fuer die laufende Sitzung (kein localStorage,
@@ -286,6 +310,26 @@ export default function App() {
   // `iss` + `sub` is the stable identity combination. Email is not used as an
   // identity fallback because identical addresses must not merge users.
   const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
+  const migrationMockEnabled =
+    String(import.meta.env.VITE_RIS_APPLICATION_MIGRATION_MOCK ?? "").toLowerCase() === "true";
+  const applicationMigration = useMemo(() => {
+    if (!migrationMockEnabled || !isAuth || !authRef.current?.user?.access_token) return null;
+    const port = createRisApplicationRepository({
+      enabled: true,
+      getAccessToken: async () => authRef.current?.user?.access_token ?? null,
+      getOwnerId: () => authRef.current?.user?.profile?.sub ?? null,
+    });
+    return createApplicationMigration({
+      sessionRepository: {
+        get: async (localId) =>
+          sessionApplicationsRef.current.find((application) => application.localId === localId) ?? null,
+      },
+      remotePort: port,
+      storageConsent: async () => true,
+      consentSource: "simulated",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [migrationMockEnabled, isAuth, authProfileKey]);
   const identityVerified = isVerifiedAuthProfileKey(authProfileKey);
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
   // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
@@ -324,7 +368,7 @@ export default function App() {
       beginNewApplicationSession();
       beginNewManualJobSession();
       setSessionApplications([]);
-      setApplicationRepository(createSessionApplicationRepository());
+      setApplicationRepository(createApplicationRepositoryForAuth());
       setApplicationRefreshToken(0);
       setApplicationNavigation(null);
       lastAdoptedApplicationIdRef.current = null;
@@ -343,6 +387,20 @@ export default function App() {
     }
     previousAuthProfileKeyRef.current = authProfileKey;
   }, [authProfileKey]);
+
+  // Opt-in remote preview: only when the public flag and a verified access
+  // token are present. Session mode remains the default.
+  useEffect(() => {
+    if (!isRisRemoteStorageEnabled()) return;
+    const next = createApplicationRepositoryForAuth();
+    setApplicationRepository((previous) => {
+      previous.invalidate();
+      return next;
+    });
+    setApplicationRefreshToken((value) => value + 1);
+    return () => next.invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuth, authProfileKey]);
 
   // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
   const [cvState, setCvState] = useState<CvProcessingState>(createInitialCvState);
@@ -3282,6 +3340,8 @@ export default function App() {
     <ApplicationsSection
       key={authProfileKey ?? "guest"}
       repository={applicationRepository}
+      storageMode={applicationStorageMode}
+      migration={applicationMigration ?? undefined}
       onChanged={setSessionApplications}
       models={models}
       defaultModel={defaultModel}

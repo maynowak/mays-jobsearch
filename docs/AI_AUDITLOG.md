@@ -71,6 +71,275 @@
 - Offene Punkte: Cross-Repo-GitHub-App-Credentials nicht verifiziert; Live-Dispatch bleibt `BLOCKED FOR LIVE`.
 - Resume-Punkt: Gate 01 abgeschlossen; Gate 02 Contract als Nächstes.
 - Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+2026-11-06 · JM-RIS-VERCEL-TEST-ENV-05-MAIN
+- Typ: Main-Integration/Readiness/Audit
+- Status: COMPLETE — **FAST-FORWARD NACH MAIN · PREVIEW ENV BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `bef81b9`; Reconciliation-Branch `8e55ebd`; Fast-Forward `bef81b9..8e55ebd`; neuer lokaler `main` `8e55ebd`; `origin/main` `fec135c`; **13 ahead / 0 behind**.
+- Integriert: serverseitige `RIS_TEST_USER_ALLOWLIST` (Issuer+sub, fail-closed), Reconciliation-Report, Vercel-Readiness-Report, `docs/DEPLOYMENT.md`-RIS-Abschnitt.
+- Vercel: `RIS_API_KEY` vorhanden (Production + Development, **nicht Preview**); `RIS_PARTNER_CREDENTIAL`, `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK` fehlen. Preview bleibt **BLOCKED**.
+- Testbenutzer: synthetischer RIS-LIVE-E2E-04-Nutzer nicht vorausgesetzt; keine gültige Allowlist-Identität in Vercel. **BLOCKED**.
+- Tests auf `main`: BFF 29/29, Boundary 6/6, Gesamtsuite **1502 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **PARTIAL / PREVIEW BLOCKED**; BFF-Security/Boundary lokal PASS.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: `main` `8e55ebd` + Dokumentations-Commit; 4 untracked Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-VERCEL-TEST-ENV-05.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-Env-Mutation, keine RIS-/AWS-/Cognito-/Terraform-Änderung, keine echten RIS-Requests, kein Deployment, kein Push.
+- Offene Punkte: Zielprojekt/Preview-Env, Key-Zuordnung, Testbenutzer/Allowlist, RIS-Partnerbindung/Surface, Push/Deploy/E2E-Freigabe.
+- Nächste Aktionen: Betreiberfreigabe für Preview-Env und Testidentität; danach separater Preview-E2E.
+- Resume-Punkt: Readiness auf `main`; Preview-Env und Live-E2E blockiert.
+- Log: `docs/reports/JM-RIS-VERCEL-TEST-ENV-05.md`
+
+2026-11-06 · JM-RIS-VERCEL-TEST-ENV-05
+- Typ: Vercel-/BFF-/Contract-Readiness (read-only)
+- Status: COMPLETE — **VERCEL PREVIEW BLOCKED · NO MUTATIONS · LIVE E2E NOT EXECUTED**; kein Push/Deploy
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `feature/jm-ris-testuser-allowlist-reconciliation-01` @ `2382ab4` (Allowlist) / `48b8049` (Report); lokaler `main` `bef81b9`; 1 ahead / 0 behind; 4 untracked Dokumente unangetastet.
+- Vercel: Linked Project `maymilly/mays-job-matcher`; `RIS_API_KEY` vorhanden als Secret in Production + Development, **nicht Preview**; `RIS_PARTNER_CREDENTIAL`, `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK` fehlen. Separates Projekt `maymilly/mays-jobsearch` ohne Env.
+- BFF: serverseitige JWT-/Issuer-/Client-/Allowlist-Prüfung, HTTPS-Zwang, `X-Api-Credential`, Feature-Flags default OFF, keine Client-Allowlist, kein Catch-all. `RIS_API_KEY`-Alias im Code unterstützt.
+- Contract: ApplicationV1-Endpunkte und Fehlermapping lokal/mock verifiziert; offizielle RIS-Partnerdokumentation, Preview-Base-URL, registrierte Issuer/Client-/Credential-/Tenant-Bindung und Testidentität nicht bestätigt. Historische RIS-interne Beobachtungen nicht als Vertragsbeweis verwendet. **RIS-LIVE-E2E-04 ist im Jobsearch-Repo nicht als eigener Report vorhanden; nur referenziert, nicht als Evidence verwendet.**
+- Tests: BFF **29/29**, Boundary **6/6** (35/35); `node --check` PASS; `npm run build` PASS; Vollsuite seriell **1502 passed / 5 skipped**; paralleler Default-Lauf mit 2 unabhängigen Timeout-Flakes, isoliert PASS.
+- Klassifikation: **PARTIAL / PREVIEW BLOCKED**; BFF-Security und Boundary lokal PASS; Live E2E nicht freigegeben.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Report-/Dokumentationsänderungen; 4 untracked Dokumente bleiben unangetastet; kein Push, kein Merge.
+- Geänderte Dateien: `.env.example`, `docs/DEPLOYMENT.md`, `docs/reports/JM-RIS-VERCEL-TEST-ENV-05.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-Env-Mutation, keine RIS-/AWS-/Cognito-/CloudFront-/Terraform-Änderung, keine echten RIS-Requests, keine Secret-Werte gelesen/ausgegeben, kein Deployment.
+- Offene Punkte: Zielprojekt bestätigen, Preview-Env setzen, Key-Zuordnung bestätigen, Testbenutzer/Allowlist konfigurieren, RIS-Partnerbindung/Surface bestätigen, Push/Deploy/E2E separat freigeben.
+- Nächste Aktionen: Betreiberfreigabe für Preview-Env und Testidentität; danach separater Preview-E2E-Auftrag.
+- Resume-Punkt: Readiness dokumentiert; Preview-Env und Live-E2E blockiert.
+- Log: `docs/reports/JM-RIS-VERCEL-TEST-ENV-05.md`
+
+2026-11-05 · JM-RIS-BRANCH-RECONCILIATION-01
+- Typ: Branch-Reconciliation/Security-Allowlist/Regression
+- Status: COMPLETE — **LOCAL VERIFIED · NO MERGE · NO PUSH**; alter Branch unverändert
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: lokaler `main` `bef81b9`; neuer Branch `feature/jm-ris-testuser-allowlist-reconciliation-01`; alter Branch `origin/feature/jm-ris-integration-gap-closure-01` @ `656566b` nur gelesen.
+- Übernommen: ausschließlich die Idee einer Testbenutzer-Allowlist, serverseitig neu umgesetzt als `RIS_TEST_USER_ALLOWLIST` (`<issuer>|<sub>`), Prüfung nach JWT-Verifikation, exakte Issuer+sub-Bindung, fehlende/leere Liste → 403 `test_user_not_allowed`, keine RIS-Anfrage.
+- Nicht übernommen: `api/ris/[...path].mjs`-Catch-all, alternative `src/lib/applications/ris/*`-Architektur, `VITE_RIS_REMOTE_TEST_SUBS`/`VITE_RIS_APPLICATIONS_REMOTE` (Client-Allowlist), `location.join`/`source[0]`-Lossy-Mapping, `ownerId=""`, Deployment-Claims.
+- Sicherheit: bestehende JWT-Prüfung (RS256/JWKS, Issuer, Client, `token_use`, `exp`, `nbf`, `sub`) bleibt; Allowlist ist zusätzliche Testzugangsbeschränkung, kein Ersatz für RIS-Partnerberechtigungen; Flags default OFF; keine echten Benutzerkennungen im Repo.
+- Tests: BFF **29/29**, Boundary **6/6**, Gesamtsuite **1502 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** lokal; RIS-Live weiterhin separat blockiert.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit auf Reconciliation-Branch; 4 untracked Dokumente unangetastet; kein Merge, kein Push.
+- Geänderte Dateien: `api/_lib/ris/config.mjs`, `api/ris/applications.mjs`, `tests/api/ris-applications.test.mjs`, `tests/api/ris-boundary.test.mjs`, `.env.example`, `AGENTS.md`, `docs/reports/JM-RIS-BRANCH-RECONCILIATION-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-/AWS-/Cognito-/CloudFront-/Terraform-Änderung, keine echten RIS-Requests, kein Deployment, kein Push/Merge.
+- Offene Punkte: echter Allowlist-Wert serverseitig setzen; RIS-Partnerressourcen/Authorizer/Surface; Vercel-Env; Live-E2E-Freigabe.
+- Nächste Aktionen: Review des Reconciliation-Branches; Merge/Push nur mit separater Freigabe.
+- Resume-Punkt: Allowlist lokal implementiert und getestet; alter Branch unverändert.
+- Log: `docs/reports/JM-RIS-BRANCH-RECONCILIATION-01.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-GAP-CLOSURE-01
+- Typ: Gap-Audit/Vercel-Env/Readiness
+- Status: COMPLETE — **GAP OPEN · NO MUTATIONS · LIVE E2E BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `3e60010`; `origin/main` `fec135c`; **9 ahead / 0 behind**; Pull ist No-op; 4 untracked Dokumente unangetastet.
+- Vercel: linked `maymilly/mays-job-matcher`; `RIS_API_KEY` nur in Production vorhanden; `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED` fehlen; `mays-jobsearch`-Projekt ohne Env; `.env.local` ohne RIS-Variablen.
+- RIS-DEV (read-only): Partner Applications/APIProfiles/Credentials/Offers/Entitlements/Profiles/Applications = 0; Agent Catalog 2; `PARTNER_SURFACE_ENABLED=false`; Authorizer `ojbmoiYGM`/`7ldh…`; Testbenutzer im Jobsearch-Pool (`sub 93a43852-…`), kein `custom:tenant_id`, kein Grant.
+- Gaps: G1 Provisionierung (Trust Anchor fehlt), G2 Authorizer für Jobsearch-Pool/Client, G3 Surface, G4 Testbenutzer-Grant, G5 Tenant-Claim, G6 Vercel-Env, G7 BFF nicht im Produktionsstand (9 lokale Commits nicht gepusht), G8 History/Cover-Letter, G9 Server-Consent.
+- Schließungsreihenfolge: Trust Anchor → APIProfile/Credential/Partner/Offer/Grant → Authorizer → Surface-Testfenster → Vercel-Env → Push/Deploy-Freigabe → synthetischer E2E.
+- E2E-Pfad: Vercel Production-Env (`vercel env pull`/`vercel dev` oder Preview); Key allein genügt nicht; ohne G1–G3 endet er bei 401/503. Kein E2E gestartet.
+- Tests: Build und Gesamtsuite bereits auf diesem Stand: **1498 passed / 5 skipped**; keine neuen Tests (Dokumentation).
+- Klassifikation: **YELLOW / BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Dokumentations-Commit; 4 untracked Dokumente bleiben; kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-Env-Mutation, keine RIS-/AWS-/Terraform-/Cognito-/DNS-Mutation, keine echten RIS-Writes, kein Deployment.
+- Offene Punkte: Trust Anchor, Authorizer-Entscheidung, Surface-Fenster, Vercel-Env (Key-Zuordnung), Push/Deploy, E2E-Freigabe.
+- Nächste Aktionen: RIS-Owner-Freigabe/Trust Anchor; danach Provisionierung und Vercel-Env; erst dann E2E.
+- Resume-Punkt: Gaps dokumentiert; Anschluss blockiert.
+- Log: `docs/reports/JM-RIS-INTEGRATION-GAP-CLOSURE-01.md`
+
+2026-11-05 · RIS-JOBSEARCH-DEV-CONNECT-01
+- Typ: Read-only RIS-DEV-Verifikation/Provisionierungsplan
+- Status: COMPLETE — **GAP VERIFIED · PROVISIONING BLOCKED**; keine Mutation, kein Push
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `a6412a4`; AWS read-only `240571105849` (`user/Mayaws`), `eu-central-1`.
+- Befund: Auf `ris-dev` sind Partner Applications, APIProfiles, Credentials, Offers, Entitlements, Partner-/User-Profiles und Applications **0**; Agent Catalog **2** (`jobsearch-agent`, `reference_agent`). Lambda `PARTNER_SURFACE_ENABLED=false`, Erasure/Ledger false. Human JWT Authorizer: Issuer `eu-central-1_ojbmoiYGM`, Audience `7ldhihlpdgsgcl3puvu4oi7ksv`.
+- Testbenutzer: Jobsearch-Pool `ZURSMpD2O`, Client `5hb3…`, `sub 93a43852-a051-7036-28e3-0eee4362cffb`, CONFIRMED/verified, **kein `custom:tenant_id`**; nicht im RIS-Pool.
+- Konsequenz: Jobsearch-Token wird vom aktuellen Authorizer nicht akzeptiert; Partnerroute bleibt 503; ohne Partnerressourcen kein ApplicationV1.
+- Anschlussplan: (1) owner-only `RIS_ADMIN_AUTHORIZATION_FILE` für `arn:aws:iam::240571105849:user/Mayaws`/admin/Tenant `mays-ris-dev` out-of-band; (2) `ris-admin apiprofile create/activate`; (3) `credential issue` in sichere Datei; (4) `partner create` mit Jobsearch-Client; (5) `offer create` + `offer grant` für Testbenutzer-sub; (6) JWT-Authorizer für Jobsearch-Pool/Client (Option A) oder Wechsel auf RIS-Pool-Client (Option B); (7) `PARTNER_SURFACE_ENABLED=true` im Testfenster; (8) Jobsearch-BFF-Env.
+- Identitätsentscheidung: Option A (RIS autorisiert Jobsearch-Pool/Client) bevorzugt; Option B ändert Jobsearch-Login; Token-Übersetzung abgelehnt. Tenant-Claim muss über Registry/Credential aufgelöst werden.
+- Klassifikation: **YELLOW / BLOCKED** — Read-only-Nachweis vollständig; Provisionierung und E2E nicht freigegeben.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Dokumentations-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `docs/reports/RIS-JOBSEARCH-DEV-CONNECT-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine Partnerregistrierung, keine Credential-Erzeugung/Rotation, keine Offer-/Grant-Mutation, keine echten RIS-Writes/Bewerberdaten.
+- Offene Punkte: Trust Anchor, Provisionierung, Authorizer-Option, Surface-Fenster, Tenant-Claim, Server-Consent, E2E-Freigabe.
+- Nächste Aktionen: RIS-Owner liefert Trust Anchor/Freigabe; danach Provisionierung und separater synthetischer E2E.
+- Resume-Punkt: Ist-Zustand und Anschlussplan dokumentiert; Live-Anschluss BLOCKED.
+- Log: `docs/reports/RIS-JOBSEARCH-DEV-CONNECT-01.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-01-ABSCHLUSS
+- Typ: Consolidation/Final Report/Integration
+- Status: COMPLETE — **LOCAL VERIFIED · JOBSEARCH DEV2 E2E BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `da10601`; RIS öffentlich `5ebefbd` (R08 `e0a3fe4`, Referenz `c28c668`); keine RIS-AWS-Abfragen in diesem Lauf.
+- Phasen: 01A `92be5c1`, 01B `67af66a`, 01C `68ae5de`, 01D `a3c9a04`, 01E `362592d`, 01F `d60ce6a`, Boundary `da10601`.
+- Implementierung: BFF `/api/ris/applications` (List/Detail/Create/Update/Status/Export/Delete/Metrics/Action-Routen), Remote-Adapter, UI-Modi SESSION/REMOTE_PREVIEW, Migration mit Consent-Gate.
+- Vertrag: `location[]`/`source[]` nur genau 1 Wert; manuelle Stellen/Builder-CV blockiert; `status`↔`stage` gemappt; `statusHistory`/`history` im Detail GAP; Delete nur lokales Receipt; `addFeedback`/`addInterview`/`addNote`/`addCoverLetterVersion` bewusst nicht unterstützt.
+- Identität: Jobsearch `ZURSMpD2O`/`5hb3…`; DEV2 öffentlich `K3dkdSipZ`/`21j28…`; RIS-DEV historisch `ojbmoiYGM`/`7ldh…`. Keine automatische JWT-Kompatibilität; RIS muss Jobsearch-Issuer/Client autorisieren. `custom:tenant_id`-Vertrag (Access vs. ID Token) offen.
+- Live: RIS-interner DEV2-E2E PASS; **Jobsearch-spezifischer DEV2-Pfad BLOCKED** (keine Partnerbindung/Credential/Tenant); `ris-dev` Quellenkonflikt (Apply vs. Hands-on-Handoff „live inventory BLOCKED“). Keine AWS-Abfragen.
+- Ergänzung: `RIS_API_KEY`/`RIS_API_CREDENTIAL` als serverseitige Credential-Aliase zusätzlich zu `RIS_PARTNER_CREDENTIAL`.
+- Tests: BFF **26/26**, Migration **16/16**, Dialog **2/2**, Adapter **21/21**, Bridge **12/12**, UI **2/2**, Boundary **5/5**, Gesamtsuite **1498 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** lokal; **JOBSEARCH DEV2 E2E: BLOCKED**; **CONTRACT: PARTIAL** (History/Cover-Letter); **NO-LOSS: PARTIAL**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Abschluss-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `api/_lib/ris/config.mjs`, `.env.example`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01-ABSCHLUSS.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine produktive Speicherung.
+- Offene Punkte: RIS-Attestation Issuer/Client; Partner-Credential/Tenant; Grant für Testbenutzer-`sub`; Tenant-Claim-Klärung; Surface-Aktivierung; History-/Cover-Letter-Vertrag; Server-Consent; E2E-Freigabe.
+- Nächste Aktionen: Attestation/Binding vom RIS-Team; danach separater synthetischer DEV2-E2E; kein automatischer Live-Test.
+- Resume-Punkt: Integration lokal abgeschlossen; Live-Pfad unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01-ABSCHLUSS.md`
+
+2026-11-05 · JM-RIS-BOUNDARY-01
+- Typ: Governance/Boundary/Incident/Remediation
+- Status: COMPLETE — **YELLOW**; Prozessvorfall dokumentiert; keine RIS-/AWS-Mutation; kein Push
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `d60ce6a`.
+- Incident: Im Rahmen der RIS-Readiness-Vorbereitung wurden read-only AWS-Abfragen im RIS-DEV-Account `240571105849` und Einsichten in das lokale RIS-Repo durchgeführt, ohne separates ausdrückliches Mandat. Kategorien: DynamoDB-Metadaten/Items, Lambda-Env-Flags, API-Gateway-Routen/Authorizer, Cognito-Pool-/Client-/Testbenutzer-Metadaten. Keine Mutation, keine Secrets/Tokens, keine RIS-Repo-Änderung, keine echten RIS-Requests.
+- Impact: Konkrete RIS-Interna sind **quarantänisiert** und werden nicht als Jobsearch-Evidenz verwendet/reproduziert. Die Aussage „Jobsearch nutzt RIS nur über den öffentlichen Vertrag“ wird künftig ausschließlich Jobsearch-seitig belegt.
+- Remediation: `AGENTS.md` Abschnitt „External system boundary — Mays-RIS“; `.opencode/agents/commander.md` Constraint; statischer Boundary-Test `tests/api/ris-boundary.test.mjs` (kein AWS SDK/RIS-Code, keine execute-api-URL, Credential nur serverseitig, ein Browser-Egress, AGENTS-Regel).
+- Tests: Boundary **5/5 PASS**; Gesamtsuite **1497 passed / 5 skipped**; Build und `git diff --check` PASS.
+- Klassifikation: **YELLOW** (Prozessvorfall, keine Daten-/Produktänderung).
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Governance-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `AGENTS.md`, `.opencode/agents/commander.md`, `tests/api/ris-boundary.test.mjs`, `docs/reports/JM-RIS-BOUNDARY-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests, keine Secrets/Tokens gelesen oder ausgegeben.
+- Offene Punkte: RIS-Partner-Attestation (API-Version/OpenAPI, Issuer/Audience, Partner-/Credential-/Offer-/Grant-/Entitlement-Prozess, Surface-Status, Consent/Retention, Testbenutzer, Cleanup); danach separater Live-E2E-Auftrag.
+- Nächste Aktionen: Attestation vom RIS-Team anfordern; keine weiteren RIS-Interna; Live-E2E bleibt gesperrt.
+- Resume-Punkt: Grenze dokumentiert und technisch getestet; RIS-DEV LIVE unverändert NOT AUTHORIZED.
+- Log: `docs/reports/JM-RIS-BOUNDARY-01.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-01F
+- Typ: Security-/Integrations-/Regressionsprüfung
+- Status: COMPLETE — **SECURITY PASS (lokal) · RIS-DEV LIVE NOT AUTHORIZED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `362592d`; Integration 01A–01E; RIS lokal `5ebefbd`; RIS-DEV unverändert.
+- Scope: vollständiger Datenfluss Cognito → UI → Repository → Remote-Adapter → BFF → Mock-RIS; Migration; Consent; Partnerabhängigkeiten.
+- Auth/Isolation: JWKS-RS256, Issuer, Client, `token_use=access`, `exp`, `nbf`, `sub`; E-Mail nicht Identität; Browser-`ownerId` ignoriert; Tenant nicht aus Browser; Credential nur serverseitig. Gleiche E-Mail mit unterschiedlichen `sub` → getrennte `ownerId`.
+- Härtung: JWKS-Ausfall → **503** (nicht 401), JWKS-Timeout 5 s, `nbf`-Prüfung, Body-Limit auch für geparste Objekte (413), unbekannte Aktion → 422, Pfadmanipulation → 422, PUT → 405.
+- BFF: Server-/Browser-Flag default OFF, feste HTTPS-Basis, Pfad-/ID-Allowlist, kein offener Proxy, 10-s-Timeout, keine Retries, Error-Mapping, keine Secret-/Token-Leaks.
+- ApplicationV1: List/Detail/Create/Update/Status/Export/Delete/Metrics lokal verifiziert; `addFeedback`/`addInterview`/`addNote`/`addCoverLetterVersion` bewusst **nicht unterstützt**.
+- Migration: explizite Bestätigung, Consent fail-closed, Kompatibilitätsblocker, stabile Idempotenz, Duplikat-CONFLICT, Teilübertragung, lokale Daten bleiben erhalten, Logout/Benutzerwechsel verworfen.
+- No-Loss: **PARTIAL** — mehrere Standorte/Quellen, manuelle Stellen, Builder-CV, History/StatusHistory über Initial, Notes > 10.000 und fehlende URL werden blockiert.
+- RIS-Partner: Partner Application Registry/APIProfile/Credential/Tenant/Entitlements/Offer/Grant/Agenten-API sind dokumentiert; Verfügbarkeit auf `ris-dev` **NOT LIVE VERIFIED**; `RIS-DEV2-TEST-IDENTITY-04D` meldet Provisioning BLOCKED. Keine neue Registrierung/Credential-Ausstellung.
+- Tests: BFF **25/25**, Migration **16/16**, Dialog **2/2**, Adapter **21/21**, Bridge **12/12**, UI **2/2**, Gesamtsuite **1492 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** für lokale Security/Regression; **APPLICATIONV1 CONTRACT: PARTIAL**, **NO-LOSS: PARTIAL**, **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Security-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `api/_lib/ris/auth.mjs`, `api/ris/applications.mjs`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01F-SECURITY-REGRESSION.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine produktive Speicherung.
+- Offene Punkte: Partnerregistrierung/APIProfile/Credential/Tenant/Entitlement, Surface, echter Server-Consent, History-/Cover-Letter-Transfer, Cleanup, E2E-Freigabe.
+- Nächste Aktionen: 01G nur mit separater Freigabe; keine automatische Fortsetzung.
+- Resume-Punkt: Security-/Regressionsprüfung abgeschlossen; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01F-SECURITY-REGRESSION.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-01E
+- Typ: Session-Migration/Consent-Gate/Mock-Integration
+- Status: COMPLETE — **SESSION MIGRATION LOCAL VERIFIED · STORAGE GATE FAIL-CLOSED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `a3c9a04`; Remote-Adapter 01C, UI 01D, BFF 01B; Session-Repository unverändert.
+- Scope: ausdrücklich gestarteter Handoff bestehender Session-Bewerbungen in den Remote-Port; Vorschau, Kompatibilität, Duplikate, Bestätigung, Idempotenz, Teilübertragung.
+- Implementierung: `applicationMigration.ts` implementiert `ApplicationMigrationPortV1`; additive Vertragsfelder (`confirmed`, Item-Status, Preview-Items, Result-Statuses, `followUp` im Create); Dialog `ApplicationMigrationDialog` + Button in `ApplicationsSection`; App übergibt Migration nur bei `VITE_RIS_APPLICATION_MIGRATION_MOCK=true` + Auth + Access-Token (Default false).
+- No-Loss: blockiert mehrere Standorte/Quellen, manuelle Stellen, Builder-CV, History/StatusHistory > Initial, Notes > 10.000, fehlende Quell-URL. Inkompatible bleiben lokal und werden nicht übertragen.
+- Consent: `consentSource` muss `simulated` sein; `server`/fehlende Freigabe → `storage_consent_required`; keine künstlichen Receipts; UI-Checkbox ist nur Bestätigung, keine Serverfreigabe.
+- Idempotenz/Duplikate: `<migrationKey>:<localId>` stabil; kein neuer Key nach Timeout; Remote-List-Abgleich (max. 5 Seiten); Duplikate → CONFLICT ohne Auto-Merge; bestätigte `applicationId` wird nur im Migrationskontext zugeordnet.
+- Isolation: verifiziertes `sub`, Session-Generation + `invalidate()`, verspätete Antworten verworfen, keine Übernahme zwischen Benutzern.
+- Tests: Migration **16/16**, Dialog **2/2**, Adapter **21/21**, BFF **14/14**, UI-Bridge **12/12**, Gesamtsuite **1481 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** für lokale Migration; **NO-LOSS: PARTIAL** (inkompatible Datensätze blockiert); **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `src/lib/applications/applicationMigration.ts`, `.test.ts`, `repositoryTypes.ts`, `contractTypes.ts`, `src/components/ApplicationMigrationDialog.tsx`, `.test.tsx`, `ApplicationsSection.tsx`, `src/App.tsx`, `src/i18n.tsx`, `.env.example`, `docs/reports/JM-RIS-INTEGRATION-01E-SESSION-MIGRATION.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine Session-Regression.
+- Offene Punkte: echter Server-Consent, History-/Cover-Letter-Transfer, `statusHistory` im Detail, RIS-DEV-Partnerbindung, Rechtsprüfung, manuelle Stellen/Builder-CVs.
+- Nächste Aktionen: 01F (Security/Regression) erst nach separater Freigabe; 01G weiterhin gesperrt.
+- Resume-Punkt: Migration lokal implementiert und getestet; Live-/Consent-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01E-SESSION-MIGRATION.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-01D
+- Typ: UI-Integration/Remote-Preview/Session-Kompatibilität/Regression
+- Status: COMPLETE — **UI REPOSITORY INTEGRATION LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `68ae5de`; Remote-Adapter 01C; BFF 01B; Session-Repository unverändert; RIS-DEV unverändert.
+- Scope: bestehende `ApplicationsSection` an `ApplicationRepository`/`ApplicationPersistencePort` anbinden; SESSION und REMOTE_PREVIEW lokal.
+- Modus: SESSION ist Default; REMOTE_PREVIEW nur bei `VITE_RIS_APPLICATION_STORAGE_ENABLED=true` + verifizierter Anmeldung + Access-Token; Gast/Logout bleibt SESSION. Kein automatischer Remote-Zugriff, kein Auto-Transfer, kein stilles Umschalten.
+- Implementierung: `remoteSessionRepository.ts` als Brücke (`ApplicationV1` ↔ `SessionApplicationV1`, `applicationId` ↔ UI-`localId`); UI-Hinweis „Remote/RIS“ statt „nur diese Sitzung“; Löschdialog unterscheidet Sitzungsentwurf/gespeicherte Bewerbung; 409 löst Listen-Reload aus.
+- Unterstützt: List/Get/Create/Update/Status/Export/Delete/Metrics. Bewusst `not_supported`: addHistory, addCoverLetterVersion, adoptCoverLetter (BFF liefert keine vollständige `ApplicationV1`); UI zeigt verständlichen Hinweis, keine Scheinspeicherung.
+- Identität: Token pro Request, `ownerId` aus verifiziertem `sub`, `invalidate()` + globale Session-Generation, verspätete Antworten verworfen, keine Session-/Remote-Datenvermischung.
+- Tests: Bridge **12/12**, UI **2/2**, Adapter **21/21**, BFF **14/14**, Gesamtsuite **1463 passed / 5 skipped**, Build und `git diff --check` PASS.
+- Klassifikation: **GREEN** für lokale UI-Integration; **APPLICATIONV1 CONTRACT: PARTIAL**, **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `src/App.tsx`, `src/components/ApplicationsSection.tsx`, `ApplicationsSection.remote.test.tsx`, `src/lib/applications/remoteSessionRepository.ts`, `.test.ts`, `repositoryTypes.ts`, `sessionApplications.ts`, `src/i18n.tsx`, `docs/reports/JM-RIS-INTEGRATION-01D-UI-HANDOFF.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine Session-Repository-Regression.
+- Offene Punkte: History-/Cover-Letter-Vertrag, `statusHistory` im Detail, 01E-Migration/Consent, RIS-DEV-Partnerbindung.
+- Nächste Aktionen: 01E erst nach separater Freigabe; 01G weiterhin gesperrt.
+- Resume-Punkt: UI kann lokal zwischen Session und Remote-Preview wechseln; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01D-UI-HANDOFF.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-01C
+- Typ: Remote-Adapter/Session-Kompatibilität/Contract-Tests
+- Status: COMPLETE — **REMOTE ADAPTER LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `67af66a`; BFF aus 01B; Session-Repository unverändert; RIS-DEV unverändert (`PARTNER_SURFACE_ENABLED=false`).
+- Scope: Implementierung des RIS-Remote-Adapters für `ApplicationPersistencePort`, Mock-/Contract-Tests, Regression.
+- Implementiert: `list`, `get`, `create`, `update`, `transitionStatus`, `export`, `delete`, `metrics` (konkret). Bewusst **nicht** implementiert: `addFeedback`/`addInterview`/`addNote`/`addCoverLetterVersion` — der BFF liefert nur `{history}`/`{version}`, keine vollständige `ApplicationV1`.
+- Mapping: BFF bleibt autoritativ; Adapter validiert Antwortform, prüft `notes` ≤ 10.000 und `expectedVersion` ≥ 1 vor dem Request; keine Rundung von Gehaltswerten; Delete-Receipt lokal nach bestätigtem `{deleted:true}`.
+- Identität: Access-Token pro Request über Provider, nie gespeichert; `ownerId` aus verifizierter Session; `invalidate()` + globale Session-Generation verwerfen verspätete Antworten; keine Browser-Tenant-/Owner-Werte.
+- Version/Idempotenz: Server-`applicationId`, `expectedVersion`, 409 → `version_conflict` ohne Auto-Override, stabiler `Idempotency-Key`, kein Auto-Retry.
+- Fehler: 401/403/404/409/422/429/502/503 → `unauthorized`/`forbidden`/`not_found`/`version_conflict`/`idempotency_conflict`/`conflict`/`validation_error`/`unavailable`; Logout → `session_ended`; Abbruch → `aborted`.
+- Feature-Flag: `createRisApplicationRepository({enabled:false})` = keine Requests; UI-Flag `VITE_RIS_APPLICATION_STORAGE_ENABLED` default false; kein Auto-Transfer, kein stilles Umschalten.
+- Tests: Adapter **21/21**, BFF **14/14**, Gesamtsuite **1449 passed / 5 skipped**, Build und `git diff --check` PASS. Ein früherer Volllauf hatte 1 nicht reproduzierbaren Flake; Folgelauf grün; keine Tests deaktiviert.
+- Klassifikation: **GREEN** für den lokalen Adapter; **APPLICATIONV1 CONTRACT: PARTIAL**, **RIS-DEV LIVE: BLOCKED**.
+- Terraform-Checks: keine ausgeführt.
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `src/lib/applications/risRemoteRepository.ts`, `...test.ts`, `repositoryTypes.ts`, `api/ris/applications.mjs`, `api/_lib/ris/client.mjs`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01C-REMOTE-ADAPTER.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten RIS-Requests/Bewerberdaten, keine Session-Repository-Änderung.
+- Offene Punkte: History-/Cover-Letter-Adapter, `statusHistory` im Detail, RIS-DEV-Partnerbindung/Credential/Tenant/Surface, Metrics live, Datenschutz-/Rechtsfreigabe.
+- Nächste Aktionen: 01D (UI-Anbindung) erst nach separater Freigabe; 01G weiterhin gesperrt.
+- Resume-Punkt: Remote-Adapter implementiert und mock-getestet; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01C-REMOTE-ADAPTER.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-01B
+- Typ: Auth-/BFF-Vorbereitung/Integration/Regression
+- Status: COMPLETE — **BFF LOCAL VERIFIED · RIS-DEV LIVE BLOCKED**; kein Push, kein Deployment
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `fec135c`; RIS lokal `5ebefbd` (enthält `c28c668`, R08 `e0a3fe4`); `ris-dev` R08-Apply 52/4/0/0, `PARTNER_SURFACE_ENABLED=false`.
+- Scope: Testbenutzer-/Cognito-Prüfung, RIS-DEV-Autorisierungsstatus, Endpoint-Matrix, lokaler BFF mit Mock-RIS, Regression.
+- Phase A: Cognito-JWKS öffentlich erreichbar (HTTP 200, 2 Keys); Issuer/Client aus Code verifiziert; tatsächliche Login-/Token-Prüfung **BLOCKED** (IAM `DescribeUserPoolClient` verweigert; Passwort bewusst nicht über unsicheren Shell-Kanal verwendet). Keine Zugangsdaten dokumentiert.
+- Phase B: AWS-Identität `992382612204` ist nicht der ris-dev-Account `240571105849`; kein Zugriff auf Registry/Credential/Tenant. Partner-Registrierung NOT VERIFIED, Credential BLOCKED, Surface nicht live verifiziert (Quelle: DISABLED).
+- Phase C: alle ApplicationV1-Routen im RIS-Code implementiert, auf ris-dev2 historisch verifiziert, auf ris-dev deployt, live **BLOCKED** (503).
+- Phase D: BFF unter `api/ris/applications.mjs` mit `api/_lib/ris/{config,auth,client,map}.mjs`; Feature standardmäßig OFF; JWT-RS256/JWKS-Verifikation; Credential nur serverseitig; feste Pfad-Allowlist; kein offener Proxy; 10 s Timeout; keine Retries; explizite 422 bei nicht verlustfreiem Mapping (`location[]`/`source[]` >1, Builder-CV, `imported`); Status→`stage`; Delete-Receipt lokal.
+- Phase E: BFF-Mock-Tests **13/13 PASS**; Gesamtsuite **1427 passed / 5 skipped**; `npm run build`, `git diff --check`, `node --check` PASS. Erster Lauf scheiterte an fehlendem `pdf-lib` im alten `node_modules`; nach `npm ci` grün (keine Versionsänderung, kein `audit fix`).
+- Sicherheit: keine Tokens/Credentials in Antworten/Logs; kein Wildcard-CORS; `no-store`; Body-Limit 200 KB; `ownerId` aus verifiziertem `sub`.
+- Klassifikation: **YELLOW** — BFF lokal verifiziert; Live-Identität/Partnerbindung BLOCKED.
+- Terraform-Checks: keine ausgeführt (keine Infrastrukturmutation).
+- Git-Status: Feature-Commit; 4 untracked Jobsearch-Dokumente unangetastet; kein Push.
+- Geänderte Dateien: `.env.example`, `api/_lib/ris/*.mjs`, `api/ris/applications.mjs`, `tests/api/ris-applications.test.mjs`, `docs/reports/JM-RIS-INTEGRATION-01B-TESTUSER-AND-BFF.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-Repo-Änderung, keine AWS-/Terraform-/Cognito-/CloudFront-/DNS-Mutation, keine echten Bewerberdaten, keine echten RIS-Calls.
+- Offene Voraussetzungen: Partner-Registrierung, Credential, Tenant, Surface-Freigabe, synthetische RIS-Identität, Cleanup, explizite Write-Freigabe, Timeline-/API-Drift-Entscheidungen.
+- Nächste Aktionen: ris-dev-Partnerbindung/Credential/Tenant bereitstellen; danach 01C–01F lokal; 01G nur mit separater Freigabe.
+- Resume-Punkt: BFF implementiert und mock-getestet; Live-Gate unverändert BLOCKED.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01B-TESTUSER-AND-BFF.md`
+
+2026-11-05 · JM-RIS-INTEGRATION-01A
+- Typ: Integration/Contract-Audit/Identity-Reconciliation
+- Status: COMPLETE — **APPLICATION CONTRACT: PARTIAL · IDENTITY: BLOCKED**; keine Implementierung, keine AWS-/Terraform-/Cognito-Änderung, kein Push
+- Audit-Zeitpunkt: 2026-11-05 (Europe/Berlin)
+- Git-Baseline: Jobsearch `main` `fec135c` (4 untracked Dokumente unangetastet); RIS lokal `5ebefbd`, enthält `c28c668` und R08 `e0a3fe4`; `ris-dev` R08-Apply 52/4/0/0, `PARTNER_SURFACE_ENABLED=false`.
+- Scope: Phase 01A — Endpoint-, Feld- und Identitätsabgleich zwischen vorhandener Jobsearch-Bewerbungsverwaltung und RIS ApplicationV1.
+- Befunde: RIS-Routen `/v1/partner/me/applications` (Create/List/Detail/Patch/Status/History/Cover-Letter/Export/Delete) vorhanden; Dual-Auth JWT + `X-Api-Credential`. Jobsearch-Issuer/Client (`ZURSMpD2O`/`5hb3…`) ist auf `ris-dev` nicht als Partner autorisiert; kein Credential, kein Tenant, Surface geschlossen (503). Frontend sendet derzeit kein Access-Token an eigene API-Routen.
+- Contract-GAPs: `location[]`→`string`, `source[]`→`string`, `jobOrigin` nicht erlaubt, `cvSource` (builder) nicht erlaubt, `statusHistory`/`history` nicht in Detail/List, Delete nur 204 ohne Receipt; OpenAPI-Drift bei `job.url` und `CoverLetterVersion.source`.
+- Mapping: Jobsearch-Status ↔ RIS `stage` verlustfrei; RIS `status` wird serverseitig abgeleitet.
+- Klassifikation: **YELLOW / BLOCKED** — keine reale RIS-Anbindung ohne Identitäts- und Feldentscheidungen.
+- Terraform-Checks: keine ausgeführt (read-only; keine Infrastruktur im Scope).
+- Git-Status: Dokumentations-Commit; Working Tree behält die vier untracked Dokumente; kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-INTEGRATION-01A-CONTRACT.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Änderung an Produktcode, API, Dependencies, RIS-Repo, AWS/Terraform/RIS/Cognito/CloudFront/DNS, Secrets; keine echten Daten.
+- Offene Entscheidungen: location/source-Mapping, jobOrigin, builder-CV, Timeline-Abruf, Delete-Receipt, OpenAPI-Korrektur, Partner-Registrierung/Credential/Tenant.
+- Nächste Aktionen: Entscheidungen + ris-dev-Partnerfreigabe; erst danach 01B–01F mit lokalen Mock-Tests.
+- Resume-Punkt: Phase 01A dokumentiert; 01B NICHT begonnen.
+- Log: `docs/reports/JM-RIS-INTEGRATION-01A-CONTRACT.md`
 
 2026-11-05 · JM-ENTWICKLUNGSREPORT-KONSOLIDIERT-2026-11-05
 - Typ: Dokumentation/Konsolidierung/Statusbericht

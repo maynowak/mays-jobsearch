@@ -120,6 +120,26 @@ curl -H "x-usage-token: <your-token>" https://mays-job-matcher.vercel.app/api/us
 
 The token is a server-side secret: it must never be added to the frontend bundle, `.env.example` is only a placeholder, and it never appears in responses or logs.
 
+## RIS ApplicationV1 BFF (server-only, disabled by default)
+
+The RIS application storage path is disabled unless all required server values are present. The partner credential must never use a `VITE_*` name and must never be exposed to the browser. The server-side test-user allowlist is an additional test gate, not a replacement for RIS partner authorization.
+
+| Variable | Purpose | Required for BFF? | Secret? |
+|---|---|---|---|
+| `RIS_APPLICATION_STORAGE_ENABLED` | Explicit server opt-in; default/absent = OFF | Yes, `true` for remote mode | No |
+| `RIS_API_BASE_URL` | Official HTTPS RIS partner base URL | Yes | No |
+| `RIS_PARTNER_CREDENTIAL` | Server-side partner credential sent as `X-Api-Credential` | Yes | Yes |
+| `RIS_API_KEY` | Supported compatibility alias for the partner credential | Alternative to `RIS_PARTNER_CREDENTIAL` | Yes |
+| `RIS_API_CREDENTIAL` | Additional compatibility alias | Alternative | Yes |
+| `RIS_COGNITO_ISSUER` | Expected Cognito issuer for access tokens | Yes | No |
+| `RIS_COGNITO_CLIENT_ID` | Expected Cognito client/audience | Yes | No |
+| `RIS_TEST_USER_ALLOWLIST` | Server-side `<issuer>|<sub>` test identities; empty = deny all | Yes for test mode | Sensitive |
+| `RIS_API_TIMEOUT_MS` | RIS request timeout, default 10000 | No | No |
+| `VITE_RIS_APPLICATION_STORAGE_ENABLED` | Browser opt-in for remote preview; default OFF | Client-side only | No |
+| `VITE_RIS_APPLICATION_MIGRATION_MOCK` | Local migration mock only; keep OFF outside local tests | No | No |
+
+`RIS_API_BASE_URL` must be the official partner endpoint and use HTTPS. `RIS_COGNITO_ISSUER` and `RIS_COGNITO_CLIENT_ID` must match the partner registration. Do not read, print or commit secret values. Production and Preview are separate environments; a key in Production does not make Preview ready.
+
 ## Add an environment variable (CLI)
 
 ```bash

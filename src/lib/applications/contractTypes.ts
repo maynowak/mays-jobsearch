@@ -160,6 +160,7 @@ export interface CreateApplicationDraftInputV1 {
   contact?: ApplicationContactV1;
   notes?: string;
   salary?: ApplicationSalaryContextV1;
+  followUp?: ApplicationFollowUpV1;
 }
 
 export interface CreateApplicationDraftContextV1 {
