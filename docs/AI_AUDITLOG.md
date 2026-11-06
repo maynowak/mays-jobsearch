@@ -1,3 +1,21 @@
+2026-11-06 · JM-RIS-VERCEL-PREVIEW-CONFIG-06
+- Typ: Vercel-Preview-Konfiguration/Sicherheits-Gate
+- Status: BLOCKED — **PREVIEW SECRET ISOLATION BLOCKED · NO MUTATIONS · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `53cbcd4`; `origin/main` `7a3d2ea`; **1 ahead / 0 behind**; erwartete Baseline `7a3d2ea`/0/0. Abweichung: lokaler Function-Limit-Fix `53cbcd4` (13→12 Functions), nicht gepusht; 4 untracked Dokumente unangetastet.
+- Vercel-Projekt: `mays-job-matcher` (`prj_wdzpRfrGENG82Txi9Sa9QTzKruk9`), Team `maymilly`, Git `maynowak/mays-jobsearch`, Production Branch `main`; aktiver Link und offizielle Projekt-API bestätigt. Caveat: `.vercel/repo.json` enthält veraltete Zuordnung zu `mays-jobsearch` (`prj_j6Ak...`), nicht verändert.
+- Preview-Isolation: `RIS_API_KEY` vorhanden in Production, **Preview**, Development; Preview-Zuordnung **global**, keine branch-scoped Preview-Variablen; 14 Remote-Branches; `protection`/`passwordProtection`/`ssoProtection` = null, nur `gitForkProtection=true`. **STOP — keine Secret-Zuordnung.**
+- Fehlende Preview-Variablen: `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK`. Flags fehlen → Code-Default OFF.
+- Vertrag: ApplicationV1 lokal/mock verifiziert; offizielle Base-URL sowie bestätigter Issuer/Client fehlen; Key-Berechtigung für Preview nicht verifiziert. Testbenutzer: keine Allowlist in Preview, Gültigkeit nicht verifiziert → **BLOCKED**.
+- Tests: BFF+Boundary **35/35**, Gesamtsuite **1502 passed / 5 skipped**, Build PASS, API-Syntax PASS, `git diff --check` PASS.
+- Konfigurationsänderungen: **keine**; keine Vercel-Env-Mutation, kein Secret gelesen/ausgegeben, kein Deployment, kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-VERCEL-PREVIEW-CONFIG-06.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/CloudFront-/DNS-/Terraform-Änderung, keine echten RIS-Requests, keine produktiven Bewerberdaten.
+- Offene Punkte: Preview-Key-Isolation, offizieller API-Vertrag, Testidentität/Allowlist, Preview-Schutz, Push von `53cbcd4`, separater Deploy/E2E.
+- Nächste Aktionen: Betreiberentscheidung zur Isolation; danach Preview-Env und separater E2E.
+- Resume-Punkt: Preview-Konfiguration blockiert; keine Mutation.
+- Log: `docs/reports/JM-RIS-VERCEL-PREVIEW-CONFIG-06.md`
+
 2026-11-06 · JM-VERCEL-FUNCTION-LIMIT-01
 - Typ: Deployment-Fix/Function-Consolidation
 - Status: COMPLETE — **LOCAL FIX VERIFIED · NO PUSH · NO DEPLOYMENT**
