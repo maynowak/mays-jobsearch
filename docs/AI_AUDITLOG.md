@@ -1,3 +1,23 @@
+2026-11-06 · JM-RIS-VERCEL-SAFE-RELEASE-05
+- Typ: Safe Preview Release/Consent-Integration/E2E-Vorbereitung
+- Status: **BLOCKED — PREVIEW RELEASE NOT AUTHORIZED · P0 SECRET ISOLATION/PROTECTION/ENV/COGNITO · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `4b74695`; Code-Commit `d05a953`; `origin/main` `f59aa4b`; lokaler Preview-Branch `preview/jm-ris-safe-release-05` @ `d05a953`; nur Haupt-Worktree; 4 untracked Dokumente unangetastet.
+- Vercel-Projekt: `mays-job-matcher` (`prj_wdzpRfrGENG82Txi9Sa9QTzKruk9`), Team `maymilly`, Git `maynowak/mays-jobsearch`, Production Branch `main`; bestätigt.
+- P0 Secret-Isolation: `RIS_API_KEY` global in Production, Preview, Development; keine branch-spezifische Preview-Isolation. Keine Secret-Werte gelesen; kein `vercel env pull`; keine Mutation.
+- P0 Preview-Protection: `protection`/`passwordProtection`/`ssoProtection` = null; nur `gitForkProtection=true`; Vercel Authentication für Preview nicht aktiv.
+- Preview-Env: `RIS_CONSENT_SERVICE_ENABLED`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_CONSENT_UI_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK`, `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_CONSENT_NOTICE_VERSION` fehlen; `RIS_CONSENT_NOTICE_VERSION` bleibt wegen DRAFT ungesetzt.
+- P0 Cognito: `VITE_REDIRECT_URI`/`VITE_POST_LOGOUT_REDIRECT_URI` global für Preview; Preview-Callback nicht bestätigt; keine Cognito-/DNS-/Hosted-UI-Änderung.
+- DRAFT-Sperre: BFF-GET liefert `grantAllowed` nur bei serverseitiger Notice-Version; `StorageConsentLive` aktiviert Grant nur bei `grantAllowed=true`; Server bleibt fail-closed (`notice_version_not_mapped`). Kein Grant ausgeführt.
+- Tests: Applications **29/29**, Consents **10/10**, Routing **11/11**, Config-Separation **6/6**, StorageConsentLive **2/2**; Gesamtsuite **1531 passed / 5 skipped**; Build PASS; API-Syntax PASS; `git diff --check` PASS; Vercel-Build **12 Functions**.
+- Bestehende Preview-Deployments: mindestens zwei Ready-Preview-Deployments aus der Zeit der globalen Key-Zuordnung (`rftu7nbo9`, `p9m1g8bnb`) sind als exponiert zu behandeln; keine neuen Deployments erstellt.
+- Geänderte Dateien: `api/_lib/ris/consentsHandler.mjs`, `src/lib/risConsentApi.ts`, `src/components/StorageConsentLive.tsx`, `src/components/StorageConsentLive.test.tsx`, `tests/api/ris-consents.test.mjs`, `docs/reports/JM-RIS-VERCEL-SAFE-RELEASE-05.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-Env-/Secret-Mutation, keine RIS-/AWS-/Cognito-/CloudFront-/DNS-/Terraform-Änderung, kein Deployment, kein Push, keine produktive Speicherung, keine echten Bewerberdaten.
+- Offene Blocker: Preview-Secret-Isolation, Preview-Protection, Preview-Env-Werte, Cognito-Preview-Callback, DRAFT-Notice-Freigabe.
+- Nächste Aktionen: Betreiberfreigabe für die P0-Punkte; danach Preview-Branch pushen, Preview deployen und Runtime-Smoke/E2E durchführen.
+- Resume-Punkt: DRAFT-Sperre implementiert; Preview-Release blockiert.
+- Log: `docs/reports/JM-RIS-VERCEL-SAFE-RELEASE-05.md`
+
 2026-11-06 · JM-RIS-CONSENT-CONFIG-SEPARATION-04
 - Typ: Consent-/Application-Aktivierungstrennung
 - Status: COMPLETE — **LOCAL VERIFIED · CONSENT INDEPENDENT · APPLICATIONS STILL OFF · NO PUSH · NO DEPLOYMENT**
