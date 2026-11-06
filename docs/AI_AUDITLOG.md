@@ -1,3 +1,15 @@
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — POST-GATE HARDENING
+- Typ: Security-Hardening/Receiver-Idempotenz
+- Status: **GREEN (local) / E2E PENDING / BLOCKED FOR LIVE**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Änderung: Nur Kommentare von `github-actions[bot]` dürfen Event-/State-Marker setzen; user-authored Marker werden ignoriert.
+- Grund: Ein fremder Issue-Kommentar könnte sonst eine hohe Sequenz oder ein Event-Marker injizieren und echte Events unterdrücken (DoS).
+- Tests: neuer Test `test_untrusted_comment_markers_are_ignored`; `./scripts/xrepo/run_local_qa.sh` → **54/54 PASS**, JSON/YAML/diff PASS.
+- Geänderte Dateien: `scripts/xrepo/apply_event.py`, `scripts/xrepo/test_apply_event.py`, QA-/E2E-Reports, Execution Log, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Vercel-/Mays-Orders-Änderung, kein Live-Dispatch.
+- Resume-Punkt: Lokal weiterhin abgeschlossen; Rollout/App-Credentials bleiben blockiert.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
 2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 07 E2E READINESS
 - Typ: E2E-Readiness/Runbook/Test-Issues/Blocker-Dokumentation
 - Status: **IMPLEMENTED / LOCAL VERIFIED / E2E PENDING / BLOCKED FOR LIVE**; kein Live-Dispatch
