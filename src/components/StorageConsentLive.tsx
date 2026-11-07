@@ -8,6 +8,7 @@ import {
   withdrawRisConsent,
   type RisConsent,
 } from "../lib/risConsentApi";
+import { STORAGE_CONSENT_TEXT_VERSION } from "../lib/storageConsent";
 
 /**
  * Live consent controls backed by the RIS consent service through the BFF.
@@ -64,6 +65,11 @@ export default function StorageConsentLive() {
           Die Einwilligungs-Textversion ist noch nicht freigegeben. Die Zustimmung ist gesperrt.
         </p>
       )}
+      <p className="field-hint">
+        <a href="/datenschutz">Datenschutzhinweise zur Bewerbungsspeicherung</a>
+        {` · Angezeigte Textfassung: ${STORAGE_CONSENT_TEXT_VERSION}`}
+        {consent?.noticeVersion ? ` · RIS-Textversion: ${consent.noticeVersion}` : ""}
+      </p>
       <div className="storage-consent__actions">
         <button
           type="button"

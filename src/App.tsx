@@ -2073,7 +2073,7 @@ export default function App() {
   // Profilseite nicht abfangen (Defensiv-Guard zusätzlich zur Route oben).
   // WICHTIG: /auth/callback muss vor diesem Early-Return behandelt werden,
   // damit AuthCallback den OIDC-Flow abwickeln kann.
-  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isDevDashboard && !isDevUiComponents && !isDevDashboardV2 && !isDevDashboardV2Auth) {
+  if (route === "landing" && !isSearching && !isProfile && !isAuthCallback && !isPrivacy && !isPrinciples && !isDevDashboard && !isDevUiComponents && !isDevDashboardV2 && !isDevDashboardV2Auth) {
     return (
       <div className="landing">
         <Navbar route="landing" onNavigate={navigateInApp} />

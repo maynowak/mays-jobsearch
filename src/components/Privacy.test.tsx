@@ -1,9 +1,62 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import Privacy from "./Privacy";
 import { LangProvider } from "../i18n";
 
+const PRIVACY_TEXT = [
+  "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+  "Version 1.1 · Stand: 7. November 2026",
+  "",
+  "Website: https://www.mays-job-matcher.app",
+  "E-Mail: info@mays-job-matcher.app",
+  "",
+  "18. IHRE RECHTE",
+  "",
+  "Sie haben Rechte auf Auskunft und Löschung.",
+].join("\n");
+
+const fetchMock = vi.fn();
+
+beforeEach(() => {
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValue({
+    ok: true,
+    text: async () => PRIVACY_TEXT,
+  } as unknown as Response);
+  vi.stubGlobal("fetch", fetchMock);
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
 describe("Privacy", () => {
+  it("lädt und zeigt die konsolidierte Datenschutzerklärung", async () => {
+    render(
+      <LangProvider>
+        <Privacy />
+      </LangProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/Version 1\.1 · Stand: 7\. November 2026/)).toBeInTheDocument()
+    );
+    expect(
+      screen.getByRole("heading", { level: 1, name: "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "18. IHRE RECHTE" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "https://www.mays-job-matcher.app" })
+    ).toHaveAttribute("href", "https://www.mays-job-matcher.app");
+    expect(
+      screen.getByRole("link", { name: "info@mays-job-matcher.app" })
+    ).toHaveAttribute("href", "mailto:info@mays-job-matcher.app");
+    expect(fetchMock).toHaveBeenCalledWith("/legal/datenschutz.md");
+  });
+
   it("zeigt Link zur Datenschutzerklärung und Prinzipien", () => {
     render(
       <LangProvider>

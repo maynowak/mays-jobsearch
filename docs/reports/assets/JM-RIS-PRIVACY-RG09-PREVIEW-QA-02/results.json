@@ -1,0 +1,74 @@
+{
+  "localDesktop": {
+    "url": "http://127.0.0.1:4173/datenschutz",
+    "status": 200,
+    "title": "May's Job Matcher",
+    "hasVersion11": true,
+    "hasInternalNote": false,
+    "h1": 1,
+    "h2": 1,
+    "h3": 19,
+    "paragraphs": 38,
+    "footerLinks": [
+      "Impressum",
+      "Datenschutz",
+      "Datenschutzprinzipien",
+      "Arbeitnow",
+      "Arbeitsagentur"
+    ],
+    "horizontalOverflow": false,
+    "bodyStart": "May’s Job Matcher\nEN\nDE\nSuche\nAnmelden\nDatenschutz\nDATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER\nVersion 1.1 · Stand: 7. November 2026\n1. VERANTWORTLICHE STELLE\n\nMaymilly Nowak\nPestalozzistraße 16b\n64720 Michelstadt\nDeutschland\nE-Mail: info@mays"
+  },
+  "localMobile": {
+    "url": "http://127.0.0.1:4173/datenschutz",
+    "status": 200,
+    "title": "May's Job Matcher",
+    "hasVersion11": true,
+    "hasInternalNote": false,
+    "h1": 1,
+    "h2": 1,
+    "h3": 19,
+    "paragraphs": 38,
+    "footerLinks": [
+      "Impressum",
+      "Datenschutz",
+      "Datenschutzprinzipien",
+      "Arbeitnow",
+      "Arbeitsagentur"
+    ],
+    "horizontalOverflow": false,
+    "bodyStart": "May’s Job Matcher\nDatenschutz\nDATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER\nVersion 1.1 · Stand: 7. November 2026\n1. VERANTWORTLICHE STELLE\n\nMaymilly Nowak\nPestalozzistraße 16b\n64720 Michelstadt\nDeutschland\nE-Mail: info@mays-job-matcher.app\nWebs"
+  },
+  "previewHtml": {
+    "url": "https://mays-jobsearch-mmvfeuane-maymilly.vercel.app/legal/datenschutz.html",
+    "status": 200,
+    "title": "Datenschutzerklärung – May’s Job Matcher",
+    "hasVersion11": true,
+    "hasInternalNote": false,
+    "h1": 0,
+    "h2": 0,
+    "h3": 0,
+    "paragraphs": 0,
+    "footerLinks": [],
+    "horizontalOverflow": false,
+    "bodyStart": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER\nVersion 1.1 · Stand: 7. November 2026\n\n1. VERANTWORTLICHE STELLE\nMaymilly Nowak\nPestalozzistraße 16b\n64720 Michelstadt\nDeutschland\nE-Mail: info@mays-job-matcher.app\nWebsite: https://www.mays-job-matc"
+  },
+  "previewRoute": {
+    "url": "https://mays-jobsearch-mmvfeuane-maymilly.vercel.app/datenschutz",
+    "status": 200,
+    "title": "Datenschutz",
+    "hasVersion11": false,
+    "hasInternalNote": true,
+    "h1": 0,
+    "h2": 0,
+    "h3": 0,
+    "paragraphs": 0,
+    "footerLinks": [],
+    "horizontalOverflow": true,
+    "bodyStart": "\n\nDATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER\nStand: 10. Oktober 2026\n\n1. VERANTWORTLICHE STELLE\nMaymilly Nowak\nPestalozzistraße 16b\n64720 Michelstadt\nDeutschland\nE-Mail: info@mays-job-matcher.app\nWebsite: https://www.mays-job-matcher.app\n\n2. "
+  },
+  "footerNavigation": {
+    "url": "http://127.0.0.1:4173/datenschutzprinzipien",
+    "title": "May's Job Matcher"
+  }
+}

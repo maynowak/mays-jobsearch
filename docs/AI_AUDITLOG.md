@@ -1,3 +1,14 @@
+2026-11-07 · JM-RIS-PRIVACY-RG09-ALIGNMENT-01
+- Typ: Cross-Repo-Privacy-Konsolidierung/Anzeige/Review
+- Status: CROSS-REPO PRIVACY ALIGNMENT VERIFIED — JOBSEARCH PRIVACY DISPLAY READY — READY FOR CONTROLLED RELEASE (kein Push/Deploy)
+- Version: Datenschutzerklärung 1.1 · Stand 7. November 2026
+- Quellen: `public/legal/datenschutz.md`, `public/legal/datenschutz.html`, `docs/mays_job_matcher_datenschutzerklaerung_1.0.md`, `docs/mays_job_matcher_datenschutzprinzipien.md`, `public/legal/prinzipien.md`, `src/components/Privacy.tsx`, `StorageConsentLive.tsx`, `StorageConsentSection.tsx`, `src/lib/storageConsent.ts`, `docs/contracts/JM-RIS-STORAGE-CONSENT-*`, `docs/DEPLOYMENT.md`; RIS: `RIS-JOBSEARCH-PRIVACY-NOTICE-DRAFT-V1.md`, `CONSENT-V1.md`, `RIS_PRIVACY_DATA_INVENTORY_V1.md`, `RIS_PRIVACY_CAPABILITY_CONTRACT.md`, `RIS-R08-RG09-METRICS-PRIVACY-ASSESSMENT.md`, `USER_PRIVACY_VIEW_SPEC.md`.
+- Konsolidiert: eine öffentliche Fassung; RG-09-Metriken, ApplicationV1, Consent-Versionierung/Widerruf, RIS-Abgrenzung und partielle Lösch-/Retention-Grenzen ergänzt; interne Redaktions-/Freigabevermerke aus der öffentlichen Fassung entfernt; HTML und Markdown synchronisiert.
+- Integration: `/datenschutz` lädt die Markdown-Fassung in `Privacy.tsx` ohne Anmeldung; direkte SPA-Rewrites für `/datenschutz` und `/datenschutzprinzipien`; `StorageConsentLive` verlinkt die Hinweise und zeigt angezeigte Textfassung + RIS-Textversion.
+- Tests: fokussierte Privacy/Consent/Footer-Tests 18/18 PASS; `npm run build` PASS; Vollsuite 1535 passed, 5 skipped, 1 isolierter Flake (`CvBuilderEditorPdf.test.tsx`, isoliert 4/4 PASS). Keine Produktlogik außerhalb der Datenschutzanzeige geändert.
+- Agenten: Jobsearch-Review `ses_e49ea284bffexefbb3iDz6bO2K` PASS; RIS-Review `ses_e49e9b94bffeeqW6GiCOn1Pseq` PASS. Langlaufende Analyse-Sessions liefen in Timeout und wurden nicht als Evidence verwendet.
+- Kein Push, Merge, Deployment, AWS/Terraform/Cognito, keine neuen Secrets/Rechte. Report: `JM-RIS-PRIVACY-RG09-ALIGNMENT-01-CROSS-REPO-REPORT.md` (Workspace/Reports).
+
 2026-11-07 · MAYS-XREPO-ROLLOUT-01D — BRANCH RECONCILIATION
 - Typ: Branch-Reconciliation/Integration-Readiness/Vercel-Klassifikation
 - Status: **READY FOR CONTROLLED PUSH**; kein Push, kein Merge, kein Deployment
@@ -3727,3 +3738,11 @@ configured synthetic test user.
 - Not enabled: `APPLICATION_CONSENT_ENFORCED` (RIS) stays false; production
   access remains limited to the allowlisted synthetic user.
 - No Cognito/CloudFront/DNS/ACM changes, no RIS Terraform apply.
+
+2026-11-07 · JM-RIS-PRIVACY-RG09-PREVIEW-QA-02
+- Typ: Preview-QA/Browser/Mobile/Semantik/Route
+- Status: PRIVACY V1.1 CONTENT VERIFIED — PREVIEW ROUTE FIX READY — RE-PUSH APPROVAL REQUIRED
+- Preview `8d991a7`: `/legal/datenschutz.html` zeigt Version 1.1 ohne internen Vermerk, aber `/datenschutz` wird von der alten statischen `public/datenschutz/index.html` überschattet (Version 1.0, interner Vermerk, `<pre>`, kein Footer, Overflow).
+- Lokale Korrektur `4555521`: alte statische Kopie entfernt, Landing-Early-Return für `/datenschutz` korrigiert, `Privacy.tsx` semantisch (H1/H2/H3, Absätze, Links), HTML semantisch regeneriert, Tests 20/20 PASS, Build PASS, Desktop/Mobil ohne Overflow, Footer-Navigation PASS.
+- PDF-Flake `CvBuilderEditorPdf.test.tsx` im Vollauf separat dokumentiert; isoliert 4/4 PASS.
+- Kein Push, Merge, Deployment, AWS/Terraform/Cognito, keine Flag-Aktivierung, keine Secrets. Report: `docs/reports/JM-RIS-PRIVACY-RG09-PREVIEW-QA-02.md`.
