@@ -4275,3 +4275,36 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
 - Kein Push, Merge, Deploy, keine Env-/Flag-/Notice-/`legalApprovalRef`-
   Änderung; keine RIS-Datei editiert. Keine Rechtsfreigabe, keine Freigabe und
   keine Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 — audit completeness addendum
+
+**Typ:** Documentation / Audit completeness (no new Jobsearch execution)
+**Status:** `V3 REVIEW CLOSED — CANDIDATE, NOT APPROVED, NO LIVE PERSISTENCE`
+
+Ergänzung zu den bestehenden v3-Einträgen; keine Duplikation, kein neuer Code:
+
+- Die Einträge oben decken bereits ab: v3-Text/Version
+  `application-storage-consent-2026-11-07-v3`, SHA-256
+  `696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668`,
+  Art.-9-Absatz und die **nicht vorausgewählte** Checkbox (Commit `9eecf83`),
+  den RIS-Review `2301aee` mit `REWORK_REQUIRED` wegen fehlender
+  Text-/Art.-9-Kopplung sowie den Checkbox-Reset nach Widerruf (`206d26e`,
+  Status `WITHDRAWN` → unchecked, Regrant nur nach erneutem Anhaken).
+- RIS hat die beiden Review-Findings in `3ed915b` behoben:
+  `ART9_EXTERNAL_TEXT_VERSION`/`_SHA256` (nur v3) und
+  `validate_consent_proof`; `specialCategoriesConsent=true` verlangt jetzt
+  zwingend das v3-Textpaar
+  (`EXTERNAL_TEXT_REQUIRED_FOR_SPECIAL_CATEGORIES`) und lehnt historische
+  v2/v1-Texte als Art.-9-Proof ab (`EXTERNAL_TEXT_NOT_ART9`). Nicht-Art.-9-
+  Grants dürfen weiterhin historische Texte tragen. Damit ist der frühere
+  REWORK-Befund geschlossen; Re-Review-Ergebnis: **PASS**.
+- RIS-Verifikation (read-only, lokal): `tests/test_consent_special_categories.py`
+  = **33 passed**; mit Catalog- und Pilot-Allowlist-Suite
+  (`tests/test_consent_special_categories.py`,
+  `tests/test_consent_notice_catalog_contract.py`,
+  `tests/test_consent_pilot_allowlist.py`) = **73 passed**. Notice
+  `application-storage/1.0` bleibt `DRAFT`, `legalApprovalRef=null`; keine
+  Env-/Terraform-/Notice-/Deploy-Änderung im Review.
+- Keine Rechtsfreigabe, keine Aktivierung, kein Push/Merge/Deploy und keine
+  Live-Persistenz behauptet. Jobsearch-Commit `9eecf83` (v3) und `206d26e`
+  (Checkbox-Reset) bleiben lokal.
