@@ -1,3 +1,18 @@
+2026-11-07 · MAYS-XREPO-ROLLOUT-01D — BRANCH RECONCILIATION
+- Typ: Branch-Reconciliation/Integration-Readiness/Vercel-Klassifikation
+- Status: **READY FOR CONTROLLED PUSH**; kein Push, kein Merge, kein Deployment
+- Audit-Zeitpunkt: 2026-11-07 (Europe/Berlin)
+- Git-Baseline: Jobsearch-Feature `0ab510a`, `origin/main` `a2225c4`; Merge `bd2c406`; 0 behind, 12 lokale Commits vor `origin/feature`.
+- Konflikt: nur `docs/AI_AUDITLOG.md`; beide Seiten (XRepo-Einträge + neue Main-Einträge) vollständig erhalten.
+- Change Surface: nur `.github/workflows/xrepo-*`, `scripts/xrepo/*`, `docs/xrepo/*`, XRepo-Reports und Auditlog; keine Produkt-/API-/Terraform-Änderung.
+- Tests: `./scripts/xrepo/run_local_qa.sh` → **69/69 PASS**, 0 FAIL, 0 SKIP; JSON/YAML/diff PASS.
+- Vercel: Preview-Fehler war `exceeded_serverless_functions_per_deployment` (`patchBuild`, max. 12 Hobby-Funktionen), kein Buildfehler. Main-Fix `40356e6`; Production-Deployment `dpl_uAqHQqbs3yDYY6gkqqx3xaoA843Y` @ `a2225c4` READY mit 12 Funktionen; Branch enthält den Fix. Preview-Re-Run nicht ausgeführt (kein Push).
+- App-Auth: bestehender Nachweis `42272286516` wiederverwendet; keine erneute Prüfung; Secrets unverändert in beiden Repos.
+- Side Effects beim späteren Push: Jobsearch Vercel Preview (erwartet READY, nicht verifiziert); RIS `ci-cd.yml` kann 0-Job-Fehler auslösen; kein Live-Dispatch.
+- Bestätigung: kein Push, kein Merge, kein Deployment, kein Live-Dispatch, keine AWS-/Terraform-/Cognito-/Vercel-Konfigurationsänderung, keine Branch-Löschung.
+- Bericht: `docs/reports/MAYS-XREPO-ROLLOUT-01D-INTEGRATION-REPORT.md`.
+- Resume-Punkt: separate Push-Freigabe; danach PR-Mergeability + Vercel-Preview + RIS-CI prüfen.
+
 2026-11-06 · MAYS-XREPO-ROLLOUT-01B — APP AUTH VERIFICATION
 - Typ: GitHub-App-Authentifizierung/Token-/Permissions-Prüfung
 - Status: **NOT VERIFIED** für Token-Ausstellung/Permissions; Rollout **BLOCKED**
