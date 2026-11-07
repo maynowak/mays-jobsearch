@@ -148,15 +148,19 @@ Consent and application storage are independently activated. `RIS_CONSENT_SERVIC
 `RIS_CONSENT_NOTICE_VERSION` is only a mapping from this app to a RIS notice version. It is **not** an approval and must never be treated as one. Before reporting `grantAllowed` and again immediately before writing a grant, the BFF reads the live catalogue from `GET /v1/partner/me/consents` and requires the catalogue entry for the configured version to satisfy all of:
 
 - the entry exists for `purpose=application-storage` and `noticeVersion` equals the server-configured value,
-- `noticeState` is `ACTIVE`,
+- `noticeState` is `APPROVED` or `ACTIVE` (RIS `GRANTABLE_NOTICE_STATES`),
 - `noticeApproved` is boolean `true`,
 - `acceptedForNewGrant` is boolean `true`.
 
-Anything else fails closed: missing or malformed catalogue, unknown/changed version, `DRAFT` state, non-boolean approval flags, RIS error or timeout. `GET /api/ris/consents` returns `noticeVersion`, `noticeState`, `noticeApproved`, `acceptedForNewGrant`, `grantAllowed` and `noticeReason` so the UI can explain the block; legal approval references are never returned.
+The state check is load-bearing: with RIS `CONSENT_NOTICE_STATE_ENFORCED=false`, a `DRAFT` notice reports `acceptedForNewGrant: true` and a `SUPERSEDED` notice reports `noticeApproved: true` **and** `acceptedForNewGrant: true`. The flags alone would therefore accept a superseded notice; `DRAFT` and `SUPERSEDED` are rejected by the state check regardless of the flags.
+
+Anything else fails closed: missing or malformed catalogue, unknown/changed version, `DRAFT`/`SUPERSEDED` state, non-boolean approval flags, RIS error or timeout. `GET /api/ris/consents` returns `noticeVersion`, `noticeState`, `noticeApproved`, `acceptedForNewGrant`, `grantAllowed` and `noticeReason` so the UI can explain the block; legal approval references are never returned.
 
 Blocked grants use `409` for notice-state reasons (`notice_not_active`, `notice_not_approved`, `notice_not_accepted`, `notice_version_unknown`) and `503` for `notice_version_not_mapped`, `notice_catalog_invalid` or `notice_catalog_unavailable`. A blocked grant never calls the RIS grant endpoint. Withdrawal stays available regardless of notice state.
 
 Activation implication: setting `RIS_CONSENT_NOTICE_VERSION=1.0` while RIS keeps notice `1.0` in `DRAFT` leaves grants blocked. That is the intended fail-closed behaviour. Do not work around it by enabling other flags, editing the browser code or changing the version; the RIS notice must be approved and opened for new grants first. The privacy policy release version is independent of the consent notice version.
+
+**Defence in depth is currently incomplete on the RIS side.** RIS reads `CONSENT_NOTICE_STATE_ENFORCED` in code but does **not** wire it in Terraform, so it defaults to `false` in deployment and the RIS grant endpoint accepts a known version regardless of notice state. Until RIS wires and enables that flag, the Jobsearch BFF is the only effective notice-approval barrier. Do not change Terraform or the RIS flag from this repository; treat it as an RIS activation blocker.
 
 ## Add an environment variable (CLI)
 

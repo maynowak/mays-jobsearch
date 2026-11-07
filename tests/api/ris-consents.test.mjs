@@ -31,6 +31,9 @@ const ACTIVE_NOTICE = {
   legalApprovalRef: "internal-legal-ref-must-not-leak",
 };
 
+const APPROVED_NOTICE = { ...ACTIVE_NOTICE, noticeState: "APPROVED" };
+const SUPERSEDED_NOTICE = { ...ACTIVE_NOTICE, noticeState: "SUPERSEDED" };
+
 function b64u(value) {
   return Buffer.from(value).toString("base64url");
 }
@@ -187,6 +190,48 @@ describe("/api/ris/consents", () => {
     expect(res.body.noticeReason).toBeNull();
   });
 
+  it("gibt eine APPROVED-Notice frei (RIS GRANTABLE_NOTICE_STATES)", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    getResponse = response(200, { items: consentItems(), catalog: [APPROVED_NOTICE] });
+    const res = makeRes();
+    await handler(request("GET"), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.noticeState).toBe("APPROVED");
+    expect(res.body.noticeApproved).toBe(true);
+    expect(res.body.acceptedForNewGrant).toBe(true);
+    expect(res.body.grantAllowed).toBe(true);
+    expect(res.body.noticeReason).toBeNull();
+  });
+
+  it("sperrt SUPERSEDED trotz gesetzter Freigabe-Flags", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    getResponse = response(200, { items: consentItems(), catalog: [SUPERSEDED_NOTICE] });
+    const res = makeRes();
+    await handler(request("GET"), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.noticeState).toBe("SUPERSEDED");
+    // RIS reports both flags true while CONSENT_NOTICE_STATE_ENFORCED=false;
+    // only the state check blocks this entry.
+    expect(res.body.noticeApproved).toBe(true);
+    expect(res.body.acceptedForNewGrant).toBe(true);
+    expect(res.body.grantAllowed).toBe(false);
+    expect(res.body.noticeReason).toBe("notice_not_active");
+  });
+
+  it("sperrt ein DRAFT mit gesetzten Freigabe-Flags", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    getResponse = response(200, {
+      items: consentItems(),
+      catalog: [{ ...DRAFT_NOTICE, noticeApproved: true, acceptedForNewGrant: true }],
+    });
+    const res = makeRes();
+    await handler(request("GET"), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.noticeState).toBe("DRAFT");
+    expect(res.body.grantAllowed).toBe(false);
+    expect(res.body.noticeReason).toBe("notice_not_active");
+  });
+
   it("sperrt ACTIVE ohne rechtliche Freigabe", async () => {
     process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
     getResponse = response(200, {
@@ -265,6 +310,16 @@ describe("/api/ris/consents", () => {
     expect(callsByMethod("POST")).toHaveLength(0);
   });
 
+  it("weist einen Grant bei SUPERSEDED-Notice ab, ohne RIS-Grant aufzurufen", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    getResponse = response(200, { items: consentItems(), catalog: [SUPERSEDED_NOTICE] });
+    const res = makeRes();
+    await handler(request("POST", { body: { purpose: "application-storage" } }), res);
+    expect(res.statusCode).toBe(409);
+    expect(res.body.code).toBe("notice_not_active");
+    expect(callsByMethod("POST")).toHaveLength(0);
+  });
+
   it("weist einen Grant bei unbekannter Version ab, ohne RIS-Grant aufzurufen", async () => {
     process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
     getResponse = response(200, {
@@ -303,6 +358,16 @@ describe("/api/ris/consents", () => {
     expect(sent.purpose).toBe("application-storage");
     expect(sent.noticeVersion).toBe("1.0");
     expect(sent.noticeVersion).not.toBe("9.9");
+  });
+
+  it("sendet bei einer APPROVED-Notice die serverseitige Version an RIS", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    getResponse = response(200, { items: consentItems(), catalog: [APPROVED_NOTICE] });
+    const res = makeRes();
+    await handler(request("POST", { body: { purpose: "application-storage" } }), res);
+    expect(res.statusCode).toBe(200);
+    const grantCall = callsByMethod("POST")[0];
+    expect(JSON.parse(grantCall[1].body).noticeVersion).toBe("1.0");
   });
 
   it("fällt bei RIS-Statusfehler geschlossen zu und schreibt keinen Grant", async () => {
@@ -354,6 +419,35 @@ describe("evaluateNoticeGrant", () => {
     );
     expect(notice.grantAllowed).toBe(false);
     expect(notice.noticeReason).toBe("notice_not_active");
+  });
+
+  it("blockiert SUPERSEDED trotz noticeApproved und acceptedForNewGrant", () => {
+    const notice = evaluateNoticeGrant(
+      { catalog: [SUPERSEDED_NOTICE] },
+      { noticeVersion: "1.0", purpose: "application-storage" },
+    );
+    expect(notice.noticeApproved).toBe(true);
+    expect(notice.acceptedForNewGrant).toBe(true);
+    expect(notice.grantAllowed).toBe(false);
+    expect(notice.noticeReason).toBe("notice_not_active");
+  });
+
+  it("akzeptiert APPROVED und ACTIVE, aber keinen anderen Zustand", () => {
+    for (const state of ["APPROVED", "ACTIVE"]) {
+      const notice = evaluateNoticeGrant(
+        { catalog: [{ ...ACTIVE_NOTICE, noticeState: state }] },
+        { noticeVersion: "1.0", purpose: "application-storage" },
+      );
+      expect(notice.grantAllowed).toBe(true);
+    }
+    for (const state of ["DRAFT", "SUPERSEDED", "PUBLISHED", "UNKNOWN"]) {
+      const notice = evaluateNoticeGrant(
+        { catalog: [{ ...ACTIVE_NOTICE, noticeState: state }] },
+        { noticeVersion: "1.0", purpose: "application-storage" },
+      );
+      expect(notice.grantAllowed).toBe(false);
+      expect(notice.noticeReason).toBe("notice_not_active");
+    }
   });
 
   it("ignoriert Katalogeinträge für andere Zwecke", () => {

@@ -131,15 +131,16 @@ function label(status: string): string {
 
 function stateLabel(state: string): string {
   if (state === "ACTIVE") return "freigegeben";
+  if (state === "APPROVED") return "rechtlich freigegeben";
   if (state === "DRAFT") return "Entwurf";
-  if (state === "RETIRED") return "zurückgezogen";
+  if (state === "SUPERSEDED") return "ersetzt";
   return "unbekannt";
 }
 
 function reasonOf(reason: string): string {
   if (reason === "notice_version_not_mapped") return "Für diese App ist noch keine Textversion hinterlegt.";
   if (reason === "notice_version_unknown") return "Die hinterlegte Textversion ist bei RIS nicht veröffentlicht.";
-  if (reason === "notice_not_active") return "Die RIS-Textversion ist noch nicht aktiv.";
+  if (reason === "notice_not_active") return "Die RIS-Textversion ist weder freigegeben (APPROVED) noch aktiv (ACTIVE).";
   if (reason === "notice_not_approved") return "Die RIS-Textversion ist noch nicht rechtlich freigegeben.";
   if (reason === "notice_not_accepted") return "Die RIS-Textversion ist noch nicht für neue Zustimmungen geöffnet.";
   return "Der Freigabestatus konnte nicht geprüft werden.";

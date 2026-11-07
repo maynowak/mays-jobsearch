@@ -3,12 +3,13 @@
 // A configured notice version (RIS_CONSENT_NOTICE_VERSION) is only a mapping,
 // not an approval. RIS publishes the notice catalogue on the partner consent
 // endpoint. A grant is allowed only when the catalogue entry for the configured
-// version is present, its state is ACTIVE, RIS marks it approved and RIS marks
-// it accepted for new grants. Every other case fails closed.
+// version is present, its state is APPROVED or ACTIVE (RIS GRANTABLE_NOTICE_STATES),
+// RIS marks it approved and RIS marks it accepted for new grants. Every other
+// case fails closed.
 
 import { RisClientError, risRequest } from "./client.mjs";
 
-const ACTIVE_STATE = "ACTIVE";
+const ACTIVE_STATES = new Set(["APPROVED", "ACTIVE"]);
 const UNKNOWN_STATE = "UNKNOWN";
 
 function normalizeState(value) {
@@ -78,7 +79,7 @@ export function evaluateNoticeGrant(data, { noticeVersion, purpose } = {}) {
     noticeReason: null,
   };
 
-  if (entry.noticeState.toUpperCase() !== ACTIVE_STATE) {
+  if (!ACTIVE_STATES.has(entry.noticeState.toUpperCase())) {
     return { ...evaluated, noticeReason: "notice_not_active" };
   }
   if (!entry.noticeApproved) return { ...evaluated, noticeReason: "notice_not_approved" };
@@ -144,7 +145,7 @@ export function noticeMessage(reason) {
     return "The configured consent notice version is not published by RIS";
   }
   if (reason === "notice_not_active") {
-    return "The consent notice is not active yet";
+    return "The consent notice is not in a grantable state (APPROVED or ACTIVE)";
   }
   if (reason === "notice_not_approved") {
     return "The consent notice is not legally approved yet";

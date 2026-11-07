@@ -3825,3 +3825,40 @@ configured synthetic test user.
 - Kein Push, Merge, Deploy, keine Vercel-Env-Änderung, keine Secrets, keine
   RIS-Dateien. Produktionswirkung: Bei aktuell gesetzter Version `1.0` und
   DRAFT-Notice bleiben Grants gesperrt, bis RIS die Notice freigibt.
+
+## 2026-11-07 — JM-RIS-STORAGE-ACTIVATION-01 Rework (RIS contract review R1–R3)
+
+**Typ:** Rework / Consent gate / Contract alignment / Documentation
+**Status:** LOCAL IMPLEMENTED — NOT DEPLOYED, NO LIVE PERSISTENCE EVIDENCE
+
+- Auslöser: RIS-Vertragsprüfung (`REWORK_REQUIRED`). RIS definiert
+  `GRANTABLE_NOTICE_STATES = {APPROVED, ACTIVE}`; die Jobsearch-Gate akzeptierte
+  nur `ACTIVE` und blockierte damit den legitimen Zwischenzustand `APPROVED`.
+- R1 (Code): `api/_lib/ris/consentNotice.mjs` akzeptiert jetzt `APPROVED` oder
+  `ACTIVE`; `DRAFT`, `SUPERSEDED` und unbekannte Zustände bleiben gesperrt.
+  `noticeApproved === true` und `acceptedForNewGrant === true` bleiben strikt
+  erforderlich; Fail-closed-Verhalten, Katalog-Precheck vor dem Grant und
+  Widerruf unverändert.
+- R2 (Dokumentation): A→B-Evidenz korrigiert. Mit
+  `CONSENT_NOTICE_STATE_ENFORCED=false` (aktueller Deployment-Stand) meldet
+  `DRAFT` `acceptedForNewGrant: true`; `SUPERSEDED` meldet zusätzlich
+  `noticeApproved: true`. Beide Flags allein würden `SUPERSEDED` akzeptieren —
+  die `noticeState`-Prüfung ist die tragende Sperre. `DRAFT` und `SUPERSEDED`
+  sind unabhängig von den Flags blockiert.
+- R3 (Koordination): `CONSENT_NOTICE_STATE_ENFORCED` ist bei RIS nicht in
+  Terraform verdrahtet und im Deployment `false`; die RIS-seitige
+  Notice-Enforcement ist inaktiv. Der Jobsearch-BFF ist derzeit die einzige
+  Notice-Barriere. Keine Terraform-/Flag-Änderung in diesem Repository;
+  dokumentiert als RIS-Aktivierungsblocker.
+- AI-/Privacy-/Data-Flow impact: keine neue AI-/Speicher-/Datenflussänderung.
+  Die Freigabegrenze wird vertragskonform präzisiert (mehr legitime Zustände
+  erlaubt, dieselben Sperren bleiben). Datenschutztext v1.1 unverändert.
+- Tests: `tests/api/ris-consents.test.mjs` erweitert (APPROVED erlaubt,
+  SUPERSEDED mit gesetzten Flags blockiert, DRAFT mit gesetzten Flags
+  blockiert, APPROVED-POST sendet Serverversion; reine Helper-Fälle für
+  Zustandsmatrix); bestehende Auth-/Allowlist-/Config-Tests unverändert.
+  `StorageConsentLive.test.tsx` prüft weiterhin den DRAFT-Hinweis.
+- Evidenz: `docs/reports/agent-evidence/JM-RIS-STORAGE-ACTIVATION-01-jobsearch-requirements.md`
+  (§3 Zustands-/Flag-Matrix, §7 R1–R3-Status), `docs/DEPLOYMENT.md`.
+- Kein Push, Merge, Deploy, keine Vercel-Env-Änderung, keine Secrets, keine
+  RIS-/Terraform-/AWS-Datei.

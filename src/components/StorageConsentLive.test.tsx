@@ -105,7 +105,7 @@ describe("StorageConsentLive", () => {
     expect(screen.getByRole("button", { name: "Speicherung zustimmen" })).toBeDisabled();
     expect(screen.getByText(/noch nicht freigegeben/)).toBeInTheDocument();
     expect(screen.getByText(/RIS-Status: Entwurf \(DRAFT\)/)).toBeInTheDocument();
-    expect(screen.getByText(/noch nicht aktiv/)).toBeInTheDocument();
+    expect(screen.getByText(/weder freigegeben/)).toBeInTheDocument();
     expect(screen.getByText(/RIS-Textversion: 1.0/)).toBeInTheDocument();
   });
 });
