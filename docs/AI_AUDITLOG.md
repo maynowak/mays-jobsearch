@@ -4069,3 +4069,36 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
 - Keine Code-, Env-, Secret-, Notice-, Deploy-, Apply- oder Push-Änderung; keine
   Live-Persistenz und keine Notice-Freigabe behauptet. Details:
   `docs/reports/JM-RIS-STORAGE-PILOT-04-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Phase A (consent text v2)
+
+**Typ:** Implementation / Consent text revision / Audit
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Einwilligungstext erweitert: Der Absatz zu den gespeicherten Daten nennt
+  jetzt zusätzlich ausdrücklich **Bewerbungsstatus**, **Statusänderungen** und
+  **Statusverlauf**. Alle übrigen Aussagen bleiben unverändert.
+- Neue Textversion `application-storage-consent-2026-11-07-v2`; neuer
+  SHA-256 (UTF-8 über `paragraphs.join("\n\n")`):
+  `232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca`.
+  Die alte Fassung `application-storage-consent-2026-11-07-v1`
+  (SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`)
+  bleibt nur als historischer Kandidat dokumentiert und darf nicht konfiguriert
+  werden.
+- Angepasst: `src/lib/applicationStorageConsent.ts` (Version, Hash,
+  Textabsatz, Historienkonstante), `api/_lib/ris/consentText.mjs`
+  (Server-Identität), Tests (`storageConsent.test.ts`,
+  `StorageConsentLive.test.tsx`) und `docs/DEPLOYMENT.md` (aktuelle
+  Env-Werte). Client/BFF-Mapping-Gate, Volltextanzeige,
+  server-autoritativer Textstatus, `DRAFT`-Kandidatenstatus und alle
+  rechtlichen Vorbehalte bleiben unverändert.
+- Zustand weiterhin `DRAFT`: **keine** Rechtsfreigabe, **kein**
+  `legalApprovalRef`, **keine** Zuordnung zu RIS `application-storage/1.0`,
+  RIS-Notice unverändert `DRAFT`.
+- Tests (fokussiert, real): `storageConsent.test.ts` +
+  `StorageConsentLive.test.tsx` = 2 Dateien / 15 Tests PASS;
+  `ris-consents.test.mjs` + `ris-config-separation.test.mjs` = 2 Dateien /
+  44 Tests PASS; `npm run build` PASS; `git diff --check` ohne Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice- oder
+  `legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Live-Persistenz behauptet.

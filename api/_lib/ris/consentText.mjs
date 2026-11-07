@@ -5,7 +5,7 @@
 // the operator must configure exactly these values through environment
 // variables before a grant is allowed:
 //
-//   RIS_CONSENT_TEXT_VERSION = application-storage-consent-2026-11-07-v1
+//   RIS_CONSENT_TEXT_VERSION = application-storage-consent-2026-11-07-v2
 //   RIS_CONSENT_TEXT_SHA256  = <canonical SHA-256>
 //   RIS_CONSENT_TEXT_STATE   = APPROVED  (only after operator/legal approval)
 //
@@ -13,9 +13,9 @@
 // `src/lib/storageConsent.test.ts` asserts that this module and the client
 // module agree.
 
-export const CONSENT_TEXT_VERSION = "application-storage-consent-2026-11-07-v1";
+export const CONSENT_TEXT_VERSION = "application-storage-consent-2026-11-07-v2";
 export const CONSENT_TEXT_SHA256 =
-  "2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953";
+  "232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca";
 
 export const CONSENT_TEXT_STATE_APPROVED = "APPROVED";
 export const CONSENT_TEXT_STATE_DRAFT = "DRAFT";

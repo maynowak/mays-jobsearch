@@ -15,6 +15,7 @@ import {
   APPLICATION_STORAGE_CONSENT_RIS_NOTICE_VERSION,
   APPLICATION_STORAGE_CONSENT_STATE,
   APPLICATION_STORAGE_CONSENT_TEXT,
+  APPLICATION_STORAGE_CONSENT_TEXT_HISTORY,
   APPLICATION_STORAGE_CONSENT_TEXT_SHA256,
   APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
 } from "./applicationStorageConsent";
@@ -73,12 +74,28 @@ describe("APPLICATION-STORAGE consent text (candidate)", () => {
       APPLICATION_STORAGE_CONSENT_PARAGRAPHS.join("\n\n")
     );
     expect(APPLICATION_STORAGE_CONSENT_TEXT_VERSION).toBe(
-      "application-storage-consent-2026-11-07-v1"
+      "application-storage-consent-2026-11-07-v2"
     );
     expect(APPLICATION_STORAGE_CONSENT_PURPOSE).toBe("application-storage");
     expect(APPLICATION_STORAGE_CONSENT_RIS_NOTICE_VERSION).toBe("1.0");
     expect(APPLICATION_STORAGE_CONSENT_PRIVACY_POLICY_VERSION).toBe("1.1");
     expect(APPLICATION_STORAGE_CONSENT_STATE).toBe("DRAFT");
+  });
+
+  it("keeps the superseded v1 candidate as history with its own hash", () => {
+    expect(APPLICATION_STORAGE_CONSENT_TEXT_HISTORY).toEqual([
+      {
+        version: "application-storage-consent-2026-11-07-v1",
+        sha256: "2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953",
+        state: "DRAFT",
+      },
+    ]);
+    expect(APPLICATION_STORAGE_CONSENT_TEXT_HISTORY.map((entry) => entry.version)).not.toContain(
+      APPLICATION_STORAGE_CONSENT_TEXT_VERSION
+    );
+    expect(APPLICATION_STORAGE_CONSENT_TEXT_HISTORY.map((entry) => entry.sha256)).not.toContain(
+      APPLICATION_STORAGE_CONSENT_TEXT_SHA256
+    );
   });
 
   it("publishes the exact SHA-256 of the canonical UTF-8 text", () => {
@@ -94,6 +111,9 @@ describe("APPLICATION-STORAGE consent text (candidate)", () => {
     expect(text).toContain("Bewerbungen mit Stellenbezug");
     expect(text).toContain("Anschreiben-Versionen");
     expect(text).toContain("Dokumentstatus");
+    expect(text).toContain("Bewerbungsstatus");
+    expect(text).toContain("Statusänderungen");
+    expect(text).toContain("Statusverlauf");
     expect(text).toContain("CV- und Suchprofile");
     expect(text).toContain("Kontaktangaben");
     expect(text).toContain("Notizen");

@@ -13,7 +13,19 @@
  */
 
 export const APPLICATION_STORAGE_CONSENT_TEXT_VERSION =
-  "application-storage-consent-2026-11-07-v1" as const;
+  "application-storage-consent-2026-11-07-v2" as const;
+
+/**
+ * Superseded candidates kept for audit traceability. Historical hashes must
+ * never be reused for a new text.
+ */
+export const APPLICATION_STORAGE_CONSENT_TEXT_HISTORY = [
+  {
+    version: "application-storage-consent-2026-11-07-v1",
+    sha256: "2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953",
+    state: "DRAFT",
+  },
+] as const;
 
 export const APPLICATION_STORAGE_CONSENT_PURPOSE = "application-storage" as const;
 
@@ -27,7 +39,7 @@ export const APPLICATION_STORAGE_CONSENT_PRIVACY_POLICY_VERSION = "1.1" as const
 
 export const APPLICATION_STORAGE_CONSENT_PARAGRAPHS = [
   "Ich willige ein, dass der RIS-Speicherdienst meine Bewerbungsdaten im nachfolgend beschriebenen Umfang dauerhaft speichert, damit ich sie später abrufen, bearbeiten, exportieren und löschen kann. Diese Einwilligung gilt ergänzend zu den Datenschutzhinweisen unter /datenschutz (Datenschutzrichtlinie Version 1.1 vom 7. November 2026) und ersetzt diese nicht.",
-  "Gespeichert werden: meine Bewerbungen mit Stellenbezug (jobId, Titel, Unternehmen, Ort, Quelle und URL), meine Anschreiben und Anschreiben-Versionen, der Dokumentstatus, Verweise auf ausgewählte CV- und Suchprofile sowie Bewerbungsdatum und -kanal, Kontaktangaben, Notizen, Gehaltsvorstellung und -angebot, Wiedervorlagen und Verlaufsereignisse (Feedback, Interview, Notizen).",
+  "Gespeichert werden: meine Bewerbungen mit Stellenbezug (jobId, Titel, Unternehmen, Ort, Quelle und URL), meine Anschreiben und Anschreiben-Versionen, der Dokumentstatus, der Bewerbungsstatus, Statusänderungen und der Statusverlauf, Verweise auf ausgewählte CV- und Suchprofile sowie Bewerbungsdatum und -kanal, Kontaktangaben, Notizen, Gehaltsvorstellung und -angebot, Wiedervorlagen und Verlaufsereignisse (Feedback, Interview, Notizen).",
   "Nicht gespeichert werden durch diese Einwilligung: PDF-Dateien, im Browser ausgelesene CV-Texte, KI-Prompts oder Provider-Nutzlasten. Verweise auf CV- und Suchprofile verweisen nur auf die jeweilige Ressource und enthalten keine Dokumentkopie.",
   "Der Zweck der Speicherung ist ausschließlich der spätere Abruf, die Änderung, der Export und die Löschung der ausgewählten Bewerbungsdaten durch mich.",
   "RIS ist der Speicherdienst; die Daten liegen in der bestehenden RIS-/AWS-Infrastruktur. Diese Einwilligung betrifft keine KI-Analyse und keine Übermittlung an KI- oder sonstige Provider. Eine Einwilligung in eine KI-Verarbeitung ist nicht Teil dieser Erklärung und wird durch sie nicht erteilt.",
@@ -44,4 +56,4 @@ export const APPLICATION_STORAGE_CONSENT_TEXT = APPLICATION_STORAGE_CONSENT_PARA
  * (`RIS_CONSENT_TEXT_SHA256`) before a grant can be allowed.
  */
 export const APPLICATION_STORAGE_CONSENT_TEXT_SHA256 =
-  "2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953";
+  "232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca";

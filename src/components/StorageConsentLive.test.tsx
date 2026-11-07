@@ -97,7 +97,7 @@ describe("StorageConsentLive", () => {
     render(<StorageConsentLive />);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
-    expect(screen.getByText(/application-storage-consent-2026-11-07-v1/)).toBeInTheDocument();
+    expect(screen.getByText(/application-storage-consent-2026-11-07-v2/)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(SHORT_HASH.replace("…", ".")))).toBeInTheDocument();
     expect(screen.getByText(/Textstatus: rechtlich freigegeben \(APPROVED\)/)).toBeInTheDocument();
     // The code constant is provenance only; an approved server state must not

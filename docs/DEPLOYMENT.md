@@ -165,8 +165,8 @@ The Jobsearch side additionally binds the consent to the exact declaration text 
 
 | Item | Value |
 | --- | --- |
-| Text version | `application-storage-consent-2026-11-07-v1` |
-| SHA-256 (UTF-8, `paragraphs.join("\n\n")`) | `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953` |
+| Text version | `application-storage-consent-2026-11-07-v2` |
+| SHA-256 (UTF-8, `paragraphs.join("\n\n")`) | `232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca` |
 | Purpose | `application-storage` |
 | RIS notice version | `1.0` |
 | State | `DRAFT` / candidate for operator approval |
@@ -183,7 +183,7 @@ Blocked grants use `409` for notice-state reasons (`notice_not_active`, `notice_
 
 Activation implication: setting `RIS_CONSENT_NOTICE_VERSION=1.0` while RIS keeps notice `1.0` in `DRAFT` leaves grants blocked, and so does an absent, `DRAFT` or mismatching text mapping. That is the intended fail-closed behaviour. Do not work around it by enabling other flags, editing the browser code or changing the version; both the RIS notice and the Jobsearch text mapping must be explicitly approved first. The privacy policy release version is independent of the consent notice version.
 
-**RIS-DEV activation sequence (separate operator GO required):** (1) approve the exact consent text and the RIS notice `application-storage/1.0`, set the RIS notice to `APPROVED`/`ACTIVE` with a real `legalApprovalRef`; (2) set `RIS_CONSENT_NOTICE_VERSION=1.0`, `RIS_CONSENT_TEXT_VERSION=application-storage-consent-2026-11-07-v1`, `RIS_CONSENT_TEXT_SHA256=2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953` and `RIS_CONSENT_TEXT_STATE=APPROVED` in the target environment; (3) enable RIS `CONSENT_NOTICE_STATE_ENFORCED=true`; (4) grant a synthetic consent; (5) enable `APPLICATION_CONSENT_ENFORCED=true` for the write gate. Keep the allowlist restricted to the synthetic test identity and do not enable production `VITE_RIS_APPLICATION_STORAGE_ENABLED` for the general audience.
+**RIS-DEV activation sequence (separate operator GO required):** (1) approve the exact consent text and the RIS notice `application-storage/1.0`, set the RIS notice to `APPROVED`/`ACTIVE` with a real `legalApprovalRef`; (2) set `RIS_CONSENT_NOTICE_VERSION=1.0`, `RIS_CONSENT_TEXT_VERSION=application-storage-consent-2026-11-07-v2`, `RIS_CONSENT_TEXT_SHA256=232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca` and `RIS_CONSENT_TEXT_STATE=APPROVED` in the target environment; (3) enable RIS `CONSENT_NOTICE_STATE_ENFORCED=true`; (4) grant a synthetic consent; (5) enable `APPLICATION_CONSENT_ENFORCED=true` for the write gate. Keep the allowlist restricted to the synthetic test identity and do not enable production `VITE_RIS_APPLICATION_STORAGE_ENABLED` for the general audience. The superseded candidate `application-storage-consent-2026-11-07-v1` (SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`) is historical only and must not be configured.
 
 **Defence in depth status.** RIS wired `CONSENT_NOTICE_STATE_ENFORCED` into Terraform in `81634d8`, but the variable defaults to `false` and is not enabled in any deployed environment. Until it is explicitly enabled, the Jobsearch BFF gate is the only effective notice-approval barrier.
 
