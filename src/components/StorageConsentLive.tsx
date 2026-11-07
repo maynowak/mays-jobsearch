@@ -121,10 +121,12 @@ export default function StorageConsentLive() {
         <p className="field-hint storage-consent__text-meta">
           {`Textfassung: ${APPLICATION_STORAGE_CONSENT_TEXT_VERSION}`}
           {` · SHA-256: ${shortHash}`}
-          {` · Status: ${stateLabel(APPLICATION_STORAGE_CONSENT_STATE)} (${APPLICATION_STORAGE_CONSENT_STATE})`}
           {textState
-            ? ` · Server-Zuordnung: ${stateLabel(textState)} (${textState})`
-            : " · Server-Zuordnung: nicht konfiguriert"}
+            ? ` · Textstatus: ${stateLabel(textState)} (${textState})`
+            : " · Textstatus: nicht konfiguriert"}
+          {!textApproved
+            ? ` · ${candidateLabel(APPLICATION_STORAGE_CONSENT_STATE)}`
+            : ""}
           {textMappingMatches ? " · Version/Hash stimmen überein" : " · Version/Hash stimmen nicht überein"}
         </p>
       </div>
@@ -185,6 +187,16 @@ function stateLabel(state: string): string {
   if (state === "DRAFT") return "Entwurf";
   if (state === "SUPERSEDED") return "ersetzt";
   return "unbekannt";
+}
+
+/**
+ * The client constant describes provenance, not approval. Never present it as a
+ * DRAFT "status" next to an approved server state; only call it a candidate
+ * while the server has not approved the mapping.
+ */
+function candidateLabel(state: string): string {
+  if (state === "DRAFT") return "Text-Kandidat (Kandidat für Betreiberfreigabe)";
+  return "bekannte Textfassung";
 }
 
 function reasonOf(reason: string): string {

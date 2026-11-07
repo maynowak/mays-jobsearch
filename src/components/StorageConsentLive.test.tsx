@@ -99,8 +99,11 @@ describe("StorageConsentLive", () => {
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
     expect(screen.getByText(/application-storage-consent-2026-11-07-v1/)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(SHORT_HASH.replace("…", ".")))).toBeInTheDocument();
-    expect(screen.getByText(/Status: Entwurf \(DRAFT\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Server-Zuordnung: rechtlich freigegeben \(APPROVED\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Textstatus: rechtlich freigegeben \(APPROVED\)/)).toBeInTheDocument();
+    // The code constant is provenance only; an approved server state must not
+    // be contradicted by a client-side DRAFT label.
+    expect(screen.queryByText(/Entwurf \(DRAFT\)/)).toBeNull();
+    expect(screen.queryByText(/Text-Kandidat/)).toBeNull();
     expect(
       screen.getByRole("link", { name: "Datenschutzhinweise zur Bewerbungsspeicherung" })
     ).toHaveAttribute("href", "/datenschutz");
@@ -122,7 +125,10 @@ describe("StorageConsentLive", () => {
     expect(screen.getByRole("button", { name: "Speicherung zustimmen" })).toBeDisabled();
     expect(screen.getByText(/noch nicht freigegeben/)).toBeInTheDocument();
     expect(screen.getByText(/Einwilligungs-Textfassung ist noch nicht freigegeben/)).toBeInTheDocument();
-    expect(screen.getByText(/Server-Zuordnung: Entwurf \(DRAFT\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Textstatus: Entwurf \(DRAFT\)/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Text-Kandidat \(Kandidat für Betreiberfreigabe\)/)
+    ).toBeInTheDocument();
   });
 
   it("sperrt ohne serverseitige Textzuordnung", async () => {
@@ -142,7 +148,10 @@ describe("StorageConsentLive", () => {
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
     expect(screen.getByRole("button", { name: "Speicherung zustimmen" })).toBeDisabled();
-    expect(screen.getByText(/Server-Zuordnung: nicht konfiguriert/)).toBeInTheDocument();
+    expect(screen.getByText(/Textstatus: nicht konfiguriert/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Text-Kandidat \(Kandidat für Betreiberfreigabe\)/)
+    ).toBeInTheDocument();
     expect(screen.getByText(/keine Einwilligungs-Textfassung konfiguriert/)).toBeInTheDocument();
   });
 
@@ -173,6 +182,8 @@ describe("StorageConsentLive", () => {
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
     expect(screen.getByRole("button", { name: "Speicherung zustimmen" })).toBeEnabled();
     expect(screen.queryByText(/noch nicht freigegeben/)).toBeNull();
+    expect(screen.getByText(/Textstatus: rechtlich freigegeben \(APPROVED\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/Entwurf \(DRAFT\)/)).toBeNull();
     expect(screen.getByText(/Version\/Hash stimmen überein/)).toBeInTheDocument();
   });
 
