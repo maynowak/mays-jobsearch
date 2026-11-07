@@ -3472,3 +3472,29 @@ Einschraenkung: /profil mit echtem Cognito-Login ohne Zugangsdaten nicht
 testbar; pre-auth-Render (Navbar+Footer) verifiziert, /dev/dashboard ist
 die volle Layout-Entsprechung.
 Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
+
+## 2026-11-07 — RIS consent live deployment and production consent flow
+
+**Status:** production deployment fixed and verified; RIS consent flow live for the
+configured synthetic test user.
+
+- Deploy failure cause: 13 serverless functions on Hobby (limit 12) after adding
+  `api/ris/consents.mjs`. Fix `40356e6` consolidates both BFF routes into
+  `api/ris/router.mjs` (12 functions).
+- Pushed `f59aa4b..4e334d0`; production deployment `6e7rcjrz0` is `Ready`
+  (previous four deployments had failed at "Deploying outputs").
+- Production env set (values never printed): `RIS_APPLICATION_STORAGE_ENABLED`,
+  `RIS_API_BASE_URL` (edge `c7e9pdwe78`), `RIS_COGNITO_ISSUER`/`CLIENT_ID`
+  (Jobsearch pool `ZURSMpD2O` / `5hb3…`), `RIS_PARTNER_CREDENTIAL` (new
+  `mays-jobsearch` key), `RIS_CONSENT_SERVICE_ENABLED`, `RIS_CONSENT_NOTICE_VERSION=1.0`,
+  `RIS_TEST_USER_ALLOWLIST`, `VITE_RIS_CONSENT_UI_ENABLED=true`.
+  Stale `RIS_API_KEY` removed from production.
+- Live checks: site 200, login 302, `/api/ris/applications` and
+  `/api/ris/consents` 401 without token (previously 503 `ris_disabled`/`consent_disabled`).
+- Production E2E (synthetic PKCE user through `www.mays-job-matcher.app`):
+  status NOT_GRANTED -> grant 200 GRANTED (1.0) -> withdraw 200 WITHDRAWN ->
+  history [WITHDRAWN, GRANTED] -> regrant 200 GRANTED.
+- Cleanup: 4 consent rows deleted, synthetic user deleted, consent table 0.
+- Not enabled: `APPLICATION_CONSENT_ENFORCED` (RIS) stays false; production
+  access remains limited to the allowlisted synthetic user.
+- No Cognito/CloudFront/DNS/ACM changes, no RIS Terraform apply.
