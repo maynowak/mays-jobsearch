@@ -60,6 +60,11 @@ import { beginNewApplicationSession, createSessionApplicationRepository } from "
 import { createRemoteApplicationRepository } from "./lib/applications/remoteSessionRepository";
 import { createApplicationMigration } from "./lib/applications/applicationMigration";
 import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
+import {
+  checkRisRemoteApplicationAccess,
+  isRemoteCapabilityForProfile,
+  type RisRemoteCapability,
+} from "./lib/applications/remoteCapability";
 import { beginNewManualJobSession } from "./lib/applications/manualJobSession";
 import { isManualJob } from "./lib/applications/manualJob";
 import { ApplicationRepositoryError } from "./lib/applications/repositoryTypes";
@@ -271,13 +276,29 @@ export default function App() {
   // session profiles.
   const auth = useAuth() ?? { isAuthenticated: false, user: undefined };
   const isAuth = auth.isAuthenticated;
+  // `iss` + `sub` is the stable identity combination. Email is not used as an
+  // identity fallback because identical addresses must not merge users.
+  const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
   const [applicationStorageMode, setApplicationStorageMode] = useState<"session" | "remote">("session");
+  const [remoteCapability, setRemoteCapability] = useState<RisRemoteCapability | null>(null);
   const authRef = useRef(auth);
   authRef.current = auth;
-  // Remote persistence is opt-in and never activated silently. Guests and
-  // unconfigured environments always keep the session repository.
+  const remoteCapabilityRef = useRef(remoteCapability);
+  remoteCapabilityRef.current = remoteCapability;
+  // Remote persistence is opt-in and never activated silently. Guests,
+  // unconfigured environments and identities without a confirmed server-side
+  // capability always keep the session repository.
   const createApplicationRepositoryForAuth = () => {
-    if (isRisRemoteStorageEnabled() && isAuth && authRef.current?.user?.access_token) {
+    const hasRemoteCapability = isRemoteCapabilityForProfile(
+      remoteCapabilityRef.current,
+      authProfileKey
+    );
+    if (
+      isRisRemoteStorageEnabled() &&
+      isAuth &&
+      authRef.current?.user?.access_token &&
+      hasRemoteCapability
+    ) {
       setApplicationStorageMode("remote");
       return createRemoteApplicationRepository(
         createRisApplicationRepository({
@@ -307,9 +328,6 @@ export default function App() {
       manualRepository: manualProfileStoreRef.current,
     });
   }
-  // `iss` + `sub` is the stable identity combination. Email is not used as an
-  // identity fallback because identical addresses must not merge users.
-  const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
   const migrationMockEnabled =
     String(import.meta.env.VITE_RIS_APPLICATION_MIGRATION_MOCK ?? "").toLowerCase() === "true";
   const applicationMigration = useMemo(() => {
@@ -388,10 +406,37 @@ export default function App() {
     previousAuthProfileKeyRef.current = authProfileKey;
   }, [authProfileKey]);
 
-  // Opt-in remote preview: only when the public flag and a verified access
-  // token are present. Session mode remains the default.
+  // Opt-in remote preview: the public flag only enables the capability probe.
+  // The BFF decides via auth + RIS_TEST_USER_ALLOWLIST; the browser keeps no
+  // issuer/sub allowlist. Guests, logged-out users and failed probes stay in
+  // session mode.
+  useEffect(() => {
+    if (!isRisRemoteStorageEnabled()) {
+      setRemoteCapability(null);
+      return;
+    }
+    const token = authRef.current?.user?.access_token ?? "";
+    if (!isAuth || !token || !authProfileKey || !isVerifiedAuthProfileKey(authProfileKey)) {
+      setRemoteCapability(null);
+      return;
+    }
+    const key = authProfileKey;
+    let active = true;
+    // Never keep a capability that was checked for another identity.
+    setRemoteCapability((current) => (current && current.key === key ? current : null));
+    checkRisRemoteApplicationAccess(token).then((allowed) => {
+      if (!active) return;
+      setRemoteCapability({ key, allowed });
+    });
+    return () => { active = false; };
+  }, [isAuth, authProfileKey]);
+
+  // Switch to RIS only after the capability was confirmed for this identity.
+  // A failed or still-pending probe keeps the existing session repository, so
+  // session applications are never transferred automatically.
   useEffect(() => {
     if (!isRisRemoteStorageEnabled()) return;
+    if (!isRemoteCapabilityForProfile(remoteCapability, authProfileKey)) return;
     const next = createApplicationRepositoryForAuth();
     setApplicationRepository((previous) => {
       previous.invalidate();
@@ -400,7 +445,7 @@ export default function App() {
     setApplicationRefreshToken((value) => value + 1);
     return () => next.invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuth, authProfileKey]);
+  }, [remoteCapability, isAuth, authProfileKey]);
 
   // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
   const [cvState, setCvState] = useState<CvProcessingState>(createInitialCvState);

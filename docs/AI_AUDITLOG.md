@@ -4120,3 +4120,40 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
 - A copied local Chrome profile had no active production session (only `mj-lang`); no tokens/cookies were read or printed. The verified operator `issuer|sub` is therefore still unavailable for `RIS_TEST_USER_ALLOWLIST`/`CONSENT_PILOT_ALLOWLIST`.
 - No final Terraform plan/apply, deployment, notice change, env change, push or merge. The legal approval reference is still missing.
 - Next: operator logs in through the regular production login (or provides verified iss/sub), approves v2 text/hash and supplies the real legalApprovalRef; then the saved plan is generated and the bundled GO requested.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Phase C (per-user remote capability)
+
+**Typ:** Implementation / Server-side capability gating / Audit
+**Status:** `IMPLEMENTED LOCALLY — NOT DEPLOYED, NO LIVE PERSISTENCE`
+
+- Problem: `src/App.tsx` aktivierte den RIS-Remote-Repository-Modus für jeden
+  authentifizierten Nutzer, sobald `VITE_RIS_APPLICATION_STORAGE_ENABLED=true`
+  und ein Access-Token vorhanden waren. Der globale Flag war die einzige
+  Client-Prüfung; die serverseitige `RIS_TEST_USER_ALLOWLIST` griff erst beim
+  BFF-Request (`403 test_user_not_allowed`).
+- Fix: neues Modul `src/lib/applications/remoteCapability.ts`.
+  `checkRisRemoteApplicationAccess(token, fetchConsent = fetchRisConsent)`
+  fragt das bestehende `GET /api/ris/consents` ab und liefert nur bei Erfolg
+  `true`; fehlender Token, `401`/`403`/`503`, Netzwerk- oder sonstige Fehler
+  ergeben `false`. Keine Client-Allowlist, keine Issuer/Sub-Prüfung im Browser.
+  `isRemoteCapabilityForProfile()` bindet das Ergebnis an den exakten
+  `iss + sub`-Profilkey, damit eine Capability nicht auf einen anderen Nutzer
+  übergreift.
+- App-Wiring: Remote-Repository nur bei Flag **und** bestätigter Capability für
+  den aktuellen `authProfileKey`. Probe nur bei verifizierter Anmeldung mit
+  Token; bei Identitätswechsel/Logout wird die Capability sofort verworfen und
+  der Session-Repository-Zustand beibehalten. Fehlschlag/`pending`/Gast/
+  unkonfigurierte Umgebung → Session-Modus. Kein automatischer Transfer
+  bestehender Session-Bewerbungen; Session-Verhalten bleibt unverändert.
+- Verhalten: allowlistetes Konto mit gültigem Token und konfiguriertem
+  Consent-BFF → Remote-Modus (RIS ist weiterhin Schreib-/Consent-Autorität);
+  nicht allowlistetes Konto → BFF `403`, Probe `false`, Session-Modus; Logout,
+  fehlender/abgelaufener Token, `503` oder Netzwerkfehler → Session-Modus.
+- Tests (real, lokal): `remoteCapability.test.ts` = 1 Datei / 8 Tests PASS
+  (Erfolg, fehlender Token, 401/403/503, Netzwerk-/unerwarteter Fehler,
+  Token-Trimming, Identitätsbindung/Mismatch); bestehende fokussierte
+  Application-/Consent-Tests = 6 Dateien / 92 Tests PASS; `npm run build` PASS;
+  `git diff --check` ohne Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
+  RIS-Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Live-Persistenz oder Notice-Freigabe behauptet.
