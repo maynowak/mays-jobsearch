@@ -66,6 +66,16 @@ export default function StorageConsentLive() {
     setSpecialCategoriesConsent(false);
   }, [token]);
 
+  /**
+   * A withdrawal revokes the Art. 9 declaration as well. Clear the checkbox so a
+   * regrant in the same mounted UI requires a fresh, explicit check. The
+   * initial load and the NOT_GRANTED -> GRANTED grant flow are unaffected
+   * because they never transition into WITHDRAWN.
+   */
+  useEffect(() => {
+    if (consent?.status === "WITHDRAWN") setSpecialCategoriesConsent(false);
+  }, [consent?.status]);
+
   const run = async (action: () => Promise<RisConsent>) => {
     setBusy(true);
     setError(null);

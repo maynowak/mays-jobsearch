@@ -251,18 +251,44 @@ describe("StorageConsentLive", () => {
     expect(screen.getByText(/Kategorien: health, genetic_data/)).toBeInTheDocument();
   });
 
-  it("erlaubt den Widerruf weiterhin und ruft den BFF auf", async () => {
-    const granted = consentState({ consent: consent("GRANTED") });
-    fetchMock.mockImplementation(async (url: string) => {
+  it("erlaubt den Widerruf weiterhin, ruft den BFF auf und setzt die Art.-9-Einwilligung zurück", async () => {
+    const granted = {
+      ...consent("GRANTED"),
+      specialCategoriesConsent: true,
+      specialCategories: ["health"],
+      externalTextVersion: APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
+      externalTextSha256: APPLICATION_STORAGE_CONSENT_TEXT_SHA256,
+    };
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
       if (String(url).includes("action=withdraw")) {
         return consentResponse({ consent: consent("WITHDRAWN") });
       }
-      return consentResponse(granted);
+      if (String(init?.method ?? "").toUpperCase() === "POST") {
+        return consentResponse({ consent: granted });
+      }
+      return consentResponse(consentState());
     });
 
     render(<StorageConsentLive />);
 
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
+    const checkbox = screen.getByRole("checkbox", {
+      name: /Art\. 9 Abs\. 2 lit\. a DSGVO/,
+    });
+    const grantButton = screen.getByRole("button", { name: "Speicherung zustimmen" });
+    expect(checkbox).not.toBeChecked();
+    expect(grantButton).toBeDisabled();
+
+    // grant with an explicit Art. 9 declaration
+    checkbox.click();
+    await waitFor(() => expect(checkbox).toBeChecked());
+    await waitFor(() => expect(grantButton).toBeEnabled());
+    grantButton.click();
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: erteilt/));
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toBeDisabled();
+
+    // withdraw: the declaration must not survive into a regrant
     const withdraw = screen.getByRole("button", { name: "Einwilligung widerrufen" });
     expect(withdraw).toBeEnabled();
     withdraw.click();
@@ -271,5 +297,14 @@ describe("StorageConsentLive", () => {
       String(url).includes("action=withdraw")
     );
     expect(withdrawCall).toBeDefined();
+
+    await waitFor(() => expect(checkbox).not.toBeChecked());
+    expect(checkbox).toBeEnabled();
+    expect(grantButton).toBeDisabled();
+
+    // only a fresh explicit check enables a regrant
+    checkbox.click();
+    await waitFor(() => expect(checkbox).toBeChecked());
+    await waitFor(() => expect(grantButton).toBeEnabled());
   });
 });

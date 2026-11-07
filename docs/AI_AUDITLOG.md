@@ -4250,3 +4250,28 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
   tests/test_consent_pilot_allowlist.py` = **64 passed**.
 - Keine RIS-Datei editiert, kein Push/Merge/Deploy/Env-/Notice-Wechsel; keine
   Rechtsfreigabe oder Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 — UI residual fix (Art. 9 withdrawal reset)
+
+**Typ:** Implementation / UI consent state / Audit
+**Status:** `IMPLEMENTED — LOCAL ONLY, NOT APPROVED, NO LIVE PERSISTENCE`
+
+- Residual aus dem v3-Review behoben: Nach einem Widerruf blieb die
+  Art.-9-Checkbox im selben gemounteten UI gesetzt. Ein Regrant war damit ohne
+  erneute ausdrückliche Bestätigung möglich. Neu: `StorageConsentLive.tsx`
+  setzt `specialCategoriesConsent` auf `false`, sobald der Consent-Status
+  `WITHDRAWN` wird (Effekt auf `consent?.status`). Der Reset auf Token-/
+  Identitätswechsel bleibt bestehen; der initiale Grant-Flow
+  (`NOT_GRANTED` → Checkbox → `GRANTED`) ist unverändert, weil er nie nach
+  `WITHDRAWN` wechselt.
+- UI-Test `StorageConsentLive.test.tsx`: grant (Checkbox gesetzt) → withdraw →
+  Checkbox unchecked und aktivierbar, „Speicherung zustimmen“ deaktiviert →
+  erst erneutes Anhaken aktiviert den Regrant. Negativkontrolle: ohne den
+  WITHDRAWN-Reset schlägt genau diese Assertion fehl.
+- Verifikation (lokal, real): `npx vitest run
+  src/components/StorageConsentLive.test.tsx src/lib/storageConsent.test.ts`
+  = **2 Dateien / 17 Tests PASS**; `tsc -b` PASS; `git diff --check` ohne
+  Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Notice-/`legalApprovalRef`-
+  Änderung; keine RIS-Datei editiert. Keine Rechtsfreigabe, keine Freigabe und
+  keine Live-Persistenz behauptet.
