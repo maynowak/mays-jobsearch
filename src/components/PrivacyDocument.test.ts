@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = process.cwd();
@@ -25,6 +25,18 @@ describe("public privacy documents", () => {
     expect(markdown).toContain("BEWERBUNGSKENNZAHLEN");
     expect(markdown).toContain("EINWILLIGUNG, VERSIONIERUNG UND WIDERRUF");
     expect(html).toContain("BEWERBUNGSKENNZAHLEN");
+  });
+
+  it("renders semantic headings and paragraphs in the public HTML copy", () => {
+    expect(html).toContain("<h1>DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER</h1>");
+    expect(html).toContain("<h2>1. VERANTWORTLICHE STELLE</h2>");
+    expect(html).toContain("<p>");
+    expect(html).not.toContain("<pre>");
+    expect(html).not.toMatch(/REDAKTIONELLE FREIGABEPRÜFUNG/);
+  });
+
+  it("does not shadow the SPA privacy route with a stale static page", () => {
+    expect(existsSync(resolve(root, "public/datenschutz/index.html"))).toBe(false);
   });
 
   it("have direct SPA rewrites for the privacy routes", () => {

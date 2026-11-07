@@ -7589,14 +7589,44 @@ body {
 .legal-document {
   margin: 0 0 var(--space-lg);
   padding: 0;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
-  font-family: inherit;
   font-size: 0.95rem;
   line-height: 1.65;
   color: var(--text);
   background: transparent;
+}
+
+.legal-document__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space-lg);
+}
+
+.legal-document__meta h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.legal-document__meta span {
+  color: var(--muted);
+}
+
+.legal-document h3 {
+  margin: var(--space-lg) 0 var(--space-sm);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.legal-document p {
+  margin: 0 0 var(--space-md);
+  white-space: pre-line;
+}
+
+.legal-document a {
+  overflow-wrap: anywhere;
 }
 
 .legal-container {

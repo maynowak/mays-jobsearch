@@ -6,7 +6,13 @@ import { LangProvider } from "../i18n";
 const PRIVACY_TEXT = [
   "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
   "Version 1.1 · Stand: 7. November 2026",
+  "",
+  "Website: https://www.mays-job-matcher.app",
+  "E-Mail: info@mays-job-matcher.app",
+  "",
   "18. IHRE RECHTE",
+  "",
+  "Sie haben Rechte auf Auskunft und Löschung.",
 ].join("\n");
 
 const fetchMock = vi.fn();
@@ -36,6 +42,18 @@ describe("Privacy", () => {
     await waitFor(() =>
       expect(screen.getByText(/Version 1\.1 · Stand: 7\. November 2026/)).toBeInTheDocument()
     );
+    expect(
+      screen.getByRole("heading", { level: 1, name: "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "18. IHRE RECHTE" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "https://www.mays-job-matcher.app" })
+    ).toHaveAttribute("href", "https://www.mays-job-matcher.app");
+    expect(
+      screen.getByRole("link", { name: "info@mays-job-matcher.app" })
+    ).toHaveAttribute("href", "mailto:info@mays-job-matcher.app");
     expect(fetchMock).toHaveBeenCalledWith("/legal/datenschutz.md");
   });
 
