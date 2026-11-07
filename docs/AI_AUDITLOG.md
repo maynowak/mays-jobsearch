@@ -3862,3 +3862,14 @@ configured synthetic test user.
   (§3 Zustands-/Flag-Matrix, §7 R1–R3-Status), `docs/DEPLOYMENT.md`.
 - Kein Push, Merge, Deploy, keine Vercel-Env-Änderung, keine Secrets, keine
   RIS-/Terraform-/AWS-Datei.
+
+## 2026-11-07 — JM-RIS-STORAGE-ACTIVATION-01 — final consolidation
+
+**Status:** `APPLICATION STORAGE TECHNICALLY VERIFIED` / `PARTIALLY READY — CONTROLLED TEST-USER ACTIVATION BLOCKED`
+
+- Jobsearch implementation commits `324ad18` (fail-closed live notice gate) and `b8074a0` (accept APPROVED/ACTIVE; correct DRAFT/SUPERSEDED evidence); RIS contract commit `54d6a77`.
+- New BFF gate requires RIS catalogue `APPROVED|ACTIVE` + `noticeApproved=true` + `acceptedForNewGrant=true`; DRAFT/SUPERSEDED/unknown/missing/unavailable fail closed; POST re-reads before grant; withdraw remains allowed; browser cannot choose version; legal refs are not forwarded.
+- Agent sessions: Jobsearch `ses_e49a66ef3ffeCeeSQhQhNwNnqs`, RIS `ses_e49a08eb7ffe8RltsM98S9VTQq`. Final cross-reviews: PASS both sides. No push/merge/deploy.
+- Tests: full Jobsearch `1562 passed / 5 skipped`; focused BFF 50/50, UI/repo 36/36; build PASS; API syntax PASS; diff check PASS. RIS selected 79 passed (consent + application suites).
+- Primary blocker: RIS notice `application-storage/1.0` is DRAFT with `legalApprovalRef=null`; no live grant/persistence was executed. Also `VITE_RIS_APPLICATION_STORAGE_ENABLED` absent, `CONSENT_NOTICE_STATE_ENFORCED` unwired, `APPLICATION_CONSENT_ENFORCED=false`.
+- No env/secret/flag/Terraform/AWS/Cognito change. Report: `docs/reports/JM-RIS-STORAGE-ACTIVATION-01-REPORT.md`.
