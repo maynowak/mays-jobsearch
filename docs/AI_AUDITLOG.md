@@ -3738,3 +3738,11 @@ configured synthetic test user.
 - Not enabled: `APPLICATION_CONSENT_ENFORCED` (RIS) stays false; production
   access remains limited to the allowlisted synthetic user.
 - No Cognito/CloudFront/DNS/ACM changes, no RIS Terraform apply.
+
+2026-11-07 · JM-RIS-PRIVACY-RG09-PREVIEW-QA-02
+- Typ: Preview-QA/Browser/Mobile/Semantik/Route
+- Status: PRIVACY V1.1 CONTENT VERIFIED — PREVIEW ROUTE FIX READY — RE-PUSH APPROVAL REQUIRED
+- Preview `8d991a7`: `/legal/datenschutz.html` zeigt Version 1.1 ohne internen Vermerk, aber `/datenschutz` wird von der alten statischen `public/datenschutz/index.html` überschattet (Version 1.0, interner Vermerk, `<pre>`, kein Footer, Overflow).
+- Lokale Korrektur `4555521`: alte statische Kopie entfernt, Landing-Early-Return für `/datenschutz` korrigiert, `Privacy.tsx` semantisch (H1/H2/H3, Absätze, Links), HTML semantisch regeneriert, Tests 20/20 PASS, Build PASS, Desktop/Mobil ohne Overflow, Footer-Navigation PASS.
+- PDF-Flake `CvBuilderEditorPdf.test.tsx` im Vollauf separat dokumentiert; isoliert 4/4 PASS.
+- Kein Push, Merge, Deployment, AWS/Terraform/Cognito, keine Flag-Aktivierung, keine Secrets. Report: `docs/reports/JM-RIS-PRIVACY-RG09-PREVIEW-QA-02.md`.
