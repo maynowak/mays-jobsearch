@@ -3873,3 +3873,42 @@ configured synthetic test user.
 - Tests: full Jobsearch `1562 passed / 5 skipped`; focused BFF 50/50, UI/repo 36/36; build PASS; API syntax PASS; diff check PASS. RIS selected 79 passed (consent + application suites).
 - Primary blocker: RIS notice `application-storage/1.0` is DRAFT with `legalApprovalRef=null`; no live grant/persistence was executed. Also `VITE_RIS_APPLICATION_STORAGE_ENABLED` absent, `CONSENT_NOTICE_STATE_ENFORCED` unwired, `APPLICATION_CONSENT_ENFORCED=false`.
 - No env/secret/flag/Terraform/AWS/Cognito change. Report: `docs/reports/JM-RIS-STORAGE-ACTIVATION-01-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-02 (Jobsearch preview plan)
+
+**Typ:** Read-only cross-review + preview configuration plan / Documentation
+**Status:** `PLAN ONLY — NOT APPLIED, NO ENV CHANGE, NO DEPLOY`
+
+- RIS-Gegenstueck geprueft: Commit `81634d8`
+  (`APPLICATION-STORAGE-1.0-APPROVAL-PACKET.md`,
+  `JM-RIS-STORAGE-PILOT-02-ENVIRONMENT-ANALYSIS.md`, Terraform-Anbindung von
+  `CONSENT_NOTICE_STATE_ENFORCED`, Pilot-Tests). Keine RIS-Datei editiert.
+- BFF-Nachpruefung der eigenen Haertung (`324ad18`/`b8074a0`) gegen die
+  Pilot-Anforderungen: Live-Katalogpruefung, serverseitige Versionsbindung,
+  Fail-closed, Zustandssemantik APPROVED/ACTIVE, Consent-Status-UI,
+  Remote-Mode (Session-Default, Flag + Login + Token), Allowlist,
+  Fehlerbehandlung und Backend-Bestaetigung (kein UI-Erfolg aus lokalem State).
+  Ergebnis `PASS`; kein nachgewiesener Code-Gap, daher keine Code-Aenderung.
+- Approval-Packet bestaetigt: Es existiert **keine** vollstaendige, rechtlich
+  freigegebene ApplicationV1-Einwilligungserklaerung. RIS-Draft ist
+  Profil-/CV-/Suchprofil-Text und selbst "keine Einwilligungserklaerung";
+  Jobsearch §9/§10 ist eine Datenschutzinformation, keine
+  Einwilligungserklaerung. Notice `1.0` bleibt `DRAFT`,
+  `legalApprovalRef=null`. Keine Rechtsfreigabe durch Agenten.
+- Environment-Analyse bestaetigt: `ris-dev` ist mit der Jobsearch-Partner-Edge
+  geteilt (`ris-dev-jobsearch-api`, API `c7e9pdwe78`); der Pilot braucht einen
+  dedizierten Workspace/API, nicht `ris-dev`. `ris-dev2` ist in diesem Account
+  nicht vorhanden.
+- Plan: `docs/reports/JM-RIS-STORAGE-PILOT-02-PREVIEW-CONFIG.md` —
+  dedizierte Preview-Umgebung, vollstaendige Env-Namen (keine Secret-Werte),
+  `VITE_RIS_APPLICATION_STORAGE_ENABLED` nur Preview (in beiden Vercel-Projekten
+  aktuell abwesend), Allowlist, Notice-Version, Remote-Mode, Gate-Reihenfolge,
+  Testflow und Rollback. Produktionsflags `mays-job-matcher` bleiben aus.
+- AI-/Privacy-/Data-Flow impact: keine Code-/Datenfluss-Aenderung; reine
+  Dokumentation und Review. Keine Aktivierung, keine Env-/Secret-/Vercel-
+  Aenderung, kein Push/Merge/Deploy.
+- Tests (fokussiert, real):
+  `npx vitest run tests/api/ris-consents.test.mjs tests/api/ris-routing.test.mjs
+  tests/api/ris-config-separation.test.mjs` = 3 Dateien / 50 Tests PASS;
+  `StorageConsentLive.test.tsx` + `risRemoteRepository.test.ts` +
+  `remoteSessionRepository.test.ts` = 3 Dateien / 36 Tests PASS.
