@@ -255,7 +255,7 @@ describe("RIS single-entry routing", () => {
       makeReq("/api/ris/consents", {
         method: "POST",
         headers: { authorization: `Bearer ${token()}` },
-        body: { purpose: "application-storage" },
+        body: { purpose: "application-storage", specialCategoriesConsent: true },
       }),
       res
     );

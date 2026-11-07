@@ -5,7 +5,7 @@
 // the operator must configure exactly these values through environment
 // variables before a grant is allowed:
 //
-//   RIS_CONSENT_TEXT_VERSION = application-storage-consent-2026-11-07-v2
+//   RIS_CONSENT_TEXT_VERSION = application-storage-consent-2026-11-07-v3
 //   RIS_CONSENT_TEXT_SHA256  = <canonical SHA-256>
 //   RIS_CONSENT_TEXT_STATE   = APPROVED  (only after operator/legal approval)
 //
@@ -13,9 +13,21 @@
 // `src/lib/storageConsent.test.ts` asserts that this module and the client
 // module agree.
 
-export const CONSENT_TEXT_VERSION = "application-storage-consent-2026-11-07-v2";
+export const CONSENT_TEXT_VERSION = "application-storage-consent-2026-11-07-v3";
 export const CONSENT_TEXT_SHA256 =
-  "232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca";
+  "696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668";
+
+/** Server-owned Art. 9 category list sent to RIS with an explicit consent. */
+export const CONSENT_SPECIAL_CATEGORIES = Object.freeze([
+  "health",
+  "religious_or_philosophical_beliefs",
+  "trade_union_membership",
+  "political_opinions",
+  "sexual_orientation",
+  "biometric_data",
+  "genetic_data",
+  "racial_or_ethnic_origin",
+]);
 
 export const CONSENT_TEXT_STATE_APPROVED = "APPROVED";
 export const CONSENT_TEXT_STATE_DRAFT = "DRAFT";

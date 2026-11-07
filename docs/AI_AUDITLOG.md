@@ -4157,3 +4157,52 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
 - Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
   RIS-Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
   Live-Persistenz oder Notice-Freigabe behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 (Art. 9 explicit consent)
+
+**Typ:** Implementation / Consent text + explicit special-category consent / Audit
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Einwilligungstext v3: `application-storage-consent-2026-11-07-v3`,
+  SHA-256 `696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668`.
+  Alle v2-Aussagen (inkl. Bewerbungsstatus/Statusänderungen/Statusverlauf)
+  bleiben erhalten; neuer Absatz mit ausdrücklicher Einwilligung nach
+  Art. 9 Abs. 2 lit. a DSGVO für besondere Kategorien in Bewerbungsunterlagen.
+  v1/v2 bleiben ausschließlich als Historie dokumentiert und dürfen nicht
+  konfiguriert werden.
+- Kategorien-Codes (server-owned): `health`,
+  `religious_or_philosophical_beliefs`, `trade_union_membership`,
+  `political_opinions`, `sexual_orientation`, `biometric_data`,
+  `genetic_data`, `racial_or_ethnic_origin`.
+- UI `StorageConsentLive.tsx`: vollständiger v3-Text vor der Aktion; separate,
+  **nicht vorausgewählte** Checkbox „Ich willige ausdrücklich in die Speicherung
+  besonderer Kategorien personenbezogener Daten gemäß Art. 9 Abs. 2 lit. a
+  DSGVO ein.“; Zustimmungs-Button erst bei gesetzter Checkbox **und**
+  bestätigtem Notice-/Text-Gate; Checkbox wird bei Token-/Identitätswechsel
+  zurückgesetzt; Nachweiszeile zeigt nach Grant Art.-9-Status, Nachweis-
+  Textversion, SHA-256-Kurzform und gespeicherte Kategorien. Widerruf
+  unverändert.
+- BFF: `grantRisConsent(token, specialCategoriesConsent)` sendet nur den
+  Nutzer-Boolean; `consentsHandler` verlangt `body.specialCategoriesConsent ===
+  true` (sonst `422 special_categories_consent_required` vor jedem RIS-Grant)
+  und sendet `{ purpose, noticeVersion, specialCategoriesConsent: true,
+  specialCategories: [...], externalTextVersion, externalTextSha256 }`.
+  GET/Status mappt `specialCategoriesConsent`/`specialCategories`/
+  `externalTextVersion`/`externalTextSha256` fail-closed (fehlend → false/[]/
+  null). Keine browser-gewählte Version/Hash/Kategorien.
+- RIS-Vertragsergänzung (vom RIS-Agent umzusetzen): die vier Felder beim Grant
+  persistieren und im Consent-Status zurückgeben; idealerweise
+  `externalTextVersion`/`externalTextSha256` gegen die freigegebene
+  Jobsearch-Textidentität validieren und ein fehlendes/falsches
+  `specialCategoriesConsent` ablehnen. Ohne RIS-Persistenz bleibt der
+  UI-Nachweis ehrlich „nicht erteilt“/leer.
+- Tests (real, lokal): `storageConsent.test.ts` + `StorageConsentLive.test.tsx`
+  = 2 Dateien / 17 Tests PASS; `ris-consents.test.mjs` + `ris-routing.test.mjs`
+  = 2 Dateien / 51 Tests PASS; `npm run build` PASS; `git diff --check` ohne
+  Ausgabe. Abgedeckt: Checkbox default aus/Button gesperrt, Grant-Body nur
+  Boolean, BFF-Ablehnung ohne/mit falschem Consent vor RIS, serverseitiger
+  Payload, v3-Text/Hash/Kategorien, Nachweisfelder, Widerruf, keine Regression
+  der Notice-/Text-Gates.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
+  Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Rechtsfreigabe oder Live-Persistenz behauptet.

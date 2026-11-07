@@ -7,6 +7,7 @@ import { __resetJwksCache } from "../../api/_lib/ris/auth.mjs";
 import handler from "../../api/_lib/ris/consentsHandler.mjs";
 import { evaluateNoticeGrant } from "../../api/_lib/ris/consentNotice.mjs";
 import {
+  CONSENT_SPECIAL_CATEGORIES,
   CONSENT_TEXT_SHA256,
   CONSENT_TEXT_VERSION,
 } from "../../api/_lib/ris/consentText.mjs";
@@ -14,6 +15,7 @@ import {
   APPLICATION_STORAGE_CONSENT_TEXT,
   APPLICATION_STORAGE_CONSENT_TEXT_SHA256,
   APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
+  APPLICATION_STORAGE_SPECIAL_CATEGORIES,
 } from "../../src/lib/applicationStorageConsent";
 
 const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
@@ -363,11 +365,11 @@ describe("/api/ris/consents", () => {
     expect(callsByMethod("POST")).toHaveLength(0);
   });
 
-  it("sendet bei freigegebener Notice die serverseitige Version an RIS", async () => {
+  it("sendet bei freigegebener Notice Version, Kategorien und Textnachweis an RIS", async () => {
     process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
     getResponse = response(200, { items: consentItems(), catalog: [ACTIVE_NOTICE] });
     const res = makeRes();
-    await handler(request("POST", { body: { purpose: "application-storage", noticeVersion: "9.9" } }), res);
+    await handler(request("POST", { body: { purpose: "application-storage", noticeVersion: "9.9", specialCategoriesConsent: true } }), res);
     expect(res.statusCode).toBe(200);
 
     const calls = risCalls();
@@ -378,16 +380,73 @@ describe("/api/ris/consents", () => {
     expect(sent.purpose).toBe("application-storage");
     expect(sent.noticeVersion).toBe("1.0");
     expect(sent.noticeVersion).not.toBe("9.9");
+    expect(sent.specialCategoriesConsent).toBe(true);
+    expect(sent.specialCategories).toEqual([...CONSENT_SPECIAL_CATEGORIES]);
+    expect(sent.externalTextVersion).toBe(CONSENT_TEXT_VERSION);
+    expect(sent.externalTextSha256).toBe(CONSENT_TEXT_SHA256);
   });
 
   it("sendet bei einer APPROVED-Notice die serverseitige Version an RIS", async () => {
     process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
     getResponse = response(200, { items: consentItems(), catalog: [APPROVED_NOTICE] });
     const res = makeRes();
-    await handler(request("POST", { body: { purpose: "application-storage" } }), res);
+    await handler(request("POST", { body: { purpose: "application-storage", specialCategoriesConsent: true } }), res);
     expect(res.statusCode).toBe(200);
     const grantCall = callsByMethod("POST")[0];
     expect(JSON.parse(grantCall[1].body).noticeVersion).toBe("1.0");
+  });
+
+  it("weist einen Grant ohne ausdrückliche Art.-9-Einwilligung vor dem RIS-Aufruf ab", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    getResponse = response(200, { items: consentItems(), catalog: [ACTIVE_NOTICE] });
+
+    for (const body of [
+      { purpose: "application-storage" },
+      { purpose: "application-storage", specialCategoriesConsent: false },
+      { purpose: "application-storage", specialCategoriesConsent: "true" },
+    ]) {
+      const res = makeRes();
+      await handler(request("POST", { body }), res);
+      expect(res.statusCode).toBe(422);
+      expect(res.body.code).toBe("special_categories_consent_required");
+      expect(callsByMethod("POST")).toHaveLength(0);
+    }
+  });
+
+  it("liefert den Backend-Nachweis fail-closed und mit gespeicherten Feldern", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    getResponse = response(200, { items: consentItems(), catalog: [ACTIVE_NOTICE] });
+
+    const bare = makeRes();
+    await handler(request("GET"), bare);
+    expect(bare.statusCode).toBe(200);
+    expect(bare.body.specialCategoriesConsent).toBe(false);
+    expect(bare.body.specialCategories).toEqual([]);
+    expect(bare.body.externalTextVersion).toBeNull();
+    expect(bare.body.externalTextSha256).toBeNull();
+    expect(bare.body.consent.specialCategoriesConsent).toBe(false);
+
+    getResponse = response(200, {
+      items: [{
+        purpose: "application-storage",
+        status: "GRANTED",
+        noticeVersion: "1.0",
+        version: 1,
+        specialCategoriesConsent: true,
+        specialCategories: ["health", "genetic_data"],
+        externalTextVersion: CONSENT_TEXT_VERSION,
+        externalTextSha256: CONSENT_TEXT_SHA256,
+      }],
+      catalog: [ACTIVE_NOTICE],
+    });
+    const stored = makeRes();
+    await handler(request("GET"), stored);
+    expect(stored.body.specialCategoriesConsent).toBe(true);
+    expect(stored.body.specialCategories).toEqual(["health", "genetic_data"]);
+    expect(stored.body.externalTextVersion).toBe(CONSENT_TEXT_VERSION);
+    expect(stored.body.externalTextSha256).toBe(CONSENT_TEXT_SHA256);
+    expect(stored.body.consent.specialCategoriesConsent).toBe(true);
+    expect(stored.body.consent.externalTextVersion).toBe(CONSENT_TEXT_VERSION);
   });
 
   it("fällt bei RIS-Statusfehler geschlossen zu und schreibt keinen Grant", async () => {
@@ -445,6 +504,7 @@ describe("consent text mapping gate", () => {
   it("hält Server- und Client-Textidentität sowie den SHA-256 konsistent", () => {
     expect(CONSENT_TEXT_VERSION).toBe(APPLICATION_STORAGE_CONSENT_TEXT_VERSION);
     expect(CONSENT_TEXT_SHA256).toBe(APPLICATION_STORAGE_CONSENT_TEXT_SHA256);
+    expect([...CONSENT_SPECIAL_CATEGORIES]).toEqual([...APPLICATION_STORAGE_SPECIAL_CATEGORIES]);
     const digest = createHash("sha256")
       .update(APPLICATION_STORAGE_CONSENT_TEXT, "utf8")
       .digest("hex");

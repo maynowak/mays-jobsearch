@@ -31,6 +31,10 @@ function consent(status: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" = "NOT_GRANTED"
     grantedAt: null,
     withdrawnAt: null,
     version: 0,
+    specialCategoriesConsent: false,
+    specialCategories: [],
+    externalTextVersion: null,
+    externalTextSha256: null,
   };
 }
 
@@ -49,6 +53,10 @@ function consentState(overrides: Record<string, unknown> = {}) {
     textMapped: true,
     textApproved: true,
     textReason: null,
+    specialCategoriesConsent: false,
+    specialCategories: [],
+    externalTextVersion: null,
+    externalTextSha256: null,
     ...overrides,
   };
 }
@@ -97,7 +105,7 @@ describe("StorageConsentLive", () => {
     render(<StorageConsentLive />);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
-    expect(screen.getByText(/application-storage-consent-2026-11-07-v2/)).toBeInTheDocument();
+    expect(screen.getByText(/application-storage-consent-2026-11-07-v3/)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(SHORT_HASH.replace("…", ".")))).toBeInTheDocument();
     expect(screen.getByText(/Textstatus: rechtlich freigegeben \(APPROVED\)/)).toBeInTheDocument();
     // The code constant is provenance only; an approved server state must not
@@ -174,17 +182,73 @@ describe("StorageConsentLive", () => {
     ).toBeInTheDocument();
   });
 
-  it("gibt die Zustimmung nur bei übereinstimmendem, freigegebenem Mapping frei", async () => {
+  it("sperrt die Zustimmung, bis die Art.-9-Einwilligung ausdrücklich gesetzt ist", async () => {
     mockState(consentState());
 
     render(<StorageConsentLive />);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
-    expect(screen.getByRole("button", { name: "Speicherung zustimmen" })).toBeEnabled();
-    expect(screen.queryByText(/noch nicht freigegeben/)).toBeNull();
+    const checkbox = screen.getByRole("checkbox", {
+      name: /Art\. 9 Abs\. 2 lit\. a DSGVO/,
+    });
+    const button = screen.getByRole("button", { name: "Speicherung zustimmen" });
+    expect(checkbox).not.toBeChecked();
+    expect(button).toBeDisabled();
     expect(screen.getByText(/Textstatus: rechtlich freigegeben \(APPROVED\)/)).toBeInTheDocument();
-    expect(screen.queryByText(/Entwurf \(DRAFT\)/)).toBeNull();
     expect(screen.getByText(/Version\/Hash stimmen überein/)).toBeInTheDocument();
+
+    checkbox.click();
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(screen.queryByText(/noch nicht freigegeben/)).toBeNull();
+  });
+
+  it("sendet nur die Art.-9-Entscheidung an den BFF, nicht Version, Hash oder Kategorien", async () => {
+    const granted = {
+      ...consent("GRANTED"),
+      specialCategoriesConsent: true,
+      specialCategories: ["health", "genetic_data"],
+      externalTextVersion: APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
+      externalTextSha256: APPLICATION_STORAGE_CONSENT_TEXT_SHA256,
+    };
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (String(url).includes("action=withdraw")) {
+        return consentResponse({ consent: consent("WITHDRAWN") });
+      }
+      if (String(init?.method ?? "").toUpperCase() === "POST") {
+        return consentResponse({ consent: granted });
+      }
+      return consentResponse(consentState());
+    });
+
+    render(<StorageConsentLive />);
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
+    screen.getByRole("checkbox", { name: /Art\. 9 Abs\. 2 lit\. a DSGVO/ }).click();
+    const button = screen.getByRole("button", { name: "Speicherung zustimmen" });
+    await waitFor(() => expect(button).toBeEnabled());
+    button.click();
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: erteilt/));
+    const grantCall = fetchMock.mock.calls.find(
+      ([url, init]) =>
+        String(init?.method ?? "").toUpperCase() === "POST" &&
+        !String(url).includes("action=")
+    );
+    expect(grantCall).toBeDefined();
+    const body = JSON.parse(grantCall![1].body as string);
+    expect(body).toEqual({
+      purpose: "application-storage",
+      specialCategoriesConsent: true,
+    });
+    expect(body.specialCategories).toBeUndefined();
+    expect(body.externalTextVersion).toBeUndefined();
+    expect(body.externalTextSha256).toBeUndefined();
+
+    expect(screen.getByText(/Art\.-9-Einwilligung: erteilt/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Nachweis-Textversion: application-storage-consent-2026-11-07-v3/)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Kategorien: health, genetic_data/)).toBeInTheDocument();
   });
 
   it("erlaubt den Widerruf weiterhin und ruft den BFF auf", async () => {

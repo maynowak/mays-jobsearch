@@ -13,7 +13,11 @@ import {
   noticeMessage,
   noticeRejectionStatus,
 } from "./consentNotice.mjs";
-import { textMessage, textRejectionStatus } from "./consentText.mjs";
+import {
+  CONSENT_SPECIAL_CATEGORIES,
+  textMessage,
+  textRejectionStatus,
+} from "./consentText.mjs";
 
 function bearer(req) {
   const raw = req.headers?.authorization ?? req.headers?.Authorization ?? "";
@@ -61,6 +65,24 @@ function upstreamFailure(res, result) {
     : status === 401 ? "upstream_unauthenticated"
     : "upstream_error";
   return fail(res, status, code, "RIS rejected the consent request");
+}
+
+/**
+ * Fail-closed projection of the backend consent proof. Missing or malformed
+ * fields become false/empty/null; the browser never invents categories.
+ */
+function consentProof(item) {
+  const record = item && typeof item === "object" ? item : {};
+  return {
+    specialCategoriesConsent: record.specialCategoriesConsent === true,
+    specialCategories: Array.isArray(record.specialCategories)
+      ? record.specialCategories.filter((value) => typeof value === "string")
+      : [],
+    externalTextVersion: typeof record.externalTextVersion === "string"
+      ? record.externalTextVersion : null,
+    externalTextSha256: typeof record.externalTextSha256 === "string"
+      ? record.externalTextSha256 : null,
+  };
 }
 
 export default async function handler(req, res) {
@@ -114,8 +136,10 @@ export default async function handler(req, res) {
         noticeVersion: cfg.noticeVersion,
         purpose,
       });
+      const proof = consentProof(item);
       return send(res, 200, {
-        consent: item,
+        consent: item ? { ...item, ...proof } : null,
+        ...proof,
         noticeVersion: notice.noticeVersion,
         noticeState: notice.noticeState,
         noticeApproved: notice.noticeApproved,
@@ -165,9 +189,23 @@ export default async function handler(req, res) {
         const reason = cfg.textReason ?? "consent_text_not_approved";
         return fail(res, textRejectionStatus(reason), reason, textMessage(reason));
       }
+      // The Art. 9 consent is the user's explicit decision. Only the boolean
+      // comes from the browser; text identity and category list stay
+      // server-owned.
+      if (body.specialCategoriesConsent !== true) {
+        return fail(res, 422, "special_categories_consent_required",
+          "Explicit consent for special categories is required");
+      }
       const result = await risRequest(
         { ...cfg, path: cfg.path }, token, "POST",
-        cfg.path, { purpose, noticeVersion },
+        cfg.path, {
+          purpose,
+          noticeVersion,
+          specialCategoriesConsent: true,
+          specialCategories: [...CONSENT_SPECIAL_CATEGORIES],
+          externalTextVersion: cfg.textVersion,
+          externalTextSha256: cfg.textHash,
+        },
       );
       if (result.status >= 400) return upstreamFailure(res, result);
       return send(res, 200, result.data);

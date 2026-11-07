@@ -35,6 +35,7 @@ export default function StorageConsentLive() {
   const [textMapped, setTextMapped] = useState(false);
   const [textApproved, setTextApproved] = useState(false);
   const [textReason, setTextReason] = useState<string | null>(null);
+  const [specialCategoriesConsent, setSpecialCategoriesConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Array<Record<string, unknown>> | null>(null);
@@ -61,6 +62,10 @@ export default function StorageConsentLive() {
     return () => { active = false; };
   }, [token]);
 
+  useEffect(() => {
+    setSpecialCategoriesConsent(false);
+  }, [token]);
+
   const run = async (action: () => Promise<RisConsent>) => {
     setBusy(true);
     setError(null);
@@ -79,9 +84,17 @@ export default function StorageConsentLive() {
     textHash === APPLICATION_STORAGE_CONSENT_TEXT_SHA256;
   const textServerApproved = textMapped && textApproved && textState === "APPROVED";
   const canGrant =
-    grantAllowed && textMappingMatches && textServerApproved && status !== "GRANTED";
+    grantAllowed &&
+    textMappingMatches &&
+    textServerApproved &&
+    specialCategoriesConsent &&
+    status !== "GRANTED";
   const version = consent?.noticeVersion ?? noticeVersion;
   const shortHash = `${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(0, 12)}…${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(-8)}`;
+  const proofVersion = consent?.externalTextVersion ?? null;
+  const proofHash = consent?.externalTextSha256 ?? null;
+  const proofCategories = consent?.specialCategories ?? [];
+  const proofConsent = consent?.specialCategoriesConsent === true;
 
   return (
     <section className="storage-consent__block" aria-labelledby="storage-consent-live-title">
@@ -131,12 +144,36 @@ export default function StorageConsentLive() {
         </p>
       </div>
 
+      <label className="storage-consent__special-categories">
+        <input
+          type="checkbox"
+          checked={specialCategoriesConsent}
+          disabled={busy || status === "GRANTED"}
+          onChange={(event) => setSpecialCategoriesConsent(event.target.checked)}
+        />
+        <span>
+          Ich willige ausdrücklich in die Speicherung besonderer Kategorien personenbezogener
+          Daten gemäß Art. 9 Abs. 2 lit. a DSGVO ein.
+        </span>
+      </label>
+
+      {status === "GRANTED" && (
+        <p className="field-hint storage-consent__proof">
+          {`Art.-9-Einwilligung: ${proofConsent ? "erteilt" : "nicht erteilt"}`}
+          {proofVersion ? ` · Nachweis-Textversion: ${proofVersion}` : ""}
+          {proofHash
+            ? ` · Nachweis-SHA-256: ${proofHash.slice(0, 12)}…${proofHash.slice(-8)}`
+            : ""}
+          {proofCategories.length ? ` · Kategorien: ${proofCategories.join(", ")}` : ""}
+        </p>
+      )}
+
       <div className="storage-consent__actions">
         <button
           type="button"
           className="btn-ghost"
           disabled={busy || !canGrant}
-          onClick={() => run(() => grantRisConsent(token))}
+          onClick={() => run(() => grantRisConsent(token, specialCategoriesConsent))}
         >
           Speicherung zustimmen
         </button>
