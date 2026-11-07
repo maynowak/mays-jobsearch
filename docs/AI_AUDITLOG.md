@@ -4102,3 +4102,12 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
 - Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice- oder
   `legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
   Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-ONE-SHOT-05 — blocked pre-apply
+
+**Status:** `BLOCKED — OPERATOR/LEGAL TEXT APPROVAL + LEGAL APPROVAL REFERENCE + SYNTHETIC TEST IDENTITY REQUIRED`
+
+- Phase A local update committed `47f73c4`: consent text v2 `application-storage-consent-2026-11-07-v2`, SHA-256 `232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca`; explicit Bewerbungsstatus/Statusänderungen/Statusverlauf; tests 15/15 + 44/44, build PASS.
+- No final Terraform plan/apply, deployment, push or merge. No `legalApprovalRef`, no notice approval, no synthetic test identity in pool `ZURSMpD2O`; `CONSENT_PILOT_ALLOWLIST` cannot be finalized.
+- Required: operator/legal approval of v2 and a real `legalApprovalRef`; approved synthetic `<issuer>|<sub>` (or approval to create one); then saved plan review and exact bundled GO.
+- No live persistence. Report: `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-REPORT.md`.
