@@ -3922,3 +3922,52 @@ configured synthetic test user.
 - Focused tests: BFF 50/50; UI/repository 36/36; `git diff --check` PASS. Previous full suite `1562 passed / 5 skipped` remains the baseline and was not repeated without a code change.
 - Blockers: (1) no complete, legally approved ApplicationV1 consent declaration/notice — notice `1.0` stays DRAFT/`legalApprovalRef=null`; (2) no isolated RIS pilot runtime — `ris-dev` is shared with `ris-dev-jobsearch-api`.
 - No push, merge, deploy, env/secret/Terraform/AWS/Cognito change, no notice state change, no live persistence. Report: `docs/reports/JM-RIS-STORAGE-PILOT-02-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-03 (ApplicationV1 consent text candidate)
+
+**Typ:** Implementation / Consent text + BFF text binding / UI
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Neues Modul `src/lib/applicationStorageConsent.ts` mit vollständiger deutscher
+  Ich-Einwilligungserklärung für ApplicationV1:
+  - Textversion `application-storage-consent-2026-11-07-v1`
+  - Zweck `application-storage`, RIS-Notice-Version `1.0`
+  - SHA-256 (UTF-8 über `paragraphs.join("\n\n")`):
+    `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`
+  - Zustand `DRAFT` (Kandidat); kein `legalApprovalRef`, keine erfundene
+    Rechtsgrundlage, Frist, Empfänger-/Drittlandangabe oder Freigabe.
+  - Inhalt: gespeicherte Bewerbungsdaten (Bewerbungen, Anschreiben/Versionen,
+    Dokumentstatus, CV-/Suchprofil-Verweise, Kontakt/Notizen/Gehalt/
+    Wiedervorlagen/Verlauf; keine PDF-Bytes/CV-Texte/KI-Payloads), Zweck
+    (Abruf/Änderung/Export/Löschung), RIS-Rolle (RIS-/AWS-Infrastruktur, keine
+    KI-/Provider-Verarbeitung), Wirkung, Widerruf (blockiert neue Schreibzüge,
+    Bestand bleibt lesbar/exportierbar/löschbar, keine sofortige physische
+    Löschung), tatsächliche Retention (keine pauschale Frist, Bestand bis
+    Löschung, Sicherungen/Protokolle/gesetzliche Pflichten), Verweis auf
+    `/datenschutz` (Policy v1.1).
+- Serverbindung `api/_lib/ris/consentText.mjs` + `risConsentConfig`:
+  `RIS_CONSENT_TEXT_VERSION`, `RIS_CONSENT_TEXT_SHA256`,
+  `RIS_CONSENT_TEXT_STATE` werden gelesen. `GET` liefert `textVersion`,
+  `textHash`, `textState`, `textMapped`, `textApproved`, `textReason`;
+  `grantAllowed` verlangt Notice-Freigabe **und** freigegebenes Text-Mapping.
+  `POST` prüft das Mapping erneut vor dem Schreiben (`503
+  consent_text_not_configured|consent_text_mismatch`, `409
+  consent_text_not_approved`) und ruft RIS bei Blockade nicht auf. Keine
+  Secrets/Legal-Refs im Browser.
+- UI `StorageConsentLive.tsx` zeigt den vollständigen Text vor dem
+  Zustimmungs-Button, Textversion, SHA-256-Kurzform, Kandidatenstatus und
+  Server-Zuordnung. Der Button ist nur aktiv bei `grantAllowed` **und**
+  übereinstimmender Version/Hash **und** `APPROVED`-Serverstatus; Abweichung
+  oder fehlende Zuordnung sperren. Widerruf bleibt statusabhängig möglich; der
+  Datenschutz-Link bleibt erhalten. Keine zweite Consent-UI.
+- AI-/Privacy-/Data-Flow impact: kein neuer AI-Aufruf, keine neue Speicherung;
+  die Einwilligung wird nur angezeigt und serverseitig gebunden. Datenschutz-
+  policy v1.1 inhaltlich unverändert.
+- Tests: `tests/api/ris-consents.test.mjs` um Text-Mapping-Fälle erweitert
+  (fehlend/DRAFT/mismatch, Server-Client-Identität, SHA-256-Neuberechnung);
+  `ris-routing` Test-Env ergänzt; `StorageConsentLive.test.tsx` deckt
+  Volltext-vor-Button, Version/Hash/Status, DRAFT/fehlend/mismatch und Widerruf
+  ab; `storageConsent.test.ts` prüft Kanonik, Hash und Themenabdeckung.
+- Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice-
+  Änderung, keine Rechtsfreigabe. Aktivierung erst nach Operatorfreigabe von
+  Text und RIS-Notice sowie `RIS_CONSENT_TEXT_STATE=APPROVED`.

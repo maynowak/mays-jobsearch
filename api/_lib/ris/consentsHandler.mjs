@@ -13,6 +13,7 @@ import {
   noticeMessage,
   noticeRejectionStatus,
 } from "./consentNotice.mjs";
+import { textMessage, textRejectionStatus } from "./consentText.mjs";
 
 function bearer(req) {
   const raw = req.headers?.authorization ?? req.headers?.Authorization ?? "";
@@ -119,8 +120,14 @@ export default async function handler(req, res) {
         noticeState: notice.noticeState,
         noticeApproved: notice.noticeApproved,
         acceptedForNewGrant: notice.acceptedForNewGrant,
-        grantAllowed: notice.grantAllowed,
+        grantAllowed: notice.grantAllowed && cfg.textApproved === true,
         noticeReason: notice.noticeReason,
+        textVersion: cfg.textVersion ?? null,
+        textHash: cfg.textHash ?? null,
+        textState: cfg.textState ?? null,
+        textMapped: cfg.textMapped === true,
+        textApproved: cfg.textApproved === true,
+        textReason: cfg.textReason ?? null,
       });
     }
     if (req.method === "POST") {
@@ -151,6 +158,12 @@ export default async function handler(req, res) {
       if (!notice.evaluation.grantAllowed) {
         const reason = notice.evaluation.noticeReason ?? "notice_not_active";
         return fail(res, noticeRejectionStatus(reason), reason, noticeMessage(reason));
+      }
+      // The text mapping is a separate, server-owned approval. Re-check it
+      // before writing; the browser does not send a version or hash.
+      if (cfg.textApproved !== true) {
+        const reason = cfg.textReason ?? "consent_text_not_approved";
+        return fail(res, textRejectionStatus(reason), reason, textMessage(reason));
       }
       const result = await risRequest(
         { ...cfg, path: cfg.path }, token, "POST",

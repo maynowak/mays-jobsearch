@@ -135,6 +135,9 @@ The RIS application storage path is disabled unless all required server values a
 | `RIS_COGNITO_ISSUER` | Expected Cognito issuer for access tokens | Yes | No |
 | `RIS_COGNITO_CLIENT_ID` | Expected Cognito client/audience | Yes | No |
 | `RIS_TEST_USER_ALLOWLIST` | Server-side `<issuer>|<sub>` test identities; empty = deny all | Yes for test mode | Sensitive |
+| `RIS_CONSENT_TEXT_VERSION` | Server-owned consent text version; must equal the canonical client version | Yes for a grant | No |
+| `RIS_CONSENT_TEXT_SHA256` | SHA-256 of the canonical consent text (UTF-8) | Yes for a grant | No |
+| `RIS_CONSENT_TEXT_STATE` | `APPROVED` only after operator/legal approval; `DRAFT` or absent blocks | Yes for a grant | No |
 | `RIS_API_TIMEOUT_MS` | RIS request timeout, default 10000 | No | No |
 | `VITE_RIS_APPLICATION_STORAGE_ENABLED` | Browser opt-in for remote preview; default OFF | Client-side only | No |
 | `VITE_RIS_APPLICATION_MIGRATION_MOCK` | Local migration mock only; keep OFF outside local tests | No | No |
@@ -156,11 +159,33 @@ The state check is load-bearing: with RIS `CONSENT_NOTICE_STATE_ENFORCED=false`,
 
 Anything else fails closed: missing or malformed catalogue, unknown/changed version, `DRAFT`/`SUPERSEDED` state, non-boolean approval flags, RIS error or timeout. `GET /api/ris/consents` returns `noticeVersion`, `noticeState`, `noticeApproved`, `acceptedForNewGrant`, `grantAllowed` and `noticeReason` so the UI can explain the block; legal approval references are never returned.
 
+### Consent text mapping (candidate — not approved)
+
+The Jobsearch side additionally binds the consent to the exact declaration text it displays (`src/lib/applicationStorageConsent.ts`):
+
+| Item | Value |
+| --- | --- |
+| Text version | `application-storage-consent-2026-11-07-v1` |
+| SHA-256 (UTF-8, `paragraphs.join("\n\n")`) | `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953` |
+| Purpose | `application-storage` |
+| RIS notice version | `1.0` |
+| State | `DRAFT` / candidate for operator approval |
+
+The text is a complete German first-person declaration candidate. It is **not legally approved**; no `legalApprovalRef` exists for it. The operator must approve the exact text and then configure the same version and hash server-side:
+
+- `RIS_CONSENT_TEXT_VERSION` must equal the canonical version,
+- `RIS_CONSENT_TEXT_SHA256` must equal the canonical hash,
+- `RIS_CONSENT_TEXT_STATE` must be `APPROVED` (only after approval).
+
+`GET /api/ris/consents` returns `textVersion`, `textHash`, `textState`, `textMapped`, `textApproved` and `textReason` in addition to the notice fields. `grantAllowed` is `true` only when the RIS notice is grantable **and** the text mapping is approved. The browser compares the server version/hash with its own canonical values and fails closed on any mismatch. `POST` re-checks the text mapping before writing and returns `503 consent_text_not_configured` / `503 consent_text_mismatch` or `409 consent_text_not_approved`; no RIS grant call is made.
+
 Blocked grants use `409` for notice-state reasons (`notice_not_active`, `notice_not_approved`, `notice_not_accepted`, `notice_version_unknown`) and `503` for `notice_version_not_mapped`, `notice_catalog_invalid` or `notice_catalog_unavailable`. A blocked grant never calls the RIS grant endpoint. Withdrawal stays available regardless of notice state.
 
-Activation implication: setting `RIS_CONSENT_NOTICE_VERSION=1.0` while RIS keeps notice `1.0` in `DRAFT` leaves grants blocked. That is the intended fail-closed behaviour. Do not work around it by enabling other flags, editing the browser code or changing the version; the RIS notice must be approved and opened for new grants first. The privacy policy release version is independent of the consent notice version.
+Activation implication: setting `RIS_CONSENT_NOTICE_VERSION=1.0` while RIS keeps notice `1.0` in `DRAFT` leaves grants blocked, and so does an absent, `DRAFT` or mismatching text mapping. That is the intended fail-closed behaviour. Do not work around it by enabling other flags, editing the browser code or changing the version; both the RIS notice and the Jobsearch text mapping must be explicitly approved first. The privacy policy release version is independent of the consent notice version.
 
-**Defence in depth is currently incomplete on the RIS side.** RIS reads `CONSENT_NOTICE_STATE_ENFORCED` in code but does **not** wire it in Terraform, so it defaults to `false` in deployment and the RIS grant endpoint accepts a known version regardless of notice state. Until RIS wires and enables that flag, the Jobsearch BFF is the only effective notice-approval barrier. Do not change Terraform or the RIS flag from this repository; treat it as an RIS activation blocker.
+**RIS-DEV activation sequence (separate operator GO required):** (1) approve the exact consent text and the RIS notice `application-storage/1.0`, set the RIS notice to `APPROVED`/`ACTIVE` with a real `legalApprovalRef`; (2) set `RIS_CONSENT_NOTICE_VERSION=1.0`, `RIS_CONSENT_TEXT_VERSION=application-storage-consent-2026-11-07-v1`, `RIS_CONSENT_TEXT_SHA256=2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953` and `RIS_CONSENT_TEXT_STATE=APPROVED` in the target environment; (3) enable RIS `CONSENT_NOTICE_STATE_ENFORCED=true`; (4) grant a synthetic consent; (5) enable `APPLICATION_CONSENT_ENFORCED=true` for the write gate. Keep the allowlist restricted to the synthetic test identity and do not enable production `VITE_RIS_APPLICATION_STORAGE_ENABLED` for the general audience.
+
+**Defence in depth status.** RIS wired `CONSENT_NOTICE_STATE_ENFORCED` into Terraform in `81634d8`, but the variable defaults to `false` and is not enabled in any deployed environment. Until it is explicitly enabled, the Jobsearch BFF gate is the only effective notice-approval barrier.
 
 ## Add an environment variable (CLI)
 

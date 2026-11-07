@@ -24,6 +24,12 @@ export interface RisConsentState {
   acceptedForNewGrant: boolean;
   grantAllowed: boolean;
   noticeReason: string | null;
+  textVersion: string | null;
+  textHash: string | null;
+  textState: string | null;
+  textMapped: boolean;
+  textApproved: boolean;
+  textReason: string | null;
 }
 
 export class RisConsentApiError extends Error {
@@ -68,6 +74,12 @@ export async function fetchRisConsent(token: string): Promise<RisConsentState> {
     acceptedForNewGrant?: boolean;
     grantAllowed?: boolean;
     noticeReason?: string | null;
+    textVersion?: string | null;
+    textHash?: string | null;
+    textState?: string | null;
+    textMapped?: boolean;
+    textApproved?: boolean;
+    textReason?: string | null;
   }>(token, { method: "GET" });
   return {
     consent: data.consent ?? null,
@@ -77,6 +89,12 @@ export async function fetchRisConsent(token: string): Promise<RisConsentState> {
     acceptedForNewGrant: data.acceptedForNewGrant === true,
     grantAllowed: data.grantAllowed === true,
     noticeReason: data.noticeReason ?? null,
+    textVersion: data.textVersion ?? null,
+    textHash: data.textHash ?? null,
+    textState: data.textState ?? null,
+    textMapped: data.textMapped === true,
+    textApproved: data.textApproved === true,
+    textReason: data.textReason ?? null,
   };
 }
 

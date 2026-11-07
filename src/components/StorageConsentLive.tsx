@@ -8,7 +8,13 @@ import {
   withdrawRisConsent,
   type RisConsent,
 } from "../lib/risConsentApi";
-import { STORAGE_CONSENT_TEXT_VERSION } from "../lib/storageConsent";
+import {
+  APPLICATION_STORAGE_CONSENT_PARAGRAPHS,
+  APPLICATION_STORAGE_CONSENT_RIS_NOTICE_VERSION,
+  APPLICATION_STORAGE_CONSENT_STATE,
+  APPLICATION_STORAGE_CONSENT_TEXT_SHA256,
+  APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
+} from "../lib/applicationStorageConsent";
 
 /**
  * Live consent controls backed by the RIS consent service through the BFF.
@@ -23,6 +29,12 @@ export default function StorageConsentLive() {
   const [noticeVersion, setNoticeVersion] = useState<string | null>(null);
   const [noticeState, setNoticeState] = useState<string | null>(null);
   const [noticeReason, setNoticeReason] = useState<string | null>(null);
+  const [textVersion, setTextVersion] = useState<string | null>(null);
+  const [textHash, setTextHash] = useState<string | null>(null);
+  const [textState, setTextState] = useState<string | null>(null);
+  const [textMapped, setTextMapped] = useState(false);
+  const [textApproved, setTextApproved] = useState(false);
+  const [textReason, setTextReason] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Array<Record<string, unknown>> | null>(null);
@@ -38,6 +50,12 @@ export default function StorageConsentLive() {
         setNoticeVersion(state.noticeVersion);
         setNoticeState(state.noticeState);
         setNoticeReason(state.noticeReason);
+        setTextVersion(state.textVersion);
+        setTextHash(state.textHash);
+        setTextState(state.textState);
+        setTextMapped(state.textMapped);
+        setTextApproved(state.textApproved);
+        setTextReason(state.textReason);
       })
       .catch((err) => { if (active) setError(messageOf(err)); });
     return () => { active = false; };
@@ -56,8 +74,14 @@ export default function StorageConsentLive() {
   };
 
   const status = consent?.status ?? "NOT_GRANTED";
-  const canGrant = grantAllowed && status !== "GRANTED";
+  const textMappingMatches =
+    textVersion === APPLICATION_STORAGE_CONSENT_TEXT_VERSION &&
+    textHash === APPLICATION_STORAGE_CONSENT_TEXT_SHA256;
+  const textServerApproved = textMapped && textApproved && textState === "APPROVED";
+  const canGrant =
+    grantAllowed && textMappingMatches && textServerApproved && status !== "GRANTED";
   const version = consent?.noticeVersion ?? noticeVersion;
+  const shortHash = `${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(0, 12)}…${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(-8)}`;
 
   return (
     <section className="storage-consent__block" aria-labelledby="storage-consent-live-title">
@@ -67,18 +91,44 @@ export default function StorageConsentLive() {
         {version ? ` (Textversion ${version})` : ""}
       </p>
       {error && <p role="alert">{error}</p>}
-      {!grantAllowed && status !== "GRANTED" && (
+      {!canGrant && status !== "GRANTED" && (
         <p className="field-hint" role="note">
           Die Einwilligungs-Textversion ist noch nicht freigegeben. Die Zustimmung ist gesperrt.
           {noticeState ? ` RIS-Status: ${stateLabel(noticeState)} (${noticeState}).` : ""}
           {noticeReason ? ` ${reasonOf(noticeReason)}` : ""}
+          {!textMappingMatches
+            ? " Die angezeigte Textfassung stimmt nicht mit der serverseitigen Zuordnung überein."
+            : ""}
+          {textReason ? ` ${textReasonOf(textReason)}` : ""}
         </p>
       )}
       <p className="field-hint">
         <a href="/datenschutz">Datenschutzhinweise zur Bewerbungsspeicherung</a>
-        {` · Angezeigte Textfassung: ${STORAGE_CONSENT_TEXT_VERSION}`}
         {version ? ` · RIS-Textversion: ${version}` : ""}
+        {` · RIS-Notice: ${APPLICATION_STORAGE_CONSENT_RIS_NOTICE_VERSION}`}
       </p>
+
+      <div
+        className="storage-consent__declaration"
+        aria-labelledby="storage-consent-declaration-title"
+      >
+        <h4 id="storage-consent-declaration-title">
+          Einwilligungserklärung zur dauerhaften Speicherung von Bewerbungen
+        </h4>
+        {APPLICATION_STORAGE_CONSENT_PARAGRAPHS.map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
+        <p className="field-hint storage-consent__text-meta">
+          {`Textfassung: ${APPLICATION_STORAGE_CONSENT_TEXT_VERSION}`}
+          {` · SHA-256: ${shortHash}`}
+          {` · Status: ${stateLabel(APPLICATION_STORAGE_CONSENT_STATE)} (${APPLICATION_STORAGE_CONSENT_STATE})`}
+          {textState
+            ? ` · Server-Zuordnung: ${stateLabel(textState)} (${textState})`
+            : " · Server-Zuordnung: nicht konfiguriert"}
+          {textMappingMatches ? " · Version/Hash stimmen überein" : " · Version/Hash stimmen nicht überein"}
+        </p>
+      </div>
+
       <div className="storage-consent__actions">
         <button
           type="button"
@@ -146,6 +196,13 @@ function reasonOf(reason: string): string {
   return "Der Freigabestatus konnte nicht geprüft werden.";
 }
 
+function textReasonOf(reason: string): string {
+  if (reason === "consent_text_not_configured") return "Für diese App ist keine Einwilligungs-Textfassung konfiguriert.";
+  if (reason === "consent_text_mismatch") return "Die konfigurierte Textfassung weicht von der kanonischen Fassung ab.";
+  if (reason === "consent_text_not_approved") return "Die Einwilligungs-Textfassung ist noch nicht freigegeben.";
+  return "Die serverseitige Textzuordnung konnte nicht geprüft werden.";
+}
+
 function messageOf(err: unknown): string {
   if (err instanceof RisConsentApiError) {
     if (
@@ -153,7 +210,10 @@ function messageOf(err: unknown): string {
       err.code === "notice_version_unknown" ||
       err.code === "notice_not_active" ||
       err.code === "notice_not_approved" ||
-      err.code === "notice_not_accepted"
+      err.code === "notice_not_accepted" ||
+      err.code === "consent_text_not_configured" ||
+      err.code === "consent_text_mismatch" ||
+      err.code === "consent_text_not_approved"
     ) {
       return "Die Einwilligungs-Textversion ist noch nicht freigegeben.";
     }

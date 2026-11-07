@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetJwksCache } from "../../api/_lib/ris/auth.mjs";
 import router from "../../api/ris/router.mjs";
+import { CONSENT_TEXT_SHA256, CONSENT_TEXT_VERSION } from "../../api/_lib/ris/consentText.mjs";
 
 const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: "jwk" }), kid: "test-key", alg: "RS256", use: "sig" };
@@ -123,6 +124,9 @@ beforeEach(() => {
   process.env.RIS_COGNITO_CLIENT_ID = CLIENT;
   process.env.RIS_TEST_USER_ALLOWLIST = `${ISSUER}|user-1`;
   delete process.env.RIS_CONSENT_NOTICE_VERSION;
+  process.env.RIS_CONSENT_TEXT_VERSION = CONSENT_TEXT_VERSION;
+  process.env.RIS_CONSENT_TEXT_SHA256 = CONSENT_TEXT_SHA256;
+  process.env.RIS_CONSENT_TEXT_STATE = "APPROVED";
 
   risResponse = response(200, { items: [applicationFixture()], nextCursor: null });
   fetchMock = vi.fn(async (url) => {
@@ -143,6 +147,9 @@ afterEach(() => {
     "RIS_COGNITO_CLIENT_ID",
     "RIS_TEST_USER_ALLOWLIST",
     "RIS_CONSENT_NOTICE_VERSION",
+    "RIS_CONSENT_TEXT_VERSION",
+    "RIS_CONSENT_TEXT_SHA256",
+    "RIS_CONSENT_TEXT_STATE",
   ]) delete process.env[key];
 });
 

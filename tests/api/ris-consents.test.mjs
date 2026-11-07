@@ -1,10 +1,20 @@
 // @vitest-environment node
+import { createHash } from "node:crypto";
 import { generateKeyPairSync, sign as cryptoSign } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetJwksCache } from "../../api/_lib/ris/auth.mjs";
 import handler from "../../api/_lib/ris/consentsHandler.mjs";
 import { evaluateNoticeGrant } from "../../api/_lib/ris/consentNotice.mjs";
+import {
+  CONSENT_TEXT_SHA256,
+  CONSENT_TEXT_VERSION,
+} from "../../api/_lib/ris/consentText.mjs";
+import {
+  APPLICATION_STORAGE_CONSENT_TEXT,
+  APPLICATION_STORAGE_CONSENT_TEXT_SHA256,
+  APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
+} from "../../src/lib/applicationStorageConsent";
 
 const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: "jwk" }), kid: "test-key", alg: "RS256", use: "sig" };
@@ -93,6 +103,9 @@ beforeEach(() => {
   process.env.RIS_COGNITO_CLIENT_ID = CLIENT;
   process.env.RIS_TEST_USER_ALLOWLIST = `${ISSUER}|user-1`;
   delete process.env.RIS_CONSENT_NOTICE_VERSION;
+  process.env.RIS_CONSENT_TEXT_VERSION = CONSENT_TEXT_VERSION;
+  process.env.RIS_CONSENT_TEXT_SHA256 = CONSENT_TEXT_SHA256;
+  process.env.RIS_CONSENT_TEXT_STATE = "APPROVED";
 
   getResponse = response(200, { items: consentItems() });
   postResponse = response(200, { consent: { purpose: "application-storage", status: "GRANTED", noticeVersion: "1.0", version: 1 } });
@@ -113,6 +126,7 @@ afterEach(() => {
     "RIS_APPLICATION_STORAGE_ENABLED", "RIS_CONSENT_SERVICE_ENABLED", "RIS_API_BASE_URL",
     "RIS_PARTNER_CREDENTIAL", "RIS_COGNITO_ISSUER", "RIS_COGNITO_CLIENT_ID",
     "RIS_TEST_USER_ALLOWLIST", "RIS_CONSENT_NOTICE_VERSION",
+    "RIS_CONSENT_TEXT_VERSION", "RIS_CONSENT_TEXT_SHA256", "RIS_CONSENT_TEXT_STATE",
   ]) delete process.env[key];
 });
 
@@ -186,6 +200,12 @@ describe("/api/ris/consents", () => {
     expect(res.body.noticeState).toBe("ACTIVE");
     expect(res.body.noticeApproved).toBe(true);
     expect(res.body.acceptedForNewGrant).toBe(true);
+    expect(res.body.textVersion).toBe(CONSENT_TEXT_VERSION);
+    expect(res.body.textHash).toBe(CONSENT_TEXT_SHA256);
+    expect(res.body.textState).toBe("APPROVED");
+    expect(res.body.textMapped).toBe(true);
+    expect(res.body.textApproved).toBe(true);
+    expect(res.body.textReason).toBeNull();
     expect(res.body.grantAllowed).toBe(true);
     expect(res.body.noticeReason).toBeNull();
   });
@@ -408,6 +428,114 @@ describe("/api/ris/consents", () => {
     await handler(request("POST", { body: { purpose: "marketing" } }), res);
     expect(res.statusCode).toBe(422);
     expect(res.body.code).toBe("unknown_purpose");
+  });
+});
+
+describe("consent text mapping gate", () => {
+  function approveText() {
+    process.env.RIS_CONSENT_TEXT_VERSION = CONSENT_TEXT_VERSION;
+    process.env.RIS_CONSENT_TEXT_SHA256 = CONSENT_TEXT_SHA256;
+    process.env.RIS_CONSENT_TEXT_STATE = "APPROVED";
+  }
+
+  function activeNotice() {
+    getResponse = response(200, { items: consentItems(), catalog: [ACTIVE_NOTICE] });
+  }
+
+  it("hält Server- und Client-Textidentität sowie den SHA-256 konsistent", () => {
+    expect(CONSENT_TEXT_VERSION).toBe(APPLICATION_STORAGE_CONSENT_TEXT_VERSION);
+    expect(CONSENT_TEXT_SHA256).toBe(APPLICATION_STORAGE_CONSENT_TEXT_SHA256);
+    const digest = createHash("sha256")
+      .update(APPLICATION_STORAGE_CONSENT_TEXT, "utf8")
+      .digest("hex");
+    expect(digest).toBe(CONSENT_TEXT_SHA256);
+  });
+
+  it("sperrt ohne konfiguriertes Text-Mapping und schreibt keinen Grant", async () => {
+    delete process.env.RIS_CONSENT_TEXT_VERSION;
+    delete process.env.RIS_CONSENT_TEXT_SHA256;
+    delete process.env.RIS_CONSENT_TEXT_STATE;
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    activeNotice();
+
+    const get = makeRes();
+    await handler(request("GET"), get);
+    expect(get.statusCode).toBe(200);
+    expect(get.body.grantAllowed).toBe(false);
+    expect(get.body.textVersion).toBeNull();
+    expect(get.body.textHash).toBeNull();
+    expect(get.body.textState).toBeNull();
+    expect(get.body.textMapped).toBe(false);
+    expect(get.body.textApproved).toBe(false);
+    expect(get.body.textReason).toBe("consent_text_not_configured");
+
+    const post = makeRes();
+    await handler(request("POST", { body: { purpose: "application-storage" } }), post);
+    expect(post.statusCode).toBe(503);
+    expect(post.body.code).toBe("consent_text_not_configured");
+    expect(callsByMethod("POST")).toHaveLength(0);
+  });
+
+  it("sperrt einen DRAFT-Textstatus und schreibt keinen Grant", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    approveText();
+    process.env.RIS_CONSENT_TEXT_STATE = "DRAFT";
+    activeNotice();
+
+    const get = makeRes();
+    await handler(request("GET"), get);
+    expect(get.statusCode).toBe(200);
+    expect(get.body.grantAllowed).toBe(false);
+    expect(get.body.textState).toBe("DRAFT");
+    expect(get.body.textMapped).toBe(true);
+    expect(get.body.textApproved).toBe(false);
+    expect(get.body.textReason).toBe("consent_text_not_approved");
+
+    const post = makeRes();
+    await handler(request("POST", { body: { purpose: "application-storage" } }), post);
+    expect(post.statusCode).toBe(409);
+    expect(post.body.code).toBe("consent_text_not_approved");
+    expect(callsByMethod("POST")).toHaveLength(0);
+  });
+
+  it("sperrt abweichende Textversion oder abweichenden Hash", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    for (const override of [
+      { version: "application-storage-consent-other" },
+      { hash: "0".repeat(64) },
+    ]) {
+      approveText();
+      if (override.version) process.env.RIS_CONSENT_TEXT_VERSION = override.version;
+      if (override.hash) process.env.RIS_CONSENT_TEXT_SHA256 = override.hash;
+      activeNotice();
+
+      const get = makeRes();
+      await handler(request("GET"), get);
+      expect(get.statusCode).toBe(200);
+      expect(get.body.grantAllowed).toBe(false);
+      expect(get.body.textMapped).toBe(false);
+      expect(get.body.textApproved).toBe(false);
+      expect(get.body.textReason).toBe("consent_text_mismatch");
+
+      const post = makeRes();
+      await handler(request("POST", { body: { purpose: "application-storage" } }), post);
+      expect(post.statusCode).toBe(503);
+      expect(post.body.code).toBe("consent_text_mismatch");
+      expect(callsByMethod("POST")).toHaveLength(0);
+    }
+  });
+
+  it("gibt ein APPROVED-Mapping nur mit freigegebener Notice frei", async () => {
+    process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
+    approveText();
+    activeNotice();
+
+    const get = makeRes();
+    await handler(request("GET"), get);
+    expect(get.statusCode).toBe(200);
+    expect(get.body.grantAllowed).toBe(true);
+    expect(get.body.textMapped).toBe(true);
+    expect(get.body.textApproved).toBe(true);
   });
 });
 
