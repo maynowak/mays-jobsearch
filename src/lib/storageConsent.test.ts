@@ -77,6 +77,7 @@ describe("APPLICATION-STORAGE consent text (candidate)", () => {
       "trade_union_membership",
       "political_opinions",
       "sexual_orientation",
+      "sex_life",
       "biometric_data",
       "genetic_data",
       "racial_or_ethnic_origin",
@@ -88,7 +89,7 @@ describe("APPLICATION-STORAGE consent text (candidate)", () => {
       APPLICATION_STORAGE_CONSENT_PARAGRAPHS.join("\n\n")
     );
     expect(APPLICATION_STORAGE_CONSENT_TEXT_VERSION).toBe(
-      "application-storage-consent-2026-11-07-v3"
+      "application-storage-consent-2026-11-07-v4"
     );
     expect(APPLICATION_STORAGE_CONSENT_PURPOSE).toBe("application-storage");
     expect(APPLICATION_STORAGE_CONSENT_RIS_NOTICE_VERSION).toBe("1.0");
@@ -98,6 +99,11 @@ describe("APPLICATION-STORAGE consent text (candidate)", () => {
 
   it("keeps the superseded candidates as history with their own hashes", () => {
     expect(APPLICATION_STORAGE_CONSENT_TEXT_HISTORY).toEqual([
+      {
+        version: "application-storage-consent-2026-11-07-v3",
+        sha256: "696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668",
+        state: "DRAFT",
+      },
       {
         version: "application-storage-consent-2026-11-07-v2",
         sha256: "232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca",
@@ -143,6 +149,11 @@ describe("APPLICATION-STORAGE consent text (candidate)", () => {
     expect(text).toContain("Gewerkschaftszugehörigkeit");
     expect(text).toContain("politische Meinungen");
     expect(text).toContain("sexuelle Orientierung");
+    expect(text).toContain("Sexualleben");
+    expect(text).toContain("keine Zuordnung zu einer bestimmten Kategorie");
+    expect(text).toContain("keine Offenlegung, ob solche Daten überhaupt vorliegen");
+    expect(text).toContain("automatische Kategorisierung oder Ableitung von Geschlecht");
+    expect(text).toContain("Geschlechtsidentität");
     expect(text).toContain("biometrische Daten");
     expect(text).toContain("genetische Daten");
     expect(text).toContain("rassischen oder ethnischen Herkunft");

@@ -4308,3 +4308,44 @@ Ergänzung zu den bestehenden v3-Einträgen; keine Duplikation, kein neuer Code:
 - Keine Rechtsfreigabe, keine Aktivierung, kein Push/Merge/Deploy und keine
   Live-Persistenz behauptet. Jobsearch-Commit `9eecf83` (v3) und `206d26e`
   (Checkbox-Reset) bleiben lokal.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v4 (Sexualleben, Freiwilligkeit, keine Ableitung)
+
+**Typ:** Implementation / Consent text revision / Audit
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Neue Textversion `application-storage-consent-2026-11-07-v4`, SHA-256
+  `8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7`.
+  v1/v2/v3 bleiben ausschließlich als Historie dokumentiert; ihre Hashes
+  dürfen nicht wiederverwendet werden.
+- Art.-9-Absatz erweitert: nennt jetzt ausdrücklich **Sexualleben und sexuelle
+  Orientierung**; stellt klar, dass die Einwilligung freiwillig ist, **keine
+  Zuordnung zu einer bestimmten Kategorie** und **keine Offenlegung, ob solche
+  Daten überhaupt vorliegen**, verlangt; und dass **keine automatische
+  Kategorisierung oder Ableitung von Geschlecht, Geschlechtsidentität oder
+  sexueller Orientierung** stattfindet. Kein Gender-Feld, keine automatische
+  Herleitung, keine neuen personenbezogenen Datenfelder; optionale Freitext-
+  und Datenminimierungsaussagen bleiben unverändert.
+- Kategorienliste (server-owned, kanonische Reihenfolge) jetzt neun Codes:
+  `health`, `religious_or_philosophical_beliefs`, `trade_union_membership`,
+  `political_opinions`, `sexual_orientation`, `sex_life`, `biometric_data`,
+  `genetic_data`, `racial_or_ethnic_origin`.
+- Separate Checkbox bleibt **nicht vorausgewählt**; Zustimmungs-Button weiterhin
+  nur bei gesetzter Checkbox plus bestätigtem Notice-/Text-Gate. Widerruf-/
+  Löschrechte unverändert; Checkbox-Reset nach Widerruf (`206d26e`) bleibt.
+- Angepasst: `src/lib/applicationStorageConsent.ts` (v4, Hash, Text,
+  Historienkonstante, `sex_life`), `api/_lib/ris/consentText.mjs`
+  (Server-Identität v4 + neun Kategorien), Tests
+  (`storageConsent.test.ts`, `StorageConsentLive.test.tsx`),
+  `docs/DEPLOYMENT.md`.
+- RIS-Vertrag: `3ed915b` akzeptiert als Art.-9-Text derzeit nur die v3-Identität
+  (`EXTERNAL_TEXT_NOT_ART9`). Der RIS-Agent muss die v4-Version/-Hash als
+  Art.-9-fähigen Text registrieren und `sex_life` in die Kategorie-Allowlist
+  aufnehmen, bevor ein v4-Pilot-Grant akzeptiert wird.
+- Tests (real, lokal): `storageConsent.test.ts` + `StorageConsentLive.test.tsx`
+  = 2 Dateien / 17 Tests PASS; `ris-consents.test.mjs` + `ris-routing.test.mjs`
+  = 2 Dateien / 51 Tests PASS; `npm run build` PASS; `git diff --check` ohne
+  Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
+  Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Rechtsfreigabe oder Live-Persistenz behauptet.
