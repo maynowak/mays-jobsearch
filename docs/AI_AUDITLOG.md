@@ -4045,3 +4045,27 @@ configured synthetic test user.
 - RIS-DEV preflight read-only: `ris-dev-dev-agent` active, `APPLICATION_CONSENT_ENFORCED=false`, `PARTNER_SURFACE_ENABLED=true`, `CONSENT_NOTICE_STATE_ENFORCED`/`CONSENT_PILOT_ALLOWLIST` absent; `c7e9pdwe78` = `ris-dev-jobsearch-api` uses the same Lambda; `g6901and25` also same Lambda; tables ACTIVE, consents TTL disabled, applications TTL enabled on expiresAt.
 - Deployment impact: shared Lambda for partner edge + kernel; scoped allowlist required; global gates must remain false; plan/apply and preview deployment are separate approvals.
 - No push/merge/deploy/apply/env/notice change; no live write. Report: `docs/reports/JM-RIS-STORAGE-PILOT-04-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-04 — audit completeness addendum
+
+**Typ:** Documentation / Audit completeness (no new execution)
+**Status:** `CONSENT TEXT READY FOR OPERATOR REVIEW` / `RIS-DEV DEPLOYMENT PREFLIGHT READY`
+
+Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlauf:
+
+- Vollständige ApplicationV1-Einwilligung `application-storage-consent-2026-11-07-v1`,
+  SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`;
+  Zustand `DRAFT`, **keine** Rechtsfreigabe, **kein** `legalApprovalRef`, **keine**
+  anerkannte Zuordnung zu RIS `application-storage/1.0`.
+- Preflight-Impact explizit: Der gemeinsame Lambda `ris-dev-dev-agent` bedient
+  sowohl `ris-dev-dev-api` (`g6901and25`) als auch `ris-dev-jobsearch-api`
+  (`c7e9pdwe78`, Partner-Edge mit Produktions-Jobsearch-Cognito). Ein globales
+  `APPLICATION_CONSENT_ENFORCED`/`CONSENT_NOTICE_STATE_ENFORCED` würde daher die
+  geteilte Partner-Edge treffen.
+- Deshalb müssen beide globalen Gates `false` bleiben; nur die exakte scoped
+  `CONSENT_PILOT_ALLOWLIST` (`<issuer>|<sub>`) isoliert die Pilot-Identität.
+  Die Jobsearch-`RIS_TEST_USER_ALLOWLIST` muss dieselbe Identität nennen;
+  Abweichung führt zu BFF-`403` oder fehlender RIS-Pilot-Scope.
+- Keine Code-, Env-, Secret-, Notice-, Deploy-, Apply- oder Push-Änderung; keine
+  Live-Persistenz und keine Notice-Freigabe behauptet. Details:
+  `docs/reports/JM-RIS-STORAGE-PILOT-04-REPORT.md`.
