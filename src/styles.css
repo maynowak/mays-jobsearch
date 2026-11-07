@@ -7586,6 +7586,19 @@ body {
   max-width: 1000px;
 }
 
+.legal-document {
+  margin: 0 0 var(--space-lg);
+  padding: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text);
+  background: transparent;
+}
+
 .legal-container {
   position: relative;
   background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);

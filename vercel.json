@@ -57,6 +57,14 @@
     {
       "source": "/email-bestaetigen",
       "destination": "/index.html"
+    },
+    {
+      "source": "/datenschutz",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/datenschutzprinzipien",
+      "destination": "/index.html"
     }
   ]
 }

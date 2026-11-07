@@ -72,5 +72,10 @@ describe("StorageConsentLive", () => {
     await waitFor(() => expect(screen.getByText(/Textversion 1.0/)).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Speicherung zustimmen" })).toBeEnabled();
     expect(screen.queryByText(/noch nicht freigegeben/)).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Datenschutzhinweise zur Bewerbungsspeicherung" })
+    ).toHaveAttribute("href", "/datenschutz");
+    expect(screen.getByText(/Angezeigte Textfassung: 2026-11-04-draft-1/)).toBeInTheDocument();
+    expect(screen.getByText(/RIS-Textversion: 1.0/)).toBeInTheDocument();
   });
 });
