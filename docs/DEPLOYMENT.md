@@ -120,13 +120,14 @@ curl -H "x-usage-token: <your-token>" https://mays-job-matcher.vercel.app/api/us
 
 The token is a server-side secret: it must never be added to the frontend bundle, `.env.example` is only a placeholder, and it never appears in responses or logs.
 
-## RIS ApplicationV1 BFF (server-only, disabled by default)
+## RIS ApplicationV1 and Consent BFF (server-only, disabled by default)
 
-The RIS application storage path is disabled unless all required server values are present. The partner credential must never use a `VITE_*` name and must never be exposed to the browser. The server-side test-user allowlist is an additional test gate, not a replacement for RIS partner authorization.
+The RIS application storage path is disabled unless all required server values are present. The consent BFF has its own activation switch and can be enabled independently of application storage. The partner credential must never use a `VITE_*` name and must never be exposed to the browser. The server-side test-user allowlist is an additional test gate, not a replacement for RIS partner authorization.
 
 | Variable | Purpose | Required for BFF? | Secret? |
 |---|---|---|---|
-| `RIS_APPLICATION_STORAGE_ENABLED` | Explicit server opt-in; default/absent = OFF | Yes, `true` for remote mode | No |
+| `RIS_APPLICATION_STORAGE_ENABLED` | Explicit application-storage opt-in; default/absent = OFF | Yes, `true` for remote application mode | No |
+| `RIS_CONSENT_SERVICE_ENABLED` | Independent consent-BFF opt-in; default/absent = OFF; does not require application storage | Yes, `true` for consent mode | No |
 | `RIS_API_BASE_URL` | Official HTTPS RIS partner base URL | Yes | No |
 | `RIS_PARTNER_CREDENTIAL` | Server-side partner credential sent as `X-Api-Credential` | Yes | Yes |
 | `RIS_API_KEY` | Supported compatibility alias for the partner credential | Alternative to `RIS_PARTNER_CREDENTIAL` | Yes |
@@ -139,6 +140,8 @@ The RIS application storage path is disabled unless all required server values a
 | `VITE_RIS_APPLICATION_MIGRATION_MOCK` | Local migration mock only; keep OFF outside local tests | No | No |
 
 `RIS_API_BASE_URL` must be the official partner endpoint and use HTTPS. `RIS_COGNITO_ISSUER` and `RIS_COGNITO_CLIENT_ID` must match the partner registration. Do not read, print or commit secret values. Production and Preview are separate environments; a key in Production does not make Preview ready.
+
+Consent and application storage are independently activated. `RIS_CONSENT_SERVICE_ENABLED=true` with `RIS_APPLICATION_STORAGE_ENABLED=false` enables only the consent BFF; the reverse leaves consent disabled. Both modes reuse the same `RIS_API_BASE_URL`, partner credential, Cognito issuer/client and test-user allowlist.
 
 ## Add an environment variable (CLI)
 

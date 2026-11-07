@@ -75,7 +75,6 @@ api/                          serverless functions
   jobs.mjs                    GET /api/jobs
   match.mjs                   POST /api/match
   cover-letter.mjs            POST /api/cover-letter
-  model.mjs                   GET /api/model
   alerts.mjs                  POST/DELETE/GET /api/alerts
   cron/digest.mjs             POST /api/cron/digest
 

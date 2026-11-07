@@ -20,7 +20,6 @@ Diese Inventur wurde ausschließlich aus den tatsächlichen Handlern in `api/`,
 | POST | `/api/profile` | none | keine | `api/profile.mjs` → `api/_lib/ai.mjs: chat` | `tests/api/profile-cache.test.mjs`, `src/App.test.tsx` |
 | POST | `/api/cover-letter` | none | keine | `api/cover-letter.mjs` → `api/_lib/ai.mjs: chat` | indirekt via `src/api.test.ts`/Komponententests |
 | GET | `/api/models` | none | keine | `api/models.mjs` → `api/_lib/models.mjs` | `tests/api/providers.test.mjs` (Provider-Ebene) |
-| GET | `/api/model` | none | keine | `api/model.mjs` | — |
 | POST / DELETE / GET | `/api/alerts` | none | keine | `api/alerts.mjs` → `api/_lib/alerts.mjs` (Upstash) | — |
 | POST | `/api/ats-analysis` | none | keine | `api/ats-analysis.mjs` → `api/_lib/ats.mjs` | `tests/api/ats-analysis.test.js`, `tests/api/ats-extraction.test.js`, `tests/api/ats-model-selection.test.mjs` |
 | POST | `/api/cv-improvement` (und interne Sub-Dispatcher `/apply`, `/reanalyze`, `/match-impact` via `req.url`) | none | Antwort-`meta.version = "v1"` (nicht URL) | `api/cv-improvement.mjs` | `tests/api/cv-improvement-api.test.mjs`, `tests/api/cv-improvement-module.test.mjs` |
@@ -65,9 +64,6 @@ Hinweis: `GET /api/alerts` liefert nur `{ count }` und wird vom Frontend nicht v
 - 200 → `{ models: [{id,name,provider}], providers: [{id,name,enabled,configured}], defaultModel, fallbackModel, recommendedModel, fallbackMaxAttempts }`.
 - Errors: 405 `method`, 502 `models_unavailable` (oder Provider-Status).
 
-### `GET /api/model`
-- 200 → `{ model: string | null }`. Kein Method-Guard im Fehlerfall (405 nur via OPTIONS); Errors: keine expliziten.
-
 ### `POST /api/alerts`
 - Body: `{ email (Pflicht, E-Mail-Regex), skills|targetRole (mind. eins), city? }` → 200 `{ ok: true, message }`.
 - `DELETE`: Body `{ email }` → 200 `{ ok: true, message }`.
@@ -105,7 +101,7 @@ Hinweis: `GET /api/alerts` liefert nur `{ count }` und wird vom Frontend nicht v
 | `fetchMatches` | `/api/match` | POST (+ `x-mj-attempt`) |
 | `fetchJobDetails` | `/api/job-details` | POST |
 | `fetchModels` | `/api/models` | GET |
-| `fetchModel` | `/api/model` | GET |
+| `fetchModel` | `/api/models` (`recommendedModel`/`defaultModel`) | GET |
 | `createProfile` | `/api/profile` | POST (+ `x-mj-attempt`) |
 | `generateCoverLetter` | `/api/cover-letter` | POST (+ `x-mj-attempt`) |
 | `subscribeAlert` / `unsubscribeAlert` | `/api/alerts` | POST / DELETE |
@@ -164,7 +160,7 @@ Client-Fehlerhandling: `ApiError { message, status?, code? }`, Retries nur via `
 1. **`/api/v1/cv-improvement*` vs. tatsächlichem Routing:** Der Client ruft `v1`-URLs, der Server legt keine `api/v1/`-Dateien an und `vercel.json` enthält keine Rewrites. Aus dem Repo ist nicht herleitbar, dass diese Routen in Production bedient werden (Vercel würde ohne `api/v1/`-Datei 404 liefern). Die cv-improvement-Unit-Tests rufen den Handler direkt, ohne URL-Routing. → **Entscheidung nötig** (Routing ergänzen oder Client auf unversioned umstellen) — NICHT in diesem Task beheben.
 2. **`/api/cron/digest` ohne `CRON_SECRET` ist öffentlich** aufrufbar (`isAuthorized` gibt `true`, wenn kein Secret gesetzt ist). Sicherheitsrelevante Entscheidung nötig — NICHT in diesem Task beheben.
 3. **Zwei Response-Formate koexistieren** (flach vs. `{data, meta}`-Envelope nur in cv-improvement-Subpfaden) — welche Variante der Standard werden soll, ist offen (Versioning-Standard sagt Envelope; IST sagt überwiegend flach).
-4. `api/model.mjs` hat keinen Method-Guard-Fehlerpfad (jetzt dokumentiert; bewusste Entscheidung offen).
+4. ~~`api/model.mjs` hat keinen Method-Guard-Fehlerpfad~~ — Endpoint entfernt (Vercel-Hobby-Limit); Ersatz ist `/api/models.recommendedModel`.
 5. Standard-vs-IST-Überführung (Migration Plan) bleibt Draft — keine Umsetzung in diesem Task.
 
 ---
@@ -210,6 +206,6 @@ Der Standard ist nicht eingeführt. Die Dokumente beschreiben einen Zielzustand,
 | Details/Enrichment | `tests/api/job-details.test.mjs`, `tests/api/detail-enrich.test.mjs` |
 | Safety | `tests/api/safety-observer.test.mjs` |
 | Client/Frontend | `src/api.test.ts`, Komponententests unter `src/components/*.test.tsx` |
-| Keinen eigenen API-Test | `/api/model`, `/api/alerts`, `/api/usage`, `/api/cron/digest`, `/api/cover-letter` (direkt) |
+| Keinen eigenen API-Test | `/api/alerts`, `/api/usage`, `/api/cron/digest`, `/api/cover-letter` (direkt) |
 
 Gesamtsuite zum Stand der Inventur: **657 passed / 5 skipped** (`npm test` = `vitest run`; `api/**` excluded — API-Tests liegen unter `tests/api/`).

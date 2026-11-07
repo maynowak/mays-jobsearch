@@ -212,6 +212,131 @@
 - Offene Punkte: Cross-Repo-GitHub-App-Credentials nicht verifiziert; Live-Dispatch bleibt `BLOCKED FOR LIVE`.
 - Resume-Punkt: Gate 01 abgeschlossen; Gate 02 Contract als Nächstes.
 - Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+2026-11-06 · JM-RIS-VERCEL-SAFE-RELEASE-05
+- Typ: Safe Preview Release/Consent-Integration/E2E-Vorbereitung
+- Status: **BLOCKED — PREVIEW RELEASE NOT AUTHORIZED · P0 SECRET ISOLATION/PROTECTION/ENV/COGNITO · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `4b74695`; Code-Commit `d05a953`; `origin/main` `f59aa4b`; lokaler Preview-Branch `preview/jm-ris-safe-release-05` @ `d05a953`; nur Haupt-Worktree; 4 untracked Dokumente unangetastet.
+- Vercel-Projekt: `mays-job-matcher` (`prj_wdzpRfrGENG82Txi9Sa9QTzKruk9`), Team `maymilly`, Git `maynowak/mays-jobsearch`, Production Branch `main`; bestätigt.
+- P0 Secret-Isolation: `RIS_API_KEY` global in Production, Preview, Development; keine branch-spezifische Preview-Isolation. Keine Secret-Werte gelesen; kein `vercel env pull`; keine Mutation.
+- P0 Preview-Protection: `protection`/`passwordProtection`/`ssoProtection` = null; nur `gitForkProtection=true`; Vercel Authentication für Preview nicht aktiv.
+- Preview-Env: `RIS_CONSENT_SERVICE_ENABLED`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_CONSENT_UI_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK`, `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_CONSENT_NOTICE_VERSION` fehlen; `RIS_CONSENT_NOTICE_VERSION` bleibt wegen DRAFT ungesetzt.
+- P0 Cognito: `VITE_REDIRECT_URI`/`VITE_POST_LOGOUT_REDIRECT_URI` global für Preview; Preview-Callback nicht bestätigt; keine Cognito-/DNS-/Hosted-UI-Änderung.
+- DRAFT-Sperre: BFF-GET liefert `grantAllowed` nur bei serverseitiger Notice-Version; `StorageConsentLive` aktiviert Grant nur bei `grantAllowed=true`; Server bleibt fail-closed (`notice_version_not_mapped`). Kein Grant ausgeführt.
+- Tests: Applications **29/29**, Consents **10/10**, Routing **11/11**, Config-Separation **6/6**, StorageConsentLive **2/2**; Gesamtsuite **1531 passed / 5 skipped**; Build PASS; API-Syntax PASS; `git diff --check` PASS; Vercel-Build **12 Functions**.
+- Bestehende Preview-Deployments: mindestens zwei Ready-Preview-Deployments aus der Zeit der globalen Key-Zuordnung (`rftu7nbo9`, `p9m1g8bnb`) sind als exponiert zu behandeln; keine neuen Deployments erstellt.
+- Geänderte Dateien: `api/_lib/ris/consentsHandler.mjs`, `src/lib/risConsentApi.ts`, `src/components/StorageConsentLive.tsx`, `src/components/StorageConsentLive.test.tsx`, `tests/api/ris-consents.test.mjs`, `docs/reports/JM-RIS-VERCEL-SAFE-RELEASE-05.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-Env-/Secret-Mutation, keine RIS-/AWS-/Cognito-/CloudFront-/DNS-/Terraform-Änderung, kein Deployment, kein Push, keine produktive Speicherung, keine echten Bewerberdaten.
+- Offene Blocker: Preview-Secret-Isolation, Preview-Protection, Preview-Env-Werte, Cognito-Preview-Callback, DRAFT-Notice-Freigabe.
+- Nächste Aktionen: Betreiberfreigabe für die P0-Punkte; danach Preview-Branch pushen, Preview deployen und Runtime-Smoke/E2E durchführen.
+- Resume-Punkt: DRAFT-Sperre implementiert; Preview-Release blockiert.
+- Log: `docs/reports/JM-RIS-VERCEL-SAFE-RELEASE-05.md`
+
+2026-11-06 · JM-RIS-CONSENT-CONFIG-SEPARATION-04
+- Typ: Consent-/Application-Aktivierungstrennung
+- Status: COMPLETE — **LOCAL VERIFIED · CONSENT INDEPENDENT · APPLICATIONS STILL OFF · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `40356e6`; `origin/main` `f59aa4b`; **1 ahead / 0 behind**; nur Haupt-Worktree; 4 untracked Dokumente unangetastet.
+- Konfiguration: gemeinsamer `sharedRisConfig()` für API-Basis-URL, Partner-Credential, Cognito-Issuer/Client, Allowlist und Timeout; neuer Schalter `RIS_CONSENT_SERVICE_ENABLED` (Default OFF); Applications bleibt an `RIS_APPLICATION_STORAGE_ENABLED` gebunden.
+- Consent-Handler: nutzt `risConsentConfig()`; deaktiviert → `503 consent_disabled`; fehlende gemeinsame Konfiguration → `503 missing_config`; Authentifizierung, Allowlist, Zweckvalidierung und `RIS_CONSENT_NOTICE_VERSION` unverändert; ohne Notice-Version kein Grant.
+- Verhaltensmatrix: OFF/OFF beide deaktiviert; ON/OFF Consent erlaubt, Applications gesperrt; OFF/ON Consent gesperrt, Applications unverändert; ON/ON beide erreichbar.
+- Tests: Applications **29/29**, Consents **9/9**, Routing **11/11**, Config-Separation **6/6**; Gesamtsuite **1528 passed / 5 skipped**; Build PASS; API-Syntax PASS; `git diff --check` PASS.
+- Vercel-Build: **12 Functions** unverändert, inkl. `api/ris/router.func`; keine zusätzliche Function; `vercel.json`/Router unverändert.
+- Geänderte Dateien: `api/_lib/ris/config.mjs`, `api/_lib/ris/consentsHandler.mjs`, `.env.example`, `docs/DEPLOYMENT.md`, `tests/api/ris-applications.test.mjs`, `tests/api/ris-consents.test.mjs`, `tests/api/ris-routing.test.mjs`, `tests/api/ris-config-separation.test.mjs`, `docs/reports/JM-RIS-CONSENT-CONFIG-SEPARATION-04.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/CloudFront-/DNS-/Terraform-Änderung, keine Vercel-Env-Mutation, kein Deployment, kein Push, keine produktive Speicherung, keine echten RIS-Requests.
+- Offene Punkte: rechtliche/betriebliche Freigabe der Notice-Version; Preview-Secret-Isolation; Testbenutzer/Allowlist; separater Preview-/E2E-Auftrag.
+- Nächste Aktionen: Code-/Test-Commit und Doku-Commit; danach separater Preview-Test mit Consent ON/Application OFF.
+- Resume-Punkt: Consent unabhängig aktivierbar; Applications weiterhin gesperrt.
+- Log: `docs/reports/JM-RIS-CONSENT-CONFIG-SEPARATION-04.md`
+
+2026-11-06 · JM-RIS-VERCEL-FUNCTION-CONSOLIDATION-03
+- Typ: Vercel-Function-Konsolidierung/API-Kompatibilität
+- Status: COMPLETE — **LOCAL VERIFIED · 13→12 FUNCTIONS · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `f59aa4b`; `origin/main` `f59aa4b`; 0/0; 4 untracked Dokumente unangetastet.
+- Root Cause: Vercel Hobby erlaubt max. 12 Functions; 13 RIS-/API-Functions führten zu `exceeded_serverless_functions_per_deployment`.
+- Architektur: ein Einstiegspunkt `api/ris/router.mjs`; Handler logisch getrennt unter `api/_lib/ris/applicationsHandler.mjs` und `consentsHandler.mjs`; öffentliche URLs unverändert über zwei explizite Rewrites; direkter Router-Aufruf per 307 auf `/404`; kein Catch-all.
+- Routing-Sicherheit: genau ein internes Flag (`__ris_applications=1` bzw. `__ris_consents=1`); Pfad-/Flag-Mismatch und widersprüchliche Flags → 404; Client-Query kann den Handler nicht wechseln.
+- Kompatibilität: Applications- und Consent-Operationen, Auth/JWT/JWKS, Issuer/Client, Allowlist, Owner `iss + sub`, Idempotency, Versionskonflikte, Fehler-Mapping und `RIS_CONSENT_NOTICE_VERSION` unverändert; kein neues Consent-Enforcement.
+- Tests: Applications **29/29**, Consents **7/7**, Routing **11/11**; Gesamtsuite **1520 passed / 5 skipped**; `npm run build` PASS; `node --check` PASS; `git diff --check` PASS.
+- Vercel-Build: `vercel build --non-interactive` erfolgreich; **12 `.func`-Artefakte** inkl. `api/ris/router.func`; Build-Config mit zwei RIS-Rewrites und Router-Redirect verifiziert.
+- Einschränkung: `vercel dev` nutzt in diesem Vite-Projekt den Vite-Dev-Server und wandte Rewrites/dynamische API-Routen lokal nicht an; Runtime-Rewrite-Semantik bleibt Preview-Deployment-Test.
+- Geänderte Dateien: `api/ris/router.mjs`, `api/_lib/ris/applicationsHandler.mjs`, `api/_lib/ris/consentsHandler.mjs`, `vercel.json`, `tests/api/ris-applications.test.mjs`, `tests/api/ris-consents.test.mjs`, `tests/api/ris-routing.test.mjs`, `docs/reports/JM-RIS-VERCEL-FUNCTION-CONSOLIDATION-03.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/Terraform-Änderung, keine Vercel-Env-Mutation, kein Deployment, kein Push, keine produktive Speicherung.
+- Offene Punkte: Preview-Deployment-Test der Rewrites und des Router-Redirects; Preview-Secret-Isolation; Testbenutzer/Allowlist; Consent-Notice-Version bleibt DRAFT.
+- Nächste Aktionen: separater, freigegebener Preview-Deployment-Test; danach Deployment-Review.
+- Resume-Punkt: 12 Functions lokal verifiziert; Public APIs kompatibel.
+- Log: `docs/reports/JM-RIS-VERCEL-FUNCTION-CONSOLIDATION-03.md`
+
+2026-11-06 · JM-RIS-STORAGE-CONSENT-RESPONSE-02
+- Typ: External Contract Verification/Consent-Gate
+- Status: **WAITING_FOR_PROVIDER_RESPONSE** — keine offizielle RIS-Antwort, alle Consent-Funktionen `UNKNOWN`, keine Implementierung, keine Aktivierung
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `4b07466`; `origin/main` `7a3d2ea`; **3 ahead / 0 behind**; erwarteter Stand `4b07466` VERIFIED; 4 untracked Dokumente unangetastet.
+- Geprüft: `docs/contracts/JM-RIS-STORAGE-CONSENT-CONTRACT-01.md`, `JM-RIS-STORAGE-CONSENT-HANDOFF-V1.md`, `src/lib/storageConsent.ts`, `StorageConsentSection.tsx`, `applicationMigration.ts`, `risRemoteRepository.ts`, `remoteSessionRepository.ts`, `api/ris/applications.mjs`, `api/_lib/ris/*`.
+- Befund: Keine offizielle, zuordenbare RIS-Antwort (Anbieter/API-Version/Zielumgebung/Vertragsversion/Operationen/Auth/Berechtigungen/Schemas fehlen). Keine Consent-Endpunkte dokumentiert oder verifiziert.
+- Support-Matrix: alle zehn Funktionen `UNKNOWN`; keine `SUPPORTED`-Bewertung ohne externe Vertragsevidenz.
+- Kritisch: BFF-Writes (Create/Update/Status/History/Cover-Letter) haben keinen serverseitigen Consent-Gate; Migration nutzt `consentSource: "simulated"` mit `storageConsent: async () => true`; `STORAGE_CONSENT_BACKEND_AVAILABLE = false`; Remote-Flags OFF.
+- Integrationsplan: bestehende BFF-/Consent-Architektur erweitern, zentraler `application_storage`-Gate vor allen neuen Writes, fail-closed, Read/Export/Delete weiterhin möglich; keine neue Consent-UI; Function-Zahl 12 beachten.
+- Tests: BFF+Boundary **35/35** PASS; Build PASS; Gesamtsuite zuletzt **1502 passed / 5 skipped** auf code-identischem Stand; `git diff --check` PASS.
+- Geänderte Dateien: `docs/reports/JM-RIS-STORAGE-CONSENT-RESPONSE-02.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Vercel-/Cognito-/Terraform-Änderung, keine echten RIS-Requests, keine Live-Writes, keine produktiven Bewerberdaten, kein Push.
+- Offene Punkte: offizielle RIS-Antwort, Consent-Endpunkte/Schemas, bestehende Nutzer-Einwilligung, Audit/Retention/Erasure, Preview-Isolation, Testbenutzer/Allowlist.
+- Nächste Aktionen: Anfrage über den freigegebenen Partnerkanal erneut bereitstellen; danach separater Implementierungsauftrag für den serverseitigen Consent-Gate.
+- Resume-Punkt: Vertragsprüfung abgeschlossen; Provider-Antwort blockiert.
+- Log: `docs/reports/JM-RIS-STORAGE-CONSENT-RESPONSE-02.md`
+
+2026-11-06 · JM-RIS-STORAGE-CONSENT-CONTRACT-01
+- Typ: Externe Contract-Anfrage/Consent-Gate
+- Status: OPEN — **RIS RESPONSE REQUIRED · NO IMPLEMENTATION · NO RIS ACCESS**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `dcbc973`; `origin/main` `7a3d2ea`; **2 ahead / 0 behind**; 4 untracked Dokumente unangetastet.
+- Inhalt: formale Anfrage an Mays-RIS zu bestehenden und neuen Storage-Consents (`application_storage`, `cv_storage`, `search_profile_storage`), Nachweisen/Versionen, Widerruf/Export/Löschung, ApplicationV1-Parametern und Support-Matrix zum Handoff `docs/contracts/JM-RIS-STORAGE-CONSENT-HANDOFF-V1.md`.
+- Grenzen: keine RIS-Repository-/AWS-Zugriffe, keine RIS-Interna, keine Secrets/JWTs/Passwörter/Benutzerkennungen, keine echten RIS-Requests, keine Aktivierung der dauerhaften Speicherung.
+- Tests: keine Codeänderung; `git diff --check` PASS.
+- Geänderte Dateien: `docs/contracts/JM-RIS-STORAGE-CONSENT-CONTRACT-01.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Vercel-/RIS-/AWS-/Cognito-/Terraform-Änderung, kein Deployment, kein Push.
+- Offene Punkte: RIS-Antwort zu Consent-Endpoints, Nachweisfeldern, Persistierungsbestätigung, Widerruf/Export/Löschung, ApplicationV1-Parametern und Support-Matrix.
+- Nächste Aktionen: Antwort von RIS einholen; danach Vertragslücken schließen und separaten Implementierungs-/E2E-Auftrag freigeben.
+- Resume-Punkt: Anfrage formuliert; keine RIS-Evidence vorhanden.
+- Log: `docs/contracts/JM-RIS-STORAGE-CONSENT-CONTRACT-01.md`
+
+2026-11-06 · JM-RIS-VERCEL-PREVIEW-CONFIG-06
+- Typ: Vercel-Preview-Konfiguration/Sicherheits-Gate
+- Status: BLOCKED — **PREVIEW SECRET ISOLATION BLOCKED · NO MUTATIONS · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `53cbcd4`; `origin/main` `7a3d2ea`; **1 ahead / 0 behind**; erwartete Baseline `7a3d2ea`/0/0. Abweichung: lokaler Function-Limit-Fix `53cbcd4` (13→12 Functions), nicht gepusht; 4 untracked Dokumente unangetastet.
+- Vercel-Projekt: `mays-job-matcher` (`prj_wdzpRfrGENG82Txi9Sa9QTzKruk9`), Team `maymilly`, Git `maynowak/mays-jobsearch`, Production Branch `main`; aktiver Link und offizielle Projekt-API bestätigt. Caveat: `.vercel/repo.json` enthält veraltete Zuordnung zu `mays-jobsearch` (`prj_j6Ak...`), nicht verändert.
+- Preview-Isolation: `RIS_API_KEY` vorhanden in Production, **Preview**, Development; Preview-Zuordnung **global**, keine branch-scoped Preview-Variablen; 14 Remote-Branches; `protection`/`passwordProtection`/`ssoProtection` = null, nur `gitForkProtection=true`. **STOP — keine Secret-Zuordnung.**
+- Fehlende Preview-Variablen: `RIS_API_BASE_URL`, `RIS_COGNITO_ISSUER`, `RIS_COGNITO_CLIENT_ID`, `RIS_TEST_USER_ALLOWLIST`, `RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_STORAGE_ENABLED`, `VITE_RIS_APPLICATION_MIGRATION_MOCK`. Flags fehlen → Code-Default OFF.
+- Vertrag: ApplicationV1 lokal/mock verifiziert; offizielle Base-URL sowie bestätigter Issuer/Client fehlen; Key-Berechtigung für Preview nicht verifiziert. Testbenutzer: keine Allowlist in Preview, Gültigkeit nicht verifiziert → **BLOCKED**.
+- Tests: BFF+Boundary **35/35**, Gesamtsuite **1502 passed / 5 skipped**, Build PASS, API-Syntax PASS, `git diff --check` PASS.
+- Konfigurationsänderungen: **keine**; keine Vercel-Env-Mutation, kein Secret gelesen/ausgegeben, kein Deployment, kein Push.
+- Geänderte Dateien: `docs/reports/JM-RIS-VERCEL-PREVIEW-CONFIG-06.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/CloudFront-/DNS-/Terraform-Änderung, keine echten RIS-Requests, keine produktiven Bewerberdaten.
+- Offene Punkte: Preview-Key-Isolation, offizieller API-Vertrag, Testidentität/Allowlist, Preview-Schutz, Push von `53cbcd4`, separater Deploy/E2E.
+- Nächste Aktionen: Betreiberentscheidung zur Isolation; danach Preview-Env und separater E2E.
+- Resume-Punkt: Preview-Konfiguration blockiert; keine Mutation.
+- Log: `docs/reports/JM-RIS-VERCEL-PREVIEW-CONFIG-06.md`
+
+2026-11-06 · JM-VERCEL-FUNCTION-LIMIT-01
+- Typ: Deployment-Fix/Function-Consolidation
+- Status: COMPLETE — **LOCAL FIX VERIFIED · NO PUSH · NO DEPLOYMENT**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: `main` `7a3d2ea`; `origin/main` `7a3d2ea`; **0 ahead / 0 behind**; 4 untracked Dokumente unangetastet.
+- Root Cause: Vercel-Deployments (Production/Preview) endeten mit `exceeded_serverless_functions_per_deployment` — 13 Functions unter `api/**/*.mjs` (ohne `_lib`), Hobby-Limit 12.
+- Fix: deprecated `api/model.mjs` entfernt; `fetchModel` liest nun `/api/models` und nutzt `recommendedModel ?? defaultModel`; Function-Zahl 12; keine `vercel.json`-/Env-Änderung.
+- API/Data-Flow: `/api/model` entfällt; `/api/models` bleibt unverändert; kein neuer AI-Call, kein neuer externer Datenfluss, keine neuen personenbezogenen Daten, keine Secrets.
+- Docs: `docs/ARCHITECTURE.md`, `docs/API_CONTRACT.md`, `docs/API_INVENTORY.md`, `docs/AGENTS.md`, `docs/AI_CONTEXT.md`, `docs/CHANGELOG.md` aktualisiert.
+- Tests: `npm run build` PASS; Gesamtsuite **1502 passed / 5 skipped**; `node --check` alle `api/**/*.mjs` PASS; `git diff --check` PASS.
+- Git-Status: lokaler Commit; 4 untracked Dokumente unangetastet; kein Push, kein Deployment.
+- Geänderte Dateien: `api/model.mjs` (gelöscht), `src/api.ts`, `src/hooks/useAvailableModels.ts`, `docs/ARCHITECTURE.md`, `docs/API_CONTRACT.md`, `docs/API_INVENTORY.md`, `docs/AGENTS.md`, `docs/AI_CONTEXT.md`, `docs/CHANGELOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine RIS-/AWS-/Cognito-/Terraform-Änderung, keine Vercel-Env-Mutation, kein Deployment, kein Push.
+- Offene Punkte: Push und Production-Deploy separat freigeben; danach Vercel-Deployment-Status prüfen.
+- Nächste Aktionen: Betreiberfreigabe für Push/Deploy.
+- Resume-Punkt: Function-Zahl 12, lokal verifiziert.
+- Log: diese Datei.
+
 2026-11-06 · JM-RIS-VERCEL-TEST-ENV-05-MAIN
 - Typ: Main-Integration/Readiness/Audit
 - Status: COMPLETE — **FAST-FORWARD NACH MAIN · PREVIEW ENV BLOCKED**; kein Push, kein Deployment
@@ -3561,3 +3686,29 @@ Einschraenkung: /profil mit echtem Cognito-Login ohne Zugangsdaten nicht
 testbar; pre-auth-Render (Navbar+Footer) verifiziert, /dev/dashboard ist
 die volle Layout-Entsprechung.
 Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
+
+## 2026-11-07 — RIS consent live deployment and production consent flow
+
+**Status:** production deployment fixed and verified; RIS consent flow live for the
+configured synthetic test user.
+
+- Deploy failure cause: 13 serverless functions on Hobby (limit 12) after adding
+  `api/ris/consents.mjs`. Fix `40356e6` consolidates both BFF routes into
+  `api/ris/router.mjs` (12 functions).
+- Pushed `f59aa4b..4e334d0`; production deployment `6e7rcjrz0` is `Ready`
+  (previous four deployments had failed at "Deploying outputs").
+- Production env set (values never printed): `RIS_APPLICATION_STORAGE_ENABLED`,
+  `RIS_API_BASE_URL` (edge `c7e9pdwe78`), `RIS_COGNITO_ISSUER`/`CLIENT_ID`
+  (Jobsearch pool `ZURSMpD2O` / `5hb3…`), `RIS_PARTNER_CREDENTIAL` (new
+  `mays-jobsearch` key), `RIS_CONSENT_SERVICE_ENABLED`, `RIS_CONSENT_NOTICE_VERSION=1.0`,
+  `RIS_TEST_USER_ALLOWLIST`, `VITE_RIS_CONSENT_UI_ENABLED=true`.
+  Stale `RIS_API_KEY` removed from production.
+- Live checks: site 200, login 302, `/api/ris/applications` and
+  `/api/ris/consents` 401 without token (previously 503 `ris_disabled`/`consent_disabled`).
+- Production E2E (synthetic PKCE user through `www.mays-job-matcher.app`):
+  status NOT_GRANTED -> grant 200 GRANTED (1.0) -> withdraw 200 WITHDRAWN ->
+  history [WITHDRAWN, GRANTED] -> regrant 200 GRANTED.
+- Cleanup: 4 consent rows deleted, synthetic user deleted, consent table 0.
+- Not enabled: `APPLICATION_CONSENT_ENFORCED` (RIS) stays false; production
+  access remains limited to the allowlisted synthetic user.
+- No Cognito/CloudFront/DNS/ACM changes, no RIS Terraform apply.

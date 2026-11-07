@@ -112,8 +112,7 @@ Kein globaler Auth-Mechanismus. Entscheidung je Endpoint:
 | `POST /api/job-details` | Session-Cookie (anonym) | Session-Cookie (anonym) | Quote-Limiting an Session gekoppelt |
 | `POST /api/profile` | none | none | CV-Text kommt bewusst anonym; Anonymisierung clientseitig |
 | `POST /api/cover-letter` | none | none | wie match |
-| `GET /api/models` | none | none | öffentliche Metadaten |
-| `GET /api/model` | none | none | öffentliche Metadaten |
+| `GET /api/models` | none | none | öffentliche Metadaten (inkl. `recommendedModel`) |
 | `POST/DELETE/GET /api/alerts` | none | none | E-Mail-basiert; Opt-out per DELETE |
 | `POST /api/ats-analysis` | none | none | **AI-Consent am Request (`ai.consent`) ist die Gate, nicht Auth** |
 | `POST /api/cv-improvement*` | none | none | deterministisch, kein externer AI-Call |
@@ -333,7 +332,7 @@ Deprecation.
 | Profile | `/api/profile` | `/api/v1/profile` | none | none | body text/hash/model | Envelope | §10 | yes | flach → Envelope |
 | Cover Letter | `/api/cover-letter` | `/api/v1/cover-letter` | none | none | body+`x-mj-attempt` | Envelope | §10 | yes | flach → Envelope |
 | Models | `/api/models` | `/api/v1/models` | none | none | — | Envelope | §10 | meta | flach → Envelope |
-| Model | `/api/model` | (deprecated zugunsten `/api/v1/models`) | none | none | — | Envelope | §10 | meta | Legacy in v1 als Teil von models; Sunset planen |
+| Model | `/api/model` | **entfernt** (Vercel-Hobby-Limit, 12 Functions) | — | — | — | — | — | — | Ersatz: `/api/models.recommendedModel` |
 | Alerts | `/api/alerts` | `/api/v1/alerts` | none | none | body email+profile | Envelope | §10 | no | GET `{count}` wird intern dokumentiert |
 | ATS Analysis | `/api/ats-analysis` | `/api/v1/ats-analysis` | none | none | body inkl. `ai.model?` (§13) | Envelope | §10 | **yes** | flach + Legacy → v1 |
 | CV Improvement | `/api/cv-improvement` (+Suffix-Dispatch) | `/api/v1/cv-improvement` (+`/apply`,`/reanalyze`,`/match-impact` als Routen) | none | none | §14 | Envelope (vereinheitlicht) | §10 | no (deterministisch) | §14 |
@@ -358,7 +357,7 @@ Deprecation.
 
 1. **Kanonische Production-URL** — Deployment-Entscheidung (EXTERNAL), nicht aus dem Repo ableitbar.
 2. **`CRON_SECRET`-Pflicht** für `/api/cron/digest` (aktuell offen ohne Secret) — erfordert Deployment-/Ops-Entscheidung; Empfehlung: Pflicht.
-3. **Vorgehen bei `GET /api/model`**: in v1 redundant zu `/api/v1/models` — Target sah Deprecation vor; Entscheidung über Sunset-Zeitpunkt offen.
+3. **`GET /api/model`**: entfernt (Vercel-Hobby-Limit von 12 Serverless Functions). Ersatz ist `GET /api/models` mit `recommendedModel`; der Client nutzt diesen Wert als Fallback.
 4. **OpenAPI-Artefakt**: TARGET = Ja, eine generierte OpenAPI-Spezifikation soll im Contract-Cleanup-Step erzeugt werden (Maschinenlesbarkeit). **Noch nicht** gebaut; es existiert heute keine OpenAPI-Datei und kein `request_schema.json` im Repo — diese Tatsache bleibt im IST dokumentiert.
 5. **Resend-/Digest-Beobachtbarkeit**: nicht Teil des API-Vertrags — nur notiert falls relevant beim Lifecycle-Schritt.
 
