@@ -3746,3 +3746,40 @@ configured synthetic test user.
 - Lokale Korrektur `4555521`: alte statische Kopie entfernt, Landing-Early-Return für `/datenschutz` korrigiert, `Privacy.tsx` semantisch (H1/H2/H3, Absätze, Links), HTML semantisch regeneriert, Tests 20/20 PASS, Build PASS, Desktop/Mobil ohne Overflow, Footer-Navigation PASS.
 - PDF-Flake `CvBuilderEditorPdf.test.tsx` im Vollauf separat dokumentiert; isoliert 4/4 PASS.
 - Kein Push, Merge, Deployment, AWS/Terraform/Cognito, keine Flag-Aktivierung, keine Secrets. Report: `docs/reports/JM-RIS-PRIVACY-RG09-PREVIEW-QA-02.md`.
+
+## 2026-11-07 — JM-RIS-PRIVACY-RG09-PRODUCTION-RELEASE-04
+
+**Status:** `PRIVACY V1.1 PRODUCTION VERIFIED`
+
+- PR [#4](https://github.com/maynowak/mays-jobsearch/pull/4) merged with a
+  regular merge commit; head candidate `adfe23f`, base `4e2b640`.
+- Merge SHA: `2aed1c3a31cd6b91ebf2e4174e0c3353cffc2181`.
+- Checks: CodeQL PASS, Vercel Preview Comments PASS, Vercel Deployments PASS,
+  `mays-jobsearch` PASS, `mays-job-matcher` PASS. No force-push, no branch
+  deletion; feature branch retained at `adfe23f`.
+- Production deployments at `2aed1c3`:
+  `dpl_HEzi1SxsVN7jgajq3EehyEEX21q6` (`mays-jobsearch`, READY, production,
+  aliases `mays-jobsearch.vercel.app`, `mays-jobsearch-maymilly.vercel.app`,
+  `mays-jobsearch-git-main-maymilly.vercel.app`);
+  `dpl_yAmFr8JxrY2G4qis6g82hbGVB85x` (`mays-job-matcher`, READY, production,
+  alias `www.mays-job-matcher.app` among others).
+- HTTP 200 on both aliases for `/datenschutz`, `/legal/datenschutz.md`,
+  `/legal/datenschutz.html`, `/datenschutzprinzipien`. Markdown/HTML mirrors
+  contain `Version 1.1 · Stand: 7. November 2026`; HTML is semantic and has
+  no `<pre>`.
+- Browser (desktop 1440×900, mobile 390×844, both aliases): version 1.1,
+  no internal editorial note, H1/H2/H3 = 1/1/19, 38 paragraphs, 5 footer
+  links, no horizontal overflow, footer navigation to
+  `/datenschutzprinzipien` PASS, public without login PASS, old static
+  version 1.0 page gone.
+- Consent/ApplicationV1 configuration unchanged: no edits to
+  `src/lib/storageConsent.ts`, `.env*`, `api/`, Vercel env, or RIS backend;
+  `StorageConsentLive.tsx` only adds the `/datenschutz` link and displayed
+  text versions. No `APPLICATION_CONSENT_ENFORCED` or
+  `VITE_RIS_CONSENT_UI_ENABLED` activation; no ApplicationV1 gate change.
+- No RIS deployment, AWS/Terraform/Cognito change, secret, or permission
+  change. Known unrelated PDF flake documented (full run 1535 passed / 5
+  skipped / 1 failed; isolated 4/4 PASS).
+- Report and screenshots:
+  `docs/reports/JM-RIS-PRIVACY-RG09-PRODUCTION-RELEASE-04-REPORT.md`,
+  `docs/reports/assets/JM-RIS-PRIVACY-RG09-PRODUCTION-RELEASE-04/`.
