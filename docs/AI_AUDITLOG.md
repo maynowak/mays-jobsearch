@@ -4206,3 +4206,47 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
 - Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
   Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
   Rechtsfreigabe oder Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 — RIS review (`2301aee`)
+
+**Typ:** Read-only cross-review / Audit
+**Status:** `REWORK_REQUIRED (RIS backend proof edge)` — no Jobsearch code change
+
+- Reviewed RIS `2301aee` against Jobsearch `9eecf83` (v3 text, SHA-256
+  `696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668`,
+  acht Kategorien).
+- **PASS:** RIS speichert und liefert `specialCategoriesConsent`,
+  `specialCategories`, `externalTextVersion`, `externalTextSha256` auf Grant,
+  Status und History; v3-Ref mit exaktem Hash und `DRAFT`/`noticeVersion: None`
+  ist registriert; die acht Codes werden als Allowlist validiert (bool-Typ,
+  nicht-leere/eindeutige Teilmenge, kanonische Reihenfolge); unbekannte
+  Kategorien, Duplikate, Teil-Paare und Hash-Mismatch werden abgelehnt;
+  idempotente Wiederholung mit identischem Proof ist versionsstabil, anderer
+  Text/Kategorie-Scope liefert `409 RECONSENT_REQUIRED`; Widerruf erhält den
+  Proof in Status und Event-Historie; Read/Export/Delete bleiben nutzbar.
+  Notice `1.0` bleibt `DRAFT`, `legalApprovalRef=null`; keine Env-/Terraform-/
+  Notice-/Deploy-Änderung, Branch lokal.
+- **REWORK-Finding:** `validate_special_category_consent(True, [...])` und
+  `validate_external_text(purpose, None, None)` sind unabhängig gültig. Damit
+  akzeptiert `ConsentRepository.grant` einen Grant mit
+  `specialCategoriesConsent=true` **ohne** `externalTextVersion`/
+  `externalTextSha256` (Proof zeigt Art.-9-Einwilligung, aber keine
+  Textidentität). Zusätzlich wird ein Art.-9-Consent mit der historischen
+  v2-Textversion akzeptiert, obwohl v2 den Art.-9-Absatz nicht enthält.
+  Jobsearch sendet immer v3 + beide Felder, daher kein aktueller UI-Pfad, aber
+  ein direkter Partneraufruf kann den Backend-Proof unvollständig oder
+  textfremd belegen. Das widerspricht der Anforderung „Backend-Nachweis zeigt
+  Textversion/Hash und Kategorien“.
+- Minimale RIS-Korrektur (nicht in diesem Repo ausgeführt): Wenn
+  `specialCategoriesConsent is True`, müssen `externalTextVersion` und
+  `externalTextSha256` vorhanden sein **und** auf einen Art.-9-fähigen Text
+  (aktuell v3) zeigen; sonst `422` z. B.
+  `EXTERNAL_TEXT_REQUIRED_FOR_SPECIAL_CATEGORIES`/`EXTERNAL_TEXT_NOT_ART9`.
+  Tests ergänzen: true ohne Textpaar → Reject; true mit v2 → Reject; false mit
+  v3-Text → weiterhin gültig; idempotenter v3-Repeat unverändert.
+- RIS-Tests (read-only ausgeführt):
+  `tests/test_consent_special_categories.py
+  tests/test_consent_notice_catalog_contract.py
+  tests/test_consent_pilot_allowlist.py` = **64 passed**.
+- Keine RIS-Datei editiert, kein Push/Merge/Deploy/Env-/Notice-Wechsel; keine
+  Rechtsfreigabe oder Live-Persistenz behauptet.
