@@ -4111,3 +4111,12 @@ Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlau
 - No final Terraform plan/apply, deployment, push or merge. No `legalApprovalRef`, no notice approval, no synthetic test identity in pool `ZURSMpD2O`; `CONSENT_PILOT_ALLOWLIST` cannot be finalized.
 - Required: operator/legal approval of v2 and a real `legalApprovalRef`; approved synthetic `<issuer>|<sub>` (or approval to create one); then saved plan review and exact bundled GO.
 - No live persistence. Report: `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-ONE-SHOT-05 — operator account decision
+
+**Status:** `BLOCKED — OPERATOR/LEGAL TEXT APPROVAL + LEGAL APPROVAL REFERENCE + VERIFIED OPERATOR IDENTITY REQUIRED`
+
+- Corrected operator decision: use `www.mays-job-matcher.app` production and the existing operator account; no new Cognito test user, no preview target.
+- A copied local Chrome profile had no active production session (only `mj-lang`); no tokens/cookies were read or printed. The verified operator `issuer|sub` is therefore still unavailable for `RIS_TEST_USER_ALLOWLIST`/`CONSENT_PILOT_ALLOWLIST`.
+- No final Terraform plan/apply, deployment, notice change, env change, push or merge. The legal approval reference is still missing.
+- Next: operator logs in through the regular production login (or provides verified iss/sub), approves v2 text/hash and supplies the real legalApprovalRef; then the saved plan is generated and the bundled GO requested.
