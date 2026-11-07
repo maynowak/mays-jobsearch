@@ -1,3 +1,232 @@
+2026-11-07 · MAYS-XREPO-ROLLOUT-01D — BRANCH RECONCILIATION
+- Typ: Branch-Reconciliation/Integration-Readiness/Vercel-Klassifikation
+- Status: **READY FOR CONTROLLED PUSH**; kein Push, kein Merge, kein Deployment
+- Audit-Zeitpunkt: 2026-11-07 (Europe/Berlin)
+- Git-Baseline: Jobsearch-Feature `0ab510a`, `origin/main` `a2225c4`; Merge `bd2c406`; 0 behind, 12 lokale Commits vor `origin/feature`.
+- Konflikt: nur `docs/AI_AUDITLOG.md`; beide Seiten (XRepo-Einträge + neue Main-Einträge) vollständig erhalten.
+- Change Surface: nur `.github/workflows/xrepo-*`, `scripts/xrepo/*`, `docs/xrepo/*`, XRepo-Reports und Auditlog; keine Produkt-/API-/Terraform-Änderung.
+- Tests: `./scripts/xrepo/run_local_qa.sh` → **69/69 PASS**, 0 FAIL, 0 SKIP; JSON/YAML/diff PASS.
+- Vercel: Preview-Fehler war `exceeded_serverless_functions_per_deployment` (`patchBuild`, max. 12 Hobby-Funktionen), kein Buildfehler. Main-Fix `40356e6`; Production-Deployment `dpl_uAqHQqbs3yDYY6gkqqx3xaoA843Y` @ `a2225c4` READY mit 12 Funktionen; Branch enthält den Fix. Preview-Re-Run nicht ausgeführt (kein Push).
+- App-Auth: bestehender Nachweis `42272286516` wiederverwendet; keine erneute Prüfung; Secrets unverändert in beiden Repos.
+- Side Effects beim späteren Push: Jobsearch Vercel Preview (erwartet READY, nicht verifiziert); RIS `ci-cd.yml` kann 0-Job-Fehler auslösen; kein Live-Dispatch.
+- Bestätigung: kein Push, kein Merge, kein Deployment, kein Live-Dispatch, keine AWS-/Terraform-/Cognito-/Vercel-Konfigurationsänderung, keine Branch-Löschung.
+- Bericht: `docs/reports/MAYS-XREPO-ROLLOUT-01D-INTEGRATION-REPORT.md`.
+- Resume-Punkt: separate Push-Freigabe; danach PR-Mergeability + Vercel-Preview + RIS-CI prüfen.
+
+2026-11-06 · MAYS-XREPO-ROLLOUT-01B — APP AUTH VERIFICATION
+- Typ: GitHub-App-Authentifizierung/Token-/Permissions-Prüfung
+- Status: **NOT VERIFIED** für Token-Ausstellung/Permissions; Rollout **BLOCKED**
+- Audit-Zeitpunkt: 2026-11-06T17:00:10+01:00 (Europe/Berlin)
+- Git-Baseline: Jobsearch `138297e` (Basis `7a3d2ea`); RIS `b23635b` (Basis `c28c668`); beide clean.
+- App: `mays-xrepo-orchestration-app` existiert; öffentliche App-Seite HTTP 200 und weist sie als private GitHub App aus. REST-App-Endpoint mit User-Token 404 (privat).
+- Secrets: `XREPO_APP_ID`/`XREPO_APP_PRIVATE_KEY` in beiden Repos vorhanden (nur Existenz/Metadaten; keine Werte gelesen/ausgegeben).
+- Token-Ausstellung für beide Repos: **NOT VERIFIED** — kein App-JWT/Private-Key lokal; `/app` und `/repos/.../installation` 401 mit User-Token.
+- Effektive Permissions / Repository-Zuordnung: **NOT VERIFIED** — benötigt `GET /installation` bzw. `/installation/repositories` mit Installation-Token.
+- Workflows: statisch korrekt (Sender Contents write/Issues read; Receiver Contents read/Issues read; Ziel-Issue via `GITHUB_TOKEN`); keine PAT-Referenzen.
+- Minimaler Actions-Prüfweg dokumentiert; nicht hinzugefügt/ausgeführt, weil `workflow_dispatch` eine Workflow-Datei auf dem Default-Branch voraussetzt.
+- Tests: 69/69 PASS in beiden Repos.
+- Vercel: PR #2 Draft `MERGEABLE`/`UNSTABLE`, Output-Fehler `dpl_CdTNAN1LuNcFGUfMPVtPuMZTq6M3`/`dpl_4mPQkgVyNvUQuJqAWn7e9WFhdsWR`; PR #6 Draft `MERGEABLE`/`CLEAN`.
+- Bestätigung: keine Secrets/Tokens ausgegeben, keine Credentials erzeugt/erweitert, kein Merge, Deployment, Live-Dispatch, keine Infrastruktur-/Test-Issue-Änderung.
+- Bericht: `docs/reports/MAYS-XREPO-ROLLOUT-01B-EXECUTION_LOG.md`.
+- Resume-Punkt: App-Verifikationsworkflow nach Default-Branch-Freigabe ausführen; danach ROLLOUT-01A wiederholen.
+
+2026-11-06 · MAYS-XREPO-ROLLOUT-01A — READINESS CHECK
+- Typ: Rollout-Readiness/App-/Secret-/PR-/Vercel-Prüfung
+- Status: **BLOCKED**
+- Audit-Zeitpunkt: 2026-11-06T16:46:28+01:00 (Europe/Berlin)
+- Git-Baseline: Jobsearch `13e035f` (Basis `7a3d2ea`, 18/0); RIS `38d0a7e` (Basis `c28c668`, 16/0); beide clean.
+- Secrets: `XREPO_APP_ID` und `XREPO_APP_PRIVATE_KEY` in beiden Repos vorhanden (nur Existenz/Metadaten geprüft; keine Werte gelesen/ausgegeben).
+- App-Installation: **NOT VERIFIED**; `/app` 401, `/users/maynowak/installations` 404, `/repos/{owner}/{repo}/installation` 401; Kandidaten-App-Seiten 404. Keine app-authentifizierte Prüfung möglich.
+- Berechtigungen: **NOT VERIFIED**; statische Workflow-Prüfung entspricht dem Vertrag (Sender Contents write/Issues read; Receiver Contents read/Issues read; Ziel-Issue via `GITHUB_TOKEN`), ersetzt aber keinen Installationsnachweis.
+- PRs: #2 Draft, `MERGEABLE`/`UNSTABLE` (Vercel Output-Fehler `dpl_CdTNAN1LuNcFGUfMPVtPuMZTq6M3`, `dpl_4mPQkgVyNvUQuJqAWn7e9WFhdsWR`); #6 Draft, `MERGEABLE`/`CLEAN`; keine Review-Freigabe.
+- Tests: 69/69 PASS in beiden Repos; JSON/YAML/diff PASS.
+- Vercel: Build erfolgreich, Fehler bei `Deploying outputs... status ● Error`; keine xrepo-/Produktursache belegt, keine Vercel-Konfigurationsänderung.
+- Bestätigung: kein Merge, kein Deployment, kein Live-Dispatch, keine Infrastruktur-/Produktänderung, keine Branch-Löschung, keine Secret-Werte.
+- Bericht: `docs/reports/MAYS-XREPO-ROLLOUT-01A-EXECUTION_LOG.md`.
+- Resume-Punkt: App-authentifizierte Installations-/Permissionsprüfung, Vercel-Klärung, Review-/Rollout-Freigabe.
+
+2026-11-06 · MAYS-XREPO-APP-SETUP-01 — APP/SECRET READINESS
+- Typ: GitHub-App-Readiness/Secret-Existenz/Rollout-Readiness
+- Status: **BLOCKED FOR LIVE**; keine App-/Secret-Einrichtung bestätigt
+- Audit-Zeitpunkt: 2026-11-06T12:55:51+01:00 (Europe/Berlin)
+- Git-Baseline: Jobsearch `67913ec` (Basis `7a3d2ea`, 17/0); RIS `438fa4f` (Basis `c28c668`, 15/0); beide clean.
+- App: Sollkonfiguration `Mays Cross-Repository Orchestrator`, nur `maynowak`, nur Jobsearch/RIS, Contents Read/Write, Issues Read-only, keine Webhooks/Extras. Keine Installation mit User-Token verifizierbar (`/app` 401, `/users/maynowak/installations` 404); Kandidaten-App-URLs 404.
+- Secrets: `actions/secrets.total_count=0` in beiden Repos; `XREPO_APP_ID`/`XREPO_APP_PRIVATE_KEY` fehlen; keine Werte gelesen/ausgegeben.
+- Workflows: Sender nutzt App-Token `Contents: write`/`Issues: read`; Receiver `Contents: read`/`Issues: read`; Ziel-Issue über `GITHUB_TOKEN`; keine PAT-Referenzen.
+- Tests: 69/69 PASS in beiden Repos; JSON/YAML/diff PASS.
+- Rollout: Jobsearch PR #2 Draft, `MERGEABLE`/`UNSTABLE` (Vercel-Preview-Output-Fehler); RIS PR #6 Draft, `MERGEABLE`/`CLEAN`; keine Review-Freigabe, kein Merge.
+- Bestätigung: kein Merge, kein Deployment, kein Live-Dispatch, keine AWS-/Terraform-/Cognito-/CloudFront-/Vercel-Produktions-/Mays-Orders-Änderung, kein PAT.
+- Bericht: `docs/reports/MAYS-XREPO-APP-SETUP-01-EXECUTION_LOG.md`.
+- Resume-Punkt: App manuell erstellen/installieren, beide Secrets setzen, Preflight wiederholen.
+
+2026-11-06 · MAYS-XREPO-E2E-01 — STEPS D/E/F APP READINESS + ROLLOUT GATE
+- Typ: App-Readiness/Rollout-Gate/E2E-Blocker
+- Status: **BLOCKED FOR LIVE**; E2E-01F `NOT EXECUTED`
+- Audit-Zeitpunkt: 2026-11-06T11:05:30+01:00 (Europe/Berlin)
+- GitHub App: Beide Repos `actions/secrets.total_count=0`; `XREPO_APP_ID`/`XREPO_APP_PRIVATE_KEY` fehlen; Installation mit User-Token nicht verifizierbar (403). Keine Secret-Werte ausgegeben, kein PAT erzeugt.
+- Rollout-Gate: Jobsearch PR #2 Draft, `MERGEABLE`/`UNSTABLE` (Vercel Preview Output-Fehler nach erfolgreichem Build, `dpl_54EYrEJHqN5Cu7N7uJjSQ31hnbmN`, `dpl_W1ndUvFfV6G7cTZK2ygG1RbzHGs6`); RIS PR #6 Draft, `MERGEABLE`/`CLEAN`. Keine Review-Freigabe.
+- Merge: **nicht ausgeführt**; kein Auto-Merge; keine Deployments; keine AWS-/Terraform-/Cognito-/CloudFront-/Vercel-Produktions-/Mays-Orders-Änderung.
+- E2E-01F: `NOT EXECUTED`; keine Run-IDs/Event-IDs/Kommentar-URLs, weil kein Live-Dispatch.
+- Recovery-Punkt: Draft-PRs, Issues #3/#7, E2E-Report, Local-QA-Reports; Freigabe + App/Secrets als nächste Voraussetzung.
+- Bericht: `docs/reports/MAYS-XREPO-E2E-01-EXECUTION_LOG.md`.
+
+2026-11-06 · MAYS-XREPO-E2E-01 — STEPS B/C HARDENING + LOCAL VERIFICATION
+- Typ: Protocol-Hardening/Statusmaschine/Rework-Limit/Rejection/Local QA
+- Status: **HARDENING COMPLETE — LOCAL VERIFIED — E2E BLOCKED FOR LIVE**
+- Audit-Zeitpunkt: 2026-11-06T11:05:30+01:00 (Europe/Berlin)
+- Commit: `5ff6850` (`feat(xrepo): enforce status transitions and rework limits`).
+- Statusmaschine: `REQUESTED`/`BLOCKED` als Start; `BLOCKED`/`COMPLETED` terminal; `COMPLETED` nur nach `VERIFIED`; erlaubte Übergänge explizit; `IMPLEMENTATION_READY -> VERIFIED` für die geforderte E2E-Sequenz zulässig.
+- Rework: max. drei `REWORK_REQUIRED`; das vierte wird mit Rejection-Marker abgelehnt und fail-closed beendet.
+- Rejections: Konflikt, ungültiger Übergang und Rework-Limit erzeugen einen Rejection-Kommentar ohne State-Marker; Retry eines bereits abgelehnten Events erzeugt keinen zweiten Kommentar.
+- State-Marker: `<!-- mays-xrepo:state:<taskId>:<sequence>:<status> -->`; Legacy-Marker ohne Status → `state_unreadable`.
+- Evidence: `IMPLEMENTATION_READY`/`VERIFIED`/`COMPLETED` verlangen Commit-Evidence mit exaktem `source.commit`; Issue-Evidence wird über die Quell-API verifiziert; test-only Evidence reicht nicht.
+- Tests: `./scripts/xrepo/run_local_qa.sh` → **69/69 PASS**, 0 FAIL, 0 SKIP; JSON/YAML/diff PASS.
+- Klassifikation: **LOCAL VERIFIED**; Live weiterhin **BLOCKED FOR LIVE**.
+- Geänderte Dateien: `scripts/xrepo/validate_event.py`, `scripts/xrepo/apply_event.py`, `scripts/xrepo/test_validate_event.py`, `scripts/xrepo/test_apply_event.py`, `docs/xrepo/MAYS-XREPO-V1.md`, `docs/xrepo/fixtures/valid-implementation-ready.json`, QA-/E2E-Reports, Auditlog.
+- Bestätigung: kein Live-Dispatch, kein Merge, keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Vercel-Konfigurations-/Mays-Orders-Änderung.
+- Resume-Punkt: E2E-01D/E/F offen; Live-Test `NOT EXECUTED`.
+
+2026-11-06 · MAYS-XREPO-E2E-01 — STEP A PREFLIGHT
+- Typ: E2E-Preflight/PR/Issue/Workflow/App-Readiness
+- Status: **PREFLIGHT COMPLETE — E2E BLOCKED FOR LIVE**
+- Audit-Zeitpunkt: 2026-11-06T11:05:30+01:00 (Europe/Berlin)
+- Git-Baseline: Jobsearch `feature/mays-xrepo-orchestration-01` @ `75f5cae`, `origin/main` `7a3d2ea`, 12/0; RIS @ `2b8cc42`, `origin/main` `c28c668`, 10/0; beide clean.
+- PRs: Jobsearch #2 Draft, `MERGEABLE`/`UNSTABLE` (Vercel); RIS #6 Draft, `MERGEABLE`/`CLEAN`.
+- Issues: Jobsearch #3 und RIS #7 OPEN.
+- Workflows: `xrepo-send.yml`/`xrepo-receive.yml` in beiden Repos; einheitlicher `MAYS-XREPO-V1`-Vertrag; bestehende Workflows unverändert.
+- Tests: 54/54 PASS in beiden Repos; PR-Body mit 53/53 war veraltet.
+- GitHub App: `actions/secrets.total_count=0` in beiden Repos; `XREPO_APP_ID`/`XREPO_APP_PRIVATE_KEY` fehlen; Installation mit User-Token nicht verifizierbar (403). **BLOCKED FOR LIVE**.
+- Vercel Jobsearch: Build erfolgreich, `Deploying outputs... status Error`; Preview-Deployments `dpl_54EYrEJHqN5Cu7N7uJjSQ31hnbmN` und `dpl_W1ndUvFfV6G7cTZK2ygG1RbzHGs6`; keine Vercel-Konfigurationsänderung.
+- Klassifikation: **BLOCKED FOR LIVE**; keine Terraform-/AWS-Änderung.
+- Bericht: `docs/reports/MAYS-XREPO-E2E-01-EXECUTION_LOG.md`.
+- Resume-Punkt: E2E-01B Hardening als Nächstes.
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — WORKSPACE PATH CORRECTION
+- Typ: Workspace-/Path-Correction
+- Status: Canonical working directory corrected; no feature change
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Alt: `/home/dci-student/projects/Mays-Jobsearch` (außerhalb des Orchestrierungs-Workspaces; auf `main` zurückgestellt).
+- Neu: `/home/dci-student/projects/mays-xrepo-orchestration/repos/mays-jobsearch`.
+- Regel: Alle Repo-Arbeiten müssen unter `/home/dci-student/projects/mays-xrepo-orchestration` bleiben.
+- Bestätigung: kein Branch gelöscht, kein Force-Push, kein Produkt-/Infra-Change; Feature-Branch weiterhin auf `origin`.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — POST-GATE HARDENING
+- Typ: Security-Hardening/Receiver-Idempotenz
+- Status: **GREEN (local) / E2E PENDING / BLOCKED FOR LIVE**
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Änderung: Nur Kommentare von `github-actions[bot]` dürfen Event-/State-Marker setzen; user-authored Marker werden ignoriert.
+- Grund: Ein fremder Issue-Kommentar könnte sonst eine hohe Sequenz oder ein Event-Marker injizieren und echte Events unterdrücken (DoS).
+- Tests: neuer Test `test_untrusted_comment_markers_are_ignored`; `./scripts/xrepo/run_local_qa.sh` → **54/54 PASS**, JSON/YAML/diff PASS.
+- Geänderte Dateien: `scripts/xrepo/apply_event.py`, `scripts/xrepo/test_apply_event.py`, QA-/E2E-Reports, Execution Log, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Vercel-/Mays-Orders-Änderung, kein Live-Dispatch.
+- Resume-Punkt: Lokal weiterhin abgeschlossen; Rollout/App-Credentials bleiben blockiert.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 07 E2E READINESS
+- Typ: E2E-Readiness/Runbook/Test-Issues/Blocker-Dokumentation
+- Status: **IMPLEMENTED / LOCAL VERIFIED / E2E PENDING / BLOCKED FOR LIVE**; kein Live-Dispatch
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: Branch `feature/mays-xrepo-orchestration-01`; Gate-06-Commit `6fd2b5f`; Basis nach Merge `origin/main` `7a3d2ea`.
+- Test-Issues: https://github.com/maynowak/mays-jobsearch/issues/3 (A/source) und https://github.com/maynowak/Mays-Recruiting-Intelligence-System/issues/7 (B/destination), Task `MAYS-XR-E2E-001`.
+- Runbook: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-E2E-READINESS.md` mit A→B→A-Sequenz, Rework-Runde, Live-Assertions und Recovery-Punkt.
+- Blocker: Workflows nur auf Feature-Branch; `XREPO_APP_ID`/`XREPO_APP_PRIVATE_KEY` nicht konfiguriert/approved. Kein Ersatz-PAT, kein Secret erzeugt.
+- Klassifikation: **GREEN (local)**; **E2E PENDING / BLOCKED FOR LIVE**; keine Terraform-Checks.
+- Geänderte Dateien: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-E2E-READINESS.md`, `docs/xrepo/MAYS-XREPO-V1.md`, `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: kein Merge, kein Live-Dispatch, kein Deployment, keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Mays-Orders-Änderung.
+- Offene Punkte: Rollout-Freigabe, App-Installation, Secrets, echter A→B→A-Lauf, Live-Rework-/Stale-/Duplicate-Nachweis.
+- Resume-Punkt: Lokal abgeschlossen; nächster Schritt nur nach expliziter Rollout-Freigabe.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 06 PR READINESS
+- Typ: Draft-PR/Readiness/Diff-/Secret-Audit
+- Status: GATE 06 COMPLETE — **GREEN (PR readiness)**; kein Merge/Deployment
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: Jobsearch-Branch nach Merge von `origin/main` `7a3d2ea` = `45c1e02`; RIS-Branch `2aa6ad7`, Basis `c28c668`.
+- PRs: Jobsearch https://github.com/maynowak/mays-jobsearch/pull/2 (Draft, `MERGEABLE`/`UNSTABLE` durch Vercel-Preview-Checks); RIS https://github.com/maynowak/Mays-Recruiting-Intelligence-System/pull/6 (Draft, `MERGEABLE`/`CLEAN`).
+- Diff-Audit: nur xrepo-Workflows/-Skripte/-Doku, Auditlogs und Reports; keine Produkt-/API-/Terraform-Änderung.
+- Secret-Audit: nur Referenzen auf Secret-Namen (`XREPO_APP_ID`, `XREPO_APP_PRIVATE_KEY`), keine Werte/Tokens/Credentials.
+- Vercel: Jobsearch-PR löste die bestehende Preview-Integration automatisch aus; keine manuelle Vercel-Konfigurations-/Deployment-Änderung.
+- Klassifikation: **GREEN (PR readiness)**; Live-E2E weiterhin **E2E PENDING**.
+- Geänderte Dateien: PRs + `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: kein Merge, kein Auto-Merge, kein manuelles Deployment, keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Mays-Orders-Änderung.
+- Offene Punkte: E2E-Testissues, Default-Branch-Rollout, App-Credentials, kontrollierter A→B→A-Lauf.
+- Resume-Punkt: Gate 06 abgeschlossen; Gate 07 E2E-Readiness als Nächstes.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 05 LOCAL QA
+- Typ: Reproduzierbare Testmatrix/Local QA/Testbericht
+- Status: GATE 05 COMPLETE — **GREEN (local QA)**; kein Live-E2E
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: Branch `feature/mays-xrepo-orchestration-01`; Gate-04-Commit `644f636`; QA auf dem Arbeitsstand inkl. neuem Runner.
+- Implementiert: `scripts/xrepo/run_local_qa.sh`, `docs/reports/MAYS-XREPO-ORCHESTRATION-01-LOCAL-QA.md`.
+- Testmatrix: valid, invalid schema, spoofed source, unauthorized, wrong target, stale sequence, duplicate event, evidence absent, retry cycle, A→B→A (lokale State-Machine), Quellverifikation, No-Shell-Posting, fehlende Credentials.
+- Ergebnis: **53/53 Tests PASS**, JSON-Parse PASS, YAML-Parse PASS, `git diff --check` PASS, `LOCAL QA PASS`.
+- Klassifikation: **GREEN (local)**; Live-`repository_dispatch` **E2E PENDING**; keine Terraform-Checks ausgeführt.
+- Geänderte Dateien: `scripts/xrepo/run_local_qa.sh`, `docs/reports/MAYS-XREPO-ORCHESTRATION-01-LOCAL-QA.md`, `docs/xrepo/MAYS-XREPO-V1.md`, `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: kein Live-Dispatch, keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Vercel-/Mays-Orders-Änderung.
+- Offene Punkte: PR-Readiness, Draft-PRs, E2E nach Default-Branch-Rollout und App-Credentials.
+- Resume-Punkt: Gate 05 abgeschlossen; Gate 06 PR-Readiness als Nächstes.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 04 SENDER
+- Typ: Sender/Event-Builder/Workflow/App-Token
+- Status: GATE 04 COMPLETE — **GREEN (sender)**; kein Live-Dispatch
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: Branch `feature/mays-xrepo-orchestration-01`; Gate-03-Commit `cc997d5`; Basis `origin/main` `fec135c`.
+- Implementiert: `scripts/xrepo/build_event.py`, `scripts/xrepo/test_build_event.py`, `.github/workflows/xrepo-send.yml`, Sender-Abschnitt in `docs/xrepo/MAYS-XREPO-V1.md`.
+- Sicherheit: manueller `workflow_dispatch`, Quell-/Ziel-Issue-Prüfung, lokale Schema-Validierung, expliziter `BLOCKED FOR LIVE`-Abbruch ohne App-Secrets, Least-Privilege-App-Token nur für Ziel-Contents/Issues, Quell-Issue-Kommentar erst nach erfolgreichem Dispatch.
+- Tests: `python3 -m unittest discover -s scripts/xrepo -p 'test_*.py'` → **53/53 PASS**; YAML-Parse → PASS; `py_compile` → PASS.
+- Klassifikation: **GREEN**; keine Terraform-Checks ausgeführt.
+- Geänderte Dateien: `scripts/xrepo/build_event.py`, `scripts/xrepo/test_build_event.py`, `.github/workflows/xrepo-send.yml`, `docs/xrepo/MAYS-XREPO-V1.md`, `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: kein Live-Dispatch, keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Vercel-/Mays-Orders-Änderung.
+- Offene Punkte: QA-Matrix, PRs, E2E; Live bleibt ohne App-Credentials/Default-Branch `BLOCKED FOR LIVE`.
+- Resume-Punkt: Gate 04 abgeschlossen; Gate 05 Local QA als Nächstes.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 03 RECEIVER
+- Typ: Receiver/Issue-Idempotenz/Quellverifikation/Workflow
+- Status: GATE 03 COMPLETE — **GREEN (receiver)**; kein Live-Dispatch
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: Branch `feature/mays-xrepo-orchestration-01`; Gate-02-Commit `4b23bfe`; Basis `origin/main` `fec135c`.
+- Implementiert: `scripts/xrepo/apply_event.py`, `scripts/xrepo/test_apply_event.py`, `.github/workflows/xrepo-receive.yml`.
+- Sicherheit: Payload-Revalidierung, Allowlist/Expected-Target, Quell-Issue-/Commit-API-Prüfung, Ziel-Issue-Prüfung, Duplikat-/Stale-/Konfliktlogik, HTML-Escaping, JSON-Datei statt Shell-Argument, App-Token nur für Quell-Lesen, `GITHUB_TOKEN` für Ziel-Issue.
+- Tests: `python3 -m unittest discover -s scripts/xrepo -p 'test_*.py'` → **45/45 PASS**; `py_compile` → PASS.
+- Klassifikation: **GREEN**; keine Terraform-Checks ausgeführt.
+- Geänderte Dateien: `scripts/xrepo/apply_event.py`, `scripts/xrepo/test_apply_event.py`, `.github/workflows/xrepo-receive.yml`, `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: kein Live-Dispatch, keine Produkt-/AWS-/Terraform-/Cognito-/CloudFront-/Vercel-/Mays-Orders-Änderung.
+- Offene Punkte: Sender, PRs, E2E; ohne App-Credentials und Default-Branch-Workflow bleibt Live `BLOCKED FOR LIVE`.
+- Resume-Punkt: Gate 03 abgeschlossen; Gate 04 Sender als Nächstes.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 02 CONTRACT
+- Typ: Protocol/Validator/Schema/Fixtures/Unit-Tests
+- Status: GATE 02 COMPLETE — **GREEN (contract)**; keine Live-Dispatch-/Workflow-/Infra-Änderung
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: Branch `feature/mays-xrepo-orchestration-01`; Gate-01-Commit `06fbadd`; Basis `origin/main` `fec135c`.
+- Implementiert: `docs/xrepo/MAYS-XREPO-V1.schema.json`, `scripts/xrepo/validate_event.py`, `scripts/xrepo/test_validate_event.py`, Fixtures und `docs/xrepo/MAYS-XREPO-V1.md`.
+- Sicherheit: 9 Top-Level-Felder, <64 KiB, Allowlist, Quell-/Ziel-Erwartung, Evidence-Bindung an Quell-Repo/Commit, fail-closed; Payload wird nie als Shell ausgeführt.
+- Tests: `python3 -m unittest scripts/xrepo/test_validate_event.py -v` → **27/27 PASS**; JSON-Schema-/Fixture-Parse → PASS.
+- Klassifikation: **GREEN**; keine Terraform-Checks ausgeführt.
+- Geänderte Dateien: `docs/xrepo/*`, `scripts/xrepo/*`, `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: kein Live-Dispatch, keine Workflow-/Produkt-/AWS-/Terraform-Änderung, keine Secrets.
+- Offene Punkte: Receiver/Sender, Issue-State-Tests, PRs, E2E; Live bleibt `BLOCKED FOR LIVE` ohne GitHub-App-Credentials.
+- Resume-Punkt: Gate 02 abgeschlossen; Gate 03 Receiver als Nächstes.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
+
+2026-11-06 · MAYS-XREPO-ORCHESTRATION-01 — GATE 01 DISCOVERY
+- Typ: Cross-Repo-Discovery/Branch-Baseline/Audit
+- Status: GATE 01 COMPLETE — **GREEN (discovery only)**; keine Produkt-/Workflow-/Infra-Änderung
+- Audit-Zeitpunkt: 2026-11-06 (Europe/Berlin)
+- Git-Baseline: Branch `feature/mays-xrepo-orchestration-01` von `origin/main` `fec135c`; lokaler `main` `7a3d2ea` = 14 ahead / 0 behind und unverändert.
+- Befund: Nur `.github/workflows/codeql.yml` vorhanden; kein xrepo-Workflow/Validator. `AGENTS.md` mit externer RIS-Boundary gelesen.
+- Dirty-State: 4 untracked Dokumente vorhanden und unangetastet.
+- Klassifikation: **GREEN**; keine Terraform-Checks ausgeführt.
+- Geänderte Dateien: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`, `docs/AI_AUDITLOG.md`.
+- Bestätigung: keine Produktcode-, Workflow-, Terraform-, AWS-, Cognito-, CloudFront-, Vercel- oder Mays-Orders-Änderung; keine Branch-/Worktree-/Stash-Löschung.
+- Offene Punkte: Cross-Repo-GitHub-App-Credentials nicht verifiziert; Live-Dispatch bleibt `BLOCKED FOR LIVE`.
+- Resume-Punkt: Gate 01 abgeschlossen; Gate 02 Contract als Nächstes.
+- Log: `docs/reports/MAYS-XREPO-ORCHESTRATION-01-EXECUTION_LOG.md`
 2026-11-06 · JM-RIS-VERCEL-SAFE-RELEASE-05
 - Typ: Safe Preview Release/Consent-Integration/E2E-Vorbereitung
 - Status: **BLOCKED — PREVIEW RELEASE NOT AUTHORIZED · P0 SECRET ISOLATION/PROTECTION/ENV/COGNITO · NO PUSH · NO DEPLOYMENT**
