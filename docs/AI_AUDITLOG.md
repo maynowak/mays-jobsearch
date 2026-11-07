@@ -4036,3 +4036,12 @@ configured synthetic test user.
 - Tests: focused BFF 55/55, UI/text 14/14, build PASS, API syntax PASS, diff check PASS; full suite second run 1574 passed / 5 skipped (first run had 2 transient ManualSearchProfiles failures; isolated 8/8 PASS).
 - RIS review `37503a9` PASS: scoped `CONSENT_PILOT_ALLOWLIST` and mapping; non-pilot identities unaffected; global gates remain false.
 - No push/merge/deploy/env/notice change; no live persistence. Report: `docs/reports/JM-RIS-STORAGE-PILOT-03-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-04 — preflight and operator text
+
+**Status:** `CONSENT TEXT READY FOR OPERATOR REVIEW` / `RIS-DEV DEPLOYMENT PREFLIGHT READY`
+
+- Full user-visible text: `application-storage-consent-2026-11-07-v1`, SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`; still DRAFT, no legal approval/mapping.
+- RIS-DEV preflight read-only: `ris-dev-dev-agent` active, `APPLICATION_CONSENT_ENFORCED=false`, `PARTNER_SURFACE_ENABLED=true`, `CONSENT_NOTICE_STATE_ENFORCED`/`CONSENT_PILOT_ALLOWLIST` absent; `c7e9pdwe78` = `ris-dev-jobsearch-api` uses the same Lambda; `g6901and25` also same Lambda; tables ACTIVE, consents TTL disabled, applications TTL enabled on expiresAt.
+- Deployment impact: shared Lambda for partner edge + kernel; scoped allowlist required; global gates must remain false; plan/apply and preview deployment are separate approvals.
+- No push/merge/deploy/apply/env/notice change; no live write. Report: `docs/reports/JM-RIS-STORAGE-PILOT-04-REPORT.md`.
