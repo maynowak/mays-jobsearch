@@ -3783,3 +3783,45 @@ configured synthetic test user.
 - Report and screenshots:
   `docs/reports/JM-RIS-PRIVACY-RG09-PRODUCTION-RELEASE-04-REPORT.md`,
   `docs/reports/assets/JM-RIS-PRIVACY-RG09-PRODUCTION-RELEASE-04/`.
+
+## 2026-11-07 — JM-RIS-STORAGE-ACTIVATION-01 (Jobsearch side)
+
+**Typ:** Implementation / Consent gate / API + UI
+**Status:** LOCAL IMPLEMENTED — NOT DEPLOYED, NO LIVE PERSISTENCE EVIDENCE
+
+- Ausgangslage: `api/_lib/ris/consentsHandler.mjs` setzte
+  `grantAllowed: Boolean(cfg.noticeVersion)` und sendete die konfigurierte
+  Version ohne RIS-Freigabeprüfung. Damit hätte `RIS_CONSENT_NOTICE_VERSION=1.0`
+  allein einen Grant erlaubt, obwohl die RIS-Notice `1.0` `DRAFT` mit
+  `legalApprovalRef: null` ist.
+- Korrektur: neues serverseitiges Modul `api/_lib/ris/consentNotice.mjs` liest
+  den Live-Katalog aus `GET /v1/partner/me/consents` und erlaubt einen Grant nur
+  bei passender `noticeVersion`, `noticeState === ACTIVE`,
+  `noticeApproved === true` und `acceptedForNewGrant === true`. Fehlender oder
+  malformed Katalog, unbekannte/geänderte Version, DRAFT, nicht-booleansche
+  Flags, RIS-Fehler oder Timeout fallen geschlossen aus. Der POST-Grant prüft
+  unmittelbar vor dem Schreiben erneut und ruft bei Blockade den RIS-Grant
+  nicht auf. Widerruf bleibt unabhängig vom Notice-Status möglich.
+- API-Vertrag: GET liefert zusätzlich `noticeState`, `noticeApproved`,
+  `acceptedForNewGrant`, `noticeReason`; keine internen Legal-Referenzen.
+  Blockade-Codes: `409 notice_not_active|notice_not_approved|notice_not_accepted|
+  notice_version_unknown`, `503 notice_version_not_mapped|notice_catalog_invalid|
+  notice_catalog_unavailable`.
+- Browser: `src/lib/risConsentApi.ts` typisiert den Notice-Status,
+  `StorageConsentLive.tsx` zeigt RIS-Status und Blockadegrund; bestehende
+  Fail-closed-Meldung und Versionsanzeige bleiben erhalten. Keine
+  Flag-Aktivierung, keine Env-Änderung, keine Version im Browser wählbar.
+- AI-/Privacy-/Data-Flow impact: kein neuer AI-Aufruf, kein neuer Datenfluss,
+  keine zusätzliche Speicherung. Der einzige zusätzliche RIS-Egress ist der
+  dokumentierte Consent-Status-GET; die Freigabe-Grenze wird strikter.
+  Datenschutztext v1.1 bleibt unverändert.
+- Tests: `tests/api/ris-consents.test.mjs` erweitert (DRAFT blockt,
+  ACTIVE/approved erlaubt und sendet Serverversion, fehlender/malformed Katalog,
+  unbekannte Version, RIS-Fehler/Netzwerkfehler, Widerruf bei Blockade,
+  widersprüchliche Duplikate); `tests/api/ris-routing.test.mjs` Grant-Fall an
+  Katalog-Precheck angepasst; `StorageConsentLive.test.tsx` prüft DRAFT-Hinweis.
+  Keine bestehenden Auth-/Allowlist-/Config-Tests abgeschwächt.
+- Evidenz: `docs/reports/agent-evidence/JM-RIS-STORAGE-ACTIVATION-01-jobsearch-requirements.md`.
+- Kein Push, Merge, Deploy, keine Vercel-Env-Änderung, keine Secrets, keine
+  RIS-Dateien. Produktionswirkung: Bei aktuell gesetzter Version `1.0` und
+  DRAFT-Notice bleiben Grants gesperrt, bis RIS die Notice freigibt.

@@ -7,6 +7,12 @@
 import { isAllowedTestUser, risConsentConfig } from "./config.mjs";
 import { RisAuthError, verifyAccessToken } from "./auth.mjs";
 import { RisClientError, risRequest } from "./client.mjs";
+import {
+  evaluateNoticeGrant,
+  loadNoticeGrant,
+  noticeMessage,
+  noticeRejectionStatus,
+} from "./consentNotice.mjs";
 
 function bearer(req) {
   const raw = req.headers?.authorization ?? req.headers?.Authorization ?? "";
@@ -103,10 +109,18 @@ export default async function handler(req, res) {
       );
       if (result.status >= 400) return upstreamFailure(res, result);
       const item = (result.data?.items ?? []).find((x) => x.purpose === purpose) ?? null;
+      const notice = evaluateNoticeGrant(result.data, {
+        noticeVersion: cfg.noticeVersion,
+        purpose,
+      });
       return send(res, 200, {
         consent: item,
-        noticeVersion: cfg.noticeVersion,
-        grantAllowed: Boolean(cfg.noticeVersion),
+        noticeVersion: notice.noticeVersion,
+        noticeState: notice.noticeState,
+        noticeApproved: notice.noticeApproved,
+        acceptedForNewGrant: notice.acceptedForNewGrant,
+        grantAllowed: notice.grantAllowed,
+        noticeReason: notice.noticeReason,
       });
     }
     if (req.method === "POST") {
@@ -126,6 +140,17 @@ export default async function handler(req, res) {
       if (!noticeVersion) {
         return fail(res, 503, "notice_version_not_mapped",
           "The consent notice version has not been approved for this app yet");
+      }
+      // Re-load the live catalogue immediately before writing. A configured
+      // version alone never authorizes a grant.
+      const notice = await loadNoticeGrant(cfg, token, { purpose });
+      if (!notice.ok) {
+        return fail(res, notice.status, notice.code,
+          "The consent notice state could not be verified; no grant was written");
+      }
+      if (!notice.evaluation.grantAllowed) {
+        const reason = notice.evaluation.noticeReason ?? "notice_not_active";
+        return fail(res, noticeRejectionStatus(reason), reason, noticeMessage(reason));
       }
       const result = await risRequest(
         { ...cfg, path: cfg.path }, token, "POST",

@@ -226,8 +226,22 @@ describe("RIS single-entry routing", () => {
 
   it("erhält Methode und Body für Consent-Grant", async () => {
     process.env.RIS_CONSENT_NOTICE_VERSION = "1.0";
-    risResponse = response(200, {
+    const catalogResponse = response(200, {
+      items: [{ purpose: "application-storage", status: "NOT_GRANTED", noticeVersion: null, version: 0 }],
+      catalog: [{
+        purpose: "application-storage",
+        noticeVersion: "1.0",
+        noticeState: "ACTIVE",
+        noticeApproved: true,
+        acceptedForNewGrant: true,
+      }],
+    });
+    const grantResponse = response(200, {
       consent: { purpose: "application-storage", status: "GRANTED", noticeVersion: "1.0", version: 1 },
+    });
+    fetchMock.mockImplementation(async (url, init = {}) => {
+      if (String(url).includes("/.well-known/jwks.json")) return response(200, { keys: [jwk] });
+      return String(init?.method ?? "GET").toUpperCase() === "GET" ? catalogResponse : grantResponse;
     });
     const res = makeRes();
     await router(
@@ -240,9 +254,9 @@ describe("RIS single-entry routing", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    const [, options] = risCalls()[0];
-    expect(options.method).toBe("POST");
-    const payload = JSON.parse(options.body);
+    const grantCall = risCalls().find(([, options]) => options.method === "POST");
+    expect(grantCall).toBeDefined();
+    const payload = JSON.parse(grantCall[1].body);
     expect(payload.purpose).toBe("application-storage");
     expect(payload.noticeVersion).toBe("1.0");
   });

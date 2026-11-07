@@ -20,6 +20,9 @@ export default function StorageConsentLive() {
   const token = auth.user?.access_token ?? "";
   const [consent, setConsent] = useState<RisConsent | null>(null);
   const [grantAllowed, setGrantAllowed] = useState(false);
+  const [noticeVersion, setNoticeVersion] = useState<string | null>(null);
+  const [noticeState, setNoticeState] = useState<string | null>(null);
+  const [noticeReason, setNoticeReason] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Array<Record<string, unknown>> | null>(null);
@@ -32,6 +35,9 @@ export default function StorageConsentLive() {
         if (!active) return;
         setConsent(state.consent);
         setGrantAllowed(state.grantAllowed);
+        setNoticeVersion(state.noticeVersion);
+        setNoticeState(state.noticeState);
+        setNoticeReason(state.noticeReason);
       })
       .catch((err) => { if (active) setError(messageOf(err)); });
     return () => { active = false; };
@@ -51,24 +57,27 @@ export default function StorageConsentLive() {
 
   const status = consent?.status ?? "NOT_GRANTED";
   const canGrant = grantAllowed && status !== "GRANTED";
+  const version = consent?.noticeVersion ?? noticeVersion;
 
   return (
     <section className="storage-consent__block" aria-labelledby="storage-consent-live-title">
       <h3 id="storage-consent-live-title">Speicherung von Bewerbungen</h3>
       <p role="status">
         Status: <strong>{label(status)}</strong>
-        {consent?.noticeVersion ? ` (Textversion ${consent.noticeVersion})` : ""}
+        {version ? ` (Textversion ${version})` : ""}
       </p>
       {error && <p role="alert">{error}</p>}
       {!grantAllowed && status !== "GRANTED" && (
         <p className="field-hint" role="note">
           Die Einwilligungs-Textversion ist noch nicht freigegeben. Die Zustimmung ist gesperrt.
+          {noticeState ? ` RIS-Status: ${stateLabel(noticeState)} (${noticeState}).` : ""}
+          {noticeReason ? ` ${reasonOf(noticeReason)}` : ""}
         </p>
       )}
       <p className="field-hint">
         <a href="/datenschutz">Datenschutzhinweise zur Bewerbungsspeicherung</a>
         {` · Angezeigte Textfassung: ${STORAGE_CONSENT_TEXT_VERSION}`}
-        {consent?.noticeVersion ? ` · RIS-Textversion: ${consent.noticeVersion}` : ""}
+        {version ? ` · RIS-Textversion: ${version}` : ""}
       </p>
       <div className="storage-consent__actions">
         <button
@@ -120,9 +129,31 @@ function label(status: string): string {
   return "nicht erteilt";
 }
 
+function stateLabel(state: string): string {
+  if (state === "ACTIVE") return "freigegeben";
+  if (state === "DRAFT") return "Entwurf";
+  if (state === "RETIRED") return "zurückgezogen";
+  return "unbekannt";
+}
+
+function reasonOf(reason: string): string {
+  if (reason === "notice_version_not_mapped") return "Für diese App ist noch keine Textversion hinterlegt.";
+  if (reason === "notice_version_unknown") return "Die hinterlegte Textversion ist bei RIS nicht veröffentlicht.";
+  if (reason === "notice_not_active") return "Die RIS-Textversion ist noch nicht aktiv.";
+  if (reason === "notice_not_approved") return "Die RIS-Textversion ist noch nicht rechtlich freigegeben.";
+  if (reason === "notice_not_accepted") return "Die RIS-Textversion ist noch nicht für neue Zustimmungen geöffnet.";
+  return "Der Freigabestatus konnte nicht geprüft werden.";
+}
+
 function messageOf(err: unknown): string {
   if (err instanceof RisConsentApiError) {
-    if (err.code === "notice_version_not_mapped") {
+    if (
+      err.code === "notice_version_not_mapped" ||
+      err.code === "notice_version_unknown" ||
+      err.code === "notice_not_active" ||
+      err.code === "notice_not_approved" ||
+      err.code === "notice_not_accepted"
+    ) {
       return "Die Einwilligungs-Textversion ist noch nicht freigegeben.";
     }
     if (err.code === "test_user_not_allowed") {

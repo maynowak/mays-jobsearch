@@ -143,6 +143,21 @@ The RIS application storage path is disabled unless all required server values a
 
 Consent and application storage are independently activated. `RIS_CONSENT_SERVICE_ENABLED=true` with `RIS_APPLICATION_STORAGE_ENABLED=false` enables only the consent BFF; the reverse leaves consent disabled. Both modes reuse the same `RIS_API_BASE_URL`, partner credential, Cognito issuer/client and test-user allowlist.
 
+### Consent notice approval gate
+
+`RIS_CONSENT_NOTICE_VERSION` is only a mapping from this app to a RIS notice version. It is **not** an approval and must never be treated as one. Before reporting `grantAllowed` and again immediately before writing a grant, the BFF reads the live catalogue from `GET /v1/partner/me/consents` and requires the catalogue entry for the configured version to satisfy all of:
+
+- the entry exists for `purpose=application-storage` and `noticeVersion` equals the server-configured value,
+- `noticeState` is `ACTIVE`,
+- `noticeApproved` is boolean `true`,
+- `acceptedForNewGrant` is boolean `true`.
+
+Anything else fails closed: missing or malformed catalogue, unknown/changed version, `DRAFT` state, non-boolean approval flags, RIS error or timeout. `GET /api/ris/consents` returns `noticeVersion`, `noticeState`, `noticeApproved`, `acceptedForNewGrant`, `grantAllowed` and `noticeReason` so the UI can explain the block; legal approval references are never returned.
+
+Blocked grants use `409` for notice-state reasons (`notice_not_active`, `notice_not_approved`, `notice_not_accepted`, `notice_version_unknown`) and `503` for `notice_version_not_mapped`, `notice_catalog_invalid` or `notice_catalog_unavailable`. A blocked grant never calls the RIS grant endpoint. Withdrawal stays available regardless of notice state.
+
+Activation implication: setting `RIS_CONSENT_NOTICE_VERSION=1.0` while RIS keeps notice `1.0` in `DRAFT` leaves grants blocked. That is the intended fail-closed behaviour. Do not work around it by enabling other flags, editing the browser code or changing the version; the RIS notice must be approved and opened for new grants first. The privacy policy release version is independent of the consent notice version.
+
 ## Add an environment variable (CLI)
 
 ```bash

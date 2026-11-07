@@ -78,4 +78,34 @@ describe("StorageConsentLive", () => {
     expect(screen.getByText(/Angezeigte Textfassung: 2026-11-04-draft-1/)).toBeInTheDocument();
     expect(screen.getByText(/RIS-Textversion: 1.0/)).toBeInTheDocument();
   });
+
+  it("erklärt eine gesperrte DRAFT-Notice mit ihrem RIS-Status", async () => {
+    fetchMock.mockResolvedValue(
+      consentResponse({
+        consent: {
+          purpose: "application-storage",
+          status: "NOT_GRANTED",
+          noticeVersion: null,
+          grantedAt: null,
+          withdrawnAt: null,
+          version: 0,
+        },
+        noticeVersion: "1.0",
+        noticeState: "DRAFT",
+        noticeApproved: false,
+        acceptedForNewGrant: false,
+        grantAllowed: false,
+        noticeReason: "notice_not_active",
+      })
+    );
+
+    render(<StorageConsentLive />);
+
+    await waitFor(() => expect(screen.getByText(/nicht erteilt/)).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Speicherung zustimmen" })).toBeDisabled();
+    expect(screen.getByText(/noch nicht freigegeben/)).toBeInTheDocument();
+    expect(screen.getByText(/RIS-Status: Entwurf \(DRAFT\)/)).toBeInTheDocument();
+    expect(screen.getByText(/noch nicht aktiv/)).toBeInTheDocument();
+    expect(screen.getByText(/RIS-Textversion: 1.0/)).toBeInTheDocument();
+  });
 });

@@ -19,7 +19,11 @@ export interface RisConsent {
 export interface RisConsentState {
   consent: RisConsent | null;
   noticeVersion: string | null;
+  noticeState: string | null;
+  noticeApproved: boolean;
+  acceptedForNewGrant: boolean;
   grantAllowed: boolean;
+  noticeReason: string | null;
 }
 
 export class RisConsentApiError extends Error {
@@ -59,12 +63,20 @@ export async function fetchRisConsent(token: string): Promise<RisConsentState> {
   const data = await request<{
     consent: RisConsent | null;
     noticeVersion?: string | null;
+    noticeState?: string | null;
+    noticeApproved?: boolean;
+    acceptedForNewGrant?: boolean;
     grantAllowed?: boolean;
+    noticeReason?: string | null;
   }>(token, { method: "GET" });
   return {
     consent: data.consent ?? null,
     noticeVersion: data.noticeVersion ?? null,
+    noticeState: data.noticeState ?? null,
+    noticeApproved: data.noticeApproved === true,
+    acceptedForNewGrant: data.acceptedForNewGrant === true,
     grantAllowed: data.grantAllowed === true,
+    noticeReason: data.noticeReason ?? null,
   };
 }
 
