@@ -3971,3 +3971,58 @@ configured synthetic test user.
 - Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice-
   Änderung, keine Rechtsfreigabe. Aktivierung erst nach Operatorfreigabe von
   Text und RIS-Notice sowie `RIS_CONSENT_TEXT_STATE=APPROVED`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-03/04 (consent text, status display, RIS review)
+
+**Typ:** Implementation / UI correction / Cross-repo review
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Jobsearch `2b4b520`: vollständige ApplicationV1-Einwilligungserklärung als
+  Kandidat (`src/lib/applicationStorageConsent.ts`) plus serverseitige
+  Text/Hash-Bindung (`api/_lib/ris/consentText.mjs`, `risConsentConfig`,
+  `consentsHandler`). Textversion:
+  `application-storage-consent-2026-11-07-v1`; SHA-256 (UTF-8 über
+  `paragraphs.join("\n\n")`):
+  `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`;
+  Zweck `application-storage`; RIS-Notice `1.0`; Zustand `DRAFT` —
+  **nicht rechtlich freigegeben**, kein `legalApprovalRef`.
+  `GET` liefert `textVersion/textHash/textState/textMapped/textApproved/
+  textReason`; `grantAllowed` verlangt Notice-Freigabe **und** freigegebenes
+  Text-Mapping; `POST` prüft erneut und schreibt bei Blockade nicht.
+- Jobsearch `115ea57`: UI-Korrektur — der serverseitige `textState` ist die
+  maßgebliche Anzeige (`Textstatus: … (APPROVED|DRAFT|nicht konfiguriert)`).
+  Die Code-Konstante erscheint nur bei nicht freigegebenem Serverstatus als
+  `Text-Kandidat (Kandidat für Betreiberfreigabe)`; bei `APPROVED` wird kein
+  widersprüchliches `DRAFT` mehr angezeigt. Volltext, Version, SHA-256,
+  Datenschutz-Link und strikte Freigabe (`grantAllowed` + Mapping-Match +
+  Server-`APPROVED`) bleiben unverändert; Widerruf bleibt statusabhängig.
+- RIS-Review `37503a9` (read-only): **PASS**. Geprüft:
+  `CONSENT_PILOT_ALLOWLIST` exakt `<issuer>|<sub>` (getrimmt, Trailing-Slash
+  normalisiert, malformed ignoriert, leer = keine Pilot-Identität); effektive
+  Gates `APPLICATION_CONSENT_ENFORCED` **oder** Pilot-Identität für die fünf
+  ApplicationV1-Schreibpfade und `CONSENT_NOTICE_STATE_ENFORCED` **oder**
+  Pilot-Identität für neue/erneute Grants; `ConsentRepository.grant(
+  enforce_notice_state=…)` betrifft nur neue/erneute Grants, idempotente
+  Wiederholung und Widerruf bleiben möglich; Terraform-Defaults
+  `consent_pilot_allowlist=""` und `consent_notice_state_enforced=false`, keine
+  Identität hartkodiert, `ris-dev`/`ris-dev2`-Projektconfigs unverändert.
+  External Ref `application-storage-consent-2026-11-07-v1` mit exaktem Hash,
+  `DRAFT`, `noticeVersion: None` (nicht als Notice-Version akzeptiert);
+  Registry `application-storage/1.0` bleibt `DRAFT`, `legalApprovalRef=null`.
+  Keine unautorisierte Änderung, kein Apply/Deploy/Env-/Secret-Wechsel.
+- Tests RIS (fokussiert, real):
+  `PYTHONPATH=/tmp/opencode/pydeps python3 -m pytest
+  tests/test_consent_pilot_allowlist.py
+  tests/test_consent_active_notice_pilot.py
+  tests/test_consent_notice_catalog_contract.py
+  tests/test_consent_notice_state_enforcement_terraform.py -q`
+  = **60 passed**.
+- Tests Jobsearch (fokussiert, real): `StorageConsentLive.test.tsx` +
+  `storageConsent.test.ts` = 2 Dateien / 14 Tests PASS;
+  `ris-consents/ris-routing/ris-config-separation` = 3 Dateien / 55 Tests PASS;
+  `npm run build` PASS; `git diff --check` ohne Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice-
+  oder `legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Live-Persistenz behauptet. Aktivierung weiterhin blockiert durch fehlende
+  Operator-/Rechtsfreigabe von Text und RIS-Notice `1.0` sowie die nicht
+  aktivierten Gates.
