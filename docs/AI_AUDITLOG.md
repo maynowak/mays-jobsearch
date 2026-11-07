@@ -4026,3 +4026,13 @@ configured synthetic test user.
   Live-Persistenz behauptet. Aktivierung weiterhin blockiert durch fehlende
   Operator-/Rechtsfreigabe von Text und RIS-Notice `1.0` sowie die nicht
   aktivierten Gates.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-03 — final consolidation
+
+**Status:** `APPLICATION STORAGE READY FOR RIS-DEV E2E` (not executed; operator approval/deployment pending)
+
+- Commits: `2b4b520` (complete ApplicationV1 consent text + version/hash/BFF gate), `115ea57` (server-authoritative text status), `ef370d0` (auditlog + RIS review), this final docs commit.
+- Text: `application-storage-consent-2026-11-07-v1`, SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`; state DRAFT candidate, no legal approval.
+- Tests: focused BFF 55/55, UI/text 14/14, build PASS, API syntax PASS, diff check PASS; full suite second run 1574 passed / 5 skipped (first run had 2 transient ManualSearchProfiles failures; isolated 8/8 PASS).
+- RIS review `37503a9` PASS: scoped `CONSENT_PILOT_ALLOWLIST` and mapping; non-pilot identities unaffected; global gates remain false.
+- No push/merge/deploy/env/notice change; no live persistence. Report: `docs/reports/JM-RIS-STORAGE-PILOT-03-REPORT.md`.
