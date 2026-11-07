@@ -21,7 +21,7 @@
 | --- | --- | --- |
 | Live catalogue check | `GET /api/ris/consents` evaluates the RIS `catalog`; POST grant re-reads it immediately before writing | `api/_lib/ris/consentsHandler.mjs`, `api/_lib/ris/consentNotice.mjs`, tests `ris-consents.test.mjs` |
 | Version binding | Notice version is server-owned (`RIS_CONSENT_NOTICE_VERSION`); a body-supplied version is ignored | test `sendet bei freigegebener Notice die serverseitige Version an RIS` (body `9.9`, sent `1.0`) |
-| Fail-closed | Missing/malformed catalogue, unknown version, `DRAFT`/`SUPERSEDED`, non-boolean flags, RIS 5xx/timeout/network error, conflicting duplicates all block | `consentNotice.mjs`; `ris-consents.test.mjs` 26 API cases |
+| Fail-closed | Missing/malformed catalogue, unknown version, `DRAFT`/`SUPERSEDED`, non-boolean flags, RIS 5xx/timeout/network error, conflicting duplicates all block | `consentNotice.mjs`; `ris-consents.test.mjs` 26 HTTP handler cases (+7 helper cases) |
 | State semantics | Accepts `APPROVED` or `ACTIVE`; requires strict `noticeApproved === true` and `acceptedForNewGrant === true` | `consentNotice.mjs:12`, `:82-85` |
 | Consent status UI | Shows status, RIS state, block reason and both text versions; grant button disabled unless `grantAllowed` | `src/components/StorageConsentLive.tsx`; 3 UI tests |
 | Remote mode | Session is default; remote only with `VITE_RIS_APPLICATION_STORAGE_ENABLED=true` + verified login + access token | `src/App.tsx:280-291`, `src/lib/applications/risRemoteRepository.ts:40` |
@@ -81,7 +81,7 @@ declaration exists.**
   `STORAGE_CONSENT_PRIVACY_NOTICE_VERSION` = `2026-11-04-draft-1`; RIS notice
   `application-storage/1.0` = `DRAFT`, `legalApprovalRef = null`; the external
   reference is deliberately not mapped.
-- Retention facts match this repository's Terraform/code: applications table
+- Retention facts match the RIS repository's Terraform/code: applications table
   TTL enabled on `expiresAt` but the repository never writes it; consents table
   has no TTL; `r08_pitr_enabled=false`; `ERASURE_APPLICATIONS_ENABLED="false"`;
   log retention default 14 days. No approved ApplicationV1 retention rule

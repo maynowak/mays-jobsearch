@@ -3912,3 +3912,13 @@ configured synthetic test user.
   tests/api/ris-config-separation.test.mjs` = 3 Dateien / 50 Tests PASS;
   `StorageConsentLive.test.tsx` + `risRemoteRepository.test.ts` +
   `remoteSessionRepository.test.ts` = 3 Dateien / 36 Tests PASS.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-02 — final consolidation
+
+**Status:** `STORAGE PILOT TECHNICALLY READY (LOCAL)` / `BLOCKED FOR LIVE PILOT`
+
+- Jobsearch commit `04f00f4` adds the dedicated preview plan and BFF review; no API/UI code change was needed. Precision fixes to the plan were added in this docs commit.
+- BFF remains PASS: live RIS catalogue, APPROVED/ACTIVE + strict flags, POST re-read, DRAFT/SUPERSEDED blocked, withdrawal allowed, server-owned version, no legal-ref leakage, no backend-confirmed success missing.
+- Focused tests: BFF 50/50; UI/repository 36/36; `git diff --check` PASS. Previous full suite `1562 passed / 5 skipped` remains the baseline and was not repeated without a code change.
+- Blockers: (1) no complete, legally approved ApplicationV1 consent declaration/notice — notice `1.0` stays DRAFT/`legalApprovalRef=null`; (2) no isolated RIS pilot runtime — `ris-dev` is shared with `ris-dev-jobsearch-api`.
+- No push, merge, deploy, env/secret/Terraform/AWS/Cognito change, no notice state change, no live persistence. Report: `docs/reports/JM-RIS-STORAGE-PILOT-02-REPORT.md`.
