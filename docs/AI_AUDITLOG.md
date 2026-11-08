@@ -4539,3 +4539,35 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - No push, merge, deployment, Terraform apply, AWS mutation, general user
   enablement or Mays-Orders change. Report:
   `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`.
+
+## 2026-11-08 — JM-RIS-CV-STORAGE-INTEGRATION-01 — release preparation / approval packet
+
+**Typ:** Release preparation / Cross-repository review / Audit
+**Status:** `AWAITING OPERATOR APPROVAL OF THE EXACT CV CONSENT TEXT — NO APPLY/PUSH/DEPLOY`
+
+- Published the exact CV consent text
+  `cv-storage-consent-2026-11-08-v1`, canonical SHA-256
+  `2fe65fd158a3a2953cf3869ff864aae626971012d68cfb8849db84e04579d036`;
+  no new text version was created.
+- Verified purpose mapping: Jobsearch client and BFF use `cv-storage`; the
+  `/api/ris/cv-consents` route forces the purpose server-side; RIS
+  `CONSENT_PURPOSES`, notice `cv-storage/1.0`, external text ref and Art. 9
+  text map all use the same identity.
+- Verified server-side CV gate: `CONSENT_PILOT_ALLOWLIST` restricts durable CV
+  writes to the confirmed operator identity when configured; without
+  `GRANTED` `cv-storage` (when `CV_STORAGE_CONSENT_ENFORCED=true`) create/
+  upload/complete/update fail closed; list/get/download/delete remain
+  available. The global CV gate defaults false.
+- Reproduced the six RIS full-suite failures on unchanged baseline `1d951b2`
+  in a separate worktree; the same six fail on the current branch. They are
+  pre-existing and outside the CV/consent change surface. Focused RIS
+  CV/consent/API tests: **134 PASS**.
+- Pre-approval technical plan (not final activation):
+  `/tmp/opencode/ris-cv-storage-01-preapproval.tfplan`, SHA-256
+  `5986eadd20e6a4c93a9016a889cec73abd40727da0fd6c0c3a53965c62c145e0`,
+  state serial 43: 1 add (S3 CORS), 1 change (agent Lambda/env), 0 destroy.
+  Explicit Mays-Orders boundary ARN keeps the worker boundary NO-OP.
+- Approval packet:
+  `docs/reports/JM-RIS-CV-STORAGE-CONSENT-V1-APPROVAL-PACKET.md`.
+  Awaiting the operator's explicit text/notice/legalApprovalRef approval.
+  No apply, push, merge or deployment.
