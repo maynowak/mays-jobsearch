@@ -65,10 +65,10 @@ export default function PersistentCvProfilesOverlay({
   };
 
   useEffect(() => {
-    if (!profiles.active) return;
+    if (!profiles.persistentView) return;
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profiles.active, cvId]);
+  }, [profiles.persistentView, cvId]);
 
   const searchConfig = () => ({
     skills,
@@ -155,7 +155,7 @@ export default function PersistentCvProfilesOverlay({
           <Button variant="ghost" onClick={onClose}>{t("searchProfiles.close")}</Button>
         </header>
 
-        {!profiles.active ? (
+        {!profiles.persistentView ? (
           <p role="note">{t("searchProfiles.consentRequired")}</p>
         ) : (
           <>
@@ -214,7 +214,7 @@ export default function PersistentCvProfilesOverlay({
                 </ul>
               )}
 
-              <div className="cv-profiles-overlay__form">
+              {profiles.active && <div className="cv-profiles-overlay__form">
                 <h5>{editingCvId ? t("searchProfiles.editCv") : t("searchProfiles.createCv")}</h5>
                 <label>{t("searchProfiles.name")}
                   <input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
@@ -242,7 +242,7 @@ export default function PersistentCvProfilesOverlay({
                     {t("searchProfiles.cancel")}
                   </Button>
                 )}
-              </div>
+              </div>}
             </section>
 
             <section aria-labelledby="persistent-ats-title">
@@ -300,7 +300,7 @@ export default function PersistentCvProfilesOverlay({
                     </div>
                   ))}
 
-                  <div className="cv-profiles-overlay__form">
+                  {profiles.active && <div className="cv-profiles-overlay__form">
                     <h5>{editingAtsId ? t("searchProfiles.editAts") : t("searchProfiles.createAts")}</h5>
                     <label>{t("searchProfiles.parent")}
                       <select value={atsParent} onChange={(e) => setAtsParent(e.target.value)}>
@@ -328,7 +328,7 @@ export default function PersistentCvProfilesOverlay({
                         {t("searchProfiles.cancel")}
                       </Button>
                     )}
-                  </div>
+                  </div>}
                 </>
               )}
             </section>

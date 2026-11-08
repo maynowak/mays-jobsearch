@@ -26,6 +26,7 @@ import {
   updateCvSearchProfile,
   updateManualSearchProfile,
   withdrawSearchProfileConsent,
+  SearchProfilesApiError,
   type SearchProfileConsent,
   type SearchProfileConsentState,
 } from "./searchProfilesApi";
@@ -68,6 +69,7 @@ function manualInput(
 export interface PersistentSearchProfiles {
   available: boolean;
   active: boolean;
+  persistentView: boolean;
   loading: boolean;
   error: string | null;
   consent: SearchProfileConsentState | null;
@@ -92,7 +94,9 @@ export function usePersistentSearchProfiles(
   token: string,
   enabled: boolean
 ): PersistentSearchProfiles {
-  const available = enabled && isRisSearchProfileStorageEnabled() && Boolean(token);
+  const baseAvailable = enabled && isRisSearchProfileStorageEnabled() && Boolean(token);
+  const [denied, setDenied] = useState(false);
+  const available = baseAvailable && !denied;
   const [consent, setConsent] = useState<SearchProfileConsentState | null>(null);
   const [manualProfiles, setManualProfiles] = useState<ManualSearchProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -100,10 +104,12 @@ export function usePersistentSearchProfiles(
   const tokenRef = useRef(token);
   tokenRef.current = token;
 
-  const active = available && consent?.consent?.status === "GRANTED";
+  const consentStatus = consent?.consent?.status;
+  const active = available && consentStatus === "GRANTED";
+  const persistentView = available && (consentStatus === "GRANTED" || consentStatus === "WITHDRAWN");
 
   const refresh = useCallback(async () => {
-    if (!available) {
+    if (!baseAvailable) {
       setConsent(null);
       setManualProfiles([]);
       return;
@@ -115,21 +121,27 @@ export function usePersistentSearchProfiles(
     try {
       const nextConsent = await fetchSearchProfileConsent(current);
       setConsent(nextConsent);
-      if (nextConsent.consent?.status === "GRANTED") {
+      if (nextConsent.consent?.status === "GRANTED" || nextConsent.consent?.status === "WITHDRAWN") {
         const items = await listManualSearchProfiles(current);
         setManualProfiles(items.map(mapManual));
       } else {
         setManualProfiles([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "search_profile_storage_unavailable");
+      if (err instanceof SearchProfilesApiError && err.status === 403) {
+        setDenied(true);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : "search_profile_storage_unavailable");
+      }
       setManualProfiles([]);
     } finally {
       setLoading(false);
     }
-  }, [available]);
+  }, [baseAvailable]);
 
   useEffect(() => {
+    setDenied(false);
     void refresh();
   }, [refresh, token]);
 
@@ -143,7 +155,12 @@ export function usePersistentSearchProfiles(
       await refresh();
       return granted;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "search_profile_consent_failed");
+      if (err instanceof SearchProfilesApiError && err.status === 403) {
+        setDenied(true);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : "search_profile_consent_failed");
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -161,7 +178,12 @@ export function usePersistentSearchProfiles(
       await refresh();
       return withdrawn;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "search_profile_consent_failed");
+      if (err instanceof SearchProfilesApiError && err.status === 403) {
+        setDenied(true);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : "search_profile_consent_failed");
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -260,6 +282,7 @@ export function usePersistentSearchProfiles(
   return {
     available,
     active,
+    persistentView,
     loading,
     error,
     consent,

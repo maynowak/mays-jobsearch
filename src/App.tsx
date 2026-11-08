@@ -363,7 +363,7 @@ export default function App() {
     cvStorageAccessToken,
     searchProfileStorageEnabled
   );
-  const effectiveManualProfiles = persistentSearchProfiles.active
+  const effectiveManualProfiles = persistentSearchProfiles.persistentView
     ? persistentSearchProfiles.manualProfiles
     : manualProfiles;
 
@@ -2037,7 +2037,8 @@ export default function App() {
   });
 
   const handleSaveManualProfile = async (draft: ManualSearchProfileDraft, existingId: string | null) => {
-    if (persistentSearchProfiles.active) {
+    if (persistentSearchProfiles.persistentView) {
+      if (!persistentSearchProfiles.active) throw new Error("consent_required");
       await persistentSearchProfiles.saveManual(draft, existingId);
       return;
     }
@@ -2056,7 +2057,7 @@ export default function App() {
   };
 
   const handleDeleteManualProfile = async (id: string) => {
-    if (persistentSearchProfiles.active) {
+    if (persistentSearchProfiles.persistentView) {
       await persistentSearchProfiles.deleteManual(id);
       return;
     }
@@ -2069,7 +2070,8 @@ export default function App() {
   };
 
   const handleDuplicateManualProfile = async (id: string) => {
-    if (persistentSearchProfiles.active) {
+    if (persistentSearchProfiles.persistentView) {
+      if (!persistentSearchProfiles.active) throw new Error("consent_required");
       await persistentSearchProfiles.duplicateManual(id);
       return;
     }
@@ -3430,7 +3432,8 @@ export default function App() {
       onDelete={handleDeleteManualProfile}
       onDuplicate={handleDuplicateManualProfile}
       onSearch={handleSearchWithManualProfile}
-      storageMode={persistentSearchProfiles.active ? "persistent" : "session"}
+      storageMode={persistentSearchProfiles.persistentView ? "persistent" : "session"}
+      readOnly={persistentSearchProfiles.persistentView && !persistentSearchProfiles.active}
       persistenceAvailable={persistentSearchProfiles.available}
       consentState={persistentSearchProfiles.consent}
       consentBusy={persistentSearchProfiles.loading}

@@ -42,6 +42,7 @@ interface Props {
   onDuplicate: (id: string) => Promise<void>;
   onSearch: (profile: ManualSearchProfile) => void;
   storageMode?: "session" | "persistent";
+  readOnly?: boolean;
   persistenceAvailable?: boolean;
   consentState?: SearchProfileConsentState | null;
   consentBusy?: boolean;
@@ -108,6 +109,7 @@ export default function ManualSearchProfilesSection({
   onDuplicate,
   onSearch,
   storageMode = "session",
+  readOnly = false,
   persistenceAvailable = false,
   consentState = null,
   consentBusy = false,
@@ -329,7 +331,7 @@ export default function ManualSearchProfilesSection({
       )}
 
       <div className="dashboard-v2__manual-toolbar">
-        <Button id={`${formId}-new`} onClick={startCreate} disabled={busy || pendingAction !== null || Boolean(form)}>
+        <Button id={`${formId}-new`} onClick={startCreate} disabled={busy || readOnly || pendingAction !== null || Boolean(form)}>
           {t("manualProfiles.new")}
         </Button>
         {!form && profiles.length > 0 && (
@@ -535,7 +537,9 @@ export default function ManualSearchProfilesSection({
 
           <div className="dashboard-v2__manual-form-actions">
             <Button type="submit" disabled={busy || pendingAction === "save"}>
-              {t("manualProfiles.saveSession")}
+              {persistent
+                ? t("manualProfiles.savePersistent")
+                : t("manualProfiles.saveSession")}
             </Button>
             <Button variant="ghost" onClick={cancelForm} disabled={busy || pendingAction === "save"}>
               {t("manualProfiles.cancel")}
@@ -568,7 +572,11 @@ export default function ManualSearchProfilesSection({
                     <h3>{profile.name}</h3>
                     {profile.description && <p>{profile.description}</p>}
                   </div>
-                  <Badge tone="neutral">{t("manualProfiles.sessionBadge")}</Badge>
+                  <Badge tone={persistent ? "active" : "neutral"}>
+                    {persistent
+                      ? t("manualProfiles.persistentBadge")
+                      : t("manualProfiles.sessionBadge")}
+                  </Badge>
                 </div>
 
                 <p className="dashboard-v2__manual-summary">
@@ -600,13 +608,13 @@ export default function ManualSearchProfilesSection({
                 </p>
 
                 <div className="dashboard-v2__manual-actions">
-                  <Button variant="ghost" onClick={() => startEdit(profile)} disabled={busy || pendingAction !== null}>
+                  <Button variant="ghost" onClick={() => startEdit(profile)} disabled={busy || readOnly || pendingAction !== null}>
                     {t("manualProfiles.edit")}
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={() => void duplicateProfile(profile.id)}
-                    disabled={busy || pendingAction !== null}
+                    disabled={busy || readOnly || pendingAction !== null}
                   >
                     {t("manualProfiles.duplicate")}
                   </Button>

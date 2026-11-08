@@ -298,7 +298,7 @@ const DashboardV2CvSection = ({
           onGrantConsent={persistentCvStorage.grantConsent}
           onWithdrawConsent={persistentCvStorage.withdrawConsent}
           onManageProfiles={
-            persistentSearchProfiles?.active
+            persistentSearchProfiles?.persistentView
               ? (cvId) => setPersistentProfilesCvId(cvId)
               : undefined
           }
