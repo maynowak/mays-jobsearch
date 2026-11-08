@@ -4770,3 +4770,25 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   no test-user credentials/reusable session. No preview URL or public preview
   with copied secrets was created.
 - No Vercel mutation, no push, no live E2E.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 LIVE E2E VERIFIED
+
+**Typ:** Production limited pilot / Live browser E2E
+**Status:** `LIVE E2E VERIFIED — PRODUCTION LIMITED PILOT`
+
+- RIS final state serial **49**; Lambda `ris-dev-dev-agent` Active at
+  `j6eiYk09A8cF9idJBqklzGFaSafDMq+Bsara634PzUI=`;
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=true`.
+- Applied plans: `d6cfcda…` (notice/code), `53bcc0a…` (enforcement true),
+  `09ce68b…` (API Gateway v2 method fix).
+- Production deployment `dpl_ufUcAnWNGMEeHkXeLsW2df4eHwPz` READY at
+  `https://www.mays-job-matcher.app`.
+- Real browser session; no mocked `/api/**`:
+  manual create/edit/reload/delete; persistent CV create/upload; CV-search and
+  ATS create/edit/reload/delete; withdraw read; regrant; enforcement POST/PUT
+  `403 SEARCH_PROFILE_STORAGE_CONSENT_REQUIRED`; list/get `200`; delete `204`;
+  regrant create `201`; cleanup.
+- UI fixes: persistent badge, `Dauerhaft speichern`, read-only profiles after
+  withdrawal, non-allowlisted UI hidden.
+- Cleanup: synthetic profiles/CV deleted, preview env/deployments removed,
+  consent left WITHDRAWN. P3 account-erasure boundary remains open.
