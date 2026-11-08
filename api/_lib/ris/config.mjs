@@ -1,9 +1,12 @@
 import { consentTextMapping } from "./consentText.mjs";
+import { cvConsentTextMapping } from "./cvConsentText.mjs";
 
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_PATH = "/v1/partner/me/applications";
 const CONSENT_PATH = "/v1/partner/me/consents";
 const CONSENT_PURPOSE = "application-storage";
+const CV_PATH = "/v1/partner/me/cvs";
+const CV_CONSENT_PURPOSE = "cv-storage";
 
 function httpsUrl(value) {
   try {
@@ -88,6 +91,55 @@ export function risConfig(env = process.env) {
  * depend on RIS_APPLICATION_STORAGE_ENABLED. The notice version is owned by
  * the server (env), never by the client.
  */
+/** Durable CV storage BFF configuration. Disabled unless explicitly enabled. */
+export function risCvConfig(env = process.env) {
+  const enabled = String(env.RIS_CV_STORAGE_ENABLED ?? "").toLowerCase() === "true";
+  if (!enabled) {
+    return { enabled: false, error: "cv_storage_disabled" };
+  }
+
+  const shared = sharedRisConfig(env);
+  if (!shared) {
+    return { enabled: true, error: "missing_config" };
+  }
+
+  return {
+    enabled: true,
+    ...shared,
+    path: CV_PATH,
+  };
+}
+
+/**
+ * Separate cv-storage consent configuration. It reuses the consent service
+ * connection but has its own purpose, notice version and text mapping.
+ */
+export function risCvConsentConfig(env = process.env) {
+  const enabled = String(env.RIS_CONSENT_SERVICE_ENABLED ?? "").toLowerCase() === "true";
+  const noticeVersion = String(env.RIS_CV_CONSENT_NOTICE_VERSION ?? "").trim();
+  const text = cvConsentTextMapping(env);
+  const consent = {
+    path: CONSENT_PATH,
+    purpose: CV_CONSENT_PURPOSE,
+    noticeVersion: noticeVersion || null,
+    textVersion: text.version,
+    textHash: text.hash,
+    textState: text.state,
+    textMapped: text.mapped,
+    textApproved: text.approved,
+    textReason: text.reason,
+  };
+
+  if (!enabled) {
+    return { enabled: false, error: "consent_disabled", ...consent };
+  }
+  const shared = sharedRisConfig(env);
+  if (!shared) {
+    return { enabled: true, error: "missing_config", ...consent };
+  }
+  return { enabled: true, ...shared, ...consent };
+}
+
 export function risConsentConfig(env = process.env) {
   const enabled = String(env.RIS_CONSENT_SERVICE_ENABLED ?? "").toLowerCase() === "true";
   const noticeVersion = String(env.RIS_CONSENT_NOTICE_VERSION ?? "").trim();

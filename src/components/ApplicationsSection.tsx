@@ -6,6 +6,7 @@ import type {
 } from "../lib/applications/sessionApplications";
 import type { ApplicationMigrationPortV1, ApplicationRepository } from "../lib/applications/repositoryTypes";
 import type { CvDocument, Job, ModelOption } from "../types";
+import type { PersistentCv } from "../lib/cvStorageApi";
 import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
 import { hasCvBuilderTextContent } from "../lib/cvBuilder/toAnonymizedText";
 import { ApplicationRepositoryError } from "../lib/applications/repositoryTypes";
@@ -46,6 +47,7 @@ interface Props {
   refreshToken?: number;
   cvDocuments?: CvDocument[];
   cvBuilderProfiles?: CvBuilderProfileV1[];
+  persistentCvs?: PersistentCv[];
   onOpenCvProfile?: (cvId: string) => void;
   navigationTarget?: {
     localId?: string | null;
@@ -141,6 +143,7 @@ export default function ApplicationsSection({
   refreshToken = 0,
   cvDocuments = [],
   cvBuilderProfiles = [],
+  persistentCvs = [],
   onOpenCvProfile,
   navigationTarget = null,
 }: Props) {
@@ -550,6 +553,16 @@ export default function ApplicationsSection({
       const document = cvDocuments.find((entry) => entry.id === cvId);
       if (!document) return;
       cvReference = { cvId: document.id, label: document.name, cvSource: "uploaded" };
+    } else if (value.startsWith("persistent:")) {
+      const cvId = value.slice("persistent:".length);
+      const document = persistentCvs.find((entry) => entry.cvId === cvId);
+      if (!document || document.processingStatus !== "ready") return;
+      cvReference = {
+        cvId: document.cvId,
+        ...(document.documentId ? { documentId: document.documentId } : {}),
+        label: document.filename,
+        cvSource: "uploaded",
+      };
     } else if (value !== "none") {
       return;
     }
@@ -875,15 +888,21 @@ export default function ApplicationsSection({
     selectedCvReference && selectedCvSource === "uploaded"
       ? cvDocuments.find((document) => document.id === selectedCvReference.cvId) ?? null
       : null;
+  const selectedPersistentCv =
+    selectedCvReference && selectedCvSource === "uploaded"
+      ? persistentCvs.find((document) => document.cvId === selectedCvReference.cvId) ?? null
+      : null;
   const selectedCvAvailable = selectedCvReference
     ? selectedCvSource === "builder"
       ? Boolean(selectedBuilderCv && hasCvBuilderTextContent(selectedBuilderCv.cvData))
-      : Boolean(selectedUploadedCv)
+      : Boolean(selectedUploadedCv || (selectedPersistentCv && selectedPersistentCv.processingStatus === "ready"))
     : true;
   const selectedCvValue = selectedCvReference
     ? selectedCvSource === "builder"
       ? `builder:${selectedCvReference.cvId}`
-      : `uploaded:${selectedCvReference.cvId}`
+      : selectedPersistentCv
+        ? `persistent:${selectedCvReference.cvId}`
+        : `uploaded:${selectedCvReference.cvId}`
     : "none";
 
   return (
@@ -1401,6 +1420,22 @@ export default function ApplicationsSection({
                             {cvDocuments.map((document) => (
                               <option key={`uploaded:${document.id}`} value={`uploaded:${document.id}`}>
                                 {document.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        {persistentCvs.length > 0 && (
+                          <optgroup label={t("applications.cvSource.persistent")}>
+                            {persistentCvs.map((document) => (
+                              <option
+                                key={`persistent:${document.cvId}`}
+                                value={`persistent:${document.cvId}`}
+                                disabled={document.processingStatus !== "ready"}
+                              >
+                                {document.filename}
+                                {document.processingStatus === "ready"
+                                  ? ""
+                                  : ` — ${t("applications.cvNotUsable")}`}
                               </option>
                             ))}
                           </optgroup>

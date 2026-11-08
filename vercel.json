@@ -27,6 +27,14 @@
       "destination": "/api/ris/router?__ris_consents=1"
     },
     {
+      "source": "/api/ris/cvs",
+      "destination": "/api/ris/router?__ris_cvs=1"
+    },
+    {
+      "source": "/api/ris/cv-consents",
+      "destination": "/api/ris/router?__ris_cv_consents=1"
+    },
+    {
       "source": "/search",
       "destination": "/index.html"
     },

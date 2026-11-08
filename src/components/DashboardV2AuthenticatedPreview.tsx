@@ -10,9 +10,17 @@ interface Props {
   cvSection?: ReactNode;
   applicationsSection?: ReactNode;
   preferencesSection?: ReactNode;
+  cvStorageEnabled?: boolean;
+  cvStorageConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
 }
 
-const DashboardV2AuthenticatedPreview = ({ cvSection, applicationsSection, preferencesSection }: Props) => {
+const DashboardV2AuthenticatedPreview = ({
+  cvSection,
+  applicationsSection,
+  preferencesSection,
+  cvStorageEnabled = false,
+  cvStorageConsentStatus = null,
+}: Props) => {
   const auth = useAuth();
   const { t } = useLang();
 
@@ -63,6 +71,8 @@ const DashboardV2AuthenticatedPreview = ({ cvSection, applicationsSection, prefe
       applicationsSection={applicationsSection}
       preferencesSection={preferencesSection}
       storageConsentIdentityVerified={storageConsentIdentityVerified}
+      cvStorageEnabled={cvStorageEnabled}
+      cvStorageConsentStatus={cvStorageConsentStatus}
     />
   );
 };

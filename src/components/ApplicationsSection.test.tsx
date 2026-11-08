@@ -10,6 +10,7 @@ import type { ApplicationJobReferenceV1 } from "../lib/applications/contractType
 import type { CvDocument } from "../types";
 import { createEmptyCvBuilderDraft } from "../lib/cvBuilder/contractTypes";
 import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
+import type { PersistentCv } from "../lib/cvStorageApi";
 
 const NOW = "2026-11-02T10:00:00.000Z";
 const job: ApplicationJobReferenceV1 = {
@@ -46,12 +47,14 @@ function Harness({
   onChanged,
   cvDocuments = [],
   cvBuilderProfiles = [],
+  persistentCvs = [],
   onOpenCvProfile,
 }: {
   initial: SessionApplicationV1[];
   onChanged?: (applications: SessionApplicationV1[]) => void;
   cvDocuments?: CvDocument[];
   cvBuilderProfiles?: CvBuilderProfileV1[];
+  persistentCvs?: PersistentCv[];
   onOpenCvProfile?: (cvId: string) => void;
 }) {
   const [repository] = useState(() => createSessionApplicationRepository({ initial }));
@@ -61,6 +64,7 @@ function Harness({
       onChanged={onChanged}
       cvDocuments={cvDocuments}
       cvBuilderProfiles={cvBuilderProfiles}
+      persistentCvs={persistentCvs}
       onOpenCvProfile={onOpenCvProfile}
     />
   );
@@ -229,6 +233,42 @@ describe("APP-02 ApplicationsSection", () => {
     const latest = onChanged.mock.calls.at(-1)?.[0] as SessionApplicationV1[];
     expect(latest[0].documents.cvReference).toBeUndefined();
     expect(latest[0].documents.coverLetterVersions).toHaveLength(0);
+  });
+
+  it("selects a permanently stored RIS CV for an application", async () => {
+    const onChanged = vi.fn();
+    const persistentCv: PersistentCv = {
+      cvId: "cv-ris-1",
+      filename: "RIS-Lebenslauf.pdf",
+      processingStatus: "ready",
+      sizeBytes: 2048,
+      documentId: "doc-ris-1",
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 2,
+    };
+    render(
+      <LangProvider>
+        <Harness
+          initial={[draft()]}
+          onChanged={onChanged}
+          persistentCvs={[persistentCv]}
+        />
+      </LangProvider>
+    );
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    fireEvent.change(screen.getByLabelText("Zugeordneten Lebenslauf ändern"), {
+      target: { value: "persistent:cv-ris-1" },
+    });
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    const latest = onChanged.mock.calls.at(-1)?.[0] as SessionApplicationV1[];
+    expect(latest[0].documents.cvReference).toEqual({
+      cvId: "cv-ris-1",
+      documentId: "doc-ris-1",
+      label: "RIS-Lebenslauf.pdf",
+      cvSource: "uploaded",
+    });
   });
 
   it("marks a deleted builder CV reference as unavailable without selecting a replacement", async () => {
