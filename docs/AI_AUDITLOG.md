@@ -4812,3 +4812,18 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Offen für allgemeinen Rollout: P3 Account-Erasure umfasst keine Partner-
   Suchprofile.
 - Commits: Jobsearch `8dacb93`/`217cce8`; RIS `60bc72d`/`d3459e2`.
+
+## 2026-11-08 — RIS account erasure now covers search profiles
+
+**Typ:** Cross-repository privacy follow-up
+**Status:** `RIS IMPLEMENTED / VERIFIED LOCAL — JOBSEARCH ERASURE UI STILL UNWIRED`
+
+- RIS commit `30668ff` adds the three persisted partner search-profile
+  categories (ATS, CV-search, manual) to the existing account-erasure
+  lifecycle, with user/tenant/partner/issuer scoping and resumable partial
+  failures.
+- Jobsearch does not currently call `/me/erasure`; the privacy-action
+  placeholder remains disabled. No new deletion UI/client was added in this
+  task.
+- No AWS apply/deploy, Cognito change or production mutation.
+- Report: `docs/reports/RIS-ACCOUNT-ERASURE-SEARCH-PROFILES-01-REPORT.md`.
