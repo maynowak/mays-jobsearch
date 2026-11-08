@@ -4651,3 +4651,18 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   new consent version.
 - Remaining open: full account erasure, final retention/physical purge, DPA
   review. Report: `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`.
+
+## 2026-11-08 — Search-profile storage consent candidate
+
+**Typ:** Consent candidate / Scope definition / Audit
+**Status:** `AWAITING OPERATOR APPROVAL — NO ACTIVATION`
+
+- Created `search-profile-storage-consent-2026-11-08-v1`, SHA-256
+  `926d1b9bbeefac4b97a5c51e3b6e6c1ed33a3affc3698e07456132be39b0f0f8`.
+- Covers Option A: manual profiles; CV-search/ATS profiles only for durable
+  RIS CVs; session CV profiles remain session-only.
+- Explicitly excludes PDF/CV text/AI/provider payloads and is separate from
+  ApplicationV1/CV consent.
+- Approval packet:
+  `docs/reports/SEARCH-PROFILE-STORAGE-CONSENT-V1-APPROVAL-PACKET.md`.
+- No BFF/UI wiring, activation, plan, apply, push or deployment.
