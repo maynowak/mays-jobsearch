@@ -231,7 +231,7 @@ flags and the CV consent text mapping are explicitly configured.
 | `RIS_CV_CONSENT_NOTICE_VERSION` | RIS notice version mapped to the CV purpose (`1.0` candidate). |
 | `RIS_CV_CONSENT_TEXT_VERSION` | `cv-storage-consent-2026-11-08-v1`. |
 | `RIS_CV_CONSENT_TEXT_SHA256` | `2fe65fd158a3a2953cf3869ff864aae626971012d68cfb8849db84e04579d036`. |
-| `RIS_CV_CONSENT_TEXT_STATE` | `APPROVED` only after operator/legal approval; `DRAFT`/absent blocks grants. |
+| `RIS_CV_CONSENT_TEXT_STATE` | `APPROVED` for the limited pilot; `DRAFT`/absent blocks grants. |
 | `VITE_RIS_CV_STORAGE_ENABLED` | Browser opt-in for the durable CV UI; default `false`. |
 | `CV_STORAGE_CONSENT_ENFORCED` (RIS) | Enforce `cv-storage` on new CV writes; reads/download/delete remain allowed. Default `false`; Terraform wiring exists, activation requires a separate plan/apply GO. |
 
@@ -252,7 +252,7 @@ text mapping are explicitly configured.
 | `RIS_SEARCH_PROFILE_CONSENT_NOTICE_VERSION` | RIS notice version mapped to `search-profile-storage` (`1.0` candidate). |
 | `RIS_SEARCH_PROFILE_CONSENT_TEXT_VERSION` | `search-profile-storage-consent-2026-11-08-v2`. |
 | `RIS_SEARCH_PROFILE_CONSENT_TEXT_SHA256` | `75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6`. |
-| `RIS_SEARCH_PROFILE_CONSENT_TEXT_STATE` | `APPROVED` only after operator/legal approval; `DRAFT`/absent blocks grants. |
+| `RIS_SEARCH_PROFILE_CONSENT_TEXT_STATE` | `APPROVED` for the limited pilot; `DRAFT`/absent blocks grants. |
 | `VITE_RIS_SEARCH_PROFILE_STORAGE_ENABLED` | Browser opt-in for the durable search-profile UI; default `false`. |
 | `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED` (RIS) | Enforce the separate consent on manual/CV-search/ATS writes; list/get/delete remain allowed. Default `false`; activation needs a separate plan/apply GO. |
 

@@ -5,6 +5,7 @@ import {
   SEARCH_PROFILE_STORAGE_CONSENT_TEXT,
   SEARCH_PROFILE_STORAGE_CONSENT_TEXT_SHA256,
   SEARCH_PROFILE_STORAGE_CONSENT_TEXT_VERSION,
+  SEARCH_PROFILE_STORAGE_CONSENT_STATE,
 } from "./searchProfileStorageConsent";
 
 describe("search-profile storage consent text", () => {
@@ -17,6 +18,7 @@ describe("search-profile storage consent text", () => {
       .digest("hex");
     expect(digest).toBe(SEARCH_PROFILE_STORAGE_CONSENT_TEXT_SHA256);
     expect(digest).toBe("75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6");
+    expect(SEARCH_PROFILE_STORAGE_CONSENT_STATE).toBe("APPROVED");
   });
 
   it("covers all three profile types, AWS storage and the AI boundary", () => {
