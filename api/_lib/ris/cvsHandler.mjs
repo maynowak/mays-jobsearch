@@ -137,10 +137,13 @@ export default async function handler(req, res) {
       }
       if (action === "upload") {
         if (!id) return fail(res, 422, "invalid_request", "id is required");
-        const contentType = typeof body.contentType === "string" ? body.contentType : "application/pdf";
+        const requestedType = body.contentType;
+        if (requestedType !== undefined && requestedType !== "application/pdf") {
+          return fail(res, 422, "content_type_not_allowed", "CV uploads must be application/pdf");
+        }
         return ok(res, await risRequest(
           { ...cfg, path: cfg.path }, token, "POST", cvPath(cfg, id, "/document/upload"),
-          { contentType },
+          { contentType: "application/pdf" },
         ));
       }
       if (action === "complete") {

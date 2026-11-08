@@ -218,6 +218,17 @@ describe("/api/ris/cvs", () => {
     expect(res.body.downloadUrl).toBe("https://s3.example/get");
   });
 
+  it("blockt Nicht-PDF-Upload-Tickets für CVs", async () => {
+    const res = makeRes();
+    await handler(request("POST", {
+      query: { id: "cv-1", action: "upload" },
+      body: { contentType: "text/plain" },
+    }), res);
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe("content_type_not_allowed");
+    expect(risCalls()).toHaveLength(0);
+  });
+
   it("löscht nur den angefragten CV-Pfad", async () => {
     risResponse = response(200, { cvId: "cv-1", deleted: true, physicalPurge: false });
     const res = makeRes();

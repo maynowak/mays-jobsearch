@@ -17,7 +17,7 @@ export const CV_STORAGE_CONSENT_TEXT_SHA256 =
 
 export const CV_STORAGE_CONSENT_PURPOSE = "cv-storage" as const;
 export const CV_STORAGE_CONSENT_RIS_NOTICE_VERSION = "1.0" as const;
-export const CV_STORAGE_CONSENT_STATE = "DRAFT" as const;
+export const CV_STORAGE_CONSENT_STATE = "APPROVED" as const;
 export const CV_STORAGE_CONSENT_PRIVACY_POLICY_VERSION = "1.1" as const;
 
 export const CV_STORAGE_SPECIAL_CATEGORIES = [
