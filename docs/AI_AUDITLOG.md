@@ -4827,3 +4827,20 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   task.
 - No AWS apply/deploy, Cognito change or production mutation.
 - Report: `docs/reports/RIS-ACCOUNT-ERASURE-SEARCH-PROFILES-01-REPORT.md`.
+
+## 2026-11-08 — MAYS-P3-FINAL
+
+**Typ:** Cross-repo account erasure / E2E readiness
+**Status:** `BLOCKED — SYNTHETIC ERASURE E2E + JOBSEARCH DEPLOYMENT PENDING`
+
+- RIS P3 remains deployed/post-deploy verified at state serial 50, Lambda
+  `/oB1onGisdIHu9/J1RMp80Ti7t8ooGl28yiLRD6BLIE=`.
+- Jobsearch BFF `/api/ris/erasure` forwards the verified token to the existing
+  `POST /me/erasure`; settings UI is opt-in via
+  `VITE_RIS_ACCOUNT_ERASURE_ENABLED` and disabled by default. Commit `e060606`.
+- Tests: Jobsearch 32 PASS + build PASS; RIS 14/104/146 focused, full 2551
+  pass with 16 pre-existing unrelated failures.
+- No destructive production erasure: no isolated synthetic Cognito identity/
+  dataset approval exists; no real operator data was deleted.
+- No Jobsearch deployment, AWS/Terraform change, push or merge. S3/version/
+  backup/PITR limits remain open. Report: `docs/reports/MAYS-P3-FINAL-REPORT.md`.
