@@ -4491,3 +4491,51 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   No persistent frontend failure was observed.
 - Next task: `JM-RIS-CV-STORAGE-INTEGRATION-01`. Report:
   `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-E2E-AND-UI-STATUS-REPORT.md`.
+
+## 2026-11-08 — JM-RIS-CV-STORAGE-INTEGRATION-01 — durable CV storage (local)
+
+**Typ:** Implementation / Cross-repository integration / Audit
+**Status:** `LOCAL IMPLEMENTED — TESTS GREEN — NOT DEPLOYED` /
+`PRODUCTION E2E NOT EXECUTED — CV NOTICE DRAFT / CORS PLAN + RELEASE REQUIRED`
+
+- Baseline: Jobsearch `1553a5a`, RIS `1d951b2`; new branches
+  `feature/jm-ris-cv-storage-integration-01` in both repositories.
+- Reused the existing encrypted RIS S3 document store and partner CV routes
+  (metadata CRUD, presigned PUT/GET, HeadObject completion, delete marker,
+  tenant/user isolation). No new storage architecture and no ApplicationV1
+  change.
+- Jobsearch added `/api/ris/cvs` and `/api/ris/cv-consents` to the existing
+  single-entry RIS router, a strict CV BFF, the separate CV consent client,
+  `usePersistentCvStorage`, the persistent CV list, a session/persistent mode
+  switch in the existing CV area, persistent-CV selection for ApplicationV1,
+  and server-backed CV status in settings. Builder profiles remain separate.
+- CV consent is a separate `cv-storage` purpose and text
+  `cv-storage-consent-2026-11-08-v1`, SHA-256
+  `2fe65fd158a3a2953cf3869ff864aae626971012d68cfb8849db84e04579d036`.
+  RIS notice `cv-storage/1.0` is **DRAFT** with no legal approval reference;
+  no grant is presented as approved. ApplicationV1 v4 remains unchanged.
+- RIS added the CV write consent gate (`CV_STORAGE_CONSENT_ENFORCED`, default
+  false; reads/download/delete remain available after withdrawal), explicit
+  purpose-specific Art. 9 text mapping, Terraform variable/env wiring, and a
+  private-bucket CORS resource for the exact production origin. The clean
+  read-only plan is `/tmp/opencode/ris-cv-storage-01-clean.tfplan`, SHA-256
+  `f1c16c25856e05f558b0a284a2c87460b53d8375e7c47d68e3eea0b53d09ed49`,
+  state serial 43: **1 add (S3 CORS), 1 change (agent Lambda code/env), 0
+  destroy**. With the explicit Mays-Orders boundary variable the Orders
+  boundary is NO-OP. **No apply.**
+- Jobsearch clean-install verification: focused **10 files / 142 tests PASS**;
+  serial full suite **157 files / 1620 tests PASS**, 5 skipped; build PASS.
+  BFF ApplicationV1/consent regression remains PASS. RIS focused CV/consent/
+  API tests **132 PASS**; full suite 2531 passed / 56 skipped / 6 unrelated
+  known failures outside the CV/consent surface.
+- Security: identity only from verified JWT; CV BFF validates IDs/paths and
+  never accepts browser user/tenant identity; server-only partner credential;
+  no CV contents in logs; upload bytes go directly to private S3 via
+  short-lived presigned URL; no AI call during storage.
+- Production blockers: CV notice DRAFT/no legal ref; CORS plan not applied;
+  RIS Lambda/Jobsearch BFF not deployed; CV text/notice/env flags not set;
+  production acceptance E2E not executed. No release approval was requested
+  or assumed.
+- No push, merge, deployment, Terraform apply, AWS mutation, general user
+  enablement or Mays-Orders change. Report:
+  `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`.
