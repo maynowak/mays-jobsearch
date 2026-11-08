@@ -283,6 +283,7 @@ export default function App() {
   const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
   const [applicationStorageMode, setApplicationStorageMode] = useState<"session" | "remote">("session");
   const [cvStorageMode, setCvStorageMode] = useState<"session" | "persistent">("session");
+  const cvStorageAutoSelectedRef = useRef(false);
   const [remoteCapability, setRemoteCapability] = useState<RisRemoteCapability | null>(null);
   const authRef = useRef(auth);
   authRef.current = auth;
@@ -355,6 +356,22 @@ export default function App() {
   const cvStorageAccessToken = auth.user?.access_token ?? "";
   const cvStorageEnabled = isRisCvStorageEnabled() && identityVerified;
   const persistentCvStorage = usePersistentCvStorage(cvStorageAccessToken, cvStorageEnabled);
+
+  // If the operator has already granted the separate CV storage consent, show
+  // the durable CV list automatically after login. The user can still switch
+  // back to session mode; the automatic selection happens only once per
+  // authenticated identity.
+  useEffect(() => {
+    if (!cvStorageEnabled) {
+      cvStorageAutoSelectedRef.current = false;
+      return;
+    }
+    if (cvStorageAutoSelectedRef.current) return;
+    if (persistentCvStorage.consent?.consent?.status === "GRANTED") {
+      setCvStorageMode("persistent");
+      cvStorageAutoSelectedRef.current = true;
+    }
+  }, [cvStorageEnabled, persistentCvStorage.consent?.consent?.status]);
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
   // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
   // apply late results after a user switch/logout.
@@ -393,6 +410,7 @@ export default function App() {
       beginNewManualJobSession();
       setSessionApplications([]);
       setCvStorageMode("session");
+      cvStorageAutoSelectedRef.current = false;
       setApplicationRepository(createApplicationRepositoryForAuth());
       setApplicationRefreshToken(0);
       setApplicationNavigation(null);
