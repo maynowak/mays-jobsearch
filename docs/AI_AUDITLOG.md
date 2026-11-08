@@ -4750,3 +4750,23 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`.
 - Jobsearch targeted 68 PASS, build PASS; RIS targeted 172 PASS.
 - No apply, deploy, push, preview URL or live E2E.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 RIS apply + preview blocker
+
+**Typ:** Deployment / Live-E2E preflight
+**Status:** `RIS DEPLOYED — JOBSEARCH PREVIEW BLOCKED — LIVE E2E NOT EXECUTED`
+
+- Applied saved plan `d6cfcda99a73dacf6ed44f111c42f719f8c401dcea6d7edb82caf9bfd1e2576a`
+  (0 add/1 change/0 destroy); RIS state serial **47**; Lambda
+  `ris-dev-dev-agent` Active at code hash
+  `pStIe5JG66TGF6PyltAmLJQ/0yKSgoWI6H7AmrAKwHU=`;
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`.
+- Notice `search-profile-storage/1.0` is live as `APPROVED` with
+  `legalApprovalRef=JM-SEARCH-PROFILE-STORAGE-V1-2026-11-08`.
+- Prepared enforcement plan `/tmp/opencode/ris-dev-search-profile-05.tfplan`,
+  SHA-256 `53bcc0a09c9a878d4ca90e65c75fba1a9219084d181b9eac2544f5c33908e5a9`;
+  not applied.
+- Jobsearch preview blocked: no Preview RIS env, no Cognito preview callback,
+  no test-user credentials/reusable session. No preview URL or public preview
+  with copied secrets was created.
+- No Vercel mutation, no push, no live E2E.
