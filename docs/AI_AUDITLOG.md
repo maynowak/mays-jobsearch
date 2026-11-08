@@ -4690,3 +4690,24 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Tests: targeted Jobsearch suites green; production build green. Full suite
   has unrelated pre-existing pdfjs/worker-path failures in this worktree.
 - No Vercel deployment, no AWS apply, no real user data.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-02 deployment preparation
+
+**Typ:** Privacy alignment / Terraform plan / Deployment review
+**Status:** `READY FOR NOTICE APPROVAL + DEPLOYMENT REVIEW — NO MUTATION`
+
+- Compared the DRAFT candidate text with Datenschutzerklärung v1.1 and live
+  RIS-DEV storage/deletion semantics. Findings: policy scope conflict (P1),
+  AWS-processor wording (P2), account-erasure gap (P3), verified no-PITR/no-
+  backup profile table (P4), free-text Art. 9 hint (P5). No general privacy
+  analysis; no policy edit.
+- New RIS-DEV plan:
+  `/tmp/opencode/ris-dev-search-profile-02.tfplan`,
+  SHA-256 `d94550010417d964fc9c3e5c94259a3eb8b692995f9bac41edd023c12bfcdc14`;
+  state serial 46; **0 add, 1 change, 0 destroy**; only
+  `module.lambda.aws_lambda_function.agent` update with
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`.
+- Prepared RIS→Jobsearch deployment order and the synthetic grant/withdraw/
+  regrant/write-block runbook.
+- Notice remains `DRAFT`; no `legalApprovalRef`; no AWS apply, state write,
+  Vercel deployment, push or real-user data.
