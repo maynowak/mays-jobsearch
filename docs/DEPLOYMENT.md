@@ -264,6 +264,22 @@ Option A applies: manual profiles have no CV parent; CV-search profiles need a
 durable RIS `cvId`; ATS profiles need a durable CV-search profile id. Session
 CVs and their profile lists remain session-only.
 
+## Account erasure (existing RIS lifecycle)
+
+The Jobsearch BFF now forwards the verified user token to the existing kernel
+endpoint `POST /me/erasure`. It does not implement a second deletion engine.
+
+| Variable | Purpose |
+| --- | --- |
+| `RIS_ACCOUNT_ERASURE_ENABLED` | Server opt-in; default `false`. |
+| `RIS_ERASURE_API_BASE_URL` | Server-only kernel API HTTPS base URL; required when enabled. |
+| `VITE_RIS_ACCOUNT_ERASURE_ENABLED` | Browser opt-in for the confirmation UI; default `false`. |
+| `RIS_TEST_USER_ALLOWLIST` | Existing verified-identity allowlist; erasure is restricted to it. |
+
+The action remains disabled for general users until a separate rollout
+approval. A completed request does not prove physical deletion of S3 versions,
+backups, logs or PITR history.
+
 ## CI/CD
 
 - Not automated — deployments are performed explicitly via the CLI (see above).

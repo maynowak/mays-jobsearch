@@ -1400,6 +1400,19 @@ const en: Dict = {
   "privacyStorage.actions.export": "Export stored data",
   "privacyStorage.actions.erasure": "Request deletion",
   "privacyStorage.actions.withdraw": "Withdraw consent",
+  "accountErasure.title": "Delete account and RIS data",
+  "accountErasure.warning":
+    "This permanently requests deletion of your account data, stored CVs, applications, search profiles and machine credentials. This cannot be undone. No deletion occurs unless you enter LÖSCHEN and confirm.",
+  "accountErasure.openLimits":
+    "S3 versions, backups, logs and legal retention may outlive the request. A complete physical purge is not guaranteed and is not claimed.",
+  "accountErasure.confirmLabel": "Type LÖSCHEN to confirm",
+  "accountErasure.confirmPlaceholder": "LÖSCHEN",
+  "accountErasure.action": "Delete account permanently",
+  "accountErasure.busy": "Deletion in progress…",
+  "accountErasure.complete": "The RIS deletion lifecycle completed.",
+  "accountErasure.partial": "Deletion is incomplete. Do not assume all data is gone; retry or contact support.",
+  "accountErasure.error": "Account deletion could not be requested.",
+  "accountErasure.signOut": "Please sign out and sign in again to verify the account state.",
   "privacyStorage.actions.unavailable": "These controls are prepared but not active until a verified consent backend is available.",
   "privacyStorage.openSettings": "View privacy & storage",
 };
@@ -2797,6 +2810,19 @@ const de: Dict = {
   "privacyStorage.actions.export": "Gespeicherte Daten exportieren",
   "privacyStorage.actions.erasure": "Löschung beantragen",
   "privacyStorage.actions.withdraw": "Einwilligung widerrufen",
+  "accountErasure.title": "Konto und RIS-Daten löschen",
+  "accountErasure.warning":
+    "Dies beantragt endgültig die Löschung deiner Kontodaten, gespeicherten CVs, Bewerbungen, Suchprofile und Maschinen-Zugangsdaten. Das kann nicht rückgängig gemacht werden. Es wird nichts gelöscht, solange du nicht LÖSCHEN eingibst und bestätigst.",
+  "accountErasure.openLimits":
+    "S3-Versionen, Backups, Protokolle und gesetzliche Aufbewahrung können den Antrag überdauern. Eine vollständige physische Löschung wird nicht garantiert und nicht behauptet.",
+  "accountErasure.confirmLabel": "Zur Bestätigung LÖSCHEN eingeben",
+  "accountErasure.confirmPlaceholder": "LÖSCHEN",
+  "accountErasure.action": "Konto endgültig löschen",
+  "accountErasure.busy": "Löschung läuft…",
+  "accountErasure.complete": "Der RIS-Löschvorgang wurde abgeschlossen.",
+  "accountErasure.partial": "Die Löschung ist unvollständig. Gehe nicht davon aus, dass alle Daten weg sind; wiederhole den Vorgang oder kontaktiere den Support.",
+  "accountErasure.error": "Die Kontolöschung konnte nicht beantragt werden.",
+  "accountErasure.signOut": "Bitte melde dich ab und erneut an, um den Kontostatus zu prüfen.",
   "privacyStorage.actions.unavailable": "Diese Bedienelemente sind vorbereitet, aber erst mit einem verifizierten Consent-Backend aktiv.",
   "privacyStorage.openSettings": "Datenschutz & Speicherung ansehen",
 };

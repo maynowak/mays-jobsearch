@@ -226,3 +226,33 @@ export function risSearchProfileConsentConfig(env = process.env) {
   }
   return { enabled: true, ...shared, ...consent };
 }
+
+/**
+ * Account-erasure BFF configuration. This is a destructive, self-service
+ * operation and is disabled unless both an explicit server flag and a
+ * dedicated verified identity allowlist are configured.
+ *
+ * The erasure route lives on the existing kernel API (`POST /me/erasure`),
+ * not on the partner edge. A separate HTTPS base URL is required so this BFF
+ * can never silently fall back to a partner endpoint that lacks the route.
+ */
+export function risAccountErasureConfig(env = process.env) {
+  const enabled = String(env.RIS_ACCOUNT_ERASURE_ENABLED ?? "").toLowerCase() === "true";
+  const base = httpsUrl(env.RIS_ERASURE_API_BASE_URL);
+  const shared = sharedRisConfig(env);
+  const consent = {
+    path: "/me/erasure",
+    enabled,
+  };
+  if (!enabled) {
+    return { ...consent, error: "account_erasure_disabled" };
+  }
+  if (!shared || !base) {
+    return { ...consent, enabled: true, error: "missing_config" };
+  }
+  return {
+    ...consent,
+    ...shared,
+    baseUrl: base.toString().replace(/\/+$/, ""),
+  };
+}

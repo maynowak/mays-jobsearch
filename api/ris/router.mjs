@@ -2,6 +2,7 @@ import applicationsHandler from "../_lib/ris/applicationsHandler.mjs";
 import consentsHandler from "../_lib/ris/consentsHandler.mjs";
 import cvsHandler from "../_lib/ris/cvsHandler.mjs";
 import searchProfilesHandler from "../_lib/ris/searchProfilesHandler.mjs";
+import accountErasureHandler from "../_lib/ris/accountErasureHandler.mjs";
 
 /**
  * Single Vercel entry point for the public RIS BFF routes:
@@ -12,6 +13,7 @@ import searchProfilesHandler from "../_lib/ris/searchProfilesHandler.mjs";
  *   /api/ris/cv-consents  -> consentsHandler (cv-storage)
  *   /api/ris/search-profile-consents -> consentsHandler (search-profile-storage)
  *   /api/ris/search-profiles -> searchProfilesHandler
+ *   /api/ris/erasure -> accountErasureHandler
  *
  * The rewrites in vercel.json set exactly one internal flag. The router also
  * checks the original pathname when Vercel preserves it. A client-supplied
@@ -25,6 +27,7 @@ const ROUTES = new Map([
   ["cv-consents", consentsHandler],
   ["search-profile-consents", consentsHandler],
   ["search-profiles", searchProfilesHandler],
+  ["erasure", accountErasureHandler],
 ]);
 
 const ROUTE_FLAGS = new Map([
@@ -34,6 +37,7 @@ const ROUTE_FLAGS = new Map([
   ["cv-consents", "__ris_cv_consents"],
   ["search-profile-consents", "__ris_search_profile_consents"],
   ["search-profiles", "__ris_search_profiles"],
+  ["erasure", "__ris_erasure"],
 ]);
 
 function pathRoute(req) {
@@ -45,6 +49,7 @@ function pathRoute(req) {
     if (pathname === "/api/ris/cv-consents") return "cv-consents";
     if (pathname === "/api/ris/search-profile-consents") return "search-profile-consents";
     if (pathname === "/api/ris/search-profiles") return "search-profiles";
+    if (pathname === "/api/ris/erasure") return "erasure";
   } catch {
     return "";
   }
