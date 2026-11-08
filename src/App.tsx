@@ -407,7 +407,7 @@ export default function App() {
   }, [authProfileKey]);
 
   // Opt-in remote preview: the public flag only enables the capability probe.
-  // The BFF decides via auth + RIS_TEST_USER_ALLOWLIST; the browser keeps no
+  // The BFF decides via auth + its server-side test allowlist; the browser keeps no
   // issuer/sub allowlist. Guests, logged-out users and failed probes stay in
   // session mode.
   useEffect(() => {
