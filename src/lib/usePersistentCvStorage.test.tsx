@@ -112,6 +112,10 @@ describe("usePersistentCvStorage", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.consent?.consent?.status).toBe("GRANTED");
     expect(result.current.documents).toEqual([]);
+    const listCall = fetchMock.mock.calls.find(([input]) => String(input).includes("/api/ris/cvs?limit="));
+    expect(String(listCall?.[0])).toContain("limit=50");
+
+    expect(result.current.documents).toEqual([]);
 
     const file = new File([new Uint8Array([1, 2, 3])], "Lebenslauf.pdf", { type: "application/pdf" });
     let uploaded = false;

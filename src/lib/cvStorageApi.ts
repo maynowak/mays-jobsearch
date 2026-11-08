@@ -6,6 +6,8 @@
  * the actual PDF bytes never pass through the BFF.
  */
 
+export const MAX_PERSISTENT_CVS = 10;
+
 export type CvProcessingStatus = "pending" | "ready" | "failed" | "deleted";
 export type CvConsentStatus = "NOT_GRANTED" | "GRANTED" | "WITHDRAWN";
 
@@ -120,7 +122,7 @@ export async function listCvDocuments(
   token: string,
   cursor?: string
 ): Promise<{ items: PersistentCv[]; nextCursor: string | null }> {
-  const search = new URLSearchParams({ limit: "100" });
+  const search = new URLSearchParams({ limit: "50" });
   if (cursor) search.set("cursor", cursor);
   return request<{ items: PersistentCv[]; nextCursor: string | null }>(
     `${CV_PATH}?${search.toString()}`,
