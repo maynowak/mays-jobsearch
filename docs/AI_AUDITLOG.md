@@ -4571,3 +4571,27 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   `docs/reports/JM-RIS-CV-STORAGE-CONSENT-V1-APPROVAL-PACKET.md`.
   Awaiting the operator's explicit text/notice/legalApprovalRef approval.
   No apply, push, merge or deployment.
+
+## 2026-11-08 — JM-RIS-CV-STORAGE-INTEGRATION-01 — operator approval / final plan
+
+**Typ:** Release approval / final plan / Audit
+**Status:** `CV TEXT APPROVED — FINAL PLAN READY FOR APPLY/DEPLOY GO`
+
+- Operator approval: text `cv-storage-consent-2026-11-08-v1`, SHA-256
+  `2fe65fd158a3a2953cf3869ff864aae626971012d68cfb8849db84e04579d036`,
+  RIS notice `cv-storage/1.0` `APPROVED`, approval date 2026-11-08, body
+  `Betreiberin May's Job Matcher`, `legalApprovalRef=JM-CV-STORAGE-V1-BETA-2026-11-08`.
+- Client consent state constant updated to `APPROVED`; the exact text and
+  hash are unchanged. No new consent version.
+- PDF scope verified: UI accepts PDF only; RIS CV create/update/complete and
+  the upload ticket now require `application/pdf`; BFF rejects non-PDF upload
+  tickets. The general document allowlist is not widened for CVs.
+- Final RIS plan `/tmp/opencode/ris-cv-storage-01-final.tfplan`, SHA-256
+  `cd099de482abe851b1bad1a3defa5c3d4ac93811e06a73df1174e4431beac3a3`,
+  state serial 43: 1 add (S3 CORS), 1 change (agent Lambda code +
+  `CV_STORAGE_CONSENT_ENFORCED=true`), 0 destroy. Explicit Mays-Orders
+  boundary NO-OP; ApplicationV1 unchanged.
+- No apply, push, merge or deployment. Next gate: separate apply/deployment
+  GO. Report:
+  `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`; approval packet:
+  `docs/reports/JM-RIS-CV-STORAGE-CONSENT-V1-APPROVAL-PACKET.md`.
