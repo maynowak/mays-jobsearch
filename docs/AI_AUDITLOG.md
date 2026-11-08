@@ -4349,3 +4349,12 @@ Ergänzung zu den bestehenden v3-Einträgen; keine Duplikation, kein neuer Code:
 - Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
   Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
   Rechtsfreigabe oder Live-Persistenz behauptet.
+
+## 2026-11-08 — JM-RIS-STORAGE-ONE-SHOT-05 — RIS-DEV plan STOP
+
+**Status:** `BLOCKED BEFORE APPLY — PLAN CONTAINS OUT-OF-SCOPE CHANGES`
+
+- Consent v4 remains `application-storage-consent-2026-11-07-v4` / SHA-256 `8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7`; notice remains DRAFT/no legalApprovalRef.
+- Saved RIS-DEV pre-plan SHA-256 `392d107478a391fe02a4527a28581cf115a8acfa2a71ce34b322b3260087393a`; state serial 42/lineage `9cec61e5-c036-1ad5-6ae4-8b48a50122a4`.
+- Expected agent Lambda update; unexpected health/reader filename updates, **SQS queue policy delete**, and Orders worker IAM boundary removal. STOP. No apply/deploy/push.
+- Report: `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-PLAN-STOP.md`.
