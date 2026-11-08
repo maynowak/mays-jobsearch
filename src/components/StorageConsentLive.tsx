@@ -7,6 +7,7 @@ import {
   grantRisConsent,
   withdrawRisConsent,
   type RisConsent,
+  type RisConsentStatus,
 } from "../lib/risConsentApi";
 import {
   APPLICATION_STORAGE_CONSENT_PARAGRAPHS,
@@ -16,15 +17,30 @@ import {
   APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
 } from "../lib/applicationStorageConsent";
 
+export interface StorageConsentLiveState {
+  status: RisConsentStatus;
+  loaded: boolean;
+  error: boolean;
+}
+
+interface Props {
+  /**
+   * Lets the parent surface the same server-side status in the summary card
+   * and storage categories without duplicating the consent request.
+   */
+  onStateChange?: (state: StorageConsentLiveState) => void;
+}
+
 /**
  * Live consent controls backed by the RIS consent service through the BFF.
  * Rendered only when VITE_RIS_CONSENT_UI_ENABLED=true and the identity is
  * verified, so the preparation-mode markup stays the default.
  */
-export default function StorageConsentLive() {
+export default function StorageConsentLive({ onStateChange }: Props = {}) {
   const auth = useAuth();
   const token = auth.user?.access_token ?? "";
   const [consent, setConsent] = useState<RisConsent | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [grantAllowed, setGrantAllowed] = useState(false);
   const [noticeVersion, setNoticeVersion] = useState<string | null>(null);
   const [noticeState, setNoticeState] = useState<string | null>(null);
@@ -43,6 +59,8 @@ export default function StorageConsentLive() {
   useEffect(() => {
     let active = true;
     if (!token) return;
+    setLoaded(false);
+    setError(null);
     fetchRisConsent(token)
       .then((state) => {
         if (!active) return;
@@ -57,10 +75,23 @@ export default function StorageConsentLive() {
         setTextMapped(state.textMapped);
         setTextApproved(state.textApproved);
         setTextReason(state.textReason);
+        setLoaded(true);
       })
-      .catch((err) => { if (active) setError(messageOf(err)); });
+      .catch((err) => {
+        if (!active) return;
+        setError(messageOf(err));
+        setLoaded(true);
+      });
     return () => { active = false; };
   }, [token]);
+
+  useEffect(() => {
+    onStateChange?.({
+      status: consent?.status ?? "NOT_GRANTED",
+      loaded,
+      error: error !== null,
+    });
+  }, [consent?.status, error, loaded, onStateChange]);
 
   useEffect(() => {
     setSpecialCategoriesConsent(false);
@@ -93,12 +124,9 @@ export default function StorageConsentLive() {
     textVersion === APPLICATION_STORAGE_CONSENT_TEXT_VERSION &&
     textHash === APPLICATION_STORAGE_CONSENT_TEXT_SHA256;
   const textServerApproved = textMapped && textApproved && textState === "APPROVED";
-  const canGrant =
-    grantAllowed &&
-    textMappingMatches &&
-    textServerApproved &&
-    specialCategoriesConsent &&
-    status !== "GRANTED";
+  const textBlocked = !grantAllowed || !textMappingMatches || !textServerApproved;
+  const art9Missing = !specialCategoriesConsent;
+  const canGrant = !textBlocked && !art9Missing && status !== "GRANTED";
   const version = consent?.noticeVersion ?? noticeVersion;
   const shortHash = `${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(0, 12)}…${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(-8)}`;
   const proofVersion = consent?.externalTextVersion ?? null;
@@ -114,7 +142,7 @@ export default function StorageConsentLive() {
         {version ? ` (Textversion ${version})` : ""}
       </p>
       {error && <p role="alert">{error}</p>}
-      {!canGrant && status !== "GRANTED" && (
+      {status !== "GRANTED" && textBlocked && (
         <p className="field-hint" role="note">
           Die Einwilligungs-Textversion ist noch nicht freigegeben. Die Zustimmung ist gesperrt.
           {noticeState ? ` RIS-Status: ${stateLabel(noticeState)} (${noticeState}).` : ""}
@@ -123,6 +151,11 @@ export default function StorageConsentLive() {
             ? " Die angezeigte Textfassung stimmt nicht mit der serverseitigen Zuordnung überein."
             : ""}
           {textReason ? ` ${textReasonOf(textReason)}` : ""}
+        </p>
+      )}
+      {status !== "GRANTED" && !textBlocked && art9Missing && (
+        <p className="field-hint" role="note">
+          Bitte bestätige die Art.-9-Einwilligung ausdrücklich, um die Speicherung zu aktivieren.
         </p>
       )}
       <p className="field-hint">

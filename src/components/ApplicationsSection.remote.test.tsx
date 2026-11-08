@@ -74,6 +74,8 @@ describe("ApplicationsSection remote preview", () => {
     );
 
     expect(await screen.findByText(/über RIS in deinem Konto gespeichert/)).toBeTruthy();
+    expect(screen.getByText(/Die Daten bleiben deinem Konto zugeordnet/)).toBeTruthy();
+    expect(screen.queryByText(/RIS bleibt Eigentümer/)).toBeNull();
     expect(screen.queryByText(/nur in der aktuellen Sitzung verfügbar/)).toBeNull();
   });
 
