@@ -16,6 +16,11 @@ import type {
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
 import { ProfileSessionEndedError } from "../lib/profiles/sessionRepositories";
+import {
+  SEARCH_PROFILE_STORAGE_CONSENT_PARAGRAPHS,
+  SEARCH_PROFILE_STORAGE_CONSENT_TEXT_VERSION,
+} from "../lib/searchProfileStorageConsent";
+import type { SearchProfileConsentState } from "../lib/searchProfilesApi";
 
 // MAYS-SEARCH-PROFILE-MANUAL-01:
 // Manuelle Suchprofile unter "Job-Praferenzen".
@@ -36,6 +41,13 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
   onDuplicate: (id: string) => Promise<void>;
   onSearch: (profile: ManualSearchProfile) => void;
+  storageMode?: "session" | "persistent";
+  persistenceAvailable?: boolean;
+  consentState?: SearchProfileConsentState | null;
+  consentBusy?: boolean;
+  consentError?: string | null;
+  onGrantConsent?: () => Promise<void>;
+  onWithdrawConsent?: () => Promise<void>;
 }
 
 interface FormState {
@@ -95,8 +107,18 @@ export default function ManualSearchProfilesSection({
   onDelete,
   onDuplicate,
   onSearch,
+  storageMode = "session",
+  persistenceAvailable = false,
+  consentState = null,
+  consentBusy = false,
+  consentError = null,
+  onGrantConsent,
+  onWithdrawConsent,
 }: Props) {
   const { t } = useLang();
+  const persistent = storageMode === "persistent";
+  const consentGranted = consentState?.consent?.status === "GRANTED";
+  const grantPossible = consentState?.grantAllowed === true && Boolean(onGrantConsent);
   const formId = useId();
   const [form, setForm] = useState<FormState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -243,12 +265,68 @@ export default function ManualSearchProfilesSection({
           <h2 id="dashboard-v2-manual-profiles-title">{t("manualProfiles.title")}</h2>
           <p>{t("manualProfiles.description")}</p>
         </div>
-        <Badge tone="soon">{t("manualProfiles.sessionBadge")}</Badge>
+        <Badge tone={persistent ? "active" : "soon"}>
+          {persistent
+            ? t("manualProfiles.persistentBadge")
+            : t("manualProfiles.sessionBadge")}
+        </Badge>
       </div>
 
       <div className="dashboard-v2__cv-boundary" role="note">
-        {t("manualProfiles.sessionNote")}
+        {persistent
+          ? t("manualProfiles.persistentNote")
+          : t("manualProfiles.sessionNote")}
       </div>
+
+      {persistenceAvailable && (
+        <div className="dashboard-v2__manual-consent" role="note">
+          <div>
+            <strong>{t("manualProfiles.storage.title")}</strong>
+            <p>
+              {consentGranted
+                ? t("manualProfiles.storage.granted")
+                : consentState?.textState === "DRAFT"
+                  ? t("manualProfiles.storage.draft")
+                  : t("manualProfiles.storage.notGranted")}
+            </p>
+            {consentState?.textVersion && (
+              <p className="field-hint">
+                {t("manualProfiles.storage.textVersion", {
+                  version: SEARCH_PROFILE_STORAGE_CONSENT_TEXT_VERSION,
+                })}
+              </p>
+            )}
+            {!consentGranted && (
+              <details>
+                <summary>{t("manualProfiles.storage.readText")}</summary>
+                {SEARCH_PROFILE_STORAGE_CONSENT_PARAGRAPHS.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </details>
+            )}
+            {consentError && <p role="alert">{consentError}</p>}
+          </div>
+          <div className="dashboard-v2__manual-consent-actions">
+            {!consentGranted && (
+              <Button
+                onClick={() => void onGrantConsent?.()}
+                disabled={consentBusy || !grantPossible}
+              >
+                {t("manualProfiles.storage.grant")}
+              </Button>
+            )}
+            {consentGranted && onWithdrawConsent && (
+              <Button
+                variant="ghost"
+                onClick={() => void onWithdrawConsent()}
+                disabled={consentBusy}
+              >
+                {t("manualProfiles.storage.withdraw")}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="dashboard-v2__manual-toolbar">
         <Button id={`${formId}-new`} onClick={startCreate} disabled={busy || pendingAction !== null || Boolean(form)}>

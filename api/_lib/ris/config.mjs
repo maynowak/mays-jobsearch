@@ -1,5 +1,6 @@
 import { consentTextMapping } from "./consentText.mjs";
 import { cvConsentTextMapping } from "./cvConsentText.mjs";
+import { searchProfileConsentTextMapping } from "./searchProfileConsentText.mjs";
 
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_PATH = "/v1/partner/me/applications";
@@ -7,6 +8,8 @@ const CONSENT_PATH = "/v1/partner/me/consents";
 const CONSENT_PURPOSE = "application-storage";
 const CV_PATH = "/v1/partner/me/cvs";
 const CV_CONSENT_PURPOSE = "cv-storage";
+const SEARCH_PROFILE_PATH = "/v1/partner/me";
+const SEARCH_PROFILE_CONSENT_PURPOSE = "search-profile-storage";
 
 function httpsUrl(value) {
   try {
@@ -165,5 +168,61 @@ export function risConsentConfig(env = process.env) {
     return { enabled: true, error: "missing_config", ...consent };
   }
 
+  return { enabled: true, ...shared, ...consent };
+}
+
+/**
+ * Durable search-profile BFF configuration. Disabled unless explicitly
+ * enabled. The BFF only builds paths; the RIS server still owns consent,
+ * identity, versioning and capacity.
+ */
+export function risSearchProfilesConfig(env = process.env) {
+  const enabled = String(env.RIS_SEARCH_PROFILE_STORAGE_ENABLED ?? "")
+    .toLowerCase() === "true";
+  if (!enabled) {
+    return { enabled: false, error: "search_profile_storage_disabled" };
+  }
+
+  const shared = sharedRisConfig(env);
+  if (!shared) {
+    return { enabled: true, error: "missing_config" };
+  }
+
+  return {
+    enabled: true,
+    ...shared,
+    path: SEARCH_PROFILE_PATH,
+  };
+}
+
+/**
+ * Separate search-profile-storage consent configuration. It reuses the
+ * consent service connection but has its own purpose, notice version and text
+ * mapping. A DRAFT text is never approved by this function.
+ */
+export function risSearchProfileConsentConfig(env = process.env) {
+  const enabled = String(env.RIS_CONSENT_SERVICE_ENABLED ?? "").toLowerCase() === "true";
+  const noticeVersion = String(env.RIS_SEARCH_PROFILE_CONSENT_NOTICE_VERSION ?? "").trim();
+  const text = searchProfileConsentTextMapping(env);
+  const consent = {
+    path: CONSENT_PATH,
+    purpose: SEARCH_PROFILE_CONSENT_PURPOSE,
+    noticeVersion: noticeVersion || null,
+    textVersion: text.version,
+    textHash: text.hash,
+    textState: text.state,
+    textMapped: text.mapped,
+    textApproved: text.approved,
+    syntheticTextAllowed: text.syntheticDraft,
+    textReason: text.reason,
+  };
+
+  if (!enabled) {
+    return { enabled: false, error: "consent_disabled", ...consent };
+  }
+  const shared = sharedRisConfig(env);
+  if (!shared) {
+    return { enabled: true, error: "missing_config", ...consent };
+  }
   return { enabled: true, ...shared, ...consent };
 }

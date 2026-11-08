@@ -4,7 +4,12 @@
 // browser cannot invent a version. Identity comes from the verified access
 // token, never from the body.
 
-import { isAllowedTestUser, risConsentConfig, risCvConsentConfig } from "./config.mjs";
+import {
+  isAllowedTestUser,
+  risConsentConfig,
+  risCvConsentConfig,
+  risSearchProfileConsentConfig,
+} from "./config.mjs";
 import { RisAuthError, verifyAccessToken } from "./auth.mjs";
 import { RisClientError, risRequest } from "./client.mjs";
 import {
@@ -90,12 +95,19 @@ export default async function handler(req, res) {
 
   const query = queryOf(req);
   const requestedPurpose = typeof query.purpose === "string" ? query.purpose.trim() : "";
-  if (requestedPurpose && !["application-storage", "cv-storage"].includes(requestedPurpose)) {
+  if (requestedPurpose && ![
+    "application-storage",
+    "cv-storage",
+    "search-profile-storage",
+  ].includes(requestedPurpose)) {
     return fail(res, 422, "unknown_purpose", "Purpose is not supported");
   }
   const cfg = requestedPurpose === "cv-storage"
     ? risCvConsentConfig()
-    : risConsentConfig();
+    : requestedPurpose === "search-profile-storage"
+      ? risSearchProfileConsentConfig()
+      : risConsentConfig();
+  const textAllowed = cfg.textApproved === true || cfg.syntheticTextAllowed === true;
   if (!cfg.enabled) return fail(res, 503, "consent_disabled", "RIS consent service is disabled");
   if (cfg.error) return fail(res, 503, "missing_config", "RIS consent service is not configured");
 
@@ -150,13 +162,14 @@ export default async function handler(req, res) {
         noticeState: notice.noticeState,
         noticeApproved: notice.noticeApproved,
         acceptedForNewGrant: notice.acceptedForNewGrant,
-        grantAllowed: notice.grantAllowed && cfg.textApproved === true,
+        grantAllowed: notice.grantAllowed && textAllowed,
         noticeReason: notice.noticeReason,
         textVersion: cfg.textVersion ?? null,
         textHash: cfg.textHash ?? null,
         textState: cfg.textState ?? null,
         textMapped: cfg.textMapped === true,
         textApproved: cfg.textApproved === true,
+        textSyntheticAllowed: cfg.syntheticTextAllowed === true,
         textReason: cfg.textReason ?? null,
       });
     }
@@ -185,20 +198,27 @@ export default async function handler(req, res) {
         return fail(res, notice.status, notice.code,
           "The consent notice state could not be verified; no grant was written");
       }
-      if (!notice.evaluation.grantAllowed) {
+      // Local synthetic tests may use the DRAFT candidate only with the
+      // explicit RIS_SEARCH_PROFILE_CONSENT_SYNTHETIC switch. Real grants
+      // still fail closed on a non-grantable notice state.
+      const syntheticDraft = cfg.syntheticTextAllowed === true
+        && notice.evaluation.noticeState === "DRAFT";
+      if (!notice.evaluation.grantAllowed && !syntheticDraft) {
         const reason = notice.evaluation.noticeReason ?? "notice_not_active";
         return fail(res, noticeRejectionStatus(reason), reason, noticeMessage(reason));
       }
       // The text mapping is a separate, server-owned approval. Re-check it
       // before writing; the browser does not send a version or hash.
-      if (cfg.textApproved !== true) {
+      if (!textAllowed) {
         const reason = cfg.textReason ?? "consent_text_not_approved";
         return fail(res, textRejectionStatus(reason), reason, textMessage(reason));
       }
-      // The Art. 9 consent is the user's explicit decision. Only the boolean
-      // comes from the browser; text identity and category list stay
-      // server-owned.
-      if (body.specialCategoriesConsent !== true) {
+      // ApplicationV1 and CV storage carry an explicit Art. 9 decision. The
+      // search-profile purpose is ordinary professional-profile metadata and
+      // deliberately sends no special-category consent. The boolean still
+      // comes from the browser for the two Art. 9 purposes only.
+      const requiresSpecialCategories = cfg.purpose !== "search-profile-storage";
+      if (requiresSpecialCategories && body.specialCategoriesConsent !== true) {
         return fail(res, 422, "special_categories_consent_required",
           "Explicit consent for special categories is required");
       }
@@ -207,8 +227,15 @@ export default async function handler(req, res) {
         cfg.path, {
           purpose,
           noticeVersion,
-          specialCategoriesConsent: true,
-          specialCategories: [...CONSENT_SPECIAL_CATEGORIES],
+          ...(requiresSpecialCategories
+            ? {
+                specialCategoriesConsent: true,
+                specialCategories: [...CONSENT_SPECIAL_CATEGORIES],
+              }
+            : {
+                specialCategoriesConsent: false,
+                specialCategories: [],
+              }),
           externalTextVersion: cfg.textVersion,
           externalTextSha256: cfg.textHash,
         },

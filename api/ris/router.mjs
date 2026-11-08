@@ -1,6 +1,7 @@
 import applicationsHandler from "../_lib/ris/applicationsHandler.mjs";
 import consentsHandler from "../_lib/ris/consentsHandler.mjs";
 import cvsHandler from "../_lib/ris/cvsHandler.mjs";
+import searchProfilesHandler from "../_lib/ris/searchProfilesHandler.mjs";
 
 /**
  * Single Vercel entry point for the public RIS BFF routes:
@@ -8,7 +9,9 @@ import cvsHandler from "../_lib/ris/cvsHandler.mjs";
  *   /api/ris/applications -> applicationsHandler
  *   /api/ris/consents     -> consentsHandler
  *   /api/ris/cvs          -> cvsHandler
- *   /api/ris/cv-consents  -> cvConsentsHandler
+ *   /api/ris/cv-consents  -> consentsHandler (cv-storage)
+ *   /api/ris/search-profile-consents -> consentsHandler (search-profile-storage)
+ *   /api/ris/search-profiles -> searchProfilesHandler
  *
  * The rewrites in vercel.json set exactly one internal flag. The router also
  * checks the original pathname when Vercel preserves it. A client-supplied
@@ -20,6 +23,8 @@ const ROUTES = new Map([
   ["consents", consentsHandler],
   ["cvs", cvsHandler],
   ["cv-consents", consentsHandler],
+  ["search-profile-consents", consentsHandler],
+  ["search-profiles", searchProfilesHandler],
 ]);
 
 const ROUTE_FLAGS = new Map([
@@ -27,6 +32,8 @@ const ROUTE_FLAGS = new Map([
   ["consents", "__ris_consents"],
   ["cvs", "__ris_cvs"],
   ["cv-consents", "__ris_cv_consents"],
+  ["search-profile-consents", "__ris_search_profile_consents"],
+  ["search-profiles", "__ris_search_profiles"],
 ]);
 
 function pathRoute(req) {
@@ -36,6 +43,8 @@ function pathRoute(req) {
     if (pathname === "/api/ris/consents") return "consents";
     if (pathname === "/api/ris/cvs") return "cvs";
     if (pathname === "/api/ris/cv-consents") return "cv-consents";
+    if (pathname === "/api/ris/search-profile-consents") return "search-profile-consents";
+    if (pathname === "/api/ris/search-profiles") return "search-profiles";
   } catch {
     return "";
   }
@@ -77,6 +86,9 @@ export default async function handler(req, res) {
   // The purpose is server-selected by the route, never by the browser.
   if (route === "cv-consents") {
     req.query = { ...(req.query ?? {}), purpose: "cv-storage" };
+  }
+  if (route === "search-profile-consents") {
+    req.query = { ...(req.query ?? {}), purpose: "search-profile-storage" };
   }
 
   return routeHandler(req, res);

@@ -4666,3 +4666,27 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Approval packet:
   `docs/reports/SEARCH-PROFILE-STORAGE-CONSENT-V1-APPROVAL-PACKET.md`.
 - No BFF/UI wiring, activation, plan, apply, push or deployment.
+
+## 2026-11-08 — Search-profile storage BFF and UI (DRAFT gate)
+
+**Typ:** BFF / Adapter / UI / Tests
+**Status:** `IMPLEMENTED LOCAL — FLAGS DEFAULT OFF — NOT ACTIVATED`
+
+- Added one BFF route `/api/ris/search-profiles` reusing the existing RIS
+  contracts: manual (`type=manual`), CV-search (`type=cv&cvId=...`) and ATS
+  (`type=ats&searchProfileId=...`). No second BFF architecture.
+- Added `/api/ris/search-profile-consents` with the separate
+  `search-profile-storage` purpose and server-owned text mapping.
+- DRAFT text stays non-grantable (`textApproved=false`); the explicit
+  `RIS_SEARCH_PROFILE_CONSENT_SYNTHETIC` local test switch is the only path
+  that can exercise a synthetic DRAFT grant. No real activation.
+- Manual profiles use the existing RIS manual contract and can persist without
+  a CV. CV-search profiles are only reachable from a persistent RIS `cvId`;
+  ATS profiles are only reachable under a persistent CV-search profile.
+- Session CVs and their profile lists are unchanged and remain session-only.
+- No automatic CV upload, no silent migration, no ApplicationV1/CV changes.
+- UI: existing manual profile section shows storage/consent state; persistent
+  CV list opens a profile manager for CV-search/ATS profiles.
+- Tests: targeted Jobsearch suites green; production build green. Full suite
+  has unrelated pre-existing pdfjs/worker-path failures in this worktree.
+- No Vercel deployment, no AWS apply, no real user data.

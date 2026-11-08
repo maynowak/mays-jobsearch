@@ -62,6 +62,8 @@ import { createApplicationMigration } from "./lib/applications/applicationMigrat
 import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
 import { isRisCvStorageEnabled } from "./lib/cvStorageApi";
 import { usePersistentCvStorage } from "./lib/usePersistentCvStorage";
+import { isRisSearchProfileStorageEnabled } from "./lib/searchProfilesApi";
+import { usePersistentSearchProfiles } from "./lib/usePersistentSearchProfiles";
 import {
   checkRisRemoteApplicationAccess,
   isRemoteCapabilityForProfile,
@@ -356,6 +358,14 @@ export default function App() {
   const cvStorageAccessToken = auth.user?.access_token ?? "";
   const cvStorageEnabled = isRisCvStorageEnabled() && identityVerified;
   const persistentCvStorage = usePersistentCvStorage(cvStorageAccessToken, cvStorageEnabled);
+  const searchProfileStorageEnabled = isRisSearchProfileStorageEnabled() && identityVerified;
+  const persistentSearchProfiles = usePersistentSearchProfiles(
+    cvStorageAccessToken,
+    searchProfileStorageEnabled
+  );
+  const effectiveManualProfiles = persistentSearchProfiles.active
+    ? persistentSearchProfiles.manualProfiles
+    : manualProfiles;
 
   // If the operator has already granted the separate CV storage consent, show
   // the durable CV list automatically after login. The user can still switch
@@ -2027,6 +2037,10 @@ export default function App() {
   });
 
   const handleSaveManualProfile = async (draft: ManualSearchProfileDraft, existingId: string | null) => {
+    if (persistentSearchProfiles.active) {
+      await persistentSearchProfiles.saveManual(draft, existingId);
+      return;
+    }
     const store = manualProfileStoreRef.current;
     const repositories = profileRepositoriesRef.current;
     if (!store || !repositories) throw new Error("profile repository unavailable");
@@ -2042,6 +2056,10 @@ export default function App() {
   };
 
   const handleDeleteManualProfile = async (id: string) => {
+    if (persistentSearchProfiles.active) {
+      await persistentSearchProfiles.deleteManual(id);
+      return;
+    }
     const repositories = profileRepositoriesRef.current;
     if (!repositories) throw new Error("profile repository unavailable");
     const epoch = sessionEpochRef.current;
@@ -2051,6 +2069,10 @@ export default function App() {
   };
 
   const handleDuplicateManualProfile = async (id: string) => {
+    if (persistentSearchProfiles.active) {
+      await persistentSearchProfiles.duplicateManual(id);
+      return;
+    }
     const store = manualProfileStoreRef.current;
     const repositories = profileRepositoriesRef.current;
     if (!store || !repositories) throw new Error("profile repository unavailable");
@@ -3394,6 +3416,7 @@ export default function App() {
       cvStorageMode={cvStorageMode}
       onCvStorageModeChange={setCvStorageMode}
       persistentCvStorage={persistentCvStorage}
+      persistentSearchProfiles={persistentSearchProfiles}
       onAssignUnassigned={handleAssignUnassignedAts}
     />
   );
@@ -3401,12 +3424,19 @@ export default function App() {
   // MAYS-SEARCH-PROFILE-MANUAL-01: "Job-Praferenzen" im Dashboard.
   const dashboardPreferencesSection = (
     <ManualSearchProfilesSection
-      profiles={manualProfiles}
+      profiles={effectiveManualProfiles}
       busy={isSearching || isMatching}
       onSave={handleSaveManualProfile}
       onDelete={handleDeleteManualProfile}
       onDuplicate={handleDuplicateManualProfile}
       onSearch={handleSearchWithManualProfile}
+      storageMode={persistentSearchProfiles.active ? "persistent" : "session"}
+      persistenceAvailable={persistentSearchProfiles.available}
+      consentState={persistentSearchProfiles.consent}
+      consentBusy={persistentSearchProfiles.loading}
+      consentError={persistentSearchProfiles.error}
+      onGrantConsent={async () => { await persistentSearchProfiles.grantConsent(); }}
+      onWithdrawConsent={async () => { await persistentSearchProfiles.withdrawConsent(); }}
     />
   );
 

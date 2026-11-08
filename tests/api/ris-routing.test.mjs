@@ -67,6 +67,8 @@ function makeReq(path, { method = "GET", headers = {}, body, query = {} } = {}) 
     "/api/ris/consents": ["consents", "__ris_consents"],
     "/api/ris/cvs": ["cvs", "__ris_cvs"],
     "/api/ris/cv-consents": ["cv-consents", "__ris_cv_consents"],
+    "/api/ris/search-profile-consents": ["search-profile-consents", "__ris_search_profile_consents"],
+    "/api/ris/search-profiles": ["search-profiles", "__ris_search_profiles"],
   };
   const [exactRoute, flagKey] = routeMap[url.pathname] ?? ["", ""];
   return {
@@ -151,7 +153,7 @@ afterEach(() => {
 });
 
 describe("RIS single-entry routing", () => {
-  it("konfiguriert ausschließlich die vier RIS-Rewrites und blockt den Router direkt", () => {
+  it("konfiguriert ausschließlich die sechs RIS-Rewrites und blockt den Router direkt", () => {
     const config = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"));
     const risRewrites = config.rewrites.filter((rewrite) => rewrite.source.startsWith("/api/ris/"));
     expect(risRewrites).toEqual([
@@ -159,6 +161,8 @@ describe("RIS single-entry routing", () => {
       { source: "/api/ris/consents", destination: "/api/ris/router?__ris_consents=1" },
       { source: "/api/ris/cvs", destination: "/api/ris/router?__ris_cvs=1" },
       { source: "/api/ris/cv-consents", destination: "/api/ris/router?__ris_cv_consents=1" },
+      { source: "/api/ris/search-profile-consents", destination: "/api/ris/router?__ris_search_profile_consents=1" },
+      { source: "/api/ris/search-profiles", destination: "/api/ris/router?__ris_search_profiles=1" },
     ]);
     expect(config.redirects).toContainEqual({
       source: "/api/ris/router",
