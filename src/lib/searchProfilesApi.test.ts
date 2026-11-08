@@ -23,7 +23,7 @@ describe("search-profiles BFF client", () => {
     const fetchMock = vi.fn(async () => jsonResponse(200, { items: [], nextCursor: null }));
     vi.stubGlobal("fetch", fetchMock);
     await listManualSearchProfiles("token");
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toContain("/api/ris/search-profiles?type=manual");
     expect(init.method).toBe("GET");
   });
@@ -42,7 +42,7 @@ describe("search-profiles BFF client", () => {
         employmentTypes: ["full_time"],
       },
     });
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toContain("/api/ris/search-profiles?type=cv&cvId=cv-1");
     expect(JSON.parse(String(init.body)).name).toBe("Cloud");
   });
@@ -55,7 +55,7 @@ describe("search-profiles BFF client", () => {
       targetRoles: ["DevOps"],
       skills: ["Terraform"],
     });
-    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toContain("/api/ris/search-profiles?type=ats&searchProfileId=sp-1");
   });
 

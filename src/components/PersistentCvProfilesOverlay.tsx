@@ -42,6 +42,8 @@ export default function PersistentCvProfilesOverlay({
   const [atsRoles, setAtsRoles] = useState("");
   const [atsSkills, setAtsSkills] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editingCvId, setEditingCvId] = useState<string | null>(null);
+  const [editingAtsId, setEditingAtsId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -77,18 +79,39 @@ export default function PersistentCvProfilesOverlay({
     employmentTypes: ["full_time"] as EmploymentType[],
   });
 
-  const createCv = async () => {
+  const resetCvForm = () => {
+    setEditingCvId(null);
+    setName("");
+    setDescription("");
+    setSkills("");
+    setTargetRoles("");
+    setCity("");
+    setRadius("");
+  };
+
+  const resetAtsForm = () => {
+    setEditingAtsId(null);
+    setAtsName("");
+    setAtsRoles("");
+    setAtsSkills("");
+  };
+
+  const saveCv = async () => {
     if (!name.trim()) return;
     setBusy(true);
     setError(null);
     try {
-      await profiles.createCv(cvId, {
+      const input = {
         name: name.trim(),
         ...(description.trim() ? { description: description.trim() } : {}),
         searchConfig: searchConfig(),
-      });
-      setName("");
-      setDescription("");
+      };
+      if (editingCvId) {
+        await profiles.updateCv(cvId, editingCvId, input);
+      } else {
+        await profiles.createCv(cvId, input);
+      }
+      resetCvForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "search_profile_create_failed");
@@ -97,19 +120,22 @@ export default function PersistentCvProfilesOverlay({
     }
   };
 
-  const createAts = async () => {
+  const saveAts = async () => {
     if (!atsParent || !atsName.trim()) return;
     setBusy(true);
     setError(null);
     try {
-      await profiles.createAts(atsParent, {
+      const input = {
         name: atsName.trim(),
         targetRoles: split(atsRoles),
         skills: split(atsSkills),
-      });
-      setAtsName("");
-      setAtsRoles("");
-      setAtsSkills("");
+      };
+      if (editingAtsId) {
+        await profiles.updateAts(atsParent, editingAtsId, input);
+      } else {
+        await profiles.createAts(atsParent, input);
+      }
+      resetAtsForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ats_profile_create_failed");
@@ -151,6 +177,23 @@ export default function PersistentCvProfilesOverlay({
                         variant="ghost"
                         disabled={busy}
                         onClick={() => {
+                          setEditingCvId(profile.searchProfileId);
+                          setName(profile.name);
+                          setDescription(profile.description ?? "");
+                          setSkills(profile.searchConfig.skills);
+                          setTargetRoles(profile.searchConfig.targetRoles.join(", "));
+                          setCity(profile.searchConfig.city);
+                          setRadius(profile.searchConfig.radiusKm === null
+                            ? ""
+                            : String(profile.searchConfig.radiusKm));
+                        }}
+                      >
+                        {t("searchProfiles.edit")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={() => {
                           void (async () => {
                             setBusy(true);
                             try {
@@ -172,7 +215,7 @@ export default function PersistentCvProfilesOverlay({
               )}
 
               <div className="cv-profiles-overlay__form">
-                <h5>{t("searchProfiles.createCv")}</h5>
+                <h5>{editingCvId ? t("searchProfiles.editCv") : t("searchProfiles.createCv")}</h5>
                 <label>{t("searchProfiles.name")}
                   <input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
                 </label>
@@ -191,9 +234,14 @@ export default function PersistentCvProfilesOverlay({
                 <label>{t("searchProfiles.radius")}
                   <input value={radius} onChange={(e) => setRadius(e.target.value)} inputMode="numeric" />
                 </label>
-                <Button disabled={busy || !name.trim()} onClick={() => void createCv()}>
+                <Button disabled={busy || !name.trim()} onClick={() => void saveCv()}>
                   {t("searchProfiles.save")}
                 </Button>
+                {editingCvId && (
+                  <Button variant="ghost" disabled={busy} onClick={resetCvForm}>
+                    {t("searchProfiles.cancel")}
+                  </Button>
+                )}
               </div>
             </section>
 
@@ -213,6 +261,19 @@ export default function PersistentCvProfilesOverlay({
                           {(atsByParent[parent.searchProfileId] ?? []).map((ats) => (
                             <li key={ats.atsSearchProfileId}>
                               <span>{ats.name}</span>
+                              <Button
+                                variant="ghost"
+                                disabled={busy}
+                                onClick={() => {
+                                  setEditingAtsId(ats.atsSearchProfileId);
+                                  setAtsParent(parent.searchProfileId);
+                                  setAtsName(ats.name);
+                                  setAtsRoles(ats.targetRoles.join(", "));
+                                  setAtsSkills(ats.skills.join(", "));
+                                }}
+                              >
+                                {t("searchProfiles.edit")}
+                              </Button>
                               <Button
                                 variant="ghost"
                                 disabled={busy}
@@ -240,7 +301,7 @@ export default function PersistentCvProfilesOverlay({
                   ))}
 
                   <div className="cv-profiles-overlay__form">
-                    <h5>{t("searchProfiles.createAts")}</h5>
+                    <h5>{editingAtsId ? t("searchProfiles.editAts") : t("searchProfiles.createAts")}</h5>
                     <label>{t("searchProfiles.parent")}
                       <select value={atsParent} onChange={(e) => setAtsParent(e.target.value)}>
                         {cvProfiles.map((parent) => (
@@ -259,9 +320,14 @@ export default function PersistentCvProfilesOverlay({
                     <label>{t("searchProfiles.skills")}
                       <input value={atsSkills} onChange={(e) => setAtsSkills(e.target.value)} />
                     </label>
-                    <Button disabled={busy || !atsParent || !atsName.trim()} onClick={() => void createAts()}>
+                    <Button disabled={busy || !atsParent || !atsName.trim()} onClick={() => void saveAts()}>
                       {t("searchProfiles.save")}
                     </Button>
+                    {editingAtsId && (
+                      <Button variant="ghost" disabled={busy} onClick={resetAtsForm}>
+                        {t("searchProfiles.cancel")}
+                      </Button>
+                    )}
                   </div>
                 </>
               )}
