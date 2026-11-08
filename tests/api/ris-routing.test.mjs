@@ -115,6 +115,7 @@ beforeEach(() => {
   __resetJwksCache();
   process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
   process.env.RIS_CV_STORAGE_ENABLED = "true";
+  process.env.RIS_SEARCH_PROFILE_STORAGE_ENABLED = "true";
   process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
   process.env.RIS_API_BASE_URL = "https://ris.example.invalid";
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
@@ -139,6 +140,7 @@ afterEach(() => {
   for (const key of [
     "RIS_APPLICATION_STORAGE_ENABLED",
     "RIS_CV_STORAGE_ENABLED",
+    "RIS_SEARCH_PROFILE_STORAGE_ENABLED",
     "RIS_CONSENT_SERVICE_ENABLED",
     "RIS_API_BASE_URL",
     "RIS_PARTNER_CREDENTIAL",
@@ -336,5 +338,39 @@ describe("RIS single-entry routing", () => {
     const consents = makeRes();
     await router(makeReq("/api/ris/consents"), consents);
     expect(consents.statusCode).toBe(401);
+  });
+});
+
+
+describe("search-profile routes", () => {
+  it("leitet /api/ris/search-profiles an den Search-Profile-Handler", async () => {
+    const res = makeRes();
+    await router(
+      makeReq("/api/ris/search-profiles?type=manual&limit=5", {
+        headers: { authorization: `Bearer ${token()}` },
+      }),
+      res
+    );
+    expect(res.statusCode).toBe(200);
+    expect(risCalls()[0][0]).toContain("/v1/partner/me/manual-search-profiles?limit=5");
+  });
+
+  it("setzt bei /api/ris/search-profile-consents den Purpose serverseitig", async () => {
+    process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_NOTICE_VERSION = "1.0";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_VERSION =
+      "search-profile-storage-consent-2026-11-08-v1";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_SHA256 =
+      "926d1b9bbeefac4b97a5c51e3b6e6c1ed33a3affc3698e07456132be39b0f0f8";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_STATE = "DRAFT";
+    risResponse = response(200, { items: [], catalog: [] });
+    const res = makeRes();
+    await router(
+      makeReq("/api/ris/search-profile-consents", {
+        headers: { authorization: `Bearer ${token()}` },
+      }),
+      res
+    );
+    expect(risCalls()[0][0]).toContain("purpose=search-profile-storage");
   });
 });
