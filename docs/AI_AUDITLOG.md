@@ -4397,3 +4397,58 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Kein Apply/Deploy/Push, keine Env-/Notice-/`legalApprovalRef`-Änderung durch
   diesen Audit-Eintrag. Report:
   `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-FINAL-PLAN.md`.
+
+## 2026-11-08 — JM-RIS-STORAGE-ONE-SHOT-05 — Production E2E + UI status fix
+
+**Typ:** Execution / UI implementation / Cross-repository review / Audit
+**Status:** `APPLICATIONV1 PRODUCTION E2E VERIFIED — SYNTHETIC DATA CLEANED` /
+`UI STATUS FIX IMPLEMENTED LOCAL — NOT DEPLOYED, RELEASE APPROVAL PENDING`
+
+- Production target: `https://www.mays-job-matcher.app`, Build `e9a4116`;
+  `mays-job-matcher` deployment `dpl_FtVGZeNwHpNCesWY5fWJKLH6Dyji`,
+  `mays-jobsearch` deployment `dpl_6QX58A7At7AhuavCCd4pALNtBj3G`. RIS-DEV
+  plan `d9689931…a6d532` applied: 0 added / 1 changed / 0 destroyed; state
+  serial 43; agent Lambda code `xcbJ2JEI3ouo7VRXMT1nOtei7wlvQEhdTPhKNzJDA1U=`.
+- Operator identity (issuer/subject) was verified through the BFF; tokens,
+  cookies and credentials were not logged. Consent `GET /api/ris/consents`
+  returned 200 `GRANTED`, notice `1.0`, `noticeState=APPROVED`,
+  `textState=APPROVED`, v4 text `application-storage-consent-2026-11-07-v4`
+  and SHA-256 `8722aed9…43c7`, Art. 9 consent `true` with nine categories.
+- Synthetic production E2E (no real applicant data): create
+  `d66c3482-70c5-4bca-a742-78b179d4c719`; reload persisted the same record;
+  update advanced version to 2; export produced the server-backed JSON;
+  withdrawal returned `WITHDRAWN`; a post-withdrawal `PATCH` returned **403**
+  while `GET` and export remained **200**; UI deletion returned 200
+  `{deleted:true}` and the list returned 0 items. Regrant returned `GRANTED`
+  at `2026-11-08T08:22:27.433881+00:00` with Art. 9 and v4 proof. The
+  synthetic record was deleted; the operator consent was left granted.
+- Confirmed UI defects: hard-coded preparation copy on overview/settings while
+  the server was granted; misleading `RIS bleibt Eigentümer` ownership text; a
+  stale disabled `Datenkontrolle`/`backend_unavailable` block; and an Art. 9
+  missing-check hint that falsely claimed the text was not approved.
+- UI fix implemented locally: new `storageConsentDisplay` helper and
+  `StorageConsentOverview`; `StorageConsentSection` now uses the server status
+  for application storage and keeps CV/search explicitly session-only;
+  `StorageConsentLive` publishes its server state to the parent and distinguishes
+  an unapproved text from a missing Art. 9 check; `DashboardV2` uses the
+  server-backed overview; remote ownership text corrected in DE/EN.
+- Verification: changed-file suites = **7 files / 38 tests PASS**;
+  `npm run build` PASS. The worktree full suite had 9 environmental failures
+  because Vite denies the `pdfjs-dist` worker through the shared
+  `node_modules` symlink. Clean-install recheck in
+  `/tmp/opencode/jobsearch-release-check` (`npm ci`, own `node_modules`):
+  isolated flaky files passed 12/12; serial full suite
+  (`npm test -- --run --maxWorkers=1`) = **153 files passed / 3 skipped,
+  1599 tests passed / 5 skipped, 0 failed**. No product-code failure was
+  found; clean-worktree `npm run build` PASS.
+- Cross-repository review: the UI consumes only the existing RIS consent
+  contract; the live response confirms v4/APPROVED and the Art. 9 proof, and
+  the withdrawal write-block was verified. No RIS code, Terraform, state,
+  notice, env or deployment was changed by this UI fix.
+- Transient observation: one immediate post-E2E `GET /api/ris/consents`
+  returned 503; three immediate retries returned 200 with the same
+  GRANTED/APPROVED state. No persistent consent-service failure remained.
+- No new infrastructure, no Terraform apply, no new consent version, no
+  general rollout, no UI deployment. Release of the UI fix requires separate
+  explicit approval. Report:
+  `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-E2E-AND-UI-STATUS-REPORT.md`.

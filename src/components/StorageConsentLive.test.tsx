@@ -196,10 +196,32 @@ describe("StorageConsentLive", () => {
     expect(button).toBeDisabled();
     expect(screen.getByText(/Textstatus: rechtlich freigegeben \(APPROVED\)/)).toBeInTheDocument();
     expect(screen.getByText(/Version\/Hash stimmen überein/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Bitte bestätige die Art\.-9-Einwilligung ausdrücklich/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Die Einwilligungs-Textversion ist noch nicht freigegeben/)).toBeNull();
 
     checkbox.click();
     await waitFor(() => expect(button).toBeEnabled());
     expect(screen.queryByText(/noch nicht freigegeben/)).toBeNull();
+    expect(
+      screen.queryByText(/Bitte bestätige die Art\.-9-Einwilligung ausdrücklich/)
+    ).toBeNull();
+  });
+
+  it("meldet den serverseitigen Status an die übergeordnete Ansicht", async () => {
+    const onStateChange = vi.fn();
+    mockState(consentState({ consent: { ...consent("GRANTED") } }));
+
+    render(<StorageConsentLive onStateChange={onStateChange} />);
+
+    await waitFor(() =>
+      expect(onStateChange).toHaveBeenLastCalledWith({
+        status: "GRANTED",
+        loaded: true,
+        error: false,
+      })
+    );
   });
 
   it("sendet nur die Art.-9-Entscheidung an den BFF, nicht Version, Hash oder Kategorien", async () => {
