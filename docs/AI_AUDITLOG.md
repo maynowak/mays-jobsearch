@@ -4441,6 +4441,9 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   contract; the live response confirms v4/APPROVED and the Art. 9 proof, and
   the withdrawal write-block was verified. No RIS code, Terraform, state,
   notice, env or deployment was changed by this UI fix.
+- Transient observation: one immediate post-E2E `GET /api/ris/consents`
+  returned 503; three immediate retries returned 200 with the same
+  GRANTED/APPROVED state. No persistent consent-service failure remained.
 - No new infrastructure, no Terraform apply, no new consent version, no
   general rollout, no UI deployment. Release of the UI fix requires separate
   explicit approval. Report:
