@@ -4838,7 +4838,8 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Jobsearch BFF `/api/ris/erasure` forwards the verified token to the existing
   `POST /me/erasure`; settings UI is opt-in via
   `VITE_RIS_ACCOUNT_ERASURE_ENABLED` and disabled by default. Commit `e060606`.
-- Tests: Jobsearch 32 PASS + build PASS; RIS 14/104/146 focused, full 2551
+- Tests: Jobsearch 32 PASS + build PASS; local Chromium account-erasure UI
+  E2E PASS with mocked BFF (no real deletion); RIS 14/104/146 focused, full 2551
   pass with 16 pre-existing unrelated failures.
 - No destructive production erasure: no isolated synthetic Cognito identity/
   dataset approval exists; no real operator data was deleted.
