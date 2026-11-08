@@ -309,7 +309,7 @@ export default function ManualSearchProfilesSection({
           <div className="dashboard-v2__manual-consent-actions">
             {!consentGranted && (
               <Button
-                onClick={() => void onGrantConsent?.()}
+                onClick={() => { void onGrantConsent?.().catch(() => {}); }}
                 disabled={consentBusy || !grantPossible}
               >
                 {t("manualProfiles.storage.grant")}
@@ -318,7 +318,7 @@ export default function ManualSearchProfilesSection({
             {consentGranted && onWithdrawConsent && (
               <Button
                 variant="ghost"
-                onClick={() => void onWithdrawConsent()}
+                onClick={() => { void onWithdrawConsent().catch(() => {}); }}
                 disabled={consentBusy}
               >
                 {t("manualProfiles.storage.withdraw")}
