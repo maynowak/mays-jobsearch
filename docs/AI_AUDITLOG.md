@@ -4633,3 +4633,21 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   message. The RIS server capacity remains the authoritative atomic guard.
 - Tests: persistent CV list + hook **7/7 PASS**; production build PASS.
 - No deployment, AWS/Terraform/Vercel change, consent change or new version.
+
+## 2026-11-08 — JM-RIS-CV-STORAGE-INTEGRATION-01 — production E2E verified
+
+**Typ:** Production E2E / Release / Audit
+**Status:** `PRODUCTION E2E VERIFIED — OPERATOR PILOT ACTIVE`
+
+- Hotfix PR #8 merged as `c3da077`; production deployment
+  `dpl_5C27DWhDpLT74tbyubbr4mNibCPo`, alias `www`, footer `c3da077`.
+- CV consent granted; synthetic PDF uploaded, persisted, recovered after
+  browser close/re-login, downloaded with matching SHA-256, selected in
+  ApplicationV1, withdrawal blocked writes with 403, existing data remained
+  readable/downloadable and was deleted with a delete marker. Synthetic
+  application deleted; CV consent regranted; CV list and application list 0.
+- Capacity 10 and PDF-only behavior verified. Session mode and existing
+  ApplicationV1 flows checked. No general enablement, real applicant data or
+  new consent version.
+- Remaining open: full account erasure, final retention/physical purge, DPA
+  review. Report: `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`.
