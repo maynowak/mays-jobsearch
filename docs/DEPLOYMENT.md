@@ -240,6 +240,30 @@ document bucket must allow the exact Jobsearch origin via S3 CORS; that CORS
 resource is defined in the RIS documents module and requires a reviewed plan
 before activation.
 
+## Durable search-profile storage (separate BFF)
+
+Manual, CV-search and ATS profiles use one BFF route and the existing RIS
+contracts. The feature is disabled unless all flags and the separate consent
+text mapping are explicitly configured.
+
+| Variable | Purpose |
+| --- | --- |
+| `RIS_SEARCH_PROFILE_STORAGE_ENABLED` | Enables `/api/ris/search-profiles` (server-only). |
+| `RIS_SEARCH_PROFILE_CONSENT_NOTICE_VERSION` | RIS notice version mapped to `search-profile-storage` (`1.0` candidate). |
+| `RIS_SEARCH_PROFILE_CONSENT_TEXT_VERSION` | `search-profile-storage-consent-2026-11-08-v1`. |
+| `RIS_SEARCH_PROFILE_CONSENT_TEXT_SHA256` | `926d1b9bbeefac4b97a5c51e3b6e6c1ed33a3affc3698e07456132be39b0f0f8`. |
+| `RIS_SEARCH_PROFILE_CONSENT_TEXT_STATE` | `APPROVED` only after operator/legal approval; `DRAFT`/absent blocks grants. |
+| `VITE_RIS_SEARCH_PROFILE_STORAGE_ENABLED` | Browser opt-in for the durable search-profile UI; default `false`. |
+| `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED` (RIS) | Enforce the separate consent on manual/CV-search/ATS writes; list/get/delete remain allowed. Default `false`; activation needs a separate plan/apply GO. |
+
+`RIS_SEARCH_PROFILE_CONSENT_SYNTHETIC=true` is a local synthetic-test hook
+only. It never substitutes for operator approval and must not be used for real
+users.
+
+Option A applies: manual profiles have no CV parent; CV-search profiles need a
+durable RIS `cvId`; ATS profiles need a durable CV-search profile id. Session
+CVs and their profile lists remain session-only.
+
 ## CI/CD
 
 - Not automated — deployments are performed explicitly via the CLI (see above).
