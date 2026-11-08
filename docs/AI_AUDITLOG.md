@@ -4711,3 +4711,23 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   regrant/write-block runbook.
 - Notice remains `DRAFT`; no `legalApprovalRef`; no AWS apply, state write,
   Vercel deployment, push or real-user data.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 final text correction
+
+**Typ:** Consent text / Privacy correction / Terraform plan
+**Status:** `AWAITING FINAL OPERATOR CONFIRMATION — NOTICE DRAFT — NO APPLY`
+
+- P2 corrected in `search-profile-storage-consent-2026-11-08-v2`, SHA-256
+  `75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6`:
+  RIS/AWS storage, no AI on storage/CRUD, separate terms for later AI/ATS use.
+- P1 corrected in `public/legal/datenschutz.md`/`.html`: policy v1.2,
+  2026-11-08, separate `search-profile-storage` section; ApplicationV1/CV
+  consent texts remain historical v1.1.
+- Notice remains `search-profile-storage/1.0` `DRAFT`, `legalApprovalRef=null`.
+- New plan `/tmp/opencode/ris-dev-search-profile-03.tfplan`, SHA-256
+  `9c6924e990f1029afdb1aa08b38e12bd9e744054eb3fe01b50f356f6028d6271`;
+  state serial 46; 0 add/1 change/0 destroy; only agent Lambda update adding
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`. Old plan `d945...` invalid
+  because the Lambda code hash changed.
+- Jobsearch targeted 68 PASS, build PASS; RIS targeted 172 PASS. No apply,
+  deploy, push, notice activation or live E2E.

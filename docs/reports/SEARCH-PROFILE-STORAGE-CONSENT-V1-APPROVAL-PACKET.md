@@ -1,3 +1,6 @@
+> **SUPERSEDED by `SEARCH-PROFILE-STORAGE-03-FINAL-CONSENT-PACKET.md` (v2).**
+> This v1 packet is retained for history only.
+
 # Search-Profile Storage Consent v1 — Approval Packet
 
 ## Status

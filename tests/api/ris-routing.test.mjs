@@ -359,9 +359,9 @@ describe("search-profile routes", () => {
     process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
     process.env.RIS_SEARCH_PROFILE_CONSENT_NOTICE_VERSION = "1.0";
     process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_VERSION =
-      "search-profile-storage-consent-2026-11-08-v1";
+      "search-profile-storage-consent-2026-11-08-v2";
     process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_SHA256 =
-      "926d1b9bbeefac4b97a5c51e3b6e6c1ed33a3affc3698e07456132be39b0f0f8";
+      "75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6";
     process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_STATE = "DRAFT";
     risResponse = response(200, { items: [], catalog: [] });
     const res = makeRes();

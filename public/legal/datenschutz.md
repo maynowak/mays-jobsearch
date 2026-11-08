@@ -1,5 +1,5 @@
 DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER
-Version 1.1 · Stand: 7. November 2026
+Version 1.2 · Stand: 8. November 2026
 
 1. VERANTWORTLICHE STELLE
 Maymilly Nowak
@@ -46,6 +46,8 @@ Für Registrierung, Anmeldung und Verwaltung eines Benutzerprofils verwendet May
 Die dauerhafte Speicherung von Bewerbungen und Bewerbungsunterlagen ist technisch vorbereitet, aber nicht standardmäßig aktiv. Sie wird nur angeboten, wenn die Funktion freigegeben ist und eine wirksame, zweckgebundene Einwilligung vorliegt. Ohne eine solche Einwilligung bleiben die zugehörigen Funktionen gesperrt.
 
 Nach ausdrücklicher Freigabe und Einwilligung können insbesondere Bewerbungen, Anschreiben, Dokumentversionen, ausgewählte CV- und Suchprofile sowie zugehörige Metadaten in der vorgesehenen RIS-/AWS-Infrastruktur gespeichert werden. Zweck ist der spätere Abruf, die Änderung, der Export und die Löschung der ausgewählten Daten. Eine Einwilligung zur Speicherung ist nicht automatisch eine Einwilligung für jede andere Verarbeitung, insbesondere nicht für jede KI-Analyse oder jede Providerübermittlung.
+
+Die dauerhafte Speicherung manueller Suchprofile, CV-Suchprofile und ATS-Profile ist ein eigener, von ApplicationV1 und der CV-Speicherung getrennter Zweck (`search-profile-storage`). Sie ist nur nach einer gesonderten, versionierten Einwilligung aktiv; die ApplicationV1-Einwilligung umfasst sie nicht. Diese Profile werden in der RIS-/AWS-Infrastruktur gespeichert. Das Speichern, Anlegen, Bearbeiten, Laden oder Löschen eines Suchprofils löst keine KI-Anfrage aus. Eine spätere Verwendung von Suchprofilen bei KI-Funktionen, insbesondere ATS-Analysen, unterliegt deren gesonderten Verarbeitungsbedingungen und kann eine Übermittlung an KI-Anbieter umfassen.
 
 Die Einwilligung wird nach Zweck getrennt und versioniert erfasst. Die bei der Zustimmung angezeigte Textfassung ist maßgeblich. Der aktuelle Status, die Version und die Historie können über die vorgesehenen Einwilligungsfunktionen angezeigt werden. Ein Widerruf verhindert neue abhängige Schreibzugriffe; bereits gespeicherte Daten bleiben im Rahmen der bestehenden Rechte lesbar, exportierbar und löschbar, soweit keine gesetzlichen Aufbewahrungspflichten oder technischen Restfristen entgegenstehen. Ein Widerruf ist nicht automatisch eine sofortige physische Löschung.
 

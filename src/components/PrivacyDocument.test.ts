@@ -9,8 +9,8 @@ const vercel = JSON.parse(readFileSync(resolve(root, "vercel.json"), "utf8"));
 
 describe("public privacy documents", () => {
   it("carry the consolidated version and date", () => {
-    expect(markdown).toContain("Version 1.1 · Stand: 7. November 2026");
-    expect(html).toContain("Version 1.1 · Stand: 7. November 2026");
+    expect(markdown).toContain("Version 1.2 · Stand: 8. November 2026");
+    expect(html).toContain("Version 1.2 · Stand: 8. November 2026");
   });
 
   it("do not publish internal review notes", () => {

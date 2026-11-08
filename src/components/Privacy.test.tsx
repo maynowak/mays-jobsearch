@@ -5,7 +5,7 @@ import { LangProvider } from "../i18n";
 
 const PRIVACY_TEXT = [
   "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
-  "Version 1.1 · Stand: 7. November 2026",
+  "Version 1.2 · Stand: 8. November 2026",
   "",
   "Website: https://www.mays-job-matcher.app",
   "E-Mail: info@mays-job-matcher.app",
@@ -40,7 +40,7 @@ describe("Privacy", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByText(/Version 1\.1 · Stand: 7\. November 2026/)).toBeInTheDocument()
+      expect(screen.getByText(/Version 1\.2 · Stand: 8\. November 2026/)).toBeInTheDocument()
     );
     expect(
       screen.getByRole("heading", { level: 1, name: "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER" })
