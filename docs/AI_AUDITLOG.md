@@ -4595,3 +4595,29 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   GO. Report:
   `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`; approval packet:
   `docs/reports/JM-RIS-CV-STORAGE-CONSENT-V1-APPROVAL-PACKET.md`.
+
+## 2026-11-08 — JM-RIS-CV-STORAGE-INTEGRATION-01 — production attempt STOP / rollback
+
+**Typ:** Production incident / Rollback / Audit
+**Status:** `STOPPED — CV LIST LIMIT BUG — ROLLED BACK — E2E NOT EXECUTED`
+
+- Final approved plan `cd099de482abe851b1bad1a3defa5c3d4ac93811e06a73df1174e4431beac3a3`
+  applied: 1 add (S3 CORS), 1 change (agent Lambda +
+  `CV_STORAGE_CONSENT_ENFORCED=true`), 0 destroy; state serial 44.
+- PR #7 merged as `d55c52c365d70e12cfd76ebf171599437cea8795`; production
+  deployment `dpl_NJHrVbn4vXG6MxoKXVqEP95s91MR` was READY and aliased to
+  `https://www.mays-job-matcher.app`.
+- First authenticated smoke exposed a core list bug: browser requested
+  `/api/ris/cvs?limit=100`; RIS returns 422 because its CV list maximum is 50.
+  `limit=50`/no-limit returned 200. UI displayed `Die Lebenslauf-Daten sind
+  ungültig.` No synthetic CV was uploaded and no CV consent was granted.
+- STOP and rollback: promoted `dpl_8rGdfH7yXiExiEWsgTRGSc7XBr3T` (`www`) and
+  `dpl_LK9t9ikfH2ERDit1M3Z8NprFz4u4` (secondary), both Build `0951198`;
+  verified footer `0951198`, no CV mode button. Vercel CV flags set to false
+  for future builds. RIS infrastructure remains applied and is
+  backward-compatible; ApplicationV1/Mays-Orders unchanged.
+- Local non-deployed hotfix `1449751`: browser list limit 50 + regression
+  test; 14/14 focused tests and build PASS. Needs separate release approval.
+  No push/deploy after rollback. Production E2E not executed; no
+  `PRODUCTION VERIFIED` claim. Report:
+  `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`.
