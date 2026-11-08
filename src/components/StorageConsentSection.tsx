@@ -25,6 +25,8 @@ interface Props {
    * VITE_RIS_CONSENT_UI_ENABLED and the verified identity.
    */
   liveConsentEnabled?: boolean;
+  cvStorageEnabled?: boolean;
+  cvConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
 }
 
 const PURPOSE_LABEL_KEYS: Record<StorageConsentPurpose, string> = {
@@ -42,6 +44,8 @@ const PURPOSE_DESCRIPTION_KEYS: Record<StorageConsentPurpose, string> = {
 export default function StorageConsentSection({
   identityVerified,
   liveConsentEnabled,
+  cvStorageEnabled = false,
+  cvConsentStatus = null,
 }: Props) {
   const { t } = useLang();
   const unavailable = STORAGE_CONSENT_BACKEND_UNAVAILABLE;
@@ -57,6 +61,19 @@ export default function StorageConsentSection({
     []
   );
   const display: StorageConsentDisplayState = { liveEnabled, ...liveState };
+  const cvGranted = cvStorageEnabled && cvConsentStatus === "GRANTED";
+  const noticeKey = cvGranted
+    ? "privacyStorage.notice.activeCv"
+    : storageConsentNoticeKey(display);
+  const risTitleKey = cvGranted
+    ? "privacyStorage.risTitle.active"
+    : storageConsentRisTitleKey(display);
+  const risTextKey = cvGranted
+    ? "privacyStorage.risText.activeCv"
+    : storageConsentRisTextKey(display);
+  const sessionTextKey = cvGranted
+    ? "privacyStorage.sessionText.activeCv"
+    : storageConsentSessionTextKey(display);
 
   return (
     <section className="aurora-card storage-consent" aria-labelledby="storage-consent-title">
@@ -72,7 +89,7 @@ export default function StorageConsentSection({
       </div>
 
       <p className="storage-consent__notice" role="note">
-        {t(storageConsentNoticeKey(display))}
+        {t(noticeKey)}
       </p>
 
       <p className="storage-consent__identity" role="status">
@@ -91,7 +108,13 @@ export default function StorageConsentSection({
                 <p>{t(PURPOSE_DESCRIPTION_KEYS[purpose])}</p>
               </div>
               <span className="storage-consent__not-granted">
-                {t(storageConsentPurposeStatusKey(display, purpose))}
+                {purpose === "cv_storage" && cvStorageEnabled
+                  ? (cvConsentStatus === "GRANTED"
+                    ? t("privacyStorage.purpose.granted")
+                    : cvConsentStatus === "WITHDRAWN"
+                      ? t("privacyStorage.purpose.withdrawn")
+                      : t("privacyStorage.purpose.pending"))
+                  : t(storageConsentPurposeStatusKey(display, purpose))}
               </span>
             </li>
           ))}
@@ -112,12 +135,12 @@ export default function StorageConsentSection({
 
       <section className="storage-consent__block" aria-labelledby="storage-consent-session-title">
         <h3 id="storage-consent-session-title">{t("privacyStorage.sessionTitle")}</h3>
-        <p>{t(storageConsentSessionTextKey(display))}</p>
+        <p>{t(sessionTextKey)}</p>
       </section>
 
       <section className="storage-consent__block" aria-labelledby="storage-consent-ris-title">
-        <h3 id="storage-consent-ris-title">{t(storageConsentRisTitleKey(display))}</h3>
-        <p>{t(storageConsentRisTextKey(display))}</p>
+        <h3 id="storage-consent-ris-title">{t(risTitleKey)}</h3>
+        <p>{t(risTextKey)}</p>
       </section>
 
       <section className="storage-consent__block" aria-labelledby="storage-consent-rights-title">

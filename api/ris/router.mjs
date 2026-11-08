@@ -1,11 +1,14 @@
 import applicationsHandler from "../_lib/ris/applicationsHandler.mjs";
 import consentsHandler from "../_lib/ris/consentsHandler.mjs";
+import cvsHandler from "../_lib/ris/cvsHandler.mjs";
 
 /**
- * Single Vercel entry point for the two public RIS BFF routes:
+ * Single Vercel entry point for the public RIS BFF routes:
  *
  *   /api/ris/applications -> applicationsHandler
  *   /api/ris/consents     -> consentsHandler
+ *   /api/ris/cvs          -> cvsHandler
+ *   /api/ris/cv-consents  -> cvConsentsHandler
  *
  * The rewrites in vercel.json set exactly one internal flag. The router also
  * checks the original pathname when Vercel preserves it. A client-supplied
@@ -15,11 +18,15 @@ import consentsHandler from "../_lib/ris/consentsHandler.mjs";
 const ROUTES = new Map([
   ["applications", applicationsHandler],
   ["consents", consentsHandler],
+  ["cvs", cvsHandler],
+  ["cv-consents", consentsHandler],
 ]);
 
 const ROUTE_FLAGS = new Map([
   ["applications", "__ris_applications"],
   ["consents", "__ris_consents"],
+  ["cvs", "__ris_cvs"],
+  ["cv-consents", "__ris_cv_consents"],
 ]);
 
 function pathRoute(req) {
@@ -27,6 +34,8 @@ function pathRoute(req) {
     const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
     if (pathname === "/api/ris/applications") return "applications";
     if (pathname === "/api/ris/consents") return "consents";
+    if (pathname === "/api/ris/cvs") return "cvs";
+    if (pathname === "/api/ris/cv-consents") return "cv-consents";
   } catch {
     return "";
   }
@@ -64,6 +73,11 @@ export default async function handler(req, res) {
   const route = fromPath || fromFlag;
   const routeHandler = ROUTES.get(route);
   if (!routeHandler) return reject(res);
+
+  // The purpose is server-selected by the route, never by the browser.
+  if (route === "cv-consents") {
+    req.query = { ...(req.query ?? {}), purpose: "cv-storage" };
+  }
 
   return routeHandler(req, res);
 }

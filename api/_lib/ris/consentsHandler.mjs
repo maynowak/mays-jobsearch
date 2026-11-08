@@ -4,7 +4,7 @@
 // browser cannot invent a version. Identity comes from the verified access
 // token, never from the body.
 
-import { isAllowedTestUser, risConsentConfig } from "./config.mjs";
+import { isAllowedTestUser, risConsentConfig, risCvConsentConfig } from "./config.mjs";
 import { RisAuthError, verifyAccessToken } from "./auth.mjs";
 import { RisClientError, risRequest } from "./client.mjs";
 import {
@@ -88,7 +88,14 @@ function consentProof(item) {
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
 
-  const cfg = risConsentConfig();
+  const query = queryOf(req);
+  const requestedPurpose = typeof query.purpose === "string" ? query.purpose.trim() : "";
+  if (requestedPurpose && !["application-storage", "cv-storage"].includes(requestedPurpose)) {
+    return fail(res, 422, "unknown_purpose", "Purpose is not supported");
+  }
+  const cfg = requestedPurpose === "cv-storage"
+    ? risCvConsentConfig()
+    : risConsentConfig();
   if (!cfg.enabled) return fail(res, 503, "consent_disabled", "RIS consent service is disabled");
   if (cfg.error) return fail(res, 503, "missing_config", "RIS consent service is not configured");
 
@@ -108,7 +115,6 @@ export default async function handler(req, res) {
     return fail(res, 403, "test_user_not_allowed", "This test user is not enabled for RIS consent storage");
   }
 
-  const query = queryOf(req);
   const action = typeof query.action === "string" ? query.action : "";
 
   try {

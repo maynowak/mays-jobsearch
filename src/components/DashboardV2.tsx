@@ -23,6 +23,8 @@ export interface DashboardV2Props {
   // MAYS-SEARCH-PROFILE-MANUAL-01: "Job-Praferenzen" (manuelle Suchprofile).
   preferencesSection?: ReactNode;
   storageConsentIdentityVerified?: boolean;
+  cvStorageEnabled?: boolean;
+  cvStorageConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
 }
 
 export const DEMO_USER: DashboardUser = {
@@ -56,6 +58,8 @@ const DashboardV2 = ({
   applicationsSection,
   preferencesSection,
   storageConsentIdentityVerified = false,
+  cvStorageEnabled = false,
+  cvStorageConsentStatus = null,
 }: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
@@ -114,7 +118,11 @@ const DashboardV2 = ({
 
         <main className="dashboard-v2__main">
           {activeId === 'cv' && cvSection ? cvSection : activeId === 'applications' && applicationsSection ? applicationsSection : activeId === 'preferences' && preferencesSection ? preferencesSection : activeId === 'settings' ? (
-            <StorageConsentSection identityVerified={storageConsentIdentityVerified} />
+            <StorageConsentSection
+              identityVerified={storageConsentIdentityVerified}
+              cvStorageEnabled={cvStorageEnabled}
+              cvConsentStatus={cvStorageConsentStatus}
+            />
           ) : (
             <>
           <Card variant="primary" className="dashboard-v2__profile-card">

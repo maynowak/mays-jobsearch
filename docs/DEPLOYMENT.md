@@ -220,6 +220,26 @@ Defined in `vercel.json`:
 - Apify dataset reuse is time-of-day aware in `Europe/Berlin` (default): peak 08:00–18:00 uses the peak reuse window (6 h), off-peak the off-peak window (12 h). Summer/winter time is resolved automatically via the IANA timezone.
 - Apify cache keys are now collision-free across multiple Actors: `job-source:<sourceId>:<query>|<location>` (L1) and `job-source:<sourceId>:dataset:<query>|<location>` (L2).
 
+## Durable CV storage (separate BFF)
+
+The durable CV path is separate from ApplicationV1 and is disabled unless all
+flags and the CV consent text mapping are explicitly configured.
+
+| Variable | Purpose |
+| --- | --- |
+| `RIS_CV_STORAGE_ENABLED` | Enables `/api/ris/cvs` (server-only). |
+| `RIS_CV_CONSENT_NOTICE_VERSION` | RIS notice version mapped to the CV purpose (`1.0` candidate). |
+| `RIS_CV_CONSENT_TEXT_VERSION` | `cv-storage-consent-2026-11-08-v1`. |
+| `RIS_CV_CONSENT_TEXT_SHA256` | `2fe65fd158a3a2953cf3869ff864aae626971012d68cfb8849db84e04579d036`. |
+| `RIS_CV_CONSENT_TEXT_STATE` | `APPROVED` only after operator/legal approval; `DRAFT`/absent blocks grants. |
+| `VITE_RIS_CV_STORAGE_ENABLED` | Browser opt-in for the durable CV UI; default `false`. |
+| `CV_STORAGE_CONSENT_ENFORCED` (RIS) | Enforce `cv-storage` on new CV writes; reads/download/delete remain allowed. Default `false`; Terraform wiring exists, activation requires a separate plan/apply GO. |
+
+The browser receives only short-lived presigned PUT/GET URLs. The private
+document bucket must allow the exact Jobsearch origin via S3 CORS; that CORS
+resource is defined in the RIS documents module and requires a reviewed plan
+before activation.
+
 ## CI/CD
 
 - Not automated — deployments are performed explicitly via the CLI (see above).

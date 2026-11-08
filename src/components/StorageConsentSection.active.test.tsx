@@ -55,6 +55,26 @@ describe("StorageConsentSection with live application storage", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the separate CV storage purpose as granted", () => {
+    render(
+      <LangProvider>
+        <StorageConsentSection
+          identityVerified
+          liveConsentEnabled
+          cvStorageEnabled
+          cvConsentStatus="GRANTED"
+        />
+      </LangProvider>
+    );
+
+    expect(screen.getAllByText("Freigegeben")).toHaveLength(2);
+    expect(screen.getAllByText("Nicht freigegeben")).toHaveLength(1);
+    expect(
+      screen.getByText(/Bewerbungen und Lebensläufe ist über RIS in deinem Konto aktiv/)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Bewerbungen und hochgeladene Lebenslauf-PDFs/)).toBeInTheDocument();
+  });
+
   it("shows a withdrawal and keeps application status distinct from CV/search", () => {
     liveState.current = { status: "WITHDRAWN", loaded: true, error: false };
 

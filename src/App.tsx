@@ -60,6 +60,8 @@ import { beginNewApplicationSession, createSessionApplicationRepository } from "
 import { createRemoteApplicationRepository } from "./lib/applications/remoteSessionRepository";
 import { createApplicationMigration } from "./lib/applications/applicationMigration";
 import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
+import { isRisCvStorageEnabled } from "./lib/cvStorageApi";
+import { usePersistentCvStorage } from "./lib/usePersistentCvStorage";
 import {
   checkRisRemoteApplicationAccess,
   isRemoteCapabilityForProfile,
@@ -280,6 +282,7 @@ export default function App() {
   // identity fallback because identical addresses must not merge users.
   const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
   const [applicationStorageMode, setApplicationStorageMode] = useState<"session" | "remote">("session");
+  const [cvStorageMode, setCvStorageMode] = useState<"session" | "persistent">("session");
   const [remoteCapability, setRemoteCapability] = useState<RisRemoteCapability | null>(null);
   const authRef = useRef(auth);
   authRef.current = auth;
@@ -349,6 +352,9 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [migrationMockEnabled, isAuth, authProfileKey]);
   const identityVerified = isVerifiedAuthProfileKey(authProfileKey);
+  const cvStorageAccessToken = auth.user?.access_token ?? "";
+  const cvStorageEnabled = isRisCvStorageEnabled() && identityVerified;
+  const persistentCvStorage = usePersistentCvStorage(cvStorageAccessToken, cvStorageEnabled);
   const previousAuthProfileKeyRef = useRef<string | null | undefined>(undefined);
   // JM-PROFILE-UI-HARDENING-05: async operations capture this epoch and must not
   // apply late results after a user switch/logout.
@@ -386,6 +392,7 @@ export default function App() {
       beginNewApplicationSession();
       beginNewManualJobSession();
       setSessionApplications([]);
+      setCvStorageMode("session");
       setApplicationRepository(createApplicationRepositoryForAuth());
       setApplicationRefreshToken(0);
       setApplicationNavigation(null);
@@ -3365,6 +3372,10 @@ export default function App() {
       onRenameCvProfile={handleRenameCvProfile}
       onDeleteCvProfile={handleDeleteCvProfile}
       onDownloadCvProfile={handleDownloadCvProfile}
+      cvStorageEnabled={persistentCvStorage.enabled}
+      cvStorageMode={cvStorageMode}
+      onCvStorageModeChange={setCvStorageMode}
+      persistentCvStorage={persistentCvStorage}
       onAssignUnassigned={handleAssignUnassignedAts}
     />
   );
@@ -3396,6 +3407,7 @@ export default function App() {
       refreshToken={applicationRefreshToken}
       cvDocuments={cvState.documents}
       cvBuilderProfiles={cvProfiles}
+      persistentCvs={persistentCvStorage.documents}
       onOpenCvProfile={handleEditCvProfile}
       navigationTarget={applicationNavigation}
     />
@@ -3540,6 +3552,8 @@ export default function App() {
             cvSection={dashboardCvSection}
             applicationsSection={dashboardApplicationsSection}
             preferencesSection={dashboardPreferencesSection}
+            cvStorageEnabled={persistentCvStorage.enabled}
+            cvStorageConsentStatus={persistentCvStorage.consent?.consent?.status ?? null}
           />
         </main>
         {cvProcessingUI}
@@ -3563,6 +3577,8 @@ export default function App() {
             cvSection={dashboardCvSection}
             applicationsSection={dashboardApplicationsSection}
             preferencesSection={dashboardPreferencesSection}
+            cvStorageEnabled={persistentCvStorage.enabled}
+            cvStorageConsentStatus={persistentCvStorage.consent?.consent?.status ?? null}
           />
         </main>
         {cvProcessingUI}

@@ -62,18 +62,13 @@ function makeRes() {
 
 function makeReq(path, { method = "GET", headers = {}, body, query = {} } = {}) {
   const url = new URL(path, "http://localhost");
-  const exactRoute =
-    url.pathname === "/api/ris/applications"
-      ? "applications"
-      : url.pathname === "/api/ris/consents"
-        ? "consents"
-        : "";
-  const flagKey =
-    exactRoute === "applications"
-      ? "__ris_applications"
-      : exactRoute === "consents"
-        ? "__ris_consents"
-        : "";
+  const routeMap = {
+    "/api/ris/applications": ["applications", "__ris_applications"],
+    "/api/ris/consents": ["consents", "__ris_consents"],
+    "/api/ris/cvs": ["cvs", "__ris_cvs"],
+    "/api/ris/cv-consents": ["cv-consents", "__ris_cv_consents"],
+  };
+  const [exactRoute, flagKey] = routeMap[url.pathname] ?? ["", ""];
   return {
     method,
     url: path,
@@ -117,6 +112,7 @@ function risCalls() {
 beforeEach(() => {
   __resetJwksCache();
   process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
+  process.env.RIS_CV_STORAGE_ENABLED = "true";
   process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
   process.env.RIS_API_BASE_URL = "https://ris.example.invalid";
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
@@ -140,6 +136,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   for (const key of [
     "RIS_APPLICATION_STORAGE_ENABLED",
+    "RIS_CV_STORAGE_ENABLED",
     "RIS_CONSENT_SERVICE_ENABLED",
     "RIS_API_BASE_URL",
     "RIS_PARTNER_CREDENTIAL",
@@ -154,12 +151,14 @@ afterEach(() => {
 });
 
 describe("RIS single-entry routing", () => {
-  it("konfiguriert ausschließlich die zwei RIS-Rewrites und blockt den Router direkt", () => {
+  it("konfiguriert ausschließlich die vier RIS-Rewrites und blockt den Router direkt", () => {
     const config = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"));
     const risRewrites = config.rewrites.filter((rewrite) => rewrite.source.startsWith("/api/ris/"));
     expect(risRewrites).toEqual([
       { source: "/api/ris/applications", destination: "/api/ris/router?__ris_applications=1" },
       { source: "/api/ris/consents", destination: "/api/ris/router?__ris_consents=1" },
+      { source: "/api/ris/cvs", destination: "/api/ris/router?__ris_cvs=1" },
+      { source: "/api/ris/cv-consents", destination: "/api/ris/router?__ris_cv_consents=1" },
     ]);
     expect(config.redirects).toContainEqual({
       source: "/api/ris/router",
