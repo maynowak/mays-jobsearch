@@ -128,12 +128,18 @@ the limited pilot remains usable.
   src/components/ApplicationsSection.remote.test.tsx`
   = **7 files / 38 tests PASS**.
 - `npm run build` = PASS (TypeScript + Vite).
-- Full suite was also run: **1560 passed, 5 skipped, 9 failed in 7 files**. The
-  failures are environmental in this worktree: Vite denies the `pdfjs-dist`
-  worker URL because `node_modules` is a symlink to the main checkout
-  (`Denied ID .../repos/mays-jobsearch/node_modules/pdfjs-dist/...`). The
-  changed-file suites above pass. No product-code failure was observed in the
-  changed area.
+- Worktree full run: **1560 passed, 5 skipped, 9 failed in 7 files**. The
+  failures were environmental in that worktree: Vite denied the `pdfjs-dist`
+  worker URL because `node_modules` was a symlink to the main checkout
+  (`Denied ID .../repos/mays-jobsearch/node_modules/pdfjs-dist/...`).
+- Clean-install recheck: fresh detached worktree
+  `/tmp/opencode/jobsearch-release-check`, own `node_modules` via `npm ci`.
+  Parallel full runs showed only timing flakes (`CvBuilderEditorPdf`, then
+  `ManualSearchProfiles.integration`); both failing files passed in isolation
+  (**12/12**). A serial full run
+  (`npm test -- --run --maxWorkers=1`) = **153 test files passed / 3 skipped,
+  1599 tests passed / 5 skipped, 0 failed**. No product-code failure was found.
+- Production build in the clean worktree = PASS.
 
 ### Release status
 

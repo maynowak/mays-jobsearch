@@ -4433,10 +4433,14 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   an unapproved text from a missing Art. 9 check; `DashboardV2` uses the
   server-backed overview; remote ownership text corrected in DE/EN.
 - Verification: changed-file suites = **7 files / 38 tests PASS**;
-  `npm run build` PASS. Full suite: 1560 passed / 5 skipped / 9 failed in 7
-  files; the failures are environmental in this worktree because Vite denies
-  the `pdfjs-dist` worker through the shared `node_modules` symlink. No
-  failure was observed in the changed area.
+  `npm run build` PASS. The worktree full suite had 9 environmental failures
+  because Vite denies the `pdfjs-dist` worker through the shared
+  `node_modules` symlink. Clean-install recheck in
+  `/tmp/opencode/jobsearch-release-check` (`npm ci`, own `node_modules`):
+  isolated flaky files passed 12/12; serial full suite
+  (`npm test -- --run --maxWorkers=1`) = **153 files passed / 3 skipped,
+  1599 tests passed / 5 skipped, 0 failed**. No product-code failure was
+  found; clean-worktree `npm run build` PASS.
 - Cross-repository review: the UI consumes only the existing RIS consent
   contract; the live response confirms v4/APPROVED and the Art. 9 proof, and
   the withdrawal write-block was verified. No RIS code, Terraform, state,
