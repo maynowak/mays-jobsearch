@@ -1,0 +1,83 @@
+/**
+ * APPLICATION-STORAGE CONSENT TEXT (candidate)
+ *
+ * Complete German first-person declaration for optional durable ApplicationV1
+ * storage in RIS. This text is a **candidate for operator/legal approval**, not
+ * an approved declaration. It must not be presented as approved and it grants
+ * nothing by itself.
+ *
+ * The canonical text is `paragraphs.join("\n\n")`. The SHA-256 digest is
+ * computed over the exact UTF-8 bytes of that canonical string; the integrity
+ * test recomputes it. Never edit a paragraph without recomputing the hash and
+ * updating the server mapping in `api/_lib/ris/consentText.mjs`.
+ */
+
+export const APPLICATION_STORAGE_CONSENT_TEXT_VERSION =
+  "application-storage-consent-2026-11-07-v4" as const;
+
+/**
+ * Superseded candidates kept for audit traceability. Historical hashes must
+ * never be reused for a new text.
+ */
+export const APPLICATION_STORAGE_CONSENT_TEXT_HISTORY = [
+  {
+    version: "application-storage-consent-2026-11-07-v3",
+    sha256: "696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668",
+    state: "DRAFT",
+  },
+  {
+    version: "application-storage-consent-2026-11-07-v2",
+    sha256: "232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca",
+    state: "DRAFT",
+  },
+  {
+    version: "application-storage-consent-2026-11-07-v1",
+    sha256: "2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953",
+    state: "DRAFT",
+  },
+] as const;
+
+/** Stable Art. 9 category codes covered by the explicit consent. */
+export const APPLICATION_STORAGE_SPECIAL_CATEGORIES = [
+  "health",
+  "religious_or_philosophical_beliefs",
+  "trade_union_membership",
+  "political_opinions",
+  "sexual_orientation",
+  "sex_life",
+  "biometric_data",
+  "genetic_data",
+  "racial_or_ethnic_origin",
+] as const;
+
+export const APPLICATION_STORAGE_CONSENT_PURPOSE = "application-storage" as const;
+
+/** RIS notice this text is intended to map to (RIS keeps it DRAFT today). */
+export const APPLICATION_STORAGE_CONSENT_RIS_NOTICE_VERSION = "1.0" as const;
+
+/** Candidate state: the text is not approved for production use. */
+export const APPLICATION_STORAGE_CONSENT_STATE = "DRAFT" as const;
+
+export const APPLICATION_STORAGE_CONSENT_PRIVACY_POLICY_VERSION = "1.1" as const;
+
+export const APPLICATION_STORAGE_CONSENT_PARAGRAPHS = [
+  "Ich willige ein, dass der RIS-Speicherdienst meine Bewerbungsdaten im nachfolgend beschriebenen Umfang dauerhaft speichert, damit ich sie später abrufen, bearbeiten, exportieren und löschen kann. Diese Einwilligung gilt ergänzend zu den Datenschutzhinweisen unter /datenschutz (Datenschutzrichtlinie Version 1.1 vom 7. November 2026) und ersetzt diese nicht.",
+  "Gespeichert werden: meine Bewerbungen mit Stellenbezug (jobId, Titel, Unternehmen, Ort, Quelle und URL), meine Anschreiben und Anschreiben-Versionen, der Dokumentstatus, der Bewerbungsstatus, Statusänderungen und der Statusverlauf, Verweise auf ausgewählte CV- und Suchprofile sowie Bewerbungsdatum und -kanal, Kontaktangaben, Notizen, Gehaltsvorstellung und -angebot, Wiedervorlagen und Verlaufsereignisse (Feedback, Interview, Notizen).",
+  "Nicht gespeichert werden durch diese Einwilligung: PDF-Dateien, im Browser ausgelesene CV-Texte, KI-Prompts oder Provider-Nutzlasten. Verweise auf CV- und Suchprofile verweisen nur auf die jeweilige Ressource und enthalten keine Dokumentkopie.",
+  "Ich willige ausdrücklich nach Art. 9 Abs. 2 lit. a DSGVO ein, dass besondere Kategorien personenbezogener Daten, die in meinen Bewerbungsunterlagen oder Bewerbungsdaten enthalten sind, gespeichert werden, soweit ich diese Angaben selbst bereitstelle. Das betrifft insbesondere Gesundheitsdaten, Angaben zu religiösen oder weltanschaulichen Überzeugungen, die Gewerkschaftszugehörigkeit, politische Meinungen, das Sexualleben und die sexuelle Orientierung, biometrische Daten, genetische Daten sowie Angaben zur rassischen oder ethnischen Herkunft. Diese ausdrückliche Einwilligung ist freiwillig, erfordert keine Zuordnung zu einer bestimmten Kategorie und keine Offenlegung, ob solche Daten überhaupt vorliegen, und kann jederzeit mit Wirkung für die Zukunft widerrufen werden; sie ist nicht Voraussetzung für die übrigen Bewerbungsfunktionen. Eine automatische Kategorisierung oder Ableitung von Geschlecht, Geschlechtsidentität oder sexueller Orientierung findet nicht statt.",
+  "Der Zweck der Speicherung ist ausschließlich der spätere Abruf, die Änderung, der Export und die Löschung der ausgewählten Bewerbungsdaten durch mich.",
+  "RIS ist der Speicherdienst; die Daten liegen in der bestehenden RIS-/AWS-Infrastruktur. Diese Einwilligung betrifft keine KI-Analyse und keine Übermittlung an KI- oder sonstige Provider. Eine Einwilligung in eine KI-Verarbeitung ist nicht Teil dieser Erklärung und wird durch sie nicht erteilt.",
+  "Mit dieser Einwilligung wird die dauerhafte Speicherung der genannten Daten für mein angemeldetes Konto freigeschaltet. Ohne diese Einwilligung bleiben die abhängigen Speicherfunktionen gesperrt.",
+  "Ich kann diese Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen. Der Widerruf blockiert neue abhängige Schreibzugriffe. Bereits gespeicherte Daten bleiben im Rahmen der bestehenden Rechte lesbar, exportierbar und löschbar; der Widerruf ist nicht automatisch eine sofortige physische Löschung.",
+  "Für ApplicationV1 ist derzeit keine pauschale Aufbewahrungsfrist freigegeben. Gespeicherte Bewerbungen bleiben bestehen, bis ich sie lösche. Sicherungen, Protokolle und gesetzliche Aufbewahrungspflichten können eine Löschung verzögern oder begrenzen.",
+] as const;
+
+export const APPLICATION_STORAGE_CONSENT_TEXT = APPLICATION_STORAGE_CONSENT_PARAGRAPHS.join("\n\n");
+
+/**
+ * SHA-256 over the exact UTF-8 canonical text above. Recomputed and asserted by
+ * `src/lib/storageConsent.test.ts`; the same value must be configured in the BFF
+ * (`RIS_CONSENT_TEXT_SHA256`) before a grant can be allowed.
+ */
+export const APPLICATION_STORAGE_CONSENT_TEXT_SHA256 =
+  "8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7";

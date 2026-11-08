@@ -1,3 +1,5 @@
+import { consentTextMapping } from "./consentText.mjs";
+
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_PATH = "/v1/partner/me/applications";
 const CONSENT_PATH = "/v1/partner/me/consents";
@@ -89,10 +91,17 @@ export function risConfig(env = process.env) {
 export function risConsentConfig(env = process.env) {
   const enabled = String(env.RIS_CONSENT_SERVICE_ENABLED ?? "").toLowerCase() === "true";
   const noticeVersion = String(env.RIS_CONSENT_NOTICE_VERSION ?? "").trim();
+  const text = consentTextMapping(env);
   const consent = {
     path: CONSENT_PATH,
     purpose: CONSENT_PURPOSE,
     noticeVersion: noticeVersion || null,
+    textVersion: text.version,
+    textHash: text.hash,
+    textState: text.state,
+    textMapped: text.mapped,
+    textApproved: text.approved,
+    textReason: text.reason,
   };
 
   if (!enabled) {

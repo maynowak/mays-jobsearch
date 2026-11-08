@@ -3783,3 +3783,617 @@ configured synthetic test user.
 - Report and screenshots:
   `docs/reports/JM-RIS-PRIVACY-RG09-PRODUCTION-RELEASE-04-REPORT.md`,
   `docs/reports/assets/JM-RIS-PRIVACY-RG09-PRODUCTION-RELEASE-04/`.
+
+## 2026-11-07 — JM-RIS-STORAGE-ACTIVATION-01 (Jobsearch side)
+
+**Typ:** Implementation / Consent gate / API + UI
+**Status:** LOCAL IMPLEMENTED — NOT DEPLOYED, NO LIVE PERSISTENCE EVIDENCE
+
+- Ausgangslage: `api/_lib/ris/consentsHandler.mjs` setzte
+  `grantAllowed: Boolean(cfg.noticeVersion)` und sendete die konfigurierte
+  Version ohne RIS-Freigabeprüfung. Damit hätte `RIS_CONSENT_NOTICE_VERSION=1.0`
+  allein einen Grant erlaubt, obwohl die RIS-Notice `1.0` `DRAFT` mit
+  `legalApprovalRef: null` ist.
+- Korrektur: neues serverseitiges Modul `api/_lib/ris/consentNotice.mjs` liest
+  den Live-Katalog aus `GET /v1/partner/me/consents` und erlaubt einen Grant nur
+  bei passender `noticeVersion`, `noticeState === ACTIVE`,
+  `noticeApproved === true` und `acceptedForNewGrant === true`. Fehlender oder
+  malformed Katalog, unbekannte/geänderte Version, DRAFT, nicht-booleansche
+  Flags, RIS-Fehler oder Timeout fallen geschlossen aus. Der POST-Grant prüft
+  unmittelbar vor dem Schreiben erneut und ruft bei Blockade den RIS-Grant
+  nicht auf. Widerruf bleibt unabhängig vom Notice-Status möglich.
+- API-Vertrag: GET liefert zusätzlich `noticeState`, `noticeApproved`,
+  `acceptedForNewGrant`, `noticeReason`; keine internen Legal-Referenzen.
+  Blockade-Codes: `409 notice_not_active|notice_not_approved|notice_not_accepted|
+  notice_version_unknown`, `503 notice_version_not_mapped|notice_catalog_invalid|
+  notice_catalog_unavailable`.
+- Browser: `src/lib/risConsentApi.ts` typisiert den Notice-Status,
+  `StorageConsentLive.tsx` zeigt RIS-Status und Blockadegrund; bestehende
+  Fail-closed-Meldung und Versionsanzeige bleiben erhalten. Keine
+  Flag-Aktivierung, keine Env-Änderung, keine Version im Browser wählbar.
+- AI-/Privacy-/Data-Flow impact: kein neuer AI-Aufruf, kein neuer Datenfluss,
+  keine zusätzliche Speicherung. Der einzige zusätzliche RIS-Egress ist der
+  dokumentierte Consent-Status-GET; die Freigabe-Grenze wird strikter.
+  Datenschutztext v1.1 bleibt unverändert.
+- Tests: `tests/api/ris-consents.test.mjs` erweitert (DRAFT blockt,
+  ACTIVE/approved erlaubt und sendet Serverversion, fehlender/malformed Katalog,
+  unbekannte Version, RIS-Fehler/Netzwerkfehler, Widerruf bei Blockade,
+  widersprüchliche Duplikate); `tests/api/ris-routing.test.mjs` Grant-Fall an
+  Katalog-Precheck angepasst; `StorageConsentLive.test.tsx` prüft DRAFT-Hinweis.
+  Keine bestehenden Auth-/Allowlist-/Config-Tests abgeschwächt.
+- Evidenz: `docs/reports/agent-evidence/JM-RIS-STORAGE-ACTIVATION-01-jobsearch-requirements.md`.
+- Kein Push, Merge, Deploy, keine Vercel-Env-Änderung, keine Secrets, keine
+  RIS-Dateien. Produktionswirkung: Bei aktuell gesetzter Version `1.0` und
+  DRAFT-Notice bleiben Grants gesperrt, bis RIS die Notice freigibt.
+
+## 2026-11-07 — JM-RIS-STORAGE-ACTIVATION-01 Rework (RIS contract review R1–R3)
+
+**Typ:** Rework / Consent gate / Contract alignment / Documentation
+**Status:** LOCAL IMPLEMENTED — NOT DEPLOYED, NO LIVE PERSISTENCE EVIDENCE
+
+- Auslöser: RIS-Vertragsprüfung (`REWORK_REQUIRED`). RIS definiert
+  `GRANTABLE_NOTICE_STATES = {APPROVED, ACTIVE}`; die Jobsearch-Gate akzeptierte
+  nur `ACTIVE` und blockierte damit den legitimen Zwischenzustand `APPROVED`.
+- R1 (Code): `api/_lib/ris/consentNotice.mjs` akzeptiert jetzt `APPROVED` oder
+  `ACTIVE`; `DRAFT`, `SUPERSEDED` und unbekannte Zustände bleiben gesperrt.
+  `noticeApproved === true` und `acceptedForNewGrant === true` bleiben strikt
+  erforderlich; Fail-closed-Verhalten, Katalog-Precheck vor dem Grant und
+  Widerruf unverändert.
+- R2 (Dokumentation): A→B-Evidenz korrigiert. Mit
+  `CONSENT_NOTICE_STATE_ENFORCED=false` (aktueller Deployment-Stand) meldet
+  `DRAFT` `acceptedForNewGrant: true`; `SUPERSEDED` meldet zusätzlich
+  `noticeApproved: true`. Beide Flags allein würden `SUPERSEDED` akzeptieren —
+  die `noticeState`-Prüfung ist die tragende Sperre. `DRAFT` und `SUPERSEDED`
+  sind unabhängig von den Flags blockiert.
+- R3 (Koordination): `CONSENT_NOTICE_STATE_ENFORCED` ist bei RIS nicht in
+  Terraform verdrahtet und im Deployment `false`; die RIS-seitige
+  Notice-Enforcement ist inaktiv. Der Jobsearch-BFF ist derzeit die einzige
+  Notice-Barriere. Keine Terraform-/Flag-Änderung in diesem Repository;
+  dokumentiert als RIS-Aktivierungsblocker.
+- AI-/Privacy-/Data-Flow impact: keine neue AI-/Speicher-/Datenflussänderung.
+  Die Freigabegrenze wird vertragskonform präzisiert (mehr legitime Zustände
+  erlaubt, dieselben Sperren bleiben). Datenschutztext v1.1 unverändert.
+- Tests: `tests/api/ris-consents.test.mjs` erweitert (APPROVED erlaubt,
+  SUPERSEDED mit gesetzten Flags blockiert, DRAFT mit gesetzten Flags
+  blockiert, APPROVED-POST sendet Serverversion; reine Helper-Fälle für
+  Zustandsmatrix); bestehende Auth-/Allowlist-/Config-Tests unverändert.
+  `StorageConsentLive.test.tsx` prüft weiterhin den DRAFT-Hinweis.
+- Evidenz: `docs/reports/agent-evidence/JM-RIS-STORAGE-ACTIVATION-01-jobsearch-requirements.md`
+  (§3 Zustands-/Flag-Matrix, §7 R1–R3-Status), `docs/DEPLOYMENT.md`.
+- Kein Push, Merge, Deploy, keine Vercel-Env-Änderung, keine Secrets, keine
+  RIS-/Terraform-/AWS-Datei.
+
+## 2026-11-07 — JM-RIS-STORAGE-ACTIVATION-01 — final consolidation
+
+**Status:** `APPLICATION STORAGE TECHNICALLY VERIFIED` / `PARTIALLY READY — CONTROLLED TEST-USER ACTIVATION BLOCKED`
+
+- Jobsearch implementation commits `324ad18` (fail-closed live notice gate) and `b8074a0` (accept APPROVED/ACTIVE; correct DRAFT/SUPERSEDED evidence); RIS contract commit `54d6a77`.
+- New BFF gate requires RIS catalogue `APPROVED|ACTIVE` + `noticeApproved=true` + `acceptedForNewGrant=true`; DRAFT/SUPERSEDED/unknown/missing/unavailable fail closed; POST re-reads before grant; withdraw remains allowed; browser cannot choose version; legal refs are not forwarded.
+- Agent sessions: Jobsearch `ses_e49a66ef3ffeCeeSQhQhNwNnqs`, RIS `ses_e49a08eb7ffe8RltsM98S9VTQq`. Final cross-reviews: PASS both sides. No push/merge/deploy.
+- Tests: full Jobsearch `1562 passed / 5 skipped`; focused BFF 50/50, UI/repo 36/36; build PASS; API syntax PASS; diff check PASS. RIS selected 79 passed (consent + application suites).
+- Primary blocker: RIS notice `application-storage/1.0` is DRAFT with `legalApprovalRef=null`; no live grant/persistence was executed. Also `VITE_RIS_APPLICATION_STORAGE_ENABLED` absent, `CONSENT_NOTICE_STATE_ENFORCED` unwired, `APPLICATION_CONSENT_ENFORCED=false`.
+- No env/secret/flag/Terraform/AWS/Cognito change. Report: `docs/reports/JM-RIS-STORAGE-ACTIVATION-01-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-02 (Jobsearch preview plan)
+
+**Typ:** Read-only cross-review + preview configuration plan / Documentation
+**Status:** `PLAN ONLY — NOT APPLIED, NO ENV CHANGE, NO DEPLOY`
+
+- RIS-Gegenstueck geprueft: Commit `81634d8`
+  (`APPLICATION-STORAGE-1.0-APPROVAL-PACKET.md`,
+  `JM-RIS-STORAGE-PILOT-02-ENVIRONMENT-ANALYSIS.md`, Terraform-Anbindung von
+  `CONSENT_NOTICE_STATE_ENFORCED`, Pilot-Tests). Keine RIS-Datei editiert.
+- BFF-Nachpruefung der eigenen Haertung (`324ad18`/`b8074a0`) gegen die
+  Pilot-Anforderungen: Live-Katalogpruefung, serverseitige Versionsbindung,
+  Fail-closed, Zustandssemantik APPROVED/ACTIVE, Consent-Status-UI,
+  Remote-Mode (Session-Default, Flag + Login + Token), Allowlist,
+  Fehlerbehandlung und Backend-Bestaetigung (kein UI-Erfolg aus lokalem State).
+  Ergebnis `PASS`; kein nachgewiesener Code-Gap, daher keine Code-Aenderung.
+- Approval-Packet bestaetigt: Es existiert **keine** vollstaendige, rechtlich
+  freigegebene ApplicationV1-Einwilligungserklaerung. RIS-Draft ist
+  Profil-/CV-/Suchprofil-Text und selbst "keine Einwilligungserklaerung";
+  Jobsearch §9/§10 ist eine Datenschutzinformation, keine
+  Einwilligungserklaerung. Notice `1.0` bleibt `DRAFT`,
+  `legalApprovalRef=null`. Keine Rechtsfreigabe durch Agenten.
+- Environment-Analyse bestaetigt: `ris-dev` ist mit der Jobsearch-Partner-Edge
+  geteilt (`ris-dev-jobsearch-api`, API `c7e9pdwe78`); der Pilot braucht einen
+  dedizierten Workspace/API, nicht `ris-dev`. `ris-dev2` ist in diesem Account
+  nicht vorhanden.
+- Plan: `docs/reports/JM-RIS-STORAGE-PILOT-02-PREVIEW-CONFIG.md` —
+  dedizierte Preview-Umgebung, vollstaendige Env-Namen (keine Secret-Werte),
+  `VITE_RIS_APPLICATION_STORAGE_ENABLED` nur Preview (in beiden Vercel-Projekten
+  aktuell abwesend), Allowlist, Notice-Version, Remote-Mode, Gate-Reihenfolge,
+  Testflow und Rollback. Produktionsflags `mays-job-matcher` bleiben aus.
+- AI-/Privacy-/Data-Flow impact: keine Code-/Datenfluss-Aenderung; reine
+  Dokumentation und Review. Keine Aktivierung, keine Env-/Secret-/Vercel-
+  Aenderung, kein Push/Merge/Deploy.
+- Tests (fokussiert, real):
+  `npx vitest run tests/api/ris-consents.test.mjs tests/api/ris-routing.test.mjs
+  tests/api/ris-config-separation.test.mjs` = 3 Dateien / 50 Tests PASS;
+  `StorageConsentLive.test.tsx` + `risRemoteRepository.test.ts` +
+  `remoteSessionRepository.test.ts` = 3 Dateien / 36 Tests PASS.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-02 — final consolidation
+
+**Status:** `STORAGE PILOT TECHNICALLY READY (LOCAL)` / `BLOCKED FOR LIVE PILOT`
+
+- Jobsearch commit `04f00f4` adds the dedicated preview plan and BFF review; no API/UI code change was needed. Precision fixes to the plan were added in this docs commit.
+- BFF remains PASS: live RIS catalogue, APPROVED/ACTIVE + strict flags, POST re-read, DRAFT/SUPERSEDED blocked, withdrawal allowed, server-owned version, no legal-ref leakage, no backend-confirmed success missing.
+- Focused tests: BFF 50/50; UI/repository 36/36; `git diff --check` PASS. Previous full suite `1562 passed / 5 skipped` remains the baseline and was not repeated without a code change.
+- Blockers: (1) no complete, legally approved ApplicationV1 consent declaration/notice — notice `1.0` stays DRAFT/`legalApprovalRef=null`; (2) no isolated RIS pilot runtime — `ris-dev` is shared with `ris-dev-jobsearch-api`.
+- No push, merge, deploy, env/secret/Terraform/AWS/Cognito change, no notice state change, no live persistence. Report: `docs/reports/JM-RIS-STORAGE-PILOT-02-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-03 (ApplicationV1 consent text candidate)
+
+**Typ:** Implementation / Consent text + BFF text binding / UI
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Neues Modul `src/lib/applicationStorageConsent.ts` mit vollständiger deutscher
+  Ich-Einwilligungserklärung für ApplicationV1:
+  - Textversion `application-storage-consent-2026-11-07-v1`
+  - Zweck `application-storage`, RIS-Notice-Version `1.0`
+  - SHA-256 (UTF-8 über `paragraphs.join("\n\n")`):
+    `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`
+  - Zustand `DRAFT` (Kandidat); kein `legalApprovalRef`, keine erfundene
+    Rechtsgrundlage, Frist, Empfänger-/Drittlandangabe oder Freigabe.
+  - Inhalt: gespeicherte Bewerbungsdaten (Bewerbungen, Anschreiben/Versionen,
+    Dokumentstatus, CV-/Suchprofil-Verweise, Kontakt/Notizen/Gehalt/
+    Wiedervorlagen/Verlauf; keine PDF-Bytes/CV-Texte/KI-Payloads), Zweck
+    (Abruf/Änderung/Export/Löschung), RIS-Rolle (RIS-/AWS-Infrastruktur, keine
+    KI-/Provider-Verarbeitung), Wirkung, Widerruf (blockiert neue Schreibzüge,
+    Bestand bleibt lesbar/exportierbar/löschbar, keine sofortige physische
+    Löschung), tatsächliche Retention (keine pauschale Frist, Bestand bis
+    Löschung, Sicherungen/Protokolle/gesetzliche Pflichten), Verweis auf
+    `/datenschutz` (Policy v1.1).
+- Serverbindung `api/_lib/ris/consentText.mjs` + `risConsentConfig`:
+  `RIS_CONSENT_TEXT_VERSION`, `RIS_CONSENT_TEXT_SHA256`,
+  `RIS_CONSENT_TEXT_STATE` werden gelesen. `GET` liefert `textVersion`,
+  `textHash`, `textState`, `textMapped`, `textApproved`, `textReason`;
+  `grantAllowed` verlangt Notice-Freigabe **und** freigegebenes Text-Mapping.
+  `POST` prüft das Mapping erneut vor dem Schreiben (`503
+  consent_text_not_configured|consent_text_mismatch`, `409
+  consent_text_not_approved`) und ruft RIS bei Blockade nicht auf. Keine
+  Secrets/Legal-Refs im Browser.
+- UI `StorageConsentLive.tsx` zeigt den vollständigen Text vor dem
+  Zustimmungs-Button, Textversion, SHA-256-Kurzform, Kandidatenstatus und
+  Server-Zuordnung. Der Button ist nur aktiv bei `grantAllowed` **und**
+  übereinstimmender Version/Hash **und** `APPROVED`-Serverstatus; Abweichung
+  oder fehlende Zuordnung sperren. Widerruf bleibt statusabhängig möglich; der
+  Datenschutz-Link bleibt erhalten. Keine zweite Consent-UI.
+- AI-/Privacy-/Data-Flow impact: kein neuer AI-Aufruf, keine neue Speicherung;
+  die Einwilligung wird nur angezeigt und serverseitig gebunden. Datenschutz-
+  policy v1.1 inhaltlich unverändert.
+- Tests: `tests/api/ris-consents.test.mjs` um Text-Mapping-Fälle erweitert
+  (fehlend/DRAFT/mismatch, Server-Client-Identität, SHA-256-Neuberechnung);
+  `ris-routing` Test-Env ergänzt; `StorageConsentLive.test.tsx` deckt
+  Volltext-vor-Button, Version/Hash/Status, DRAFT/fehlend/mismatch und Widerruf
+  ab; `storageConsent.test.ts` prüft Kanonik, Hash und Themenabdeckung.
+- Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice-
+  Änderung, keine Rechtsfreigabe. Aktivierung erst nach Operatorfreigabe von
+  Text und RIS-Notice sowie `RIS_CONSENT_TEXT_STATE=APPROVED`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-03/04 (consent text, status display, RIS review)
+
+**Typ:** Implementation / UI correction / Cross-repo review
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Jobsearch `2b4b520`: vollständige ApplicationV1-Einwilligungserklärung als
+  Kandidat (`src/lib/applicationStorageConsent.ts`) plus serverseitige
+  Text/Hash-Bindung (`api/_lib/ris/consentText.mjs`, `risConsentConfig`,
+  `consentsHandler`). Textversion:
+  `application-storage-consent-2026-11-07-v1`; SHA-256 (UTF-8 über
+  `paragraphs.join("\n\n")`):
+  `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`;
+  Zweck `application-storage`; RIS-Notice `1.0`; Zustand `DRAFT` —
+  **nicht rechtlich freigegeben**, kein `legalApprovalRef`.
+  `GET` liefert `textVersion/textHash/textState/textMapped/textApproved/
+  textReason`; `grantAllowed` verlangt Notice-Freigabe **und** freigegebenes
+  Text-Mapping; `POST` prüft erneut und schreibt bei Blockade nicht.
+- Jobsearch `115ea57`: UI-Korrektur — der serverseitige `textState` ist die
+  maßgebliche Anzeige (`Textstatus: … (APPROVED|DRAFT|nicht konfiguriert)`).
+  Die Code-Konstante erscheint nur bei nicht freigegebenem Serverstatus als
+  `Text-Kandidat (Kandidat für Betreiberfreigabe)`; bei `APPROVED` wird kein
+  widersprüchliches `DRAFT` mehr angezeigt. Volltext, Version, SHA-256,
+  Datenschutz-Link und strikte Freigabe (`grantAllowed` + Mapping-Match +
+  Server-`APPROVED`) bleiben unverändert; Widerruf bleibt statusabhängig.
+- RIS-Review `37503a9` (read-only): **PASS**. Geprüft:
+  `CONSENT_PILOT_ALLOWLIST` exakt `<issuer>|<sub>` (getrimmt, Trailing-Slash
+  normalisiert, malformed ignoriert, leer = keine Pilot-Identität); effektive
+  Gates `APPLICATION_CONSENT_ENFORCED` **oder** Pilot-Identität für die fünf
+  ApplicationV1-Schreibpfade und `CONSENT_NOTICE_STATE_ENFORCED` **oder**
+  Pilot-Identität für neue/erneute Grants; `ConsentRepository.grant(
+  enforce_notice_state=…)` betrifft nur neue/erneute Grants, idempotente
+  Wiederholung und Widerruf bleiben möglich; Terraform-Defaults
+  `consent_pilot_allowlist=""` und `consent_notice_state_enforced=false`, keine
+  Identität hartkodiert, `ris-dev`/`ris-dev2`-Projektconfigs unverändert.
+  External Ref `application-storage-consent-2026-11-07-v1` mit exaktem Hash,
+  `DRAFT`, `noticeVersion: None` (nicht als Notice-Version akzeptiert);
+  Registry `application-storage/1.0` bleibt `DRAFT`, `legalApprovalRef=null`.
+  Keine unautorisierte Änderung, kein Apply/Deploy/Env-/Secret-Wechsel.
+- Tests RIS (fokussiert, real):
+  `PYTHONPATH=/tmp/opencode/pydeps python3 -m pytest
+  tests/test_consent_pilot_allowlist.py
+  tests/test_consent_active_notice_pilot.py
+  tests/test_consent_notice_catalog_contract.py
+  tests/test_consent_notice_state_enforcement_terraform.py -q`
+  = **60 passed**.
+- Tests Jobsearch (fokussiert, real): `StorageConsentLive.test.tsx` +
+  `storageConsent.test.ts` = 2 Dateien / 14 Tests PASS;
+  `ris-consents/ris-routing/ris-config-separation` = 3 Dateien / 55 Tests PASS;
+  `npm run build` PASS; `git diff --check` ohne Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice-
+  oder `legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Live-Persistenz behauptet. Aktivierung weiterhin blockiert durch fehlende
+  Operator-/Rechtsfreigabe von Text und RIS-Notice `1.0` sowie die nicht
+  aktivierten Gates.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-03 — final consolidation
+
+**Status:** `APPLICATION STORAGE READY FOR RIS-DEV E2E` (not executed; operator approval/deployment pending)
+
+- Commits: `2b4b520` (complete ApplicationV1 consent text + version/hash/BFF gate), `115ea57` (server-authoritative text status), `ef370d0` (auditlog + RIS review), this final docs commit.
+- Text: `application-storage-consent-2026-11-07-v1`, SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`; state DRAFT candidate, no legal approval.
+- Tests: focused BFF 55/55, UI/text 14/14, build PASS, API syntax PASS, diff check PASS; full suite second run 1574 passed / 5 skipped (first run had 2 transient ManualSearchProfiles failures; isolated 8/8 PASS).
+- RIS review `37503a9` PASS: scoped `CONSENT_PILOT_ALLOWLIST` and mapping; non-pilot identities unaffected; global gates remain false.
+- No push/merge/deploy/env/notice change; no live persistence. Report: `docs/reports/JM-RIS-STORAGE-PILOT-03-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-04 — preflight and operator text
+
+**Status:** `CONSENT TEXT READY FOR OPERATOR REVIEW` / `RIS-DEV DEPLOYMENT PREFLIGHT READY`
+
+- Full user-visible text: `application-storage-consent-2026-11-07-v1`, SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`; still DRAFT, no legal approval/mapping.
+- RIS-DEV preflight read-only: `ris-dev-dev-agent` active, `APPLICATION_CONSENT_ENFORCED=false`, `PARTNER_SURFACE_ENABLED=true`, `CONSENT_NOTICE_STATE_ENFORCED`/`CONSENT_PILOT_ALLOWLIST` absent; `c7e9pdwe78` = `ris-dev-jobsearch-api` uses the same Lambda; `g6901and25` also same Lambda; tables ACTIVE, consents TTL disabled, applications TTL enabled on expiresAt.
+- Deployment impact: shared Lambda for partner edge + kernel; scoped allowlist required; global gates must remain false; plan/apply and preview deployment are separate approvals.
+- No push/merge/deploy/apply/env/notice change; no live write. Report: `docs/reports/JM-RIS-STORAGE-PILOT-04-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-04 — audit completeness addendum
+
+**Typ:** Documentation / Audit completeness (no new execution)
+**Status:** `CONSENT TEXT READY FOR OPERATOR REVIEW` / `RIS-DEV DEPLOYMENT PREFLIGHT READY`
+
+Ergänzung zum PILOT-04-Eintrag oben; keine neue Ausführung, kein neuer Testlauf:
+
+- Vollständige ApplicationV1-Einwilligung `application-storage-consent-2026-11-07-v1`,
+  SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`;
+  Zustand `DRAFT`, **keine** Rechtsfreigabe, **kein** `legalApprovalRef`, **keine**
+  anerkannte Zuordnung zu RIS `application-storage/1.0`.
+- Preflight-Impact explizit: Der gemeinsame Lambda `ris-dev-dev-agent` bedient
+  sowohl `ris-dev-dev-api` (`g6901and25`) als auch `ris-dev-jobsearch-api`
+  (`c7e9pdwe78`, Partner-Edge mit Produktions-Jobsearch-Cognito). Ein globales
+  `APPLICATION_CONSENT_ENFORCED`/`CONSENT_NOTICE_STATE_ENFORCED` würde daher die
+  geteilte Partner-Edge treffen.
+- Deshalb müssen beide globalen Gates `false` bleiben; nur die exakte scoped
+  `CONSENT_PILOT_ALLOWLIST` (`<issuer>|<sub>`) isoliert die Pilot-Identität.
+  Die Jobsearch-`RIS_TEST_USER_ALLOWLIST` muss dieselbe Identität nennen;
+  Abweichung führt zu BFF-`403` oder fehlender RIS-Pilot-Scope.
+- Keine Code-, Env-, Secret-, Notice-, Deploy-, Apply- oder Push-Änderung; keine
+  Live-Persistenz und keine Notice-Freigabe behauptet. Details:
+  `docs/reports/JM-RIS-STORAGE-PILOT-04-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Phase A (consent text v2)
+
+**Typ:** Implementation / Consent text revision / Audit
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Einwilligungstext erweitert: Der Absatz zu den gespeicherten Daten nennt
+  jetzt zusätzlich ausdrücklich **Bewerbungsstatus**, **Statusänderungen** und
+  **Statusverlauf**. Alle übrigen Aussagen bleiben unverändert.
+- Neue Textversion `application-storage-consent-2026-11-07-v2`; neuer
+  SHA-256 (UTF-8 über `paragraphs.join("\n\n")`):
+  `232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca`.
+  Die alte Fassung `application-storage-consent-2026-11-07-v1`
+  (SHA-256 `2615314738ca991f232314529d0bd473585758b4d1dd4b780f29bcc4c5289953`)
+  bleibt nur als historischer Kandidat dokumentiert und darf nicht konfiguriert
+  werden.
+- Angepasst: `src/lib/applicationStorageConsent.ts` (Version, Hash,
+  Textabsatz, Historienkonstante), `api/_lib/ris/consentText.mjs`
+  (Server-Identität), Tests (`storageConsent.test.ts`,
+  `StorageConsentLive.test.tsx`) und `docs/DEPLOYMENT.md` (aktuelle
+  Env-Werte). Client/BFF-Mapping-Gate, Volltextanzeige,
+  server-autoritativer Textstatus, `DRAFT`-Kandidatenstatus und alle
+  rechtlichen Vorbehalte bleiben unverändert.
+- Zustand weiterhin `DRAFT`: **keine** Rechtsfreigabe, **kein**
+  `legalApprovalRef`, **keine** Zuordnung zu RIS `application-storage/1.0`,
+  RIS-Notice unverändert `DRAFT`.
+- Tests (fokussiert, real): `storageConsent.test.ts` +
+  `StorageConsentLive.test.tsx` = 2 Dateien / 15 Tests PASS;
+  `ris-consents.test.mjs` + `ris-config-separation.test.mjs` = 2 Dateien /
+  44 Tests PASS; `npm run build` PASS; `git diff --check` ohne Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Secret-Änderung, keine RIS-Notice- oder
+  `legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-ONE-SHOT-05 — blocked pre-apply
+
+**Status:** `BLOCKED — OPERATOR/LEGAL TEXT APPROVAL + LEGAL APPROVAL REFERENCE + SYNTHETIC TEST IDENTITY REQUIRED`
+
+- Phase A local update committed `47f73c4`: consent text v2 `application-storage-consent-2026-11-07-v2`, SHA-256 `232cc8206261b5d14f7a269f63a58320f76eea435a65f7e039b25c62d26da0ca`; explicit Bewerbungsstatus/Statusänderungen/Statusverlauf; tests 15/15 + 44/44, build PASS.
+- No final Terraform plan/apply, deployment, push or merge. No `legalApprovalRef`, no notice approval, no synthetic test identity in pool `ZURSMpD2O`; `CONSENT_PILOT_ALLOWLIST` cannot be finalized.
+- Required: operator/legal approval of v2 and a real `legalApprovalRef`; approved synthetic `<issuer>|<sub>` (or approval to create one); then saved plan review and exact bundled GO.
+- No live persistence. Report: `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-REPORT.md`.
+
+## 2026-11-07 — JM-RIS-STORAGE-ONE-SHOT-05 — operator account decision
+
+**Status:** `BLOCKED — OPERATOR/LEGAL TEXT APPROVAL + LEGAL APPROVAL REFERENCE + VERIFIED OPERATOR IDENTITY REQUIRED`
+
+- Corrected operator decision: use `www.mays-job-matcher.app` production and the existing operator account; no new Cognito test user, no preview target.
+- A copied local Chrome profile had no active production session (only `mj-lang`); no tokens/cookies were read or printed. The verified operator `issuer|sub` is therefore still unavailable for `RIS_TEST_USER_ALLOWLIST`/`CONSENT_PILOT_ALLOWLIST`.
+- No final Terraform plan/apply, deployment, notice change, env change, push or merge. The legal approval reference is still missing.
+- Next: operator logs in through the regular production login (or provides verified iss/sub), approves v2 text/hash and supplies the real legalApprovalRef; then the saved plan is generated and the bundled GO requested.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Phase C (per-user remote capability)
+
+**Typ:** Implementation / Server-side capability gating / Audit
+**Status:** `IMPLEMENTED LOCALLY — NOT DEPLOYED, NO LIVE PERSISTENCE`
+
+- Problem: `src/App.tsx` aktivierte den RIS-Remote-Repository-Modus für jeden
+  authentifizierten Nutzer, sobald `VITE_RIS_APPLICATION_STORAGE_ENABLED=true`
+  und ein Access-Token vorhanden waren. Der globale Flag war die einzige
+  Client-Prüfung; die serverseitige `RIS_TEST_USER_ALLOWLIST` griff erst beim
+  BFF-Request (`403 test_user_not_allowed`).
+- Fix: neues Modul `src/lib/applications/remoteCapability.ts`.
+  `checkRisRemoteApplicationAccess(token, fetchConsent = fetchRisConsent)`
+  fragt das bestehende `GET /api/ris/consents` ab und liefert nur bei Erfolg
+  `true`; fehlender Token, `401`/`403`/`503`, Netzwerk- oder sonstige Fehler
+  ergeben `false`. Keine Client-Allowlist, keine Issuer/Sub-Prüfung im Browser.
+  `isRemoteCapabilityForProfile()` bindet das Ergebnis an den exakten
+  `iss + sub`-Profilkey, damit eine Capability nicht auf einen anderen Nutzer
+  übergreift.
+- App-Wiring: Remote-Repository nur bei Flag **und** bestätigter Capability für
+  den aktuellen `authProfileKey`. Probe nur bei verifizierter Anmeldung mit
+  Token; bei Identitätswechsel/Logout wird die Capability sofort verworfen und
+  der Session-Repository-Zustand beibehalten. Fehlschlag/`pending`/Gast/
+  unkonfigurierte Umgebung → Session-Modus. Kein automatischer Transfer
+  bestehender Session-Bewerbungen; Session-Verhalten bleibt unverändert.
+- Verhalten: allowlistetes Konto mit gültigem Token und konfiguriertem
+  Consent-BFF → Remote-Modus (RIS ist weiterhin Schreib-/Consent-Autorität);
+  nicht allowlistetes Konto → BFF `403`, Probe `false`, Session-Modus; Logout,
+  fehlender/abgelaufener Token, `503` oder Netzwerkfehler → Session-Modus.
+- Tests (real, lokal): `remoteCapability.test.ts` = 1 Datei / 8 Tests PASS
+  (Erfolg, fehlender Token, 401/403/503, Netzwerk-/unerwarteter Fehler,
+  Token-Trimming, Identitätsbindung/Mismatch); bestehende fokussierte
+  Application-/Consent-Tests = 6 Dateien / 92 Tests PASS; `npm run build` PASS;
+  `git diff --check` ohne Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
+  RIS-Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Live-Persistenz oder Notice-Freigabe behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 (Art. 9 explicit consent)
+
+**Typ:** Implementation / Consent text + explicit special-category consent / Audit
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Einwilligungstext v3: `application-storage-consent-2026-11-07-v3`,
+  SHA-256 `696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668`.
+  Alle v2-Aussagen (inkl. Bewerbungsstatus/Statusänderungen/Statusverlauf)
+  bleiben erhalten; neuer Absatz mit ausdrücklicher Einwilligung nach
+  Art. 9 Abs. 2 lit. a DSGVO für besondere Kategorien in Bewerbungsunterlagen.
+  v1/v2 bleiben ausschließlich als Historie dokumentiert und dürfen nicht
+  konfiguriert werden.
+- Kategorien-Codes (server-owned): `health`,
+  `religious_or_philosophical_beliefs`, `trade_union_membership`,
+  `political_opinions`, `sexual_orientation`, `biometric_data`,
+  `genetic_data`, `racial_or_ethnic_origin`.
+- UI `StorageConsentLive.tsx`: vollständiger v3-Text vor der Aktion; separate,
+  **nicht vorausgewählte** Checkbox „Ich willige ausdrücklich in die Speicherung
+  besonderer Kategorien personenbezogener Daten gemäß Art. 9 Abs. 2 lit. a
+  DSGVO ein.“; Zustimmungs-Button erst bei gesetzter Checkbox **und**
+  bestätigtem Notice-/Text-Gate; Checkbox wird bei Token-/Identitätswechsel
+  zurückgesetzt; Nachweiszeile zeigt nach Grant Art.-9-Status, Nachweis-
+  Textversion, SHA-256-Kurzform und gespeicherte Kategorien. Widerruf
+  unverändert.
+- BFF: `grantRisConsent(token, specialCategoriesConsent)` sendet nur den
+  Nutzer-Boolean; `consentsHandler` verlangt `body.specialCategoriesConsent ===
+  true` (sonst `422 special_categories_consent_required` vor jedem RIS-Grant)
+  und sendet `{ purpose, noticeVersion, specialCategoriesConsent: true,
+  specialCategories: [...], externalTextVersion, externalTextSha256 }`.
+  GET/Status mappt `specialCategoriesConsent`/`specialCategories`/
+  `externalTextVersion`/`externalTextSha256` fail-closed (fehlend → false/[]/
+  null). Keine browser-gewählte Version/Hash/Kategorien.
+- RIS-Vertragsergänzung (vom RIS-Agent umzusetzen): die vier Felder beim Grant
+  persistieren und im Consent-Status zurückgeben; idealerweise
+  `externalTextVersion`/`externalTextSha256` gegen die freigegebene
+  Jobsearch-Textidentität validieren und ein fehlendes/falsches
+  `specialCategoriesConsent` ablehnen. Ohne RIS-Persistenz bleibt der
+  UI-Nachweis ehrlich „nicht erteilt“/leer.
+- Tests (real, lokal): `storageConsent.test.ts` + `StorageConsentLive.test.tsx`
+  = 2 Dateien / 17 Tests PASS; `ris-consents.test.mjs` + `ris-routing.test.mjs`
+  = 2 Dateien / 51 Tests PASS; `npm run build` PASS; `git diff --check` ohne
+  Ausgabe. Abgedeckt: Checkbox default aus/Button gesperrt, Grant-Body nur
+  Boolean, BFF-Ablehnung ohne/mit falschem Consent vor RIS, serverseitiger
+  Payload, v3-Text/Hash/Kategorien, Nachweisfelder, Widerruf, keine Regression
+  der Notice-/Text-Gates.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
+  Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Rechtsfreigabe oder Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 — RIS review (`2301aee`)
+
+**Typ:** Read-only cross-review / Audit
+**Status:** `REWORK_REQUIRED (RIS backend proof edge)` — no Jobsearch code change
+
+- Reviewed RIS `2301aee` against Jobsearch `9eecf83` (v3 text, SHA-256
+  `696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668`,
+  acht Kategorien).
+- **PASS:** RIS speichert und liefert `specialCategoriesConsent`,
+  `specialCategories`, `externalTextVersion`, `externalTextSha256` auf Grant,
+  Status und History; v3-Ref mit exaktem Hash und `DRAFT`/`noticeVersion: None`
+  ist registriert; die acht Codes werden als Allowlist validiert (bool-Typ,
+  nicht-leere/eindeutige Teilmenge, kanonische Reihenfolge); unbekannte
+  Kategorien, Duplikate, Teil-Paare und Hash-Mismatch werden abgelehnt;
+  idempotente Wiederholung mit identischem Proof ist versionsstabil, anderer
+  Text/Kategorie-Scope liefert `409 RECONSENT_REQUIRED`; Widerruf erhält den
+  Proof in Status und Event-Historie; Read/Export/Delete bleiben nutzbar.
+  Notice `1.0` bleibt `DRAFT`, `legalApprovalRef=null`; keine Env-/Terraform-/
+  Notice-/Deploy-Änderung, Branch lokal.
+- **REWORK-Finding:** `validate_special_category_consent(True, [...])` und
+  `validate_external_text(purpose, None, None)` sind unabhängig gültig. Damit
+  akzeptiert `ConsentRepository.grant` einen Grant mit
+  `specialCategoriesConsent=true` **ohne** `externalTextVersion`/
+  `externalTextSha256` (Proof zeigt Art.-9-Einwilligung, aber keine
+  Textidentität). Zusätzlich wird ein Art.-9-Consent mit der historischen
+  v2-Textversion akzeptiert, obwohl v2 den Art.-9-Absatz nicht enthält.
+  Jobsearch sendet immer v3 + beide Felder, daher kein aktueller UI-Pfad, aber
+  ein direkter Partneraufruf kann den Backend-Proof unvollständig oder
+  textfremd belegen. Das widerspricht der Anforderung „Backend-Nachweis zeigt
+  Textversion/Hash und Kategorien“.
+- Minimale RIS-Korrektur (nicht in diesem Repo ausgeführt): Wenn
+  `specialCategoriesConsent is True`, müssen `externalTextVersion` und
+  `externalTextSha256` vorhanden sein **und** auf einen Art.-9-fähigen Text
+  (aktuell v3) zeigen; sonst `422` z. B.
+  `EXTERNAL_TEXT_REQUIRED_FOR_SPECIAL_CATEGORIES`/`EXTERNAL_TEXT_NOT_ART9`.
+  Tests ergänzen: true ohne Textpaar → Reject; true mit v2 → Reject; false mit
+  v3-Text → weiterhin gültig; idempotenter v3-Repeat unverändert.
+- RIS-Tests (read-only ausgeführt):
+  `tests/test_consent_special_categories.py
+  tests/test_consent_notice_catalog_contract.py
+  tests/test_consent_pilot_allowlist.py` = **64 passed**.
+- Keine RIS-Datei editiert, kein Push/Merge/Deploy/Env-/Notice-Wechsel; keine
+  Rechtsfreigabe oder Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 — UI residual fix (Art. 9 withdrawal reset)
+
+**Typ:** Implementation / UI consent state / Audit
+**Status:** `IMPLEMENTED — LOCAL ONLY, NOT APPROVED, NO LIVE PERSISTENCE`
+
+- Residual aus dem v3-Review behoben: Nach einem Widerruf blieb die
+  Art.-9-Checkbox im selben gemounteten UI gesetzt. Ein Regrant war damit ohne
+  erneute ausdrückliche Bestätigung möglich. Neu: `StorageConsentLive.tsx`
+  setzt `specialCategoriesConsent` auf `false`, sobald der Consent-Status
+  `WITHDRAWN` wird (Effekt auf `consent?.status`). Der Reset auf Token-/
+  Identitätswechsel bleibt bestehen; der initiale Grant-Flow
+  (`NOT_GRANTED` → Checkbox → `GRANTED`) ist unverändert, weil er nie nach
+  `WITHDRAWN` wechselt.
+- UI-Test `StorageConsentLive.test.tsx`: grant (Checkbox gesetzt) → withdraw →
+  Checkbox unchecked und aktivierbar, „Speicherung zustimmen“ deaktiviert →
+  erst erneutes Anhaken aktiviert den Regrant. Negativkontrolle: ohne den
+  WITHDRAWN-Reset schlägt genau diese Assertion fehl.
+- Verifikation (lokal, real): `npx vitest run
+  src/components/StorageConsentLive.test.tsx src/lib/storageConsent.test.ts`
+  = **2 Dateien / 17 Tests PASS**; `tsc -b` PASS; `git diff --check` ohne
+  Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Notice-/`legalApprovalRef`-
+  Änderung; keine RIS-Datei editiert. Keine Rechtsfreigabe, keine Freigabe und
+  keine Live-Persistenz behauptet.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v3 — audit completeness addendum
+
+**Typ:** Documentation / Audit completeness (no new Jobsearch execution)
+**Status:** `V3 REVIEW CLOSED — CANDIDATE, NOT APPROVED, NO LIVE PERSISTENCE`
+
+Ergänzung zu den bestehenden v3-Einträgen; keine Duplikation, kein neuer Code:
+
+- Die Einträge oben decken bereits ab: v3-Text/Version
+  `application-storage-consent-2026-11-07-v3`, SHA-256
+  `696f9e66d8098b2dce56a93418ba598145b669934662e2b52d9a332731517668`,
+  Art.-9-Absatz und die **nicht vorausgewählte** Checkbox (Commit `9eecf83`),
+  den RIS-Review `2301aee` mit `REWORK_REQUIRED` wegen fehlender
+  Text-/Art.-9-Kopplung sowie den Checkbox-Reset nach Widerruf (`206d26e`,
+  Status `WITHDRAWN` → unchecked, Regrant nur nach erneutem Anhaken).
+- RIS hat die beiden Review-Findings in `3ed915b` behoben:
+  `ART9_EXTERNAL_TEXT_VERSION`/`_SHA256` (nur v3) und
+  `validate_consent_proof`; `specialCategoriesConsent=true` verlangt jetzt
+  zwingend das v3-Textpaar
+  (`EXTERNAL_TEXT_REQUIRED_FOR_SPECIAL_CATEGORIES`) und lehnt historische
+  v2/v1-Texte als Art.-9-Proof ab (`EXTERNAL_TEXT_NOT_ART9`). Nicht-Art.-9-
+  Grants dürfen weiterhin historische Texte tragen. Damit ist der frühere
+  REWORK-Befund geschlossen; Re-Review-Ergebnis: **PASS**.
+- RIS-Verifikation (read-only, lokal): `tests/test_consent_special_categories.py`
+  = **33 passed**; mit Catalog- und Pilot-Allowlist-Suite
+  (`tests/test_consent_special_categories.py`,
+  `tests/test_consent_notice_catalog_contract.py`,
+  `tests/test_consent_pilot_allowlist.py`) = **73 passed**. Notice
+  `application-storage/1.0` bleibt `DRAFT`, `legalApprovalRef=null`; keine
+  Env-/Terraform-/Notice-/Deploy-Änderung im Review.
+- Keine Rechtsfreigabe, keine Aktivierung, kein Push/Merge/Deploy und keine
+  Live-Persistenz behauptet. Jobsearch-Commit `9eecf83` (v3) und `206d26e`
+  (Checkbox-Reset) bleiben lokal.
+
+## 2026-11-07 — JM-RIS-STORAGE-PILOT-05 Consent v4 (Sexualleben, Freiwilligkeit, keine Ableitung)
+
+**Typ:** Implementation / Consent text revision / Audit
+**Status:** `CANDIDATE — NOT APPROVED, NOT ACTIVATED, NO LIVE PERSISTENCE`
+
+- Neue Textversion `application-storage-consent-2026-11-07-v4`, SHA-256
+  `8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7`.
+  v1/v2/v3 bleiben ausschließlich als Historie dokumentiert; ihre Hashes
+  dürfen nicht wiederverwendet werden.
+- Art.-9-Absatz erweitert: nennt jetzt ausdrücklich **Sexualleben und sexuelle
+  Orientierung**; stellt klar, dass die Einwilligung freiwillig ist, **keine
+  Zuordnung zu einer bestimmten Kategorie** und **keine Offenlegung, ob solche
+  Daten überhaupt vorliegen**, verlangt; und dass **keine automatische
+  Kategorisierung oder Ableitung von Geschlecht, Geschlechtsidentität oder
+  sexueller Orientierung** stattfindet. Kein Gender-Feld, keine automatische
+  Herleitung, keine neuen personenbezogenen Datenfelder; optionale Freitext-
+  und Datenminimierungsaussagen bleiben unverändert.
+- Kategorienliste (server-owned, kanonische Reihenfolge) jetzt neun Codes:
+  `health`, `religious_or_philosophical_beliefs`, `trade_union_membership`,
+  `political_opinions`, `sexual_orientation`, `sex_life`, `biometric_data`,
+  `genetic_data`, `racial_or_ethnic_origin`.
+- Separate Checkbox bleibt **nicht vorausgewählt**; Zustimmungs-Button weiterhin
+  nur bei gesetzter Checkbox plus bestätigtem Notice-/Text-Gate. Widerruf-/
+  Löschrechte unverändert; Checkbox-Reset nach Widerruf (`206d26e`) bleibt.
+- Angepasst: `src/lib/applicationStorageConsent.ts` (v4, Hash, Text,
+  Historienkonstante, `sex_life`), `api/_lib/ris/consentText.mjs`
+  (Server-Identität v4 + neun Kategorien), Tests
+  (`storageConsent.test.ts`, `StorageConsentLive.test.tsx`),
+  `docs/DEPLOYMENT.md`.
+- RIS-Vertrag: `3ed915b` akzeptiert als Art.-9-Text derzeit nur die v3-Identität
+  (`EXTERNAL_TEXT_NOT_ART9`). Der RIS-Agent muss die v4-Version/-Hash als
+  Art.-9-fähigen Text registrieren und `sex_life` in die Kategorie-Allowlist
+  aufnehmen, bevor ein v4-Pilot-Grant akzeptiert wird.
+- Tests (real, lokal): `storageConsent.test.ts` + `StorageConsentLive.test.tsx`
+  = 2 Dateien / 17 Tests PASS; `ris-consents.test.mjs` + `ris-routing.test.mjs`
+  = 2 Dateien / 51 Tests PASS; `npm run build` PASS; `git diff --check` ohne
+  Ausgabe.
+- Kein Push, Merge, Deploy, keine Env-/Flag-/Secret-Änderung, keine
+  Notice-/`legalApprovalRef`-Änderung, keine RIS-Datei editiert. Keine
+  Rechtsfreigabe oder Live-Persistenz behauptet.
+
+## 2026-11-08 — JM-RIS-STORAGE-ONE-SHOT-05 — RIS-DEV plan STOP
+
+**Status:** `BLOCKED BEFORE APPLY — PLAN CONTAINS OUT-OF-SCOPE CHANGES`
+
+- Consent v4 remains `application-storage-consent-2026-11-07-v4` / SHA-256 `8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7`; notice remains DRAFT/no legalApprovalRef.
+- Saved RIS-DEV pre-plan SHA-256 `392d107478a391fe02a4527a28581cf115a8acfa2a71ce34b322b3260087393a`; state serial 42/lineage `9cec61e5-c036-1ad5-6ae4-8b48a50122a4`.
+- Expected agent Lambda update; unexpected health/reader filename updates, **SQS queue policy delete**, and Orders worker IAM boundary removal. STOP. No apply/deploy/push.
+- Report: `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-PLAN-STOP.md`.
+
+## 2026-11-08 — JM-RIS-STORAGE-ONE-SHOT-05 — FINAL PLAN (Jobsearch)
+
+**Status:** `RIS-DEV TERRAFORM PLAN CLEAN — READY FOR FINAL REVIEW` / `APPROVED FOR LIMITED BETA PILOT`
+
+- Operator approval: v4 `application-storage-consent-2026-11-07-v4`, SHA-256 `8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7`, date `2026-11-08`, body `Betreiberin May's Job Matcher`, ref `JM-APPLICATION-STORAGE-V4-PILOT-2026-11-08`; notice `APPROVED` (not ACTIVE), limited pilot only.
+- Final plan `/tmp/opencode/ris-dev-one-shot-05-v4-final.tfplan` SHA-256 `d9689931cab89181ec9262407b85dd37ec107f8ae5db32d1241163a6a0a6d532`; state serial 42/lineage `9cec61e5-c036-1ad5-6ae4-8b48a50122a4`; 272 no-op, 1 update (agent Lambda), 0 delete/replace.
+- Orders SQS policy/IAM boundary, health/reader, Cognito/CloudFront/DNS/ACM/DynamoDB/API routes NO-OP. Temporary Mays-Orders revision `c1dcca2`; explicit boundary variable.
+- No apply/deploy/push; no live persistence. GO required: `GO JM-RIS-STORAGE-ONE-SHOT-05 APPLY + DEPLOY + E2E`.
+
+## 2026-11-08 — JM-RIS-STORAGE-ONE-SHOT-05 — audit completeness addendum
+
+**Typ:** Documentation / Audit completeness (no new execution)
+**Status:** `APPROVED FOR LIMITED BETA PILOT — FINAL PLAN CLEAN, NOT APPLIED`
+
+Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
+
+- Bestätigt: v4 `application-storage-consent-2026-11-07-v4`, SHA-256
+  `8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7`;
+  Betreiberfreigabe vom `2026-11-08`, Stelle `Betreiberin May's Job Matcher`,
+  Referenz `JM-APPLICATION-STORAGE-V4-PILOT-2026-11-08`; RIS-Notice
+  `APPROVED` (**nicht** `ACTIVE`), ausschließlich Limited-Beta-Pilot.
+- Bestätigt: finaler RIS-DEV-Plan SHA-256
+  `d9689931cab89181ec9262407b85dd37ec107f8ae5db32d1241163a6a0a6d532`,
+  272 no-op / 1 update (Agent-Lambda) / 0 delete / 0 replace; der frühere
+  Plan-Stop (`392d10…`, SQS-Policy/IAM/Health-Reader-Drift) ist damit
+  überholt, nicht angewendet.
+- Offene Punkte (kein Fortschritts-Claim): (1) Apply des finalen Plans ist
+  **nicht** erfolgt, `GO JM-RIS-STORAGE-ONE-SHOT-05 APPLY + DEPLOY + E2E`
+  steht aus; (2) RIS-Bundle/Deployment und die Freigabe von v4 als
+  Art.-9-Text inkl. `sex_life` müssen im Zielsystem aktiv sein; (3) die
+  Jobsearch-Preview-Env (`RIS_CONSENT_TEXT_VERSION/_SHA256/_STATE`, Flags,
+  Allowlist) ist nicht gesetzt; (4) der Live-E2E (grant/write/reload/withdraw/
+  delete) wurde nicht ausgeführt, keine Live-Persistenz belegt; (5) Notice
+  bleibt `APPROVED`, nicht `ACTIVE`; keine allgemeine Verfügbarkeit und keine
+  Produktionsfreigabe über den begrenzten Pilot hinaus.
+- Kein Apply/Deploy/Push, keine Env-/Notice-/`legalApprovalRef`-Änderung durch
+  diesen Audit-Eintrag. Report:
+  `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-FINAL-PLAN.md`.
