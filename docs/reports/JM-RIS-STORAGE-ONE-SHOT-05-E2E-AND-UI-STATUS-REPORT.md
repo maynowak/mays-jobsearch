@@ -4,10 +4,12 @@
 
 `APPLICATIONV1 PRODUCTION E2E VERIFIED — SYNTHETIC DATA CLEANED`
 
-`UI STATUS FIX IMPLEMENTED LOCALLY — NOT DEPLOYED, RELEASE APPROVAL PENDING`
+`UI STATUS FIX RELEASED TO PRODUCTION — PRODUCTION SMOKE VERIFIED`
 
 No new infrastructure, no Terraform apply, no new consent version, no general
 rollout and no real applicant data were used.
+
+Release approval: `GO JM-RIS-STORAGE-ONE-SHOT-05 UI RELEASE` (2026-11-08).
 
 ## 1. Production targets
 
@@ -85,7 +87,7 @@ the limited pilot remains usable.
    not approved, although the server text state was `APPROVED`. The only
    missing action was the explicit Art. 9 check.
 
-## 5. UI status fix (local implementation)
+## 5. UI status fix (released implementation)
 
 ### Behaviour
 
@@ -143,11 +145,50 @@ the limited pilot remains usable.
 
 ### Release status
 
-The UI fix is committed locally only. It is **not deployed**; deployment
-requires a separate explicit release approval. No new consent text, no v5, no
-architecture change and no general rollout.
+The UI fix was released through PR #6 and is live. No new consent text, no v5,
+no architecture change and no general rollout.
 
-## 6. Cross-repository review
+## 6. Production release and smoke test
+
+| Item | Value |
+| --- | --- |
+| PR | `#6` — `fix(profile): align storage consent status with RIS` |
+| Head commit | `9f1ae4d17e23bb4bd7f554c0b645d8197fed0dc9` |
+| Merge commit | `09511989cc72d5625268a1fd3be7e366d77c8350` |
+| `mays-job-matcher` deployment | `dpl_8rGdfH7yXiExiEWsgTRGSc7XBr3T` (READY, production, `www` alias) |
+| `mays-job-matcher` production URL | `https://www.mays-job-matcher.app` |
+| `mays-jobsearch` production deployment | `dpl_LK9t9ikfH2ERDit1M3Z8NprFz4u4` (READY; auto-deployed from merge `0951198`) |
+| Deployed footer | `Version 2.2.0 · production · main · 0951198` |
+| Previous known-good frontend | `dpl_FtVGZeNwHpNCesWY5fWJKLH6Dyji` (rollback target, not needed) |
+
+Checks and tests:
+
+- GitHub checks: CodeQL PASS, Vercel previews PASS, Vercel deployments PASS.
+- PR state before merge: `CLEAN` / `MERGEABLE`.
+- Clean install (`/tmp/opencode/jobsearch-release-check`): focused suites
+  **7 files / 38 tests PASS**; serial full suite **153 files / 1599 tests
+  PASS**, 5 skipped; production build PASS.
+- No RIS/AWS/Terraform/Orders/consent-version change.
+
+Production smoke with the existing operator account (`iss`/`sub` verified):
+
+- Applications: remote RIS notice present; ownership text corrected
+  (`Daten bleiben deinem Konto zugeordnet; RIS ist der Speicherdienst`); BFF
+  `GET /api/ris/applications` = 200, count 0.
+- Settings: `Aktiv`, application storage `Freigegeben`,
+  `Status: erteilt (Textversion 1.0)`, Art. 9 proof visible; no `Vorbereitung`
+  and no `backend_unavailable`.
+- Overview: server-backed card active; 5/5 repeated loads showed `Aktiv` and no
+  `Vorbereitung`; consent BFF 200 `GRANTED`/`APPROVED`.
+- CV: `Nur Session`.
+- Search profiles: `Nur diese Sitzung`.
+- Public smoke: `www` 200, `/datenschutz` 200, unauthenticated
+  `/api/ris/consents` and `/api/ris/applications` = 401.
+- One immediate first overview load showed `Status nicht verfügbar` (transient
+  upstream 503); five consecutive reloads were `Aktiv`, and the BFF returned
+  200. No persistent frontend failure observed.
+
+## 7. Cross-repository review
 
 - The Jobsearch UI consumes only the existing RIS consent contract
   (`GET/POST /consents`, status, notice state, external text version/hash,
@@ -159,10 +200,10 @@ architecture change and no general rollout.
 - No RIS code, Terraform, state, notice, environment or deployment was changed
   by this UI fix.
 
-## 7. Remaining open points
+## 8. Remaining open points
 
 - Full account deletion / ApplicationV1 account erasure.
 - Final consent-history retention period.
 - DPA/transfer review for AWS/Vercel.
-- Explicit release approval for the UI fix deployment.
 - General rollout approval beyond the confirmed operator limited pilot.
+- Next task: `JM-RIS-CV-STORAGE-INTEGRATION-01`.

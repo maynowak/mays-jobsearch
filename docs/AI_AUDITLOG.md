@@ -4452,3 +4452,42 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   general rollout, no UI deployment. Release of the UI fix requires separate
   explicit approval. Report:
   `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-E2E-AND-UI-STATUS-REPORT.md`.
+
+## 2026-11-08 — JM-RIS-STORAGE-ONE-SHOT-05 — UI release / production verified
+
+**Typ:** Release / Production smoke / Audit
+**Status:** `UI STATUS FIX RELEASED TO PRODUCTION — PRODUCTION SMOKE VERIFIED`
+
+- Explicit release approval: `GO JM-RIS-STORAGE-ONE-SHOT-05 UI RELEASE`.
+  Scope limited to May's Job Matcher Production; no RIS/AWS/Terraform/Orders
+  or consent-version change.
+- Pre-release checks: commits and auditlogs reviewed; secret scan clean;
+  PR #6 head `9f1ae4d17e23bb4bd7f554c0b645d8197fed0dc9`.
+- Clean-install recheck in a fresh detached worktree with own `node_modules`
+  (`npm ci`): the nine worktree failures reduced to parallel timing flakes;
+  failing files passed isolated 12/12; serial full suite
+  (`npm test -- --run --maxWorkers=1`) = **153 files passed / 3 skipped,
+  1599 tests passed / 5 skipped, 0 failed**. Focused suites 7 files / 38 tests
+  PASS; production build PASS. No product-code failure found.
+- PR #6 checks: CodeQL PASS, Vercel preview/deployment checks PASS; state was
+  `CLEAN`/`MERGEABLE` before merge.
+- Merge: `09511989cc72d5625268a1fd3be7e366d77c8350`.
+- Production deployment: `mays-job-matcher`
+  `dpl_8rGdfH7yXiExiEWsgTRGSc7XBr3T`, READY, aliases include
+  `https://www.mays-job-matcher.app`; footer
+  `Version 2.2.0 · production · main · 0951198`. Secondary
+  `mays-jobsearch` production `dpl_LK9t9ikfH2ERDit1M3Z8NprFz4u4`, READY,
+  auto-deployed from the merge, same footer `0951198`. Previous known-good
+  frontend `dpl_FtVGZeNwHpNCesWY5fWJKLH6Dyji` was not needed for rollback.
+- Production smoke with the existing operator account (issuer/subject
+  verified; no tokens logged): applications remote notice present and ownership
+  corrected; settings `Aktiv`/`Freigegeben`/`Status: erteilt`, Art. 9 proof
+  present; overview server-backed `Aktiv`, no `Vorbereitung`, 5/5 repeated
+  loads active; CV `Nur Session`; search profiles `Nur diese Sitzung`; BFF
+  consent 200 `GRANTED`/`APPROVED`; applications 200 count 0; public site and
+  `/datenschutz` 200; unauthenticated RIS BFF endpoints 401.
+- One immediate first overview load showed `Status nicht verfügbar` from a
+  transient upstream 503; five consecutive reloads and the BFF returned 200.
+  No persistent frontend failure was observed.
+- Next task: `JM-RIS-CV-STORAGE-INTEGRATION-01`. Report:
+  `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-E2E-AND-UI-STATUS-REPORT.md`.
