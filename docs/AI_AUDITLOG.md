@@ -4367,3 +4367,33 @@ Ergänzung zu den bestehenden v3-Einträgen; keine Duplikation, kein neuer Code:
 - Final plan `/tmp/opencode/ris-dev-one-shot-05-v4-final.tfplan` SHA-256 `d9689931cab89181ec9262407b85dd37ec107f8ae5db32d1241163a6a0a6d532`; state serial 42/lineage `9cec61e5-c036-1ad5-6ae4-8b48a50122a4`; 272 no-op, 1 update (agent Lambda), 0 delete/replace.
 - Orders SQS policy/IAM boundary, health/reader, Cognito/CloudFront/DNS/ACM/DynamoDB/API routes NO-OP. Temporary Mays-Orders revision `c1dcca2`; explicit boundary variable.
 - No apply/deploy/push; no live persistence. GO required: `GO JM-RIS-STORAGE-ONE-SHOT-05 APPLY + DEPLOY + E2E`.
+
+## 2026-11-08 — JM-RIS-STORAGE-ONE-SHOT-05 — audit completeness addendum
+
+**Typ:** Documentation / Audit completeness (no new execution)
+**Status:** `APPROVED FOR LIMITED BETA PILOT — FINAL PLAN CLEAN, NOT APPLIED`
+
+Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
+
+- Bestätigt: v4 `application-storage-consent-2026-11-07-v4`, SHA-256
+  `8722aed9fa78e5ee49c2b5e5a031bfd53a7109bf625dfb0e0c99743fd82443c7`;
+  Betreiberfreigabe vom `2026-11-08`, Stelle `Betreiberin May's Job Matcher`,
+  Referenz `JM-APPLICATION-STORAGE-V4-PILOT-2026-11-08`; RIS-Notice
+  `APPROVED` (**nicht** `ACTIVE`), ausschließlich Limited-Beta-Pilot.
+- Bestätigt: finaler RIS-DEV-Plan SHA-256
+  `d9689931cab89181ec9262407b85dd37ec107f8ae5db32d1241163a6a0a6d532`,
+  272 no-op / 1 update (Agent-Lambda) / 0 delete / 0 replace; der frühere
+  Plan-Stop (`392d10…`, SQS-Policy/IAM/Health-Reader-Drift) ist damit
+  überholt, nicht angewendet.
+- Offene Punkte (kein Fortschritts-Claim): (1) Apply des finalen Plans ist
+  **nicht** erfolgt, `GO JM-RIS-STORAGE-ONE-SHOT-05 APPLY + DEPLOY + E2E`
+  steht aus; (2) RIS-Bundle/Deployment und die Freigabe von v4 als
+  Art.-9-Text inkl. `sex_life` müssen im Zielsystem aktiv sein; (3) die
+  Jobsearch-Preview-Env (`RIS_CONSENT_TEXT_VERSION/_SHA256/_STATE`, Flags,
+  Allowlist) ist nicht gesetzt; (4) der Live-E2E (grant/write/reload/withdraw/
+  delete) wurde nicht ausgeführt, keine Live-Persistenz belegt; (5) Notice
+  bleibt `APPROVED`, nicht `ACTIVE`; keine allgemeine Verfügbarkeit und keine
+  Produktionsfreigabe über den begrenzten Pilot hinaus.
+- Kein Apply/Deploy/Push, keine Env-/Notice-/`legalApprovalRef`-Änderung durch
+  diesen Audit-Eintrag. Report:
+  `docs/reports/JM-RIS-STORAGE-ONE-SHOT-05-FINAL-PLAN.md`.
