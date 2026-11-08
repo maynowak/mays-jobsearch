@@ -4621,3 +4621,15 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   No push/deploy after rollback. Production E2E not executed; no
   `PRODUCTION VERIFIED` claim. Report:
   `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`.
+
+## 2026-11-08 — JM-RIS-CV-STORAGE-INTEGRATION-01 — durable CV capacity alignment
+
+**Typ:** Fix / Contract alignment / Audit
+**Status:** `LOCAL ALIGNED — NOT DEPLOYED`
+
+- Jobsearch reports define **10 CVs per user**; RIS `MAX_CVS_PER_USER` is already 10.
+- Added Jobsearch `MAX_PERSISTENT_CVS = 10` and enforced it in the persistent CV
+  UI and upload hook: upload is disabled at 10, with an explanatory capacity
+  message. The RIS server capacity remains the authoritative atomic guard.
+- Tests: persistent CV list + hook **7/7 PASS**; production build PASS.
+- No deployment, AWS/Terraform/Vercel change, consent change or new version.

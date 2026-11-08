@@ -6,6 +6,8 @@
  * the actual PDF bytes never pass through the BFF.
  */
 
+export const MAX_PERSISTENT_CVS = 10;
+
 export type CvProcessingStatus = "pending" | "ready" | "failed" | "deleted";
 export type CvConsentStatus = "NOT_GRANTED" | "GRANTED" | "WITHDRAWN";
 

@@ -117,6 +117,15 @@ describe("PersistentCvList", () => {
     expect(onUpload).not.toHaveBeenCalled();
   });
 
+  it("aligns the durable CV capacity with the Jobsearch limit of 10", () => {
+    const documents = Array.from({ length: 10 }, (_, index) =>
+      cv({ cvId: `cv-${index}`, filename: `Lebenslauf-${index}.pdf` })
+    );
+    renderList({ documents });
+    expect(screen.getByText(/Maximal 10 dauerhaft gespeicherte Lebensläufe/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Lebenslauf dauerhaft hochladen" })).toBeDisabled();
+  });
+
   it("disables download until the upload is ready", () => {
     renderList({ documents: [cv({ processingStatus: "pending", sizeBytes: undefined })] });
     expect(screen.getByText("Upload ausstehend")).toBeInTheDocument();

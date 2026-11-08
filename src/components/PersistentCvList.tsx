@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import { fileSizeLocale, formatFileSize } from "../lib/fileSize";
 import { validateCvFile } from "../lib/cvFileValidation";
-import type { CvConsentState, PersistentCv } from "../lib/cvStorageApi";
+import { MAX_PERSISTENT_CVS, type CvConsentState, type PersistentCv } from "../lib/cvStorageApi";
 
 interface Props {
   documents: PersistentCv[];
@@ -40,6 +40,7 @@ export default function PersistentCvList({
   const [localError, setLocalError] = useState<string | null>(null);
   const status = consent?.consent?.status ?? "NOT_GRANTED";
   const consentGranted = status === "GRANTED";
+  const atCapacity = documents.length >= MAX_PERSISTENT_CVS;
 
   useEffect(() => {
     if (status !== "GRANTED") setArt9(false);
@@ -65,6 +66,10 @@ export default function PersistentCvList({
     }
     if (!consentGranted) {
       setLocalError(t("cvStorage.consentRequired"));
+      return;
+    }
+    if (atCapacity) {
+      setLocalError(t("cvStorage.capacityReached", { max: MAX_PERSISTENT_CVS }));
       return;
     }
     await onUpload(file);
@@ -141,7 +146,7 @@ export default function PersistentCvList({
           type="file"
           accept="application/pdf,.pdf"
           onChange={handleFileSelect}
-          disabled={busy || !consentGranted}
+          disabled={busy || !consentGranted || atCapacity}
           className="visually-hidden"
         />
       </div>
@@ -152,11 +157,15 @@ export default function PersistentCvList({
             type="button"
             className="cv-file-input-label"
             onClick={() => inputRef.current?.click()}
-            disabled={busy}
+            disabled={busy || atCapacity}
           >
             <span className="cv-file-input-label__text">{t("cvStorage.upload")}</span>
           </button>
-          <p className="field-hint">{t("cvStorage.uploadHint")}</p>
+          <p className="field-hint">
+            {atCapacity
+              ? t("cvStorage.capacityReached", { max: MAX_PERSISTENT_CVS })
+              : t("cvStorage.uploadHint")}
+          </p>
         </div>
       )}
 

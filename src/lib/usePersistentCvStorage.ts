@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CvStorageApiError,
+  MAX_PERSISTENT_CVS,
   completeCvUpload,
   createCvDocument,
   deleteCvDocument,
@@ -121,6 +122,10 @@ export function usePersistentCvStorage(
       setError("Bitte erteile zuerst die CV-Speicherfreigabe.");
       return false;
     }
+    if (documents.length >= MAX_PERSISTENT_CVS) {
+      setError(`Maximal ${MAX_PERSISTENT_CVS} dauerhaft gespeicherte Lebensläufe sind erlaubt.`);
+      return false;
+    }
     setBusy(true);
     setError(null);
     setNotice(`„${file.name}“ wird dauerhaft gespeichert …`);
@@ -143,7 +148,7 @@ export function usePersistentCvStorage(
     } finally {
       setBusy(false);
     }
-  }, [consent?.consent?.status, enabled, refresh, token]);
+  }, [consent?.consent?.status, documents.length, enabled, refresh, token]);
 
   const download = useCallback(async (cvId: string): Promise<void> => {
     if (!enabled || !token) return;
