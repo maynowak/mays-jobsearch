@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  defaultProfileStorageChoice,
   isDurableAtsParentValid,
   profileStorageUnavailableReason,
 } from "./cvDerivedProfileStorage";
@@ -12,6 +13,12 @@ describe("derived profile storage guards", () => {
   it("requires the separate search-profile consent", () => {
     expect(profileStorageUnavailableReason("cv-1", false)).toBe("consent");
     expect(profileStorageUnavailableReason("cv-1", true)).toBeNull();
+  });
+
+  it("defaults a durable source CV to durable profiles only when consent is active", () => {
+    expect(defaultProfileStorageChoice(undefined, true)).toBe("session");
+    expect(defaultProfileStorageChoice("cv-1", false)).toBe("session");
+    expect(defaultProfileStorageChoice("cv-1", true)).toBe("persistent");
   });
 
   it("rejects an ATS parent that is not a durable profile of this CV", () => {

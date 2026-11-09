@@ -5209,3 +5209,24 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Authenticated synthetic RIS E2E was not executed (no approved test account in
   this run) and is not claimed. No RIS/AWS/Terraform/consent-text change, no real
   user data.
+
+## 2026-11-09 — JM-RIS-CV-PROFILE-DEFAULT-DURABLE-01
+
+**Typ:** Default-storage correction / stored-CV derived profiles
+**Status:** `IMPLEMENTED — VERIFIED LOCAL`
+
+- Branch `fix/jm-ris-cv-profile-default-durable-01`, commit `b52f3f4`.
+- Corrected understanding: durable APIs and `risCvId` were already correct; the
+  profiles disappeared after logout because **session** was preselected for a
+  durable source CV.
+- Fix: a processed CV with valid `risCvId` and `GRANTED`
+  `search-profile-storage` consent now defaults to **Dauerhaft in meinem
+  RIS-Konto**. Session is still explicitly selectable; no silent migration.
+- Missing consent can now be granted directly in the storage-choice mask; on
+  success durable is selected. Session-only CVs remain session default.
+- After durable save, the matching stored-CV profile view opens and reloads
+  from RIS (one-shot focus).
+- Verification: 7 new/updated tests; serial full suite 1675 passed, 5 skipped;
+  build PASS.
+- No RIS/AWS/Terraform/consent-text change; no real data. Auth synthetic RIS
+  E2E remains deployment-time.

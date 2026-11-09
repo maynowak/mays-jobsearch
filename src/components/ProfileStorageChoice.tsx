@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { useLang } from '../i18n';
 
 export type ProfileStorageChoiceValue = 'session' | 'persistent';
@@ -9,6 +9,8 @@ interface ProfileStorageChoiceProps {
   persistentAvailable: boolean;
   persistentUnavailableReason?: string;
   disabled?: boolean;
+  canEnablePersistent?: boolean;
+  onEnablePersistent?: () => Promise<void>;
 }
 
 /**
@@ -22,9 +24,27 @@ export default function ProfileStorageChoice({
   persistentAvailable,
   persistentUnavailableReason,
   disabled = false,
+  canEnablePersistent = false,
+  onEnablePersistent,
 }: ProfileStorageChoiceProps) {
   const { t } = useLang();
   const name = useId();
+  const [enableBusy, setEnableBusy] = useState(false);
+  const [enableError, setEnableError] = useState<string | null>(null);
+
+  const enablePersistent = async () => {
+    if (!onEnablePersistent) return;
+    setEnableBusy(true);
+    setEnableError(null);
+    try {
+      await onEnablePersistent();
+      onChange('persistent');
+    } catch {
+      setEnableError(t('profileStorage.enableError'));
+    } finally {
+      setEnableBusy(false);
+    }
+  };
 
   return (
     <fieldset className="profile-storage-choice" disabled={disabled}>
@@ -63,6 +83,17 @@ export default function ProfileStorageChoice({
           </span>
         </label>
       </div>
+      {!persistentAvailable && canEnablePersistent && onEnablePersistent && (
+        <button
+          type="button"
+          className="btn-ghost profile-storage-choice__enable"
+          onClick={() => { void enablePersistent(); }}
+          disabled={disabled || enableBusy}
+        >
+          {enableBusy ? t('profileStorage.enabling') : t('profileStorage.enableAction')}
+        </button>
+      )}
+      {enableError && <p className="field-error" role="alert">{enableError}</p>}
       <p className="profile-storage-choice__may">{t('profileStorage.mayHint')}</p>
     </fieldset>
   );

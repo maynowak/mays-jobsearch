@@ -113,7 +113,7 @@ import {
 import type { SessionProfileRepositories } from "./lib/profiles/repositoryTypes";
 import type { CreateManualSearchProfileInputV1, CVSearchProfileV1 } from "./lib/profiles/contractTypes";
 import { profileToSearchConfiguration } from "./lib/profiles/profileMappers";
-import { isDurableAtsParentValid, profileStorageUnavailableReason } from "./lib/cvDerivedProfileStorage";
+import { defaultProfileStorageChoice, isDurableAtsParentValid, profileStorageUnavailableReason } from "./lib/cvDerivedProfileStorage";
 import { useAuth } from "react-oidc-context";
 import { deriveAuthProfileKey, isVerifiedAuthProfileKey } from "./lib/authIdentity";
 
@@ -430,6 +430,7 @@ export default function App() {
       setDurableSearchProfilesError(null);
       setDurableParentSearchProfileId("");
       setPersistentProfilesFocusCvId(null);
+      profileStorageChoiceTouchedRef.current = false;
       profileSaveOperationRef.current = null;
       setProfileSaveBusy(false);
       cvStorageAutoSelectedRef.current = false;
@@ -507,6 +508,7 @@ export default function App() {
   const [persistentProfilesFocusCvId, setPersistentProfilesFocusCvId] = useState<string | null>(null);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const profileSaveOperationRef = useRef<object | null>(null);
+  const profileStorageChoiceTouchedRef = useRef(false);
   const selectedCvDocumentId = cvState.selectedDocumentIds[0] ?? null;
   const activeCvDocument = selectedCvDocumentId
     ? cvState.documents.find((document) => document.id === selectedCvDocumentId) ?? null
@@ -524,9 +526,24 @@ export default function App() {
     setDurableSearchProfilesError(null);
     setDurableParentSearchProfileId("");
     setPersistentProfilesFocusCvId(null);
+    profileStorageChoiceTouchedRef.current = false;
     profileSaveOperationRef.current = null;
     setProfileSaveBusy(false);
   }, [selectedCvDocumentId]);
+
+  useEffect(() => {
+    if (cvState.step !== "profile-ready" || profileStorageChoiceTouchedRef.current) return;
+    setProfileStorageChoice(defaultProfileStorageChoice(
+      activeCvDocument?.risCvId,
+      persistentSearchProfiles.active
+    ));
+  }, [activeCvDocument?.risCvId, cvState.step, persistentSearchProfiles.active]);
+
+  const handleProfileStorageChoiceChange = (value: ProfileStorageChoiceValue) => {
+    profileStorageChoiceTouchedRef.current = true;
+    setProfileStorageChoice(value);
+  };
+
 
   useEffect(() => {
     if (cvState.step !== "skill-selection" || cvState.processingGoal !== "ats" ||
@@ -2844,11 +2861,15 @@ export default function App() {
           loadingLabel={t("cv.savingProfile")}
           error={cvProfileSaveError}
           storageChoice={profileStorageChoice}
-          onStorageChoiceChange={setProfileStorageChoice}
+          onStorageChoiceChange={handleProfileStorageChoiceChange}
           persistentAvailable={profileStorageAvailable}
           persistentUnavailableReason={profileStorageReason === "durable-cv"
             ? t("profileStorage.durableCvRequired")
             : t("profileStorage.consentRequired")}
+          canEnablePersistent={Boolean(activeCvDocument?.risCvId) &&
+            persistentSearchProfiles.available &&
+            persistentSearchProfiles.consent?.grantAllowed === true}
+          onEnablePersistent={async () => { await persistentSearchProfiles.grantConsent(); }}
           // CV-PROFILE-LISTS-03/05 + CV-UPLOAD-UX-08: im Edit-Modus der
           // bestehende Name; sonst Vorschlag "<Zielrolle> - Profil<n>"
           defaultName={
@@ -3035,13 +3056,17 @@ export default function App() {
             <>
               <ProfileStorageChoice
                 value={profileStorageChoice}
-                onChange={setProfileStorageChoice}
+                onChange={handleProfileStorageChoiceChange}
                 persistentAvailable={profileStorageAvailable}
                 persistentUnavailableReason={
                   profileStorageReason === "durable-cv"
                     ? t("profileStorage.durableCvRequired")
                     : t("profileStorage.consentRequired")
                 }
+                canEnablePersistent={Boolean(activeCvDocument?.risCvId) &&
+                  persistentSearchProfiles.available &&
+                  persistentSearchProfiles.consent?.grantAllowed === true}
+                onEnablePersistent={async () => { await persistentSearchProfiles.grantConsent(); }}
                 disabled={cvState.isProcessing}
               />
               {profileStorageChoice === "persistent" && (

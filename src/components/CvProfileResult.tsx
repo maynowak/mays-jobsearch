@@ -24,6 +24,8 @@ interface Props {
   onStorageChoiceChange?: (value: ProfileStorageChoiceValue) => void;
   persistentAvailable?: boolean;
   persistentUnavailableReason?: string;
+  canEnablePersistent?: boolean;
+  onEnablePersistent?: () => Promise<void>;
 }
 
 export default function CvProfileResult({
@@ -38,6 +40,8 @@ export default function CvProfileResult({
   onStorageChoiceChange,
   persistentAvailable = false,
   persistentUnavailableReason,
+  canEnablePersistent = false,
+  onEnablePersistent,
 }: Props) {
   const { t } = useLang();
   const [parsedSkills, setParsedSkills] = useState<string[]>(() => suggested.skills);
@@ -244,6 +248,8 @@ export default function CvProfileResult({
           onChange={onStorageChoiceChange}
           persistentAvailable={persistentAvailable}
           persistentUnavailableReason={persistentUnavailableReason}
+          canEnablePersistent={canEnablePersistent}
+          onEnablePersistent={onEnablePersistent}
           disabled={busy}
         />
       )}
