@@ -4994,7 +4994,7 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 ## 2026-11-09 — JM-UX-NAV-HELP-01
 
 **Typ:** UX / navigation / durable-CV handoff / reusable help
-**Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
+**Status:** `PR #13 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
 
 - Branch `feature/jm-ux-nav-help-01`, feature commit `5ddf5f1`, hardening
   commit `b8be2cd`. Navigation
@@ -5048,7 +5048,7 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 ## 2026-11-09 — JM-RIS-CV-DERIVED-PROFILE-STORAGE-01
 
 **Typ:** CV-derived profile storage / consent / session isolation
-**Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
+**Status:** `PR #13 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
 
 - Branch `feature/jm-ris-cv-derived-profile-storage-01`, commit `cef8b7e`,
   lifecycle hardening `796c348`.
@@ -5126,7 +5126,7 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 ## 2026-11-09 — JM-RIS-CV-PERSISTENT-PROFILES-01
 
 **Typ:** Bug fix / stored-CV profile reachability
-**Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
+**Status:** `PR #13 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
 
 - Branch `fix/jm-ris-cv-persistent-profiles-01`, commit `770a96f`.
 - Root cause: persistent CV rows showed **Suchprofile** only when
@@ -5139,5 +5139,9 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   stored CV’s durable search/ATS profiles.
 - Verification: 2 overlay tests + 1 stored-CV reachability test PASS; serial
   full suite 1670 passed, 5 skipped; build PASS.
-- No RIS/AWS/Terraform or consent-text change; no real data; no push/merge/
-  deploy. Authenticated live RIS write/reload remains deployment-time.
+- PR #13 opened: https://github.com/maynowak/mays-jobsearch/pull/13
+  (preview https://mays-job-matcher-git-fix-jm-ris-cv-persistent-p-d4a1e0-maymilly.vercel.app).
+  Preview has search-profile storage disabled (`503`), so only the unavailable
+  state is testable there. No RIS/AWS/Terraform or consent-text change; no real
+  data; no merge/deploy. Authenticated live RIS write/reload remains
+  deployment-time.

@@ -1,9 +1,11 @@
 # JM-RIS-CV-PERSISTENT-PROFILES-01
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL — NO PUSH, MERGE OR DEPLOY`
+**Status:** `PR #13 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
 **Branch:** `fix/jm-ris-cv-persistent-profiles-01`
 **Base:** `6d0a719` (production)
 **Commit:** `770a96f`
+**PR:** https://github.com/maynowak/mays-jobsearch/pull/13
+**Preview:** https://mays-job-matcher-git-fix-jm-ris-cv-persistent-p-d4a1e0-maymilly.vercel.app
 
 ## Root cause
 
@@ -44,6 +46,13 @@ the user the missing consent action in context.
 | Stored-CV reachability test | **1 PASS** |
 | Full suite, serial | **1670 PASS**, 5 skipped |
 | Production build | **PASS** |
+
+## Preview note
+
+The Preview environment currently returns
+`503 search_profile_storage_disabled` for the search-profile APIs. The stored-CV
+entry is therefore visible, but the consent/grant flow can only be exercised in
+the configured RIS production environment.
 
 ## Boundaries
 
