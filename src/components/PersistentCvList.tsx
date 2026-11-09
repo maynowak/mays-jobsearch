@@ -17,6 +17,7 @@ interface Props {
   onDelete: (cvId: string) => Promise<boolean>;
   onGrantConsent: () => Promise<boolean>;
   onWithdrawConsent: () => Promise<boolean>;
+  onProcess?: (cv: PersistentCv) => Promise<void>;
   onManageProfiles?: (cvId: string) => void;
 }
 
@@ -33,6 +34,7 @@ export default function PersistentCvList({
   onDelete,
   onGrantConsent,
   onWithdrawConsent,
+  onProcess,
   onManageProfiles,
 }: Props) {
   const { t, lang } = useLang();
@@ -40,6 +42,9 @@ export default function PersistentCvList({
   const [art9, setArt9] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processedId, setProcessedId] = useState<string | null>(null);
+  const [processError, setProcessError] = useState<{ cvId: string; message: string } | null>(null);
   const status = consent?.consent?.status ?? "NOT_GRANTED";
   const consentGranted = status === "GRANTED";
   const atCapacity = documents.length >= MAX_PERSISTENT_CVS;
@@ -47,6 +52,36 @@ export default function PersistentCvList({
   useEffect(() => {
     if (status !== "GRANTED") setArt9(false);
   }, [status]);
+
+  useEffect(() => {
+    if (processingId && !documents.some((document) => document.cvId === processingId)) {
+      setProcessingId(null);
+    }
+    if (processedId && !documents.some((document) => document.cvId === processedId)) {
+      setProcessedId(null);
+    }
+    if (processError && !documents.some((document) => document.cvId === processError.cvId)) {
+      setProcessError(null);
+    }
+  }, [documents, processedId, processError, processingId]);
+
+  const processDocument = async (cv: PersistentCv) => {
+    if (!onProcess || processingId || cv.processingStatus !== "ready") return;
+    setProcessedId(null);
+    setProcessError(null);
+    setProcessingId(cv.cvId);
+    try {
+      await onProcess(cv);
+      setProcessedId(cv.cvId);
+    } catch (err) {
+      setProcessError({
+        cvId: cv.cvId,
+        message: err instanceof Error && err.message ? err.message : t("cvStorage.processError"),
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -191,6 +226,18 @@ export default function PersistentCvList({
                 </div>
               </div>
               <div className="cv-document-list__actions">
+                {onProcess && (
+                  <button
+                    type="button"
+                    className="cv-process-btn"
+                    disabled={busy || processingId !== null || !consentGranted || cv.processingStatus !== "ready"}
+                    aria-label={`${t("cvStorage.process")} ${cv.filename}`}
+                    aria-busy={processingId === cv.cvId || undefined}
+                    onClick={() => { void processDocument(cv); }}
+                  >
+                    {processingId === cv.cvId ? t("cvStorage.processing") : t("cvStorage.process")}
+                  </button>
+                )}
                 {onManageProfiles && (
                   <button
                     type="button"
@@ -241,6 +288,30 @@ export default function PersistentCvList({
             </li>
           ))}
         </ul>
+      )}
+      {processedId && (
+        <p className="field-hint cv-storage-process-status" role="status">
+          {t("cvStorage.processSuccess")}
+        </p>
+      )}
+      {processError && (
+        <div className="cv-storage-process-status" role="alert">
+          <p className="alert alert-error">{processError.message}</p>
+          <button
+            type="button"
+            className="btn-ghost"
+            disabled={processingId !== null}
+            onClick={() => {
+              const cv = documents.find((document) => document.cvId === processError.cvId);
+              if (cv) void processDocument(cv);
+            }}
+          >
+            {t("cvStorage.processRetry")}
+          </button>
+        </div>
+      )}
+      {!consentGranted && documents.some((cv) => cv.processingStatus === "ready") && (
+        <p className="field-hint">{t("cvStorage.processConsentRequired")}</p>
       )}
       {removeId && (
         <p className="field-hint" role="alertdialog" aria-label={t("cvStorage.delete")}>

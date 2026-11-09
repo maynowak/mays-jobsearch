@@ -11815,3 +11815,274 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .cv-storage-persistent .cv-document-list__actions {
   flex-wrap: wrap;
 }
+
+/* JM-UX-NAV-HELP-01: shared shell widths and active navigation states. */
+.nav-inner {
+  width: min(1180px, 94vw);
+  max-width: 1180px;
+  padding-inline: clamp(12px, 2vw, 20px);
+}
+
+.navbar-glass .nav-inner {
+  width: min(1180px, 94vw);
+}
+
+.nav-links {
+  gap: clamp(0.75rem, 1.6vw, 1.25rem);
+}
+
+.nav-links a,
+.mobile-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.nav-links a {
+  position: relative;
+}
+
+.nav-links a.nav-link-active,
+.nav-links a[aria-current="page"],
+.mobile-link.nav-link-active,
+.mobile-link[aria-current="page"] {
+  color: var(--accent-strong, var(--accent));
+}
+
+.nav-links a.nav-link-active::after,
+.nav-links a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.mobile-link.nav-link-active,
+.mobile-link[aria-current="page"] {
+  border-bottom-color: var(--accent);
+}
+
+.dashboard-v2__mobile-nav {
+  display: none;
+}
+
+.dashboard-v2__may {
+  margin: 0 0 var(--space-5);
+}
+
+.may-help {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 45%),
+    color-mix(in srgb, var(--surface) 88%, var(--accent));
+  color: var(--text);
+  box-shadow: var(--shadow-sm, 0 4px 14px rgba(15, 23, 42, 0.06));
+}
+
+.may-help--compact {
+  padding: var(--space-3) var(--space-4);
+}
+
+.may-help__avatar {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), var(--accent));
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+.may-help__body {
+  min-width: 0;
+}
+
+.may-help__eyebrow {
+  margin: 0;
+  color: var(--accent-strong, var(--accent));
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.may-help__title {
+  margin: 2px 0 0;
+  color: var(--text);
+  font-size: var(--text-lg);
+  line-height: 1.3;
+}
+
+.may-help__text {
+  max-width: 78ch;
+  margin: var(--space-1) 0 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+.dashboard-v2__navigation-card {
+  position: sticky;
+  top: calc(var(--navbar-height, 60px) + var(--space-4));
+  align-self: start;
+}
+
+.ui-dashboard-navigation {
+  max-height: calc(100dvh - var(--navbar-height, 60px) - 96px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 2px;
+}
+
+.aurora-sidebar-item {
+  min-height: 44px;
+  border: 1px solid transparent;
+}
+
+.aurora-sidebar-item.aurora-sidebar-active {
+  border-color: color-mix(in srgb, var(--accent) 44%, var(--border));
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  box-shadow: inset 3px 0 0 var(--accent);
+  font-weight: 700;
+}
+
+.aurora-sidebar-item:focus-within {
+  border-color: var(--accent);
+}
+
+.ui-dashboard-navigation__button {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+}
+
+.ui-dashboard-navigation__button:focus-visible {
+  outline-offset: 1px;
+}
+
+.dashboard-section-switcher {
+  display: grid;
+  gap: 4px;
+}
+
+.dashboard-section-switcher__label {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-section-switcher select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+}
+
+.dashboard-section-switcher select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cv-storage-process-status {
+  margin: 10px 0 0;
+}
+
+.cv-storage-process-status .alert {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 767px) {
+  .dashboard-v2__navigation-card {
+    display: none;
+  }
+
+  .dashboard-v2__mobile-nav {
+    display: block;
+    margin: 0 0 var(--space-4);
+  }
+
+  .dashboard-v2__may {
+    margin-bottom: var(--space-4);
+  }
+
+  .may-help {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .may-help__avatar {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .ui-dashboard-navigation {
+    max-height: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-dashboard-navigation {
+    scroll-behavior: auto;
+  }
+}
+
+
+/* JM-UX-NAV-HELP-01: tablet portrait uses the compact menu so brand, language
+   and links never overlap between 768 and 900px. */
+@media (min-width: 768px) and (max-width: 900px) {
+  .navbar:not(.scrolled) .nav-links,
+  .navbar.scrolled .nav-links,
+  .navbar .nav-center,
+  .navbar .nav-lang,
+  .navbar .nav-right {
+    display: none;
+  }
+
+  .navbar-title-left {
+    max-width: calc(100% - 64px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .burger {
+    display: flex;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+  }
+}
+
+/* JM-UX-NAV-HELP-01: keep login and language controls at the same 44px touch
+   target as the navigation links on every viewport. */
+.nav-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.lang-toggle button {
+  min-height: 44px;
+}

@@ -122,3 +122,15 @@ describe("TOP-MENU-02: Navbar Glass-Look auf Suchmaske und Auth-Seiten", () => {
     expect(within(lang).getByRole("button", { name: "DE" })).toBeTruthy();
   });
 });
+
+describe('JM-UX-NAV-HELP-01: shared active navigation state', () => {
+  it('marks the current top-level search route as active', () => {
+    renderNavbar('matcher', '/search');
+    const search = screen.getByRole('link', { name: 'Suche' });
+    expect(search).toHaveAttribute('aria-current', 'page');
+    expect(search).toHaveClass('nav-link-active');
+    const alerts = screen.getByRole('link', { name: 'Benachrichtigungen' });
+    expect(alerts).not.toHaveAttribute('aria-current');
+    expect(alerts).not.toHaveClass('nav-link-active');
+  });
+});

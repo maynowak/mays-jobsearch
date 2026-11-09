@@ -98,6 +98,24 @@ describe('MAYS-UI-S2: Aurora dashboard preview', () => {
 
     expect(screen.getAllByText('-')).toHaveLength(3);
   });
+
+  it('offers a compact mobile section switcher for the same sections', () => {
+    render(
+      <LangProvider>
+        <DashboardV2
+          user={DEMO_USER}
+          isDemo
+          cvSection={<section aria-label="Lebenslauf-Inhalt">CV</section>}
+        />
+      </LangProvider>
+    );
+
+    const switcher = screen.getByLabelText('Dashboard-Bereich wählen') as HTMLSelectElement;
+    expect(switcher.value).toBe('overview');
+    fireEvent.change(switcher, { target: { value: 'cv' } });
+    expect(switcher.value).toBe('cv');
+    expect(screen.getByRole('region', { name: 'Lebenslauf-Inhalt' })).toBeInTheDocument();
+  });
 });
 
 // MAYS-SEARCH-PROFILE-MANUAL-01: "Job-Praferenzen" ist keine "Coming soon"-Position

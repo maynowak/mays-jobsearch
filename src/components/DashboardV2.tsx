@@ -4,7 +4,8 @@ import { useLang } from '../i18n';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
 import Card from './ui/Card';
-import DashboardNavigation, { type DashboardNavigationItem } from './ui/DashboardNavigation';
+import DashboardNavigation, { DashboardSectionSwitcher, type DashboardNavigationItem } from './ui/DashboardNavigation';
+import MayHelp, { type MayContext } from './MayHelp';
 import StorageConsentOverview from './StorageConsentOverview';
 import StorageConsentSection from './StorageConsentSection';
 
@@ -63,6 +64,7 @@ const DashboardV2 = ({
 }: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
+  const mayContext: MayContext = activeId === 'cv' ? 'cv' : activeId === 'applications' ? 'applications' : activeId === 'preferences' ? 'preferences' : activeId === 'settings' ? 'settings' : 'overview';
   const navigationItems: readonly DashboardNavigationItem[] = [
     { id: 'overview', label: t('dashboard.nav.overview') },
     { id: 'profile', label: t('dashboard.nav.myProfile') },
@@ -99,11 +101,19 @@ const DashboardV2 = ({
               <strong>{t('dashboard.demoNote.title')}</strong> {t('dashboard.demoNote.text')}
             </div>
           ) : null}
-          <Button variant="ghost" className="dashboard-v2__demo-action" onClick={() => setActiveId('overview')}>
-            {t('dashboard.nav.overview')}
-          </Button>
         </div>
       </header>
+
+      <MayHelp context={mayContext} className="dashboard-v2__may" />
+
+      <div className="dashboard-v2__mobile-nav">
+        <DashboardSectionSwitcher
+          items={navigationItems}
+          activeId={activeId}
+          ariaLabel={t('dashboard.mobileNavLabel')}
+          onSelect={setActiveId}
+        />
+      </div>
 
       <div className="dashboard-v2__layout">
         <Card className="dashboard-v2__navigation-card">

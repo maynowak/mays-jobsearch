@@ -4990,3 +4990,57 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   without token = 401, no 5xx. No AWS/Terraform mutation; RIS state unchanged.
 - Remaining: user-facing reload should be rechecked with the signed-in browser;
   S3 versions/backups/PITR and physical purge remain out of scope.
+
+## 2026-11-09 — JM-UX-NAV-HELP-01
+
+**Typ:** UX / navigation / durable-CV handoff / reusable help
+**Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
+
+- Branch `feature/jm-ux-nav-help-01`, feature commit `5ddf5f1`, hardening
+  commit `b8be2cd`. Navigation
+  shell is aligned to `min(1180px, 94vw)`; active `aria-current` states, 44 px
+  targets, sticky desktop dashboard sidebar with own scroll, compact mobile
+  section selector and a tablet (768–900 px) compact main menu avoid overlap.
+- Durable CVs now expose **„Verarbeiten“**. `downloadCvFile` obtains the PDF
+  through the existing authenticated BFF/presigned URL and hands it to the
+  existing `handleCvUploadStart` workflow. No second upload or analysis engine;
+  consent, anonymisation and model selection are unchanged. Processing requires
+  verified identity, `GRANTED` CV storage consent and `ready` status.
+- Storage consent is not treated as AI consent. Loading, error, retry and
+  handoff status are shown; session-epoch guard prevents a logout/identity
+  switch from carrying a downloaded CV into the next session. No bytes are
+  written to browser storage.
+- Added reusable non-chat `MayHelp` component with contextual overview/CV/
+  applications/preferences/settings text.
+- Download uses `cache: no-store`; top-level active matching is exact so only
+  one nav item is `aria-current`; login/language controls are 44 px touch
+  targets. A full session (10 CVs) is rejected before download.
+- Verification: focused 61 passed; serial full suite 1639 passed, 5 skipped;
+  build PASS; screenshots at 320/390/430/768/1024/1440 plus search-768/1440
+  with no horizontal overflow. Assets/report under `docs/reports/`.
+- On successful handoff the UI switches to session mode; the durable copy is
+  untouched. A real signed-in browser check of presigned-GET CORS remains a
+  deployment-time verification (local test uses a mocked BFF).
+- No RIS/AWS/Terraform or privacy-contract change; no push, merge or deploy.
+
+## 2026-11-09 — JM-UX-NAV-HELP-01 integration review
+
+**Typ:** Integration review / PR #9 reconciliation / controlled main merge
+**Status:** `PR #9 MERGED — UX INTEGRATION READY FOR PR`
+
+- Isolated worktree `worktrees/jobsearch-ux-pr9-integration`, branch
+  `integration/jm-ux-nav-help-01-pr9`, merge commit `803daf3`, refreshed onto
+  the PR #9 merge commit `eedd8f2` as `1b5c68b`.
+- Baselines: `main` `7788816`, UX `092a5da`, PR #9 `0f68857`. UX branch and
+  PR #9 were not modified; no remote push.
+- Conflicts only in `DashboardV2CvSection.tsx` and `PersistentCvList.tsx`;
+  resolved by keeping both durable-CV **Verarbeiten** and PR #9 **Suchprofile
+  verwalten**, with existing consent/session/profile overlay behavior intact.
+- Focused UX + P3 tests 67 passed; serial full suite 1662 passed, 5 skipped;
+  build PASS. Screenshots 320/390/430/768/1024/1440 plus settings 390/1024,
+  no horizontal overflow, demo data only.
+- PR #9 merged to `main` as `eedd8f2`. The UX integration branch is ready for
+  its own PR against `main`; do not rebase it because the two component
+  conflicts are already resolved. No deployment; real signed-in presigned-GET
+  CORS check remains deployment-time.
+- No RIS/AWS/Terraform/Vercel mutation and no real CV/user data.

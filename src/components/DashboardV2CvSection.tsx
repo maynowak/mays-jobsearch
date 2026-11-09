@@ -10,6 +10,7 @@ import PersistentCvList from './PersistentCvList';
 import PersistentCvProfilesOverlay from './PersistentCvProfilesOverlay';
 import type { CvBuilderProfileV1 } from '../lib/cvBuilder/profileTypes';
 import type { PersistentCvStorageState } from '../lib/usePersistentCvStorage';
+import type { PersistentCv } from '../lib/cvStorageApi';
 import type { PersistentSearchProfiles } from '../lib/usePersistentSearchProfiles';
 
 interface Props {
@@ -30,8 +31,8 @@ interface Props {
   onRemoveData: () => void;
   onSelectSearchProfile: (id: string | null) => void;
   onSelectAtsProfile: (id: string | null) => void;
-  onOpenCvUpload: () => void;
   onOpenCvBuilder?: () => void;
+  onProcessPersistentCv?: (cv: PersistentCv) => Promise<void>;
   cvProfiles?: CvBuilderProfileV1[];
   activeCvProfileId?: string | null;
   canAdoptCvDraft?: boolean;
@@ -72,8 +73,8 @@ const DashboardV2CvSection = ({
   onRemoveData,
   onSelectSearchProfile,
   onSelectAtsProfile,
-  onOpenCvUpload,
   onOpenCvBuilder,
+  onProcessPersistentCv,
   cvProfiles = [],
   activeCvProfileId = null,
   canAdoptCvDraft = false,
@@ -109,9 +110,6 @@ const DashboardV2CvSection = ({
         <div>
           <h2 id="dashboard-v2-cv-title">{t('dashboard.nav.cv')}</h2>
           <p>{t('dashboard.cvDescription')}</p>
-          <button type="button" className="btn-ghost" onClick={onOpenCvUpload}>
-            {t('cv.openUpload')}
-          </button>
           {onOpenCvBuilder && (
             <button type="button" className="btn-ghost" onClick={onOpenCvBuilder}>
               {t('cvBuilder.open')}
@@ -128,9 +126,9 @@ const DashboardV2CvSection = ({
       </div>
 
       <div className="dashboard-v2__cv-boundary" role="note">
-        {cvStorageMode === "persistent"
-          ? t('cvStorage.persistentHint')
-          : t('dashboard.cvSessionNote')}
+        <p>{cvStorageMode === "persistent" ? t('cvStorage.persistentHint') : t('dashboard.cvSessionNote')}</p>
+        <p>{t('cvStorage.sessionVsPersistent')}</p>
+        {cvStorageMode === "persistent" && <p>{t('cvStorage.processNoAiConsent')}</p>}
       </div>
 
       {cvStorageEnabled && onCvStorageModeChange && (
@@ -297,6 +295,7 @@ const DashboardV2CvSection = ({
           onDelete={persistentCvStorage.remove}
           onGrantConsent={persistentCvStorage.grantConsent}
           onWithdrawConsent={persistentCvStorage.withdrawConsent}
+          onProcess={onProcessPersistentCv}
           onManageProfiles={
             persistentSearchProfiles?.persistentView
               ? (cvId) => setPersistentProfilesCvId(cvId)
