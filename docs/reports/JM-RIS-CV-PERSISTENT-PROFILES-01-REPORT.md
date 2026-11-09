@@ -1,11 +1,15 @@
 # JM-RIS-CV-PERSISTENT-PROFILES-01
 
-**Status:** `PR #13 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
+**Status:** `MERGED / PRODUCTION DEPLOYED — AUTHENTICATED WRITE PENDING`
 **Branch:** `fix/jm-ris-cv-persistent-profiles-01`
 **Base:** `6d0a719` (production)
 **Commit:** `770a96f`
 **PR:** https://github.com/maynowak/mays-jobsearch/pull/13
-**Preview:** https://mays-job-matcher-git-fix-jm-ris-cv-persistent-p-d4a1e0-maymilly.vercel.app
+**Merge:** `a1b7035`
+**Production:** `www.mays-job-matcher.app` (`dpl_8tMF9jx9VELoQvbiCi1wmMoe374Z`)
+and `mays-jobsearch.vercel.app` (`dpl_5mpyc8yMEjdLmLEL6WpHs8A2QrLt`), footer
+`a1b7035`. Durable profile testing must use `www.mays-job-matcher.app`; the
+`mays-jobsearch` project has search-profile storage disabled (`503`).
 
 ## Root cause
 

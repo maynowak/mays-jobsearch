@@ -5145,3 +5145,23 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   state is testable there. No RIS/AWS/Terraform or consent-text change; no real
   data; no merge/deploy. Authenticated live RIS write/reload remains
   deployment-time.
+
+## 2026-11-09 — JM-RIS-CV-PERSISTENT-PROFILES-01 merge and production verification
+
+**Typ:** Controlled merge / production deploy / post-deploy smoke
+**Status:** `MERGED / PRODUCTION DEPLOYED — AUTHENTICATED WRITE PENDING`
+
+- PR #13 merged to `main` as `a1b7035`.
+- Production deployments (footer Build SHA `a1b7035`):
+  - `www.mays-job-matcher.app` -> `dpl_8tMF9jx9VELoQvbiCi1wmMoe374Z`
+  - `mays-jobsearch.vercel.app` -> `dpl_5mpyc8yMEjdLmLEL6WpHs8A2QrLt`
+- Smoke: both domains return 200 for `/`; `www.mays-job-matcher.app` exposes the
+  configured search-profile APIs (401 without token); `mays-jobsearch.vercel.app`
+  returns 503 `search_profile_storage_disabled` for those APIs, so durable
+  profile testing must use `www.mays-job-matcher.app`.
+- Stored CV rows now always expose **Suchprofile**; the overlay offers the
+  separate consent/grant or unavailable/error state.
+- Verification before merge: 3 new tests; serial full suite 1670 passed,
+  5 skipped; build PASS.
+- No RIS/AWS/Terraform mutation, no real user data. Authenticated synthetic RIS
+  write/reload remains the next verification step.
