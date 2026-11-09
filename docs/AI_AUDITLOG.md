@@ -5072,3 +5072,25 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   suite 1667 passed, 5 skipped; production build PASS. No real CV/user data.
 - No authenticated live RIS write was executed; signed-in synthetic E2E remains
   deployment-time. No RIS/AWS/Terraform change; no push/merge/deploy.
+
+## 2026-11-09 — JM-RIS-CV-DERIVED-PROFILE-STORAGE-01 integration review
+
+**Typ:** Integration review / UX-safe PR preparation
+**Status:** `INTEGRATION READY — GO FOR CONTROLLED PR — NO PUSH/MERGE/DEPLOY`
+
+- Isolated worktree `worktrees/jobsearch-derived-profile-integration`, branch
+  `integration/jm-ris-cv-derived-profile-storage-01` at `177428c`; `origin/main`
+  `bcd503c` is an ancestor, so no conflict resolution or rewrite was needed.
+- Session and durable paths preserved: session defaults to session storage;
+  durable CV-search/ATS writes require the separate search-profile consent and
+  use `createCv`/`createAts`. Durable ATS parent is validated against loaded
+  profiles for the RIS CV; no session IDs are sent to RIS.
+- Lifecycle guard: busy state + operation token prevent duplicate submits and
+  late success after close/back; identity/session reset clears `risCvId`,
+  durable parents and in-flight saves.
+- Verification: 5 new tests, 72 focused, serial full 1667 passed/5 skipped,
+  build PASS, diff/secret audit clean. Screenshots at 320/390/430/1024/1440
+  show both storage options and May hint without overflow; persistent selected
+  state captured at 390/1024. Temporary preview change reverted.
+- Authenticated live RIS write not executed and not claimed. No push/merge/
+  deploy, no RIS/AWS/Terraform mutation, no real CV/user data.
