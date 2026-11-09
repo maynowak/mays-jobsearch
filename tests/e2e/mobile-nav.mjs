@@ -106,7 +106,7 @@ async function boxCenter(locator) {
 async function runGuest(browser, width, height) {
   const { context, page, consoleErrors } = await preparePage(browser, { width, height }, false);
   const burger = page.locator(".burger");
-  const mobile = width < 768;
+  const mobile = width <= 900;
 
   if (mobile) {
     if (!(await burger.isVisible())) throw new Error(`${width}: burger not visible`);
@@ -165,7 +165,7 @@ async function runGuest(browser, width, height) {
 
 async function runAuthenticated(browser, width, height) {
   const { context, page, consoleErrors } = await preparePage(browser, { width, height }, true);
-  if (width < 768) {
+  if (width <= 900) {
     await page.locator(".burger").click();
     const menu = page.locator("#mobile-navigation");
     await menu.waitFor();
