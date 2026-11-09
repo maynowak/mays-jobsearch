@@ -4845,3 +4845,25 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   dataset approval exists; no real operator data was deleted.
 - No Jobsearch deployment, AWS/Terraform change, push or merge. S3/version/
   backup/PITR limits remain open. Report: `docs/reports/MAYS-P3-FINAL-REPORT.md`.
+
+## 2026-11-09 — MAYS-P3-FINAL status reconciliation
+
+**Status:** `BLOCKED — PARTNER-EDGE ERASURE ROUTE MISSING + JOBSEARCH DEPLOYMENT PENDING`
+
+- Production Jobsearch is live on `dpl_6DiPJxotbPSC8K5u8C8ZYkizTYdA` from
+  branch `feature/jm-ris-vercel-test-env-05-integration @ e5716f1`; public
+  smoke `/`, `/datenschutz`, `/impressum` = 200. Authenticated E2E remains
+  manual. This is not the local P3 branch.
+- RIS-DEV is at state serial **54**, Lambda
+  `FlXserJvs+Cxi0uGTyKkIReLFs2kOTyJXtGTivNe8+0=`, allowlist restored to the
+  original operator only. Synthetic test user/data were removed.
+- Actual blocker: `POST /me/erasure` is on the kernel API with Cognito pool
+  `eu-central-1_ojbmoiYGM` / client `7ldhihlpdgsgcl3puvu4oi7ksv`; the
+  Jobsearch partner edge uses pool `eu-central-1_ZURSMpD2O` / client
+  `5hb3f6dj5ialg77jf4blur9g6g` and has no erasure route. Jobsearch tokens get
+  401 from the kernel route.
+- Minimal correction: add `POST /v1/partner/me/erasure` to the partner edge
+  with the existing JWT authorizer, dispatch to `_handle_me_erasure`, and point
+  the Jobsearch BFF at that route. Requires reviewed Terraform/API change and
+  Jobsearch deployment approval.
+- No destructive production E2E; no real data deleted; no push/merge.
