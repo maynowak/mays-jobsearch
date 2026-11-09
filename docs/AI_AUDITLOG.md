@@ -4937,3 +4937,16 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   `uQqKk33NnwxWnaGm2PDUhpCnyhIFVUZ5Zxe9oUotirs=`.
 - Full suite: 2558 passed, 17 skipped, 16 pre-existing unrelated failures.
 - S3 versions/backups/PITR remain open.
+
+## 2026-11-09 — P3 feature branch pushed
+
+**Typ:** Git push / Handoff
+**Status:** `PUSHED — NO MERGE/DEPLOY`
+
+- Jobsearch `feature/jm-ris-cv-storage-integration-01` pushed:
+  `cb87de4049f50342e9d96cb22313f9a94a5afc88`
+  (`origin/main` remains `c3da077908f72c2fd483279613c10e8a59119d37`).
+- Push used explicit refspec; no force, no merge, no deployment.
+- No secrets/test sessions/tfstate were pushed.
+- PR readiness still requires the normal merge review; production is unchanged.
+- Remote Jobsearch branch was fast-forwarded from `a07a810`.
