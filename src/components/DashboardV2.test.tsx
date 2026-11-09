@@ -194,3 +194,57 @@ describe('MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences navigation', () => {
     expect(screen.queryByRole("checkbox")).toBeNull();
   });
 });
+
+describe('JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01', () => {
+  beforeEach(() => {
+    localStorage.setItem('mj-lang', 'de');
+    localStorage.removeItem('mj-may-help-open');
+    window.history.replaceState({}, '', '/');
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.removeItem('mj-may-help-open');
+  });
+
+  it('starts collapsed, toggles May, keeps context and persists the preference', () => {
+    const view = render(
+      <LangProvider>
+        <DashboardV2
+          user={DEMO_USER}
+          isDemo
+          cvSection={<section aria-label="Lebenslauf-Inhalt">CV</section>}
+        />
+      </LangProvider>
+    );
+
+    expect(screen.queryByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeNull();
+    const button = screen.getByRole('button', { name: /Hilfe von May/ });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeInTheDocument();
+    expect(localStorage.getItem('mj-may-help-open')).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lebenslauf' }));
+    expect(screen.getByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeInTheDocument();
+
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(localStorage.getItem('mj-may-help-open')).toBe('false');
+    view.unmount();
+  });
+
+  it('restores an open May preference after reload', () => {
+    localStorage.setItem('mj-may-help-open', 'true');
+    render(
+      <LangProvider>
+        <DashboardV2 user={DEMO_USER} isDemo />
+      </LangProvider>
+    );
+
+    expect(screen.getByRole('button', { name: /Hilfe von May/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeInTheDocument();
+  });
+});

@@ -5165,3 +5165,25 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   5 skipped; build PASS.
 - No RIS/AWS/Terraform mutation, no real user data. Authenticated synthetic RIS
   write/reload remains the next verification step.
+
+## 2026-11-09 — JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01
+
+**Typ:** Visibility/navigation fix + collapsible May help
+**Status:** `IMPLEMENTED — VERIFIED LOCAL — RELEASE PENDING`
+
+- Branch `fix/jm-ris-cv-profile-visibility-may-01`, commit `47a6692`.
+- Data-chain analysis found no client-side second cvId or duplicate storage:
+  durable search/ATS saves use the processed CV's `risCvId`; the persistent
+  view loads with the same `cvId`. The gap was that the persistent profile view
+  was not automatically selected/reloaded after a durable save.
+- Fix: after durable search/ATS success the app switches to persistent mode and,
+  once the CV workflow closes, opens the matching `PersistentCvProfilesOverlay`
+  and reloads `listCv`/`listAts` from RIS. Focus handoff is one-shot.
+- May help is now collapsed by default behind a 44px **💚 Hilfe von May**
+  button; open state persists only as local boolean `mj-may-help-open` across
+  dashboard navigation/reload. Contextual May text, consent notices and
+  privacy boundaries are unchanged.
+- Verification: 24 focused tests; serial full suite 1673 passed, 5 skipped;
+  build PASS; screenshots 320/390/430/768/1024/1440 collapsed/open, no overflow.
+- No RIS/AWS/Terraform/consent-text change; no real user data. Authenticated
+  synthetic RIS E2E remains deployment-time.
