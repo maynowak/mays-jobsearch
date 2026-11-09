@@ -10,7 +10,7 @@ import { signOut } from "../lib/authFlow";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
 
 function useMobileNav() {
-  const query = "(max-width: 767px)";
+  const query = "(max-width: 900px)";
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
       return false;
@@ -212,6 +212,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
   // TOP-MENU-01: Linkliste kommt aus dem zentralen Modul. Pro Route sind nur
   // die dort freigegebenen Links sichtbar (Landingpage z.B. ohne Alerts).
   const links = navLinksFor(route);
+  const activeHref = route === "matcher" ? "/search" : route === "profil" ? "/profil" : null;
 
   const scrollToTopSmooth = () => {
     const start = window.scrollY;
@@ -299,13 +300,15 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
                   <a
                     key={link.id}
                     href={link.href}
+                    className={activeHref === link.href.split("#")[0] ? "nav-link-active" : undefined}
+                    aria-current={activeHref === link.href.split("#")[0] ? "page" : undefined}
                     onClick={(e) => handleClick(e, link.href, link.inPage)}
                   >
                     {t(link.labelKey)}
                   </a>
                 ))}
                 {auth?.isAuthenticated && (
-                  <a href="/profil" className="nav-link" onClick={(event) => handleClick(event, "/profil")}>
+                  <a href="/profil" className={`nav-link${activeHref === "/profil" ? " nav-link-active" : ""}`} aria-current={activeHref === "/profil" ? "page" : undefined} onClick={(event) => handleClick(event, "/profil")}>
                     {t("profile.title")}
                   </a>
                 )}
@@ -339,13 +342,15 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
                 <a
                   key={link.id}
                   href={link.href}
+                  className={activeHref === link.href.split("#")[0] ? "nav-link-active" : undefined}
+                  aria-current={activeHref === link.href.split("#")[0] ? "page" : undefined}
                   onClick={(e) => handleClick(e, link.href, link.inPage)}
                 >
                   {t(link.labelKey)}
                 </a>
               ))}
               {auth?.isAuthenticated && (
-                <a href="/profil" className="nav-link" onClick={(event) => handleClick(event, "/profil")}>
+                <a href="/profil" className={`nav-link${activeHref === "/profil" ? " nav-link-active" : ""}`} aria-current={activeHref === "/profil" ? "page" : undefined} onClick={(event) => handleClick(event, "/profil")}>
                   {t("profile.title")}
                 </a>
               )}
@@ -404,7 +409,8 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
                       <a
                         key={link.id}
                         href={link.href}
-                        className="mobile-link"
+                        className={`mobile-link${activeHref === link.href.split("#")[0] ? " nav-link-active" : ""}`}
+                        aria-current={activeHref === link.href.split("#")[0] ? "page" : undefined}
                         style={{ animationDelay: `${i * 50}ms` }}
                         onClick={(e) => handleClick(e, link.href, link.inPage)}
                       >
@@ -415,7 +421,7 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
                       <LangToggle />
                     </div>
                     {auth?.isAuthenticated && (
-                      <a href="/profil" className="mobile-link" onClick={(event) => handleClick(event, "/profil")}>
+                      <a href="/profil" className={`mobile-link${activeHref === "/profil" ? " nav-link-active" : ""}`} aria-current={activeHref === "/profil" ? "page" : undefined} onClick={(event) => handleClick(event, "/profil")}>
                         {t("profile.title")}
                       </a>
                     )}

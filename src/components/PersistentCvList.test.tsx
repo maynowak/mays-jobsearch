@@ -126,6 +126,28 @@ describe("PersistentCvList", () => {
     expect(screen.getByRole("button", { name: "Lebenslauf dauerhaft hochladen" })).toBeDisabled();
   });
 
+  it("processes a ready durable CV through the existing workflow handoff", async () => {
+    const onProcess = vi.fn(async () => undefined);
+    renderList({ onProcess });
+
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten Lebenslauf.pdf" }));
+    await waitFor(() => expect(onProcess).toHaveBeenCalledWith(cv()));
+    expect(await screen.findByText("In den bestehenden CV-Workflow übernommen.")).toBeInTheDocument();
+  });
+
+  it("shows a retry action when loading the durable CV fails", async () => {
+    const onProcess = vi.fn()
+      .mockRejectedValueOnce(new Error("Download fehlgeschlagen"))
+      .mockResolvedValueOnce(undefined);
+    renderList({ onProcess });
+
+    fireEvent.click(screen.getByRole("button", { name: "Verarbeiten Lebenslauf.pdf" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Download fehlgeschlagen");
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    await waitFor(() => expect(onProcess).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText("In den bestehenden CV-Workflow übernommen.")).toBeInTheDocument();
+  });
+
   it("disables download until the upload is ready", () => {
     renderList({ documents: [cv({ processingStatus: "pending", sizeBytes: undefined })] });
     expect(screen.getByText("Upload ausstehend")).toBeInTheDocument();

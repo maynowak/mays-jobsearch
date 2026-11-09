@@ -196,6 +196,26 @@ export async function getCvDownloadUrl(token: string, cvId: string): Promise<str
   return data.downloadUrl;
 }
 
+/** Download a durable CV through the existing BFF-issued presigned URL.
+ * The returned File is only handed to the existing session workflow; this
+ * helper never persists bytes in browser storage. */
+export async function downloadCvFile(
+  token: string,
+  cvId: string,
+  filename: string
+): Promise<File> {
+  const downloadUrl = await getCvDownloadUrl(token, cvId);
+  const response = await fetch(downloadUrl, { method: "GET", credentials: "omit" });
+  if (!response.ok) {
+    throw new CvStorageApiError("CV download failed", response.status, "download_failed");
+  }
+  const blob = await response.blob();
+  if (blob.size === 0) {
+    throw new CvStorageApiError("CV download is empty", 502, "download_empty");
+  }
+  return new File([blob], filename || "lebenslauf.pdf", { type: "application/pdf" });
+}
+
 export async function deleteCvDocument(token: string, cvId: string): Promise<void> {
   await request<Record<string, unknown>>(
     `${CV_PATH}?id=${encodeURIComponent(cvId)}`,

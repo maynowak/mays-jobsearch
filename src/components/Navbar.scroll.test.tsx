@@ -21,7 +21,7 @@ function setMatchMedia(mobile = false, reducedMotion = false) {
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: vi.fn((query: string) => ({
-      matches: query.includes("max-width: 767px") ? mobile : reducedMotion,
+      matches: query.includes("max-width: 900px") ? mobile : reducedMotion,
       media: query,
       onchange: null,
       addEventListener: vi.fn(),

@@ -60,7 +60,7 @@ import { beginNewApplicationSession, createSessionApplicationRepository } from "
 import { createRemoteApplicationRepository } from "./lib/applications/remoteSessionRepository";
 import { createApplicationMigration } from "./lib/applications/applicationMigration";
 import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
-import { isRisCvStorageEnabled } from "./lib/cvStorageApi";
+import { downloadCvFile, isRisCvStorageEnabled, type PersistentCv } from "./lib/cvStorageApi";
 import { usePersistentCvStorage } from "./lib/usePersistentCvStorage";
 import {
   checkRisRemoteApplicationAccess,
@@ -767,6 +767,38 @@ export default function App() {
       errorBackStep: null,
     }));
     return doc.id;
+  };
+
+  // JM-UX-NAV-HELP-01: A durable RIS CV is downloaded through the existing
+  // authenticated BFF/presigned URL, then handed to the existing workflow as a
+  // normal session File. No second upload, analysis engine or consent path.
+  const handleProcessPersistentCv = async (cv: PersistentCv) => {
+    const requestEpoch = sessionEpochRef.current;
+    if (!identityVerified || !cvStorageAccessToken) {
+      throw new Error(t("cvStorage.processIdentityRequired"));
+    }
+    if (!persistentCvStorage.enabled) {
+      throw new Error(t("cvStorage.processConsentRequired"));
+    }
+    if (persistentCvStorage.consent?.consent?.status !== "GRANTED") {
+      throw new Error(t("cvStorage.processConsentRequired"));
+    }
+    if (cv.processingStatus !== "ready") {
+      throw new Error(t("cvStorage.processNotReady"));
+    }
+
+    const file = await downloadCvFile(cvStorageAccessToken, cv.cvId, cv.filename);
+    // A logout/identity switch invalidates the in-flight download. Do not
+    // carry the old account's CV into the next session.
+    if (sessionEpochRef.current !== requestEpoch) {
+      throw new Error(t("cvStorage.processIdentityRequired"));
+    }
+    // The storage consent is deliberately not forwarded as AI consent.
+    // handleCvUploadStart uses the existing separate CV/AI consent gate.
+    const documentId = handleCvUploadStart(file);
+    if (!documentId) throw new Error(t("cvStorage.processError"));
+    setStatus({ type: "info", message: t("cvStorage.processSuccess") });
+    setCvStorageMode("session");
   };
 
   const handleAddCvFromLetter = (file: File, context: LetterPreparationContext) => {
@@ -3358,6 +3390,7 @@ export default function App() {
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
       onOpenCvUpload={() => navigateInApp("/search?cv=upload")}
       onOpenCvBuilder={handleCreateCvProfile}
+      onProcessPersistentCv={handleProcessPersistentCv}
       cvProfiles={cvProfiles}
       activeCvProfileId={cvBuilderProfileId}
       canAdoptCvDraft={hasCvBuilderContent(cvBuilderDraft) && cvProfiles.length === 0}
