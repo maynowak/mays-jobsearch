@@ -4919,3 +4919,21 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   consolidated report.
 - Current open items: CVDocument metadata erasure, production Jobsearch
   deployment, S3/version/backup/PITR; no real data deleted.
+
+## 2026-11-09 — CVDocument metadata erasure fixed and live-verified
+
+**Typ:** Privacy erasure / CVDocument metadata
+**Status:** `DEPLOYED / VERIFIED — RIS-DEV`
+
+- Added metadata deletion after successful S3 deletion using the existing
+  `PartnerProfileRepository`; if S3 is pending, metadata deletion fails closed.
+- Plan `/tmp/opencode/ris-dev-cv-metadata-erasure.tfplan`, SHA-256
+  `5ef5567121deb72a7da82a08257bb6c20d06174a3228754b123bc18f84aa980b`;
+  0 add / 1 change / 0 destroy (agent Lambda only).
+- Live local E2E with isolated synthetic user: `complete=true`,
+  `searchProfilesDeleted=3`, `documentMetadataDeleted=1`, `documentsDeleted=1`;
+  `GET /api/ris/cvs` then returned 0. Synthetic user/data cleaned; allowlist
+  restored; state serial **61**, Lambda
+  `uQqKk33NnwxWnaGm2PDUhpCnyhIFVUZ5Zxe9oUotirs=`.
+- Full suite: 2558 passed, 17 skipped, 16 pre-existing unrelated failures.
+- S3 versions/backups/PITR remain open.
