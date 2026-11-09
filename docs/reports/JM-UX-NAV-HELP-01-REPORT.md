@@ -3,6 +3,7 @@
 **Status:** `IMPLEMENTED / VERIFIED LOCAL — NO PUSH, MERGE OR DEPLOY`
 **Branch:** `feature/jm-ux-nav-help-01`
 **Feature commit:** `5ddf5f1`
+**Hardening commit:** `b8be2cd`
 **Date:** 2026-11-09
 
 ## Scope

@@ -4662,7 +4662,8 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 **Typ:** UX / navigation / durable-CV handoff / reusable help
 **Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
 
-- Branch `feature/jm-ux-nav-help-01`, feature commit `5ddf5f1`. Navigation
+- Branch `feature/jm-ux-nav-help-01`, feature commit `5ddf5f1`, hardening
+  commit `b8be2cd`. Navigation
   shell is aligned to `min(1180px, 94vw)`; active `aria-current` states, 44 px
   targets, sticky desktop dashboard sidebar with own scroll, compact mobile
   section selector and a tablet (768–900 px) compact main menu avoid overlap.
