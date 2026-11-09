@@ -4681,7 +4681,7 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Download uses `cache: no-store`; top-level active matching is exact so only
   one nav item is `aria-current`; login/language controls are 44 px touch
   targets. A full session (10 CVs) is rejected before download.
-- Verification: focused 60 passed; serial full suite 1638 passed, 5 skipped;
+- Verification: focused 61 passed; serial full suite 1639 passed, 5 skipped;
   build PASS; screenshots at 320/390/430/768/1024/1440 plus search-768/1440
   with no horizontal overflow. Assets/report under `docs/reports/`.
 - On successful handoff the UI switches to session mode; the durable copy is

@@ -213,7 +213,8 @@ export async function downloadCvFile(
   if (blob.size === 0) {
     throw new CvStorageApiError("CV download is empty", 502, "download_empty");
   }
-  const safeName = /\.pdf$/i.test(filename) ? filename : `${filename || "lebenslauf"}.pdf`;
+  const baseName = String(filename || "").split(/[\\/]/).pop() || "lebenslauf";
+  const safeName = /\.pdf$/i.test(baseName) ? baseName : `${baseName}.pdf`;
   return new File([blob], safeName, { type: "application/pdf" });
 }
 

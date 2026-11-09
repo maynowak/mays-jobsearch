@@ -21,8 +21,10 @@ const DashboardNavigation = ({ items, activeId, ariaLabel, onSelect }: Dashboard
     const nav = navRef.current;
     const active = nav?.querySelector<HTMLElement>('[aria-current="page"]');
     if (!nav || !active) return;
-    const top = active.offsetTop;
-    const bottom = top + active.offsetHeight;
+    const navRect = nav.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    const top = activeRect.top - navRect.top + nav.scrollTop;
+    const bottom = top + activeRect.height;
     const reduceMotion = typeof window.matchMedia === 'function'
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const behavior: ScrollBehavior = reduceMotion ? 'auto' : 'smooth';

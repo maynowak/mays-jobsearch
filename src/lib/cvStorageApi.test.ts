@@ -37,6 +37,24 @@ describe("downloadCvFile", () => {
     expect(fetchMock.mock.calls[1][1]).toMatchObject({ cache: "no-store", credentials: "omit" });
   });
 
+  it("adds a pdf extension to a stored filename that has none", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/ris/cvs?")) {
+        return jsonResponse(200, { downloadUrl: "https://s3.example/get/cv-1" });
+      }
+      return {
+        ok: true,
+        status: 200,
+        blob: async () => new Blob([new Uint8Array([1])], { type: "application/pdf" }),
+      } as unknown as Response;
+    }));
+
+    await expect(downloadCvFile("token", "cv-1", "Lebenslauf")).resolves.toMatchObject({
+      name: "Lebenslauf.pdf",
+    });
+  });
+
   it("fails closed when the presigned download is empty", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);

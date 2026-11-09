@@ -73,10 +73,10 @@ real identities.
 
 | Check | Result |
 | --- | --- |
-| Focused navigation/CV/May tests | **60 passed** |
-| Full suite, serial | **1638 passed**, 5 skipped |
+| Focused navigation/CV/May tests | **61 passed** |
+| Full suite, serial | **1639 passed**, 5 skipped |
 | Production build | **PASS** |
-| Screenshot overflow check | **none at all six widths** |
+| Screenshot overflow check | **none across the six dashboard widths / eight assets** |
 
 The parallel full run showed the existing timing-sensitive
 `ManualSearchProfiles`/`CvBuilderEditorPdf` flakes; all pass in isolation and in
