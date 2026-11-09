@@ -5050,7 +5050,8 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 **Typ:** CV-derived profile storage / consent / session isolation
 **Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
 
-- Branch `feature/jm-ris-cv-derived-profile-storage-01`, commit `cef8b7e`.
+- Branch `feature/jm-ris-cv-derived-profile-storage-01`, commit `cef8b7e`,
+  lifecycle hardening `796c348`.
 - A durable CV processed through **Verarbeiten** now carries a session-only
   `risCvId` on its session `CvDocument`; the mapping is cleared on identity or
   session reset and is never persisted.
@@ -5062,9 +5063,11 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   input)`. Durable ATS profiles use `createAts(searchProfileId, input)` and are
   validated against the durable parent profiles loaded for that RIS CV; missing
   or invalid parents fail before any write, preventing orphans.
-- After durable save, the persistent CV profile overlay reloads the new profile
-  from RIS; no re-upload. May help text explains session vs durable and the
-  separate consent boundary.
+- After durable save, the UI switches to persistent CV mode and the existing
+  persistent CV profile overlay reloads the new profile from RIS; no re-upload.
+  A busy state + operation token prevent duplicate submits and late success
+  after close/back. May help text explains session vs durable and the separate
+  consent boundary.
 - Verification: new tests 5 passed; focused regression 72 passed; serial full
   suite 1667 passed, 5 skipped; production build PASS. No real CV/user data.
 - No authenticated live RIS write was executed; signed-in synthetic E2E remains

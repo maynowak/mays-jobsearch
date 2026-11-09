@@ -3,6 +3,7 @@
 **Status:** `IMPLEMENTED / VERIFIED LOCAL — NO PUSH, MERGE OR DEPLOY`
 **Branch:** `feature/jm-ris-cv-derived-profile-storage-01`
 **Commit:** `cef8b7e`
+**Lifecycle hardening:** `796c348`
 
 ## Scope
 
@@ -30,10 +31,13 @@ RIS CV. No new backend, RIS/AWS/Terraform change or automatic persistence.
 - **Dauerhaft in meinem RIS-Konto**
 
 The durable option is only available for a session copy with `risCvId` and an
-active search-profile consent. A durable save uses the existing
+active search-profile consent. Session is the default; no CV storage consent is
+reused as profile-storage consent. A durable save uses the existing
 `persistentSearchProfiles.createCv(cvId, input)`; a session save keeps the
 existing session repository path unchanged. Success and failure messages are
-explicit; a failed RIS write does not advance as if it succeeded.
+explicit; a failed RIS write does not advance as if it succeeded. A busy state
+and operation token now prevent duplicate submits and stop late results from
+reopening a workflow after close/back.
 
 ### ATS profile
 
@@ -47,8 +51,9 @@ durable ATS profile:
   ATS profiles;
 - writes use `persistentSearchProfiles.createAts(searchProfileId, input)`.
 
-After saving, the persistent profile is available through the existing
-persistent CV profile overlay and is reloaded from RIS; no re-upload is needed.
+After a durable save, the UI switches to persistent CV mode; the existing
+persistent CV profile overlay reloads the new profile from RIS; no re-upload is
+needed. Session saves switch back to session mode.
 
 ## May help
 
