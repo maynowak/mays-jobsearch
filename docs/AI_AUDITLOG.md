@@ -5065,7 +5065,7 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - After durable save, the persistent CV profile overlay reloads the new profile
   from RIS; no re-upload. May help text explains session vs durable and the
   separate consent boundary.
-- Verification: new tests 5 passed; focused regression 67 passed; serial full
+- Verification: new tests 5 passed; focused regression 72 passed; serial full
   suite 1667 passed, 5 skipped; production build PASS. No real CV/user data.
 - No authenticated live RIS write was executed; signed-in synthetic E2E remains
   deployment-time. No RIS/AWS/Terraform change; no push/merge/deploy.

@@ -61,7 +61,7 @@ alone is not profile-storage or AI consent.
 | Check | Result |
 | --- | --- |
 | New storage-choice/guard tests | **5 passed** |
-| Focused regression (selection, CV, profile APIs) | **67 passed** |
+| Focused regression (selection, CV, profile APIs) | **72 passed** |
 | Full suite, serial | **1667 passed**, 5 skipped |
 | Production build | **PASS** |
 
