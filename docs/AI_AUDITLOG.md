@@ -5096,5 +5096,8 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   state captured at 390/1024. Temporary preview change reverted.
 - PR #12 opened: https://github.com/maynowak/mays-jobsearch/pull/12
   (preview https://mays-job-matcher-git-integration-jm-ris-cv-deri-467922-maymilly.vercel.app).
+  Preview search-profile storage is disabled (`503
+  search_profile_storage_disabled`/`consent_disabled`), so only session mode is
+  testable there; durable mode needs an approved RIS configuration.
   Authenticated live RIS write not executed and not claimed. No merge/deploy,
   no RIS/AWS/Terraform mutation, no real CV/user data.

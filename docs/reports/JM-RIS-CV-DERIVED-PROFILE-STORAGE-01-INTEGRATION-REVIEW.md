@@ -89,6 +89,10 @@ was **not** executed and is not claimed as verified.
 
 - PR: https://github.com/maynowak/mays-jobsearch/pull/12
 - Preview: https://mays-job-matcher-git-integration-jm-ris-cv-deri-467922-maymilly.vercel.app
+- Preview limitation: search-profile storage is disabled in this Preview
+  environment (`503 search_profile_storage_disabled` / `consent_disabled`), so
+  only the session path is testable there. The durable path requires an
+  approved production/preview RIS configuration; it was not activated here.
 
 **NO-GO for production until a signed-in synthetic RIS E2E** verifies the actual
 `createCv`/`createAts` writes, reload and parent assignment. No deployment is
