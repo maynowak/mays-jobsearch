@@ -4905,3 +4905,17 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   real data deleted. Production Jobsearch remains `dpl_6DiP...`.
 - Plan/apply log: `/tmp/opencode/p3-partner-erasure-apply.log`; screenshot
   `docs/reports/assets/MAYS-P3-FINAL/p3-final-real-erasure.png`.
+
+
+## 2026-11-09 — MAYS-P3-FINAL consolidated report
+
+**Typ:** Report consolidation
+**Status:** `PARTNER ERASURE ROUTE LIVE PREVIEW E2E PASS — PRODUCTION PENDING`
+
+- Replaced the stale/contradictory `MAYS-P3-FINAL-REPORT.md` with one
+  consolidated report covering RIS state 58, applied partner route, Jobsearch
+  BFF/preview E2E, health schedule and remaining boundaries.
+- Historical RAESP-02/03 reports now carry a banner pointing to the
+  consolidated report.
+- Current open items: CVDocument metadata erasure, production Jobsearch
+  deployment, S3/version/backup/PITR; no real data deleted.
