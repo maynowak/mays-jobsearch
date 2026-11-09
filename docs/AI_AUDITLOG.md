@@ -5101,3 +5101,24 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   testable there; durable mode needs an approved RIS configuration.
   Authenticated live RIS write not executed and not claimed. No merge/deploy,
   no RIS/AWS/Terraform mutation, no real CV/user data.
+
+## 2026-11-09 — JM-RIS-CV-DERIVED-PROFILE-STORAGE-01 merge and production verification
+
+**Typ:** Controlled merge / production deploy / post-deploy smoke
+**Status:** `MERGED / PRODUCTION DEPLOYED / AUTHENTICATED WRITE PENDING`
+
+- PR #12 merged to `main` as `92487ac`; branch
+  `integration/jm-ris-cv-derived-profile-storage-01`.
+- Production deployment `dpl_G1bBGubakiGXsVbi7g5SSmV2TVU8`
+  (`mays-job-matcher-87ig92hgz-maymilly.vercel.app`) is aliased to
+  `www.mays-job-matcher.app`; served footer Build SHA `92487ac`.
+- Post-deploy smoke: `/` and `/profil` 200;
+  `/api/ris/search-profiles`, `/api/ris/search-profile-consents` and
+  `/api/ris/cvs` return 401 without a token (configured, no 503/5xx).
+- Pre-merge verification: 5 new tests, 72 focused, serial full 1667 passed /
+  5 skipped, build PASS; E2E profile-storage-consent, mobile-nav and
+  account-erasure PASS. Review/PR evidence:
+  `docs/reports/JM-RIS-CV-DERIVED-PROFILE-STORAGE-01-INTEGRATION-REVIEW.md`.
+- The authenticated synthetic RIS write/reload E2E was not executed and is not
+  claimed; it remains the next verification step. No real CV/user data, no
+  RIS/AWS/Terraform mutation.

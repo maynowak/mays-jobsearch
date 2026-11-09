@@ -1,6 +1,6 @@
 # JM-RIS-CV-DERIVED-PROFILE-STORAGE-01 — Integration Review
 
-**Status:** `PR #12 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
+**Status:** `MERGED / PRODUCTION DEPLOYED — AUTHENTICATED WRITE PENDING`
 **No push, merge or deployment**
 **Date:** 2026-11-09
 
@@ -85,9 +85,15 @@ was **not** executed and is not claimed as verified.
 
 ## Recommendation
 
-**GO for a controlled PR** against `main` after normal review.
+**MERGED and PRODUCTION DEPLOYED.** The remaining gate is the authenticated
+synthetic RIS write/reload E2E.
 
 - PR: https://github.com/maynowak/mays-jobsearch/pull/12
+- Merge commit: `92487ac`
+- Production: `dpl_G1bBGubakiGXsVbi7g5SSmV2TVU8` at
+  https://www.mays-job-matcher.app (footer `92487ac`)
+- Production smoke: `/` and `/profil` 200; search-profile/consent/CV APIs
+  401 without token, no 503/5xx.
 - Preview: https://mays-job-matcher-git-integration-jm-ris-cv-deri-467922-maymilly.vercel.app
 - Preview limitation: search-profile storage is disabled in this Preview
   environment (`503 search_profile_storage_disabled` / `consent_disabled`), so
