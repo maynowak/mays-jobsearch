@@ -12168,3 +12168,19 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     padding: var(--space-3);
   }
 }
+
+/* Fix: persistent CV profile management must remain reachable before the
+   separate search-profile consent is granted. */
+.search-profiles-consent {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.search-profiles-consent p {
+  margin: 0;
+}
