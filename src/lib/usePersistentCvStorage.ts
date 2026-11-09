@@ -44,6 +44,18 @@ function messageOf(error: unknown): string {
     if (error.status === 404) return "Der Lebenslauf wurde nicht gefunden.";
     if (error.status === 409) return "Der Lebenslauf wurde zwischenzeitlich geändert.";
     if (error.status === 422) return "Die Lebenslauf-Daten sind ungültig.";
+    if (error.code === "test_user_not_allowed") {
+      return "Dieser Account ist für die dauerhafte CV-Speicherung nicht freigeschaltet.";
+    }
+    if (error.code === "cv_storage_disabled") {
+      return "Die dauerhafte CV-Speicherung ist derzeit deaktiviert.";
+    }
+    if (error.code === "missing_config") {
+      return "Die dauerhafte CV-Speicherung ist serverseitig nicht konfiguriert.";
+    }
+    if (error.code === "unavailable" || error.status === 503) {
+      return "Der CV-Dienst antwortet derzeit nicht rechtzeitig. Bitte erneut versuchen.";
+    }
   }
   return "Die CV-Speicherfunktion ist derzeit nicht verfügbar.";
 }

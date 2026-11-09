@@ -142,4 +142,18 @@ describe("usePersistentCvStorage", () => {
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("shows a retryable timeout message instead of a generic outage", async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/ris/cv-consents")) return jsonResponse(200, consentState());
+      if (url.includes("/api/ris/cvs?")) {
+        return jsonResponse(503, { error: "RIS is unavailable", code: "unavailable" });
+      }
+      throw new Error(`unexpected fetch ${url}`);
+    });
+    const { result } = renderHook(() => usePersistentCvStorage("token", true));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toContain("nicht rechtzeitig");
+  });
 });
