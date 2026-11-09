@@ -19,3 +19,11 @@ export function isDurableAtsParentValid(
 ): boolean {
   return parentId.trim().length > 0 && durableSearchProfileIds.includes(parentId);
 }
+
+/** Durable source CVs default to durable profile storage when consent exists. */
+export function defaultProfileStorageChoice(
+  risCvId: string | undefined,
+  persistentActive: boolean
+): "session" | "persistent" {
+  return risCvId && persistentActive ? "persistent" : "session";
+}
