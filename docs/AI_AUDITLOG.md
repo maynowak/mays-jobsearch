@@ -5187,3 +5187,25 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   build PASS; screenshots 320/390/430/768/1024/1440 collapsed/open, no overflow.
 - No RIS/AWS/Terraform/consent-text change; no real user data. Authenticated
   synthetic RIS E2E remains deployment-time.
+
+## 2026-11-09 — JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01 merge and production
+
+**Typ:** Controlled merge / production deploy / post-deploy smoke
+**Status:** `MERGED / PRODUCTION DEPLOYED / AUTHENTICATED E2E PENDING`
+
+- PR #14 merged to `main` as `a48fe9a`.
+- Production deployments at `a48fe9a`:
+  - `www.mays-job-matcher.app` -> `dpl_27ixok4qnRRvC3tY9DDnzaL9S7DW`
+  - `mays-jobsearch.vercel.app` -> `dpl_eodGYtWVhy1EZ6K82eaN51oJU3ng`
+  - footer Build SHA on both: `a48fe9a`.
+- Live smoke: `/` and `/profil` 200 on both. `www.mays-job-matcher.app`
+  search-profile API returns 401 without token (configured); the
+  `mays-jobsearch` project returns 503 for that API and is not suitable for
+  durable-profile testing.
+- Fixes: durable saves now auto-open/reload the matching stored-CV profile
+  view; May help is collapsed by default behind a persistent local UI toggle.
+- Verification: 24 focused tests, serial full 1673 passed/5 skipped, build PASS;
+  screenshots 320/390/430/768/1024/1440 collapsed/open, no overflow.
+- Authenticated synthetic RIS E2E was not executed (no approved test account in
+  this run) and is not claimed. No RIS/AWS/Terraform/consent-text change, no real
+  user data.

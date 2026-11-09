@@ -1,6 +1,6 @@
 # JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL`
+**Status:** `MERGED / PRODUCTION DEPLOYED / AUTHENTICATED E2E PENDING`
 **Branch:** `fix/jm-ris-cv-profile-visibility-may-01`
 **Base:** `45d169e`
 **Commit:** `47a6692`
@@ -63,10 +63,21 @@ manually. PR #13 additionally exposed that action when consent was missing.
 Screenshot assets:
 `docs/reports/assets/JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01/`
 
+## Production
+
+- PR #14 merged as `a48fe9a`.
+- `www.mays-job-matcher.app` -> `dpl_27ixok4qnRRvC3tY9DDnzaL9S7DW`
+- `mays-jobsearch.vercel.app` -> `dpl_eodGYtWVhy1EZ6K82eaN51oJU3ng`
+- footer Build SHA `a48fe9a` on both.
+- Smoke: `/`, `/profil` 200; search-profile API 401 without token on
+  `www.mays-job-matcher.app`; the alternative `mays-jobsearch` project has the
+  API disabled (503) and is not suitable for durable-profile testing.
+
 ## Remaining verification
 
-Authenticated synthetic RIS E2E (real create/reload/login) was not executed in
-this local step and is not claimed. It remains the deployment-time check.
+Authenticated synthetic RIS E2E (real create/reload/login) was not executed
+because no approved synthetic test account was available in this run. It is not
+claimed and remains the next verification step.
 
 ## Boundaries
 
