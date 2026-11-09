@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { risConfig, risConsentConfig } from "../../api/_lib/ris/config.mjs";
+import { risConfig, risConsentConfig, risCvConfig } from "../../api/_lib/ris/config.mjs";
 
 const SHARED = {
   RIS_API_BASE_URL: "https://ris.example.invalid",
@@ -87,6 +87,16 @@ describe("RIS consent/application activation separation", () => {
     expect(risConfig(config)).toMatchObject({
       enabled: true,
       error: "missing_config",
+    });
+  });
+
+  it("CV uses a cold-start tolerant default when no timeout is configured", () => {
+    const config = env({ RIS_CV_STORAGE_ENABLED: "true" });
+    delete config.RIS_API_TIMEOUT_MS;
+    expect(risCvConfig(config)).toMatchObject({
+      enabled: true,
+      path: "/v1/partner/me/cvs",
+      timeoutMs: 25000,
     });
   });
 });
