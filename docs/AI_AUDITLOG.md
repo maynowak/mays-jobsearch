@@ -5122,3 +5122,22 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - The authenticated synthetic RIS write/reload E2E was not executed and is not
   claimed; it remains the next verification step. No real CV/user data, no
   RIS/AWS/Terraform mutation.
+
+## 2026-11-09 — JM-RIS-CV-PERSISTENT-PROFILES-01
+
+**Typ:** Bug fix / stored-CV profile reachability
+**Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
+
+- Branch `fix/jm-ris-cv-persistent-profiles-01`, commit `770a96f`.
+- Root cause: persistent CV rows showed **Suchprofile** only when
+  `persistentSearchProfiles.persistentView` was already true. Without the
+  separate search-profile consent, the entry point was hidden and the overlay
+  had only a static note.
+- Fix: always show **Suchprofile** for stored CVs when the profile API exists;
+  the overlay now offers the separate consent action, unavailable state and
+  loading/error feedback. After grant, the existing hook refresh loads the
+  stored CV’s durable search/ATS profiles.
+- Verification: 2 overlay tests + 1 stored-CV reachability test PASS; serial
+  full suite 1670 passed, 5 skipped; build PASS.
+- No RIS/AWS/Terraform or consent-text change; no real data; no push/merge/
+  deploy. Authenticated live RIS write/reload remains deployment-time.
