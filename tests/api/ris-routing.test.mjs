@@ -67,6 +67,9 @@ function makeReq(path, { method = "GET", headers = {}, body, query = {} } = {}) 
     "/api/ris/consents": ["consents", "__ris_consents"],
     "/api/ris/cvs": ["cvs", "__ris_cvs"],
     "/api/ris/cv-consents": ["cv-consents", "__ris_cv_consents"],
+    "/api/ris/search-profile-consents": ["search-profile-consents", "__ris_search_profile_consents"],
+    "/api/ris/search-profiles": ["search-profiles", "__ris_search_profiles"],
+    "/api/ris/erasure": ["erasure", "__ris_erasure"],
   };
   const [exactRoute, flagKey] = routeMap[url.pathname] ?? ["", ""];
   return {
@@ -113,6 +116,7 @@ beforeEach(() => {
   __resetJwksCache();
   process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
   process.env.RIS_CV_STORAGE_ENABLED = "true";
+  process.env.RIS_SEARCH_PROFILE_STORAGE_ENABLED = "true";
   process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
   process.env.RIS_API_BASE_URL = "https://ris.example.invalid";
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
@@ -137,6 +141,7 @@ afterEach(() => {
   for (const key of [
     "RIS_APPLICATION_STORAGE_ENABLED",
     "RIS_CV_STORAGE_ENABLED",
+    "RIS_SEARCH_PROFILE_STORAGE_ENABLED",
     "RIS_CONSENT_SERVICE_ENABLED",
     "RIS_API_BASE_URL",
     "RIS_PARTNER_CREDENTIAL",
@@ -151,7 +156,7 @@ afterEach(() => {
 });
 
 describe("RIS single-entry routing", () => {
-  it("konfiguriert ausschließlich die vier RIS-Rewrites und blockt den Router direkt", () => {
+  it("konfiguriert ausschließlich die sieben RIS-Rewrites und blockt den Router direkt", () => {
     const config = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"));
     const risRewrites = config.rewrites.filter((rewrite) => rewrite.source.startsWith("/api/ris/"));
     expect(risRewrites).toEqual([
@@ -159,6 +164,9 @@ describe("RIS single-entry routing", () => {
       { source: "/api/ris/consents", destination: "/api/ris/router?__ris_consents=1" },
       { source: "/api/ris/cvs", destination: "/api/ris/router?__ris_cvs=1" },
       { source: "/api/ris/cv-consents", destination: "/api/ris/router?__ris_cv_consents=1" },
+      { source: "/api/ris/search-profile-consents", destination: "/api/ris/router?__ris_search_profile_consents=1" },
+      { source: "/api/ris/search-profiles", destination: "/api/ris/router?__ris_search_profiles=1" },
+      { source: "/api/ris/erasure", destination: "/api/ris/router?__ris_erasure=1" },
     ]);
     expect(config.redirects).toContainEqual({
       source: "/api/ris/router",
@@ -332,5 +340,39 @@ describe("RIS single-entry routing", () => {
     const consents = makeRes();
     await router(makeReq("/api/ris/consents"), consents);
     expect(consents.statusCode).toBe(401);
+  });
+});
+
+
+describe("search-profile routes", () => {
+  it("leitet /api/ris/search-profiles an den Search-Profile-Handler", async () => {
+    const res = makeRes();
+    await router(
+      makeReq("/api/ris/search-profiles?type=manual&limit=5", {
+        headers: { authorization: `Bearer ${token()}` },
+      }),
+      res
+    );
+    expect(res.statusCode).toBe(200);
+    expect(risCalls()[0][0]).toContain("/v1/partner/me/manual-search-profiles?limit=5");
+  });
+
+  it("setzt bei /api/ris/search-profile-consents den Purpose serverseitig", async () => {
+    process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_NOTICE_VERSION = "1.0";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_VERSION =
+      "search-profile-storage-consent-2026-11-08-v2";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_SHA256 =
+      "75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6";
+    process.env.RIS_SEARCH_PROFILE_CONSENT_TEXT_STATE = "DRAFT";
+    risResponse = response(200, { items: [], catalog: [] });
+    const res = makeRes();
+    await router(
+      makeReq("/api/ris/search-profile-consents", {
+        headers: { authorization: `Bearer ${token()}` },
+      }),
+      res
+    );
+    expect(risCalls()[0][0]).toContain("purpose=search-profile-storage");
   });
 });

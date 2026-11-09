@@ -7,9 +7,11 @@ import CvBuilderProfileList from './CvBuilderProfileList';
 import CvProfilesOverlay from './CvProfilesOverlay';
 import Status from './Status';
 import PersistentCvList from './PersistentCvList';
+import PersistentCvProfilesOverlay from './PersistentCvProfilesOverlay';
 import type { CvBuilderProfileV1 } from '../lib/cvBuilder/profileTypes';
 import type { PersistentCvStorageState } from '../lib/usePersistentCvStorage';
 import type { PersistentCv } from '../lib/cvStorageApi';
+import type { PersistentSearchProfiles } from '../lib/usePersistentSearchProfiles';
 
 interface Props {
   documents: CvDocument[];
@@ -47,6 +49,7 @@ interface Props {
   cvStorageMode?: "session" | "persistent";
   onCvStorageModeChange?: (mode: "session" | "persistent") => void;
   persistentCvStorage?: PersistentCvStorageState | null;
+  persistentSearchProfiles?: PersistentSearchProfiles | null;
   onAssignUnassigned?: (
     cvHash: string,
     atsSessionId: string,
@@ -87,10 +90,12 @@ const DashboardV2CvSection = ({
   cvStorageMode = "session",
   onCvStorageModeChange,
   persistentCvStorage = null,
+  persistentSearchProfiles = null,
   onAssignUnassigned,
 }: Props) => {
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
+  const [persistentProfilesCvId, setPersistentProfilesCvId] = useState<string | null>(null);
   const activeDocument = documents.find((document) => document.id === selectedDocumentId) ?? documents[0] ?? null;
   const lists = readCvProfileLists(activeDocument?.hash ?? null);
   const selectedSearchProfile = lists.searchProfiles.find((entry) => entry.id === selectedSearchProfileId) ?? null;
@@ -291,8 +296,28 @@ const DashboardV2CvSection = ({
           onGrantConsent={persistentCvStorage.grantConsent}
           onWithdrawConsent={persistentCvStorage.withdrawConsent}
           onProcess={onProcessPersistentCv}
+          onManageProfiles={
+            persistentSearchProfiles?.persistentView
+              ? (cvId) => setPersistentProfilesCvId(cvId)
+              : undefined
+          }
         />
       )}
+
+      {persistentProfilesCvId && persistentSearchProfiles && (() => {
+        const cv = persistentCvStorage?.documents.find(
+          (document) => document.cvId === persistentProfilesCvId
+        );
+        return (
+          <PersistentCvProfilesOverlay
+            key={persistentProfilesCvId}
+            cvId={persistentProfilesCvId}
+            cvName={cv?.filename ?? "CV"}
+            profiles={persistentSearchProfiles}
+            onClose={() => setPersistentProfilesCvId(null)}
+          />
+        );
+      })()}
 
       {profilesDocumentId && (() => {
         const profilesDocument = documents.find((document) => document.id === profilesDocumentId);

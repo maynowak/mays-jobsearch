@@ -18,6 +18,7 @@ interface Props {
   onGrantConsent: () => Promise<boolean>;
   onWithdrawConsent: () => Promise<boolean>;
   onProcess?: (cv: PersistentCv) => Promise<void>;
+  onManageProfiles?: (cvId: string) => void;
 }
 
 export default function PersistentCvList({
@@ -34,6 +35,7 @@ export default function PersistentCvList({
   onGrantConsent,
   onWithdrawConsent,
   onProcess,
+  onManageProfiles,
 }: Props) {
   const { t, lang } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -234,6 +236,16 @@ export default function PersistentCvList({
                     onClick={() => { void processDocument(cv); }}
                   >
                     {processingId === cv.cvId ? t("cvStorage.processing") : t("cvStorage.process")}
+                  </button>
+                )}
+                {onManageProfiles && (
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    disabled={busy || cv.processingStatus !== "ready"}
+                    onClick={() => onManageProfiles(cv.cvId)}
+                  >
+                    {t("searchProfiles.manage")}
                   </button>
                 )}
                 <button

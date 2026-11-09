@@ -231,7 +231,7 @@ flags and the CV consent text mapping are explicitly configured.
 | `RIS_CV_CONSENT_NOTICE_VERSION` | RIS notice version mapped to the CV purpose (`1.0` candidate). |
 | `RIS_CV_CONSENT_TEXT_VERSION` | `cv-storage-consent-2026-11-08-v1`. |
 | `RIS_CV_CONSENT_TEXT_SHA256` | `2fe65fd158a3a2953cf3869ff864aae626971012d68cfb8849db84e04579d036`. |
-| `RIS_CV_CONSENT_TEXT_STATE` | `APPROVED` only after operator/legal approval; `DRAFT`/absent blocks grants. |
+| `RIS_CV_CONSENT_TEXT_STATE` | `APPROVED` for the limited pilot; `DRAFT`/absent blocks grants. |
 | `VITE_RIS_CV_STORAGE_ENABLED` | Browser opt-in for the durable CV UI; default `false`. |
 | `CV_STORAGE_CONSENT_ENFORCED` (RIS) | Enforce `cv-storage` on new CV writes; reads/download/delete remain allowed. Default `false`; Terraform wiring exists, activation requires a separate plan/apply GO. |
 
@@ -239,6 +239,46 @@ The browser receives only short-lived presigned PUT/GET URLs. The private
 document bucket must allow the exact Jobsearch origin via S3 CORS; that CORS
 resource is defined in the RIS documents module and requires a reviewed plan
 before activation.
+
+## Durable search-profile storage (separate BFF)
+
+Manual, CV-search and ATS profiles use one BFF route and the existing RIS
+contracts. The feature is disabled unless all flags and the separate consent
+text mapping are explicitly configured.
+
+| Variable | Purpose |
+| --- | --- |
+| `RIS_SEARCH_PROFILE_STORAGE_ENABLED` | Enables `/api/ris/search-profiles` (server-only). |
+| `RIS_SEARCH_PROFILE_CONSENT_NOTICE_VERSION` | RIS notice version mapped to `search-profile-storage` (`1.0` candidate). |
+| `RIS_SEARCH_PROFILE_CONSENT_TEXT_VERSION` | `search-profile-storage-consent-2026-11-08-v2`. |
+| `RIS_SEARCH_PROFILE_CONSENT_TEXT_SHA256` | `75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6`. |
+| `RIS_SEARCH_PROFILE_CONSENT_TEXT_STATE` | `APPROVED` for the limited pilot; `DRAFT`/absent blocks grants. |
+| `VITE_RIS_SEARCH_PROFILE_STORAGE_ENABLED` | Browser opt-in for the durable search-profile UI; default `false`. |
+| `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED` (RIS) | Enforce the separate consent on manual/CV-search/ATS writes; list/get/delete remain allowed. Default `false`; activation needs a separate plan/apply GO. |
+
+`RIS_SEARCH_PROFILE_CONSENT_SYNTHETIC=true` is a local synthetic-test hook
+only. It never substitutes for operator approval and must not be used for real
+users.
+
+Option A applies: manual profiles have no CV parent; CV-search profiles need a
+durable RIS `cvId`; ATS profiles need a durable CV-search profile id. Session
+CVs and their profile lists remain session-only.
+
+## Account erasure (existing RIS lifecycle)
+
+The Jobsearch BFF forwards the verified user token to the existing partner-edge
+endpoint `POST /v1/partner/me/erasure`. It does not implement a second deletion
+engine.
+
+| Variable | Purpose |
+| --- | --- |
+| `RIS_ACCOUNT_ERASURE_ENABLED` | Server opt-in; default `false`. |
+| `VITE_RIS_ACCOUNT_ERASURE_ENABLED` | Browser opt-in for the confirmation UI; default `false`. |
+| `RIS_TEST_USER_ALLOWLIST` | Existing verified-identity allowlist; erasure is restricted to it. |
+
+The action remains disabled for general users until a separate rollout
+approval. A completed request does not prove physical deletion of S3 versions,
+backups, logs or PITR history.
 
 ## CI/CD
 
