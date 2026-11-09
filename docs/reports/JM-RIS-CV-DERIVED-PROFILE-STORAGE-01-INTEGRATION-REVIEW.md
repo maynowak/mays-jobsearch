@@ -1,6 +1,6 @@
 # JM-RIS-CV-DERIVED-PROFILE-STORAGE-01 — Integration Review
 
-**Status:** `INTEGRATION READY — GO FOR CONTROLLED PR`
+**Status:** `PR #12 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
 **No push, merge or deployment**
 **Date:** 2026-11-09
 
@@ -10,7 +10,7 @@
 | --- | --- |
 | Remote `main` | `bcd503c` |
 | Feature branch | `feature/jm-ris-cv-derived-profile-storage-01` @ `177428c` |
-| Integration branch | `integration/jm-ris-cv-derived-profile-storage-01` @ `177428c` |
+| Integration branch | `integration/jm-ris-cv-derived-profile-storage-01` @ `16d33c3` |
 
 `origin/main` is an ancestor of the feature branch. The isolated integration
 worktree needed no conflict resolution (`git merge origin/main` -> already
@@ -72,6 +72,13 @@ content; the temporary preview change was reverted before this commit.
 | Full suite, serial | **1667 passed**, 5 skipped |
 | Production build | **PASS** |
 | Diff/secret audit | **clean** |
+| `test:e2e:profile-storage-consent` | **PASS** (1440/390/guest + 1024/768/430/320, no overflow) |
+| `test:e2e:mobile-nav` | **PASS** (390/430/768/1024/1440, guest + auth) |
+| `test:e2e:account-erasure` | **PASS** |
+
+The two navigation E2E scripts were aligned with the already-merged UX
+breakpoint: 768 px intentionally uses the burger menu, and mobile settings are
+selected through the dashboard section switcher.
 
 No pre-existing test failures were introduced. The authenticated live RIS write
 was **not** executed and is not claimed as verified.
@@ -80,6 +87,9 @@ was **not** executed and is not claimed as verified.
 
 **GO for a controlled PR** against `main` after normal review.
 
+- PR: https://github.com/maynowak/mays-jobsearch/pull/12
+- Preview: https://mays-job-matcher-git-integration-jm-ris-cv-deri-467922-maymilly.vercel.app
+
 **NO-GO for production until a signed-in synthetic RIS E2E** verifies the actual
 `createCv`/`createAts` writes, reload and parent assignment. No deployment is
 part of this review.
@@ -87,8 +97,8 @@ part of this review.
 ## Remaining risks
 
 - No App-level end-to-end test for the real authenticated `createCv`/`createAts`
-  path; guard tests and the existing API contract tests cover the decision and
-  request shapes.
+  path; guard tests, component tests and the existing API contract tests cover
+  the decision and request shapes.
 - The real persistence/reload path depends on the RIS consent allowlist and
   remains a deployment-time synthetic verification.
 - No push, merge, deployment, RIS/AWS/Terraform change or real user data.

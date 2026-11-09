@@ -5076,7 +5076,7 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 ## 2026-11-09 — JM-RIS-CV-DERIVED-PROFILE-STORAGE-01 integration review
 
 **Typ:** Integration review / UX-safe PR preparation
-**Status:** `INTEGRATION READY — GO FOR CONTROLLED PR — NO PUSH/MERGE/DEPLOY`
+**Status:** `PR #12 OPEN — CHECKS GREEN — NO MERGE/DEPLOY`
 
 - Isolated worktree `worktrees/jobsearch-derived-profile-integration`, branch
   `integration/jm-ris-cv-derived-profile-storage-01` at `177428c`; `origin/main`
@@ -5089,8 +5089,12 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   late success after close/back; identity/session reset clears `risCvId`,
   durable parents and in-flight saves.
 - Verification: 5 new tests, 72 focused, serial full 1667 passed/5 skipped,
-  build PASS, diff/secret audit clean. Screenshots at 320/390/430/1024/1440
+  build PASS, diff/secret audit clean; E2E profile-storage-consent,
+  mobile-nav and account-erasure PASS. Mobile-nav/profile-storage tests were
+  aligned with the merged 768 px burger/section-switcher UX. Screenshots at 320/390/430/1024/1440
   show both storage options and May hint without overflow; persistent selected
   state captured at 390/1024. Temporary preview change reverted.
-- Authenticated live RIS write not executed and not claimed. No push/merge/
-  deploy, no RIS/AWS/Terraform mutation, no real CV/user data.
+- PR #12 opened: https://github.com/maynowak/mays-jobsearch/pull/12
+  (preview https://mays-job-matcher-git-integration-jm-ris-cv-deri-467922-maymilly.vercel.app).
+  Authenticated live RIS write not executed and not claimed. No merge/deploy,
+  no RIS/AWS/Terraform mutation, no real CV/user data.
