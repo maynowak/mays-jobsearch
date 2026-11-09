@@ -96,12 +96,20 @@ async function preparePage(browser, viewport, authenticated) {
   return { context, page, consoleErrors };
 }
 
+async function openSettings(page, width) {
+  if (width >= 768) {
+    await page.getByRole("button", { name: "Einstellungen" }).click();
+  } else {
+    await page.locator("#dashboard-section-select").selectOption("settings");
+  }
+}
+
 async function runAuthenticated(browser, width, height, name) {
   const { context, page, consoleErrors } = await preparePage(browser, { width, height }, true);
   await page.goto(`${base}/profil`, { waitUntil: "networkidle" });
   await page.getByText(/wird vorbereitet und ist derzeit noch nicht verfügbar/).waitFor();
   await page.screenshot({ path: resolve(evidenceDir, `${name}-profile-notice.png`), fullPage: false });
-  await page.getByRole("button", { name: "Einstellungen" }).click();
+  await openSettings(page, width);
   await page.getByRole("heading", { name: "Datenschutz & Datenspeicherung" }).waitFor();
   await page.getByText(/Die dauerhafte Speicherung deiner Bewerbungsunterlagen wird vorbereitet/).waitFor();
   await page.getByText(/Identität über das angemeldete Konto verifiziert/).waitFor();
@@ -134,7 +142,7 @@ async function runResponsive(browser) {
   for (const width of [1024, 768, 430, 320]) {
     const { context, page, consoleErrors } = await preparePage(browser, { width, height: 900 }, true);
     await page.goto(`${base}/profil`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Einstellungen" }).click();
+    await openSettings(page, width);
     await page.getByRole("heading", { name: "Datenschutz & Datenspeicherung" }).waitFor();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     if (overflow > 0) throw new Error(`responsive ${width}: overflow ${overflow}px`);

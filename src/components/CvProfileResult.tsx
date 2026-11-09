@@ -5,6 +5,7 @@ import { useLang } from "../i18n";
 import { useCityAutocomplete } from "../hooks/useCityAutocomplete";
 import { RADIUS_KM_OPTIONS } from "../types";
 import FieldClear from "./FieldClear";
+import ProfileStorageChoice, { type ProfileStorageChoiceValue } from "./ProfileStorageChoice";
 
 interface Props {
   suggested: SuggestedProfile;
@@ -18,6 +19,11 @@ interface Props {
   defaultName?: string;
   // JM-PROFILE-CAPACITY-02-LIMIT: inline save/capacity feedback.
   error?: string | null;
+  // JM-RIS-CV-DERIVED-PROFILE-STORAGE-01
+  storageChoice?: ProfileStorageChoiceValue;
+  onStorageChoiceChange?: (value: ProfileStorageChoiceValue) => void;
+  persistentAvailable?: boolean;
+  persistentUnavailableReason?: string;
 }
 
 export default function CvProfileResult({
@@ -28,6 +34,10 @@ export default function CvProfileResult({
   onBack,
   defaultName,
   error,
+  storageChoice = "session",
+  onStorageChoiceChange,
+  persistentAvailable = false,
+  persistentUnavailableReason,
 }: Props) {
   const { t } = useLang();
   const [parsedSkills, setParsedSkills] = useState<string[]>(() => suggested.skills);
@@ -227,6 +237,16 @@ export default function CvProfileResult({
           ))}
         </select>
       </div>
+
+      {onStorageChoiceChange && (
+        <ProfileStorageChoice
+          value={storageChoice}
+          onChange={onStorageChoiceChange}
+          persistentAvailable={persistentAvailable}
+          persistentUnavailableReason={persistentUnavailableReason}
+          disabled={busy}
+        />
+      )}
 
       {error && (
         <p className="field-error" role="alert">
