@@ -429,6 +429,8 @@ export default function App() {
       setDurableSearchProfiles([]);
       setDurableSearchProfilesError(null);
       setDurableParentSearchProfileId("");
+      profileSaveOperationRef.current = null;
+      setProfileSaveBusy(false);
       cvStorageAutoSelectedRef.current = false;
       setApplicationRepository(createApplicationRepositoryForAuth());
       setApplicationRefreshToken(0);
@@ -501,6 +503,8 @@ export default function App() {
   const [durableSearchProfilesError, setDurableSearchProfilesError] = useState<string | null>(null);
   const [durableParentSearchProfileId, setDurableParentSearchProfileId] = useState("");
   const [durableProfilesReloadToken, setDurableProfilesReloadToken] = useState(0);
+  const [profileSaveBusy, setProfileSaveBusy] = useState(false);
+  const profileSaveOperationRef = useRef<object | null>(null);
   const selectedCvDocumentId = cvState.selectedDocumentIds[0] ?? null;
   const activeCvDocument = selectedCvDocumentId
     ? cvState.documents.find((document) => document.id === selectedCvDocumentId) ?? null
@@ -517,6 +521,8 @@ export default function App() {
     setDurableSearchProfiles([]);
     setDurableSearchProfilesError(null);
     setDurableParentSearchProfileId("");
+    profileSaveOperationRef.current = null;
+    setProfileSaveBusy(false);
   }, [selectedCvDocumentId]);
 
   useEffect(() => {
@@ -1675,6 +1681,7 @@ export default function App() {
     if (cvState.processingGoal === "ats") {
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
       if (profileStorageChoice === "persistent") {
+        if (durableSearchProfilesLoading) return;
         if (!doc?.risCvId || !persistentSearchProfiles.active) {
           setStatus({ type: "error", message: t("profileStorage.errorPersistent") });
           return;
@@ -1699,6 +1706,7 @@ export default function App() {
             isProcessing: false,
             error: null,
           }));
+          setCvStorageMode("persistent");
           setStatus({
             type: "info",
             message: t("cv.atsProfileSavedPersistent", { name: created.name }),
@@ -1758,6 +1766,7 @@ export default function App() {
         isProcessing: false,
         error: null,
       }));
+      setCvStorageMode("session");
       setStatus({ type: "info", message: t("cv.atsProfileSaved", { name: savedName ?? "" }) });
       return;
     }
@@ -2539,6 +2548,8 @@ export default function App() {
     // reopened later, but a closed workflow must not be resurrected by a late
     // async result from its previous run.
     cvOperationRef.current = null;
+    profileSaveOperationRef.current = null;
+    setProfileSaveBusy(false);
     setEditingSearchName(null);
     if (cvState.step === "consent-required") {
       // Im Consent-Step zaehlt Schliessen als "ausstehend" (wieder oeffnbar
@@ -2825,7 +2836,7 @@ export default function App() {
       {cvState.step === "profile-ready" && cvState.suggestedProfile && (
         <CvProfileResult
           suggested={cvState.suggestedProfile}
-          busy={cvState.isProcessing}
+          busy={cvState.isProcessing || profileSaveBusy}
           loadingLabel={t("cv.savingProfile")}
           error={cvProfileSaveError}
           storageChoice={profileStorageChoice}
@@ -2852,76 +2863,90 @@ export default function App() {
             // search-profile consent and the existing RIS cvId.
             const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
             const epoch = sessionEpochRef.current;
+            const operation = {};
+            profileSaveOperationRef.current = operation;
             setCvProfileSaveError(null);
+            setProfileSaveBusy(true);
             void (async () => {
-              if (profileStorageChoice === "persistent") {
-                if (!doc?.risCvId || !persistentSearchProfiles.active) {
-                  setCvProfileSaveError(t("profileStorage.errorPersistent"));
-                  return;
-                }
-                try {
-                  const saved = await persistentSearchProfiles.createCv(doc.risCvId, {
-                    name: profileName,
-                    searchConfig: profileToSearchConfiguration(profile),
-                  });
-                  if (sessionEpochRef.current !== epoch) return;
-                  setDurableSearchProfileId(saved.searchProfileId);
-                  setDurableParentSearchProfileId(saved.searchProfileId);
-                  setDurableSearchProfiles((current) =>
-                    current.some((item) => item.searchProfileId === saved.searchProfileId)
-                      ? current
-                      : [...current, saved]
-                  );
-                  setSelectedSavedSearchId(null);
-                  setStatus({ type: "info", message: t("profileStorage.savedPersistent") });
-                } catch {
-                  if (sessionEpochRef.current === epoch) {
+              try {
+                if (profileStorageChoice === "persistent") {
+                  if (!doc?.risCvId || !persistentSearchProfiles.active) {
                     setCvProfileSaveError(t("profileStorage.errorPersistent"));
+                    return;
                   }
-                  return;
-                }
-              } else if (doc?.hash) {
-                const repositories = profileRepositoriesRef.current;
-                if (!repositories) {
-                  setStatus({ type: "error", message: t("cv.errorProfileSave") });
-                  return;
-                }
-                try {
-                  const saved = await repositories.cvSearchProfiles.create(doc.hash, {
-                    name: profileName,
-                    searchConfig: profile,
-                  });
-                  if (sessionEpochRef.current !== epoch) return;
-                  setDurableSearchProfileId(null);
-                  setSelectedSavedSearchId(saved.sessionId);
-                  setCvProfileStoreVersion((version) => version + 1);
-                  setStatus({ type: "info", message: t("profileStorage.savedSession") });
-                } catch (error) {
-                  if (error instanceof ProfileSessionEndedError) return;
-                  if (sessionEpochRef.current === epoch) {
-                    setCvProfileSaveError(
-                      (error as { code?: string })?.code === "capacity_exceeded"
-                        ? t("cv.errorProfileCapacity")
-                        : t("cv.errorProfileSave")
+                  try {
+                    const saved = await persistentSearchProfiles.createCv(doc.risCvId, {
+                      name: profileName,
+                      searchConfig: profileToSearchConfiguration(profile),
+                    });
+                    if (sessionEpochRef.current !== epoch || profileSaveOperationRef.current !== operation) return;
+                    setDurableSearchProfileId(saved.searchProfileId);
+                    setDurableParentSearchProfileId(saved.searchProfileId);
+                    setDurableSearchProfiles((current) =>
+                      current.some((item) => item.searchProfileId === saved.searchProfileId)
+                        ? current
+                        : [...current, saved]
                     );
+                    setSelectedSavedSearchId(null);
+                    setCvStorageMode("persistent");
+                    setStatus({ type: "info", message: t("profileStorage.savedPersistent") });
+                  } catch {
+                    if (sessionEpochRef.current === epoch && profileSaveOperationRef.current === operation) {
+                      setCvProfileSaveError(t("profileStorage.errorPersistent"));
+                    }
+                    return;
                   }
-                  return;
+                } else if (doc?.hash) {
+                  const repositories = profileRepositoriesRef.current;
+                  if (!repositories) {
+                    setStatus({ type: "error", message: t("cv.errorProfileSave") });
+                    return;
+                  }
+                  try {
+                    const saved = await repositories.cvSearchProfiles.create(doc.hash, {
+                      name: profileName,
+                      searchConfig: profile,
+                    });
+                    if (sessionEpochRef.current !== epoch || profileSaveOperationRef.current !== operation) return;
+                    setDurableSearchProfileId(null);
+                    setSelectedSavedSearchId(saved.sessionId);
+                    setCvProfileStoreVersion((version) => version + 1);
+                    setCvStorageMode("session");
+                    setStatus({ type: "info", message: t("profileStorage.savedSession") });
+                  } catch (error) {
+                    if (error instanceof ProfileSessionEndedError) return;
+                    if (sessionEpochRef.current === epoch && profileSaveOperationRef.current === operation) {
+                      setCvProfileSaveError(
+                        (error as { code?: string })?.code === "capacity_exceeded"
+                          ? t("cv.errorProfileCapacity")
+                          : t("cv.errorProfileSave")
+                      );
+                    }
+                    return;
+                  }
+                }
+                if (sessionEpochRef.current !== epoch || profileSaveOperationRef.current !== operation) return;
+                setCvProfileSaveError(null);
+                setEditingSearchName(null);
+                setCvState((prev) => ({
+                  ...prev,
+                  cvProfile: profile,
+                  step: "goal-selection",
+                  // suggestedProfile bleibt erhalten: der Skill-Auswahl-Step
+                  // benötigt die extrahierten Skills (BUG-16).
+                  fallbackNote: false,
+                }));
+              } finally {
+                if (profileSaveOperationRef.current === operation) {
+                  profileSaveOperationRef.current = null;
+                  setProfileSaveBusy(false);
                 }
               }
-              if (sessionEpochRef.current !== epoch) return;
-              setCvProfileSaveError(null);
-              setEditingSearchName(null);
-              setCvState((prev) => ({
-                ...prev,
-                cvProfile: profile,
-                step: "goal-selection",
-                // suggestedProfile bleibt erhalten: der Skill-Auswahl-Step
-                // benötigt die extrahierten Skills (BUG-16).
-                fallbackNote: false,
-              }));
             })();
           }}
           onBack={() => {
+            profileSaveOperationRef.current = null;
+            setProfileSaveBusy(false);
             setCvProfileSaveError(null);
             setEditingSearchName(null);
             setCvState((prev) => ({
@@ -2940,6 +2965,11 @@ export default function App() {
             {t("cv.goalExecutionTitle")}
           </h3>
           <p className="cv-goal-execution__description">{t("cv.goalExecutionDescription")}</p>
+          {durableSearchProfileId && (
+            <p className="field-hint cv-durable-save-status" role="status">
+              {t("profileStorage.savedPersistent")}
+            </p>
+          )}
           <CvGoalSelection
             value={cvState.processingGoal}
             onChange={handleGoalChange}
@@ -3114,7 +3144,13 @@ export default function App() {
               type="button"
               className="cv-continue-btn"
               onClick={handleSkillSelectionConfirm}
-              disabled={cvState.isProcessing || cvState.selectedSkills.length === 0}
+              disabled={
+                cvState.isProcessing ||
+                cvState.selectedSkills.length === 0 ||
+                (cvState.processingGoal === "ats" &&
+                  profileStorageChoice === "persistent" &&
+                  durableSearchProfilesLoading)
+              }
             >
               {cvState.isProcessing ? t("cv.executingGoal") : t("cv.skillSelectContinue")}
               {cvState.isProcessing && <span className="spinner" />}
