@@ -4968,3 +4968,25 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - PR #9 updated (body/title): CodeQL and Vercel preview checks SUCCESS, merge
   state CLEAN, no auto-merge. Production remains `dpl_6DiP...`.
 - No merge, deployment, AWS/Vercel mutation, force-push or feature-flag change.
+## 2026-11-09 — JM-RIS-CV-TIMEOUT-01
+
+**Typ:** Production hotfix / CV load path
+**Status:** `FIXED — PRODUCTION DEPLOYED`
+
+- Root cause: the Jobsearch RIS BFF aborted after the hard-coded 10,000 ms
+  default. RIS Lambda logs showed successful cold-start CV list requests at
+  8.99 s, 10.07 s and 10.13 s; the 10 s abort surfaced as the generic
+  "CV-Speicherfunktion ist derzeit nicht verfügbar" message. The requests did
+  reach RIS, so this was not a missing-config or allowlist rejection.
+- Fix commit `95b355b`: default RIS request timeout 25,000 ms (override remains
+  `RIS_API_TIMEOUT_MS`); actionable messages for `unavailable`,
+  `test_user_not_allowed`, `cv_storage_disabled` and `missing_config`.
+- Regression tests: targeted API/hook 28 passed; full suite 1,623 passed,
+  5 skipped (one unrelated integration timeout passed in isolation); build
+  PASS. PR #10 checks: CodeQL and Vercel previews PASS.
+- PR #10 merged as `7c27ec7`; production deployment
+  `dpl_FD6TAJo3Kn4hXBXAMCATBQ91BBa5`, alias `www.mays-job-matcher.app`.
+- Live smoke: `/`, `/datenschutz`, `/impressum` = 200; authenticated endpoint
+  without token = 401, no 5xx. No AWS/Terraform mutation; RIS state unchanged.
+- Remaining: user-facing reload should be rechecked with the signed-in browser;
+  S3 versions/backups/PITR and physical purge remain out of scope.

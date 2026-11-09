@@ -2,7 +2,9 @@ import { consentTextMapping } from "./consentText.mjs";
 import { cvConsentTextMapping } from "./cvConsentText.mjs";
 import { searchProfileConsentTextMapping } from "./searchProfileConsentText.mjs";
 
-const DEFAULT_TIMEOUT_MS = 10000;
+// RIS cold starts can take 9–10s before the first backend query completes.
+// A 10s abort made an otherwise successful CV list look like a hard outage.
+const DEFAULT_TIMEOUT_MS = 25000;
 const DEFAULT_PATH = "/v1/partner/me/applications";
 const CONSENT_PATH = "/v1/partner/me/consents";
 const CONSENT_PURPOSE = "application-storage";
