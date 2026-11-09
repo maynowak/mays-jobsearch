@@ -5044,3 +5044,28 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   conflicts are already resolved. No deployment; real signed-in presigned-GET
   CORS check remains deployment-time.
 - No RIS/AWS/Terraform/Vercel mutation and no real CV/user data.
+
+## 2026-11-09 — JM-RIS-CV-DERIVED-PROFILE-STORAGE-01
+
+**Typ:** CV-derived profile storage / consent / session isolation
+**Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
+
+- Branch `feature/jm-ris-cv-derived-profile-storage-01`, commit `cef8b7e`.
+- A durable CV processed through **Verarbeiten** now carries a session-only
+  `risCvId` on its session `CvDocument`; the mapping is cleared on identity or
+  session reset and is never persisted.
+- `CvProfileResult` and the ATS confirmation step offer **Nur für diese
+  Sitzung** (default) or **Dauerhaft in meinem RIS-Konto**. Persistent writes
+  require the separate `search-profile-storage` consent; CV storage consent is
+  not reused. Session storage paths are unchanged.
+- Durable CV-search profiles use `persistentSearchProfiles.createCv(cvId,
+  input)`. Durable ATS profiles use `createAts(searchProfileId, input)` and are
+  validated against the durable parent profiles loaded for that RIS CV; missing
+  or invalid parents fail before any write, preventing orphans.
+- After durable save, the persistent CV profile overlay reloads the new profile
+  from RIS; no re-upload. May help text explains session vs durable and the
+  separate consent boundary.
+- Verification: new tests 5 passed; focused regression 67 passed; serial full
+  suite 1667 passed, 5 skipped; production build PASS. No real CV/user data.
+- No authenticated live RIS write was executed; signed-in synthetic E2E remains
+  deployment-time. No RIS/AWS/Terraform change; no push/merge/deploy.
