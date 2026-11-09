@@ -266,13 +266,13 @@ CVs and their profile lists remain session-only.
 
 ## Account erasure (existing RIS lifecycle)
 
-The Jobsearch BFF now forwards the verified user token to the existing kernel
-endpoint `POST /me/erasure`. It does not implement a second deletion engine.
+The Jobsearch BFF forwards the verified user token to the existing partner-edge
+endpoint `POST /v1/partner/me/erasure`. It does not implement a second deletion
+engine.
 
 | Variable | Purpose |
 | --- | --- |
 | `RIS_ACCOUNT_ERASURE_ENABLED` | Server opt-in; default `false`. |
-| `RIS_ERASURE_API_BASE_URL` | Server-only kernel API HTTPS base URL; required when enabled. |
 | `VITE_RIS_ACCOUNT_ERASURE_ENABLED` | Browser opt-in for the confirmation UI; default `false`. |
 | `RIS_TEST_USER_ALLOWLIST` | Existing verified-identity allowlist; erasure is restricted to it. |
 

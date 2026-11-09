@@ -10,7 +10,7 @@ const jwk = { ...publicKey.export({ format: "jwk" }), kid: "test-key", alg: "RS2
 const ISSUER = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_TEST";
 const CLIENT = "test-client";
 const CREDENTIAL = "ris_test_credential";
-const KERNEL = "https://kernel.example.invalid";
+const PARTNER = "https://partner.example.invalid";
 
 function b64u(value) { return Buffer.from(value).toString("base64url"); }
 function token(overrides = {}) {
@@ -33,8 +33,7 @@ let fetchMock;
 beforeEach(() => {
   __resetJwksCache();
   process.env.RIS_ACCOUNT_ERASURE_ENABLED = "true";
-  process.env.RIS_ERASURE_API_BASE_URL = KERNEL;
-  process.env.RIS_API_BASE_URL = "https://partner.example.invalid";
+  process.env.RIS_API_BASE_URL = PARTNER;
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
   process.env.RIS_COGNITO_ISSUER = ISSUER;
   process.env.RIS_COGNITO_CLIENT_ID = CLIENT;
@@ -47,8 +46,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.unstubAllGlobals();
-  for (const key of ["RIS_ACCOUNT_ERASURE_ENABLED", "RIS_ERASURE_API_BASE_URL",
-    "RIS_API_BASE_URL", "RIS_PARTNER_CREDENTIAL", "RIS_COGNITO_ISSUER",
+  for (const key of ["RIS_ACCOUNT_ERASURE_ENABLED", "RIS_API_BASE_URL",
+    "RIS_PARTNER_CREDENTIAL", "RIS_COGNITO_ISSUER",
     "RIS_COGNITO_CLIENT_ID", "RIS_TEST_USER_ALLOWLIST"]) delete process.env[key];
 });
 function req(overrides = {}) {
@@ -63,11 +62,11 @@ describe("/api/ris/erasure", () => {
     expect(res.body.code).toBe("account_erasure_disabled");
     expect(risCalls()).toHaveLength(0);
   });
-  it("uses the existing kernel /me/erasure endpoint", async () => {
+  it("uses the existing partner erasure route", async () => {
     const res = makeRes();
     await handler(req(), res);
     expect(res.statusCode).toBe(200);
-    expect(risCalls()[0][0]).toBe(`${KERNEL}/me/erasure`);
+    expect(risCalls()[0][0]).toBe(`${PARTNER}/v1/partner/me/erasure`);
     expect(risCalls()[0][1].method).toBe("POST");
   });
   it("rejects non-POST without calling RIS", async () => {
