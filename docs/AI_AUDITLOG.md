@@ -4656,3 +4656,28 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   without token = 401, no 5xx. No AWS/Terraform mutation; RIS state unchanged.
 - Remaining: user-facing reload should be rechecked with the signed-in browser;
   S3 versions/backups/PITR and physical purge remain out of scope.
+
+## 2026-11-09 — JM-UX-NAV-HELP-01
+
+**Typ:** UX / navigation / durable-CV handoff / reusable help
+**Status:** `IMPLEMENTED — VERIFIED LOCAL — NO PUSH/MERGE/DEPLOY`
+
+- Branch `feature/jm-ux-nav-help-01`, feature commit `5ddf5f1`. Navigation
+  shell is aligned to `min(1180px, 94vw)`; active `aria-current` states, 44 px
+  targets, sticky desktop dashboard sidebar with own scroll, compact mobile
+  section selector and a tablet (768–900 px) compact main menu avoid overlap.
+- Durable CVs now expose **„Verarbeiten“**. `downloadCvFile` obtains the PDF
+  through the existing authenticated BFF/presigned URL and hands it to the
+  existing `handleCvUploadStart` workflow. No second upload or analysis engine;
+  consent, anonymisation and model selection are unchanged. Processing requires
+  verified identity, `GRANTED` CV storage consent and `ready` status.
+- Storage consent is not treated as AI consent. Loading, error, retry and
+  handoff status are shown; session-epoch guard prevents a logout/identity
+  switch from carrying a downloaded CV into the next session. No bytes are
+  written to browser storage.
+- Added reusable non-chat `MayHelp` component with contextual overview/CV/
+  applications/preferences/settings text.
+- Verification: focused 55 passed; serial full suite 1633 passed, 5 skipped;
+  build PASS; screenshots at 320/390/430/768/1024/1440 with no horizontal
+  overflow. Assets/report under `docs/reports/`.
+- No RIS/AWS/Terraform or privacy-contract change; no push, merge or deploy.
