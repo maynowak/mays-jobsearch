@@ -1,6 +1,6 @@
 # JM-RIS-CV-PROFILE-DEFAULT-DURABLE-01
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL`
+**Status:** `MERGED / PRODUCTION DEPLOYED / AUTHENTICATED E2E PENDING`
 **Branch:** `fix/jm-ris-cv-profile-default-durable-01`
 **Base:** `7ba90dd`
 **Commit:** `b52f3f4`
@@ -41,6 +41,15 @@ piece was that a **stored RIS CV** did not default to **Dauerhaft**.
 | New default/consent tests | **7 passed** (storage choice/guard selection) |
 | Full suite, serial | **1675 passed**, 5 skipped |
 | Production build | **PASS** |
+
+## Production
+
+- PR #15 merged as `7e4b0b1`.
+- `www.mays-job-matcher.app` -> `dpl_2UTtKz4PJRtCrfXM8xMuHd1Asvwe`
+- `mays-jobsearch.vercel.app` -> `dpl_Ax7tdh4Z42PbPVFucnWvG6rAYsQG`
+- footer Build SHA `7e4b0b1` on both.
+- Smoke: `/`, `/profil` 200; search-profile API 401 without token on the
+  matcher domain, 503 on the alternative `mays-jobsearch` project.
 
 ## Boundaries
 

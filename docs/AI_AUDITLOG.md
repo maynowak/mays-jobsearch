@@ -5230,3 +5230,24 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   build PASS.
 - No RIS/AWS/Terraform/consent-text change; no real data. Auth synthetic RIS
   E2E remains deployment-time.
+
+## 2026-11-09 — JM-RIS-CV-PROFILE-DEFAULT-DURABLE-01 merge and production
+
+**Typ:** Controlled merge / production deploy / post-deploy smoke
+**Status:** `MERGED / PRODUCTION DEPLOYED / AUTHENTICATED E2E PENDING`
+
+- PR #15 merged to `main` as `7e4b0b1`.
+- Production deployments at `7e4b0b1`:
+  - `www.mays-job-matcher.app` -> `dpl_2UTtKz4PJRtCrfXM8xMuHd1Asvwe`
+  - `mays-jobsearch.vercel.app` -> `dpl_Ax7tdh4Z42PbPVFucnWvG6rAYsQG`
+  - footer Build SHA on both: `7e4b0b1`.
+- Live smoke: `/` and `/profil` 200 on both. `www.mays-job-matcher.app`
+  search-profile API 401 without token (configured); the `mays-jobsearch`
+  project remains 503 for that API.
+- Behavior: durable RIS CV + GRANTED search-profile consent now defaults the
+  storage choice to **Dauerhaft**; session CVs remain session. Missing consent
+  can be granted in the storage mask. Durable save opens/reloads the matching
+  stored-CV profile view.
+- Verification: 7 new/updated tests, serial full 1675 passed/5 skipped, build
+  PASS. No RIS/AWS/Terraform/consent-text change, no real data. Authenticated
+  synthetic RIS E2E remains pending.
