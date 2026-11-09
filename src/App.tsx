@@ -61,6 +61,7 @@ import { createRemoteApplicationRepository } from "./lib/applications/remoteSess
 import { createApplicationMigration } from "./lib/applications/applicationMigration";
 import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
 import { downloadCvFile, isRisCvStorageEnabled, type PersistentCv } from "./lib/cvStorageApi";
+import { persistentCvProcessBlocker } from "./lib/cvProcessingHandoff";
 import { usePersistentCvStorage } from "./lib/usePersistentCvStorage";
 import {
   checkRisRemoteApplicationAccess,
@@ -774,17 +775,25 @@ export default function App() {
   // normal session File. No second upload, analysis engine or consent path.
   const handleProcessPersistentCv = async (cv: PersistentCv) => {
     const requestEpoch = sessionEpochRef.current;
-    if (!identityVerified || !cvStorageAccessToken) {
-      throw new Error(t("cvStorage.processIdentityRequired"));
-    }
-    if (!persistentCvStorage.enabled) {
-      throw new Error(t("cvStorage.processConsentRequired"));
-    }
-    if (persistentCvStorage.consent?.consent?.status !== "GRANTED") {
-      throw new Error(t("cvStorage.processConsentRequired"));
-    }
-    if (cv.processingStatus !== "ready") {
-      throw new Error(t("cvStorage.processNotReady"));
+    const blocker = persistentCvProcessBlocker(
+      cv,
+      {
+        identityVerified,
+        accessToken: cvStorageAccessToken,
+        storageEnabled: persistentCvStorage.enabled,
+        consentStatus: persistentCvStorage.consent?.consent?.status,
+      },
+      cvState.documents.length
+    );
+    if (blocker) {
+      const messageKey = blocker === "identity"
+        ? "cvStorage.processIdentityRequired"
+        : blocker === "consent"
+          ? "cvStorage.processConsentRequired"
+          : blocker === "not-ready"
+            ? "cvStorage.processNotReady"
+            : "cvStorage.processCapacity";
+      throw new Error(t(messageKey));
     }
 
     const file = await downloadCvFile(cvStorageAccessToken, cv.cvId, cv.filename);
@@ -3388,7 +3397,6 @@ export default function App() {
       onRemoveData={handleCvRemoveData}
       onSelectSearchProfile={handleDashboardSearchProfileSelect}
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
-      onOpenCvUpload={() => navigateInApp("/search?cv=upload")}
       onOpenCvBuilder={handleCreateCvProfile}
       onProcessPersistentCv={handleProcessPersistentCv}
       cvProfiles={cvProfiles}

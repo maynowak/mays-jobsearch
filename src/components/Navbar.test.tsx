@@ -129,5 +129,8 @@ describe('JM-UX-NAV-HELP-01: shared active navigation state', () => {
     const search = screen.getByRole('link', { name: 'Suche' });
     expect(search).toHaveAttribute('aria-current', 'page');
     expect(search).toHaveClass('nav-link-active');
+    const alerts = screen.getByRole('link', { name: 'Benachrichtigungen' });
+    expect(alerts).not.toHaveAttribute('aria-current');
+    expect(alerts).not.toHaveClass('nav-link-active');
   });
 });

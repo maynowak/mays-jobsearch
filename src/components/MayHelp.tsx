@@ -28,7 +28,6 @@ export default function MayHelp({ context, compact = false, className }: MayHelp
   return (
     <aside
       className={`may-help${compact ? ' may-help--compact' : ''}${className ? ` ${className}` : ''}`}
-      aria-labelledby={headingId}
       aria-label={t('dashboard.may.aria')}
     >
       <div className="may-help__avatar" aria-hidden="true">M</div>

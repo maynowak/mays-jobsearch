@@ -12,7 +12,7 @@ afterEach(() => {
 describe("downloadCvFile", () => {
   it("uses the existing BFF download URL and returns a session File", async () => {
     const pdfBytes = new Uint8Array([37, 80, 68, 70]);
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = String(input);
       if (url.includes("/api/ris/cvs?")) {
         expect(url).toContain("action=document");
@@ -34,6 +34,7 @@ describe("downloadCvFile", () => {
     expect(file.type).toBe("application/pdf");
     expect(file.size).toBe(pdfBytes.length);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ cache: "no-store", credentials: "omit" });
   });
 
   it("fails closed when the presigned download is empty", async () => {

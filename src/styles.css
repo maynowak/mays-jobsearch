@@ -12073,3 +12073,16 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     margin-left: auto;
   }
 }
+
+/* JM-UX-NAV-HELP-01: keep login and language controls at the same 44px touch
+   target as the navigation links on every viewport. */
+.nav-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.lang-toggle button {
+  min-height: 44px;
+}

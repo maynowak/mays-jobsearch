@@ -300,8 +300,8 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
                   <a
                     key={link.id}
                     href={link.href}
-                    className={activeHref === link.href.split("#")[0] ? "nav-link-active" : undefined}
-                    aria-current={activeHref === link.href.split("#")[0] ? "page" : undefined}
+                    className={activeHref === link.href ? "nav-link-active" : undefined}
+                    aria-current={activeHref === link.href ? "page" : undefined}
                     onClick={(e) => handleClick(e, link.href, link.inPage)}
                   >
                     {t(link.labelKey)}
@@ -342,8 +342,8 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
                 <a
                   key={link.id}
                   href={link.href}
-                  className={activeHref === link.href.split("#")[0] ? "nav-link-active" : undefined}
-                  aria-current={activeHref === link.href.split("#")[0] ? "page" : undefined}
+                  className={activeHref === link.href ? "nav-link-active" : undefined}
+                  aria-current={activeHref === link.href ? "page" : undefined}
                   onClick={(e) => handleClick(e, link.href, link.inPage)}
                 >
                   {t(link.labelKey)}
@@ -409,8 +409,8 @@ export default function Navbar({ route, glass = false, hideOnScroll = true, onNa
                       <a
                         key={link.id}
                         href={link.href}
-                        className={`mobile-link${activeHref === link.href.split("#")[0] ? " nav-link-active" : ""}`}
-                        aria-current={activeHref === link.href.split("#")[0] ? "page" : undefined}
+                        className={`mobile-link${activeHref === link.href ? " nav-link-active" : ""}`}
+                        aria-current={activeHref === link.href ? "page" : undefined}
                         style={{ animationDelay: `${i * 50}ms` }}
                         onClick={(e) => handleClick(e, link.href, link.inPage)}
                       >

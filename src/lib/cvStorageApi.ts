@@ -205,7 +205,7 @@ export async function downloadCvFile(
   filename: string
 ): Promise<File> {
   const downloadUrl = await getCvDownloadUrl(token, cvId);
-  const response = await fetch(downloadUrl, { method: "GET", credentials: "omit" });
+  const response = await fetch(downloadUrl, { method: "GET", credentials: "omit", cache: "no-store" });
   if (!response.ok) {
     throw new CvStorageApiError("CV download failed", response.status, "download_failed");
   }
@@ -213,7 +213,8 @@ export async function downloadCvFile(
   if (blob.size === 0) {
     throw new CvStorageApiError("CV download is empty", 502, "download_empty");
   }
-  return new File([blob], filename || "lebenslauf.pdf", { type: "application/pdf" });
+  const safeName = /\.pdf$/i.test(filename) ? filename : `${filename || "lebenslauf"}.pdf`;
+  return new File([blob], safeName, { type: "application/pdf" });
 }
 
 export async function deleteCvDocument(token: string, cvId: string): Promise<void> {

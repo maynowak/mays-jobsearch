@@ -43,7 +43,6 @@ const renderSection = (
         onRemoveData={vi.fn()}
         onSelectSearchProfile={onSelectSearchProfile}
         onSelectAtsProfile={onSelectAtsProfile}
-        onOpenCvUpload={vi.fn()}
         onAssignUnassigned={onAssignUnassigned}
       />
     </LangProvider>
@@ -99,7 +98,6 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
           onRemoveData={vi.fn()}
           onSelectSearchProfile={view.onSelectSearchProfile}
            onSelectAtsProfile={view.onSelectAtsProfile}
-           onOpenCvUpload={vi.fn()}
         />
       </LangProvider>
     );
@@ -171,7 +169,6 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
           onRemoveData={vi.fn()}
           onSelectSearchProfile={view.onSelectSearchProfile}
           onSelectAtsProfile={view.onSelectAtsProfile}
-          onOpenCvUpload={vi.fn()}
         />
       </LangProvider>
     );
@@ -223,7 +220,6 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
           onRemoveData={vi.fn()}
           onSelectSearchProfile={view.onSelectSearchProfile}
           onSelectAtsProfile={view.onSelectAtsProfile}
-          onOpenCvUpload={vi.fn()}
           onAssignUnassigned={onAssignUnassigned}
         />
       </LangProvider>
@@ -291,7 +287,6 @@ describe('JM-UX-NAV-HELP-01: durable CV processing handoff', () => {
           onRemoveData={vi.fn()}
           onSelectSearchProfile={vi.fn()}
           onSelectAtsProfile={vi.fn()}
-          onOpenCvUpload={vi.fn()}
           cvStorageEnabled
           cvStorageMode="persistent"
           onCvStorageModeChange={vi.fn()}

@@ -29,7 +29,6 @@ interface Props {
   onRemoveData: () => void;
   onSelectSearchProfile: (id: string | null) => void;
   onSelectAtsProfile: (id: string | null) => void;
-  onOpenCvUpload: () => void;
   onOpenCvBuilder?: () => void;
   onProcessPersistentCv?: (cv: PersistentCv) => Promise<void>;
   cvProfiles?: CvBuilderProfileV1[];
