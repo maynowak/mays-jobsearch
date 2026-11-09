@@ -29,7 +29,8 @@
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",
     "test:ip-quota:rest": "npx vitest run tests/integration/ip-quota-parallel.test.mjs",
     "test:cv-purge:redis": "node tests/tools/verify-cv-profile-purge.mjs",
-    "purge:cv-cache": "node scripts/purge-cv-profile-cache.mjs"
+    "purge:cv-cache": "node scripts/purge-cv-profile-cache.mjs",
+    "test:e2e:account-erasure": "node tests/e2e/account-erasure.mjs"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",

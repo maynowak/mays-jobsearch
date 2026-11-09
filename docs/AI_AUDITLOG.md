@@ -4634,6 +4634,340 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Tests: persistent CV list + hook **7/7 PASS**; production build PASS.
 - No deployment, AWS/Terraform/Vercel change, consent change or new version.
 
+## 2026-11-08 — JM-RIS-CV-STORAGE-INTEGRATION-01 — production E2E verified
+
+**Typ:** Production E2E / Release / Audit
+**Status:** `PRODUCTION E2E VERIFIED — OPERATOR PILOT ACTIVE`
+
+- Hotfix PR #8 merged as `c3da077`; production deployment
+  `dpl_5C27DWhDpLT74tbyubbr4mNibCPo`, alias `www`, footer `c3da077`.
+- CV consent granted; synthetic PDF uploaded, persisted, recovered after
+  browser close/re-login, downloaded with matching SHA-256, selected in
+  ApplicationV1, withdrawal blocked writes with 403, existing data remained
+  readable/downloadable and was deleted with a delete marker. Synthetic
+  application deleted; CV consent regranted; CV list and application list 0.
+- Capacity 10 and PDF-only behavior verified. Session mode and existing
+  ApplicationV1 flows checked. No general enablement, real applicant data or
+  new consent version.
+- Remaining open: full account erasure, final retention/physical purge, DPA
+  review. Report: `docs/reports/JM-RIS-CV-STORAGE-INTEGRATION-01-REPORT.md`.
+
+## 2026-11-08 — Search-profile storage consent candidate
+
+**Typ:** Consent candidate / Scope definition / Audit
+**Status:** `AWAITING OPERATOR APPROVAL — NO ACTIVATION`
+
+- Created `search-profile-storage-consent-2026-11-08-v1`, SHA-256
+  `926d1b9bbeefac4b97a5c51e3b6e6c1ed33a3affc3698e07456132be39b0f0f8`.
+- Covers Option A: manual profiles; CV-search/ATS profiles only for durable
+  RIS CVs; session CV profiles remain session-only.
+- Explicitly excludes PDF/CV text/AI/provider payloads and is separate from
+  ApplicationV1/CV consent.
+- Approval packet:
+  `docs/reports/SEARCH-PROFILE-STORAGE-CONSENT-V1-APPROVAL-PACKET.md`.
+- No BFF/UI wiring, activation, plan, apply, push or deployment.
+
+## 2026-11-08 — Search-profile storage BFF and UI (DRAFT gate)
+
+**Typ:** BFF / Adapter / UI / Tests
+**Status:** `IMPLEMENTED LOCAL — FLAGS DEFAULT OFF — NOT ACTIVATED`
+
+- Added one BFF route `/api/ris/search-profiles` reusing the existing RIS
+  contracts: manual (`type=manual`), CV-search (`type=cv&cvId=...`) and ATS
+  (`type=ats&searchProfileId=...`). No second BFF architecture.
+- Added `/api/ris/search-profile-consents` with the separate
+  `search-profile-storage` purpose and server-owned text mapping.
+- DRAFT text stays non-grantable (`textApproved=false`); the explicit
+  `RIS_SEARCH_PROFILE_CONSENT_SYNTHETIC` local test switch is the only path
+  that can exercise a synthetic DRAFT grant. No real activation.
+- Manual profiles use the existing RIS manual contract and can persist without
+  a CV. CV-search profiles are only reachable from a persistent RIS `cvId`;
+  ATS profiles are only reachable under a persistent CV-search profile.
+- Session CVs and their profile lists are unchanged and remain session-only.
+- No automatic CV upload, no silent migration, no ApplicationV1/CV changes.
+- UI: existing manual profile section shows storage/consent state; persistent
+  CV list opens a profile manager for CV-search/ATS profiles.
+- Tests: targeted Jobsearch suites green; production build green. Full suite
+  has unrelated pre-existing pdfjs/worker-path failures in this worktree.
+- No Vercel deployment, no AWS apply, no real user data.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-02 deployment preparation
+
+**Typ:** Privacy alignment / Terraform plan / Deployment review
+**Status:** `READY FOR NOTICE APPROVAL + DEPLOYMENT REVIEW — NO MUTATION`
+
+- Compared the DRAFT candidate text with Datenschutzerklärung v1.1 and live
+  RIS-DEV storage/deletion semantics. Findings: policy scope conflict (P1),
+  AWS-processor wording (P2), account-erasure gap (P3), verified no-PITR/no-
+  backup profile table (P4), free-text Art. 9 hint (P5). No general privacy
+  analysis; no policy edit.
+- New RIS-DEV plan:
+  `/tmp/opencode/ris-dev-search-profile-02.tfplan`,
+  SHA-256 `d94550010417d964fc9c3e5c94259a3eb8b692995f9bac41edd023c12bfcdc14`;
+  state serial 46; **0 add, 1 change, 0 destroy**; only
+  `module.lambda.aws_lambda_function.agent` update with
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`.
+- Prepared RIS→Jobsearch deployment order and the synthetic grant/withdraw/
+  regrant/write-block runbook.
+- Notice remains `DRAFT`; no `legalApprovalRef`; no AWS apply, state write,
+  Vercel deployment, push or real-user data.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 final text correction
+
+**Typ:** Consent text / Privacy correction / Terraform plan
+**Status:** `AWAITING FINAL OPERATOR CONFIRMATION — NOTICE DRAFT — NO APPLY`
+
+- P2 corrected in `search-profile-storage-consent-2026-11-08-v2`, SHA-256
+  `75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6`:
+  RIS/AWS storage, no AI on storage/CRUD, separate terms for later AI/ATS use.
+- P1 corrected in `public/legal/datenschutz.md`/`.html`: policy v1.2,
+  2026-11-08, separate `search-profile-storage` section; ApplicationV1/CV
+  consent texts remain historical v1.1.
+- Notice remains `search-profile-storage/1.0` `DRAFT`, `legalApprovalRef=null`.
+- New plan `/tmp/opencode/ris-dev-search-profile-03.tfplan`, SHA-256
+  `9c6924e990f1029afdb1aa08b38e12bd9e744054eb3fe01b50f356f6028d6271`;
+  state serial 46; 0 add/1 change/0 destroy; only agent Lambda update adding
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`. Old plan `d945...` invalid
+  because the Lambda code hash changed.
+- Jobsearch targeted 68 PASS, build PASS; RIS targeted 172 PASS. No apply,
+  deploy, push, notice activation or live E2E.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 notice approval
+
+**Typ:** Operator approval / Consent notice / Terraform plan
+**Status:** `NOTICE APPROVED — READY FOR APPLY REVIEW — NO APPLY`
+
+- Operator confirmed v2 text
+  `search-profile-storage-consent-2026-11-08-v2` / SHA-256
+  `75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6`
+  and privacy policy v1.2.
+- RIS notice `search-profile-storage/1.0` set to `APPROVED` with
+  `legalApprovalRef=JM-SEARCH-PROFILE-STORAGE-V1-2026-11-08`; approval date
+  `2026-11-08`, body Betreiberin May’s Job Matcher.
+- New plan `/tmp/opencode/ris-dev-search-profile-04.tfplan`, SHA-256
+  `d6cfcda99a73dacf6ed44f111c42f719f8c401dcea6d7edb82caf9bfd1e2576a`;
+  state serial 46; 0 add/1 change/0 destroy; only agent Lambda update adding
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`.
+- Jobsearch targeted 68 PASS, build PASS; RIS targeted 172 PASS.
+- No apply, deploy, push, preview URL or live E2E.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 RIS apply + preview blocker
+
+**Typ:** Deployment / Live-E2E preflight
+**Status:** `RIS DEPLOYED — JOBSEARCH PREVIEW BLOCKED — LIVE E2E NOT EXECUTED`
+
+- Applied saved plan `d6cfcda99a73dacf6ed44f111c42f719f8c401dcea6d7edb82caf9bfd1e2576a`
+  (0 add/1 change/0 destroy); RIS state serial **47**; Lambda
+  `ris-dev-dev-agent` Active at code hash
+  `pStIe5JG66TGF6PyltAmLJQ/0yKSgoWI6H7AmrAKwHU=`;
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=false`.
+- Notice `search-profile-storage/1.0` is live as `APPROVED` with
+  `legalApprovalRef=JM-SEARCH-PROFILE-STORAGE-V1-2026-11-08`.
+- Prepared enforcement plan `/tmp/opencode/ris-dev-search-profile-05.tfplan`,
+  SHA-256 `53bcc0a09c9a878d4ca90e65c75fba1a9219084d181b9eac2544f5c33908e5a9`;
+  not applied.
+- Jobsearch preview blocked: no Preview RIS env, no Cognito preview callback,
+  no test-user credentials/reusable session. No preview URL or public preview
+  with copied secrets was created.
+- No Vercel mutation, no push, no live E2E.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 LIVE E2E VERIFIED
+
+**Typ:** Production limited pilot / Live browser E2E
+**Status:** `LIVE E2E VERIFIED — PRODUCTION LIMITED PILOT`
+
+- RIS final state serial **49**; Lambda `ris-dev-dev-agent` Active at
+  `j6eiYk09A8cF9idJBqklzGFaSafDMq+Bsara634PzUI=`;
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=true`.
+- Applied plans: `d6cfcda…` (notice/code), `53bcc0a…` (enforcement true),
+  `09ce68b…` (API Gateway v2 method fix).
+- Production deployment `dpl_ufUcAnWNGMEeHkXeLsW2df4eHwPz` READY at
+  `https://www.mays-job-matcher.app`.
+- Real browser session; no mocked `/api/**`:
+  manual create/edit/reload/delete; persistent CV create/upload; CV-search and
+  ATS create/edit/reload/delete; withdraw read; regrant; enforcement POST/PUT
+  `403 SEARCH_PROFILE_STORAGE_CONSENT_REQUIRED`; list/get `200`; delete `204`;
+  regrant create `201`; cleanup.
+- UI fixes: persistent badge, `Dauerhaft speichern`, read-only profiles after
+  withdrawal, non-allowlisted UI hidden.
+- Cleanup: synthetic profiles/CV deleted, preview env/deployments removed,
+  consent left WITHDRAWN. P3 account-erasure boundary remains open.
+
+## 2026-11-08 — SEARCH-PROFILE-STORAGE-03 ABSCHLUSS
+
+**Status:** `LIVE E2E VERIFIED — PRODUCTION LIMITED PILOT`
+
+- Production: `https://www.mays-job-matcher.app`, Deployment `dpl_ufUcAnWNGMEeHkXeLsW2df4eHwPz`.
+- RIS: State Serial **49**, Lambda `ris-dev-dev-agent` Active,
+  `j6eiYk09A8cF9idJBqklzGFaSafDMq+Bsara634PzUI=`,
+  `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED=true`.
+- Consent: `search-profile-storage/1.0` `APPROVED`,
+  Ref `JM-SEARCH-PROFILE-STORAGE-V1-2026-11-08`,
+  Text `search-profile-storage-consent-2026-11-08-v2`,
+  SHA-256 `75919c8bc219c938bdd2452a8bf02955997d1336ba2ca716bc691dd54eaa7ef6`.
+- Real-Browser-E2E: manuell/CV/ATS erstellt, bearbeitet, Reload, wiedergefunden,
+  gelöscht; Consent Withdraw/Regrant; 403-Schreibsperre; Lesen/Löschen erlaubt.
+- Cleanup: synthetische Profile/CV entfernt, Consent `WITHDRAWN`, Preview-
+  Deployments/Preview-Env entfernt, Session-Datei gelöscht.
+- Offen für allgemeinen Rollout: P3 Account-Erasure umfasst keine Partner-
+  Suchprofile.
+- Commits: Jobsearch `8dacb93`/`217cce8`; RIS `60bc72d`/`d3459e2`.
+
+## 2026-11-08 — RIS account erasure now covers search profiles
+
+**Typ:** Cross-repository privacy follow-up
+**Status:** `RIS IMPLEMENTED / VERIFIED LOCAL — JOBSEARCH ERASURE UI STILL UNWIRED`
+
+- RIS commit `30668ff` adds the three persisted partner search-profile
+  categories (ATS, CV-search, manual) to the existing account-erasure
+  lifecycle, with user/tenant/partner/issuer scoping and resumable partial
+  failures.
+- Jobsearch does not currently call `/me/erasure`; the privacy-action
+  placeholder remains disabled. No new deletion UI/client was added in this
+  task.
+- No AWS apply/deploy, Cognito change or production mutation.
+- Report: `docs/reports/RIS-ACCOUNT-ERASURE-SEARCH-PROFILES-01-REPORT.md`.
+
+## 2026-11-08 — MAYS-P3-FINAL
+
+**Typ:** Cross-repo account erasure / E2E readiness
+**Status:** `BLOCKED — SYNTHETIC ERASURE E2E + JOBSEARCH DEPLOYMENT PENDING`
+
+- RIS P3 remains deployed/post-deploy verified at state serial 50, Lambda
+  `/oB1onGisdIHu9/J1RMp80Ti7t8ooGl28yiLRD6BLIE=`.
+- Jobsearch BFF `/api/ris/erasure` forwards the verified token to the existing
+  `POST /me/erasure`; settings UI is opt-in via
+  `VITE_RIS_ACCOUNT_ERASURE_ENABLED` and disabled by default. Commit `e060606`.
+- Tests: Jobsearch 32 PASS + build PASS; local Chromium account-erasure UI
+  E2E PASS with mocked BFF (no real deletion); RIS 14/104/146 focused, full 2551
+  pass with 16 pre-existing unrelated failures.
+- No destructive production erasure: no isolated synthetic Cognito identity/
+  dataset approval exists; no real operator data was deleted.
+- No Jobsearch deployment, AWS/Terraform change, push or merge. S3/version/
+  backup/PITR limits remain open. Report: `docs/reports/MAYS-P3-FINAL-REPORT.md`.
+
+## 2026-11-09 — MAYS-P3-FINAL status reconciliation
+
+**Status:** `BLOCKED — PARTNER-EDGE ERASURE ROUTE MISSING + JOBSEARCH DEPLOYMENT PENDING`
+
+- Production Jobsearch is live on `dpl_6DiPJxotbPSC8K5u8C8ZYkizTYdA` from
+  branch `feature/jm-ris-vercel-test-env-05-integration @ e5716f1`; public
+  smoke `/`, `/datenschutz`, `/impressum` = 200. Authenticated E2E remains
+  manual. This is not the local P3 branch.
+- RIS-DEV is at state serial **54**, Lambda
+  `FlXserJvs+Cxi0uGTyKkIReLFs2kOTyJXtGTivNe8+0=`, allowlist restored to the
+  original operator only. Synthetic test user/data were removed.
+- Actual blocker: `POST /me/erasure` is on the kernel API with Cognito pool
+  `eu-central-1_ojbmoiYGM` / client `7ldhihlpdgsgcl3puvu4oi7ksv`; the
+  Jobsearch partner edge uses pool `eu-central-1_ZURSMpD2O` / client
+  `5hb3f6dj5ialg77jf4blur9g6g` and has no erasure route. Jobsearch tokens get
+  401 from the kernel route.
+- Minimal correction: add `POST /v1/partner/me/erasure` to the partner edge
+  with the existing JWT authorizer, dispatch to `_handle_me_erasure`, and point
+  the Jobsearch BFF at that route. Requires reviewed Terraform/API change and
+  Jobsearch deployment approval.
+- No destructive production E2E; no real data deleted; no push/merge.
+
+## 2026-11-09 — MAYS-P3-FINAL partner erasure route verified local
+
+**Typ:** Partner-edge erasure route / BFF integration / Local verification
+**Status:** `PARTNER ERASURE ROUTE VERIFIED LOCAL — DEPLOYMENT PENDING`
+
+- RIS commit `451c12e`: added `POST /v1/partner/me/erasure` to the existing
+  partner edge and a dispatcher branch that verifies `_partner_profile_context`
+  before calling the existing `_handle_me_erasure`. No second engine.
+- Jobsearch commit `424da71`: BFF now calls the partner route; no separate
+  kernel base; existing opt-in flags/allowlist/`LÖSCHEN` confirmation retained.
+- Plan `/tmp/opencode/ris-dev-partner-erasure.tfplan`, SHA-256
+  `837068b155f953272600ec46a03efe9f82ef5472f00b9b6b283e67f936729148`;
+  1 add (partner route) + 1 update (agent Lambda), 0 delete/replace; not applied.
+- Tests: Jobsearch 23 PASS, browser E2E PASS (mocked), build PASS; RIS focused
+  77 PASS, full 2555 PASS with 16 pre-existing unrelated failures.
+- No deployment, no real account deletion; S3/document/backup/PITR limits open.
+
+## 2026-11-09 — Partner erasure live preview E2E
+
+**Typ:** Controlled preview deployment / Synthetic browser E2E
+**Status:** `PARTNER ERASURE ROUTE LIVE PREVIEW E2E PASS — PRODUCTION PENDING`
+
+- Applied exact plan `837068b155f953272600ec46a03efe9f82ef5472f00b9b6b283e67f936729148`:
+  1 add (`POST /v1/partner/me/erasure`) + 1 update (agent Lambda).
+- RIS state serial **58** after test-allowlist rollback; Lambda
+  `nmpYXt+WGUx6rPlkcGbYb78XuBLDmJYIUfUqVgfbh8g=`.
+- Isolated synthetic Cognito user + synthetic CV/manual/CV-search/ATS profiles.
+  Real browser Settings UI, typed `LÖSCHEN`, response complete=true,
+  `searchProfiles=3`, `documents=1`; search-profile lists 0/0/404; second
+  erasure call complete=true/idempotent.
+- Finding: CVDocument metadata remained visible after complete=true; S3 object
+  was deleted, metadata was not. Cleanup deleted it manually. Open
+  S3/document boundary.
+- Test user deleted, allowlist restored, preview env/deployment removed. No
+  real data deleted. Production Jobsearch remains `dpl_6DiP...`.
+- Plan/apply log: `/tmp/opencode/p3-partner-erasure-apply.log`; screenshot
+  `docs/reports/assets/MAYS-P3-FINAL/p3-final-real-erasure.png`.
+
+
+## 2026-11-09 — MAYS-P3-FINAL consolidated report
+
+**Typ:** Report consolidation
+**Status:** `PARTNER ERASURE ROUTE LIVE PREVIEW E2E PASS — PRODUCTION PENDING`
+
+- Replaced the stale/contradictory `MAYS-P3-FINAL-REPORT.md` with one
+  consolidated report covering RIS state 58, applied partner route, Jobsearch
+  BFF/preview E2E, health schedule and remaining boundaries.
+- Historical RAESP-02/03 reports now carry a banner pointing to the
+  consolidated report.
+- Current open items: CVDocument metadata erasure, production Jobsearch
+  deployment, S3/version/backup/PITR; no real data deleted.
+
+## 2026-11-09 — CVDocument metadata erasure fixed and live-verified
+
+**Typ:** Privacy erasure / CVDocument metadata
+**Status:** `DEPLOYED / VERIFIED — RIS-DEV`
+
+- Added metadata deletion after successful S3 deletion using the existing
+  `PartnerProfileRepository`; if S3 is pending, metadata deletion fails closed.
+- Plan `/tmp/opencode/ris-dev-cv-metadata-erasure.tfplan`, SHA-256
+  `5ef5567121deb72a7da82a08257bb6c20d06174a3228754b123bc18f84aa980b`;
+  0 add / 1 change / 0 destroy (agent Lambda only).
+- Live local E2E with isolated synthetic user: `complete=true`,
+  `searchProfilesDeleted=3`, `documentMetadataDeleted=1`, `documentsDeleted=1`;
+  `GET /api/ris/cvs` then returned 0. Synthetic user/data cleaned; allowlist
+  restored; state serial **61**, Lambda
+  `uQqKk33NnwxWnaGm2PDUhpCnyhIFVUZ5Zxe9oUotirs=`.
+- Full suite: 2558 passed, 17 skipped, 16 pre-existing unrelated failures.
+- S3 versions/backups/PITR remain open.
+
+## 2026-11-09 — P3 feature branch pushed
+
+**Typ:** Git push / Handoff
+**Status:** `PUSHED — NO MERGE/DEPLOY`
+
+- Jobsearch `feature/jm-ris-cv-storage-integration-01` pushed:
+  `cb87de4049f50342e9d96cb22313f9a94a5afc88`
+  (`origin/main` remains `c3da077908f72c2fd483279613c10e8a59119d37`).
+- Push used explicit refspec; no force, no merge, no deployment.
+- No secrets/test sessions/tfstate were pushed.
+- PR readiness still requires the normal merge review; production is unchanged.
+- Remote Jobsearch branch was fast-forwarded from `a07a810`.
+
+## 2026-11-09 — MAYS-XREPO PR/merge consolidation 01
+
+**Typ:** Integration preparation / PR update
+**Status:** `INTEGRATION PREPARED — GO FOR HUMAN MERGE REVIEW`
+
+- Fetched `origin` with `--prune`; baseline `main` is `c3da077`. Feature branch
+  `feature/jm-ris-cv-storage-integration-01` is at `e034070`.
+- Isolated worktree `worktrees/integration-jobsearch-p3`, branch
+  `integration/mays-p3-jobsearch`, merge commit `1e6dd34`; feature branch is an
+  ancestor, no conflicts. No integration branch push.
+- Fixed the four `StorageConsentSection.active.test.tsx` failures: erasure UI
+  renders only when `VITE_RIS_ACCOUNT_ERASURE_ENABLED` is true; `useAuth()`
+  access is defensive. Targeted tests 14 passed; full suite 1645 passed,
+  5 skipped; build PASS.
+- PR #9 updated (body/title): CodeQL and Vercel preview checks SUCCESS, merge
+  state CLEAN, no auto-merge. Production remains `dpl_6DiP...`.
+- No merge, deployment, AWS/Vercel mutation, force-push or feature-flag change.
 ## 2026-11-09 — JM-RIS-CV-TIMEOUT-01
 
 **Typ:** Production hotfix / CV load path

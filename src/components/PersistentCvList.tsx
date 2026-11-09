@@ -17,6 +17,7 @@ interface Props {
   onDelete: (cvId: string) => Promise<boolean>;
   onGrantConsent: () => Promise<boolean>;
   onWithdrawConsent: () => Promise<boolean>;
+  onManageProfiles?: (cvId: string) => void;
 }
 
 export default function PersistentCvList({
@@ -32,6 +33,7 @@ export default function PersistentCvList({
   onDelete,
   onGrantConsent,
   onWithdrawConsent,
+  onManageProfiles,
 }: Props) {
   const { t, lang } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -189,6 +191,16 @@ export default function PersistentCvList({
                 </div>
               </div>
               <div className="cv-document-list__actions">
+                {onManageProfiles && (
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    disabled={busy || cv.processingStatus !== "ready"}
+                    onClick={() => onManageProfiles(cv.cvId)}
+                  >
+                    {t("searchProfiles.manage")}
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn-ghost"

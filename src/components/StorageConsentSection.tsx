@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 import { useLang } from "../i18n";
 import StorageConsentLive, { type StorageConsentLiveState } from "./StorageConsentLive";
+import AccountErasureAction from "./AccountErasureAction";
+import { isRisAccountErasureEnabled } from "../lib/accountErasureApi";
 import {
   STORAGE_CONSENT_BACKEND_UNAVAILABLE,
   STORAGE_CONSENT_PURPOSES,
@@ -122,6 +124,7 @@ export default function StorageConsentSection({
       </section>
 
       {liveEnabled && <StorageConsentLive onStateChange={handleLiveState} />}
+      {liveEnabled && isRisAccountErasureEnabled() && <AccountErasureAction />}
 
       <section className="storage-consent__block" aria-labelledby="storage-consent-required-title">
         <h3 id="storage-consent-required-title">{t("privacyStorage.requiredTitle")}</h3>
