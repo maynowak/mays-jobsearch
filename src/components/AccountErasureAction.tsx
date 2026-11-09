@@ -17,7 +17,7 @@ import {
 export default function AccountErasureAction() {
   const { t } = useLang();
   const auth = useAuth();
-  const token = auth.user?.access_token ?? "";
+  const token = auth?.user?.access_token ?? "";
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AccountErasureResult | null>(null);
