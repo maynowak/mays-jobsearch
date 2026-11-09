@@ -1,6 +1,6 @@
 # JM-UX-NAV-HELP-01 — Integration Review
 
-**Status:** `INTEGRATION REVIEW PASS — GO AFTER PR #9`
+**Status:** `INTEGRATION REVIEW PASS — READY FOR UX PR`
 **No push, merge or deployment**
 **Date:** 2026-11-09
 
@@ -8,13 +8,14 @@
 
 | Ref | SHA |
 | --- | --- |
-| Remote `main` | `7788816` |
+| Remote `main` after PR #9 | `eedd8f2` |
 | UX branch | `feature/jm-ux-nav-help-01` @ `092a5da` |
-| PR #9 head | `feature/jm-ris-cv-storage-integration-01` @ `0f68857` |
-| Integration branch | `integration/jm-ux-nav-help-01-pr9` @ `803daf3` |
+| PR #9 | merged as `eedd8f2` (head `0f68857`) |
+| Integration branch | `integration/jm-ux-nav-help-01-pr9` @ `1b5c68b` |
 
-The UX branch already contained `main` (`7788816`). The isolated integration
-worktree merged PR #9 with `--no-ff`; the UX branch and PR #9 were not changed.
+The UX branch already contained the pre-PR-#9 `main`. The isolated integration
+worktree merged PR #9, then refreshed onto the PR #9 merge commit `eedd8f2`.
+The UX feature branch itself was not changed.
 
 ## Conflict resolution
 
@@ -74,18 +75,20 @@ tests from PR #9, so both features were exercised together.
 
 ## Merge recommendation
 
-**GO for a controlled merge — but merge PR #9 first.**
+**GO for the UX PR against the updated `main`.**
 
-Recommended order:
+Completed:
 
-1. Merge PR #9 (currently `CLEAN` / `MERGEABLE`) to `main`.
-2. Merge the UX integration branch into the resulting `main` (do not rebase;
-   rebasing would reopen the already resolved component conflicts).
-3. Open the UX PR and merge after normal review.
-4. Deploy only with separate approval.
+1. PR #9 merged as `eedd8f2`.
+2. UX integration branch refreshed onto `eedd8f2`; no new conflicts.
 
-**NO-GO for merging UX before PR #9**: both branches touch the same CV
-components; merging UX first would force a second conflict resolution in PR #9.
+Remaining:
+
+1. Open the UX PR from `integration/jm-ux-nav-help-01-pr9` against `main`.
+2. Merge only after normal review/checks; **do not rebase**, because the two
+   component conflicts were already resolved in `803daf3`.
+3. Deploy only with separate approval.
+
 No automatic merge, deployment, force-push, AWS/Terraform/RIS change or real
 data was used.
 
