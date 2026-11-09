@@ -4884,3 +4884,24 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Tests: Jobsearch 23 PASS, browser E2E PASS (mocked), build PASS; RIS focused
   77 PASS, full 2555 PASS with 16 pre-existing unrelated failures.
 - No deployment, no real account deletion; S3/document/backup/PITR limits open.
+
+## 2026-11-09 — Partner erasure live preview E2E
+
+**Typ:** Controlled preview deployment / Synthetic browser E2E
+**Status:** `PARTNER ERASURE ROUTE LIVE PREVIEW E2E PASS — PRODUCTION PENDING`
+
+- Applied exact plan `837068b155f953272600ec46a03efe9f82ef5472f00b9b6b283e67f936729148`:
+  1 add (`POST /v1/partner/me/erasure`) + 1 update (agent Lambda).
+- RIS state serial **58** after test-allowlist rollback; Lambda
+  `nmpYXt+WGUx6rPlkcGbYb78XuBLDmJYIUfUqVgfbh8g=`.
+- Isolated synthetic Cognito user + synthetic CV/manual/CV-search/ATS profiles.
+  Real browser Settings UI, typed `LÖSCHEN`, response complete=true,
+  `searchProfiles=3`, `documents=1`; search-profile lists 0/0/404; second
+  erasure call complete=true/idempotent.
+- Finding: CVDocument metadata remained visible after complete=true; S3 object
+  was deleted, metadata was not. Cleanup deleted it manually. Open
+  S3/document boundary.
+- Test user deleted, allowlist restored, preview env/deployment removed. No
+  real data deleted. Production Jobsearch remains `dpl_6DiP...`.
+- Plan/apply log: `/tmp/opencode/p3-partner-erasure-apply.log`; screenshot
+  `docs/reports/assets/MAYS-P3-FINAL/p3-final-real-erasure.png`.
