@@ -1101,6 +1101,10 @@ const en: Dict = {
   "searchProfiles.close": "Close",
   "searchProfiles.consentRequired":
     "Durable search-profile storage is not enabled for this account. Grant the separate consent first.",
+  "searchProfiles.unavailable": "Search-profile storage is not available for this account.",
+  "searchProfiles.grantDurable": "Enable durable search-profile storage",
+  "searchProfiles.granting": "Enabling…",
+  "searchProfiles.grantError": "The search-profile consent could not be granted.",
   "searchProfiles.loading": "Loading search profiles…",
   "searchProfiles.cvTitle": "CV search profiles",
   "searchProfiles.cvEmpty": "No persistent CV search profile yet.",
@@ -2549,6 +2553,10 @@ const de: Dict = {
   "searchProfiles.close": "Schließen",
   "searchProfiles.consentRequired":
     "Die dauerhafte Suchprofil-Speicherung ist für dieses Konto nicht aktiviert. Erteile zuerst die separate Einwilligung.",
+  "searchProfiles.unavailable": "Die Suchprofil-Speicherung ist für dieses Konto nicht verfügbar.",
+  "searchProfiles.grantDurable": "Dauerhafte Suchprofil-Speicherung aktivieren",
+  "searchProfiles.granting": "Wird aktiviert …",
+  "searchProfiles.grantError": "Die Suchprofil-Einwilligung konnte nicht erteilt werden.",
   "searchProfiles.loading": "Suchprofile werden geladen…",
   "searchProfiles.cvTitle": "CV-Suchprofile",
   "searchProfiles.cvEmpty": "Noch kein dauerhaftes CV-Suchprofil.",

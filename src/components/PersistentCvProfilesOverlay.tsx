@@ -44,6 +44,21 @@ export default function PersistentCvProfilesOverlay({
   const [busy, setBusy] = useState(false);
   const [editingCvId, setEditingCvId] = useState<string | null>(null);
   const [editingAtsId, setEditingAtsId] = useState<string | null>(null);
+  const [grantBusy, setGrantBusy] = useState(false);
+  const [grantError, setGrantError] = useState<string | null>(null);
+
+  const grantDurableStorage = async () => {
+    if (!profiles.available) return;
+    setGrantBusy(true);
+    setGrantError(null);
+    try {
+      await profiles.grantConsent();
+    } catch {
+      setGrantError(t("searchProfiles.grantError"));
+    } finally {
+      setGrantBusy(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -156,7 +171,20 @@ export default function PersistentCvProfilesOverlay({
         </header>
 
         {!profiles.persistentView ? (
-          <p role="note">{t("searchProfiles.consentRequired")}</p>
+          <div className="search-profiles-consent" role="note">
+            <p>{profiles.available
+              ? t("searchProfiles.consentRequired")
+              : t("searchProfiles.unavailable")}</p>
+            {profiles.available && (
+              <Button
+                onClick={() => { void grantDurableStorage(); }}
+                disabled={grantBusy || profiles.consent?.grantAllowed !== true}
+              >
+                {grantBusy ? t("searchProfiles.granting") : t("searchProfiles.grantDurable")}
+              </Button>
+            )}
+            {grantError && <p className="field-error" role="alert">{grantError}</p>}
+          </div>
         ) : (
           <>
             {error && <p className="alert alert-error" role="alert">{error}</p>}
