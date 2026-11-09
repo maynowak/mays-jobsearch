@@ -5022,3 +5022,23 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   untouched. A real signed-in browser check of presigned-GET CORS remains a
   deployment-time verification (local test uses a mocked BFF).
 - No RIS/AWS/Terraform or privacy-contract change; no push, merge or deploy.
+
+## 2026-11-09 — JM-UX-NAV-HELP-01 integration review
+
+**Typ:** Integration review / PR #9 reconciliation
+**Status:** `INTEGRATION REVIEW PASS — GO AFTER PR #9 — NO PUSH/MERGE/DEPLOY`
+
+- Isolated worktree `worktrees/jobsearch-ux-pr9-integration`, branch
+  `integration/jm-ux-nav-help-01-pr9`, merge commit `803daf3`.
+- Baselines: `main` `7788816`, UX `092a5da`, PR #9 `0f68857`. UX branch and
+  PR #9 were not modified; no remote push.
+- Conflicts only in `DashboardV2CvSection.tsx` and `PersistentCvList.tsx`;
+  resolved by keeping both durable-CV **Verarbeiten** and PR #9 **Profile
+  verwalten**, with existing consent/session/profile overlay behavior intact.
+- Focused UX + P3 tests 67 passed; serial full suite 1662 passed, 5 skipped;
+  build PASS. Screenshots 320/390/430/768/1024/1440 plus settings 390/1024,
+  no horizontal overflow, demo data only.
+- Merge order recommendation: PR #9 first, then UX integration; UX first would
+  force a new conflict resolution in PR #9. Deployment remains separately
+  gated; real signed-in presigned-GET CORS check remains deployment-time.
+- No RIS/AWS/Terraform/Vercel mutation and no real CV/user data.
