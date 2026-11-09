@@ -26,7 +26,7 @@ Only two files conflicted:
 Both were resolved by keeping both features:
 
 - **Verarbeiten** for a ready durable CV (UX)
-- **Profile verwalten** for durable search/ATS profiles (PR #9)
+- **Suchprofile verwalten** for durable search/ATS profiles (PR #9)
 - Existing consent, session/durable mode switch, profile overlay, retry and
   error states remain in place
 - Navigation/CSS/i18n merged without additional duplicated controls
@@ -37,8 +37,9 @@ A verified user can select a ready durable CV, click **Verarbeiten**, and the
 PDF is loaded through the existing authenticated BFF/presigned URL into the
 existing `handleCvUploadStart` workflow. No second upload, analysis engine or
 storage consent reuse; the existing AI/CV consent gate remains authoritative.
-Identity, storage consent, `ready` state, capacity and session-epoch guards
-remain covered.
+Identity, storage consent, `ready` state and capacity are covered by the pure
+handoff guard tests; the post-download session-epoch branch is implemented and
+code-reviewed but not separately unit-tested.
 
 ## Screenshots
 
@@ -55,6 +56,8 @@ Assets: `docs/reports/assets/JM-UX-NAV-HELP-01-INTEGRATION/`
 
 Additional evidence: `settings-390.png` and `settings-1024.png` show the
 storage/privacy section after the PR #9 merge, also without horizontal overflow.
+All screenshots were captured after the merge; four dashboard shots are
+byte-identical to the UX-only captures because the layout did not change.
 Screenshots use demo data only.
 
 ## Verification
@@ -76,7 +79,8 @@ tests from PR #9, so both features were exercised together.
 Recommended order:
 
 1. Merge PR #9 (currently `CLEAN` / `MERGEABLE`) to `main`.
-2. Rebase or merge the UX integration branch onto the resulting `main`.
+2. Merge the UX integration branch into the resulting `main` (do not rebase;
+   rebasing would reopen the already resolved component conflicts).
 3. Open the UX PR and merge after normal review.
 4. Deploy only with separate approval.
 
