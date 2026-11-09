@@ -4867,3 +4867,20 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   the Jobsearch BFF at that route. Requires reviewed Terraform/API change and
   Jobsearch deployment approval.
 - No destructive production E2E; no real data deleted; no push/merge.
+
+## 2026-11-09 — MAYS-P3-FINAL partner erasure route verified local
+
+**Typ:** Partner-edge erasure route / BFF integration / Local verification
+**Status:** `PARTNER ERASURE ROUTE VERIFIED LOCAL — DEPLOYMENT PENDING`
+
+- RIS commit `451c12e`: added `POST /v1/partner/me/erasure` to the existing
+  partner edge and a dispatcher branch that verifies `_partner_profile_context`
+  before calling the existing `_handle_me_erasure`. No second engine.
+- Jobsearch commit `424da71`: BFF now calls the partner route; no separate
+  kernel base; existing opt-in flags/allowlist/`LÖSCHEN` confirmation retained.
+- Plan `/tmp/opencode/ris-dev-partner-erasure.tfplan`, SHA-256
+  `837068b155f953272600ec46a03efe9f82ef5472f00b9b6b283e67f936729148`;
+  1 add (partner route) + 1 update (agent Lambda), 0 delete/replace; not applied.
+- Tests: Jobsearch 23 PASS, browser E2E PASS (mocked), build PASS; RIS focused
+  77 PASS, full 2555 PASS with 16 pre-existing unrelated failures.
+- No deployment, no real account deletion; S3/document/backup/PITR limits open.
