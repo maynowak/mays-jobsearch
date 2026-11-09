@@ -4950,3 +4950,21 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - No secrets/test sessions/tfstate were pushed.
 - PR readiness still requires the normal merge review; production is unchanged.
 - Remote Jobsearch branch was fast-forwarded from `a07a810`.
+
+## 2026-11-09 — MAYS-XREPO PR/merge consolidation 01
+
+**Typ:** Integration preparation / PR update
+**Status:** `INTEGRATION PREPARED — GO FOR HUMAN MERGE REVIEW`
+
+- Fetched `origin` with `--prune`; baseline `main` is `c3da077`. Feature branch
+  `feature/jm-ris-cv-storage-integration-01` is at `e034070`.
+- Isolated worktree `worktrees/integration-jobsearch-p3`, branch
+  `integration/mays-p3-jobsearch`, merge commit `1e6dd34`; feature branch is an
+  ancestor, no conflicts. No integration branch push.
+- Fixed the four `StorageConsentSection.active.test.tsx` failures: erasure UI
+  renders only when `VITE_RIS_ACCOUNT_ERASURE_ENABLED` is true; `useAuth()`
+  access is defensive. Targeted tests 14 passed; full suite 1645 passed,
+  5 skipped; build PASS.
+- PR #9 updated (body/title): CodeQL and Vercel preview checks SUCCESS, merge
+  state CLEAN, no auto-merge. Production remains `dpl_6DiP...`.
+- No merge, deployment, AWS/Vercel mutation, force-push or feature-flag change.
