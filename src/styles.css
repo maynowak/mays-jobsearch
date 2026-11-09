@@ -12086,3 +12086,85 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .lang-toggle button {
   min-height: 44px;
 }
+
+/* JM-RIS-CV-DERIVED-PROFILE-STORAGE-01: explicit session vs durable choice */
+.profile-storage-choice {
+  min-width: 0;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+
+.profile-storage-choice__legend {
+  padding: 0 var(--space-2);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.profile-storage-choice__options {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.profile-storage-choice__option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.profile-storage-choice__option.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.profile-storage-choice__option:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.profile-storage-choice__option input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+}
+
+.profile-storage-choice__option span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-storage-choice__option strong {
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.profile-storage-choice__option small {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.profile-storage-choice__may {
+  margin: var(--space-3) 0 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+@media (max-width: 430px) {
+  .profile-storage-choice {
+    padding: var(--space-3);
+  }
+}

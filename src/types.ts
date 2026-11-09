@@ -300,6 +300,9 @@ export interface CvDocument {
   // Session-only, already anonymized CV text for reusing a processed CV in
   // the cover-letter assistant without re-reading the PDF. Never persisted.
   letterText?: string;
+  // JM-RIS-CV-DERIVED-PROFILE-STORAGE-01: original durable RIS cvId for a
+  // session copy downloaded through the BFF. Session-only; never persisted.
+  risCvId?: string;
 }
 
 export type AnonymizationMode = "anonymized" | "not-anonymized";

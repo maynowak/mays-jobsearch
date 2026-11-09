@@ -44,6 +44,7 @@ import Principles from "./components/Principles";
 
 import CvAnonymizationChoice from "./components/CvAnonymizationChoice";
 import CvProfileResult from "./components/CvProfileResult";
+import ProfileStorageChoice, { type ProfileStorageChoiceValue } from "./components/ProfileStorageChoice";
 import CvProfilesOverlay from "./components/CvProfilesOverlay";
 import { 
   purgeLegacyCvListsFromLocalStorage, 
@@ -110,7 +111,9 @@ import {
   ProfileSessionEndedError,
 } from "./lib/profiles/sessionRepositories";
 import type { SessionProfileRepositories } from "./lib/profiles/repositoryTypes";
-import type { CreateManualSearchProfileInputV1 } from "./lib/profiles/contractTypes";
+import type { CreateManualSearchProfileInputV1, CVSearchProfileV1 } from "./lib/profiles/contractTypes";
+import { profileToSearchConfiguration } from "./lib/profiles/profileMappers";
+import { isDurableAtsParentValid, profileStorageUnavailableReason } from "./lib/cvDerivedProfileStorage";
 import { useAuth } from "react-oidc-context";
 import { deriveAuthProfileKey, isVerifiedAuthProfileKey } from "./lib/authIdentity";
 
@@ -421,6 +424,11 @@ export default function App() {
       beginNewManualJobSession();
       setSessionApplications([]);
       setCvStorageMode("session");
+      setProfileStorageChoice("session");
+      setDurableSearchProfileId(null);
+      setDurableSearchProfiles([]);
+      setDurableSearchProfilesError(null);
+      setDurableParentSearchProfileId("");
       cvStorageAutoSelectedRef.current = false;
       setApplicationRepository(createApplicationRepositoryForAuth());
       setApplicationRefreshToken(0);
@@ -485,6 +493,67 @@ export default function App() {
 
   // CV Processing State (Phases 6.1/6.2/6.3/6.4/6.5/6.6/6.7/6.8/6.9)
   const [cvState, setCvState] = useState<CvProcessingState>(createInitialCvState);
+  // JM-RIS-CV-DERIVED-PROFILE-STORAGE-01: session-only choice and parent state.
+  const [profileStorageChoice, setProfileStorageChoice] = useState<ProfileStorageChoiceValue>("session");
+  const [durableSearchProfileId, setDurableSearchProfileId] = useState<string | null>(null);
+  const [durableSearchProfiles, setDurableSearchProfiles] = useState<CVSearchProfileV1[]>([]);
+  const [durableSearchProfilesLoading, setDurableSearchProfilesLoading] = useState(false);
+  const [durableSearchProfilesError, setDurableSearchProfilesError] = useState<string | null>(null);
+  const [durableParentSearchProfileId, setDurableParentSearchProfileId] = useState("");
+  const [durableProfilesReloadToken, setDurableProfilesReloadToken] = useState(0);
+  const selectedCvDocumentId = cvState.selectedDocumentIds[0] ?? null;
+  const activeCvDocument = selectedCvDocumentId
+    ? cvState.documents.find((document) => document.id === selectedCvDocumentId) ?? null
+    : cvState.documents[0] ?? null;
+  const profileStorageReason = profileStorageUnavailableReason(
+    activeCvDocument?.risCvId,
+    persistentSearchProfiles.active
+  );
+  const profileStorageAvailable = profileStorageReason === null;
+
+  useEffect(() => {
+    setProfileStorageChoice("session");
+    setDurableSearchProfileId(null);
+    setDurableSearchProfiles([]);
+    setDurableSearchProfilesError(null);
+    setDurableParentSearchProfileId("");
+  }, [selectedCvDocumentId]);
+
+  useEffect(() => {
+    if (cvState.step !== "skill-selection" || cvState.processingGoal !== "ats" ||
+        profileStorageChoice !== "persistent") return;
+    const cvId = activeCvDocument?.risCvId;
+    if (!cvId || !persistentSearchProfiles.active) {
+      setDurableSearchProfiles([]);
+      setDurableParentSearchProfileId("");
+      return;
+    }
+    const epoch = sessionEpochRef.current;
+    let cancelled = false;
+    setDurableSearchProfilesLoading(true);
+    setDurableSearchProfilesError(null);
+    void persistentSearchProfiles.listCv(cvId).then((items) => {
+      if (cancelled || sessionEpochRef.current !== epoch) return;
+      setDurableSearchProfiles(items);
+      setDurableParentSearchProfileId((current) => {
+        if (current && items.some((item) => item.searchProfileId === current)) return current;
+        if (durableSearchProfileId && items.some((item) => item.searchProfileId === durableSearchProfileId)) {
+          return durableSearchProfileId;
+        }
+        return items[0]?.searchProfileId ?? "";
+      });
+    }).catch((error) => {
+      if (cancelled || sessionEpochRef.current !== epoch) return;
+      setDurableSearchProfiles([]);
+      setDurableParentSearchProfileId("");
+      setDurableSearchProfilesError(
+        error instanceof Error && error.message ? error.message : t("cv.atsParentLoadError")
+      );
+    }).finally(() => {
+      if (!cancelled && sessionEpochRef.current === epoch) setDurableSearchProfilesLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [activeCvDocument?.risCvId, cvState.processingGoal, cvState.step, durableProfilesReloadToken, durableSearchProfileId, persistentSearchProfiles.active, persistentSearchProfiles.listCv, profileStorageChoice, t]);
   // JM-PROFILE-CAPACITY-02-LIMIT: inline feedback on the profile-ready step.
   const [cvProfileSaveError, setCvProfileSaveError] = useState<string | null>(null);
 
@@ -766,7 +835,7 @@ export default function App() {
   // Suchmaske mehr; der Dateiname ueberlappte den Consent-Rahmen).
   // Beim Schliessen/Abbrechen des Consents bleibt das Dokument in der Liste
   // unter der Suchmaske erhalten (consentDismissed -> Inline-Karte).
-  const handleCvUploadStart = (file: File) => {
+  const handleCvUploadStart = (file: File, options?: { risCvId?: string }) => {
     // Defense-in-depth: auch der Quick-Upload akzeptiert keine leeren Dateien.
     const rejection = validateCvFile(file);
     if (rejection) {
@@ -783,6 +852,7 @@ export default function App() {
       size: file.size,
       selected: true,
       file,
+      ...(options?.risCvId ? { risCvId: options.risCvId } : {}),
     };
     setConsentDismissed(false);
     setCvState((prev) => ({
@@ -832,7 +902,7 @@ export default function App() {
     }
     // The storage consent is deliberately not forwarded as AI consent.
     // handleCvUploadStart uses the existing separate CV/AI consent gate.
-    const documentId = handleCvUploadStart(file);
+    const documentId = handleCvUploadStart(file, { risCvId: cv.cvId });
     if (!documentId) throw new Error(t("cvStorage.processError"));
     setStatus({ type: "info", message: t("cvStorage.processSuccess") });
     setCvStorageMode("session");
@@ -1604,6 +1674,43 @@ export default function App() {
     // dieser Stelle (ATS-Analyse laeuft pro Treffer-Job, s. AtsOverlay).
     if (cvState.processingGoal === "ats") {
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
+      if (profileStorageChoice === "persistent") {
+        if (!doc?.risCvId || !persistentSearchProfiles.active) {
+          setStatus({ type: "error", message: t("profileStorage.errorPersistent") });
+          return;
+        }
+        const parentIds = durableSearchProfiles.map((profile) => profile.searchProfileId);
+        if (!isDurableAtsParentValid(durableParentSearchProfileId, parentIds)) {
+          setStatus({ type: "error", message: t("cv.atsNoDurableParent") });
+          return;
+        }
+        const epoch = sessionEpochRef.current;
+        setCvState((prev) => ({ ...prev, isProcessing: true }));
+        try {
+          const created = await persistentSearchProfiles.createAts(durableParentSearchProfileId, {
+            name: atsProfileName,
+            skills: cvState.selectedSkills,
+            targetRoles: cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
+          });
+          if (sessionEpochRef.current !== epoch) return;
+          setCvState((prev) => ({
+            ...prev,
+            step: "document-selected",
+            isProcessing: false,
+            error: null,
+          }));
+          setStatus({
+            type: "info",
+            message: t("cv.atsProfileSavedPersistent", { name: created.name }),
+          });
+        } catch {
+          if (sessionEpochRef.current === epoch) {
+            setCvState((prev) => ({ ...prev, isProcessing: false }));
+            setStatus({ type: "error", message: t("cv.errorAtsProfileSave") });
+          }
+        }
+        return;
+      }
       let savedName: string | null = null;
       if (doc?.hash) {
         // Rule: Every new ATS profile belongs to exactly one search profile.
@@ -2721,6 +2828,12 @@ export default function App() {
           busy={cvState.isProcessing}
           loadingLabel={t("cv.savingProfile")}
           error={cvProfileSaveError}
+          storageChoice={profileStorageChoice}
+          onStorageChoiceChange={setProfileStorageChoice}
+          persistentAvailable={profileStorageAvailable}
+          persistentUnavailableReason={profileStorageReason === "durable-cv"
+            ? t("profileStorage.durableCvRequired")
+            : t("profileStorage.consentRequired")}
           // CV-PROFILE-LISTS-03/05 + CV-UPLOAD-UX-08: im Edit-Modus der
           // bestehende Name; sonst Vorschlag "<Zielrolle> - Profil<n>"
           defaultName={
@@ -2734,13 +2847,40 @@ export default function App() {
             }`
           }
           onConfirm={(profile, profileName) => {
-            // CV-PROFILE-LISTS-01/08: Suchprofil unter seinem Namen an das CV
-            // haengen (gleicher Name ueberschreibt den Eintrag).
+            // CV-PROFILE-LISTS-01/08 + JM-RIS-CV-DERIVED-PROFILE-STORAGE-01:
+            // session profiles remain local; durable profiles use the separate
+            // search-profile consent and the existing RIS cvId.
             const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
             const epoch = sessionEpochRef.current;
             setCvProfileSaveError(null);
             void (async () => {
-              if (doc?.hash) {
+              if (profileStorageChoice === "persistent") {
+                if (!doc?.risCvId || !persistentSearchProfiles.active) {
+                  setCvProfileSaveError(t("profileStorage.errorPersistent"));
+                  return;
+                }
+                try {
+                  const saved = await persistentSearchProfiles.createCv(doc.risCvId, {
+                    name: profileName,
+                    searchConfig: profileToSearchConfiguration(profile),
+                  });
+                  if (sessionEpochRef.current !== epoch) return;
+                  setDurableSearchProfileId(saved.searchProfileId);
+                  setDurableParentSearchProfileId(saved.searchProfileId);
+                  setDurableSearchProfiles((current) =>
+                    current.some((item) => item.searchProfileId === saved.searchProfileId)
+                      ? current
+                      : [...current, saved]
+                  );
+                  setSelectedSavedSearchId(null);
+                  setStatus({ type: "info", message: t("profileStorage.savedPersistent") });
+                } catch {
+                  if (sessionEpochRef.current === epoch) {
+                    setCvProfileSaveError(t("profileStorage.errorPersistent"));
+                  }
+                  return;
+                }
+              } else if (doc?.hash) {
                 const repositories = profileRepositoriesRef.current;
                 if (!repositories) {
                   setStatus({ type: "error", message: t("cv.errorProfileSave") });
@@ -2752,8 +2892,10 @@ export default function App() {
                     searchConfig: profile,
                   });
                   if (sessionEpochRef.current !== epoch) return;
+                  setDurableSearchProfileId(null);
                   setSelectedSavedSearchId(saved.sessionId);
                   setCvProfileStoreVersion((version) => version + 1);
+                  setStatus({ type: "info", message: t("profileStorage.savedSession") });
                 } catch (error) {
                   if (error instanceof ProfileSessionEndedError) return;
                   if (sessionEpochRef.current === epoch) {
@@ -2853,6 +2995,57 @@ export default function App() {
                 onFocus={(e) => e.currentTarget.select()}
               />
             </div>
+          )}
+          {cvState.processingGoal === "ats" && (
+            <>
+              <ProfileStorageChoice
+                value={profileStorageChoice}
+                onChange={setProfileStorageChoice}
+                persistentAvailable={profileStorageAvailable}
+                persistentUnavailableReason={
+                  profileStorageReason === "durable-cv"
+                    ? t("profileStorage.durableCvRequired")
+                    : t("profileStorage.consentRequired")
+                }
+                disabled={cvState.isProcessing}
+              />
+              {profileStorageChoice === "persistent" && (
+                <div className="field">
+                  <label htmlFor="cv-ats-durable-parent">{t("cv.atsParentLabel")}</label>
+                  {durableSearchProfilesLoading ? (
+                    <p className="field-hint" role="status">{t("searchProfiles.loading")}</p>
+                  ) : durableSearchProfilesError ? (
+                    <div role="alert">
+                      <p className="field-error">{durableSearchProfilesError}</p>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => setDurableProfilesReloadToken((token) => token + 1)}
+                        disabled={cvState.isProcessing}
+                      >
+                        {t("cv.atsParentRetry")}
+                      </button>
+                    </div>
+                  ) : durableSearchProfiles.length === 0 ? (
+                    <p className="field-hint">{t("cv.atsNoDurableParent")}</p>
+                  ) : (
+                    <select
+                      id="cv-ats-durable-parent"
+                      value={durableParentSearchProfileId}
+                      onChange={(event) => setDurableParentSearchProfileId(event.target.value)}
+                      disabled={cvState.isProcessing}
+                    >
+                      <option value="">{t("cv.atsParentPlaceholder")}</option>
+                      {durableSearchProfiles.map((profile) => (
+                        <option key={profile.searchProfileId} value={profile.searchProfileId}>
+                          {profile.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+            </>
           )}
           {/* CV-UPLOAD-UX-06: Bulk-Auswahl — alle Skills selektieren bzw.
               abwaehlen (Default beim Betreten: alle selektiert). */}
