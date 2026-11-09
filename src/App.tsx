@@ -429,6 +429,7 @@ export default function App() {
       setDurableSearchProfiles([]);
       setDurableSearchProfilesError(null);
       setDurableParentSearchProfileId("");
+      setPersistentProfilesFocusCvId(null);
       profileSaveOperationRef.current = null;
       setProfileSaveBusy(false);
       cvStorageAutoSelectedRef.current = false;
@@ -503,6 +504,7 @@ export default function App() {
   const [durableSearchProfilesError, setDurableSearchProfilesError] = useState<string | null>(null);
   const [durableParentSearchProfileId, setDurableParentSearchProfileId] = useState("");
   const [durableProfilesReloadToken, setDurableProfilesReloadToken] = useState(0);
+  const [persistentProfilesFocusCvId, setPersistentProfilesFocusCvId] = useState<string | null>(null);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const profileSaveOperationRef = useRef<object | null>(null);
   const selectedCvDocumentId = cvState.selectedDocumentIds[0] ?? null;
@@ -521,6 +523,7 @@ export default function App() {
     setDurableSearchProfiles([]);
     setDurableSearchProfilesError(null);
     setDurableParentSearchProfileId("");
+    setPersistentProfilesFocusCvId(null);
     profileSaveOperationRef.current = null;
     setProfileSaveBusy(false);
   }, [selectedCvDocumentId]);
@@ -1707,6 +1710,7 @@ export default function App() {
             error: null,
           }));
           setCvStorageMode("persistent");
+          setPersistentProfilesFocusCvId(doc.risCvId);
           setStatus({
             type: "info",
             message: t("cv.atsProfileSavedPersistent", { name: created.name }),
@@ -2889,6 +2893,7 @@ export default function App() {
                     );
                     setSelectedSavedSearchId(null);
                     setCvStorageMode("persistent");
+                    setPersistentProfilesFocusCvId(doc.risCvId);
                     setStatus({ type: "info", message: t("profileStorage.savedPersistent") });
                   } catch {
                     if (sessionEpochRef.current === epoch && profileSaveOperationRef.current === operation) {
@@ -3689,6 +3694,9 @@ export default function App() {
       onCvStorageModeChange={setCvStorageMode}
       persistentCvStorage={persistentCvStorage}
       persistentSearchProfiles={persistentSearchProfiles}
+      focusPersistentCvId={persistentProfilesFocusCvId}
+      focusPersistentProfilesEnabled={cvState.step === "idle" || cvState.step === "document-selected"}
+      onPersistentProfilesFocusHandled={() => setPersistentProfilesFocusCvId(null)}
       onAssignUnassigned={handleAssignUnassignedAts}
     />
   );

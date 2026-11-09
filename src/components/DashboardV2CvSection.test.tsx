@@ -372,3 +372,83 @@ describe('JM-RIS-CV-DERIVED-PROFILE-STORAGE-01: stored CV profile reachability',
     expect(screen.getByRole('button', { name: 'Suchprofile' })).toBeInTheDocument();
   });
 });
+
+describe('JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01: profile focus', () => {
+  beforeEach(() => {
+    localStorage.setItem('mj-lang', 'de');
+    resetCvProfileLists();
+  });
+
+  afterEach(() => {
+    cleanup();
+    resetCvProfileLists();
+  });
+
+  it('opens and reloads the right stored CV profile view after a durable save', async () => {
+    const listCv = vi.fn(async () => []);
+    const listAts = vi.fn(async () => []);
+    const persistentCvStorage = {
+      enabled: true,
+      loading: false,
+      consentLoading: false,
+      busy: false,
+      documents: [{
+        cvId: 'cv-1',
+        filename: 'Lebenslauf.pdf',
+        contentType: 'application/pdf',
+        processingStatus: 'ready',
+        sizeBytes: 2048,
+        createdAt: '2026-11-09T10:00:00Z',
+        updatedAt: '2026-11-09T10:00:00Z',
+        version: 1,
+      }],
+      consent: { consent: { status: 'GRANTED' } },
+      error: null,
+      notice: null,
+      refresh: vi.fn(async () => undefined),
+      upload: vi.fn(async () => true),
+      download: vi.fn(async () => undefined),
+      remove: vi.fn(async () => true),
+      grantConsent: vi.fn(async () => true),
+      withdrawConsent: vi.fn(async () => true),
+    } as unknown as import('../lib/usePersistentCvStorage').PersistentCvStorageState;
+    const persistentSearchProfiles = {
+      available: true,
+      persistentView: true,
+      listCv,
+      listAts,
+    } as unknown as import('../lib/usePersistentSearchProfiles').PersistentSearchProfiles;
+
+    render(
+      <LangProvider>
+        <DashboardV2CvSection
+          documents={[]}
+          selectedDocumentId={null}
+          selectedSearchProfileId={null}
+          selectedAtsProfileId={null}
+          processing={false}
+          searching={false}
+          onSelectDocument={vi.fn()}
+          onRemoveDocument={vi.fn()}
+          onAddFiles={vi.fn()}
+          onProcess={vi.fn()}
+          onSearch={vi.fn()}
+          onRemoveData={vi.fn()}
+          onSelectSearchProfile={vi.fn()}
+          onSelectAtsProfile={vi.fn()}
+          cvStorageEnabled
+          cvStorageMode="persistent"
+          onCvStorageModeChange={vi.fn()}
+          persistentCvStorage={persistentCvStorage}
+          persistentSearchProfiles={persistentSearchProfiles}
+          focusPersistentCvId="cv-1"
+          focusPersistentProfilesEnabled
+          onPersistentProfilesFocusHandled={vi.fn()}
+        />
+      </LangProvider>
+    );
+
+    await waitFor(() => expect(listCv).toHaveBeenCalledWith('cv-1'));
+    expect(screen.getByRole('dialog', { name: 'Lebenslauf.pdf' })).toBeInTheDocument();
+  });
+});

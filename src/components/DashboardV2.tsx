@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLang } from '../i18n';
 import Badge from './ui/Badge';
@@ -34,6 +34,17 @@ export const DEMO_USER: DashboardUser = {
   name: 'Dev Demo User',
 };
 
+const MAY_HELP_STORAGE_KEY = 'mj-may-help-open';
+
+function initialMayOpen(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(MAY_HELP_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 const DASHBOARD_TABS = [
   'overview',
   'profile',
@@ -64,6 +75,25 @@ const DashboardV2 = ({
 }: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
+  const [mayOpen, setMayOpen] = useState(initialMayOpen);
+  const mayButtonRef = useRef<HTMLButtonElement>(null);
+  const mayPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(MAY_HELP_STORAGE_KEY, mayOpen ? 'true' : 'false');
+    } catch {
+      /* UI preference only; storage can be unavailable */
+    }
+    if (mayOpen) {
+      window.setTimeout(() => mayPanelRef.current?.focus(), 0);
+    }
+  }, [mayOpen]);
+
+  const closeMay = () => {
+    setMayOpen(false);
+    mayButtonRef.current?.focus();
+  };
   const mayContext: MayContext = activeId === 'cv' ? 'cv' : activeId === 'applications' ? 'applications' : activeId === 'preferences' ? 'preferences' : activeId === 'settings' ? 'settings' : 'overview';
   const navigationItems: readonly DashboardNavigationItem[] = [
     { id: 'overview', label: t('dashboard.nav.overview') },
@@ -104,7 +134,32 @@ const DashboardV2 = ({
         </div>
       </header>
 
-      <MayHelp context={mayContext} className="dashboard-v2__may" />
+      <div className="may-help-control">
+        <button
+          ref={mayButtonRef}
+          type="button"
+          className="may-help-toggle"
+          aria-expanded={mayOpen}
+          aria-controls="may-help-panel"
+          onClick={() => {
+            if (mayOpen) closeMay();
+            else setMayOpen(true);
+          }}
+        >
+          <span aria-hidden="true">💚</span>
+          {t('dashboard.may.button')}
+        </button>
+        {mayOpen && (
+          <div
+            id="may-help-panel"
+            ref={mayPanelRef}
+            tabIndex={-1}
+            className="may-help-panel"
+          >
+            <MayHelp context={mayContext} className="dashboard-v2__may" />
+          </div>
+        )}
+      </div>
 
       <div className="dashboard-v2__mobile-nav">
         <DashboardSectionSwitcher

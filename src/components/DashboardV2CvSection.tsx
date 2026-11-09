@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CvDocument, StatusMessage } from '../types';
 import { useLang } from '../i18n';
 import { readCvProfileLists } from '../lib/cvProfileStore';
@@ -50,6 +50,9 @@ interface Props {
   onCvStorageModeChange?: (mode: "session" | "persistent") => void;
   persistentCvStorage?: PersistentCvStorageState | null;
   persistentSearchProfiles?: PersistentSearchProfiles | null;
+  focusPersistentCvId?: string | null;
+  focusPersistentProfilesEnabled?: boolean;
+  onPersistentProfilesFocusHandled?: () => void;
   onAssignUnassigned?: (
     cvHash: string,
     atsSessionId: string,
@@ -91,11 +94,21 @@ const DashboardV2CvSection = ({
   onCvStorageModeChange,
   persistentCvStorage = null,
   persistentSearchProfiles = null,
+  focusPersistentCvId = null,
+  focusPersistentProfilesEnabled = false,
+  onPersistentProfilesFocusHandled,
   onAssignUnassigned,
 }: Props) => {
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
   const [persistentProfilesCvId, setPersistentProfilesCvId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!focusPersistentCvId || !focusPersistentProfilesEnabled ||
+        !persistentSearchProfiles?.persistentView) return;
+    setPersistentProfilesCvId(focusPersistentCvId);
+    onPersistentProfilesFocusHandled?.();
+  }, [focusPersistentCvId, focusPersistentProfilesEnabled, persistentSearchProfiles?.persistentView, onPersistentProfilesFocusHandled]);
   const activeDocument = documents.find((document) => document.id === selectedDocumentId) ?? documents[0] ?? null;
   const lists = readCvProfileLists(activeDocument?.hash ?? null);
   const selectedSearchProfile = lists.searchProfiles.find((entry) => entry.id === selectedSearchProfileId) ?? null;
