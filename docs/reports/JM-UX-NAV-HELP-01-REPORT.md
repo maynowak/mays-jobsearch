@@ -36,6 +36,10 @@ no deployment.
   consent gate still runs.
 - Loading, per-CV error, retry and handoff status are visible. Identity changes
   invalidate in-flight downloads through the existing session epoch guard.
+- On success the app switches to session mode, because the downloaded PDF is
+  now a session document; the durable copy is not deleted or re-uploaded.
+- A full session (10 CVs) is rejected before download instead of silently
+  dropping the new document.
 - Duplicate top-level upload was removed; the CV list owns upload actions.
   Session and durable storage are explicitly distinguished in the UI.
 
@@ -49,7 +53,8 @@ no deployment.
 
 ## Screenshots
 
-Assets: `docs/reports/assets/JM-UX-NAV-HELP-01/`
+Assets: `docs/reports/assets/JM-UX-NAV-HELP-01/` (dashboard + `search-768.png` /
+`search-1440.png` for the glass navigation).
 
 | Width | Overflow | Main menu | Dashboard navigation | May |
 | --- | --- | --- | --- | --- |
@@ -67,14 +72,16 @@ real identities.
 
 | Check | Result |
 | --- | --- |
-| Focused navigation/CV/May tests | **55 passed** |
-| Full suite, serial | **1633 passed**, 5 skipped |
+| Focused navigation/CV/May tests | **60 passed** |
+| Full suite, serial | **1638 passed**, 5 skipped |
 | Production build | **PASS** |
 | Screenshot overflow check | **none at all six widths** |
 
 The parallel full run showed the existing timing-sensitive
 `ManualSearchProfiles`/`CvBuilderEditorPdf` flakes; all pass in isolation and in
-the serial full run.
+the serial full run. A real signed-in browser check of the presigned-GET CORS
+path remains a deployment-time verification; the handoff was covered with a
+mocked BFF in this branch.
 
 ## Boundaries
 

@@ -4677,7 +4677,13 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   written to browser storage.
 - Added reusable non-chat `MayHelp` component with contextual overview/CV/
   applications/preferences/settings text.
-- Verification: focused 55 passed; serial full suite 1633 passed, 5 skipped;
-  build PASS; screenshots at 320/390/430/768/1024/1440 with no horizontal
-  overflow. Assets/report under `docs/reports/`.
+- Download uses `cache: no-store`; top-level active matching is exact so only
+  one nav item is `aria-current`; login/language controls are 44 px touch
+  targets. A full session (10 CVs) is rejected before download.
+- Verification: focused 60 passed; serial full suite 1638 passed, 5 skipped;
+  build PASS; screenshots at 320/390/430/768/1024/1440 plus search-768/1440
+  with no horizontal overflow. Assets/report under `docs/reports/`.
+- On successful handoff the UI switches to session mode; the durable copy is
+  untouched. A real signed-in browser check of presigned-GET CORS remains a
+  deployment-time verification (local test uses a mocked BFF).
 - No RIS/AWS/Terraform or privacy-contract change; no push, merge or deploy.
