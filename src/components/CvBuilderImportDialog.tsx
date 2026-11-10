@@ -93,6 +93,27 @@ function sectionSummary(
   }
 }
 
+function sectionCount(
+  result: CvBuilderImportResult,
+  section: CvBuilderImportSectionId,
+  t: (key: string, vars?: Record<string, string | number>) => string
+): string {
+  const count = sectionSummary(result, section, t).length;
+  if (section === "personal" || section === "profile") {
+    return count === 1
+      ? t("cvBuilder.import.fieldCountOne")
+      : t("cvBuilder.import.fieldCount", { count });
+  }
+  if (section === "skills") {
+    return count === 1
+      ? t("cvBuilder.import.skillCountOne")
+      : t("cvBuilder.import.skillCount", { count });
+  }
+  return count === 1
+    ? t("cvBuilder.import.itemCountOne")
+    : t("cvBuilder.import.itemCount", { count });
+}
+
 export default function CvBuilderImportDialog({
   open,
   onClose,
@@ -355,17 +376,29 @@ export default function CvBuilderImportDialog({
                   if (!hasContent) return null;
                   return (
                     <section key={section} className="cv-import-section">
-                      <label className="cv-import-section__select">
-                        <input
-                          type="checkbox"
-                          checked={selected.has(section)}
-                          onChange={() => toggleSection(section)}
-                        />
-                        <strong>{t(`cvBuilder.import.section.${section}`)}</strong>
-                      </label>
-                      <ul>
-                        {items.map((item, index) => <li key={`${section}-${index}`}>{item}</li>)}
-                      </ul>
+                      <div className="cv-import-section__head">
+                        <label className="cv-import-section__select">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(section)}
+                            onChange={() => toggleSection(section)}
+                          />
+                          <strong>{t(`cvBuilder.import.section.${section}`)}</strong>
+                        </label>
+                        <span className={`cv-import-section__status${result.uncertain[section] ? " is-uncertain" : ""}`}>
+                          {result.uncertain[section]
+                            ? t("cvBuilder.import.statusReview")
+                            : t("cvBuilder.import.statusDetected")}
+                          {" · "}
+                          {sectionCount(result, section, t)}
+                        </span>
+                      </div>
+                      <details className="cv-import-section__details">
+                        <summary>{t("cvBuilder.import.details")}</summary>
+                        <ul>
+                          {items.map((item, index) => <li key={`${section}-${index}`}>{item}</li>)}
+                        </ul>
+                      </details>
                       {result.uncertain[section] && (
                         <p className="cv-import-section__uncertain" role="note">
                           {t("cvBuilder.import.uncertain")}
@@ -400,9 +433,12 @@ export default function CvBuilderImportDialog({
                     />
                     <span>{t("cvBuilder.import.includeUnrecognized")}</span>
                   </label>
-                  <ul>
-                    {result.unrecognized.map((line, index) => <li key={`unassigned-${index}`}>{line}</li>)}
-                  </ul>
+                  <details className="cv-import-section__details">
+                    <summary>{t("cvBuilder.import.details")}</summary>
+                    <ul>
+                      {result.unrecognized.map((line, index) => <li key={`unassigned-${index}`}>{line}</li>)}
+                    </ul>
+                  </details>
                 </section>
               )}
             </div>

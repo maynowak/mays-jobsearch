@@ -1,0 +1,59 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "width": 320,
+      "source": "local",
+      "download": "Lebenslauf-Max-Import.pdf"
+    },
+    {
+      "width": 320,
+      "source": "ris"
+    },
+    {
+      "width": 390,
+      "source": "local",
+      "download": "Lebenslauf-Max-Import.pdf"
+    },
+    {
+      "width": 390,
+      "source": "ris"
+    },
+    {
+      "width": 430,
+      "source": "local",
+      "download": "Lebenslauf-Max-Import.pdf"
+    },
+    {
+      "width": 430,
+      "source": "ris"
+    },
+    {
+      "width": 768,
+      "source": "local",
+      "download": "Lebenslauf-Max-Import.pdf"
+    },
+    {
+      "width": 768,
+      "source": "ris"
+    },
+    {
+      "width": 1024,
+      "source": "local",
+      "download": "Lebenslauf-Max-Import.pdf"
+    },
+    {
+      "width": 1024,
+      "source": "ris"
+    },
+    {
+      "width": 1440,
+      "source": "local",
+      "download": "Lebenslauf-Max-Import.pdf"
+    },
+    {
+      "width": 1440,
+      "source": "ris"
+    }
+  ]
+}

@@ -81,6 +81,8 @@ describe("CvBuilderImportDialog", () => {
     expect(screen.getByText("Max Mustermann")).toBeInTheDocument();
     expect(screen.getByText("Senior Frontend Engineer")).toBeInTheDocument();
     expect(screen.getByText("React")).toBeInTheDocument();
+    expect(screen.getByText(/2 Kandidaten/)).toBeInTheDocument();
+    expect(screen.getAllByText("Details anzeigen").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
 
     expect(onImported).toHaveBeenCalledTimes(1);

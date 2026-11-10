@@ -173,3 +173,76 @@ Zusätzliche Information`);
     expect(hasCvBuilderImportContent(result, 'experience')).toBe(true);
   });
 });
+
+const reference01B = `Alex Beispiel
+E-Mail: alex@example.invalid
+GitHub: https://github.com/alex
+
+Profil
+Cloud Platform Engineer
+Baut sichere Cloud-Plattformen.
+
+Technical Skills
+Java EE/J2EE, Spring Boot, REST APIs, PostgreSQL, AWS Lambda, Terraform
+Developed a custom analytics dashboard with React and Node.js
+2022
+
+Selected Current Projects
+RIS Integration
+Mehrzeilige Projektbeschreibung für die Anbindung an das RIS.
+Technologien: TypeScript, AWS Lambda, Terraform
+https://github.com/alex/ris-integration
+
+Professional Experience
+Acme GmbH
+Cloud Platform Engineer
+Jan 2020 - Present
+- Betrieb einer AWS-Plattform
+- Terraform und Kubernetes
+
+AI/Automation Lab
+2023 - 2024
+Entwicklung eines internen Automatisierungs-Labors.
+
+Further Education
+AWS Certified Solutions Architect | Amazon Web Services | 2023
+
+Education and Qualifications
+Technische Universitaet Berlin
+M.Sc. Informatik
+Okt 2014 - Sep 2016`;
+
+describe('parseCvBuilderImportText 01B quality', () => {
+  it('closes skills before a project section and filters sentence fragments', () => {
+    const result = parseCvBuilderImportText(reference01B);
+    expect(result.detected.projects).toBe(true);
+    expect(result.detected.skills).toBe(true);
+    expect(result.draft.projects).toHaveLength(1);
+    expect(result.draft.projects[0].name).toBe('RIS Integration');
+    expect(result.draft.projects[0].description).toContain('Mehrzeilige Projektbeschreibung');
+    expect(result.draft.projects[0].technologies).toEqual([
+      'TypeScript', 'AWS Lambda', 'Terraform',
+    ]);
+    expect(result.draft.skills).toEqual([
+      'Java EE/J2EE', 'Spring Boot', 'REST APIs', 'PostgreSQL', 'AWS Lambda', 'Terraform',
+    ]);
+    expect(result.draft.skills).not.toContain('Developed a custom analytics dashboard with React and Node.js');
+    expect(result.draft.skills).not.toContain('2022');
+    expect(result.unrecognized.join('\n')).toContain('Developed a custom analytics dashboard');
+  });
+
+  it('does not classify a dated lab/course block as employment', () => {
+    const result = parseCvBuilderImportText(reference01B);
+    expect(result.draft.experience).toHaveLength(1);
+    expect(result.draft.experience[0].employer).toBe('Acme GmbH');
+    expect(result.unrecognized.join('\n')).toContain('AI/Automation Lab');
+    expect(result.uncertain.experience).toBe(true);
+  });
+
+  it('recognises further education separately and keeps project links', () => {
+    const result = parseCvBuilderImportText(reference01B);
+    expect(result.draft.certificates[0].name).toBe('AWS Certified Solutions Architect');
+    expect(result.draft.links.some((entry) => entry.url.includes('github.com/alex/ris-integration'))).toBe(true);
+    expect(result.draft.education[0].institution).toBe('Technische Universitaet Berlin');
+  });
+});

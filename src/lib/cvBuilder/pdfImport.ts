@@ -59,13 +59,27 @@ const SECTION_ALIASES: Record<CvBuilderImportSectionId, string[]> = {
   skills: [
     "fähigkeiten", "faehigkeiten", "kenntnisse", "technische kenntnisse", "skills", "technical skills", "competencies", "core skills",
   ],
-  projects: ["projekte", "project experience", "projects", "project work"],
+  projects: ["projekte", "project experience", "projects", "project work", "project experience / projects"],
   certificates: [
-    "zertifikate", "zertifizierungen", "weiterbildungen", "certificates", "certifications", "courses",
+    "zertifikate", "zertifizierungen", "weiterbildungen", "weiterbildung", "fortbildung", "fortbildungen",
+    "certificates", "certifications", "courses", "further education", "continuing education",
   ],
   languages: ["sprachen", "sprachkenntnisse", "languages", "language skills"],
   links: ["links", "websites", "portfolio", "profile links", "online profiles"],
 };
+
+const SECTION_PATTERNS: Array<[RegExp, CvBuilderImportSectionId]> = [
+  [/^(?:selected|current|key|relevant)(?:\s+current)?\s+projects?$/i, "projects"],
+  [/^(?:projects?|project experience|project work|projekte|projektarbeit)$/i, "projects"],
+  [/^(?:professional|work|employment)\s+(?:experience|history)$/i, "experience"],
+  [/^(?:work history|employment history|berufserfahrung|berufliche erfahrung|arbeitserfahrung|beruflicher werdegang|werdegang)$/i, "experience"],
+  [/^(?:education(?: and qualifications)?|education\s*[&+]\s*certifications?|academic background|ausbildung|bildung|bildungsweg|akademische ausbildung)$/i, "education"],
+  [/^(?:further education|continuing education|weiterbildung|fortbildung|weiterbildungen|schulungen?)$/i, "certificates"],
+  [/^(?:technical skills|core competencies|key skills|technical competencies|skills|fähigkeiten|faehigkeiten|kenntnisse|technische kenntnisse|cloud\s*[&+]\s*devops)$/i, "skills"],
+  [/^(?:certificates?|certifications?|zertifikate|zertifizierungen)$/i, "certificates"],
+  [/^(?:languages?|language skills|sprachen|sprachkenntnisse)$/i, "languages"],
+  [/^(?:links?|websites?|portfolios?|online profiles?)$/i, "links"],
+];
 
 const MONTHS: Record<string, string> = {
   jan: "01", januar: "01", january: "01",
@@ -92,6 +106,22 @@ const PHONE_RE = /(?:\+?\d[\d ()/.-]{6,}\d)/;
 const LINK_RE = /(https?:\/\/[^\s<>()]+|(?:www\.)?(?:github|linkedin)\.com\/[^\s<>()]+)/i;
 const MONTH_RE = /^(\d{4})-(\d{2})$/;
 
+function linksInLine(line: string): string[] {
+  return [...line.matchAll(new RegExp(LINK_RE.source, "gi"))]
+    .map((match) => match[1])
+    .filter(Boolean);
+}
+
+function linkEntry(url: string): CvBuilderDraftV1["links"][number] {
+  let normalized = url.replace(/[.,;)]$/, "");
+  if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`;
+  const lower = normalized.toLocaleLowerCase("en");
+  const kind = lower.includes("github") ? "github" : lower.includes("linkedin") ? "linkedin" : "portfolio";
+  const label = kind === "github" ? "GitHub" : kind === "linkedin" ? "LinkedIn" : "Portfolio";
+  const entry = createLinkEntry();
+  return { ...entry, kind, label, url: normalized };
+}
+
 function normalizedHeading(line: string): string {
   return line
     .replace(/^[-•*]\s*/, "")
@@ -102,11 +132,69 @@ function normalizedHeading(line: string): string {
 }
 
 function sectionFor(line: string): CvBuilderImportSectionId | null {
-  const normalized = normalizedHeading(line);
-  for (const section of CV_BUILDER_IMPORT_SECTIONS) {
-    if (SECTION_ALIASES[section].includes(normalized)) return section;
+  const candidates = [line, line.split(/\s{2,}/)[0]];
+  for (const candidate of candidates) {
+    const normalized = normalizedHeading(candidate);
+    if (!normalized || normalized.length > 80) continue;
+    for (const section of CV_BUILDER_IMPORT_SECTIONS) {
+      if (SECTION_ALIASES[section].includes(normalized)) return section;
+    }
+    for (const [pattern, section] of SECTION_PATTERNS) {
+      if (pattern.test(normalized)) return section;
+    }
   }
   return null;
+}
+
+function preprocessLines(raw: string): string[] {
+  const lines = raw.replace(/\r/g, "").split("\n").map((line) => line.trim());
+  const counts = new Map<string, number>();
+  for (const line of lines) {
+    if (!line || sectionFor(line)) continue;
+    const key = normalizedHeading(line);
+    if (key.length <= 80) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const repeated = new Set(
+    [...counts.entries()]
+      .filter(([line, count]) => count >= 3 && line.length < 80)
+      .map(([line]) => line)
+  );
+  return lines.filter((line) => {
+    if (!line) return true;
+    if (/^\d{1,3}$/.test(line)) return false;
+    if (/^(seite|page)\s+\d+(\s*(von|of)\s*\d+)?$/i.test(line)) return false;
+    if (/^(curriculum vitae|lebenslauf)$/i.test(line) && (counts.get(normalizedHeading(line)) ?? 0) > 1) return false;
+    if (/^(?:.*\s[·|]\s)?(?:professional cv|professional profile|curriculum vitae)\s+\d+$/i.test(line)) return false;
+    return !repeated.has(normalizedHeading(line));
+  });
+}
+
+function mergeWrappedLines(lines: string[]): string[] {
+  const merged: string[] = [];
+  for (const line of lines) {
+    if (!line) {
+      merged.push("");
+      continue;
+    }
+    const previous = merged[merged.length - 1];
+    const startsLikeContinuation = /^[a-zäöüß]/.test(line);
+    const isBullet = /^[-•*–—]/.test(line);
+    if (
+      previous &&
+      startsLikeContinuation &&
+      !isBullet &&
+      !sectionFor(previous) &&
+      !LINK_RE.test(previous) &&
+      !LINK_RE.test(line) &&
+      !/[.!?:]$/.test(previous) &&
+      previous.length < 180
+    ) {
+      merged[merged.length - 1] = `${previous} ${line}`;
+    } else {
+      merged.push(line);
+    }
+  }
+  return merged;
 }
 
 function cleanLine(line: string): string {
@@ -137,6 +225,26 @@ function splitBlocks(lines: string[]): string[][] {
       continue;
     }
     current.push(line);
+  }
+  if (current.length) blocks.push(current);
+  return blocks;
+}
+
+function splitProjectBlocks(lines: string[]): string[][] {
+  const nonEmptyLines = lines.filter((line) => line.trim());
+  const starts = nonEmptyLines.filter((line) => /^\d{4}(?:\s*[-–]\s*\d{4})?\s*\|/.test(cleanLine(line))).length;
+  if (starts < 2) return splitBlocks(lines);
+  const blocks: string[][] = [];
+  let current: string[] = [];
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const isStart = /^\d{4}(?:\s*[-–]\s*\d{4})?\s*\|/.test(cleanLine(line));
+    if (isStart && current.length) {
+      blocks.push(current);
+      current = [line];
+    } else {
+      current.push(line);
+    }
   }
   if (current.length) blocks.push(current);
   return blocks;
@@ -210,27 +318,60 @@ function degreeLike(value: string): boolean {
   return /\b(bachelor|master|b\.?sc|m\.?sc|b\.?a|m\.?a|diplom|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachwirt|mba)\b/i.test(value);
 }
 
+const NON_EMPLOYMENT_RE = /\b(lab|labor|bootcamp|course|kurs|training|schulung|seminar|workshop|weiterbildung|fortbildung|certification|zertifizierung|universität|universitaet|university|hochschule|college|school|studium|education)\b/i;
+
 function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["experience"] {
   const entries: CvBuilderDraftV1["experience"] = [];
   for (const block of splitBlocks(lines)) {
-    const dateIndex = block.findIndex((line) => parseDateRange(line) !== null);
+    const dateIndex = block.findIndex((line) => parseDateRange(line) !== null || /^\s*\d{4}\s*\|/.test(line));
     if (dateIndex < 0) {
       unrecognized.push(...nonEmpty(block));
       continue;
     }
-    const date = parseDateRange(block[dateIndex]);
-    if (!date) continue;
     const dateLine = block[dateIndex];
-    const beforeText = dateLine.slice(0, date.matchIndex).replace(/[|,;–—-]\s*$/, "").trim();
-    const afterText = dateLine.slice(date.matchIndex).replace(DATE_RANGE, "").replace(SINCE_DATE, "").replace(/^[|,;–—-]\s*/, "").trim();
+    let date = parseDateRange(dateLine);
+    let singlePrefix = "";
+    if (!date) {
+      const single = dateLine.match(new RegExp(`^\s*(${DATE_POINT})\s*\|\s*`, "i"));
+      if (!single) {
+        unrecognized.push(...nonEmpty(block));
+        continue;
+      }
+      singlePrefix = single[0];
+      const startMonth = parseMonthToken(single[1]);
+      date = {
+        startMonth: startMonth ?? "",
+        current: false,
+        uncertain: true,
+        matchIndex: 0,
+      };
+    }
+    const beforeText = singlePrefix ? "" : dateLine.slice(0, date.matchIndex).replace(/[|,;–—-]\s*$/, "").trim();
+    const afterText = singlePrefix
+      ? dateLine.slice(singlePrefix.length).trim()
+      : dateLine.slice(date.matchIndex).replace(DATE_RANGE, "").replace(SINCE_DATE, "").replace(/^[|,;–—-]\s*/, "").trim();
     const before = [...nonEmpty(block.slice(0, dateIndex)), ...splitLineParts(beforeText)];
-    const after = [...(afterText ? [afterText] : []), ...nonEmpty(block.slice(dateIndex + 1))];
+    const afterParts = afterText ? afterText.split(/\s*\|\s*/).map(cleanLine).filter(Boolean) : [];
+    let after = [...afterParts.slice(2), ...nonEmpty(block.slice(dateIndex + 1))];
+    if (NON_EMPLOYMENT_RE.test(nonEmpty(block).join(" ")) && !before.some(companyLike)) {
+      uncertain.add("experience");
+      unrecognized.push(...nonEmpty(block));
+      continue;
+    }
     let employer = "";
     let position = "";
-    if (before.length === 1) {
+    if (!before.length && afterParts.length) {
+      position = afterParts[0];
+      employer = afterParts[1] ?? "";
+      after = [...afterParts.slice(2), ...nonEmpty(block.slice(dateIndex + 1))];
+      if (!employer) uncertain.add("experience");
+    } else if (before.length === 1) {
       if (companyLike(before[0])) employer = before[0];
       else if (titleLike(before[0])) position = before[0];
-      else employer = before[0];
+      else {
+        employer = before[0];
+        uncertain.add("experience");
+      }
     } else if (before.length >= 2) {
       const first = before[0];
       const second = before[1];
@@ -265,7 +406,31 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
   for (const block of splitBlocks(lines)) {
     const dateIndex = block.findIndex((line) => parseDateRange(line) !== null);
     if (dateIndex < 0) {
-      unrecognized.push(...nonEmpty(block));
+      const lines = nonEmpty(block);
+      if (!lines.length) continue;
+      if (/^(professional development|certifications?|certificates?|further education|weiterbildung|fortbildung)\b/i.test(lines[0])) {
+        unrecognized.push(...lines);
+        uncertain.add("education");
+        continue;
+      }
+      let institution = "";
+      let degree = "";
+      if (degreeLike(lines[0])) degree = lines[0];
+      else institution = lines[0];
+      if (!institution && !degree) {
+        unrecognized.push(...lines);
+        continue;
+      }
+      uncertain.add("education");
+      const entry = createEducationEntry();
+      entries.push({
+        ...entry,
+        institution,
+        degree,
+        startMonth: "",
+        current: false,
+        ...(lines.length > 1 ? { description: lines.slice(1).join("\n") } : {}),
+      });
       continue;
     }
     const date = parseDateRange(block[dateIndex]);
@@ -308,7 +473,7 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
 
 function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["projects"] {
   const entries: CvBuilderDraftV1["projects"] = [];
-  for (const block of splitBlocks(lines)) {
+  for (const block of splitProjectBlocks(lines)) {
     const cleaned = nonEmpty(block);
     if (!cleaned.length) continue;
     const name = cleaned[0];
@@ -317,9 +482,19 @@ function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>
     const technologies: string[] = [];
     descriptionLines = descriptionLines.filter((line) => {
       const tech = line.match(/^(?:technologien|technologies|tech(?: stack)?|stack|tools)\s*[:\-]\s*(.+)$/i);
-      if (!tech) return true;
-      technologies.push(...tech[1].split(/[,;|]/).map((item) => item.trim()).filter(Boolean));
-      return false;
+      if (tech) {
+        technologies.push(
+          ...tech[1]
+            .split(/[,;|]/)
+            .map((item) => item.trim().replace(/[.]+$/, ""))
+            .filter(isSkillCandidate)
+        );
+        return false;
+      }
+      if (linksInLine(line).length > 0 && line.replace(LINK_RE, "").replace(/[·|:]/g, "").trim().length < 20) {
+        return false;
+      }
+      return true;
     });
     if (!descriptionLines.length && !technologies.length) uncertain.add("projects");
     const entry = createProjectEntry();
@@ -374,21 +549,25 @@ const LANGUAGE_LEVELS: Array<[RegExp, CvBuilderLanguageLevel]> = [
 function parseLanguages(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["languages"] {
   const entries: CvBuilderDraftV1["languages"] = [];
   for (const line of nonEmpty(lines)) {
-    const match = line.match(/^([^:–—()\-]+?)\s*(?:[:–—(]|\s-\s)\s*(.+?)\)?$/);
-    if (!match) {
-      unrecognized.push(line);
-      continue;
+    const segments = line.split(/\s*\|\s*/).map(cleanLine).filter(Boolean);
+    for (const segment of segments) {
+      const match = segment.match(/^([^:–—()\-]+?)\s*(?:[:–—(]|\s-\s)\s*(.+?)\)?$/);
+      if (!match) {
+        unrecognized.push(segment);
+        uncertain.add("languages");
+        continue;
+      }
+      const language = cleanLine(match[1]);
+      const levelText = match[2];
+      const level = LANGUAGE_LEVELS.find(([pattern]) => pattern.test(levelText))?.[1];
+      if (!language || !level) {
+        unrecognized.push(segment);
+        uncertain.add("languages");
+        continue;
+      }
+      const entry = createLanguageEntry();
+      entries.push({ ...entry, language, level });
     }
-    const language = cleanLine(match[1]);
-    const levelText = match[2];
-    const level = LANGUAGE_LEVELS.find(([pattern]) => pattern.test(levelText))?.[1];
-    if (!language || !level) {
-      unrecognized.push(line);
-      uncertain.add("languages");
-      continue;
-    }
-    const entry = createLanguageEntry();
-    entries.push({ ...entry, language, level });
   }
   return entries;
 }
@@ -397,20 +576,31 @@ function parseLinks(lines: string[], unrecognized: string[]): CvBuilderDraftV1["
   const entries: CvBuilderDraftV1["links"] = [];
   const seen = new Set<string>();
   for (const line of nonEmpty(lines)) {
-    const match = line.match(LINK_RE);
-    if (!match) {
+    const urls = linksInLine(line);
+    if (!urls.length) {
       unrecognized.push(line);
       continue;
     }
-    let url = match[1];
-    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-    if (seen.has(url)) continue;
-    seen.add(url);
-    const lower = url.toLocaleLowerCase("en");
-    const kind = lower.includes("github") ? "github" : lower.includes("linkedin") ? "linkedin" : "portfolio";
-    const label = kind === "github" ? "GitHub" : kind === "linkedin" ? "LinkedIn" : "Portfolio";
-    const entry = createLinkEntry();
-    entries.push({ ...entry, kind, label, url });
+    for (const url of urls) {
+      const entry = linkEntry(url);
+      if (seen.has(entry.url)) continue;
+      seen.add(entry.url);
+      entries.push(entry);
+    }
+  }
+  return entries;
+}
+
+function collectLinks(lines: string[]): CvBuilderDraftV1["links"] {
+  const entries: CvBuilderDraftV1["links"] = [];
+  const seen = new Set<string>();
+  for (const line of nonEmpty(lines)) {
+    for (const url of linksInLine(line)) {
+      const entry = linkEntry(url);
+      if (seen.has(entry.url)) continue;
+      seen.add(entry.url);
+      entries.push(entry);
+    }
   }
   return entries;
 }
@@ -464,16 +654,63 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
   };
 }
 
-function splitSkills(lines: string[]): string[] {
+const SKILL_CATEGORY_PREFIX = /^(?:architecture|programming(?: languages?)?|languages?|frameworks?|libraries|tools?|platforms?|databases?|cloud|cloud\s*[&+]\s*devops|software\s*[&+]\s*data|data\s*[&+]\s*integration|ai engineering|development|infrastructure|devops|methoden|methodologies|technologien|technologies)\s*[:\-]\s*/i;
+const SKILL_SENTENCE_WORDS = /\b(developed|built|implemented|responsible|worked|created|designed|managed|supported|led|maintained|entwickelt|umgesetzt|verantwortlich|betreut|erstellt|konzipiert|unterstützt|geleitet|gewartet|durchgeführt)\b/i;
+
+function isSkillCandidate(value: string): boolean {
+  const item = value.replace(/^[-•*–—]\s*/, "").replace(/[,;|]+$/, "").trim();
+  if (item.length < 2 || item.length > 60) return false;
+  if (EMAIL_RE.test(item) || LINK_RE.test(item)) return false;
+  if (/\b(19|20)\d{2}\b/.test(item)) return false;
+  if (/[.!?]$/.test(item)) return false;
+  if (item.split(/\s+/).length > 6) return false;
+  if (SKILL_SENTENCE_WORDS.test(item)) return false;
+  if (/^(and|or|with|und|oder|mit|sowie)$/i.test(item)) return false;
+  if (/^\d+$/.test(item)) return false;
+  return /[a-zäöüß0-9]/i.test(item);
+}
+
+function parseSkills(
+  lines: string[],
+  uncertain: Set<CvBuilderImportSectionId>,
+  unrecognized: string[]
+): string[] {
   const seen = new Set<string>();
   const skills: string[] = [];
+  const mergedLines: string[] = [];
   for (const line of nonEmpty(lines)) {
-    const cleaned = line.replace(/^(skills?|fähigkeiten|kenntnisse)\s*[:\-]\s*/i, "");
-    for (const item of cleaned.split(/[,;|•]/).map((value) => value.trim()).filter(Boolean)) {
-      const key = item.toLocaleLowerCase("de");
+    const previous = mergedLines[mergedLines.length - 1];
+    const continuation =
+      previous &&
+      !/[.!?]$/.test(previous) &&
+      !/:$/.test(previous) &&
+      /^[A-ZÄÖÜ]/.test(line) &&
+      !SKILL_CATEGORY_PREFIX.test(line) &&
+      !SKILL_SENTENCE_WORDS.test(line) &&
+      !sectionFor(line);
+    if (continuation) mergedLines[mergedLines.length - 1] = `${previous} ${line}`;
+    else mergedLines.push(line);
+  }
+  for (const line of mergedLines) {
+    const cleaned = line.replace(SKILL_CATEGORY_PREFIX, "");
+    const words = cleaned.split(/\s+/).filter(Boolean);
+    if (!cleaned) continue;
+    if (words.length > 8 && !/[,;|•]/.test(cleaned)) {
+      unrecognized.push(line);
+      uncertain.add("skills");
+      continue;
+    }
+    const candidates = cleaned.split(/[,;|•]/).map((value) => value.trim()).filter(Boolean);
+    for (const candidate of candidates) {
+      if (!isSkillCandidate(candidate)) {
+        unrecognized.push(candidate);
+        uncertain.add("skills");
+        continue;
+      }
+      const key = candidate.toLocaleLowerCase("de");
       if (!seen.has(key)) {
         seen.add(key);
-        skills.push(item);
+        skills.push(candidate);
       }
     }
   }
@@ -505,7 +742,7 @@ export function parseCvBuilderImportText(raw: string): CvBuilderImportResult {
     header: [], misc: [], personal: [], profile: [], experience: [], education: [], skills: [], projects: [], certificates: [], languages: [], links: [],
   };
   let current: WorkingSection = "header";
-  for (const rawLine of raw.replace(/\r/g, "").split("\n")) {
+  for (const rawLine of mergeWrappedLines(preprocessLines(raw))) {
     const line = rawLine.trim();
     if (!line) {
       sections[current].push("");
@@ -541,7 +778,7 @@ export function parseCvBuilderImportText(raw: string): CvBuilderImportResult {
   detected.experience = detected.experience || draft.experience.length > 0;
   draft.education = parseEducation(sections.education, uncertainSet, unrecognized);
   detected.education = detected.education || draft.education.length > 0;
-  draft.skills = splitSkills(sections.skills);
+  draft.skills = parseSkills(sections.skills, uncertainSet, unrecognized);
   detected.skills = detected.skills || draft.skills.length > 0;
   draft.projects = parseProjects(sections.projects, uncertainSet, unrecognized);
   detected.projects = detected.projects || draft.projects.length > 0;
@@ -550,6 +787,10 @@ export function parseCvBuilderImportText(raw: string): CvBuilderImportResult {
   draft.languages = parseLanguages(sections.languages, uncertainSet, unrecognized);
   detected.languages = detected.languages || draft.languages.length > 0;
   draft.links = parseLinks(sections.links, unrecognized);
+  const linksOutsideSections = collectLinks(Object.values(sections).flat());
+  for (const entry of linksOutsideSections) {
+    if (!draft.links.some((existing) => existing.url === entry.url)) draft.links.push(entry);
+  }
   detected.links = detected.links || draft.links.length > 0;
 
   unrecognized.push(...nonEmpty(sections.misc));
