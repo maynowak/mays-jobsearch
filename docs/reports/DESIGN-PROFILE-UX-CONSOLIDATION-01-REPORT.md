@@ -1,10 +1,14 @@
 # DESIGN-PROFILE-UX-CONSOLIDATION-01
 
-**Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — IMPLEMENTED / VERIFIED LOCAL`
+**Status:** `MERGED / PRODUCTION DEPLOYED / AUTHENTICATED E2E PENDING`
 **Branch:** `design/jm-ris-profile-ux-consolidation-01`
 **Base:** `702fa20`
 **Commit:** `b56d122`
 **Session-card follow-up:** `f9994d1`
+**PR:** #16 merged as `38967ab`
+**Production:** `www.mays-job-matcher.app` (`dpl_ES2UDEXWJRXNHDzbg7P4o6ukv4JN`)
+and `mays-jobsearch.vercel.app` (`dpl_JCSqxCduQnfjN5g3kf4uJZD6pMyr`), footer
+`38967ab`.
 
 ## Design changes
 
@@ -95,10 +99,16 @@ A date-sensitive pre-existing `ApplicationsSection` assertion was made
 non-ambiguous (`getAllByText`) so the serial suite stays green when the test
 date equals the displayed date. No product behavior changed there.
 
+## Production smoke
+
+- `/` and `/profil` -> 200 on both domains.
+- `www.mays-job-matcher.app` search-profile API -> 401 without token.
+- `mays-jobsearch.vercel.app` search-profile API -> 503 (disabled there).
+- Authenticated RIS E2E remains pending; no synthetic test account available.
+
 ## Open / boundaries
 
-- No authenticated RIS E2E was executed; no synthetic test account was
-  available in this local run. The live read/write/reload path remains
+- No authenticated RIS E2E was executed; the live read/write/reload path remains
   deployment-time.
 - No push, merge or deployment.
 - No RIS/AWS/Terraform/Cognito change, no real user/CV data.

@@ -5277,3 +5277,24 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   non-ambiguous.
 - No push/merge/deploy, no RIS/AWS/Terraform change, no real data. Auth RIS E2E
   remains deployment-time.
+
+## 2026-11-10 — DESIGN-PROFILE-UX-CONSOLIDATION-01 merge and production
+
+**Typ:** Controlled merge / production deploy / post-deploy smoke
+**Status:** `MERGED / PRODUCTION DEPLOYED / AUTHENTICATED E2E PENDING`
+
+- PR #16 merged to `main` as `38967ab`.
+- Production deployments at `38967ab`:
+  - `www.mays-job-matcher.app` -> `dpl_ES2UDEXWJRXNHDzbg7P4o6ukv4JN`
+  - `mays-jobsearch.vercel.app` -> `dpl_JCSqxCduQnfjN5g3kf4uJZD6pMyr`
+  - footer Build SHA on both: `38967ab`.
+- Live smoke: `/` and `/profil` 200 on both. `www.mays-job-matcher.app`
+  search-profile API 401 without token (configured); `mays-jobsearch.vercel.app`
+  remains 503 for that API.
+- Persistent CV cards, RIS profile counts and the card-based profile manager are
+  now live. Session/durable separation, May collapse and consent boundaries are
+  unchanged.
+- Verification before merge: 22 focused tests, serial full 1677 passed/5 skipped,
+  build PASS; screenshots 320/390/430/768/1024/1440 cards/profiles, no overflow.
+- Authenticated synthetic RIS E2E was not executed and is not claimed. No
+  RIS/AWS/Terraform/Cognito change, no real data.
