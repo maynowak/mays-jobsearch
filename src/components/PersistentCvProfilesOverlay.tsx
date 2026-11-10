@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLang } from "../i18n";
 import type {
   ATSSearchProfileV1,
@@ -225,7 +226,7 @@ export default function PersistentCvProfilesOverlay({
     });
   };
 
-  return (
+  return createPortal(
     <div className="cv-profiles-overlay cv-profile-manager" role="dialog" aria-modal="true" aria-label={cvName}>
       <div className="cv-profiles-overlay__panel">
         <header className="cv-profiles-overlay__header">
@@ -475,6 +476,7 @@ export default function PersistentCvProfilesOverlay({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

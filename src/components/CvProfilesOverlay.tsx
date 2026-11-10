@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useLang } from "../i18n";
 import { readCvProfileLists } from "../lib/cvProfileStore";
 import type { CvAtsProfileEntry, CvSearchProfileEntry } from "../lib/cvProfileStore";
@@ -72,7 +73,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
   const formatSavedAt = (savedAt: number) =>
     new Date(savedAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
 
-  return (
+  return createPortal(
     <div
       className="modal"
       onClick={(e) => {
@@ -328,6 +329,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

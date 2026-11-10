@@ -24,6 +24,7 @@
     "test:e2e:nav-scroll": "node tests/e2e/nav-scroll-ux.mjs",
     "test:e2e:search-nav-final": "node tests/e2e/search-nav-ux-finalization.mjs",
     "test:e2e:profile-storage-consent": "node tests/e2e/profile-storage-consent.mjs",
+    "test:e2e:profile-ux-final": "node tests/e2e/profile-ux-final-polish.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",
