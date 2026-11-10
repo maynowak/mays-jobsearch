@@ -12,7 +12,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/CV-BUILDER-IMPORT-01B");
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/CV-BUILDER-IMPORT-01B-R1");
 const port = 5218;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";

@@ -9,6 +9,8 @@ import {
   hasCvBuilderImportContent,
   parseCvBuilderImportText,
   selectCvBuilderImportDraft,
+  type CvBuilderImportManualAssignments,
+  type CvBuilderImportManualTarget,
   type CvBuilderImportResult,
   type CvBuilderImportSectionId,
 } from "../lib/cvBuilder/pdfImport";
@@ -132,7 +134,7 @@ export default function CvBuilderImportDialog({
   const [result, setResult] = useState<CvBuilderImportResult | null>(null);
   const [sourceName, setSourceName] = useState("");
   const [selected, setSelected] = useState<Set<CvBuilderImportSectionId>>(new Set());
-  const [includeUnrecognized, setIncludeUnrecognized] = useState(false);
+  const [manualAssignments, setManualAssignments] = useState<CvBuilderImportManualAssignments>({});
   const [selectedRisId, setSelectedRisId] = useState("");
   const [busyRisId, setBusyRisId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -144,7 +146,7 @@ export default function CvBuilderImportDialog({
     setResult(null);
     setSourceName("");
     setSelected(new Set());
-    setIncludeUnrecognized(false);
+    setManualAssignments({});
     setBusyRisId(null);
     setSelectedRisId(persistentCvs[0]?.cvId ?? "");
     window.setTimeout(() => headingRef.current?.focus(), 0);
@@ -194,7 +196,7 @@ export default function CvBuilderImportDialog({
       setSelected(new Set(
         CV_BUILDER_IMPORT_SECTIONS.filter((section) => hasCvBuilderImportContent(parsed, section))
       ));
-      setIncludeUnrecognized(false);
+      setManualAssignments({});
       setStep("preview");
     } catch (err) {
       setError(t(importErrorKey(err)));
@@ -237,11 +239,12 @@ export default function CvBuilderImportDialog({
 
   const confirm = () => {
     if (!result) return;
-    if (selected.size === 0 && !includeUnrecognized) {
+    const hasManual = Object.values(manualAssignments).some((target) => target !== "ignore");
+    if (selected.size === 0 && !hasManual) {
       setError(t("cvBuilder.import.noSections"));
       return;
     }
-    const draft = selectCvBuilderImportDraft(result, selected, includeUnrecognized);
+    const draft = selectCvBuilderImportDraft(result, selected, manualAssignments);
     onImported(draft, sourceName);
   };
 
@@ -425,18 +428,37 @@ export default function CvBuilderImportDialog({
                 <section className="cv-import-unrecognized">
                   <h5>{t("cvBuilder.import.unrecognizedTitle")}</h5>
                   <p>{t("cvBuilder.import.unrecognizedHint")}</p>
-                  <label className="cv-import-section__select">
-                    <input
-                      type="checkbox"
-                      checked={includeUnrecognized}
-                      onChange={(event) => setIncludeUnrecognized(event.target.checked)}
-                    />
-                    <span>{t("cvBuilder.import.includeUnrecognized")}</span>
-                  </label>
                   <details className="cv-import-section__details">
-                    <summary>{t("cvBuilder.import.details")}</summary>
-                    <ul>
-                      {result.unrecognized.map((line, index) => <li key={`unassigned-${index}`}>{line}</li>)}
+                    <summary>
+                      {t("cvBuilder.import.manualDetails", { count: result.unrecognized.length })}
+                    </summary>
+                    <ul className="cv-import-unrecognized__list">
+                      {result.unrecognized.map((line, index) => {
+                        const value = manualAssignments[index] ?? "ignore";
+                        return (
+                          <li key={`unassigned-${index}`}>
+                            <span>{line}</span>
+                            <label>
+                              <span>{t("cvBuilder.import.manualAssign")}</span>
+                              <select
+                                aria-label={`${t("cvBuilder.import.manualAssign")}: ${line.slice(0, 60)}`}
+                                value={value}
+                                onChange={(event) => {
+                                  const target = event.target.value as CvBuilderImportManualTarget;
+                                  setManualAssignments((current) => ({ ...current, [index]: target }));
+                                }}
+                              >
+                                <option value="ignore">{t("cvBuilder.import.manualIgnore")}</option>
+                                <option value="profile">{t("cvBuilder.import.manualProfile")}</option>
+                                <option value="skills">{t("cvBuilder.import.manualSkills")}</option>
+                                <option value="projects">{t("cvBuilder.import.manualProjects")}</option>
+                                <option value="certificates">{t("cvBuilder.import.manualCertificates")}</option>
+                                <option value="links">{t("cvBuilder.import.manualLinks")}</option>
+                              </select>
+                            </label>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </details>
                 </section>

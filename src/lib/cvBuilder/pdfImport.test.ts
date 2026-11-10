@@ -165,11 +165,12 @@ Deutsch ohne Niveauangabe`);
 
 Sonstiges
 Zusätzliche Information`);
-    const draft = selectCvBuilderImportDraft(result, ['personal', 'skills'], true);
+    const firstUnassigned = result.unrecognized[0];
+    const draft = selectCvBuilderImportDraft(result, ['personal', 'skills'], { 0: 'profile' });
     expect(draft.personal.fullName).toBe('Max Mustermann');
     expect(draft.skills).toEqual(['React', 'TypeScript', 'Node.js', 'AWS']);
     expect(draft.experience).toEqual([]);
-    expect(draft.profile.summary).toContain('Weitere Angaben aus dem Import');
+    expect(draft.profile.summary).toBe(firstUnassigned);
     expect(hasCvBuilderImportContent(result, 'experience')).toBe(true);
   });
 });
@@ -244,5 +245,53 @@ describe('parseCvBuilderImportText 01B quality', () => {
     expect(result.draft.certificates[0].name).toBe('AWS Certified Solutions Architect');
     expect(result.draft.links.some((entry) => entry.url.includes('github.com/alex/ris-integration'))).toBe(true);
     expect(result.draft.education[0].institution).toBe('Technische Universitaet Berlin');
+  });
+});
+
+describe('R1 real-CV quality rules', () => {
+  it('does not turn continued page headings or incomplete dates into positions', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.com
+
+Professional Experience
+Acme GmbH
+Senior Engineer
+Jan 2020 - Present
+- Built services
+
+PROFESSIONAL EXPERIENCE (CONTINUED)
+2023 - 2024
+Only a date and description.
+
+MAY NOWAK · PROFESSIONAL CV 2`);
+    expect(result.draft.experience).toHaveLength(1);
+    expect(result.draft.experience[0]).toMatchObject({
+      employer: 'Acme GmbH',
+      position: 'Senior Engineer',
+    });
+    expect(result.draft.experience.some((entry) =>
+      `${entry.employer} ${entry.position}`.includes('CONTINUED')
+    )).toBe(false);
+    expect(result.unrecognized.join('\n')).not.toContain('PROFESSIONAL CV 2');
+  });
+
+  it('keeps incomplete experience blocks for manual assignment instead of inventing positions', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.com
+
+Professional Experience
+2023 - 2024
+Nur ein Zeitraum und eine Beschreibung.`);
+    expect(result.draft.experience).toEqual([]);
+    expect(result.unrecognized.join('\n')).toContain('Nur ein Zeitraum');
+  });
+
+  it('assigns unassigned text manually to an existing builder section', () => {
+    const result = parseCvBuilderImportText(germanCv + `\n\nSonstiges\nZusätzliche Information`);
+    const index = result.unrecognized.findIndex((line) => line.includes('Zusätzliche Information'));
+    expect(index).toBeGreaterThanOrEqual(0);
+    const draft = selectCvBuilderImportDraft(result, ['personal'], { [index]: 'projects' });
+    expect(draft.projects[0].name).toBe('Zusätzliche Information');
+    expect(draft.profile.summary).toBeUndefined();
   });
 });

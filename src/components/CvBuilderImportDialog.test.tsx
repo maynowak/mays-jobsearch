@@ -165,6 +165,24 @@ describe("CvBuilderImportDialog", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Sitzung wurde beendet");
   });
 
+  it("allows individual unassigned lines to be assigned to builder sections", async () => {
+    vi.mocked(extractPdfText).mockResolvedValue(`Max Mustermann
+E-Mail: max@example.com
+
+Sonstiges
+Zusätzliche Information`);
+    const onImported = vi.fn();
+    const { container } = renderDialog({ onImported });
+    await chooseLocal(container);
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+    const select = screen.getByRole("combobox", { name: /Zuordnen zu/ });
+    fireEvent.change(select, { target: { value: "projects" } });
+    fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    expect(onImported).toHaveBeenCalledTimes(1);
+    expect(onImported.mock.calls[0][0].projects[0].name).toBe("Zusätzliche Information");
+    expect(onImported.mock.calls[0][0].profile.summary).toBeUndefined();
+  });
+
   it("keeps the empty-CV path available without importing", () => {
     const onCreateEmpty = vi.fn();
     renderDialog({ onCreateEmpty });

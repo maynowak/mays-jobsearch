@@ -41,6 +41,16 @@ export interface CvBuilderImportResult {
   unrecognized: string[];
 }
 
+export type CvBuilderImportManualTarget =
+  | "ignore"
+  | "profile"
+  | "skills"
+  | "projects"
+  | "certificates"
+  | "links";
+
+export type CvBuilderImportManualAssignments = Record<number, CvBuilderImportManualTarget>;
+
 type WorkingSection = CvBuilderImportSectionId | "header" | "misc";
 
 const SECTION_ALIASES: Record<CvBuilderImportSectionId, string[]> = {
@@ -127,6 +137,7 @@ function normalizedHeading(line: string): string {
     .replace(/^[-•*]\s*/, "")
     .replace(/[:：]\s*$/, "")
     .replace(/\s+/g, " ")
+    .replace(/\s*\((?:continued|fortsetzung)\)\s*$/i, "")
     .trim()
     .toLocaleLowerCase("de");
 }
@@ -165,6 +176,7 @@ function preprocessLines(raw: string): string[] {
     if (/^(seite|page)\s+\d+(\s*(von|of)\s*\d+)?$/i.test(line)) return false;
     if (/^(curriculum vitae|lebenslauf)$/i.test(line) && (counts.get(normalizedHeading(line)) ?? 0) > 1) return false;
     if (/^(?:.*\s[·|]\s)?(?:professional cv|professional profile|curriculum vitae)\s+\d+$/i.test(line)) return false;
+    if (/^(?:seite|page)\s+\d+$/i.test(line)) return false;
     return !repeated.has(normalizedHeading(line));
   });
 }
@@ -386,7 +398,15 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
         position = second;
       }
     }
-    if (!employer || !position || date.uncertain) uncertain.add("experience");
+    if (!employer && /self[- ]employed|freelance/i.test(position)) {
+      employer = /freelance/i.test(position) ? "Freelance" : "Self-Employed";
+    }
+    if (!employer || !position) {
+      uncertain.add("experience");
+      unrecognized.push(...nonEmpty(block));
+      continue;
+    }
+    if (date.uncertain) uncertain.add("experience");
     const entry = createExperienceEntry();
     entries.push({
       ...entry,
@@ -415,8 +435,11 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
       }
       let institution = "";
       let degree = "";
-      if (degreeLike(lines[0])) degree = lines[0];
-      else institution = lines[0];
+      if (degreeLike(lines[0])) {
+        const split = lines[0].split(/\s+(?:–|—|-|at|an)\s+/i);
+        degree = split[0].trim();
+        institution = split[1]?.trim() ?? "";
+      } else institution = lines[0];
       if (!institution && !degree) {
         unrecognized.push(...lines);
         continue;
@@ -637,6 +660,9 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
         candidate.split(/\s+/).length >= 2 &&
         candidate.split(/\s+/).length <= 4 &&
         !/[.!?]$/.test(candidate) &&
+        !titleLike(candidate) &&
+        !companyLike(candidate) &&
+        !/\b(professional|profile|profil|summary|experience|erfahrung|curriculum)\b/i.test(candidate) &&
         /[a-zäöüß]/i.test(candidate)
       ) {
         personal.fullName = candidate;
@@ -662,8 +688,9 @@ function isSkillCandidate(value: string): boolean {
   if (item.length < 2 || item.length > 60) return false;
   if (EMAIL_RE.test(item) || LINK_RE.test(item)) return false;
   if (/\b(19|20)\d{2}\b/.test(item)) return false;
-  if (/[.!?]$/.test(item)) return false;
+  if (/[.!?]$/.test(item) || /[.!?]\s/.test(item)) return false;
   if (item.split(/\s+/).length > 6) return false;
+  if (!/[A-Z]/.test(item) && item.split(/\s+/).length > 2) return false;
   if (SKILL_SENTENCE_WORDS.test(item)) return false;
   if (/^(and|or|with|und|oder|mit|sowie)$/i.test(item)) return false;
   if (/^\d+$/.test(item)) return false;
@@ -811,7 +838,7 @@ export function hasCvBuilderImportContent(
 export function selectCvBuilderImportDraft(
   result: CvBuilderImportResult,
   selected: Iterable<CvBuilderImportSectionId>,
-  includeUnrecognized = false
+  manualAssignments: CvBuilderImportManualAssignments = {}
 ): CvBuilderDraftV1 {
   const selectedSet = new Set(selected);
   const next = createEmptyCvBuilderDraft();
@@ -826,12 +853,30 @@ export function selectCvBuilderImportDraft(
   if (selectedSet.has("certificates")) next.certificates = result.draft.certificates.map((entry) => ({ ...entry }));
   if (selectedSet.has("languages")) next.languages = result.draft.languages.map((entry) => ({ ...entry }));
   if (selectedSet.has("links")) next.links = result.draft.links.map((entry) => ({ ...entry }));
-  if (includeUnrecognized && result.unrecognized.length) {
-    const extra = `Weitere Angaben aus dem Import:\n${result.unrecognized.join("\n")}`;
-    next.profile = {
-      ...next.profile,
-      summary: [next.profile.summary, extra].filter(Boolean).join("\n\n"),
-    };
+
+  for (const [rawIndex, target] of Object.entries(manualAssignments)) {
+    const line = result.unrecognized[Number(rawIndex)];
+    if (!line || target === "ignore") continue;
+    if (target === "profile") {
+      next.profile = {
+        ...next.profile,
+        summary: [next.profile.summary, line].filter(Boolean).join("\n"),
+      };
+    } else if (target === "skills") {
+      for (const candidate of line.split(/[,;|•]/).map((value) => value.trim()).filter(Boolean)) {
+        if (!next.skills.includes(candidate)) next.skills.push(candidate);
+      }
+    } else if (target === "projects") {
+      const entry = createProjectEntry();
+      next.projects.push({ ...entry, name: line });
+    } else if (target === "certificates") {
+      const entry = createCertificateEntry();
+      next.certificates.push({ ...entry, name: line });
+    } else if (target === "links") {
+      for (const entry of collectLinks([line])) {
+        if (!next.links.some((existing) => existing.url === entry.url)) next.links.push(entry);
+      }
+    }
   }
   return next;
 }
