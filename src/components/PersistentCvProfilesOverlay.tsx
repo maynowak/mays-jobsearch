@@ -17,6 +17,11 @@ interface Props {
   cvName: string;
   profiles: PersistentSearchProfiles;
   onClose: () => void;
+  onSearch?: (
+    cvId: string,
+    parent: CVSearchProfileV1,
+    ats?: ATSSearchProfileV1
+  ) => void | Promise<void>;
 }
 
 const split = (value: string): string[] =>
@@ -30,6 +35,7 @@ export default function PersistentCvProfilesOverlay({
   cvName,
   profiles,
   onClose,
+  onSearch,
 }: Props) {
   const { t } = useLang();
   const [cvProfiles, setCvProfiles] = useState<CVSearchProfileV1[]>([]);
@@ -54,6 +60,8 @@ export default function PersistentCvProfilesOverlay({
   const [expandedAtsParent, setExpandedAtsParent] = useState<string | null>(null);
   const [grantBusy, setGrantBusy] = useState(false);
   const [grantError, setGrantError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [startingSearchKey, setStartingSearchKey] = useState<string | null>(null);
 
   const grantDurableStorage = async () => {
     if (!profiles.available) return;
@@ -220,6 +228,24 @@ export default function PersistentCvProfilesOverlay({
   const toggleAts = (parentId: string) => {
     setExpandedAtsParent((current) => (current === parentId ? null : parentId));
   };
+  const startSearch = async (
+    parent: CVSearchProfileV1,
+    ats?: ATSSearchProfileV1
+  ) => {
+    if (!onSearch) return;
+    const key = ats ? `ats:${ats.atsSearchProfileId}` : `cv:${parent.searchProfileId}`;
+    setSearchError(null);
+    setStartingSearchKey(key);
+    try {
+      await onSearch(cvId, parent, ats);
+    } catch (err) {
+      setSearchError(err instanceof Error && err.message
+        ? err.message
+        : t("searchProfiles.searchError"));
+    } finally {
+      setStartingSearchKey(null);
+    }
+  };
   const totalAts = Object.values(atsByParent).reduce((sum, entries) => sum + entries.length, 0);
   const summary = cvProfiles.length === 0
     ? t("searchProfiles.summaryEmpty")
@@ -268,6 +294,9 @@ export default function PersistentCvProfilesOverlay({
                 </Button>
               </div>
             )}
+            {searchError && (
+              <p className="alert alert-error" role="alert">{searchError}</p>
+            )}
 
             <section className="profile-manager__section" aria-labelledby="persistent-cv-search-title">
               <div className="profile-manager__head">
@@ -308,6 +337,15 @@ export default function PersistentCvProfilesOverlay({
                         </div>
                       </dl>
                       <div className="profile-card__actions">
+                        {onSearch && (
+                          <Button
+                            className="profile-card__search-action"
+                            disabled={busy || startingSearchKey !== null}
+                            onClick={() => { void startSearch(profile); }}
+                          >
+                            {t("searchProfiles.search")}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           disabled={busy}
@@ -376,6 +414,15 @@ export default function PersistentCvProfilesOverlay({
                                     </div>
                                   </dl>
                                   <div className="profile-card__actions">
+                                    {onSearch && (
+                                      <Button
+                                        className="profile-card__search-action"
+                                        disabled={busy || startingSearchKey !== null}
+                                        onClick={() => { void startSearch(profile, ats); }}
+                                      >
+                                        {t("searchProfiles.search")}
+                                      </Button>
+                                    )}
                                     <Button variant="ghost" disabled={busy} onClick={() => startEditAts(profile.searchProfileId, ats)}>
                                       {t("searchProfiles.edit")}
                                     </Button>

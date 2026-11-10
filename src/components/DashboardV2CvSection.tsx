@@ -12,6 +12,7 @@ import type { CvBuilderProfileV1 } from '../lib/cvBuilder/profileTypes';
 import type { PersistentCvStorageState } from '../lib/usePersistentCvStorage';
 import type { PersistentCv } from '../lib/cvStorageApi';
 import type { PersistentSearchProfiles } from '../lib/usePersistentSearchProfiles';
+import type { ATSSearchProfileV1, CVSearchProfileV1 } from '../lib/profiles/contractTypes';
 
 interface Props {
   documents: CvDocument[];
@@ -59,6 +60,11 @@ interface Props {
     atsSessionId: string,
     targetSearchProfileId: string
   ) => Promise<void>;
+  onSearchPersistentProfile?: (
+    cvId: string,
+    parent: CVSearchProfileV1,
+    ats?: ATSSearchProfileV1
+  ) => void | Promise<void>;
 }
 
 const DashboardV2CvSection = ({
@@ -100,6 +106,7 @@ const DashboardV2CvSection = ({
   focusPersistentProfilesEnabled = false,
   onPersistentProfilesFocusHandled,
   onAssignUnassigned,
+  onSearchPersistentProfile,
 }: Props) => {
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
@@ -347,6 +354,7 @@ const DashboardV2CvSection = ({
             cvName={cv?.filename ?? "CV"}
             profiles={persistentSearchProfiles}
             onClose={() => setPersistentProfilesCvId(null)}
+            onSearch={onSearchPersistentProfile}
           />
         );
       })()}

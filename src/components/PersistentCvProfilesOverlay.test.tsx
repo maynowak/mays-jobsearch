@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import type { PersistentSearchProfiles } from "../lib/usePersistentSearchProfiles";
 import PersistentCvProfilesOverlay from "./PersistentCvProfilesOverlay";
@@ -215,5 +215,88 @@ describe("PersistentCvProfilesOverlay loading and hierarchy", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Zugehörige ATS-Profile anzeigen" })[0]);
     expect(await screen.findByText("Noch kein ATS-Profil zu diesem Suchprofil.")).toBeInTheDocument();
     expect(screen.queryByText("Frontend ATS")).toBeNull();
+  });
+});
+
+describe("PersistentCvProfilesOverlay direct search", () => {
+  const cvProfile = {
+    schemaVersion: 1,
+    searchProfileId: "sp-1",
+    cvId: "cv-1",
+    name: "Frontend Berlin",
+    origin: "cv",
+    searchConfig: {
+      skills: "React, TypeScript",
+      targetRoles: ["Frontend Developer"],
+      city: "Berlin",
+      radiusKm: 25,
+      workModes: ["remote"],
+      employmentTypes: ["full_time"],
+    },
+    createdAt: "2026-11-09T10:00:00Z",
+    updatedAt: "2026-11-09T10:00:00Z",
+    version: 1,
+  } as never;
+  const atsProfile = {
+    schemaVersion: 1,
+    atsSearchProfileId: "ats-1",
+    searchProfileId: "sp-1",
+    name: "Frontend ATS",
+    targetRoles: ["Frontend Engineer"],
+    skills: ["React", "GraphQL"],
+    createdAt: "2026-11-09T10:00:00Z",
+    updatedAt: "2026-11-09T10:00:00Z",
+    version: 1,
+  } as never;
+
+  function renderOverlay(onSearch: (...args: never[]) => void | Promise<void>) {
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv: vi.fn(async () => [cvProfile]),
+      listAts: vi.fn(async () => [atsProfile]),
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay
+          cvId="cv-1"
+          cvName="Lebenslauf.pdf"
+          profiles={value}
+          onClose={vi.fn()}
+          onSearch={onSearch as never}
+        />
+      </LangProvider>
+    );
+  }
+
+  it("sends the CV profile and then the ATS child with its stable parent ID", async () => {
+    const onSearch = vi.fn();
+    renderOverlay(onSearch);
+
+    await screen.findByText("Frontend Berlin");
+    fireEvent.click(screen.getAllByRole("button", { name: "🔍 Damit suchen" })[0]);
+    expect(onSearch).toHaveBeenNthCalledWith(1, "cv-1", cvProfile, undefined);
+
+    fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
+    await screen.findByText("Frontend ATS");
+    const atsCard = screen.getByText("Frontend ATS").closest("li") as HTMLElement;
+    fireEvent.click(within(atsCard).getByRole("button", { name: "🔍 Damit suchen" }));
+    expect(onSearch).toHaveBeenNthCalledWith(2, "cv-1", cvProfile, atsProfile);
+  });
+
+  it("shows a direct-search error and disables repeated starts while pending", async () => {
+    let rejectSearch: ((reason: Error) => void) | undefined;
+    const onSearch = vi.fn(
+      () => new Promise<void>((_resolve, reject) => { rejectSearch = reject; })
+    );
+    renderOverlay(onSearch);
+
+    await screen.findByText("Frontend Berlin");
+    const button = screen.getAllByRole("button", { name: "🔍 Damit suchen" })[0];
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(onSearch).toHaveBeenCalledTimes(1);
+    rejectSearch?.(new Error("Keine Suchkriterien"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Keine Suchkriterien");
   });
 });

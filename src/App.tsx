@@ -111,8 +111,9 @@ import {
   ProfileSessionEndedError,
 } from "./lib/profiles/sessionRepositories";
 import type { SessionProfileRepositories } from "./lib/profiles/repositoryTypes";
-import type { CreateManualSearchProfileInputV1, CVSearchProfileV1 } from "./lib/profiles/contractTypes";
+import type { ATSSearchProfileV1, CreateManualSearchProfileInputV1, CVSearchProfileV1 } from "./lib/profiles/contractTypes";
 import { profileToSearchConfiguration } from "./lib/profiles/profileMappers";
+import { buildPersistentProfileSearch, PersistentProfileSearchError } from "./lib/persistentProfileSearch";
 import { defaultProfileStorageChoice, isDurableAtsParentValid, profileStorageUnavailableReason } from "./lib/cvDerivedProfileStorage";
 import { useAuth } from "react-oidc-context";
 import { deriveAuthProfileKey, isVerifiedAuthProfileKey } from "./lib/authIdentity";
@@ -124,6 +125,10 @@ function arraysEqual<T>(a: T[] | null | undefined, b: T[] | null | undefined): b
   const left = a ?? [];
   const right = b ?? [];
   return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function hasSearchCriteria(profile: Profile): boolean {
+  return profile.skills.trim().length > 0 || profile.targetRoles.some((role) => role.trim().length > 0);
 }
 
 // PROFILE-TAB-STATE-01: Ausgangswert der manuellen Suchmaske (Manual Tab).
@@ -277,6 +282,8 @@ export default function App() {
   const [dataset, setDataset] = useState<JobDataset | null>(null);
   const [modelExhausted, setModelExhausted] = useState(false);
   const busyRef = useRef(false);
+  const pendingProfileSearchRef = useRef<Profile | null>(null);
+  const [pendingProfileSearchToken, setPendingProfileSearchToken] = useState(0);
 
   // MAYS-SEARCH-UX-02: Auth state for admin visibility control
   // The production tree supplies AuthProvider. Tests and embedded previews may
@@ -2201,6 +2208,18 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (!pendingProfileSearchToken) return;
+    if (window.location.pathname !== "/search") return;
+    const requested = pendingProfileSearchRef.current;
+    if (!requested) return;
+    pendingProfileSearchRef.current = null;
+    handleProfileChange(requested);
+    handleSubmit(requested);
+    // The token is the explicit start signal after the route change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingProfileSearchToken]);
+
   // MAYS-SEARCH-PROFILE-MANUAL-01: CRUD fuer manuelle Suchprofile.
   // Alle Aktionen sind rein lokal (Session-Speicher) und loesen KEINEN
   // Modellaufruf, keine CV-Verarbeitung und keine Jobsuche aus.
@@ -2295,6 +2314,45 @@ export default function App() {
     handleProfileChange(searchProfile);
     handleSubmit(searchProfile);
     navigateInApp("/search");
+  };
+
+  const queueProfileSearch = (searchProfile: Profile) => {
+    if (busyRef.current || pendingProfileSearchRef.current) {
+      throw new Error(t("searchProfiles.searchBusy"));
+    }
+    if (!hasSearchCriteria(searchProfile)) {
+      throw new Error(t("searchProfiles.searchMissingCriteria"));
+    }
+    pendingProfileSearchRef.current = searchProfile;
+    handleProfileChange(searchProfile);
+    navigateInApp("/search");
+    setPendingProfileSearchToken((token) => token + 1);
+  };
+
+  const handleSearchPersistentProfile = (
+    cvId: string,
+    parent: CVSearchProfileV1,
+    ats?: ATSSearchProfileV1
+  ) => {
+    if (!persistentSearchProfiles.persistentView) {
+      throw new Error(t("searchProfiles.searchConsentRequired"));
+    }
+    if (parent.cvId !== cvId) {
+      throw new Error(t("searchProfiles.searchInvalidCv"));
+    }
+    try {
+      queueProfileSearch(buildPersistentProfileSearch(cvId, parent, ats));
+    } catch (err) {
+      if (err instanceof PersistentProfileSearchError) {
+        const key = err.code === "invalid_cv"
+          ? "searchProfiles.searchInvalidCv"
+          : err.code === "invalid_parent"
+            ? "searchProfiles.searchInvalidParent"
+            : "searchProfiles.searchMissingCriteria";
+        throw new Error(t(key));
+      }
+      throw err;
+    }
   };
 
   // SEARCH-WORLD-04: schreibt beim Scrollen nur die CSS-Property
@@ -3727,6 +3785,7 @@ export default function App() {
       focusPersistentProfilesEnabled={cvState.step === "idle" || cvState.step === "document-selected"}
       onPersistentProfilesFocusHandled={() => setPersistentProfilesFocusCvId(null)}
       onAssignUnassigned={handleAssignUnassignedAts}
+      onSearchPersistentProfile={handleSearchPersistentProfile}
     />
   );
 
