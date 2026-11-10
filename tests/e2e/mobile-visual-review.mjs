@@ -654,12 +654,6 @@ try {
             fullPage: false,
           });
         }
-        if (view.id === "settings" || view.id === "privacy") {
-          await page.screenshot({
-            path: resolve(evidenceDir, `${view.id}-full-${width}.png`),
-            fullPage: true,
-          });
-        }
         results.push({
           width,
           view: view.id,
