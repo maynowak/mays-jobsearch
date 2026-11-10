@@ -5494,3 +5494,37 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   `/api/ris/cvs` without token = **401**, no 5xx.
 - CV-Builder import features are now available in production. No additional
   RIS/AWS/Cognito/consent-contract change; no real user data used.
+
+## 2026-11-10 — CV-BUILDER-IMPORT-01B PARSER QUALITY & IMPORT UX
+
+**Typ:** Rule-based CV parser quality / compact import preview
+**Status:** `CV-BUILDER-IMPORT-01B — IMPLEMENTED / VERIFIED LOCAL`
+
+- Basis `origin/main` `325693a`; protected branch
+  `feature/cv-builder-import-01b`; code commit `c2e8efe`.
+- Root causes fixed: exact heading aliases, project headings not ending the
+  skills section, sentence/year fragments in skills, every dated block treated
+  as employment, blank-line-only project grouping, links only in the links
+  section, and an overly long preview.
+- Heading recognition now supports selected/current projects, work history,
+  education & qualifications, further/continuing education, technical skills,
+  core competencies and cloud & DevOps, including reliable left-column headings.
+  Repeated page header/footer lines are removed.
+- Skills now strip category prefixes, merge wrapped skill lines, reject
+  sentences/years/URLs, keep `Java EE/J2EE`, `REST APIs`, `Spring Boot`, and
+  expose unclear candidates separately without a cap.
+- Dated training/lab/education blocks are no longer automatically employment;
+  single years remain incomplete; education without dates remains uncertain.
+  Projects are grouped by dated project starts, description and technology
+  lines stay together, and links inside projects are collected and deduped.
+- Preview is compact: status/count per section, details collapsed, long skills
+  and unassigned lines collapsed, explicit per-section transfer checkboxes.
+- Comparison on the same synthetic reference: 01A 13 skills / 0 projects /
+  3 experience / 0 certificates / 0 links; 01B 6 skills / 1 project /
+  1 experience / 1 certificate / 2 links. No success-rate claim is made.
+- Verification: focused parser/import/builder tests PASS, serial full
+  **1711 PASS / 5 skipped**, build PASS; local and mocked RIS import E2E at
+  320/390/430/768/1024/1440 PASS, prefill/edit/PDF export, 0 AI calls, 0 RIS
+  writes. No RIS/AWS/Cognito/consent-contract change, no real user data.
+- Screenshots: `docs/reports/assets/CV-BUILDER-IMPORT-01B/`. No push, merge or
+  deployment.
