@@ -329,7 +329,7 @@ async function assertNoOverflow(page, name) {
 async function openProfileManager(page) {
   await page.goto(`${base}/profil?tab=cv`, { waitUntil: "networkidle" });
   await page.locator(".cv-storage-card").waitFor();
-  await page.getByRole("button", { name: "Profile anzeigen" }).click();
+  await page.getByRole("button", { name: "Suchprofile anzeigen" }).click();
   await page.locator(".cv-profile-manager").waitFor();
   await page.getByRole("heading", { name: "CV-Suchprofile" }).waitFor();
   await page.locator("#persistent-cv-search-title").waitFor();

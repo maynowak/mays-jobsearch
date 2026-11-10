@@ -350,7 +350,7 @@ async function preparePage(browser, viewport) {
 async function openProfiles(page) {
   await page.goto(`${base}/profil?tab=cv`, { waitUntil: "networkidle" });
   await page.locator(".cv-storage-card").waitFor();
-  await page.getByRole("button", { name: "Profile anzeigen" }).click();
+  await page.getByRole("button", { name: "Suchprofile anzeigen" }).click();
   await page.locator(".cv-profile-manager").waitFor();
   await page.getByText("2 CV-Suchprofile · 2 ATS-Profile").waitFor();
 }

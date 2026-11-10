@@ -548,7 +548,7 @@ const VIEWS = [
     searchConsentGranted: true,
     action: async (page) => {
       await page.waitForSelector(".cv-storage-card");
-      await page.getByRole("button", { name: "Profile anzeigen" }).click();
+      await page.getByRole("button", { name: "Suchprofile anzeigen" }).click();
       await page.locator(".cv-profile-manager").waitFor();
       await page.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }).first().click();
       await page.locator("#ats-list-sp-1").waitFor();

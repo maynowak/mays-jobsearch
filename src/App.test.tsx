@@ -1083,7 +1083,7 @@ describe("CV workflow", () => {
     expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
 
     // Das ATS-Profil traegt die bestaetigten Skills + Zielrolle des CV-Profils
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     await screen.findByRole("dialog", { name: /ats-flow\.pdf/ });
     fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
     const atsSection = document.querySelector(".profile-card__ats") as HTMLElement;
@@ -1234,7 +1234,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await backToDocumentList();
 
     // Overlay des CVs oeffnen: Titel = Dateiname
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
 
     // Suchprofile-Tabelle enthaelt den benannten Eintrag (gescoped: der
@@ -1299,7 +1299,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(Array.from(atsSelect.options).map((o) => o.text)).toContain("React ATS");
 
     // Overlay: ATS-Tabelle enthaelt den benannten Eintrag (gescoped)
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
     const atsSection = document.querySelector(".profile-card__ats") as HTMLElement;
@@ -1321,7 +1321,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     await screen.findByText(/Zustimmung ausstehend/);
 
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     const dialog = await screen.findByRole("dialog", { name: /cv\.pdf/ });
     expect(dialog.textContent).toContain("Noch keine Einträge gespeichert.");
     expect(screen.getByText("Profil anzeigen")).toBeTruthy();
@@ -1343,7 +1343,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await backToDocumentList();
 
     // Liste vorhanden
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
     // gescoped auf die Suchprofile-Tabelle (CV-Bereich hat Select mit gleichem Namen)
     const searchTable = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
@@ -1358,7 +1358,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     // Abbrechen: nichts wird entfernt
     fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     expect(screen.getByText("cv.pdf")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
     const searchTable2 = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
     expect(searchTable2.textContent).toContain("Frontend - Profil1");
@@ -1368,7 +1368,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     fireEvent.click(screen.getByRole("button", { name: "CV-Daten entfernen" }));
     fireEvent.click(screen.getByRole("button", { name: "Aus dieser Sitzung entfernen" }));
     await waitFor(() => expect(screen.queryByText("Deine Lebensläufe")).toBeNull());
-    expect(screen.queryByRole("button", { name: "Profile anzeigen" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Suchprofile anzeigen" })).toBeNull();
     // Dropzone ist wieder der sichtbare Einstieg (erneutes Hochladen)
     expect(document.querySelector(".cv-dropzone")).toBeTruthy();
   });
@@ -1420,7 +1420,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     await screen.findByText("Deine Lebensläufe");
     expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
     const atsSection = document.querySelector(".profile-card__ats") as HTMLElement;
     fireEvent.click(atsSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
@@ -1503,7 +1503,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     // Gespeicherter Eintrag traegt die geleerte Zielrolle (kein Fallback)
     await waitFor(() => expect(document.getElementById("cv-goal-execution-title")).toBeTruthy());
     await backToDocumentList();
-    fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
     const searchSection = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
     fireEvent.click(searchSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
     const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
@@ -1653,7 +1653,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
 
       // CV-Tab unveraendert: Dokument + gespeicherter Eintrag vorhanden
       expect(screen.getByText("cv.pdf")).toBeTruthy();
-      fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+      fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
       expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
       const searchTable = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
       expect(searchTable.textContent).toContain("Frontend - Profil1");
@@ -1700,7 +1700,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
       expect(skills.value).toBe("");
 
       // Gespeicherter CV-Eintrag unversehrt
-      fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
+      fireEvent.click(screen.getByRole("button", { name: "Suchprofile anzeigen" }));
       expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
       const searchTable = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
       expect(searchTable.textContent).toContain("Frontend - Profil1");
