@@ -5454,3 +5454,31 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   build PASS; direct-search E2E at 320/390/430/768/1440 PASS with 0 RIS writes
   and 0 unexpected CV/AI calls.
 - Code commit `2b12b6e`. No production deployment.
+
+## 2026-11-10 — CV-BUILDER-IMPORT-01A PDF IMPORT & STRUCTURED PREFILL
+
+**Typ:** CV builder PDF import / rule-based parser / preview / prefill
+**Status:** `CV-BUILDER-IMPORT-01A — IMPLEMENTED / VERIFIED LOCAL`
+
+- Basis `origin/main` `f5c4352`; protected branch
+  `feature/cv-builder-import-01a`; code commit `5d91945`.
+- New CV creation offers: empty builder, local PDF import, or stored RIS CV.
+  Local PDFs are read with existing `extractPdfText()` only in the browser.
+  RIS CVs use existing `downloadCvFile()`/signed URL; no second storage.
+- New rule-based parser `src/lib/cvBuilder/pdfImport.ts` maps German/English CV
+  sections to `CvBuilderDraftV1`. No AI, no OCR, no backend/API/contract change.
+  Unknown lines remain separate; incomplete dates and low-confidence sections
+  are marked uncertain; values are not invented.
+- New preview dialog supports per-section selection, uncertain/missing notices,
+  unassigned lines, back/cancel, and explicit confirmation. Imported content
+  opens the existing builder as a pending draft. No repository write occurs
+  until the user explicitly saves. Existing profiles are not overwritten.
+- PDF text remains in React state only; no localStorage, no external model
+  call, no RIS write, no PDF upload, no search-profile transfer. Downloads are
+  bound to the current session/identity generation; identity change aborts.
+- Verification: focused 128 PASS, serial full **1708 PASS / 5 skipped**, build
+  PASS. Browser E2E at 320/390/430/768/1024/1440 for local and mocked RIS
+  import: PASS, prefill/edit/PDF export verified, 0 model/AI calls, 0 RIS
+  writes. Existing builder/PDF E2E and CV-management E2E PASS.
+- No real user data, no valid-Cognito/RIS live write, no production deployment.
+  Screenshots under `docs/reports/assets/CV-BUILDER-IMPORT-01A/`.
