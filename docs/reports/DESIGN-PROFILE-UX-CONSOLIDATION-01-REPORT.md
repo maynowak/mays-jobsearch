@@ -4,7 +4,7 @@
 **Branch:** `design/jm-ris-profile-ux-consolidation-01`
 **Base:** `702fa20`
 **Commit:** `b56d122`
-**Session-card follow-up:** `c53d9bb`
+**Session-card follow-up:** `f9994d1`
 
 ## Design changes
 
