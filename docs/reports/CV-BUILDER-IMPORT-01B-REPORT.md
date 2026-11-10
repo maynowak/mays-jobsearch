@@ -1,9 +1,10 @@
 # CV-BUILDER-IMPORT-01B — PARSER QUALITY & IMPORT UX
 
-**Status:** `CV-BUILDER-IMPORT-01B — IMPLEMENTED / VERIFIED LOCAL`
+**Status:** `CV-BUILDER-IMPORT-01B — IMPLEMENTED / VERIFIED LOCAL / PRODUCTION DEPLOYED / LIVE GUEST E2E PASS`
 **Basis:** `origin/main` `325693a`
 **Branch:** `feature/cv-builder-import-01b`
 **Code-Commit:** `c2e8efe`
+**Deployment:** `dpl_HQgFB1HP3GvBo8LxUdBGNWz97ZRG` · Footer `b41709f` · `https://www.mays-job-matcher.app`
 
 ## 1. Gefundene Ursachen
 
@@ -172,7 +173,7 @@ Zusätzliche Parser-Tests prüfen:
 
 - Kein authentifizierter Live-RIS-E2E mit echtem Testkonto.
 - Kein OCR, keine KI.
-- Kein Push, Merge oder Production-Deployment im Rahmen dieses Auftrags.
+- Production-Deployment `dpl_HQgFB1HP3GvBo8LxUdBGNWz97ZRG` auf `b41709f`; Live-Gast-Import mit synthetischem PDF PASS (Projekt erkannt, 6 Skill-Kandidaten, 0 RIS-Writes, 0 Modellaufrufe).
 - Keine RIS-/AWS-/Cognito-/Terraform-/Consent-Änderung.
 - Keine echten personenbezogenen Lebensläufe als Repository-Fixtures.
 

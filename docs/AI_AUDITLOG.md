@@ -5528,3 +5528,18 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   writes. No RIS/AWS/Cognito/consent-contract change, no real user data.
 - Screenshots: `docs/reports/assets/CV-BUILDER-IMPORT-01B/`. No push, merge or
   deployment.
+
+## 2026-11-10 — CV-BUILDER-IMPORT-01B PRODUCTION DEPLOYMENT / LIVE GUEST E2E
+
+**Typ:** Production deployment / live browser guest E2E
+**Status:** `PRODUCTION DEPLOYED / LIVE GUEST E2E PASS`
+
+- Fast-forward `main` to `b41709f`, push to `origin/main`.
+- Vercel Production `dpl_HQgFB1HP3GvBo8LxUdBGNWz97ZRG` READY for
+  `https://www.mays-job-matcher.app`; footer/build SHA `b41709f`.
+- Public smoke: `/`, `/profil`, `/datenschutz`, `/impressum` = **200**;
+  `/api/ris/cvs` without token = **401**, no 5xx.
+- Live guest E2E with a synthetic PDF at 390 px: **PASS** — `Selected Current
+  Projects` recognized, 6 real skill candidates, no sentence fragment in skills,
+  builder prefill `Alex Beispiel`, **0 RIS writes**, **0 model/AI calls**.
+- No login, no real user data, no RIS/AWS/Cognito/consent-contract change.
