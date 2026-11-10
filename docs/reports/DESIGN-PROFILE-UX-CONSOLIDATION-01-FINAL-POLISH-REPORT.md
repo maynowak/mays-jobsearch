@@ -3,7 +3,7 @@
 **Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — FINAL POLISH VERIFIED LOCAL`
 **Branch:** `design/jm-ris-profile-ux-final-polish-01`
 **Base:** `3fb65bb`
-**Commit:** `389eb36`
+**Commits:** `389eb36` (persistent profiles), `14b4597` (session profiles)
 
 ## Changes
 
@@ -16,6 +16,8 @@
 - ATS creation can be started per CV search profile; the parent ID is fixed by
   that action and still sent to RIS as the real parent ID.
 - Empty ATS state appears once per expanded parent.
+- The read-only session profile overlay now uses the same hierarchy: ATS
+  profiles are nested under their search profile instead of a separate table.
 
 ### Duplicate names
 
@@ -63,6 +65,7 @@ CV profile; long skills wrap as chips.
 | Check | Result |
 | --- | --- |
 | Focused profile/skill tests | **4 passed** |
+| App profile-flow tests | **96 passed** |
 | Full suite, serial | **1678 passed**, 5 skipped |
 | Production build | **PASS** |
 | Screenshot overflow | **none** |

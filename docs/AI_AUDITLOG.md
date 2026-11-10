@@ -5304,10 +5304,11 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 **Typ:** Profile hierarchy / skills / duplicate-name UX
 **Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — FINAL POLISH VERIFIED LOCAL`
 
-- Branch `design/jm-ris-profile-ux-final-polish-01`, commit `389eb36`.
+- Branch `design/jm-ris-profile-ux-final-polish-01`, commits `389eb36` and `14b4597`.
 - ATS profiles are nested and expandable under each CV search profile; the
   repeated separate ATS empty area is removed. ATS creation is started per
-  parent and still uses the actual parent ID.
+  parent and still uses the actual parent ID. The read-only session overlay
+  uses the same nested hierarchy.
 - Duplicate CV/ATS names show an explicit warning; saving creates a new record
   with its own ID, no rename/overwrite/delete.
 - New `SkillChips` component renders responsive chips with show more/less and
