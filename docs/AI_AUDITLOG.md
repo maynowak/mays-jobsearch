@@ -5408,3 +5408,32 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   nicht ausgeführt und bleibt separat freigabepflichtig.
 - Keine RIS-/AWS-/Cognito-/Terraform-/Consent-Vertragsänderung. Keine echten
   Nutzer- oder CV-Daten verändert.
+
+## 2026-11-10 — PROFILE-UX-CONSOLIDATION-01 DIRECT SEARCH FROM SAVED PROFILES
+
+**Typ:** Direct search from durable CV/ATS profiles / mobile UX
+**Status:** `PROFILE-UX-CONSOLIDATION-01 — DIRECT SEARCH + MOBILE UX VERIFIED LOCAL`
+
+- Basis `origin/main` `02a5107`; protected branch
+  `feature/profile-ux-consolidation-01-direct-search`; code commit `6a1f5c4`.
+  No push, merge or deployment.
+- Durable CV-search and ATS cards now expose the primary action
+  “🔍 Damit suchen”. IDs are validated against the current RIS `cvId` and the
+  actual parent `searchProfileId`; names are never used for the relationship.
+- CV profiles use `searchConfigurationToProfile()`. ATS children reuse
+  `buildCvSearchProfile()`: ATS skills/target roles replace the parent content
+  fields; parent city, radius, work modes and employment types remain.
+- The existing `/search` handler is reused. The search starts only after the
+  route change, exactly once, with pending/multiple-click guards. Missing
+  criteria, invalid CV and invalid parent produce visible errors.
+- No RIS write, PDF upload, CV analysis, separate ATS engine or extra AI call.
+  Browser E2E verified 3 searches at 320/390/430/768/1440 px, including two
+  same-named profiles, reload, ATS parent inheritance and visible results on
+  `/search`: **PASS**, 0 RIS writes, 0 unexpected `/api/profile`, `/api/ats`,
+  `/api/match`, `/api/cover-letter` or `/api/job-details` calls.
+- Verification: focused **128 PASS**, serial full **1692 PASS / 5 skipped**,
+  production build PASS. Screenshots under
+  `docs/reports/assets/PROFILE-UX-CONSOLIDATION-01-DIRECT-SEARCH/`.
+- Synthetic session and mocked RIS/search responses only. No real user data,
+  no RIS/AWS/Cognito/consent-contract change. Authenticated live search and
+  production deployment remain separately gated.
