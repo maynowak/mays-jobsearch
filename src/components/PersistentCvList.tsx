@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import { fileSizeLocale, formatFileSize } from "../lib/fileSize";
 import { validateCvFile } from "../lib/cvFileValidation";
@@ -57,6 +57,10 @@ export default function PersistentCvList({
   const [profileCounts, setProfileCounts] = useState<Record<string, PersistentCvProfileCounts | null>>({});
   const [profileCountsLoading, setProfileCountsLoading] = useState<Record<string, boolean>>({});
   const [profileCountsError, setProfileCountsError] = useState<Record<string, boolean>>({});
+  const profileCountsGenerationRef = useRef(0);
+  const profileCountsRequestIdsRef = useRef<Record<string, number>>({});
+  const documentsRef = useRef(documents);
+  documentsRef.current = documents;
   const status = consent?.consent?.status ?? "NOT_GRANTED";
   const consentGranted = status === "GRANTED";
   const atCapacity = documents.length >= MAX_PERSISTENT_CVS;
@@ -65,33 +69,52 @@ export default function PersistentCvList({
     if (status !== "GRANTED") setArt9(false);
   }, [status]);
 
+  const fetchProfileCounts = useCallback(async (cvId: string, generation: number) => {
+    if (!onLoadProfileCounts) return;
+    const requestId = (profileCountsRequestIdsRef.current[cvId] ?? 0) + 1;
+    profileCountsRequestIdsRef.current[cvId] = requestId;
+    setProfileCountsLoading((current) => ({ ...current, [cvId]: true }));
+    setProfileCountsError((current) => ({ ...current, [cvId]: false }));
+    try {
+      const counts = await onLoadProfileCounts(cvId);
+      if (generation !== profileCountsGenerationRef.current) return;
+      if (profileCountsRequestIdsRef.current[cvId] !== requestId) return;
+      if (!documentsRef.current.some((document) => document.cvId === cvId)) return;
+      setProfileCounts((current) => ({ ...current, [cvId]: counts }));
+    } catch {
+      if (generation !== profileCountsGenerationRef.current) return;
+      if (profileCountsRequestIdsRef.current[cvId] !== requestId) return;
+      if (!documentsRef.current.some((document) => document.cvId === cvId)) return;
+      setProfileCounts((current) => ({ ...current, [cvId]: null }));
+      setProfileCountsError((current) => ({ ...current, [cvId]: true }));
+    } finally {
+      if (generation !== profileCountsGenerationRef.current) return;
+      if (profileCountsRequestIdsRef.current[cvId] !== requestId) return;
+      setProfileCountsLoading((current) => ({ ...current, [cvId]: false }));
+    }
+  }, [onLoadProfileCounts]);
+
   useEffect(() => {
     if (!onLoadProfileCounts || !consentGranted) {
+      profileCountsGenerationRef.current += 1;
       setProfileCounts({});
       setProfileCountsLoading({});
       setProfileCountsError({});
       return;
     }
-    let cancelled = false;
+    const generation = profileCountsGenerationRef.current + 1;
+    profileCountsGenerationRef.current = generation;
     const ids = documents.map((document) => document.cvId);
     setProfileCounts((current) => Object.fromEntries(ids.map((id) => [id, current[id] ?? null])));
     setProfileCountsLoading(Object.fromEntries(ids.map((id) => [id, true])));
     setProfileCountsError({});
     for (const id of ids) {
-      void onLoadProfileCounts(id).then((counts) => {
-        if (cancelled) return;
-        setProfileCounts((current) => ({ ...current, [id]: counts }));
-      }).catch(() => {
-        if (cancelled) return;
-        setProfileCounts((current) => ({ ...current, [id]: null }));
-        setProfileCountsError((current) => ({ ...current, [id]: true }));
-      }).finally(() => {
-        if (cancelled) return;
-        setProfileCountsLoading((current) => ({ ...current, [id]: false }));
-      });
+      void fetchProfileCounts(id, generation);
     }
-    return () => { cancelled = true; };
-  }, [consentGranted, documents, onLoadProfileCounts, profileCountsRefreshToken]);
+    return () => {
+      profileCountsGenerationRef.current += 1;
+    };
+  }, [consentGranted, documents, fetchProfileCounts, onLoadProfileCounts, profileCountsRefreshToken]);
 
   useEffect(() => {
     if (processingId && !documents.some((document) => document.cvId === processingId)) {
@@ -271,30 +294,47 @@ export default function PersistentCvList({
                   <dt>{t("cvStorage.pdfStatus")}</dt>
                   <dd>{statusLabel(cv)}</dd>
                 </div>
-                <div>
-                  <dt>{t("cvStorage.searchProfileCount")}</dt>
-                  <dd>
-                    {profileCountsLoading[cv.cvId]
-                      ? t("cvStorage.countLoading")
-                      : profileCounts[cv.cvId]
-                        ? profileCounts[cv.cvId]!.searchProfiles
-                        : profileCountsError[cv.cvId]
-                          ? t("cvStorage.countsUnavailable")
-                          : "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t("cvStorage.atsProfileCount")}</dt>
-                  <dd>
-                    {profileCountsLoading[cv.cvId]
-                      ? t("cvStorage.countLoading")
-                      : profileCounts[cv.cvId]
-                        ? profileCounts[cv.cvId]!.atsProfiles
-                        : profileCountsError[cv.cvId]
-                          ? t("cvStorage.countsUnavailable")
-                          : "—"}
-                  </dd>
-                </div>
+                {onLoadProfileCounts && consentGranted && (
+                  <div className="cv-storage-card__profiles-fact">
+                    <dt>{t("cvStorage.profileSummaryLabel")}</dt>
+                    <dd role="status" aria-live="polite">
+                      {profileCountsLoading[cv.cvId] ? (
+                        t("cvStorage.profileCountsLoading")
+                      ) : profileCountsError[cv.cvId] ? (
+                        <>
+                          <span>{t("cvStorage.profileCountsError")} </span>
+                          <button
+                            type="button"
+                            className="cv-storage-card__retry"
+                            onClick={() => {
+                              void fetchProfileCounts(cv.cvId, profileCountsGenerationRef.current);
+                            }}
+                          >
+                            {t("cvStorage.retry")}
+                          </button>
+                        </>
+                      ) : profileCounts[cv.cvId] ? (
+                        profileCounts[cv.cvId]!.searchProfiles === 0 &&
+                        profileCounts[cv.cvId]!.atsProfiles === 0
+                          ? t("cvStorage.profileCountsEmpty")
+                          : [
+                              profileCounts[cv.cvId]!.searchProfiles === 1
+                                ? t("cvStorage.searchProfileOne")
+                                : t("cvStorage.searchProfileMany", {
+                                    count: profileCounts[cv.cvId]!.searchProfiles,
+                                  }),
+                              profileCounts[cv.cvId]!.atsProfiles === 1
+                                ? t("cvStorage.atsProfileOne")
+                                : t("cvStorage.atsProfileMany", {
+                                    count: profileCounts[cv.cvId]!.atsProfiles,
+                                  }),
+                            ].join(" · ")
+                      ) : (
+                        t("cvStorage.profileCountsUnavailable")
+                      )}
+                    </dd>
+                  </div>
+                )}
               </dl>
               <p className="cv-storage-card__note">{t("cvStorage.verificationNote")}</p>
               <div className="cv-storage-card__actions">

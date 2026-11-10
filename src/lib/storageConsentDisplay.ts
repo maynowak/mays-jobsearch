@@ -16,6 +16,47 @@ export interface StorageConsentDisplayState {
   status: RisConsentStatus;
 }
 
+export interface DurableStorageFlags {
+  applicationGranted: boolean;
+  cvGranted: boolean;
+  searchProfileGranted: boolean;
+}
+
+export type StorageAreaId =
+  | "search"
+  | "cvWorkshop"
+  | "applications"
+  | "cvs"
+  | "searchProfiles";
+
+export const STORAGE_AREA_LABEL_KEYS: Record<StorageAreaId, string> = {
+  search: "privacyStorage.area.search",
+  cvWorkshop: "privacyStorage.area.cvWorkshop",
+  applications: "privacyStorage.area.applications",
+  cvs: "privacyStorage.area.cvs",
+  searchProfiles: "privacyStorage.area.searchProfiles",
+};
+
+export function durableStorageAreas(flags: DurableStorageFlags): StorageAreaId[] {
+  const areas: StorageAreaId[] = [];
+  if (flags.applicationGranted) areas.push("applications");
+  if (flags.cvGranted) areas.push("cvs");
+  if (flags.searchProfileGranted) areas.push("searchProfiles");
+  return areas;
+}
+
+export function sessionOnlyStorageAreas(flags: DurableStorageFlags): StorageAreaId[] {
+  const areas: StorageAreaId[] = ["search", "cvWorkshop"];
+  if (!flags.applicationGranted) areas.push("applications");
+  if (!flags.cvGranted) areas.push("cvs");
+  if (!flags.searchProfileGranted) areas.push("searchProfiles");
+  return areas;
+}
+
+export function hasExtendedDurableStorage(flags: DurableStorageFlags): boolean {
+  return flags.searchProfileGranted || (flags.cvGranted && !flags.applicationGranted);
+}
+
 export function isApplicationStorageAvailable(state: StorageConsentDisplayState): boolean {
   return state.liveEnabled && state.loaded && !state.error;
 }

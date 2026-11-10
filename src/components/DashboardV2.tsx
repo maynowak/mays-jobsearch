@@ -26,6 +26,8 @@ export interface DashboardV2Props {
   storageConsentIdentityVerified?: boolean;
   cvStorageEnabled?: boolean;
   cvStorageConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
+  searchProfileStorageEnabled?: boolean;
+  searchProfileConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
 }
 
 export const DEMO_USER: DashboardUser = {
@@ -72,6 +74,8 @@ const DashboardV2 = ({
   storageConsentIdentityVerified = false,
   cvStorageEnabled = false,
   cvStorageConsentStatus = null,
+  searchProfileStorageEnabled = false,
+  searchProfileConsentStatus = null,
 }: DashboardV2Props) => {
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
@@ -187,6 +191,8 @@ const DashboardV2 = ({
               identityVerified={storageConsentIdentityVerified}
               cvStorageEnabled={cvStorageEnabled}
               cvConsentStatus={cvStorageConsentStatus}
+              searchProfileStorageEnabled={searchProfileStorageEnabled}
+              searchProfileConsentStatus={searchProfileConsentStatus}
             />
           ) : (
             <>
@@ -219,6 +225,10 @@ const DashboardV2 = ({
           <StorageConsentOverview
             identityVerified={storageConsentIdentityVerified}
             onOpenSettings={() => setActiveId('settings')}
+            cvStorageEnabled={cvStorageEnabled}
+            cvConsentStatus={cvStorageConsentStatus}
+            searchProfileStorageEnabled={searchProfileStorageEnabled}
+            searchProfileConsentStatus={searchProfileConsentStatus}
           />
 
           <Card className="dashboard-v2__status-card">

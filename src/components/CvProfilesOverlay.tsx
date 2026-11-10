@@ -33,7 +33,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
   const [pendingAtsId, setPendingAtsId] = useState<string | null>(null);
   const [assignNotice, setAssignNotice] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
-  const [expandedAtsParents, setExpandedAtsParents] = useState<Set<string>>(new Set());
+  const [expandedAtsParent, setExpandedAtsParent] = useState<string | null>(null);
   const unassigned = lists.atsProfiles.filter((entry) => !entry.searchProfileId);
 
   const assign = async (atsSessionId: string) => {
@@ -62,12 +62,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
 
   const latestSearchProfile = lists.searchProfiles[0] ?? null;
   const toggleAts = (parentId: string) => {
-    setExpandedAtsParents((current) => {
-      const next = new Set(current);
-      if (next.has(parentId)) next.delete(parentId);
-      else next.add(parentId);
-      return next;
-    });
+    setExpandedAtsParent((current) => (current === parentId ? null : parentId));
   };
   const locale = lang === "de" ? "de-DE" : "en-US";
   const formatSavedAt = (savedAt: number) =>
@@ -155,11 +150,11 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
                       <button
                         type="button"
                         className="btn-ghost"
-                        aria-expanded={expandedAtsParents.has(entry.id)}
+                        aria-expanded={expandedAtsParent === entry.id}
                         aria-controls={`session-ats-${entry.id}`}
                         onClick={() => toggleAts(entry.id)}
                       >
-                        {expandedAtsParents.has(entry.id)
+                        {expandedAtsParent === entry.id
                           ? t("searchProfiles.hideAts")
                           : t("searchProfiles.showAts")}
                       </button>
@@ -174,7 +169,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
                         {t("cv.showDetails")}
                       </button>
                     </div>
-                    {expandedAtsParents.has(entry.id) && (
+                    {expandedAtsParent === entry.id && (
                       <div id={`session-ats-${entry.id}`} className="profile-card__ats">
                         <h5>{t("searchProfiles.atsFor", { name: entry.name })}</h5>
                         {lists.atsProfiles.filter((ats) => ats.searchProfileId === entry.id).length === 0 ? (

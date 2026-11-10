@@ -3912,6 +3912,8 @@ export default function App() {
             preferencesSection={dashboardPreferencesSection}
             cvStorageEnabled={persistentCvStorage.enabled}
             cvStorageConsentStatus={persistentCvStorage.consent?.consent?.status ?? null}
+            searchProfileStorageEnabled={persistentSearchProfiles.available}
+            searchProfileConsentStatus={persistentSearchProfiles.consent?.consent?.status ?? null}
           />
         </main>
         {cvProcessingUI}
@@ -3937,6 +3939,8 @@ export default function App() {
             preferencesSection={dashboardPreferencesSection}
             cvStorageEnabled={persistentCvStorage.enabled}
             cvStorageConsentStatus={persistentCvStorage.consent?.consent?.status ?? null}
+            searchProfileStorageEnabled={persistentSearchProfiles.available}
+            searchProfileConsentStatus={persistentSearchProfiles.consent?.consent?.status ?? null}
           />
         </main>
         {cvProcessingUI}

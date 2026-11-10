@@ -117,3 +117,103 @@ describe("PersistentCvProfilesOverlay card management", () => {
     expect(screen.getByText(/existiert bereits/)).toBeInTheDocument();
   });
 });
+
+
+describe("PersistentCvProfilesOverlay loading and hierarchy", () => {
+  const cvProfile = (id: string, name: string) => ({
+    schemaVersion: 1,
+    searchProfileId: id,
+    cvId: "cv-1",
+    name,
+    origin: "cv",
+    searchConfig: {
+      skills: "React, TypeScript",
+      targetRoles: ["Frontend"],
+      city: "Berlin",
+      radiusKm: 25,
+      workModes: ["remote"],
+      employmentTypes: ["full_time"],
+    },
+    createdAt: "2026-11-09T10:00:00Z",
+    updatedAt: "2026-11-09T10:00:00Z",
+    version: 1,
+  }) as never;
+
+  it("shows a loading summary instead of an empty profile state", async () => {
+    let resolveCv: ((value: never[]) => void) | undefined;
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv: vi.fn(() => new Promise<never[]>((resolve) => { resolveCv = resolve; })),
+      listAts: vi.fn(async () => []),
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay cvId="cv-1" cvName="Lebenslauf.pdf" profiles={value} onClose={vi.fn()} />
+      </LangProvider>
+    );
+
+    expect(await screen.findByText("CV-Suchprofile und ATS-Profile werden geladen …")).toBeInTheDocument();
+    expect(screen.queryByText("Noch kein dauerhaftes CV-Suchprofil.")).toBeNull();
+    resolveCv?.([cvProfile("sp-1", "Frontend Berlin")]);
+    expect(await screen.findByText("1 CV-Suchprofil · 0 ATS-Profile")).toBeInTheDocument();
+  });
+
+  it("shows an error with retry and keeps the loaded CV bound to its card", async () => {
+    const listCv = vi.fn()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce([cvProfile("sp-1", "Frontend Berlin")]);
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv,
+      listAts: vi.fn(async () => []),
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay cvId="cv-1" cvName="Lebenslauf.pdf" profiles={value} onClose={vi.fn()} />
+      </LangProvider>
+    );
+
+    expect(await screen.findByText("Profile konnten nicht geladen werden.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByText("Frontend Berlin")).toBeInTheDocument();
+    expect(listCv).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps only one ATS area expanded at a time", async () => {
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv: vi.fn(async () => [
+        cvProfile("sp-1", "Frontend Berlin"),
+        cvProfile("sp-2", "Backend Berlin"),
+      ]),
+      listAts: vi.fn(async (id: string) => id === "sp-1"
+        ? [{
+            schemaVersion: 1,
+            atsSearchProfileId: "ats-1",
+            searchProfileId: "sp-1",
+            name: "Frontend ATS",
+            targetRoles: ["Frontend"],
+            skills: ["React"],
+            createdAt: "2026-11-09T10:00:00Z",
+            updatedAt: "2026-11-09T10:00:00Z",
+            version: 1,
+          }]
+        : []),
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay cvId="cv-1" cvName="Lebenslauf.pdf" profiles={value} onClose={vi.fn()} />
+      </LangProvider>
+    );
+
+    await screen.findByText("Frontend Berlin");
+    fireEvent.click(screen.getAllByRole("button", { name: "Zugehörige ATS-Profile anzeigen" })[0]);
+    expect(await screen.findByText("Frontend ATS")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Zugehörige ATS-Profile anzeigen" })[0]);
+    expect(await screen.findByText("Noch kein ATS-Profil zu diesem Suchprofil.")).toBeInTheDocument();
+    expect(screen.queryByText("Frontend ATS")).toBeNull();
+  });
+});

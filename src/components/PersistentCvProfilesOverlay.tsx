@@ -51,7 +51,7 @@ export default function PersistentCvProfilesOverlay({
   const [editingAtsId, setEditingAtsId] = useState<string | null>(null);
   const [showCvForm, setShowCvForm] = useState(false);
   const [showAtsForm, setShowAtsForm] = useState(false);
-  const [expandedAtsParents, setExpandedAtsParents] = useState<Set<string>>(new Set());
+  const [expandedAtsParent, setExpandedAtsParent] = useState<string | null>(null);
   const [grantBusy, setGrantBusy] = useState(false);
   const [grantError, setGrantError] = useState<string | null>(null);
 
@@ -144,7 +144,7 @@ export default function PersistentCvProfilesOverlay({
     setAtsParent(parentId);
     setShowAtsForm(true);
     setShowCvForm(false);
-    setExpandedAtsParents((current) => new Set(current).add(parentId));
+    setExpandedAtsParent(parentId);
   };
 
   const startEditAts = (parentId: string, profile: ATSSearchProfileV1) => {
@@ -155,7 +155,7 @@ export default function PersistentCvProfilesOverlay({
     setAtsSkills(profile.skills.join(", "));
     setShowAtsForm(true);
     setShowCvForm(false);
-    setExpandedAtsParents((current) => new Set(current).add(parentId));
+    setExpandedAtsParent(parentId);
   };
 
   const saveCv = async () => {
@@ -199,7 +199,7 @@ export default function PersistentCvProfilesOverlay({
       }
       const parent = atsParent;
       resetAtsForm();
-      setExpandedAtsParents((current) => new Set(current).add(parent));
+      setExpandedAtsParent(parent);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ats_profile_create_failed");
@@ -218,13 +218,19 @@ export default function PersistentCvProfilesOverlay({
       profile.name.trim().toLocaleLowerCase("de") === atsName.trim().toLocaleLowerCase("de")
   );
   const toggleAts = (parentId: string) => {
-    setExpandedAtsParents((current) => {
-      const next = new Set(current);
-      if (next.has(parentId)) next.delete(parentId);
-      else next.add(parentId);
-      return next;
-    });
+    setExpandedAtsParent((current) => (current === parentId ? null : parentId));
   };
+  const totalAts = Object.values(atsByParent).reduce((sum, entries) => sum + entries.length, 0);
+  const summary = cvProfiles.length === 0
+    ? t("searchProfiles.summaryEmpty")
+    : [
+        cvProfiles.length === 1
+          ? t("searchProfiles.cvCountOne")
+          : t("searchProfiles.cvCountMany", { count: cvProfiles.length }),
+        totalAts === 1
+          ? t("searchProfiles.atsCountOne")
+          : t("searchProfiles.atsCountMany", { count: totalAts }),
+      ].join(" · ");
 
   return createPortal(
     <div className="cv-profiles-overlay cv-profile-manager" role="dialog" aria-modal="true" aria-label={cvName}>
@@ -254,21 +260,30 @@ export default function PersistentCvProfilesOverlay({
           </div>
         ) : (
           <>
-            {error && <p className="alert alert-error" role="alert">{error}</p>}
-            {loading ? <p role="status">{t("searchProfiles.loading")}</p> : null}
+            {error && (
+              <div className="alert alert-error profile-manager__error" role="alert">
+                <p>{t("searchProfiles.loadError")}</p>
+                <Button variant="ghost" disabled={loading} onClick={() => { void load(); }}>
+                  {t("searchProfiles.retry")}
+                </Button>
+              </div>
+            )}
 
             <section className="profile-manager__section" aria-labelledby="persistent-cv-search-title">
               <div className="profile-manager__head">
                 <div>
                   <h4 id="persistent-cv-search-title">{t("searchProfiles.cvTitle")}</h4>
                   <p className="field-hint">{t("searchProfiles.mayCvHint")}</p>
+                  <p className="profile-manager__summary" role="status" aria-live="polite">
+                    {loading ? t("searchProfiles.summaryLoading") : summary}
+                  </p>
                 </div>
                 {profiles.active && !showCvForm && (
                   <Button onClick={startNewCv}>{t("searchProfiles.newCv")}</Button>
                 )}
               </div>
 
-              {cvProfiles.length === 0 ? (
+              {loading && cvProfiles.length === 0 ? null : cvProfiles.length === 0 ? (
                 <p className="field-hint">{t("searchProfiles.cvEmpty")}</p>
               ) : (
                 <ul className="profile-card-list">
@@ -296,11 +311,11 @@ export default function PersistentCvProfilesOverlay({
                         <Button
                           variant="ghost"
                           disabled={busy}
-                          aria-expanded={expandedAtsParents.has(profile.searchProfileId)}
+                          aria-expanded={expandedAtsParent === profile.searchProfileId}
                           aria-controls={`ats-list-${profile.searchProfileId}`}
                           onClick={() => toggleAts(profile.searchProfileId)}
                         >
-                          {expandedAtsParents.has(profile.searchProfileId)
+                          {expandedAtsParent === profile.searchProfileId
                             ? t("searchProfiles.hideAts")
                             : t("searchProfiles.showAts")}
                         </Button>
@@ -333,7 +348,7 @@ export default function PersistentCvProfilesOverlay({
                           {t("searchProfiles.delete")}
                         </Button>
                       </div>
-                      {expandedAtsParents.has(profile.searchProfileId) && (
+                      {expandedAtsParent === profile.searchProfileId && (
                         <div id={`ats-list-${profile.searchProfileId}`} className="profile-card__ats">
                           <h5>{t("searchProfiles.atsFor", { name: profile.name })}</h5>
                           {(atsByParent[profile.searchProfileId] ?? []).length === 0 ? (

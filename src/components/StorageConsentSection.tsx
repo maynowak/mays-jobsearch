@@ -9,6 +9,14 @@ import {
   type StorageConsentPurpose,
 } from "../lib/storageConsent";
 import {
+  durableStorageAreas,
+  hasExtendedDurableStorage,
+  sessionOnlyStorageAreas,
+  STORAGE_AREA_LABEL_KEYS,
+  type DurableStorageFlags,
+  type StorageAreaId,
+} from "../lib/storageConsentDisplay";
+import {
   storageConsentBadgeClassName,
   storageConsentBadgeKey,
   storageConsentNoticeKey,
@@ -16,6 +24,7 @@ import {
   storageConsentRisTextKey,
   storageConsentRisTitleKey,
   storageConsentSessionTextKey,
+  isApplicationStorageGranted,
   type StorageConsentDisplayState,
 } from "../lib/storageConsentDisplay";
 
@@ -29,6 +38,8 @@ interface Props {
   liveConsentEnabled?: boolean;
   cvStorageEnabled?: boolean;
   cvConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
+  searchProfileStorageEnabled?: boolean;
+  searchProfileConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
 }
 
 const PURPOSE_LABEL_KEYS: Record<StorageConsentPurpose, string> = {
@@ -48,8 +59,10 @@ export default function StorageConsentSection({
   liveConsentEnabled,
   cvStorageEnabled = false,
   cvConsentStatus = null,
+  searchProfileStorageEnabled = false,
+  searchProfileConsentStatus = null,
 }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const unavailable = STORAGE_CONSENT_BACKEND_UNAVAILABLE;
   const envEnabled = import.meta.env.VITE_RIS_CONSENT_UI_ENABLED === "true";
   const liveEnabled = (liveConsentEnabled ?? envEnabled) && identityVerified;
@@ -64,18 +77,39 @@ export default function StorageConsentSection({
   );
   const display: StorageConsentDisplayState = { liveEnabled, ...liveState };
   const cvGranted = cvStorageEnabled && cvConsentStatus === "GRANTED";
-  const noticeKey = cvGranted
-    ? "privacyStorage.notice.activeCv"
-    : storageConsentNoticeKey(display);
-  const risTitleKey = cvGranted
+  const searchProfileGranted =
+    searchProfileStorageEnabled && searchProfileConsentStatus === "GRANTED";
+  const flags: DurableStorageFlags = {
+    applicationGranted: isApplicationStorageGranted(display),
+    cvGranted,
+    searchProfileGranted,
+  };
+  const durableAreas = durableStorageAreas(flags);
+  const sessionAreas = sessionOnlyStorageAreas(flags);
+  const extendedSummary = hasExtendedDurableStorage(flags);
+  const areaText = (areas: StorageAreaId[]) =>
+    new Intl.ListFormat(lang === "de" ? "de-DE" : "en-US", {
+      style: "long",
+      type: "conjunction",
+    }).format(areas.map((area) => t(STORAGE_AREA_LABEL_KEYS[area])));
+  const noticeKey = extendedSummary
+    ? "privacyStorage.notice.durableActive"
+    : cvGranted
+      ? "privacyStorage.notice.activeCv"
+      : storageConsentNoticeKey(display);
+  const risTitleKey = extendedSummary || cvGranted
     ? "privacyStorage.risTitle.active"
     : storageConsentRisTitleKey(display);
-  const risTextKey = cvGranted
-    ? "privacyStorage.risText.activeCv"
-    : storageConsentRisTextKey(display);
-  const sessionTextKey = cvGranted
-    ? "privacyStorage.sessionText.activeCv"
-    : storageConsentSessionTextKey(display);
+  const risTextKey = extendedSummary
+    ? "privacyStorage.risText.durableActive"
+    : cvGranted
+      ? "privacyStorage.risText.activeCv"
+      : storageConsentRisTextKey(display);
+  const sessionTextKey = extendedSummary
+    ? "privacyStorage.sessionText.durableActive"
+    : cvGranted
+      ? "privacyStorage.sessionText.activeCv"
+      : storageConsentSessionTextKey(display);
 
   return (
     <section className="aurora-card storage-consent" aria-labelledby="storage-consent-title">
@@ -91,7 +125,7 @@ export default function StorageConsentSection({
       </div>
 
       <p className="storage-consent__notice" role="note">
-        {t(noticeKey)}
+        {extendedSummary ? t(noticeKey, { areas: areaText(durableAreas) }) : t(noticeKey)}
       </p>
 
       <p className="storage-consent__identity" role="status">
@@ -116,7 +150,13 @@ export default function StorageConsentSection({
                     : cvConsentStatus === "WITHDRAWN"
                       ? t("privacyStorage.purpose.withdrawn")
                       : t("privacyStorage.purpose.pending"))
-                  : t(storageConsentPurposeStatusKey(display, purpose))}
+                  : purpose === "search_profile_storage" && searchProfileStorageEnabled
+                    ? (searchProfileConsentStatus === "GRANTED"
+                      ? t("privacyStorage.purpose.granted")
+                      : searchProfileConsentStatus === "WITHDRAWN"
+                        ? t("privacyStorage.purpose.withdrawn")
+                        : t("privacyStorage.purpose.pending"))
+                    : t(storageConsentPurposeStatusKey(display, purpose))}
               </span>
             </li>
           ))}
@@ -138,12 +178,18 @@ export default function StorageConsentSection({
 
       <section className="storage-consent__block" aria-labelledby="storage-consent-session-title">
         <h3 id="storage-consent-session-title">{t("privacyStorage.sessionTitle")}</h3>
-        <p>{t(sessionTextKey)}</p>
+        <p>
+          {extendedSummary
+            ? t(sessionTextKey, { areas: areaText(sessionAreas) })
+            : t(sessionTextKey)}
+        </p>
       </section>
 
       <section className="storage-consent__block" aria-labelledby="storage-consent-ris-title">
         <h3 id="storage-consent-ris-title">{t(risTitleKey)}</h3>
-        <p>{t(risTextKey)}</p>
+        <p>
+          {extendedSummary ? t(risTextKey, { areas: areaText(durableAreas) }) : t(risTextKey)}
+        </p>
       </section>
 
       <section className="storage-consent__block" aria-labelledby="storage-consent-rights-title">

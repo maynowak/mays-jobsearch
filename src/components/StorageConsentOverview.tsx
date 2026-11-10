@@ -3,8 +3,13 @@ import { useAuth } from "react-oidc-context";
 import { useLang } from "../i18n";
 import { fetchRisConsent, type RisConsentStatus } from "../lib/risConsentApi";
 import {
+  durableStorageAreas,
+  hasExtendedDurableStorage,
   isApplicationStorageGranted,
   storageConsentNoticeKey,
+  STORAGE_AREA_LABEL_KEYS,
+  type DurableStorageFlags,
+  type StorageAreaId,
   type StorageConsentDisplayState,
 } from "../lib/storageConsentDisplay";
 import Badge from "./ui/Badge";
@@ -16,6 +21,10 @@ interface Props {
   onOpenSettings: () => void;
   /** Test/preview override; production uses the verified identity and env flag. */
   liveConsentEnabled?: boolean;
+  cvStorageEnabled?: boolean;
+  cvConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
+  searchProfileStorageEnabled?: boolean;
+  searchProfileConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
 }
 
 /**
@@ -27,12 +36,43 @@ export default function StorageConsentOverview({
   identityVerified,
   onOpenSettings,
   liveConsentEnabled,
+  cvStorageEnabled = false,
+  cvConsentStatus = null,
+  searchProfileStorageEnabled = false,
+  searchProfileConsentStatus = null,
 }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const envEnabled = import.meta.env.VITE_RIS_CONSENT_UI_ENABLED === "true";
   const liveEnabled = (liveConsentEnabled ?? envEnabled) && identityVerified;
+  const cvGranted = cvStorageEnabled && cvConsentStatus === "GRANTED";
+  const searchProfileGranted =
+    searchProfileStorageEnabled && searchProfileConsentStatus === "GRANTED";
 
   if (!liveEnabled) {
+    const flags: DurableStorageFlags = {
+      applicationGranted: false,
+      cvGranted,
+      searchProfileGranted,
+    };
+    if (hasExtendedDurableStorage(flags)) {
+      const areas = durableStorageAreas(flags);
+      const areaText = new Intl.ListFormat(lang === "de" ? "de-DE" : "en-US", {
+        style: "long",
+        type: "conjunction",
+      }).format(areas.map((area) => t(STORAGE_AREA_LABEL_KEYS[area])));
+      return (
+        <Card className="dashboard-v2__storage-notice">
+          <div className="dashboard-v2__card-heading">
+            <h2>{t("privacyStorage.title")}</h2>
+            <Badge tone="active">{t("privacyStorage.badge.active")}</Badge>
+          </div>
+          <p>{t("privacyStorage.notice.durableActive", { areas: areaText })}</p>
+          <Button variant="ghost" onClick={onOpenSettings}>
+            {t("privacyStorage.openSettings")}
+          </Button>
+        </Card>
+      );
+    }
     return (
       <Card className="dashboard-v2__storage-notice">
         <div className="dashboard-v2__card-heading">
@@ -47,12 +87,32 @@ export default function StorageConsentOverview({
     );
   }
 
-  return <LiveStorageConsentOverview onOpenSettings={onOpenSettings} />;
+  return (
+    <LiveStorageConsentOverview
+      onOpenSettings={onOpenSettings}
+      cvStorageEnabled={cvStorageEnabled}
+      cvConsentStatus={cvConsentStatus}
+      searchProfileStorageEnabled={searchProfileStorageEnabled}
+      searchProfileConsentStatus={searchProfileConsentStatus}
+    />
+  );
 }
 
-function LiveStorageConsentOverview({ onOpenSettings }: { onOpenSettings: () => void }) {
+function LiveStorageConsentOverview({
+  onOpenSettings,
+  cvStorageEnabled,
+  cvConsentStatus,
+  searchProfileStorageEnabled,
+  searchProfileConsentStatus,
+}: {
+  onOpenSettings: () => void;
+  cvStorageEnabled: boolean;
+  cvConsentStatus: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
+  searchProfileStorageEnabled: boolean;
+  searchProfileConsentStatus: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
+}) {
   const auth = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const token = auth.user?.access_token ?? "";
   const [status, setStatus] = useState<RisConsentStatus>("NOT_GRANTED");
   const [loaded, setLoaded] = useState(false);
@@ -84,14 +144,26 @@ function LiveStorageConsentOverview({ onOpenSettings }: { onOpenSettings: () => 
     error,
     status,
   };
+  const flags: DurableStorageFlags = {
+    applicationGranted: isApplicationStorageGranted(display),
+    cvGranted: cvStorageEnabled && cvConsentStatus === "GRANTED",
+    searchProfileGranted:
+      searchProfileStorageEnabled && searchProfileConsentStatus === "GRANTED",
+  };
+  const extendedSummary = hasExtendedDurableStorage(flags);
+  const areas = durableStorageAreas(flags);
+  const areaText = new Intl.ListFormat(lang === "de" ? "de-DE" : "en-US", {
+    style: "long",
+    type: "conjunction",
+  }).format(areas.map((area: StorageAreaId) => t(STORAGE_AREA_LABEL_KEYS[area])));
 
   return (
     <Card className="dashboard-v2__storage-notice">
       <div className="dashboard-v2__card-heading">
         <h2>{t("privacyStorage.title")}</h2>
-        <Badge tone={isApplicationStorageGranted(display) ? "active" : "soon"}>
+        <Badge tone={extendedSummary || isApplicationStorageGranted(display) ? "active" : "soon"}>
           {t(
-            isApplicationStorageGranted(display)
+            extendedSummary || isApplicationStorageGranted(display)
               ? "privacyStorage.badge.active"
               : loaded && !error
                 ? "privacyStorage.badge.actionRequired"
@@ -101,7 +173,11 @@ function LiveStorageConsentOverview({ onOpenSettings }: { onOpenSettings: () => 
           )}
         </Badge>
       </div>
-      <p>{t(storageConsentNoticeKey(display))}</p>
+      <p>
+        {extendedSummary
+          ? t("privacyStorage.notice.durableActive", { areas: areaText })
+          : t(storageConsentNoticeKey(display))}
+      </p>
       <Button variant="ghost" onClick={onOpenSettings}>
         {t("privacyStorage.openSettings")}
       </Button>

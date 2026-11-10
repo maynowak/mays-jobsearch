@@ -12,6 +12,8 @@ interface Props {
   preferencesSection?: ReactNode;
   cvStorageEnabled?: boolean;
   cvStorageConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
+  searchProfileStorageEnabled?: boolean;
+  searchProfileConsentStatus?: "NOT_GRANTED" | "GRANTED" | "WITHDRAWN" | null;
 }
 
 const DashboardV2AuthenticatedPreview = ({
@@ -20,6 +22,8 @@ const DashboardV2AuthenticatedPreview = ({
   preferencesSection,
   cvStorageEnabled = false,
   cvStorageConsentStatus = null,
+  searchProfileStorageEnabled = false,
+  searchProfileConsentStatus = null,
 }: Props) => {
   const auth = useAuth();
   const { t } = useLang();
@@ -73,6 +77,8 @@ const DashboardV2AuthenticatedPreview = ({
       storageConsentIdentityVerified={storageConsentIdentityVerified}
       cvStorageEnabled={cvStorageEnabled}
       cvStorageConsentStatus={cvStorageConsentStatus}
+      searchProfileStorageEnabled={searchProfileStorageEnabled}
+      searchProfileConsentStatus={searchProfileConsentStatus}
     />
   );
 };

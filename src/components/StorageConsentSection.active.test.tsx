@@ -75,6 +75,32 @@ describe("StorageConsentSection with live application storage", () => {
     expect(screen.getByText(/Bewerbungen und hochgeladene Lebenslauf-PDFs/)).toBeInTheDocument();
   });
 
+  it("does not claim active search profiles are session-only", () => {
+    render(
+      <LangProvider>
+        <StorageConsentSection
+          identityVerified
+          liveConsentEnabled
+          cvStorageEnabled
+          cvConsentStatus="GRANTED"
+          searchProfileStorageEnabled
+          searchProfileConsentStatus="GRANTED"
+        />
+      </LangProvider>
+    );
+
+    expect(screen.getAllByText("Freigegeben")).toHaveLength(3);
+    expect(
+      screen.getByText(
+        "Dauerhaft über RIS gespeichert: Bewerbungen, Lebensläufe und Such- und ATS-Profile. Nicht genannte Bereiche bleiben sitzungsbezogen."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Sitzungsbezogen bleiben: Suche und Lebenslauf-Werkstatt/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Suchprofile bleiben vorerst sitzungsbezogen/)).toBeNull();
+  });
+
   it("shows a withdrawal and keeps application status distinct from CV/search", () => {
     liveState.current = { status: "WITHDRAWN", loaded: true, error: false };
 

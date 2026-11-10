@@ -160,6 +160,32 @@ describe("PersistentCvList", () => {
     renderList({ onLoadProfileCounts });
 
     await waitFor(() => expect(onLoadProfileCounts).toHaveBeenCalledWith("cv-1"));
-    expect(await screen.findByText("2")).toBeInTheDocument();
-    expect(await screen.findByText("3")).toBeInTheDocument();
+    expect(await screen.findByText("2 Suchprofile · 3 ATS-Profile")).toBeInTheDocument();
+  });
+
+  it("does not show a provisional zero while profile counts are loading", async () => {
+    let resolveCounts: ((value: { searchProfiles: number; atsProfiles: number }) => void) | undefined;
+    const onLoadProfileCounts = vi.fn(
+      () => new Promise<{ searchProfiles: number; atsProfiles: number }>((resolve) => {
+        resolveCounts = resolve;
+      })
+    );
+    renderList({ onLoadProfileCounts });
+
+    expect(await screen.findByText("Such- und ATS-Profile werden geladen …")).toBeInTheDocument();
+    expect(screen.queryByText("0 Suchprofile · 0 ATS-Profile")).toBeNull();
+    resolveCounts?.({ searchProfiles: 2, atsProfiles: 1 });
+    expect(await screen.findByText("2 Suchprofile · 1 ATS-Profil")).toBeInTheDocument();
+  });
+
+  it("retries failed profile counts for the same CV", async () => {
+    const onLoadProfileCounts = vi.fn()
+      .mockRejectedValueOnce(new Error("counts unavailable"))
+      .mockResolvedValueOnce({ searchProfiles: 0, atsProfiles: 0 });
+    renderList({ onLoadProfileCounts });
+
+    expect(await screen.findByText(/Profile konnten nicht geladen werden/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Erneut versuchen" }));
+    expect(await screen.findByText("Noch keine Such- oder ATS-Profile.")).toBeInTheDocument();
+    expect(onLoadProfileCounts).toHaveBeenCalledTimes(2);
   });
