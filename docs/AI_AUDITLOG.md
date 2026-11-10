@@ -5257,7 +5257,8 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 **Typ:** UX consolidation / CV cards / profile manager
 **Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — IMPLEMENTED / VERIFIED LOCAL`
 
-- Branch `design/jm-ris-profile-ux-consolidation-01`, commit `b56d122`.
+- Branch `design/jm-ris-profile-ux-consolidation-01`, commit `b56d122`;
+  session-overlay card alignment `f9994d1`.
 - Persistent CVs now use cards with filename, size, RIS location, PDF status,
   RIS search/ATS counts, honest verification note and actions
   Verarbeiten/Profile anzeigen/Herunterladen. Counts use
