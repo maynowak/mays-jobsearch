@@ -5298,3 +5298,23 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   build PASS; screenshots 320/390/430/768/1024/1440 cards/profiles, no overflow.
 - Authenticated synthetic RIS E2E was not executed and is not claimed. No
   RIS/AWS/Terraform/Cognito change, no real data.
+
+## 2026-11-10 — DESIGN-PROFILE-UX-CONSOLIDATION-01 FINAL POLISH
+
+**Typ:** Profile hierarchy / skills / duplicate-name UX
+**Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — FINAL POLISH VERIFIED LOCAL`
+
+- Branch `design/jm-ris-profile-ux-final-polish-01`, commit `389eb36`.
+- ATS profiles are nested and expandable under each CV search profile; the
+  repeated separate ATS empty area is removed. ATS creation is started per
+  parent and still uses the actual parent ID.
+- Duplicate CV/ATS names show an explicit warning; saving creates a new record
+  with its own ID, no rename/overwrite/delete.
+- New `SkillChips` component renders responsive chips with show more/less and
+  display-only quote cleanup; stored skills are untouched.
+- Aurora card styles, active selection, focus states and 44px actions retained.
+  May remains collapsed; no new API/library.
+- Verification: 4 focused tests, serial full 1678 passed/5 skipped, build PASS;
+  screenshots 320/390/430/768/1024/1440 hierarchy, no overflow.
+- No push/merge/deploy, no RIS/AWS change, no real user data. Auth RIS E2E
+  remains deployment-time.
