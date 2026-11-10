@@ -5543,3 +5543,35 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   Projects` recognized, 6 real skill candidates, no sentence fragment in skills,
   builder prefill `Alex Beispiel`, **0 RIS writes**, **0 model/AI calls**.
 - No login, no real user data, no RIS/AWS/Cognito/consent-contract change.
+
+## 2026-11-10 — CV-BUILDER-IMPORT-01B-R1 REAL-CV QUALITY FIX
+
+**Typ:** Parser quality / real-CV assignment / manual import mapping
+**Status:** `CV-BUILDER-IMPORT-01B-R1 — IMPLEMENTED / VERIFIED LOCAL`
+
+- Basis `origin/main` `baac910`; protected branch
+  `feature/cv-builder-import-01b-r1`; code commit `8141e1b`.
+- `PROFESSIONAL EXPERIENCE (CONTINUED)` and `(FORTSETZUNG)` now end the
+  previous section and can never become a position. Repeated page headers,
+  footers and page numbers are removed.
+- Names are rejected when they look like a job title, company or section
+  heading. Experience entries require plausible position and employer; incomplete
+  dated blocks move to manual assignment instead of becoming empty entries.
+  Lab/training/continuing-education blocks remain separate from employment.
+- Skills and project technologies now reject internal sentence punctuation,
+  sentence fragments, years, URLs and implausible generic phrases. Category
+  prefixes remain categories, not skills.
+- Education & Certifications is parsed as education; single-line degree and
+  institution are split where possible; missing periods remain uncertain.
+- Removed the bulk “all unassigned lines into profile summary” option. Each
+  unassigned line can now be explicitly mapped to Profile summary, Skills,
+  Projects, Certificates, Links or Ignore. No schema or API change.
+- Preview stays compact with per-section status/count, collapsible details, and
+  individual manual mapping.
+- Verification: serial full **1715 PASS / 5 skipped**, build PASS; local/mock RIS
+  import E2E at 320/390/430/768/1024/1440 PASS, prefill/edit/PDF export, 0 AI
+  calls, 0 RIS writes. Referenzlauf: continued heading excluded, incomplete
+  experience no longer fabricated, sentence skill fragments filtered.
+- Two-column extraction remains limited by `extractPdfText()` reading order.
+  No OCR, no AI, no real user data, no RIS/AWS/Cognito/consent change. No push,
+  merge or deployment.
