@@ -1,9 +1,10 @@
 # CV-BUILDER-IMPORT-01A — PDF IMPORT & STRUCTURED PREFILL
 
-**Status:** `CV-BUILDER-IMPORT-01A — IMPLEMENTED / VERIFIED LOCAL`  
+**Status:** `CV-BUILDER-IMPORT-01A — IMPLEMENTED / VERIFIED LOCAL / PRODUCTION DEPLOYED`  
 **Basis:** `origin/main` `f5c4352`  
 **Branch:** `feature/cv-builder-import-01a`  
 **Code-Commit:** `5d91945`
+**Deployment:** `dpl_AypVgHWrwMLTAVwz8zPeFixN8eEe` · Footer `078aba8` · `https://www.mays-job-matcher.app`
 
 ## 1. Implementiert
 
@@ -137,7 +138,7 @@ automatische Speicherung, kein Modellaufruf und Export des importierten Entwurfs
   synthetischen Session und gemockten BFF-Antworten geprüft.
 - Kein OCR für gescannte PDFs.
 - Keine KI-gestützte Erkennung; der Parser ist regelbasiert und konservativ.
-- Kein Production-Deployment im Rahmen dieses Auftrags.
+- Production-Deployment `dpl_AypVgHWrwMLTAVwz8zPeFixN8eEe` auf `078aba8`; authentifizierter Live-RIS-Import weiterhin nicht mit echtem Testkonto geprüft.
 - Keine Änderung an RIS, AWS, Terraform, Cognito oder Consent-Verträgen.
 
 ## 8. Empfehlung

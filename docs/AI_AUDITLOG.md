@@ -5482,3 +5482,15 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   writes. Existing builder/PDF E2E and CV-management E2E PASS.
 - No real user data, no valid-Cognito/RIS live write, no production deployment.
   Screenshots under `docs/reports/assets/CV-BUILDER-IMPORT-01A/`.
+
+## 2026-11-10 — CV-BUILDER-IMPORT-01A PRODUCTION DEPLOYMENT
+
+**Typ:** Production deployment / post-deploy smoke
+**Status:** `PRODUCTION DEPLOYED / SMOKE PASS`
+
+- Vercel Production `dpl_AypVgHWrwMLTAVwz8zPeFixN8eEe` READY for
+  `https://www.mays-job-matcher.app`; build/footer SHA `078aba8`.
+- Public smoke: `/`, `/profil`, `/datenschutz`, `/impressum` = **200**;
+  `/api/ris/cvs` without token = **401**, no 5xx.
+- CV-Builder import features are now available in production. No additional
+  RIS/AWS/Cognito/consent-contract change; no real user data used.
