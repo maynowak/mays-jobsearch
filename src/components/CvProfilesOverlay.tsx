@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLang } from "../i18n";
 import { readCvProfileLists } from "../lib/cvProfileStore";
 import type { CvAtsProfileEntry, CvSearchProfileEntry } from "../lib/cvProfileStore";
+import SkillChips from "./SkillChips";
 
 // CV-PROFILE-LISTS-01: Profil-Overlay pro CV. Titel = CV-Name; Button
 // "Profil anzeigen" (neustes gespeichertes Suchprofil); darunter zwei
@@ -31,6 +32,7 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
   const [pendingAtsId, setPendingAtsId] = useState<string | null>(null);
   const [assignNotice, setAssignNotice] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
+  const [expandedAtsParents, setExpandedAtsParents] = useState<Set<string>>(new Set());
   const unassigned = lists.atsProfiles.filter((entry) => !entry.searchProfileId);
 
   const assign = async (atsSessionId: string) => {
@@ -58,6 +60,14 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
   };
 
   const latestSearchProfile = lists.searchProfiles[0] ?? null;
+  const toggleAts = (parentId: string) => {
+    setExpandedAtsParents((current) => {
+      const next = new Set(current);
+      if (next.has(parentId)) next.delete(parentId);
+      else next.add(parentId);
+      return next;
+    });
+  };
   const locale = lang === "de" ? "de-DE" : "en-US";
   const formatSavedAt = (savedAt: number) =>
     new Date(savedAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
@@ -143,6 +153,17 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
                     <div className="profile-card__actions">
                       <button
                         type="button"
+                        className="btn-ghost"
+                        aria-expanded={expandedAtsParents.has(entry.id)}
+                        aria-controls={`session-ats-${entry.id}`}
+                        onClick={() => toggleAts(entry.id)}
+                      >
+                        {expandedAtsParents.has(entry.id)
+                          ? t("searchProfiles.hideAts")
+                          : t("searchProfiles.showAts")}
+                      </button>
+                      <button
+                        type="button"
                         className="btn-ghost cv-profiles-overlay__select"
                         aria-pressed={
                           selection?.kind === "search" && selection.entry.id === entry.id
@@ -152,37 +173,46 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
                         {t("cv.showDetails")}
                       </button>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="cv-profiles-overlay__table" aria-labelledby="cv-ats-profiles-title">
-            <h4 id="cv-ats-profiles-title">{t("cv.atsProfilesTitle")}</h4>
-            {lists.atsProfiles.length === 0 ? (
-              <p className="cv-profiles-overlay__empty">{t("cv.noProfilesSaved")}</p>
-            ) : (
-              <ul className="profile-card-list">
-                {lists.atsProfiles.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className={`profile-card profile-card--ats${selection?.kind === "ats" && selection.entry.id === entry.id ? " profile-card--selected" : ""}`}
-                  >
-                    <div className="profile-card__head">
-                      <strong>{entry.name}</strong>
-                      <span className="field-hint">{formatSavedAt(entry.savedAt)}</span>
-                    </div>
-                    <div className="profile-card__actions">
-                      <button
-                        type="button"
-                        className="btn-ghost cv-profiles-overlay__select"
-                        aria-pressed={selection?.kind === "ats" && selection.entry.id === entry.id}
-                        onClick={() => setSelection({ kind: "ats", entry })}
-                      >
-                        {t("cv.showDetails")}
-                      </button>
-                    </div>
+                    {expandedAtsParents.has(entry.id) && (
+                      <div id={`session-ats-${entry.id}`} className="profile-card__ats">
+                        <h5>{t("searchProfiles.atsFor", { name: entry.name })}</h5>
+                        {lists.atsProfiles.filter((ats) => ats.searchProfileId === entry.id).length === 0 ? (
+                          <p className="field-hint">{t("searchProfiles.noAtsFor")}</p>
+                        ) : (
+                          <ul className="profile-card-list">
+                            {lists.atsProfiles
+                              .filter((ats) => ats.searchProfileId === entry.id)
+                              .map((ats) => (
+                                <li key={ats.id} className="profile-card profile-card--ats">
+                                  <div className="profile-card__head">
+                                    <strong>{ats.name}</strong>
+                                  </div>
+                                  <dl className="profile-card__facts">
+                                    <div>
+                                      <dt>{t("searchProfiles.targetRoles")}</dt>
+                                      <dd>{(ats.targetRoles ?? []).join(", ") || "—"}</dd>
+                                    </div>
+                                    <div>
+                                      <dt>{t("searchProfiles.skills")}</dt>
+                                      <dd><SkillChips skills={ats.skills} /></dd>
+                                    </div>
+                                  </dl>
+                                  <div className="profile-card__actions">
+                                    <button
+                                      type="button"
+                                      className="btn-ghost cv-profiles-overlay__select"
+                                      aria-pressed={selection?.kind === "ats" && selection.entry.id === ats.id}
+                                      onClick={() => setSelection({ kind: "ats", entry: ats })}
+                                    >
+                                      {t("cv.showDetails")}
+                                    </button>
+                                  </div>
+                                </li>
+                              ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

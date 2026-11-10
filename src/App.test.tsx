@@ -1084,9 +1084,9 @@ describe("CV workflow", () => {
 
     // Das ATS-Profil traegt die bestaetigten Skills + Zielrolle des CV-Profils
     fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
-    const atsSection = await screen.findByRole("dialog", { name: /ats-flow\.pdf/ }).then(() =>
-      document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement
-    );
+    await screen.findByRole("dialog", { name: /ats-flow\.pdf/ });
+    fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
+    const atsSection = document.querySelector(".profile-card__ats") as HTMLElement;
     fireEvent.click(atsSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
     const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
     expect(details.textContent).toContain("React");
@@ -1242,7 +1242,7 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(screen.getByText("Suchprofile")).toBeTruthy();
     const searchSection = document.querySelector('[aria-labelledby="cv-search-profiles-title"]') as HTMLElement;
     expect(searchSection.textContent).toContain("Frontend Berlin");
-    expect(screen.getByText("ATS-Matching-Profile")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" })).toBeTruthy();
 
     // "Profil anzeigen" blendet das neueste Suchprofil ein/aus
     const toggle = screen.getByRole("button", { name: "Profil anzeigen" });
@@ -1301,11 +1301,11 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     // Overlay: ATS-Tabelle enthaelt den benannten Eintrag (gescoped)
     fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
     expect(await screen.findByRole("dialog", { name: /cv\.pdf/ })).toBeTruthy();
-    const atsTable = document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement;
-    expect(atsTable.textContent).toContain("React ATS");
+    fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
+    const atsSection = document.querySelector(".profile-card__ats") as HTMLElement;
+    expect(atsSection.textContent).toContain("React ATS");
 
-    // Auswahl (ATS-Tabelle) -> Detailbereich (Thema ATS-Profil) zeigt die Skills
-    const atsSection = document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement;
+    // Auswahl im hierarchischen ATS-Bereich -> Detailbereich zeigt die Skills
     fireEvent.click(atsSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
     const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
     expect(details.textContent).toContain("ATS-Matching-Profil: React ATS");
@@ -1421,7 +1421,8 @@ describe("CV-PROFILE-LISTS-01: Benannte Profil-Listen pro CV", () => {
     expect(vi.mocked(analyzeATS)).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Profile anzeigen" }));
-    const atsSection = document.querySelector('[aria-labelledby="cv-ats-profiles-title"]') as HTMLElement;
+    fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
+    const atsSection = document.querySelector(".profile-card__ats") as HTMLElement;
     fireEvent.click(atsSection.querySelector(".cv-profiles-overlay__select") as HTMLButtonElement);
     const details = document.querySelector(".cv-profiles-overlay__details") as HTMLElement;
     expect(details.textContent).toContain("React");
