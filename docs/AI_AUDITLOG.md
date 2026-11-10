@@ -5325,3 +5325,36 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   No real RIS/Cognito/AWS call and no real user/CV data.
 - Authenticated live RIS E2E (`createCv`/`createAts`/reload) remains open; no
   approved synthetic account was available and it is not claimed.
+
+## 2026-11-10 — PROFILE-UX-CONSOLIDATION-01 MOBILE VISUAL REVIEW & POLISH
+
+**Typ:** Mobile UX review / storage copy / loading states / accessibility
+**Status:** `PROFILE-UX-CONSOLIDATION-01 — MOBILE POLISH VERIFIED LOCAL`
+
+- Basis `origin/main` `3bfe391`; protected branch
+  `feature/profile-ux-consolidation-01-mobile-polish`; commits `f1922a0`,
+  `839d8ea`, `1ddbcfc` plus docs commit. No push, merge or deploy.
+- Reproduced: stale “search profiles remain session-only” claims despite an
+  active search-profile consent; provisional/empty-looking profile counts
+  without card-local retry; multiple simultaneously expanded ATS areas;
+  235 interactive targets below 44 px; oversized Job-Preferences badge;
+  zero-padding legal pages from undefined legacy spacing tokens; 320 px hero
+  headline width/contrast.
+- Storage copy now derives active and session-only areas from the actual
+  application/CV/search-profile consent state. Search-profile category shows
+  `Freigegeben` only when the separate consent is granted.
+- CV cards show explicit loading, success, empty and error states with
+  “Erneut versuchen”; responses are bound to CV ID, request ID and generation.
+  No provisional zero is shown. Profile overlay uses the same summary/retry
+  contract and a one-open-ATS accordion.
+- Mobile actions and navigation controls have 44 px targets; badges are
+  compact; legal pages receive real padding; landing hero is narrower and
+  higher-contrast at 320 px. May help remains collapsed by default with the
+  existing local preference. No new API/library.
+- Verification: 127 focused tests, serial full **1685 PASS / 5 skipped**,
+  build PASS. Mobile visual E2E 13 views × 6 widths + menu: PASS, 82 shots,
+  0 overflow, 0 targets below 44 px. Mobile navigation and existing profile UX
+  E2E: PASS.
+- Synthetic OIDC session and mocked `/api/ris/*` only. No real RIS/Cognito/AWS
+  call, no real user/CV data and no consent-contract change. Authenticated
+  live RIS E2E remains open and is not claimed.
