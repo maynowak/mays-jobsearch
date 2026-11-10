@@ -4,6 +4,7 @@
 **Branch:** `design/jm-ris-profile-ux-consolidation-01`
 **Base:** `702fa20`
 **Commit:** `b56d122`
+**Session-card follow-up:** `c53d9bb`
 
 ## Design changes
 
@@ -25,6 +26,12 @@ Profile counts are loaded through the existing RIS APIs
 `persistentSearchProfiles.listCv(cvId)` and `listAts(searchProfileId)`.
 They are never derived from session profile lists. While loading the cards show
 a loading state; on failure they show **Nicht verfügbar** instead of a fake 0.
+
+### Session profile manager
+
+`CvProfilesOverlay` now uses the same card language for session search/ATS
+profiles, with selection state and details below; the privacy/session note and
+May hint remain visible.
 
 ### CV profile manager
 
