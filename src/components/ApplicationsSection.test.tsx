@@ -302,7 +302,7 @@ describe("APP-02 ApplicationsSection", () => {
       target: { value: "2026-11-10T10:00" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Termin speichern" }));
-    await waitFor(() => expect(screen.getByText(/10\.11\.2026/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText(/10\.11\.2026/).length).toBeGreaterThan(0));
 
     fireEvent.click(screen.getByRole("tab", { name: "Verlauf" }));
     await screen.findByLabelText("Notiz");

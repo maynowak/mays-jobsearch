@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CvDocument, StatusMessage } from '../types';
 import { useLang } from '../i18n';
 import { readCvProfileLists } from '../lib/cvProfileStore';
@@ -50,6 +50,7 @@ interface Props {
   onCvStorageModeChange?: (mode: "session" | "persistent") => void;
   persistentCvStorage?: PersistentCvStorageState | null;
   persistentSearchProfiles?: PersistentSearchProfiles | null;
+  persistentProfilesVersion?: number;
   focusPersistentCvId?: string | null;
   focusPersistentProfilesEnabled?: boolean;
   onPersistentProfilesFocusHandled?: () => void;
@@ -94,6 +95,7 @@ const DashboardV2CvSection = ({
   onCvStorageModeChange,
   persistentCvStorage = null,
   persistentSearchProfiles = null,
+  persistentProfilesVersion = 0,
   focusPersistentCvId = null,
   focusPersistentProfilesEnabled = false,
   onPersistentProfilesFocusHandled,
@@ -102,6 +104,19 @@ const DashboardV2CvSection = ({
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
   const [persistentProfilesCvId, setPersistentProfilesCvId] = useState<string | null>(null);
+  const listPersistentCv = persistentSearchProfiles?.listCv;
+  const listPersistentAts = persistentSearchProfiles?.listAts;
+  const loadProfileCounts = useCallback(async (cvId: string) => {
+    if (!listPersistentCv || !listPersistentAts) return null;
+    const searchProfiles = await listPersistentCv(cvId);
+    const atsGroups = await Promise.all(
+      searchProfiles.map((profile) => listPersistentAts(profile.searchProfileId))
+    );
+    return {
+      searchProfiles: searchProfiles.length,
+      atsProfiles: atsGroups.reduce((count, group) => count + group.length, 0),
+    };
+  }, [listPersistentAts, listPersistentCv]);
 
   useEffect(() => {
     if (!focusPersistentCvId || !focusPersistentProfilesEnabled ||
@@ -309,6 +324,10 @@ const DashboardV2CvSection = ({
           onGrantConsent={persistentCvStorage.grantConsent}
           onWithdrawConsent={persistentCvStorage.withdrawConsent}
           onProcess={onProcessPersistentCv}
+          onLoadProfileCounts={
+            persistentSearchProfiles?.persistentView ? loadProfileCounts : undefined
+          }
+          profileCountsRefreshToken={persistentProfilesVersion}
           onManageProfiles={
             persistentSearchProfiles
               ? (cvId) => setPersistentProfilesCvId(cvId)

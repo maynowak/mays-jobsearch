@@ -44,6 +44,8 @@ export default function PersistentCvProfilesOverlay({
   const [busy, setBusy] = useState(false);
   const [editingCvId, setEditingCvId] = useState<string | null>(null);
   const [editingAtsId, setEditingAtsId] = useState<string | null>(null);
+  const [showCvForm, setShowCvForm] = useState(false);
+  const [showAtsForm, setShowAtsForm] = useState(false);
   const [grantBusy, setGrantBusy] = useState(false);
   const [grantError, setGrantError] = useState<string | null>(null);
 
@@ -102,6 +104,7 @@ export default function PersistentCvProfilesOverlay({
     setTargetRoles("");
     setCity("");
     setRadius("");
+    setShowCvForm(false);
   };
 
   const resetAtsForm = () => {
@@ -109,6 +112,42 @@ export default function PersistentCvProfilesOverlay({
     setAtsName("");
     setAtsRoles("");
     setAtsSkills("");
+    setShowAtsForm(false);
+  };
+
+  const startNewCv = () => {
+    resetCvForm();
+    setShowCvForm(true);
+    setShowAtsForm(false);
+  };
+
+  const startEditCv = (profile: CVSearchProfileV1) => {
+    setEditingCvId(profile.searchProfileId);
+    setName(profile.name);
+    setDescription(profile.description ?? "");
+    setSkills(profile.searchConfig.skills);
+    setTargetRoles(profile.searchConfig.targetRoles.join(", "));
+    setCity(profile.searchConfig.city);
+    setRadius(profile.searchConfig.radiusKm === null ? "" : String(profile.searchConfig.radiusKm));
+    setShowCvForm(true);
+    setShowAtsForm(false);
+  };
+
+  const startNewAts = (parentId = cvProfiles[0]?.searchProfileId ?? "") => {
+    resetAtsForm();
+    setAtsParent(parentId);
+    setShowAtsForm(true);
+    setShowCvForm(false);
+  };
+
+  const startEditAts = (parentId: string, profile: ATSSearchProfileV1) => {
+    setEditingAtsId(profile.atsSearchProfileId);
+    setAtsParent(parentId);
+    setAtsName(profile.name);
+    setAtsRoles(profile.targetRoles.join(", "));
+    setAtsSkills(profile.skills.join(", "));
+    setShowAtsForm(true);
+    setShowCvForm(false);
   };
 
   const saveCv = async () => {
@@ -159,8 +198,10 @@ export default function PersistentCvProfilesOverlay({
     }
   };
 
+  const atsCount = (searchProfileId: string) => atsByParent[searchProfileId]?.length ?? 0;
+
   return (
-    <div className="cv-profiles-overlay" role="dialog" aria-modal="true" aria-label={cvName}>
+    <div className="cv-profiles-overlay cv-profile-manager" role="dialog" aria-modal="true" aria-label={cvName}>
       <div className="cv-profiles-overlay__panel">
         <header className="cv-profiles-overlay__header">
           <div>
@@ -190,116 +231,151 @@ export default function PersistentCvProfilesOverlay({
             {error && <p className="alert alert-error" role="alert">{error}</p>}
             {loading ? <p role="status">{t("searchProfiles.loading")}</p> : null}
 
-            <section aria-labelledby="persistent-cv-search-title">
-              <h4 id="persistent-cv-search-title">{t("searchProfiles.cvTitle")}</h4>
+            <section className="profile-manager__section" aria-labelledby="persistent-cv-search-title">
+              <div className="profile-manager__head">
+                <div>
+                  <h4 id="persistent-cv-search-title">{t("searchProfiles.cvTitle")}</h4>
+                  <p className="field-hint">{t("searchProfiles.mayCvHint")}</p>
+                </div>
+                {profiles.active && !showCvForm && (
+                  <Button onClick={startNewCv}>{t("searchProfiles.newCv")}</Button>
+                )}
+              </div>
+
               {cvProfiles.length === 0 ? (
                 <p className="field-hint">{t("searchProfiles.cvEmpty")}</p>
               ) : (
-                <ul>
+                <ul className="profile-card-list">
                   {cvProfiles.map((profile) => (
-                    <li key={profile.searchProfileId}>
-                      <strong>{profile.name}</strong>
-                      <Badge tone="active">{t("searchProfiles.persistentBadge")}</Badge>
-                      <span className="field-hint"> {profile.searchConfig.targetRoles.join(", ")}</span>
-                      <Button
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => {
-                          setEditingCvId(profile.searchProfileId);
-                          setName(profile.name);
-                          setDescription(profile.description ?? "");
-                          setSkills(profile.searchConfig.skills);
-                          setTargetRoles(profile.searchConfig.targetRoles.join(", "));
-                          setCity(profile.searchConfig.city);
-                          setRadius(profile.searchConfig.radiusKm === null
-                            ? ""
-                            : String(profile.searchConfig.radiusKm));
-                        }}
-                      >
-                        {t("searchProfiles.edit")}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => {
-                          void (async () => {
-                            setBusy(true);
-                            try {
-                              await profiles.deleteCv(cvId, profile.searchProfileId);
-                              await load();
-                            } catch (err) {
-                              setError(err instanceof Error ? err.message : "search_profile_delete_failed");
-                            } finally {
-                              setBusy(false);
-                            }
-                          })();
-                        }}
-                      >
-                        {t("searchProfiles.delete")}
-                      </Button>
+                    <li key={profile.searchProfileId} className="profile-card">
+                      <div className="profile-card__head">
+                        <strong>{profile.name}</strong>
+                        <Badge tone="active">{t("searchProfiles.persistentStatus")}</Badge>
+                      </div>
+                      <dl className="profile-card__facts">
+                        <div>
+                          <dt>{t("searchProfiles.targetRoles")}</dt>
+                          <dd>{profile.searchConfig.targetRoles.join(", ") || "—"}</dd>
+                        </div>
+                        <div>
+                          <dt>{t("searchProfiles.skills")}</dt>
+                          <dd>{profile.searchConfig.skills || "—"}</dd>
+                        </div>
+                        <div>
+                          <dt>{t("searchProfiles.atsTitle")}</dt>
+                          <dd>{t("searchProfiles.atsCount", { count: atsCount(profile.searchProfileId) })}</dd>
+                        </div>
+                      </dl>
+                      <div className="profile-card__actions">
+                        <Button variant="ghost" disabled={busy} onClick={() => startEditCv(profile)}>
+                          {t("searchProfiles.edit")}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => {
+                            void (async () => {
+                              setBusy(true);
+                              try {
+                                await profiles.deleteCv(cvId, profile.searchProfileId);
+                                if (editingCvId === profile.searchProfileId) resetCvForm();
+                                await load();
+                              } catch (err) {
+                                setError(err instanceof Error ? err.message : "search_profile_delete_failed");
+                              } finally {
+                                setBusy(false);
+                              }
+                            })();
+                          }}
+                        >
+                          {t("searchProfiles.delete")}
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
 
-              {profiles.active && <div className="cv-profiles-overlay__form">
-                <h5>{editingCvId ? t("searchProfiles.editCv") : t("searchProfiles.createCv")}</h5>
-                <label>{t("searchProfiles.name")}
-                  <input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
-                </label>
-                <label>{t("searchProfiles.description")}
-                  <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} />
-                </label>
-                <label>{t("searchProfiles.skills")}
-                  <input value={skills} onChange={(e) => setSkills(e.target.value)} />
-                </label>
-                <label>{t("searchProfiles.targetRoles")}
-                  <input value={targetRoles} onChange={(e) => setTargetRoles(e.target.value)} />
-                </label>
-                <label>{t("searchProfiles.city")}
-                  <input value={city} onChange={(e) => setCity(e.target.value)} />
-                </label>
-                <label>{t("searchProfiles.radius")}
-                  <input value={radius} onChange={(e) => setRadius(e.target.value)} inputMode="numeric" />
-                </label>
-                <Button disabled={busy || !name.trim()} onClick={() => void saveCv()}>
-                  {t("searchProfiles.save")}
-                </Button>
-                {editingCvId && (
-                  <Button variant="ghost" disabled={busy} onClick={resetCvForm}>
-                    {t("searchProfiles.cancel")}
-                  </Button>
-                )}
-              </div>}
+              {showCvForm && profiles.active && (
+                <div className="profile-form" aria-labelledby="profile-cv-form-title">
+                  <h5 id="profile-cv-form-title">
+                    {editingCvId ? t("searchProfiles.editCv") : t("searchProfiles.createCv")}
+                  </h5>
+                  <div className="profile-form__grid">
+                    <label className="profile-form__full">{t("searchProfiles.name")}
+                      <input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
+                    </label>
+                    <label className="profile-form__full">{t("searchProfiles.description")}
+                      <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} />
+                    </label>
+                    <label>{t("searchProfiles.skills")}
+                      <input value={skills} onChange={(e) => setSkills(e.target.value)} />
+                    </label>
+                    <label>{t("searchProfiles.targetRoles")}
+                      <input value={targetRoles} onChange={(e) => setTargetRoles(e.target.value)} />
+                    </label>
+                    <label>{t("searchProfiles.city")}
+                      <input value={city} onChange={(e) => setCity(e.target.value)} />
+                    </label>
+                    <label>{t("searchProfiles.radius")}
+                      <input value={radius} onChange={(e) => setRadius(e.target.value)} inputMode="numeric" />
+                    </label>
+                  </div>
+                  <div className="profile-form__actions">
+                    <Button disabled={busy || !name.trim()} onClick={() => void saveCv()}>
+                      {t("searchProfiles.save")}
+                    </Button>
+                    <Button variant="ghost" disabled={busy} onClick={resetCvForm}>
+                      {t("searchProfiles.cancel")}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </section>
 
-            <section aria-labelledby="persistent-ats-title">
-              <h4 id="persistent-ats-title">{t("searchProfiles.atsTitle")}</h4>
+            <section className="profile-manager__section" aria-labelledby="persistent-ats-title">
+              <div className="profile-manager__head">
+                <div>
+                  <h4 id="persistent-ats-title">{t("searchProfiles.atsTitle")}</h4>
+                  <p className="field-hint">{t("searchProfiles.mayAtsHint")}</p>
+                </div>
+                {profiles.active && cvProfiles.length > 0 && !showAtsForm && (
+                  <Button onClick={() => startNewAts()}>{t("searchProfiles.newAts")}</Button>
+                )}
+              </div>
+
               {cvProfiles.length === 0 ? (
                 <p className="field-hint">{t("searchProfiles.atsNeedsCv")}</p>
               ) : (
-                <>
-                  {cvProfiles.map((parent) => (
-                    <div key={parent.searchProfileId}>
-                      <strong>{parent.name}</strong>
-                      {(atsByParent[parent.searchProfileId] ?? []).length === 0 ? (
-                        <p className="field-hint">{t("searchProfiles.atsEmpty")}</p>
-                      ) : (
-                        <ul>
-                          {(atsByParent[parent.searchProfileId] ?? []).map((ats) => (
-                            <li key={ats.atsSearchProfileId}>
-                              <span>{ats.name}</span>
-                              <Button
-                                variant="ghost"
-                                disabled={busy}
-                                onClick={() => {
-                                  setEditingAtsId(ats.atsSearchProfileId);
-                                  setAtsParent(parent.searchProfileId);
-                                  setAtsName(ats.name);
-                                  setAtsRoles(ats.targetRoles.join(", "));
-                                  setAtsSkills(ats.skills.join(", "));
-                                }}
-                              >
+                cvProfiles.map((parent) => (
+                  <div key={parent.searchProfileId} className="profile-manager__group">
+                    <h5>{t("searchProfiles.atsFor", { name: parent.name })}</h5>
+                    {(atsByParent[parent.searchProfileId] ?? []).length === 0 ? (
+                      <p className="field-hint">{t("searchProfiles.noAtsFor")}</p>
+                    ) : (
+                      <ul className="profile-card-list">
+                        {(atsByParent[parent.searchProfileId] ?? []).map((ats) => (
+                          <li key={ats.atsSearchProfileId} className="profile-card profile-card--ats">
+                            <div className="profile-card__head">
+                              <strong>{ats.name}</strong>
+                              <Badge tone="active">{t("searchProfiles.persistentStatus")}</Badge>
+                            </div>
+                            <dl className="profile-card__facts">
+                              <div>
+                                <dt>{t("searchProfiles.targetRoles")}</dt>
+                                <dd>{ats.targetRoles.join(", ") || "—"}</dd>
+                              </div>
+                              <div>
+                                <dt>{t("searchProfiles.skills")}</dt>
+                                <dd>{ats.skills.join(", ") || "—"}</dd>
+                              </div>
+                              <div>
+                                <dt>{t("searchProfiles.parent")}</dt>
+                                <dd>{parent.name}</dd>
+                              </div>
+                            </dl>
+                            <div className="profile-card__actions">
+                              <Button variant="ghost" disabled={busy} onClick={() => startEditAts(parent.searchProfileId, ats)}>
                                 {t("searchProfiles.edit")}
                               </Button>
                               <Button
@@ -321,16 +397,22 @@ export default function PersistentCvProfilesOverlay({
                               >
                                 {t("searchProfiles.delete")}
                               </Button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))
+              )}
 
-                  {profiles.active && <div className="cv-profiles-overlay__form">
-                    <h5>{editingAtsId ? t("searchProfiles.editAts") : t("searchProfiles.createAts")}</h5>
-                    <label>{t("searchProfiles.parent")}
+              {showAtsForm && profiles.active && cvProfiles.length > 0 && (
+                <div className="profile-form" aria-labelledby="profile-ats-form-title">
+                  <h5 id="profile-ats-form-title">
+                    {editingAtsId ? t("searchProfiles.editAts") : t("searchProfiles.createAts")}
+                  </h5>
+                  <div className="profile-form__grid">
+                    <label className="profile-form__full">{t("searchProfiles.parent")}
                       <select value={atsParent} onChange={(e) => setAtsParent(e.target.value)}>
                         {cvProfiles.map((parent) => (
                           <option key={parent.searchProfileId} value={parent.searchProfileId}>
@@ -339,7 +421,7 @@ export default function PersistentCvProfilesOverlay({
                         ))}
                       </select>
                     </label>
-                    <label>{t("searchProfiles.name")}
+                    <label className="profile-form__full">{t("searchProfiles.name")}
                       <input value={atsName} onChange={(e) => setAtsName(e.target.value)} maxLength={120} />
                     </label>
                     <label>{t("searchProfiles.targetRoles")}
@@ -348,16 +430,16 @@ export default function PersistentCvProfilesOverlay({
                     <label>{t("searchProfiles.skills")}
                       <input value={atsSkills} onChange={(e) => setAtsSkills(e.target.value)} />
                     </label>
+                  </div>
+                  <div className="profile-form__actions">
                     <Button disabled={busy || !atsParent || !atsName.trim()} onClick={() => void saveAts()}>
                       {t("searchProfiles.save")}
                     </Button>
-                    {editingAtsId && (
-                      <Button variant="ghost" disabled={busy} onClick={resetAtsForm}>
-                        {t("searchProfiles.cancel")}
-                      </Button>
-                    )}
-                  </div>}
-                </>
+                    <Button variant="ghost" disabled={busy} onClick={resetAtsForm}>
+                      {t("searchProfiles.cancel")}
+                    </Button>
+                  </div>
+                </div>
               )}
             </section>
           </>

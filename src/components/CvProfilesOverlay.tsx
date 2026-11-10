@@ -90,6 +90,9 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
         {/* CV-PROFILE-LISTS-02 (Privacy): Transparenz-Hinweis — Listen leben
             nur im Session-Speicher und werden nach 12 h automatisch geleert. */}
         <p className="cv-profiles-overlay__note">{t("cv.profilesPrivacyNote")}</p>
+        <p className="cv-profiles-overlay__note cv-profiles-overlay__may">
+          {t("cv.sessionProfilesMayHint")}
+        </p>
 
         <div className="cv-profiles-overlay__profile">
           <button
