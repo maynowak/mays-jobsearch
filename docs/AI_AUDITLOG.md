@@ -5384,3 +5384,27 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Neues Runbook `docs/reports/LIVE-PRODUCTION-BROWSER-E2E-RUNBOOK.md` und
   Harness `tests/e2e/live-production-browser.mjs` dokumentieren den Ablauf.
   Keine RIS-/Cognito-/AWS-/Terraform-Änderung.
+
+## 2026-11-10 — PROFILE-UX-CONSOLIDATION-01 MERGE / PRODUCTION / LIVE E2E
+
+**Typ:** Release / Production deployment / live read-only browser E2E
+**Status:** `MERGED / PRODUCTION DEPLOYED / LIVE READ-ONLY VERIFIED`
+
+- Fast-forward merge `3bfe391..f0bbf1b` auf `main`, Push
+  `f0bbf1b` nach `origin/main`; kein Force-Push.
+- Vercel Production Deployment `dpl_6T5qztbRD5XMcwcDFUpKVvNcStPP`
+  (`mays-job-matcher`) READY; Alias `https://www.mays-job-matcher.app`.
+  Footer/Build-SHA: `f0bbf1b`.
+- Public smoke: `/`, `/profil`, `/datenschutz`, `/impressum` = **200**;
+  `/api/ris/cvs` ohne Token = **401**, kein 5xx.
+- Live-Browser-E2E gegen genau `f0bbf1b`: manueller Operator-Login in
+  isoliertem Chrome-Profil, danach read-only Lauf über 6 Dashboard-Ansichten ×
+  6 Breiten: **36 Checks PASS**, **0 horizontale Overflows**, keine
+  Schreiboperation. Keine Credentials/Tokens dokumentiert.
+- Evidenz `/tmp/opencode/live-production-browser-e2e/2026-11-10T11-06-10-993Z/`
+  bleibt außerhalb des Repositories (mögliche Kontodaten in Screenshots).
+- Neue Live-Ansichten zeigen die korrigierten Speichertexte, kompakte Badges
+  und 44-px-Aktionen. Der authentifizierte RIS-Write-/Reload-/Cleanup-E2E wurde
+  nicht ausgeführt und bleibt separat freigabepflichtig.
+- Keine RIS-/AWS-/Cognito-/Terraform-/Consent-Vertragsänderung. Keine echten
+  Nutzer- oder CV-Daten verändert.

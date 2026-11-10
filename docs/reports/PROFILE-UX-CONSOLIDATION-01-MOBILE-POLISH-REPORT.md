@@ -1,9 +1,9 @@
 # PROFILE-UX-CONSOLIDATION-01 — MOBILE VISUAL REVIEW & POLISH
 
-**Status:** `PROFILE-UX-CONSOLIDATION-01 — MOBILE POLISH VERIFIED LOCAL / FEATURE BRANCH PUSHED`
+**Status:** `PROFILE-UX-CONSOLIDATION-01 — MERGED / PRODUCTION DEPLOYED / LIVE READ-ONLY VERIFIED`
 **Basis:** `origin/main` `3bfe391`
-**Branch:** `feature/profile-ux-consolidation-01-mobile-polish`
-**Feature-Branch gepusht auf explizite Operator-Anweisung. Kein Merge oder Deployment.**
+**Merge:** `main` `f0bbf1b`
+**Production:** `dpl_6T5qztbRD5XMcwcDFUpKVvNcStPP` · `https://www.mays-job-matcher.app` · Footer `f0bbf1b`
 
 ## 1. Tatsächlich reproduzierte Probleme
 
@@ -134,6 +134,7 @@ Messung:
 | Mobile Navigation E2E | **PASS** |
 | Bestehender Profil-UX-E2E | **PASS** |
 | E2E-Checks: kein Overflow, kein vorläufiges Null-Ergebnis, kein stale Session-Text | **PASS** |
+| Live Production Browser E2E auf `f0bbf1b` | **36 Checks PASS**, 0 Overflow |
 
 Der Browser-Harness nutzt eine synthetische OIDC-Session und gemockte
 `/api/ris/*`-Antworten. Es fanden keine echten RIS-, Cognito- oder
@@ -145,20 +146,23 @@ AWS-Aufrufe statt.
 - `839d8ea` — mobile Karten-, Badge-, Touch- und Legal-Optimierung
 - `1ddbcfc` — Full-Page-Screenshot-Artefakte entfernt
 - Abschlussbericht und Auditlog (HEAD)
+- Release: Fast-Forward-Merge auf `main` `f0bbf1b`, Vercel Production
+  `dpl_6T5qztbRD5XMcwcDFUpKVvNcStPP`, Footer `f0bbf1b`
 
 ## 6. Verbleibende Einschränkungen
 
-- Kein authentifizierter Live-RIS-E2E: Es war kein freigegebenes synthetisches
-  Testkonto verfügbar. Gemockte Browser-Tests sind kein Production-Nachweis.
+- Der authentifizierte **Read-only**-Live-Lauf ist auf `f0bbf1b` bestanden.
+  Ein echter RIS-Schreib-/Reload-E2E (synthetische CV-/Such-/ATS-Profile,
+  Consent-Wechsel, Cleanup) wurde nicht ausgeführt und wird nicht behauptet.
 - Keine Änderung an RIS, AWS, Terraform, Cognito, Consent-Verträgen oder
   produktiven Benutzerdaten.
-- Feature-Branch gepusht; kein Merge oder Production-Deployment.
 - Persistente Banner-/Consent-Texte bleiben an die bestehenden serverseitigen
   Verträge gebunden; nur die Anzeige wurde an die tatsächlichen Zustände
   angepasst.
 
 ## 7. Empfehlung
 
-**GO für lokale Abnahme und PR-Review.**
-**NO-GO für Production-E2E**, bis ein freigegebenes synthetisches RIS-Testkonto
-für den authentifizierten Lese-/Schreib-/Reload-Test vorliegt.
+**GO für die mobile Production-Auslieferung.**
+**NO-GO für den authentifizierten RIS-Write-E2E**, bis ein freigegebenes
+synthetisches Testkonto mit beiden Allowlists für den Schreib-/Reload-/Cleanup-
+Lauf vorliegt.
