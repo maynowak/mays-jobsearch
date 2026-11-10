@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { useLang } from '../i18n';
 
-export type MayContext = 'overview' | 'cv' | 'applications' | 'preferences' | 'settings';
+export type MayContext = 'overview' | 'cv' | 'applications' | 'preferences' | 'settings' | 'import';
 
 interface MayHelpProps {
   context: MayContext;
@@ -15,6 +15,7 @@ const CONTEXT_KEY: Record<MayContext, string> = {
   applications: 'dashboard.may.applications',
   preferences: 'dashboard.may.preferences',
   settings: 'dashboard.may.settings',
+  import: 'dashboard.may.import',
 };
 
 /**

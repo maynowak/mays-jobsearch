@@ -85,6 +85,7 @@ async function openBuilderFromSearch(page) {
   await page.goto(`${base}/search`, { waitUntil: "networkidle" });
   await page.getByRole("tab", { name: "Lebenslauf hochladen" }).click();
   await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
 }
 
@@ -93,6 +94,7 @@ async function openBuilderFromProfile(page) {
   await page.waitForSelector(".dashboard-v2");
   await page.getByRole("button", { name: "Lebenslauf" }).click();
   await page.getByRole("button", { name: "Lebenslauf erstellen", exact: true }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
 }
 
@@ -238,6 +240,7 @@ async function runGuest(browser) {
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("tab", { name: "Lebenslauf hochladen" }).click();
   await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await openSection(page, "Persönliche Angaben");
   if ((await builderDialog(page).getByLabel("Vollständiger Name").inputValue()) !== "") {
     throw new Error("CV builder draft persisted after reload");

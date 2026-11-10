@@ -119,6 +119,7 @@ async function assertNoOverflow(page, name) {
 
 async function createBuilderCv(page) {
   await page.getByRole("button", { name: "Lebenslauf erstellen", exact: true }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   await page.locator("summary").filter({ hasText: "Persönliche Angaben" }).click();
   await page.getByLabel("Vollständiger Name").fill("Ada Beispiel");
@@ -142,7 +143,11 @@ async function runViewport(browser, name, viewport) {
 
   // Keep the in-memory session repository alive: use the dashboard navigation
   // instead of a full page reload, which would correctly discard all profiles.
-  await page.getByRole("button", { name: "Bewerbungen", exact: true }).click();
+  if (viewport.width <= 767) {
+    await page.locator("#dashboard-section-select").selectOption("applications");
+  } else {
+    await page.getByRole("button", { name: "Bewerbungen", exact: true }).click();
+  }
   await page.locator(".applications-section").waitFor();
   await page.getByRole("button", { name: /Neue Bewerbung/ }).click();
   await page.getByLabel(/Stellenbeschreibung/).fill(description);

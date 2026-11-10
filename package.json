@@ -28,6 +28,7 @@
     "test:e2e:mobile-visual": "node tests/e2e/mobile-visual-review.mjs",
     "test:e2e:live-browser": "node tests/e2e/live-production-browser.mjs",
     "test:e2e:direct-search": "node tests/e2e/direct-search-from-profiles.mjs",
+    "test:e2e:cv-builder-import": "node tests/e2e/cv-builder-import-01a.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",

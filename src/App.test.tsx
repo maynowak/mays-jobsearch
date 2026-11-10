@@ -2798,3 +2798,58 @@ describe("ATS-SKILL-INPUT-POLISH-01: Skill-Eingabefeld verbreitert, Logik intakt
     expect(i18n).toContain('"cv.skillSelectPlaceholder": "Type a skill and press Enter"');
   });
 });
+
+describe("CV-BUILDER-IMPORT-01A", () => {
+  it("imports a local PDF into a new draft and saves only after explicit confirmation", async () => {
+    window.history.pushState({}, "", "/search");
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`Max Mustermann
+E-Mail: max@example.com
+Ort: Berlin
+
+Profil
+Senior Frontend Engineer
+
+Berufserfahrung
+Acme GmbH
+Senior Frontend Engineer
+Jan 2020 – Present
+- React
+
+Fähigkeiten
+React, TypeScript`);
+
+    renderApp();
+    fireEvent.click(await screen.findByRole("tab", { name: "Lebenslauf hochladen" }));
+    const create = await screen.findByRole("button", { name: /^Lebenslauf erstellen$/ });
+    fireEvent.click(create);
+    expect(await screen.findByRole("heading", { name: "Vorhandenen Lebenslauf importieren" })).toBeInTheDocument();
+
+    const file = new File(["synthetic"], "lebenslauf.pdf", { type: "application/pdf" });
+    const input = document.querySelector('.cv-import-modal input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    expect(await screen.findByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Vollständiger Name")).toHaveValue("Max Mustermann");
+    expect(screen.getByLabelText("Berufsbezeichnung")).toHaveValue("Senior Frontend Engineer");
+
+    fireEvent.click(screen.getByRole("button", { name: "Lebenslauf speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lebenslauf-Editor schließen" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).not.toBeInTheDocument()
+    );
+  });
+
+  it("cancels a local import without creating a builder profile", async () => {
+    window.history.pushState({}, "", "/search");
+    renderApp();
+    fireEvent.click(await screen.findByRole("tab", { name: "Lebenslauf hochladen" }));
+    const create = await screen.findByRole("button", { name: /^Lebenslauf erstellen$/ });
+    fireEvent.click(create);
+    await screen.findByRole("heading", { name: "Vorhandenen Lebenslauf importieren" });
+    fireEvent.click(screen.getByRole("button", { name: "Import abbrechen" }));
+    expect(screen.queryByText(/Import: lebenslauf/)).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).toBeNull();
+  });
+});

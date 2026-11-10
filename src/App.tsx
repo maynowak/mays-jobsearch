@@ -34,6 +34,7 @@ import DashboardV2CvSection from "./components/DashboardV2CvSection";
 import ApplicationsSection from "./components/ApplicationsSection";
 import CvDocumentList from "./components/CvDocumentList";
 import CvBuilderEditor from "./components/CvBuilderEditor";
+import CvBuilderImportDialog from "./components/CvBuilderImportDialog";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
@@ -239,6 +240,8 @@ export default function App() {
   const [cvBuilderDraft, setCvBuilderDraft] = useState<CvBuilderDraftV1>(createEmptyCvBuilderDraft);
   const [cvBuilderTemplate, setCvBuilderTemplate] = useState<CvBuilderTemplate>("classic");
   const [cvBuilderOpen, setCvBuilderOpen] = useState(false);
+  const [cvBuilderImportOpen, setCvBuilderImportOpen] = useState(false);
+  const [cvBuilderPendingName, setCvBuilderPendingName] = useState("");
   const [cvBuilderDirty, setCvBuilderDirty] = useState(false);
   const [cvBuilderSaving, setCvBuilderSaving] = useState(false);
   const [cvBuilderSaveError, setCvBuilderSaveError] = useState("");
@@ -453,6 +456,8 @@ export default function App() {
       setCvBuilderDraft(createEmptyCvBuilderDraft());
       setCvBuilderTemplate("classic");
       setCvBuilderOpen(false);
+      setCvBuilderImportOpen(false);
+      setCvBuilderPendingName("");
       setCvBuilderDirty(false);
       setCvBuilderSaving(false);
       setCvBuilderSaveError("");
@@ -1252,7 +1257,17 @@ export default function App() {
     return profiles;
   };
 
+  const handleOpenCvBuilderImport = () => {
+    if (hasCvBuilderContent(cvBuilderDraft) && !cvBuilderProfileId) {
+      setStatus({ type: "error", message: t("cvBuilder.import.existingDraft") });
+      return;
+    }
+    setCvBuilderImportOpen(true);
+  };
+
   const handleCreateCvProfile = () => {
+    setCvBuilderImportOpen(false);
+    setCvBuilderPendingName("");
     const name = t("cvBuilder.profiles.defaultName", { count: cvProfiles.length + 1 });
     try {
       const profile = cvProfileRepositoryRef.current?.create({ name });
@@ -1305,16 +1320,67 @@ export default function App() {
     setCvBuilderSaveError("");
   };
 
-  const handleSaveCvProfile = async () => {
-    if (!cvBuilderProfileId || !cvProfileRepositoryRef.current) return;
-    const current = cvProfileRepositoryRef.current.get(cvBuilderProfileId);
-    if (!current) {
-      setCvBuilderSaveError(t("cvBuilder.profiles.error"));
-      throw new Error("CV profile was not found");
+  const handleImportedCvBuilderDraft = (draft: CvBuilderDraftV1, sourceName: string) => {
+    setCvBuilderImportOpen(false);
+    setCvBuilderProfileId(null);
+    setCvBuilderPendingName(
+      t("cvBuilder.import.defaultName", { name: sourceName || t("cvBuilder.title") })
+    );
+    setCvBuilderDraft(cloneCvBuilderDraft(draft));
+    setCvBuilderTemplate("classic");
+    setCvBuilderOpen(true);
+    setCvBuilderDirty(true);
+    setCvBuilderSaveError("");
+  };
+
+  const handleDownloadRisForImport = async (cv: PersistentCv): Promise<File> => {
+    const requestEpoch = sessionEpochRef.current;
+    if (!persistentCvStorage.enabled) {
+      const error = new Error("session_ended") as Error & { code: string };
+      error.code = "session_ended";
+      throw error;
     }
+    try {
+      const file = await downloadCvFile(cvStorageAccessToken, cv.cvId, cv.filename);
+      if (sessionEpochRef.current !== requestEpoch) {
+        const error = new Error("session_ended") as Error & { code: string };
+        error.code = "session_ended";
+        throw error;
+      }
+      return file;
+    } catch (err) {
+      if ((err as { code?: string })?.code === "session_ended") throw err;
+      const error = new Error("download_failed") as Error & { code: string };
+      error.code = "download_failed";
+      throw error;
+    }
+  };
+
+  const handleSaveCvProfile = async () => {
+    if (!cvProfileRepositoryRef.current) return;
     setCvBuilderSaving(true);
     setCvBuilderSaveError("");
     try {
+      if (!cvBuilderProfileId) {
+        const created = cvProfileRepositoryRef.current.create({
+          name: cvBuilderPendingName.trim() ||
+            t("cvBuilder.profiles.defaultName", { count: cvProfiles.length + 1 }),
+          cvData: cvBuilderDraft,
+          template: cvBuilderTemplate,
+        });
+        refreshCvProfiles();
+        setCvBuilderProfileId(created.cvId);
+        setCvBuilderPendingName("");
+        setCvBuilderDraft(cloneCvBuilderDraft(created.cvData));
+        setCvBuilderTemplate(created.template);
+        setCvBuilderDirty(false);
+        return;
+      }
+      const current = cvProfileRepositoryRef.current.get(cvBuilderProfileId);
+      if (!current) {
+        setCvBuilderSaveError(t("cvBuilder.profiles.error"));
+        throw new Error("CV profile was not found");
+      }
       const updated = cvProfileRepositoryRef.current.update(
         current.cvId,
         current.version,
@@ -2459,7 +2525,7 @@ export default function App() {
         hasJobs={hasFoundJobs}
         rematch={canRematch}
         onWorkflowStart={handleCvUploadStart}
-        onOpenBuilder={() => setCvBuilderOpen(true)}
+        onOpenBuilder={handleOpenCvBuilderImport}
         openCvUpload={new URLSearchParams(window.location.search).get("cv") === "upload"}
         manualProfiles={manualProfiles}
         authenticated={isAuth && identityVerified}
@@ -3724,6 +3790,10 @@ export default function App() {
       onClose={() => {
         setCvBuilderOpen(false);
         setCvBuilderDirty(false);
+        if (!cvBuilderProfileId) {
+          setCvBuilderDraft(createEmptyCvBuilderDraft());
+          setCvBuilderPendingName("");
+        }
       }}
       initialTemplate={cvBuilderTemplate}
       onTemplateChange={(template) => {
@@ -3736,6 +3806,26 @@ export default function App() {
       saveError={cvBuilderSaveError}
     />
   ) : null;
+
+  const cvBuilderImportNode = cvBuilderImportOpen ? (
+    <CvBuilderImportDialog
+      open={cvBuilderImportOpen}
+      onClose={() => setCvBuilderImportOpen(false)}
+      onCreateEmpty={handleCreateCvProfile}
+      risAvailable={persistentCvStorage.enabled}
+      risLoading={persistentCvStorage.loading}
+      persistentCvs={persistentCvStorage.documents.filter((cv) => cv.processingStatus === "ready")}
+      onDownloadRis={handleDownloadRisForImport}
+      onImported={handleImportedCvBuilderDraft}
+    />
+  ) : null;
+
+  const cvBuilderUi = (
+    <>
+      {cvBuilderNode}
+      {cvBuilderImportNode}
+    </>
+  );
 
   // CV-PROFILE-LISTS-01: Zum Profil-Overlay gehoeriges Dokument aufloesen
   const profilesDoc = profilesDocId
@@ -3759,7 +3849,7 @@ export default function App() {
       onRemoveData={handleCvRemoveData}
       onSelectSearchProfile={handleDashboardSearchProfileSelect}
       onSelectAtsProfile={handleDashboardAtsProfileSelect}
-      onOpenCvBuilder={handleCreateCvProfile}
+      onOpenCvBuilder={handleOpenCvBuilderImport}
       onProcessPersistentCv={handleProcessPersistentCv}
       cvProfiles={cvProfiles}
       activeCvProfileId={cvBuilderProfileId}
@@ -3768,7 +3858,7 @@ export default function App() {
         const reference = application.documents.cvReference;
         return reference?.cvSource === "builder" ? [reference.cvId] : [];
       })}
-      onCreateCvProfile={handleCreateCvProfile}
+      onCreateCvProfile={handleOpenCvBuilderImport}
       onAdoptCvDraft={handleAdoptCvDraft}
       onEditCvProfile={handleEditCvProfile}
       onDuplicateCvProfile={handleDuplicateCvProfile}
@@ -3949,7 +4039,7 @@ export default function App() {
           />
         </main>
         {cvProcessingUI}
-        {cvBuilderNode}
+        {cvBuilderUi}
         {letterModalNode}
         <Footer />
       </ErrorBoundary>
@@ -3976,7 +4066,7 @@ export default function App() {
           />
         </main>
         {cvProcessingUI}
-        {cvBuilderNode}
+        {cvBuilderUi}
         {letterModalNode}
         <Footer />
       </ErrorBoundary>
@@ -4003,7 +4093,7 @@ export default function App() {
           />
         </main>
         {cvProcessingUI}
-        {cvBuilderNode}
+        {cvBuilderUi}
         {letterModalNode}
         <Footer />
       </ErrorBoundary>
@@ -4205,7 +4295,7 @@ export default function App() {
               }
             />
           )}
-          {cvBuilderNode}
+          {cvBuilderUi}
           <Footer />
           {/* SEARCH-WORLD-09: Halbrundes Podium als letzter visueller Abschluss.
               Das BESTEHENDE Boden-Element wird hier weiterverwendet und nur

@@ -57,6 +57,7 @@ describe("CV-BUILDER-01A auth session isolation", () => {
     const view = renderApp();
     fireEvent.click(await screen.findByRole("tab", { name: "Lebenslauf hochladen" }));
     fireEvent.click(screen.getByRole("button", { name: "Lebenslauf erstellen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Leeren Lebenslauf erstellen" }));
     await screen.findByRole("heading", { name: "Strukturierter Lebenslauf-Editor" });
     fireEvent.click(screen.getByText("Persönliche Angaben", { selector: "summary span" }));
     fireEvent.change(screen.getByLabelText("Vollständiger Name"), {
@@ -78,6 +79,7 @@ describe("CV-BUILDER-01A auth session isolation", () => {
     );
     fireEvent.click(screen.getByRole("tab", { name: "Lebenslauf hochladen" }));
     fireEvent.click(screen.getByRole("button", { name: "Lebenslauf erstellen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Leeren Lebenslauf erstellen" }));
     await screen.findByRole("heading", { name: "Strukturierter Lebenslauf-Editor" });
     fireEvent.click(screen.getByText("Persönliche Angaben", { selector: "summary span" }));
     expect(screen.getByLabelText("Vollständiger Name")).toHaveValue("");

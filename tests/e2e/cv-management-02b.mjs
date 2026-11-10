@@ -103,6 +103,7 @@ async function assertNoOverflow(page, name) {
 
 async function openEditor(page, name) {
   await page.getByRole("button", { name: "Lebenslauf erstellen", exact: true }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   await page.locator("summary").filter({ hasText: "Persönliche Angaben" }).click();
   await page.getByLabel("Vollständiger Name").fill(name);
@@ -135,6 +136,7 @@ async function runViewport(browser, name, viewport) {
   await page.getByText("AWS Cloud Engineer").waitFor();
 
   await page.getByRole("button", { name: /Neuen Lebenslauf erstellen/ }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   await page.getByRole("button", { name: "Kompakt" }).click();
   await saveAndClose(page);

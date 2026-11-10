@@ -122,6 +122,7 @@ async function openBuilder(page) {
   await page.goto(`${base}/search`, { waitUntil: "networkidle" });
   await page.getByRole("tab", { name: "Lebenslauf hochladen" }).click();
   await page.getByRole("button", { name: "Lebenslauf erstellen" }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
 }
 
@@ -323,6 +324,7 @@ async function runEnglish(browser) {
   await page.goto(`${base}/search`, { waitUntil: "networkidle" });
   await page.getByRole("tab", { name: "Upload CV" }).click();
   await page.getByRole("button", { name: "Create CV" }).click();
+  await page.getByRole("button", { name: "Create empty CV" }).click();
   await page.getByRole("heading", { name: "Structured CV editor" }).waitFor();
   const englishDialog = page.getByRole("dialog", { name: "Structured CV editor" });
   await englishDialog.locator("summary span").filter({ hasText: "Personal details" }).first().click();
@@ -356,6 +358,7 @@ async function runAuthenticated(browser) {
   await page.waitForSelector(".dashboard-v2");
   await page.getByRole("button", { name: "Lebenslauf" }).click();
   await page.getByRole("button", { name: "Lebenslauf erstellen", exact: true }).click();
+  await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   await openSection(page, "Persönliche Angaben");
   await dialog(page).getByLabel("Vollständiger Name").fill("Auth Nutzer");
