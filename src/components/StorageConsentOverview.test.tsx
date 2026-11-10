@@ -77,6 +77,33 @@ describe("StorageConsentOverview", () => {
     expect(screen.queryByText("Vorbereitung")).toBeNull();
   });
 
+  it("shows durable CV and search-profile storage instead of a session-only claim", async () => {
+    fetchMock.mockResolvedValue(response(grantedState()));
+
+    render(
+      <LangProvider>
+        <StorageConsentOverview
+          identityVerified
+          liveConsentEnabled
+          onOpenSettings={vi.fn()}
+          cvStorageEnabled
+          cvConsentStatus="GRANTED"
+          searchProfileStorageEnabled
+          searchProfileConsentStatus="GRANTED"
+        />
+      </LangProvider>
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Dauerhaft über RIS gespeichert: Bewerbungen, Lebensläufe und Such- und ATS-Profile. Nicht genannte Bereiche bleiben sitzungsbezogen."
+        )
+      ).toBeInTheDocument()
+    );
+    expect(screen.queryByText(/Suchprofile bleiben vorerst sitzungsbezogen/)).toBeNull();
+  });
+
   it("keeps the preparation card when live consent is not enabled", () => {
     render(
       <LangProvider>

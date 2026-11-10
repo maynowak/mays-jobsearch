@@ -1,0 +1,5341 @@
+{
+  "phase": "before",
+  "generatedAt": "2026-11-10T09:24:38.320Z",
+  "syntheticSession": true,
+  "realRisCalls": false,
+  "results": [
+    {
+      "width": 320,
+      "view": "landing",
+      "screenshot": "landing-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1686,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 10,
+          "y": 255,
+          "width": 301,
+          "height": 132
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1085,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1250,
+          "width": 246,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 208,
+          "y": 359,
+          "width": 22,
+          "height": 22
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "view": "login",
+      "screenshot": "login-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 844,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 45,
+          "y": 163,
+          "width": 230,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "overview",
+      "screenshot": "overview-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1617,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 27,
+          "y": 456,
+          "width": 111,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 27,
+          "y": 777,
+          "width": 166,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 27,
+          "y": 1051,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 27,
+          "y": 1201,
+          "width": 149,
+          "height": 54
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 153,
+          "y": 488,
+          "width": 89,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "view": "profile",
+      "screenshot": "profile-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1617,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 27,
+          "y": 456,
+          "width": 111,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 27,
+          "y": 777,
+          "width": 166,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 27,
+          "y": 1051,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 27,
+          "y": 1201,
+          "width": 149,
+          "height": 54
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 153,
+          "y": 488,
+          "width": 89,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "view": "cv-session",
+      "screenshot": "cv-session-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2104,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 176,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1078,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 31,
+          "y": 1452,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 31,
+          "y": 591,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "PDF auswählen",
+          "x": 91,
+          "y": 1606,
+          "width": 137,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2908,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 184,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1188,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 31,
+          "y": 1546,
+          "width": 200,
+          "height": 48
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 31,
+          "y": 591,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 31,
+          "y": 1915,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 48,
+          "y": 2449,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 48,
+          "y": 2491,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 185,
+          "y": 2494,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2908,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 184,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1188,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 31,
+          "y": 1546,
+          "width": 200,
+          "height": 48
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 17,
+          "y": 17,
+          "width": 286,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 31,
+          "y": 591,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 31,
+          "y": 1915,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 48,
+          "y": 2449,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 48,
+          "y": 2491,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 185,
+          "y": 2494,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Schließen",
+          "x": 17,
+          "y": 132,
+          "width": 100,
+          "height": 34
+        },
+        {
+          "label": "+ Neues Suchprofil erstellen",
+          "x": 17,
+          "y": 277,
+          "width": 286,
+          "height": 36
+        },
+        {
+          "label": "ATS-Profile ausblenden",
+          "x": 34,
+          "y": 684,
+          "width": 191,
+          "height": 34
+        },
+        {
+          "label": "+ ATS-Profil",
+          "x": 34,
+          "y": 726,
+          "width": 113,
+          "height": 34
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 155,
+          "y": 726,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 34,
+          "y": 768,
+          "width": 92,
+          "height": 34
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 62,
+          "y": 1227,
+          "width": 106,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "view": "applications",
+      "screenshot": "applications-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1488,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 27,
+          "y": 456,
+          "width": 267,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 46,
+          "y": 892,
+          "width": 229,
+          "height": 56
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "preferences",
+      "screenshot": "preferences-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2146,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 31,
+          "y": 460,
+          "width": 159,
+          "height": 54
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 48,
+          "y": 1290,
+          "width": 225,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Einwilligung widerrufen",
+          "x": 31,
+          "y": 1117,
+          "width": 192,
+          "height": 34
+        },
+        {
+          "label": "Neues Suchprofil",
+          "x": 31,
+          "y": 1159,
+          "width": 158,
+          "height": 36
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 48,
+          "y": 1663,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Duplizieren",
+          "x": 162,
+          "y": 1663,
+          "width": 109,
+          "height": 34
+        },
+        {
+          "label": "Damit suchen",
+          "x": 48,
+          "y": 1705,
+          "width": 134,
+          "height": 36
+        },
+        {
+          "label": "Löschen",
+          "x": 48,
+          "y": 1749,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "view": "settings",
+      "screenshot": "settings-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 5434,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 27,
+          "y": 456,
+          "width": 267,
+          "height": 72
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 27,
+          "y": 820,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 27,
+          "y": 1239,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 27,
+          "y": 4143,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 27,
+          "y": 4310,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 27,
+          "y": 4498,
+          "width": 267,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "privacy",
+      "screenshot": "privacy-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 12235,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 3,
+          "y": 84,
+          "width": 314,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 3,
+          "y": 140,
+          "width": 314,
+          "height": 60
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 3,
+          "y": 233,
+          "width": 314,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 3,
+          "y": 431,
+          "width": 314,
+          "height": 45
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 3,
+          "y": 1078,
+          "width": 314,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 3,
+          "y": 1728,
+          "width": 314,
+          "height": 45
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 3,
+          "y": 2200,
+          "width": 314,
+          "height": 68
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 3,
+          "y": 2895,
+          "width": 314,
+          "height": 45
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "menu",
+      "screenshot": "menu-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1686,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 10,
+          "y": 255,
+          "width": 301,
+          "height": 132
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1085,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1250,
+          "width": 246,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 208,
+          "y": 359,
+          "width": 22,
+          "height": 22
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "landing",
+      "screenshot": "landing-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1588,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 12,
+          "y": 269,
+          "width": 367,
+          "height": 132
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1061,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1202,
+          "width": 316,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 243,
+          "y": 373,
+          "width": 22,
+          "height": 22
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "login",
+      "screenshot": "login-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 844,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 45,
+          "y": 163,
+          "width": 300,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "overview",
+      "screenshot": "overview-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1502,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 29,
+          "y": 432,
+          "width": 140,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 29,
+          "y": 753,
+          "width": 196,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 29,
+          "y": 987,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 29,
+          "y": 1137,
+          "width": 202,
+          "height": 54
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 184,
+          "y": 464,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 29,
+          "y": 899,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "profile",
+      "screenshot": "profile-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1502,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 29,
+          "y": 432,
+          "width": 140,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 29,
+          "y": 753,
+          "width": 196,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 29,
+          "y": 987,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 29,
+          "y": 1137,
+          "width": 202,
+          "height": 54
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 184,
+          "y": 464,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 29,
+          "y": 899,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "cv-session",
+      "screenshot": "cv-session-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1913,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 242,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 988,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 33,
+          "y": 1311,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 33,
+          "y": 543,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "PDF auswählen",
+          "x": 126,
+          "y": 1465,
+          "width": 137,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2568,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 250,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 1061,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 33,
+          "y": 1367,
+          "width": 266,
+          "height": 48
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 33,
+          "y": 543,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 46,
+          "y": 1623,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 33,
+          "y": 1703,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 174,
+          "y": 2155,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 50,
+          "y": 2202,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 187,
+          "y": 2205,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2568,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 250,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 1061,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 33,
+          "y": 1367,
+          "width": 266,
+          "height": 48
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 17,
+          "y": 17,
+          "width": 356,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 33,
+          "y": 543,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 46,
+          "y": 1623,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 33,
+          "y": 1703,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 174,
+          "y": 2155,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 50,
+          "y": 2202,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 187,
+          "y": 2205,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Schließen",
+          "x": 17,
+          "y": 115,
+          "width": 100,
+          "height": 34
+        },
+        {
+          "label": "+ Neues Suchprofil erstellen",
+          "x": 17,
+          "y": 260,
+          "width": 356,
+          "height": 36
+        },
+        {
+          "label": "ATS-Profile ausblenden",
+          "x": 34,
+          "y": 646,
+          "width": 191,
+          "height": 34
+        },
+        {
+          "label": "+ ATS-Profil",
+          "x": 233,
+          "y": 646,
+          "width": 113,
+          "height": 34
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 34,
+          "y": 688,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 148,
+          "y": 688,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "applications",
+      "screenshot": "applications-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1316,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 29,
+          "y": 432,
+          "width": 333,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 48,
+          "y": 847,
+          "width": 295,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "preferences",
+      "screenshot": "preferences-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1809,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 33,
+          "y": 436,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 50,
+          "y": 1108,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Einwilligung widerrufen",
+          "x": 33,
+          "y": 952,
+          "width": 192,
+          "height": 34
+        },
+        {
+          "label": "Neues Suchprofil",
+          "x": 33,
+          "y": 994,
+          "width": 158,
+          "height": 36
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 50,
+          "y": 1418,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Duplizieren",
+          "x": 164,
+          "y": 1418,
+          "width": 109,
+          "height": 34
+        },
+        {
+          "label": "Damit suchen",
+          "x": 50,
+          "y": 1460,
+          "width": 134,
+          "height": 36
+        },
+        {
+          "label": "Löschen",
+          "x": 192,
+          "y": 1461,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "view": "settings",
+      "screenshot": "settings-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 4588,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 29,
+          "y": 432,
+          "width": 333,
+          "height": 72
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 29,
+          "y": 773,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 29,
+          "y": 1192,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 29,
+          "y": 3506,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 29,
+          "y": 3651,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 29,
+          "y": 3817,
+          "width": 333,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "privacy",
+      "screenshot": "privacy-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 10043,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 3,
+          "y": 84,
+          "width": 384,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 3,
+          "y": 140,
+          "width": 384,
+          "height": 60
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 3,
+          "y": 233,
+          "width": 384,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 3,
+          "y": 406,
+          "width": 384,
+          "height": 45
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 3,
+          "y": 978,
+          "width": 384,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 3,
+          "y": 1502,
+          "width": 384,
+          "height": 45
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 3,
+          "y": 1899,
+          "width": 384,
+          "height": 45
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 3,
+          "y": 2471,
+          "width": 384,
+          "height": 23
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "menu",
+      "screenshot": "menu-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1588,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 12,
+          "y": 269,
+          "width": 367,
+          "height": 132
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1061,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1202,
+          "width": 316,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 243,
+          "y": 373,
+          "width": 22,
+          "height": 22
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "landing",
+      "screenshot": "landing-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1564,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 13,
+          "y": 269,
+          "width": 404,
+          "height": 132
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 38,
+          "y": 897,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 38,
+          "y": 1061,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 38,
+          "y": 1202,
+          "width": 354,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 263,
+          "y": 373,
+          "width": 22,
+          "height": 22
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "login",
+      "screenshot": "login-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 844,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 45,
+          "y": 163,
+          "width": 340,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "overview",
+      "screenshot": "overview-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1475,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 30,
+          "y": 432,
+          "width": 156,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 30,
+          "y": 753,
+          "width": 221,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 30,
+          "y": 987,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 30,
+          "y": 1137,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 202,
+          "y": 464,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 30,
+          "y": 899,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "profile",
+      "screenshot": "profile-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1475,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 30,
+          "y": 432,
+          "width": 156,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 30,
+          "y": 753,
+          "width": 221,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 30,
+          "y": 987,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 30,
+          "y": 1137,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 202,
+          "y": 464,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 30,
+          "y": 899,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "cv-session",
+      "screenshot": "cv-session-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1820,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 280,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 943,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 34,
+          "y": 1266,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 34,
+          "y": 543,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "PDF auswählen",
+          "x": 146,
+          "y": 1396,
+          "width": 137,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2503,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 287,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 1037,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 34,
+          "y": 1343,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 34,
+          "y": 543,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 47,
+          "y": 1575,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 34,
+          "y": 1655,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 175,
+          "y": 2090,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 51,
+          "y": 2137,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 188,
+          "y": 2140,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2503,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 287,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 1037,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 34,
+          "y": 1343,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 17,
+          "y": 17,
+          "width": 396,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 34,
+          "y": 543,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 47,
+          "y": 1575,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 34,
+          "y": 1655,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 175,
+          "y": 2090,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 51,
+          "y": 2137,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 188,
+          "y": 2140,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Schließen",
+          "x": 17,
+          "y": 115,
+          "width": 100,
+          "height": 34
+        },
+        {
+          "label": "+ Neues Suchprofil erstellen",
+          "x": 17,
+          "y": 260,
+          "width": 396,
+          "height": 36
+        },
+        {
+          "label": "ATS-Profile ausblenden",
+          "x": 34,
+          "y": 610,
+          "width": 191,
+          "height": 34
+        },
+        {
+          "label": "+ ATS-Profil",
+          "x": 233,
+          "y": 610,
+          "width": 113,
+          "height": 34
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 34,
+          "y": 652,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 148,
+          "y": 652,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "applications",
+      "screenshot": "applications-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1292,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 30,
+          "y": 432,
+          "width": 370,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 49,
+          "y": 847,
+          "width": 332,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "preferences",
+      "screenshot": "preferences-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1740,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 34,
+          "y": 436,
+          "width": 263,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 51,
+          "y": 1060,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Einwilligung widerrufen",
+          "x": 34,
+          "y": 904,
+          "width": 192,
+          "height": 34
+        },
+        {
+          "label": "Neues Suchprofil",
+          "x": 34,
+          "y": 946,
+          "width": 158,
+          "height": 36
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 51,
+          "y": 1349,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Duplizieren",
+          "x": 165,
+          "y": 1349,
+          "width": 109,
+          "height": 34
+        },
+        {
+          "label": "Damit suchen",
+          "x": 51,
+          "y": 1391,
+          "width": 134,
+          "height": 36
+        },
+        {
+          "label": "Löschen",
+          "x": 193,
+          "y": 1392,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "view": "settings",
+      "screenshot": "settings-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 4250,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 30,
+          "y": 432,
+          "width": 370,
+          "height": 72
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 30,
+          "y": 750,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 30,
+          "y": 1169,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 30,
+          "y": 3233,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 30,
+          "y": 3356,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 30,
+          "y": 3501,
+          "width": 370,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "privacy",
+      "screenshot": "privacy-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 9095,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 3,
+          "y": 84,
+          "width": 424,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 3,
+          "y": 140,
+          "width": 424,
+          "height": 60
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 3,
+          "y": 233,
+          "width": 424,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 3,
+          "y": 406,
+          "width": 424,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 3,
+          "y": 880,
+          "width": 424,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 3,
+          "y": 1354,
+          "width": 424,
+          "height": 45
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 3,
+          "y": 1700,
+          "width": 424,
+          "height": 45
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 3,
+          "y": 2222,
+          "width": 424,
+          "height": 23
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "menu",
+      "screenshot": "menu-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1564,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 13,
+          "y": 269,
+          "width": 404,
+          "height": 132
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 38,
+          "y": 897,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 38,
+          "y": 1061,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 38,
+          "y": 1202,
+          "width": 354,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 263,
+          "y": 373,
+          "width": 22,
+          "height": 22
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "landing",
+      "screenshot": "landing-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1383,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 31,
+          "y": 246,
+          "width": 707,
+          "height": 88
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 52,
+          "y": 797,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 52,
+          "y": 938,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 52,
+          "y": 1054,
+          "width": 665,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 429,
+          "y": 301,
+          "width": 32,
+          "height": 32
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "login",
+      "screenshot": "login-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 900,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 141,
+          "y": 187,
+          "width": 486,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "overview",
+      "screenshot": "overview-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1352,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 285,
+          "y": 357,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 285,
+          "y": 569,
+          "width": 260,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 285,
+          "y": 833,
+          "width": 60,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 285,
+          "y": 1039,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 624,
+          "y": 357,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 285,
+          "y": 715,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "profile",
+      "screenshot": "profile-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1352,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 285,
+          "y": 357,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 285,
+          "y": 569,
+          "width": 260,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 285,
+          "y": 833,
+          "width": 60,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 285,
+          "y": 1039,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Logout",
+          "x": 624,
+          "y": 357,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 285,
+          "y": 715,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "cv-session",
+      "screenshot": "cv-session-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1624,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 367,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 808,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 274,
+          "y": 1110,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 274,
+          "y": 429,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "PDF auswählen",
+          "x": 430,
+          "y": 1240,
+          "width": 137,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2121,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 375,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 860,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 274,
+          "y": 1145,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 274,
+          "y": 429,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 287,
+          "y": 1360,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 274,
+          "y": 1440,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 415,
+          "y": 1754,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 565,
+          "y": 1754,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 679,
+          "y": 1801,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2121,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 375,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 860,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 274,
+          "y": 1145,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 37,
+          "y": 66,
+          "width": 494,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 274,
+          "y": 429,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 287,
+          "y": 1360,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 274,
+          "y": 1440,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 415,
+          "y": 1754,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 565,
+          "y": 1754,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 679,
+          "y": 1801,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Schließen",
+          "x": 632,
+          "y": 66,
+          "width": 100,
+          "height": 34
+        },
+        {
+          "label": "+ Neues Suchprofil erstellen",
+          "x": 37,
+          "y": 225,
+          "width": 234,
+          "height": 36
+        },
+        {
+          "label": "ATS-Profile ausblenden",
+          "x": 54,
+          "y": 469,
+          "width": 191,
+          "height": 34
+        },
+        {
+          "label": "+ ATS-Profil",
+          "x": 253,
+          "y": 469,
+          "width": 113,
+          "height": 34
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 374,
+          "y": 469,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 488,
+          "y": 469,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "applications",
+      "screenshot": "applications-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1604,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 33,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 39,
+          "y": 357,
+          "width": 689,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 33,
+          "y": 896,
+          "width": 703,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 52,
+          "y": 1214,
+          "width": 665,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "preferences",
+      "screenshot": "preferences-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1527,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 274,
+          "y": 346,
+          "width": 345,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 291,
+          "y": 908,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Einwilligung widerrufen",
+          "x": 274,
+          "y": 752,
+          "width": 192,
+          "height": 34
+        },
+        {
+          "label": "Neues Suchprofil",
+          "x": 274,
+          "y": 794,
+          "width": 158,
+          "height": 36
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 291,
+          "y": 1177,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Duplizieren",
+          "x": 405,
+          "y": 1177,
+          "width": 109,
+          "height": 34
+        },
+        {
+          "label": "Damit suchen",
+          "x": 523,
+          "y": 1176,
+          "width": 134,
+          "height": 36
+        },
+        {
+          "label": "Löschen",
+          "x": 291,
+          "y": 1220,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "view": "settings",
+      "screenshot": "settings-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 3718,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 285,
+          "y": 357,
+          "width": 402,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 285,
+          "y": 638,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 285,
+          "y": 943,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 285,
+          "y": 2770,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 285,
+          "y": 2893,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 285,
+          "y": 3037,
+          "width": 428,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "privacy",
+      "screenshot": "privacy-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 5383,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 3,
+          "y": 84,
+          "width": 762,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 3,
+          "y": 140,
+          "width": 762,
+          "height": 30
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 3,
+          "y": 203,
+          "width": 762,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 3,
+          "y": 376,
+          "width": 762,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 3,
+          "y": 649,
+          "width": 762,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 3,
+          "y": 923,
+          "width": 762,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 3,
+          "y": 1121,
+          "width": 762,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 3,
+          "y": 1395,
+          "width": 762,
+          "height": 23
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "menu",
+      "screenshot": "menu-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1383,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 31,
+          "y": 246,
+          "width": 707,
+          "height": 88
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 52,
+          "y": 797,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 52,
+          "y": 938,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 52,
+          "y": 1054,
+          "width": 665,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 429,
+          "y": 301,
+          "width": 32,
+          "height": 32
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "landing",
+      "screenshot": "landing-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1178,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 152,
+          "y": 209,
+          "width": 720,
+          "height": 161
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 62,
+          "y": 810,
+          "width": 261,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 381,
+          "y": 810,
+          "width": 261,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 701,
+          "y": 810,
+          "width": 261,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 572,
+          "y": 333,
+          "width": 32,
+          "height": 32
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "login",
+      "screenshot": "login-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 900,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 269,
+          "y": 211,
+          "width": 486,
+          "height": 36
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "overview",
+      "screenshot": "overview-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1239,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 312,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 312,
+          "y": 549,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 312,
+          "y": 764,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 312,
+          "y": 946,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Logout",
+          "x": 872,
+          "y": 358,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 312,
+          "y": 644,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "profile",
+      "screenshot": "profile-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1239,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 312,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 312,
+          "y": 549,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 312,
+          "y": 764,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 312,
+          "y": 946,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Logout",
+          "x": 872,
+          "y": 358,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 312,
+          "y": 644,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "cv-session",
+      "screenshot": "cv-session-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1512,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 565,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 763,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 300,
+          "y": 1020,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 300,
+          "y": 429,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Nur für diese Sitzung",
+          "x": 304,
+          "y": 661,
+          "width": 193,
+          "height": 38
+        },
+        {
+          "label": "Dauerhaft in meinem Konto speichern",
+          "x": 501,
+          "y": 661,
+          "width": 330,
+          "height": 38
+        },
+        {
+          "label": "PDF auswählen",
+          "x": 568,
+          "y": 1150,
+          "width": 137,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1882,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 795,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 300,
+          "y": 1035,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 300,
+          "y": 405,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Nur für diese Sitzung",
+          "x": 304,
+          "y": 693,
+          "width": 193,
+          "height": 38
+        },
+        {
+          "label": "Dauerhaft in meinem Konto speichern",
+          "x": 501,
+          "y": 693,
+          "width": 330,
+          "height": 38
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 313,
+          "y": 1234,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 300,
+          "y": 1314,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 441,
+          "y": 1571,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 591,
+          "y": 1571,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 927,
+          "y": 1574,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1882,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 795,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 300,
+          "y": 1035,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 43,
+          "y": 66,
+          "width": 494,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 300,
+          "y": 405,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Nur für diese Sitzung",
+          "x": 304,
+          "y": 693,
+          "width": 193,
+          "height": 38
+        },
+        {
+          "label": "Dauerhaft in meinem Konto speichern",
+          "x": 501,
+          "y": 693,
+          "width": 330,
+          "height": 38
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 313,
+          "y": 1234,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 300,
+          "y": 1314,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 441,
+          "y": 1571,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 591,
+          "y": 1571,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 927,
+          "y": 1574,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Schließen",
+          "x": 881,
+          "y": 66,
+          "width": 100,
+          "height": 34
+        },
+        {
+          "label": "+ Neues Suchprofil erstellen",
+          "x": 747,
+          "y": 152,
+          "width": 234,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "applications",
+      "screenshot": "applications-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1115,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 43,
+          "y": 358,
+          "width": 134,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 255,
+          "y": 350,
+          "width": 734,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 274,
+          "y": 668,
+          "width": 696,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "preferences",
+      "screenshot": "preferences-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1325,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 300,
+          "y": 346,
+          "width": 531,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 317,
+          "y": 823,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Einwilligung widerrufen",
+          "x": 300,
+          "y": 683,
+          "width": 192,
+          "height": 34
+        },
+        {
+          "label": "Neues Suchprofil",
+          "x": 300,
+          "y": 725,
+          "width": 158,
+          "height": 36
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 317,
+          "y": 1039,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Duplizieren",
+          "x": 432,
+          "y": 1039,
+          "width": 109,
+          "height": 34
+        },
+        {
+          "label": "Damit suchen",
+          "x": 549,
+          "y": 1038,
+          "width": 134,
+          "height": 36
+        },
+        {
+          "label": "Löschen",
+          "x": 691,
+          "y": 1039,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "settings",
+      "screenshot": "settings-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2860,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 312,
+          "y": 358,
+          "width": 402,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 312,
+          "y": 572,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 312,
+          "y": 855,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 312,
+          "y": 2083,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 312,
+          "y": 2184,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 312,
+          "y": 2286,
+          "width": 648,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "view": "privacy",
+      "screenshot": "privacy-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 5161,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 105,
+          "y": 84,
+          "width": 814,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 105,
+          "y": 140,
+          "width": 814,
+          "height": 30
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 105,
+          "y": 203,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 105,
+          "y": 376,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 105,
+          "y": 649,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 105,
+          "y": 898,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 105,
+          "y": 1071,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 105,
+          "y": 1344,
+          "width": 814,
+          "height": 23
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 473,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 512,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "landing",
+      "screenshot": "landing-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1180,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 360,
+          "y": 177,
+          "width": 720,
+          "height": 227
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 201,
+          "y": 823,
+          "width": 307,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 566,
+          "y": 823,
+          "width": 307,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 932,
+          "y": 823,
+          "width": 307,
+          "height": 26
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Mit KI pulsieren, Job-Stream aktualisieren",
+          "x": 805,
+          "y": 357,
+          "width": 32,
+          "height": 32
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "login",
+      "screenshot": "login-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 900,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 477,
+          "y": 211,
+          "width": 486,
+          "height": 36
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 21,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "overview",
+      "screenshot": "overview-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1239,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 464,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 464,
+          "y": 549,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 464,
+          "y": 764,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 464,
+          "y": 946,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Logout",
+          "x": 1188,
+          "y": 358,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 464,
+          "y": 644,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "profile",
+      "screenshot": "profile-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1239,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 464,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 464,
+          "y": 549,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 464,
+          "y": 764,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 464,
+          "y": 946,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Logout",
+          "x": 1188,
+          "y": 358,
+          "width": 89,
+          "height": 36
+        },
+        {
+          "label": "Datenschutz & Speicherung ansehen",
+          "x": 464,
+          "y": 644,
+          "width": 281,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "cv-session",
+      "screenshot": "cv-session-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1443,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 718,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 452,
+          "y": 975,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 452,
+          "y": 405,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Nur für diese Sitzung",
+          "x": 456,
+          "y": 616,
+          "width": 193,
+          "height": 38
+        },
+        {
+          "label": "Dauerhaft in meinem Konto speichern",
+          "x": 653,
+          "y": 616,
+          "width": 330,
+          "height": 38
+        },
+        {
+          "label": "PDF auswählen",
+          "x": 802,
+          "y": 1105,
+          "width": 137,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1819,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 732,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 452,
+          "y": 972,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 452,
+          "y": 405,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Nur für diese Sitzung",
+          "x": 456,
+          "y": 630,
+          "width": 193,
+          "height": 38
+        },
+        {
+          "label": "Dauerhaft in meinem Konto speichern",
+          "x": 653,
+          "y": 630,
+          "width": 330,
+          "height": 38
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 465,
+          "y": 1171,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 452,
+          "y": 1251,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 593,
+          "y": 1508,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 743,
+          "y": 1508,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 1244,
+          "y": 1511,
+          "width": 28,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1819,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 732,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 452,
+          "y": 972,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 251,
+          "y": 66,
+          "width": 494,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Lebenslauf erstellen",
+          "x": 452,
+          "y": 405,
+          "width": 169,
+          "height": 34
+        },
+        {
+          "label": "Nur für diese Sitzung",
+          "x": 456,
+          "y": 630,
+          "width": 193,
+          "height": 38
+        },
+        {
+          "label": "Dauerhaft in meinem Konto speichern",
+          "x": 653,
+          "y": 630,
+          "width": 330,
+          "height": 38
+        },
+        {
+          "label": "CV-Speicherfreigabe widerrufen",
+          "x": 465,
+          "y": 1171,
+          "width": 246,
+          "height": 34
+        },
+        {
+          "label": "Lebenslauf dauerhaft hochladen",
+          "x": 452,
+          "y": 1251,
+          "width": 249,
+          "height": 34
+        },
+        {
+          "label": "Profile anzeigen",
+          "x": 593,
+          "y": 1508,
+          "width": 141,
+          "height": 34
+        },
+        {
+          "label": "Herunterladen",
+          "x": 743,
+          "y": 1508,
+          "width": 129,
+          "height": 34
+        },
+        {
+          "label": "Löschen",
+          "x": 1244,
+          "y": 1511,
+          "width": 28,
+          "height": 28
+        },
+        {
+          "label": "Schließen",
+          "x": 1089,
+          "y": 66,
+          "width": 100,
+          "height": 34
+        },
+        {
+          "label": "+ Neues Suchprofil erstellen",
+          "x": 955,
+          "y": 152,
+          "width": 234,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "applications",
+      "screenshot": "applications-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1091,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 45,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 53,
+          "y": 358,
+          "width": 183,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 314,
+          "y": 350,
+          "width": 807,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 333,
+          "y": 575,
+          "width": 1043,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "preferences",
+      "screenshot": "preferences-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1275,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 452,
+          "y": 346,
+          "width": 669,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 469,
+          "y": 773,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "Einwilligung widerrufen",
+          "x": 452,
+          "y": 662,
+          "width": 192,
+          "height": 34
+        },
+        {
+          "label": "Neues Suchprofil",
+          "x": 452,
+          "y": 704,
+          "width": 158,
+          "height": 36
+        },
+        {
+          "label": "Bearbeiten",
+          "x": 469,
+          "y": 989,
+          "width": 106,
+          "height": 34
+        },
+        {
+          "label": "Duplizieren",
+          "x": 584,
+          "y": 989,
+          "width": 109,
+          "height": 34
+        },
+        {
+          "label": "Damit suchen",
+          "x": 701,
+          "y": 988,
+          "width": 134,
+          "height": 36
+        },
+        {
+          "label": "Löschen",
+          "x": 843,
+          "y": 989,
+          "width": 92,
+          "height": 34
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "settings",
+      "screenshot": "settings-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2729,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 464,
+          "y": 358,
+          "width": 402,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 464,
+          "y": 572,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 464,
+          "y": 855,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 464,
+          "y": 1953,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 464,
+          "y": 2054,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 464,
+          "y": 2156,
+          "width": 813,
+          "height": 24
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "view": "privacy",
+      "screenshot": "privacy-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 5161,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 313,
+          "y": 84,
+          "width": 814,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 313,
+          "y": 140,
+          "width": 814,
+          "height": 30
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 313,
+          "y": 203,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 313,
+          "y": 376,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 313,
+          "y": 649,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 313,
+          "y": 898,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 313,
+          "y": 1071,
+          "width": 814,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 313,
+          "y": 1344,
+          "width": 814,
+          "height": 23
+        }
+      ],
+      "smallTargets": [
+        {
+          "label": "EN",
+          "x": 681,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        },
+        {
+          "label": "DE",
+          "x": 720,
+          "y": 8,
+          "width": 39,
+          "height": 44
+        }
+      ]
+    }
+  ]
+}

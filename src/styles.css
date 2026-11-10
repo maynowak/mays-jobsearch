@@ -197,8 +197,8 @@ body {
   top: 50%;
   transform: translateY(-50%);
   display: none;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -1347,6 +1347,7 @@ body {
 }
 
 .lang-toggle button {
+  min-width: 44px;
   border: none;
   background: none;
   padding: 4px 11px;
@@ -11781,6 +11782,7 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 }
 
 .cv-storage-mode button {
+  min-height: 44px;
   border: 0;
   border-radius: 999px;
   padding: 7px 12px;
@@ -12591,4 +12593,196 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   .profile-card__ats {
     padding: var(--space-2);
   }
+}
+
+/* PROFILE-UX-CONSOLIDATION-01 — mobile review polish */
+.btn-ghost,
+.letter-btn,
+.aurora-btn,
+.cv-process-btn,
+.cv-file-input-label {
+  min-height: 44px;
+}
+
+.cv-document-list__remove {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.cv-storage-card__facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cv-storage-card__profiles-fact {
+  min-width: 0;
+}
+
+.cv-storage-card__retry {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-link);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cv-storage-card__retry:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dashboard-v2__manual-profiles .dashboard-v2__card-heading .ui-badge,
+.dashboard-v2__manual-item-head .ui-badge {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.profile-manager__summary {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.profile-manager__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.profile-manager__error p {
+  margin: 0;
+}
+
+/* LEGAL-01: .legal-main used undefined legacy spacing tokens and therefore
+   rendered with zero padding on mobile. Keep legal text readable without
+   removing any content. */
+.legal-main {
+  padding: 96px 20px 48px;
+}
+
+.legal-page {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.legal-document {
+  max-width: 72ch;
+  margin-inline: auto;
+}
+
+.legal-document__meta h1,
+.legal-document h3 {
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+}
+
+@media (max-width: 700px) {
+  .cv-storage-card__facts {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-card__facts > div:nth-child(2) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 430px) {
+  .legal-main {
+    padding: 88px 16px 40px;
+  }
+
+  .legal-document__meta h1 {
+    font-size: 1.2rem;
+  }
+
+  .legal-document h3 {
+    font-size: 1rem;
+  }
+
+  .cv-profile-manager {
+    padding: 0;
+  }
+
+  .cv-profile-manager .cv-profiles-overlay__panel {
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .cv-profile-manager .cv-profiles-overlay__header {
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .profile-manager__section {
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  .profile-card {
+    gap: 10px;
+    padding: var(--space-3);
+  }
+
+  .profile-card__ats {
+    padding: var(--space-2);
+  }
+
+  .profile-card__actions {
+    gap: 6px;
+  }
+
+  .profile-card__actions > * {
+    flex: 1 1 calc(50% - 6px);
+  }
+
+  .profile-card__head .ui-badge,
+  .cv-storage-card__head .ui-badge,
+  .dashboard-v2__manual-item-head .ui-badge,
+  .dashboard-v2__manual-profiles .dashboard-v2__card-heading .ui-badge {
+    max-width: 100%;
+    padding: 2px 7px;
+    font-size: 0.62rem;
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+
+  .profile-card__facts dt,
+  .profile-card__facts dd {
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-v2__manual-profiles .dashboard-v2__card-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-v2__manual-profiles .dashboard-v2__card-heading > div {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .profile-card__actions > * {
+    flex-basis: 100%;
+  }
+}
+
+/* PROFILE-UX-CONSOLIDATION-01 — readable legal/storage copy */
+.storage-consent__notice,
+.storage-consent__block p,
+.storage-consent__declaration p {
+  max-width: 72ch;
+  line-height: 1.6;
 }

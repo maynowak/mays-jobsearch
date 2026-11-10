@@ -1,0 +1,4266 @@
+{
+  "phase": "after",
+  "generatedAt": "2026-11-10T10:14:13.720Z",
+  "syntheticSession": true,
+  "realRisCalls": false,
+  "results": [
+    {
+      "width": 320,
+      "view": "landing",
+      "screenshot": "landing-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1686,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 16,
+          "y": 268,
+          "width": 288,
+          "height": 115
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1085,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1250,
+          "width": 246,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "login",
+      "screenshot": "login-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 844,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 41,
+          "y": 175,
+          "width": 238,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "overview",
+      "screenshot": "overview-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1625,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 27,
+          "y": 456,
+          "width": 111,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 27,
+          "y": 785,
+          "width": 166,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 27,
+          "y": 1059,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 27,
+          "y": 1209,
+          "width": 149,
+          "height": 54
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "profile",
+      "screenshot": "profile-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1625,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 27,
+          "y": 456,
+          "width": 111,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 27,
+          "y": 785,
+          "width": 166,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 27,
+          "y": 1059,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 27,
+          "y": 1209,
+          "width": 149,
+          "height": 54
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "cv-session",
+      "screenshot": "cv-session-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2124,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 176,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1088,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 31,
+          "y": 1462,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2895,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 184,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1198,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 31,
+          "y": 1556,
+          "width": 200,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "cv-ris-loading",
+      "screenshot": "cv-ris-loading-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2916,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 184,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1198,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 31,
+          "y": 1556,
+          "width": 200,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "cv-ris-error",
+      "screenshot": "cv-ris-error-320.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "overflow": 0,
+      "documentHeight": 2939,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 184,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1198,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 31,
+          "y": 1556,
+          "width": 200,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2895,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 31,
+          "y": 460,
+          "width": 184,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 48,
+          "y": 1198,
+          "width": 225,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 31,
+          "y": 1556,
+          "width": 200,
+          "height": 48
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 13,
+          "y": 17,
+          "width": 294,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "applications",
+      "screenshot": "applications-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1488,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 27,
+          "y": 456,
+          "width": 267,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 46,
+          "y": 892,
+          "width": 229,
+          "height": 56
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "preferences",
+      "screenshot": "preferences-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2133,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 31,
+          "y": 460,
+          "width": 259,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 48,
+          "y": 1249,
+          "width": 225,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "settings",
+      "screenshot": "settings-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 5506,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 132,
+          "width": 251,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 27,
+          "y": 456,
+          "width": 267,
+          "height": 72
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 27,
+          "y": 835,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 27,
+          "y": 1256,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 27,
+          "y": 4239,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 27,
+          "y": 4409,
+          "width": 267,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 27,
+          "y": 4602,
+          "width": 267,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "privacy",
+      "screenshot": "privacy-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 13746,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 19,
+          "y": 172,
+          "width": 282,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 19,
+          "y": 228,
+          "width": 282,
+          "height": 48
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 19,
+          "y": 309,
+          "width": 282,
+          "height": 22
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 19,
+          "y": 506,
+          "width": 282,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 19,
+          "y": 1226,
+          "width": 282,
+          "height": 22
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 19,
+          "y": 1925,
+          "width": 282,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 19,
+          "y": 2445,
+          "width": 282,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 19,
+          "y": 3215,
+          "width": 282,
+          "height": 43
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 320,
+      "view": "menu",
+      "screenshot": "menu-320.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1686,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 16,
+          "y": 268,
+          "width": 288,
+          "height": 115
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1085,
+          "width": 246,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1250,
+          "width": 246,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "landing",
+      "screenshot": "landing-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1588,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 12,
+          "y": 267,
+          "width": 367,
+          "height": 137
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1061,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1202,
+          "width": 316,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "login",
+      "screenshot": "login-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 844,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 41,
+          "y": 175,
+          "width": 308,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "overview",
+      "screenshot": "overview-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1520,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 29,
+          "y": 432,
+          "width": 140,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 29,
+          "y": 761,
+          "width": 196,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 29,
+          "y": 1005,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 29,
+          "y": 1155,
+          "width": 202,
+          "height": 54
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "profile",
+      "screenshot": "profile-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1520,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 29,
+          "y": 432,
+          "width": 140,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 29,
+          "y": 761,
+          "width": 196,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 29,
+          "y": 1005,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 29,
+          "y": 1155,
+          "width": 202,
+          "height": 54
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "cv-session",
+      "screenshot": "cv-session-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1933,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 242,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 998,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 33,
+          "y": 1321,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2555,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 250,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 1071,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 33,
+          "y": 1377,
+          "width": 266,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "cv-ris-loading",
+      "screenshot": "cv-ris-loading-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2555,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 250,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 1071,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 33,
+          "y": 1377,
+          "width": 266,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "cv-ris-error",
+      "screenshot": "cv-ris-error-390.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "overflow": 0,
+      "documentHeight": 2599,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 250,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 1071,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 33,
+          "y": 1377,
+          "width": 266,
+          "height": 48
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2555,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 33,
+          "y": 436,
+          "width": 250,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 50,
+          "y": 1071,
+          "width": 291,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 33,
+          "y": 1377,
+          "width": 266,
+          "height": 48
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 13,
+          "y": 17,
+          "width": 364,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "applications",
+      "screenshot": "applications-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1316,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 29,
+          "y": 432,
+          "width": 333,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 48,
+          "y": 847,
+          "width": 295,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "preferences",
+      "screenshot": "preferences-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1861,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 33,
+          "y": 436,
+          "width": 325,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 50,
+          "y": 1142,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "settings",
+      "screenshot": "settings-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 4633,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 37,
+          "y": 132,
+          "width": 317,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 29,
+          "y": 432,
+          "width": 333,
+          "height": 72
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 29,
+          "y": 759,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 29,
+          "y": 1181,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 29,
+          "y": 3556,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 29,
+          "y": 3704,
+          "width": 333,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 29,
+          "y": 3874,
+          "width": 333,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "privacy",
+      "screenshot": "privacy-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 10981,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 19,
+          "y": 172,
+          "width": 352,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 19,
+          "y": 228,
+          "width": 352,
+          "height": 48
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 19,
+          "y": 309,
+          "width": 352,
+          "height": 22
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 19,
+          "y": 481,
+          "width": 352,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 19,
+          "y": 1076,
+          "width": 352,
+          "height": 22
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 19,
+          "y": 1624,
+          "width": 352,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 19,
+          "y": 2043,
+          "width": 352,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 19,
+          "y": 2638,
+          "width": 352,
+          "height": 22
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 390,
+      "view": "menu",
+      "screenshot": "menu-390.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1588,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 12,
+          "y": 267,
+          "width": 367,
+          "height": 137
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 37,
+          "y": 897,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 37,
+          "y": 1061,
+          "width": 316,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 37,
+          "y": 1202,
+          "width": 316,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "landing",
+      "screenshot": "landing-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1564,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 13,
+          "y": 267,
+          "width": 404,
+          "height": 137
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 38,
+          "y": 897,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 38,
+          "y": 1061,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 38,
+          "y": 1202,
+          "width": 354,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "login",
+      "screenshot": "login-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 844,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 41,
+          "y": 175,
+          "width": 348,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "overview",
+      "screenshot": "overview-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1493,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 30,
+          "y": 432,
+          "width": 156,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 30,
+          "y": 761,
+          "width": 221,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 30,
+          "y": 1005,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 30,
+          "y": 1155,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "profile",
+      "screenshot": "profile-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1493,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 30,
+          "y": 432,
+          "width": 156,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 30,
+          "y": 761,
+          "width": 221,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 30,
+          "y": 1005,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 30,
+          "y": 1155,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "cv-session",
+      "screenshot": "cv-session-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1840,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 280,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 953,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 34,
+          "y": 1276,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2454,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 287,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 1047,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 34,
+          "y": 1353,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "cv-ris-loading",
+      "screenshot": "cv-ris-loading-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2454,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 287,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 1047,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 34,
+          "y": 1353,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "cv-ris-error",
+      "screenshot": "cv-ris-error-430.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "overflow": 0,
+      "documentHeight": 2498,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 287,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 1047,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 34,
+          "y": 1353,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2454,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 34,
+          "y": 436,
+          "width": 287,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 51,
+          "y": 1047,
+          "width": 328,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 34,
+          "y": 1353,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 13,
+          "y": 17,
+          "width": 404,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "applications",
+      "screenshot": "applications-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1292,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 30,
+          "y": 432,
+          "width": 370,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 49,
+          "y": 847,
+          "width": 332,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "preferences",
+      "screenshot": "preferences-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1816,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 34,
+          "y": 436,
+          "width": 362,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 51,
+          "y": 1118,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "settings",
+      "screenshot": "settings-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 4288,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 38,
+          "y": 132,
+          "width": 354,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 30,
+          "y": 432,
+          "width": 370,
+          "height": 72
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 30,
+          "y": 759,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 30,
+          "y": 1181,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 30,
+          "y": 3301,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 30,
+          "y": 3427,
+          "width": 370,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 30,
+          "y": 3574,
+          "width": 370,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "privacy",
+      "screenshot": "privacy-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 9952,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 19,
+          "y": 172,
+          "width": 392,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 19,
+          "y": 228,
+          "width": 392,
+          "height": 48
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 19,
+          "y": 309,
+          "width": 392,
+          "height": 22
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 19,
+          "y": 481,
+          "width": 392,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 19,
+          "y": 1026,
+          "width": 392,
+          "height": 22
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 19,
+          "y": 1524,
+          "width": 392,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 19,
+          "y": 1918,
+          "width": 392,
+          "height": 43
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 19,
+          "y": 2463,
+          "width": 392,
+          "height": 22
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 430,
+      "view": "menu",
+      "screenshot": "menu-430.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1564,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 13,
+          "y": 267,
+          "width": 404,
+          "height": 137
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 38,
+          "y": 897,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 38,
+          "y": 1061,
+          "width": 354,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 38,
+          "y": 1202,
+          "width": 354,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "landing",
+      "screenshot": "landing-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1383,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 31,
+          "y": 244,
+          "width": 707,
+          "height": 93
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 52,
+          "y": 797,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 52,
+          "y": 938,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 52,
+          "y": 1054,
+          "width": 665,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "login",
+      "screenshot": "login-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 900,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 141,
+          "y": 195,
+          "width": 486,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "overview",
+      "screenshot": "overview-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1370,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 285,
+          "y": 357,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 285,
+          "y": 577,
+          "width": 260,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 285,
+          "y": 851,
+          "width": 60,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 285,
+          "y": 1057,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "profile",
+      "screenshot": "profile-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1370,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 285,
+          "y": 357,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 285,
+          "y": 577,
+          "width": 260,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 285,
+          "y": 851,
+          "width": 60,
+          "height": 54
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 285,
+          "y": 1057,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "cv-session",
+      "screenshot": "cv-session-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1644,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 367,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 818,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 274,
+          "y": 1120,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2146,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 375,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 870,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 274,
+          "y": 1155,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "cv-ris-loading",
+      "screenshot": "cv-ris-loading-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2167,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 375,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 870,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 274,
+          "y": 1155,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "cv-ris-error",
+      "screenshot": "cv-ris-error-768.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "overflow": 0,
+      "documentHeight": 2190,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 375,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 870,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 274,
+          "y": 1155,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 2146,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 274,
+          "y": 346,
+          "width": 375,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 291,
+          "y": 870,
+          "width": 416,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 274,
+          "y": 1155,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 37,
+          "y": 66,
+          "width": 494,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "applications",
+      "screenshot": "applications-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1604,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 33,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 39,
+          "y": 357,
+          "width": 689,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 33,
+          "y": 896,
+          "width": 703,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 52,
+          "y": 1214,
+          "width": 665,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "preferences",
+      "screenshot": "preferences-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1563,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 274,
+          "y": 346,
+          "width": 270,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 291,
+          "y": 926,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "settings",
+      "screenshot": "settings-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 3721,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 48,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 55,
+          "y": 357,
+          "width": 147,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 285,
+          "y": 357,
+          "width": 402,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 285,
+          "y": 623,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 285,
+          "y": 930,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 285,
+          "y": 2804,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 285,
+          "y": 2929,
+          "width": 428,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 285,
+          "y": 3077,
+          "width": 428,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "privacy",
+      "screenshot": "privacy-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 6453,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 23,
+          "y": 180,
+          "width": 722,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 71,
+          "y": 236,
+          "width": 625,
+          "height": 30
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 71,
+          "y": 299,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 71,
+          "y": 472,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 71,
+          "y": 796,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 71,
+          "y": 1119,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 71,
+          "y": 1343,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 71,
+          "y": 1666,
+          "width": 625,
+          "height": 23
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 768,
+      "view": "menu",
+      "screenshot": "menu-768.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1383,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 31,
+          "y": 244,
+          "width": 707,
+          "height": 93
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 52,
+          "y": 797,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 52,
+          "y": 938,
+          "width": 665,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 52,
+          "y": 1054,
+          "width": 665,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "landing",
+      "screenshot": "landing-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1178,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 152,
+          "y": 209,
+          "width": 720,
+          "height": 162
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 62,
+          "y": 810,
+          "width": 261,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 381,
+          "y": 810,
+          "width": 261,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 701,
+          "y": 810,
+          "width": 261,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "login",
+      "screenshot": "login-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 900,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 269,
+          "y": 195,
+          "width": 486,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "overview",
+      "screenshot": "overview-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1257,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 312,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 312,
+          "y": 557,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 312,
+          "y": 782,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 312,
+          "y": 964,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "profile",
+      "screenshot": "profile-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1257,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 312,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 312,
+          "y": 557,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 312,
+          "y": 782,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 312,
+          "y": 964,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "cv-session",
+      "screenshot": "cv-session-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1538,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 565,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 779,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 300,
+          "y": 1036,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1918,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 811,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 300,
+          "y": 1051,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "cv-ris-loading",
+      "screenshot": "cv-ris-loading-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1918,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 811,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 300,
+          "y": 1051,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "cv-ris-error",
+      "screenshot": "cv-ris-error-1024.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "overflow": 0,
+      "documentHeight": 1962,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 811,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 300,
+          "y": 1051,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1918,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 300,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 317,
+          "y": 811,
+          "width": 638,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 300,
+          "y": 1051,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 43,
+          "y": 66,
+          "width": 494,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "applications",
+      "screenshot": "applications-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1115,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 35,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 43,
+          "y": 358,
+          "width": 134,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 255,
+          "y": 350,
+          "width": 734,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 274,
+          "y": 668,
+          "width": 696,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "preferences",
+      "screenshot": "preferences-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1351,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 300,
+          "y": 346,
+          "width": 492,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 317,
+          "y": 841,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "settings",
+      "screenshot": "settings-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 3108,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 56,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 64,
+          "y": 358,
+          "width": 162,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 312,
+          "y": 358,
+          "width": 402,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 312,
+          "y": 577,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 312,
+          "y": 862,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 312,
+          "y": 2301,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 312,
+          "y": 2403,
+          "width": 648,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 312,
+          "y": 2529,
+          "width": 648,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1024,
+      "view": "privacy",
+      "screenshot": "privacy-1024.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 6432,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 125,
+          "y": 180,
+          "width": 774,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 199,
+          "y": 236,
+          "width": 625,
+          "height": 30
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 199,
+          "y": 299,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 199,
+          "y": 472,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 199,
+          "y": 796,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 199,
+          "y": 1119,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 199,
+          "y": 1343,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 199,
+          "y": 1666,
+          "width": 625,
+          "height": 23
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "landing",
+      "screenshot": "landing-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1180,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Dein nächster Karriereschrittmit KI",
+          "x": 360,
+          "y": 177,
+          "width": 720,
+          "height": 227
+        },
+        {
+          "tag": "H2",
+          "text": "Mehrere Quellen",
+          "x": 201,
+          "y": 823,
+          "width": 307,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "KI-Bewertung",
+          "x": 566,
+          "y": 823,
+          "width": 307,
+          "height": 26
+        },
+        {
+          "tag": "H2",
+          "text": "CV-Upload",
+          "x": 932,
+          "y": 823,
+          "width": 307,
+          "height": 26
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "login",
+      "screenshot": "login-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 900,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Anmelden",
+          "x": 477,
+          "y": 195,
+          "width": 486,
+          "height": 36
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "overview",
+      "screenshot": "overview-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1257,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 464,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 464,
+          "y": 557,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 464,
+          "y": 782,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 464,
+          "y": 964,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "profile",
+      "screenshot": "profile-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1257,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Persönliche Daten",
+          "x": 464,
+          "y": 358,
+          "width": 164,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 464,
+          "y": 557,
+          "width": 302,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Konto-Status",
+          "x": 464,
+          "y": 782,
+          "width": 117,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Zukünftige Funktionen",
+          "x": 464,
+          "y": 964,
+          "width": 207,
+          "height": 27
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "cv-session",
+      "screenshot": "cv-session-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1469,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 734,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Deine Lebensläufe",
+          "x": 452,
+          "y": 991,
+          "width": 148,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "cv-ris",
+      "screenshot": "cv-ris-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1855,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 748,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 452,
+          "y": 988,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "cv-ris-loading",
+      "screenshot": "cv-ris-loading-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1855,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 748,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 452,
+          "y": 988,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "cv-ris-error",
+      "screenshot": "cv-ris-error-1440.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "overflow": 0,
+      "documentHeight": 1878,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 748,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 452,
+          "y": 988,
+          "width": 291,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "cv-profiles",
+      "screenshot": "cv-profiles-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1855,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Lebenslauf",
+          "x": 452,
+          "y": 346,
+          "width": 579,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Meine Lebensläufe",
+          "x": 469,
+          "y": 748,
+          "width": 803,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Dauerhaft gespeicherte Lebensläufe",
+          "x": 452,
+          "y": 988,
+          "width": 291,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Lebenslauf_2026.pdf",
+          "x": 251,
+          "y": 66,
+          "width": 494,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "applications",
+      "screenshot": "applications-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1091,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 45,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 53,
+          "y": 358,
+          "width": 183,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Bewerbungen",
+          "x": 314,
+          "y": 350,
+          "width": 807,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Noch keine Bewerbungen",
+          "x": 333,
+          "y": 575,
+          "width": 1043,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "preferences",
+      "screenshot": "preferences-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 1301,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Meine Suchprofile",
+          "x": 452,
+          "y": 346,
+          "width": 657,
+          "height": 27
+        },
+        {
+          "tag": "H3",
+          "text": "Pflege Nord",
+          "x": 469,
+          "y": 791,
+          "width": 279,
+          "height": 28
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "settings",
+      "screenshot": "settings-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 3108,
+      "headings": [
+        {
+          "tag": "H1",
+          "text": "Profil",
+          "x": 155,
+          "y": 140,
+          "width": 259,
+          "height": 48
+        },
+        {
+          "tag": "H2",
+          "text": "Navigieren",
+          "x": 163,
+          "y": 358,
+          "width": 215,
+          "height": 27
+        },
+        {
+          "tag": "H2",
+          "text": "Datenschutz & Datenspeicherung",
+          "x": 464,
+          "y": 358,
+          "width": 402,
+          "height": 36
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherkategorien",
+          "x": 464,
+          "y": 577,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Speicherung von Bewerbungen",
+          "x": 464,
+          "y": 862,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Erforderliche Kontodaten",
+          "x": 464,
+          "y": 2301,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Externe KI-Verarbeitung",
+          "x": 464,
+          "y": 2403,
+          "width": 813,
+          "height": 24
+        },
+        {
+          "tag": "H3",
+          "text": "Sitzungsbezogene Browser-Daten",
+          "x": 464,
+          "y": 2529,
+          "width": 813,
+          "height": 24
+        }
+      ],
+      "smallTargets": []
+    },
+    {
+      "width": 1440,
+      "view": "privacy",
+      "screenshot": "privacy-1440.png",
+      "consoleErrors": [],
+      "overflow": 0,
+      "documentHeight": 6432,
+      "headings": [
+        {
+          "tag": "H2",
+          "text": "Datenschutz",
+          "x": 333,
+          "y": 180,
+          "width": 774,
+          "height": 36
+        },
+        {
+          "tag": "H1",
+          "text": "DATENSCHUTZERKLÄRUNG – MAY’S JOB MATCHER",
+          "x": 407,
+          "y": 236,
+          "width": 625,
+          "height": 30
+        },
+        {
+          "tag": "H3",
+          "text": "1. VERANTWORTLICHE STELLE",
+          "x": 407,
+          "y": 299,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "2. GELTUNGSBEREICH UND ENTWICKLUNGSSTAND",
+          "x": 407,
+          "y": 472,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "3. ALLGEMEINE GRUNDLAGEN",
+          "x": 407,
+          "y": 796,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "4. AUFRUF DER WEBSITE UND TECHNISCHER BETRIEB",
+          "x": 407,
+          "y": 1119,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "5. STELLENSUCHE UND AUFBEREITUNG VON STELLENANZEIGEN",
+          "x": 407,
+          "y": 1343,
+          "width": 625,
+          "height": 23
+        },
+        {
+          "tag": "H3",
+          "text": "6. KI-DIENSTE UND DATENMINIMIERUNG",
+          "x": 407,
+          "y": 1666,
+          "width": 625,
+          "height": 23
+        }
+      ],
+      "smallTargets": []
+    }
+  ]
+}

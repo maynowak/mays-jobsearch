@@ -189,7 +189,7 @@ describe("PersistentCvProfilesOverlay loading and hierarchy", () => {
         cvProfile("sp-1", "Frontend Berlin"),
         cvProfile("sp-2", "Backend Berlin"),
       ]),
-      listAts: vi.fn(async (id: string) => id === "sp-1"
+      listAts: vi.fn(async (id: string) => (id === "sp-1"
         ? [{
             schemaVersion: 1,
             atsSearchProfileId: "ats-1",
@@ -201,7 +201,7 @@ describe("PersistentCvProfilesOverlay loading and hierarchy", () => {
             updatedAt: "2026-11-09T10:00:00Z",
             version: 1,
           }]
-        : []),
+        : []) as never),
     });
     render(
       <LangProvider>

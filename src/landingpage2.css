@@ -266,9 +266,9 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  width: 32px;
-  height: 32px;
-  margin-left: 14px;
+  width: 44px;
+  height: 44px;
+  margin-left: 6px;
   vertical-align: middle;
   background: none;
   border: none;
@@ -308,7 +308,7 @@
 
 .mp-ring {
   position: absolute;
-  inset: 2px;
+  inset: 8px;
   border: 1px solid rgba(34, 211, 238, 0.8);
   border-radius: 50%;
   opacity: 0;
@@ -331,19 +331,19 @@
 }
 
 .mp-sat-1 {
-  left: 1px;
-  top: 5px;
+  left: 8px;
+  top: 13px;
 }
 
 .mp-sat-2 {
-  right: 0;
-  top: 3px;
+  right: 7px;
+  top: 11px;
   animation-delay: -2s;
 }
 
 .mp-sat-3 {
-  left: 4px;
-  bottom: 2px;
+  left: 11px;
+  bottom: 10px;
   animation-delay: -4s;
 }
 
@@ -879,9 +879,9 @@
 
   /* Match Pulse kompakter (Sats aus – Platz/Lesbarkeit). */
   .mp {
-    width: 22px;
-    height: 22px;
-    margin-left: 10px;
+    width: 44px;
+    height: 44px;
+    margin-left: 2px;
   }
 
   .mp-dot {
@@ -965,5 +965,29 @@
   .lp2-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* PROFILE-UX-CONSOLIDATION-01 — mobile hero readability */
+.lp2-title-accent {
+  color: #a5f3fc;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.38);
+}
+
+@media (max-width: 360px) {
+  .lp2-hero-content {
+    width: min(92%, 288px);
+  }
+
+  .lp2-title {
+    font-size: clamp(32px, 10.5vw, 36px);
+  }
+
+  .lp2-title-accent {
+    font-size: clamp(27px, 9vw, 33px);
+  }
+
+  .lp2-subtitle {
+    font-size: 17px;
   }
 }
