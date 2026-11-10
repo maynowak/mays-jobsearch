@@ -5333,7 +5333,8 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 
 - Basis `origin/main` `3bfe391`; protected branch
   `feature/profile-ux-consolidation-01-mobile-polish`; commits `f1922a0`,
-  `839d8ea`, `1ddbcfc` plus docs commit. No push, merge or deploy.
+  `839d8ea`, `1ddbcfc` plus docs commit. Feature branch pushed on explicit
+  operator request (`be1bda9`); no merge and no deployment.
 - Reproduced: stale “search profiles remain session-only” claims despite an
   active search-profile consent; provisional/empty-looking profile counts
   without card-local retry; multiple simultaneously expanded ATS areas;

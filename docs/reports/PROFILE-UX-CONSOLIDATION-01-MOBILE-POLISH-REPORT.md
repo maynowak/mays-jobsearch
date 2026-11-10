@@ -1,9 +1,9 @@
 # PROFILE-UX-CONSOLIDATION-01 — MOBILE VISUAL REVIEW & POLISH
 
-**Status:** `PROFILE-UX-CONSOLIDATION-01 — MOBILE POLISH VERIFIED LOCAL`
+**Status:** `PROFILE-UX-CONSOLIDATION-01 — MOBILE POLISH VERIFIED LOCAL / FEATURE BRANCH PUSHED`
 **Basis:** `origin/main` `3bfe391`
 **Branch:** `feature/profile-ux-consolidation-01-mobile-polish`
-**Kein Push, Merge oder Deployment.**
+**Feature-Branch gepusht auf explizite Operator-Anweisung. Kein Merge oder Deployment.**
 
 ## 1. Tatsächlich reproduzierte Probleme
 
@@ -152,7 +152,7 @@ AWS-Aufrufe statt.
   Testkonto verfügbar. Gemockte Browser-Tests sind kein Production-Nachweis.
 - Keine Änderung an RIS, AWS, Terraform, Cognito, Consent-Verträgen oder
   produktiven Benutzerdaten.
-- Kein Push, Merge oder Production-Deployment.
+- Feature-Branch gepusht; kein Merge oder Production-Deployment.
 - Persistente Banner-/Consent-Texte bleiben an die bestehenden serverseitigen
   Verträge gebunden; nur die Anzeige wurde an die tatsächlichen Zustände
   angepasst.
