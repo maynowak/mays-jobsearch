@@ -4,6 +4,11 @@ import { fileSizeLocale, formatFileSize } from "../lib/fileSize";
 import { validateCvFile } from "../lib/cvFileValidation";
 import { MAX_PERSISTENT_CVS, type CvConsentState, type PersistentCv } from "../lib/cvStorageApi";
 
+export interface PersistentCvProfileCounts {
+  searchProfiles: number;
+  atsProfiles: number;
+}
+
 interface Props {
   documents: PersistentCv[];
   consent: CvConsentState | null;
@@ -19,6 +24,8 @@ interface Props {
   onWithdrawConsent: () => Promise<boolean>;
   onProcess?: (cv: PersistentCv) => Promise<void>;
   onManageProfiles?: (cvId: string) => void;
+  onLoadProfileCounts?: (cvId: string) => Promise<PersistentCvProfileCounts | null>;
+  profileCountsRefreshToken?: number;
 }
 
 export default function PersistentCvList({
@@ -36,6 +43,8 @@ export default function PersistentCvList({
   onWithdrawConsent,
   onProcess,
   onManageProfiles,
+  onLoadProfileCounts,
+  profileCountsRefreshToken = 0,
 }: Props) {
   const { t, lang } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -45,6 +54,9 @@ export default function PersistentCvList({
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processedId, setProcessedId] = useState<string | null>(null);
   const [processError, setProcessError] = useState<{ cvId: string; message: string } | null>(null);
+  const [profileCounts, setProfileCounts] = useState<Record<string, PersistentCvProfileCounts | null>>({});
+  const [profileCountsLoading, setProfileCountsLoading] = useState<Record<string, boolean>>({});
+  const [profileCountsError, setProfileCountsError] = useState<Record<string, boolean>>({});
   const status = consent?.consent?.status ?? "NOT_GRANTED";
   const consentGranted = status === "GRANTED";
   const atCapacity = documents.length >= MAX_PERSISTENT_CVS;
@@ -52,6 +64,34 @@ export default function PersistentCvList({
   useEffect(() => {
     if (status !== "GRANTED") setArt9(false);
   }, [status]);
+
+  useEffect(() => {
+    if (!onLoadProfileCounts || !consentGranted) {
+      setProfileCounts({});
+      setProfileCountsLoading({});
+      setProfileCountsError({});
+      return;
+    }
+    let cancelled = false;
+    const ids = documents.map((document) => document.cvId);
+    setProfileCounts((current) => Object.fromEntries(ids.map((id) => [id, current[id] ?? null])));
+    setProfileCountsLoading(Object.fromEntries(ids.map((id) => [id, true])));
+    setProfileCountsError({});
+    for (const id of ids) {
+      void onLoadProfileCounts(id).then((counts) => {
+        if (cancelled) return;
+        setProfileCounts((current) => ({ ...current, [id]: counts }));
+      }).catch(() => {
+        if (cancelled) return;
+        setProfileCounts((current) => ({ ...current, [id]: null }));
+        setProfileCountsError((current) => ({ ...current, [id]: true }));
+      }).finally(() => {
+        if (cancelled) return;
+        setProfileCountsLoading((current) => ({ ...current, [id]: false }));
+      });
+    }
+    return () => { cancelled = true; };
+  }, [consentGranted, documents, onLoadProfileCounts, profileCountsRefreshToken]);
 
   useEffect(() => {
     if (processingId && !documents.some((document) => document.cvId === processingId)) {
@@ -213,19 +253,51 @@ export default function PersistentCvList({
       ) : (
         <ul className="cv-document-list__list" role="list">
           {documents.map((cv) => (
-            <li key={cv.cvId} className="cv-document-list__item" role="listitem">
-              <div className="cv-document-list__item-main">
-                <div className="cv-document-list__info">
-                  <span className="cv-document-list__name" title={cv.filename}>{cv.filename}</span>
-                  {typeof cv.sizeBytes === "number" && (
-                    <span className="cv-document-list__size">
-                      {formatFileSize(cv.sizeBytes, fileSizeLocale(lang))}
-                    </span>
-                  )}
-                  <span className="cv-document-list__status">{statusLabel(cv)}</span>
+            <li key={cv.cvId} className="cv-storage-card" role="listitem">
+              <div className="cv-storage-card__head">
+                <div className="cv-storage-card__identity">
+                  <span className="cv-storage-card__name" title={cv.filename}>{cv.filename}</span>
+                  <span className="cv-storage-card__meta">
+                    {typeof cv.sizeBytes === "number" && (
+                      <span>{formatFileSize(cv.sizeBytes, fileSizeLocale(lang))}</span>
+                    )}
+                    <span>{t("cvStorage.locationRis")}</span>
+                  </span>
                 </div>
+                <span className="ui-badge ui-badge-active">{t("cvStorage.persistentBadge")}</span>
               </div>
-              <div className="cv-document-list__actions">
+              <dl className="cv-storage-card__facts">
+                <div>
+                  <dt>{t("cvStorage.pdfStatus")}</dt>
+                  <dd>{statusLabel(cv)}</dd>
+                </div>
+                <div>
+                  <dt>{t("cvStorage.searchProfileCount")}</dt>
+                  <dd>
+                    {profileCountsLoading[cv.cvId]
+                      ? t("cvStorage.countLoading")
+                      : profileCounts[cv.cvId]
+                        ? profileCounts[cv.cvId]!.searchProfiles
+                        : profileCountsError[cv.cvId]
+                          ? t("cvStorage.countsUnavailable")
+                          : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t("cvStorage.atsProfileCount")}</dt>
+                  <dd>
+                    {profileCountsLoading[cv.cvId]
+                      ? t("cvStorage.countLoading")
+                      : profileCounts[cv.cvId]
+                        ? profileCounts[cv.cvId]!.atsProfiles
+                        : profileCountsError[cv.cvId]
+                          ? t("cvStorage.countsUnavailable")
+                          : "—"}
+                  </dd>
+                </div>
+              </dl>
+              <p className="cv-storage-card__note">{t("cvStorage.verificationNote")}</p>
+              <div className="cv-storage-card__actions">
                 {onProcess && (
                   <button
                     type="button"
@@ -257,7 +329,7 @@ export default function PersistentCvList({
                   {t("cvStorage.download")}
                 </button>
                 {removeId === cv.cvId ? (
-                  <>
+                  <span className="cv-storage-card__secondary">
                     <button
                       type="button"
                       className="cv-document-list__remove-data-confirm-btn"
@@ -271,11 +343,11 @@ export default function PersistentCvList({
                     <button type="button" className="btn-ghost" onClick={() => setRemoveId(null)}>
                       {t("cvStorage.cancel")}
                     </button>
-                  </>
+                  </span>
                 ) : (
                   <button
                     type="button"
-                    className="cv-document-list__remove"
+                    className="cv-document-list__remove cv-storage-card__secondary"
                     aria-label={t("cvStorage.delete")}
                     title={t("cvStorage.delete")}
                     disabled={busy}

@@ -369,7 +369,7 @@ describe('JM-RIS-CV-DERIVED-PROFILE-STORAGE-01: stored CV profile reachability',
       </LangProvider>
     );
 
-    expect(screen.getByRole('button', { name: 'Suchprofile' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Profile anzeigen' })).toBeInTheDocument();
   });
 });
 

@@ -5251,3 +5251,29 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Verification: 7 new/updated tests, serial full 1675 passed/5 skipped, build
   PASS. No RIS/AWS/Terraform/consent-text change, no real data. Authenticated
   synthetic RIS E2E remains pending.
+
+## 2026-11-10 — DESIGN-PROFILE-UX-CONSOLIDATION-01
+
+**Typ:** UX consolidation / CV cards / profile manager
+**Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — IMPLEMENTED / VERIFIED LOCAL`
+
+- Branch `design/jm-ris-profile-ux-consolidation-01`, commit `b56d122`;
+  session-overlay card alignment `f9994d1`.
+- Persistent CVs now use cards with filename, size, RIS location, PDF status,
+  RIS search/ATS counts, honest verification note and actions
+  Verarbeiten/Profile anzeigen/Herunterladen. Counts use
+  `persistentSearchProfiles.listCv/listAts` only; no session data is labelled as
+  durable.
+- `PersistentCvProfilesOverlay` is a card manager: CV profiles first, ATS
+  grouped by parent, create forms hidden until requested, responsive two-column
+  forms and explicit durable status.
+- May hints explain CV/ATS profiles and session vs durable. May remains
+  collapsed by default with local boolean preference.
+- No processing history is invented; only RIS PDF state and profile counts
+  returned by RIS are shown.
+- Verification: 22 focused tests, serial full suite 1677 passed/5 skipped,
+  build PASS; screenshots 320/390/430/768/1024/1440 cards/profiles, no overflow.
+  A pre-existing date-sensitive ApplicationsSection assertion was made
+  non-ambiguous.
+- No push/merge/deploy, no RIS/AWS/Terraform change, no real data. Auth RIS E2E
+  remains deployment-time.

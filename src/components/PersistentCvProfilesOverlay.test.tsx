@@ -63,3 +63,55 @@ describe("PersistentCvProfilesOverlay consent reachability", () => {
     expect(screen.queryByRole("button", { name: "Dauerhafte Suchprofil-Speicherung aktivieren" })).toBeNull();
   });
 });
+
+describe("PersistentCvProfilesOverlay card management", () => {
+  it("shows profile cards and reveals the create form only on action", async () => {
+    const cvProfile = {
+      schemaVersion: 1,
+      searchProfileId: "sp-1",
+      cvId: "cv-1",
+      name: "Frontend Berlin",
+      origin: "cv",
+      searchConfig: {
+        skills: "React, TypeScript",
+        targetRoles: ["Frontend"],
+        city: "Berlin",
+        radiusKm: 25,
+        workModes: ["remote"],
+        employmentTypes: ["full_time"],
+      },
+      createdAt: "2026-11-09T10:00:00Z",
+      updatedAt: "2026-11-09T10:00:00Z",
+      version: 1,
+    } as never;
+    const atsProfile = {
+      schemaVersion: 1,
+      atsSearchProfileId: "ats-1",
+      searchProfileId: "sp-1",
+      name: "Frontend ATS",
+      targetRoles: ["Frontend"],
+      skills: ["React"],
+      createdAt: "2026-11-09T10:00:00Z",
+      updatedAt: "2026-11-09T10:00:00Z",
+      version: 1,
+    } as never;
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv: vi.fn(async () => [cvProfile]),
+      listAts: vi.fn(async () => [atsProfile]),
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay cvId="cv-1" cvName="Lebenslauf.pdf" profiles={value} onClose={vi.fn()} />
+      </LangProvider>
+    );
+
+    expect((await screen.findAllByText("Frontend Berlin")).length).toBeGreaterThan(0);
+    expect(await screen.findByText("Frontend ATS")).toBeInTheDocument();
+    expect(screen.getByText("Frontend ATS")).toBeInTheDocument();
+    expect(screen.queryByText("CV-Suchprofil erstellen")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "+ Neues Suchprofil erstellen" }));
+    expect(screen.getByText("CV-Suchprofil erstellen")).toBeInTheDocument();
+  });
+});

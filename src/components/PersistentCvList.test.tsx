@@ -84,7 +84,7 @@ describe("PersistentCvList", () => {
     renderList({ onDownload, onDelete });
 
     expect(screen.getByText("Dauerhaft gespeicherte Lebensläufe")).toBeInTheDocument();
-    expect(screen.getByText("Dauerhaft gespeichert")).toBeInTheDocument();
+    expect(screen.getAllByText("Dauerhaft gespeichert").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Herunterladen" })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: "Herunterladen" }));
@@ -154,3 +154,12 @@ describe("PersistentCvList", () => {
     expect(screen.getByRole("button", { name: "Herunterladen" })).toBeDisabled();
   });
 });
+
+  it("shows RIS profile counts from the provided loader", async () => {
+    const onLoadProfileCounts = vi.fn(async () => ({ searchProfiles: 2, atsProfiles: 3 }));
+    renderList({ onLoadProfileCounts });
+
+    await waitFor(() => expect(onLoadProfileCounts).toHaveBeenCalledWith("cv-1"));
+    expect(await screen.findByText("2")).toBeInTheDocument();
+    expect(await screen.findByText("3")).toBeInTheDocument();
+  });
