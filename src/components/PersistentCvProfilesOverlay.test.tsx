@@ -108,10 +108,12 @@ describe("PersistentCvProfilesOverlay card management", () => {
     );
 
     expect((await screen.findAllByText("Frontend Berlin")).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
     expect(await screen.findByText("Frontend ATS")).toBeInTheDocument();
-    expect(screen.getByText("Frontend ATS")).toBeInTheDocument();
     expect(screen.queryByText("CV-Suchprofil erstellen")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "+ Neues Suchprofil erstellen" }));
     expect(screen.getByText("CV-Suchprofil erstellen")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Frontend Berlin" } });
+    expect(screen.getByText(/existiert bereits/)).toBeInTheDocument();
   });
 });
