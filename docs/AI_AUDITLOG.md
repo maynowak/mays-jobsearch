@@ -5299,12 +5299,13 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Authenticated synthetic RIS E2E was not executed and is not claimed. No
   RIS/AWS/Terraform/Cognito change, no real data.
 
-## 2026-11-10 — DESIGN-PROFILE-UX-CONSOLIDATION-01 FINAL POLISH
+## 2026-11-10 — DESIGN-PROFILE-UX-CONSOLIDATION-01 FINAL POLISH + MAIN MERGE / BROWSER E2E
 
-**Typ:** Profile hierarchy / skills / duplicate-name UX
-**Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — FINAL POLISH VERIFIED LOCAL`
+**Typ:** Profile hierarchy / skills / duplicate-name UX / browser verification
+**Status:** `DESIGN-PROFILE-UX-CONSOLIDATION-01 — FINAL POLISH VERIFIED LOCAL / MERGED TO MAIN`
 
-- Branch `design/jm-ris-profile-ux-final-polish-01`, commits `389eb36` and `14b4597`.
+- Merged the verified feature branch to `main` and pushed `1cd0eae` on explicit
+  operator request. No production deployment was performed.
 - ATS profiles are nested and expandable under each CV search profile; the
   repeated separate ATS empty area is removed. ATS creation is started per
   parent and still uses the actual parent ID. The read-only session overlay
@@ -5313,9 +5314,14 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
   with its own ID, no rename/overwrite/delete.
 - New `SkillChips` component renders responsive chips with show more/less and
   display-only quote cleanup; stored skills are untouched.
-- Aurora card styles, active selection, focus states and 44px actions retained.
-  May remains collapsed; no new API/library.
-- Verification: 4 focused tests, serial full 1678 passed/5 skipped, build PASS;
-  screenshots 320/390/430/768/1024/1440 hierarchy, no overflow.
-- No push/merge/deploy, no RIS/AWS change, no real user data. Auth RIS E2E
-  remains deployment-time.
+- Browser E2E found the fixed profile modal was clipped by the CV section
+  `backdrop-filter`. Both profile overlays now render through a React portal
+  into `document.body`; fix commit `8ff4c4b`.
+- E2E `tests/e2e/profile-ux-final-polish.mjs` uses a synthetic OIDC session and
+  mocked `/api/ris/*` responses only. PASS: duplicate names, ATS nesting,
+  skill show more/less, CV/ATS duplicate warnings, one empty ATS state per
+  parent, no overflow at 320/390/430/768/1024/1440, 44px skill toggle.
+- Verification: 104 focused tests, serial full 1678 passed/5 skipped, build PASS.
+  No real RIS/Cognito/AWS call and no real user/CV data.
+- Authenticated live RIS E2E (`createCv`/`createAts`/reload) remains open; no
+  approved synthetic account was available and it is not claimed.
