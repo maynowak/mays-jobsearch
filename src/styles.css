@@ -12510,3 +12510,8 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     padding: var(--space-4);
   }
 }
+
+.profile-card--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}

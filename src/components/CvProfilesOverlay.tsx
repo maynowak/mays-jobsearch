@@ -130,42 +130,31 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
             {lists.searchProfiles.length === 0 ? (
               <p className="cv-profiles-overlay__empty">{t("cv.noProfilesSaved")}</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t("cv.colName")}</th>
-                    <th>{t("cv.colSavedAt")}</th>
-                    <th className="visually-hidden">{t("cv.colSelect")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lists.searchProfiles.map((entry) => (
-                    <tr
-                      key={entry.id}
-                      className={
-                        selection?.kind === "search" && selection.entry.id === entry.id
-                          ? "cv-profiles-overlay__row--selected"
-                          : undefined
-                      }
-                    >
-                      <td>{entry.name}</td>
-                      <td>{formatSavedAt(entry.savedAt)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-ghost cv-profiles-overlay__select"
-                          aria-pressed={
-                            selection?.kind === "search" && selection.entry.id === entry.id
-                          }
-                          onClick={() => setSelection({ kind: "search", entry })}
-                        >
-                          {t("cv.showDetails")}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ul className="profile-card-list">
+                {lists.searchProfiles.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className={`profile-card${selection?.kind === "search" && selection.entry.id === entry.id ? " profile-card--selected" : ""}`}
+                  >
+                    <div className="profile-card__head">
+                      <strong>{entry.name}</strong>
+                      <span className="field-hint">{formatSavedAt(entry.savedAt)}</span>
+                    </div>
+                    <div className="profile-card__actions">
+                      <button
+                        type="button"
+                        className="btn-ghost cv-profiles-overlay__select"
+                        aria-pressed={
+                          selection?.kind === "search" && selection.entry.id === entry.id
+                        }
+                        onClick={() => setSelection({ kind: "search", entry })}
+                      >
+                        {t("cv.showDetails")}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 
@@ -174,40 +163,29 @@ export default function CvProfilesOverlay({ docName, docHash, onClose, onAssignU
             {lists.atsProfiles.length === 0 ? (
               <p className="cv-profiles-overlay__empty">{t("cv.noProfilesSaved")}</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t("cv.colName")}</th>
-                    <th>{t("cv.colSavedAt")}</th>
-                    <th className="visually-hidden">{t("cv.colSelect")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lists.atsProfiles.map((entry) => (
-                    <tr
-                      key={entry.id}
-                      className={
-                        selection?.kind === "ats" && selection.entry.id === entry.id
-                          ? "cv-profiles-overlay__row--selected"
-                          : undefined
-                      }
-                    >
-                      <td>{entry.name}</td>
-                      <td>{formatSavedAt(entry.savedAt)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-ghost cv-profiles-overlay__select"
-                          aria-pressed={selection?.kind === "ats" && selection.entry.id === entry.id}
-                          onClick={() => setSelection({ kind: "ats", entry })}
-                        >
-                          {t("cv.showDetails")}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ul className="profile-card-list">
+                {lists.atsProfiles.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className={`profile-card profile-card--ats${selection?.kind === "ats" && selection.entry.id === entry.id ? " profile-card--selected" : ""}`}
+                  >
+                    <div className="profile-card__head">
+                      <strong>{entry.name}</strong>
+                      <span className="field-hint">{formatSavedAt(entry.savedAt)}</span>
+                    </div>
+                    <div className="profile-card__actions">
+                      <button
+                        type="button"
+                        className="btn-ghost cv-profiles-overlay__select"
+                        aria-pressed={selection?.kind === "ats" && selection.entry.id === entry.id}
+                        onClick={() => setSelection({ kind: "ats", entry })}
+                      >
+                        {t("cv.showDetails")}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
         </div>
