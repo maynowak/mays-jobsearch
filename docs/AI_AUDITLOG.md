@@ -5437,3 +5437,20 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Synthetic session and mocked RIS/search responses only. No real user data,
   no RIS/AWS/Cognito/consent-contract change. Authenticated live search and
   production deployment remain separately gated.
+
+## 2026-11-10 — CV PROFILE ACTION LABEL FIX
+
+**Typ:** UI label correction in `/profil` CV section
+**Status:** `FIXED / PUSHED TO MAIN`
+
+- The CV card action that opens the durable/session profile list was labelled
+  “Profile anzeigen” / “Show profiles” although the list contains search
+  profiles and ATS profiles. It now reads **“Suchprofile anzeigen”** /
+  **“Show search profiles”** in both the session CV list and the durable RIS CV
+  card.
+- The separate ATS action remains “Zugehörige ATS-Profile anzeigen”.
+- No data, API, RIS, AWS, Cognito or consent change.
+- Verification: focused **117 PASS**, serial full **1692 PASS / 5 skipped**,
+  build PASS; direct-search E2E at 320/390/430/768/1440 PASS with 0 RIS writes
+  and 0 unexpected CV/AI calls.
+- Code commit `2b12b6e`. No production deployment.
