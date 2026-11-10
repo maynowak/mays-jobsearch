@@ -186,3 +186,25 @@ Diese drei Lebenszyklen sind **nicht** zu vermischen.
 - **PASS:** Alle definierten Checks des Tests erfüllt, keine Abweichung.
 - **FAIL:** Abweichung → sofort STOP, Fehler + Evidenz in den Log, **kein**
   weiterer Apify-Run / kein erneutes Klicken bei Apify-Fehler.
+## 11. Live-Browser-E2E (read-only, Production)
+
+Für angemeldete Production-Prüfungen gibt es das dokumentierte Runbook
+`docs/reports/LIVE-PRODUCTION-BROWSER-E2E-RUNBOOK.md` und den Harness
+`tests/e2e/live-production-browser.mjs`.
+
+```bash
+npm run test:e2e:live-browser -- open   # sichtbares Chrome-Fenster
+# manuell mit freigegebenem Testkonto anmelden
+npm run test:e2e:live-browser -- run    # read-only Navigation + Responsive-Checks
+```
+
+Regeln:
+
+- Zugangsdaten nur im Browser eingeben, niemals in Chat/Terminal/Report.
+- Der Standardlauf ist read-only; keine Erstellung, Änderung oder Löschung.
+- Screenshots bleiben außerhalb des Repositories, weil angemeldete Ansichten
+  Kontodaten enthalten können.
+- Production läuft auf dem deployten SHA; ein nicht gemergter Branch wird
+  dadurch nicht geprüft.
+- Schreibtests nur nach separater Freigabe, mit synthetischen Daten und
+  dokumentiertem Cleanup.

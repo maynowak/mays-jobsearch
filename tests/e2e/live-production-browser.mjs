@@ -26,8 +26,8 @@ const cdpPort = Number(process.env.LIVE_CDP_PORT ?? "9223");
 const profileDir = process.env.LIVE_PROFILE_DIR ?? "/tmp/opencode/mays-live-e2e-profile";
 const mode = process.argv[2] ?? "open";
 const evidenceDir = resolve(
-  repoRoot,
-  `docs/reports/assets/LIVE-PRODUCTION-BROWSER-E2E/${new Date().toISOString().replace(/[:.]/g, "-")}`
+  process.env.LIVE_EVIDENCE_DIR ??
+    `/tmp/opencode/live-production-browser-e2e/${new Date().toISOString().replace(/[:.]/g, "-")}`
 );
 const widths = (process.env.LIVE_WIDTHS ?? "320,390,430,768,1024,1440")
   .split(",")

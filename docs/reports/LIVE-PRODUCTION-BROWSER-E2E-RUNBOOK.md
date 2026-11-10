@@ -52,12 +52,17 @@ Geprüft werden:
 Ergebnisse:
 
 ```text
-docs/reports/assets/LIVE-PRODUCTION-BROWSER-E2E/<timestamp>/
+/tmp/opencode/live-production-browser-e2e/<timestamp>/
   overview-320.png
   ...
   settings-1440.png
   live-results.json
 ```
+
+Die Screenshots bleiben bewusst außerhalb des Repositories, weil angemeldete
+Ansichten Kontodaten enthalten können. Nur aggregierte, PII-freie Ergebnisse
+gehören in Bericht und Auditlog. Mit `LIVE_EVIDENCE_DIR=...` kann ein anderer
+geschützter Pfad gesetzt werden.
 
 ### 4. Optional: kontrollierte RIS-/Consent-Schreibprüfung
 

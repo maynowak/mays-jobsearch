@@ -5359,3 +5359,28 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Synthetic OIDC session and mocked `/api/ris/*` only. No real RIS/Cognito/AWS
   call, no real user/CV data and no consent-contract change. Authenticated
   live RIS E2E remains open and is not claimed.
+
+## 2026-11-10 — LIVE PRODUCTION BROWSER E2E (READ-ONLY)
+
+**Typ:** Live-Browser-Prüfung / Testverfahren
+**Status:** `LIVE PRODUCTION READ-ONLY PASS / BRANCH NOT DEPLOYED`
+
+- Production `https://www.mays-job-matcher.app`, Build
+  `Version 2.2.0 · production · main · 3bfe391`.
+- Operator meldete sich manuell in einem isolierten Chrome-Profil an. Keine
+  Zugangsdaten, Tokens oder Cookies wurden gelesen, gespeichert oder
+  dokumentiert.
+- Read-only Lauf über 6 Dashboard-Ansichten × 6 Breiten (320/390/430/768/
+  1024/1440): **36 Checks PASS**, **0 horizontale Overflows**, keine
+  Schreiboperation.
+- Screenshots/`live-results.json` liegen bewusst unter
+  `/tmp/opencode/live-production-browser-e2e/...` und werden wegen möglicher
+  Kontodaten nicht committed.
+- Production ist noch `3bfe391`; der Mobile-Polish-Branch ist nicht gemergt
+  oder deployt. Daher bestätigt der Lauf die aktuelle Production-App, nicht die
+  Branch-Änderungen. Die bekannten Vorher-Punkte (stale Suchprofil-Sitzungs-
+  texte, große Job-Präferenzen-Badges, Profilaktionen unter 44 px) bleiben live
+  sichtbar.
+- Neues Runbook `docs/reports/LIVE-PRODUCTION-BROWSER-E2E-RUNBOOK.md` und
+  Harness `tests/e2e/live-production-browser.mjs` dokumentieren den Ablauf.
+  Keine RIS-/Cognito-/AWS-/Terraform-Änderung.
