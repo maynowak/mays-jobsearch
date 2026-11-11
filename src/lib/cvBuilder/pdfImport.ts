@@ -249,16 +249,19 @@ function splitBlocks(lines: string[]): string[][] {
   return blocks;
 }
 
+function isProjectStart(line: string): boolean {
+  return /^\d{4}(?:\s*[-–—]\s*\d{4})?\s*(?:\||[–—])\s*/.test(cleanLine(line));
+}
+
 function splitProjectBlocks(lines: string[]): string[][] {
   const nonEmptyLines = lines.filter((line) => line.trim());
-  const starts = nonEmptyLines.filter((line) => /^\d{4}(?:\s*[-–]\s*\d{4})?\s*\|/.test(cleanLine(line))).length;
+  const starts = nonEmptyLines.filter(isProjectStart).length;
   if (starts < 2) return splitBlocks(lines);
   const blocks: string[][] = [];
   let current: string[] = [];
   for (const line of lines) {
     if (!line.trim()) continue;
-    const isStart = /^\d{4}(?:\s*[-–]\s*\d{4})?\s*\|/.test(cleanLine(line));
-    if (isStart && current.length) {
+    if (isProjectStart(line) && current.length) {
       blocks.push(current);
       current = [line];
     } else {
@@ -370,9 +373,10 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
       ? dateLine.slice(singlePrefix.length).trim()
       : dateLine.slice(date.matchIndex).replace(DATE_RANGE, "").replace(SINCE_DATE, "").replace(/^[|,;–—-]\s*/, "").trim();
     const before = [...nonEmpty(block.slice(0, dateIndex)), ...splitLineParts(beforeText)];
-    const afterParts = afterText ? afterText.split(/\s*\|\s*/).map(cleanLine).filter(Boolean) : [];
+    const afterParts = afterText ? splitLineParts(afterText) : [];
     let after = [...afterParts.slice(2), ...nonEmpty(block.slice(dateIndex + 1))];
-    if (NON_EMPLOYMENT_RE.test(nonEmpty(block).join(" ")) && !before.some(companyLike)) {
+    const headerText = [...nonEmpty(block.slice(0, dateIndex + 1)), ...afterParts.slice(0, 2)].join(" ");
+    if (NON_EMPLOYMENT_RE.test(headerText) && !before.some(companyLike)) {
       uncertain.add("experience");
       unrecognized.push(...nonEmpty(block));
       continue;
@@ -816,6 +820,11 @@ export function parseCvBuilderImportText(
         sections.education.push(...lines);
         break;
       case "certificates":
+        if (/status|ziel|target|planned|planung|geplant/i.test(section.heading)) {
+          uncertainSet.add("certificates");
+          unrecognized.push(...lines);
+          break;
+        }
         sections.certificates.push(...lines);
         break;
       case "languages":

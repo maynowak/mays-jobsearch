@@ -399,3 +399,29 @@ describe('CV-BUILDER-PARSER-02B structured document', () => {
     expect(result.unrecognized.join('\n')).toContain('Additional Enterprise Projects');
   });
 });
+
+
+describe('CV-BUILDER-PARSER-02B project grouping', () => {
+  it('splits dated dash projects without mixing them into one entry', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Projekte
+2026 – Projekt A
+Beschreibung A
+Technologien: React, AWS
+2025 – Projekt B
+Beschreibung B
+2024 – Projekt C
+Beschreibung C
+2023 – Projekt D
+Beschreibung D`);
+    expect(result.draft.projects.map((entry) => entry.name)).toEqual([
+      '2026 – Projekt A',
+      '2025 – Projekt B',
+      '2024 – Projekt C',
+      '2023 – Projekt D',
+    ]);
+    expect(result.draft.projects[0].technologies).toEqual(['React', 'AWS']);
+  });
+});
