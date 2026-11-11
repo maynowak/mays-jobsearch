@@ -96,6 +96,20 @@ function sectionSummary(
   }
 }
 
+function manualTargetLabel(target: CvBuilderImportManualTarget, t: (key: string) => string): string {
+  const key: Record<CvBuilderImportManualTarget, string> = {
+    ignore: "manualIgnore",
+    profile: "manualProfile",
+    experience: "manualExperience",
+    education: "manualEducation",
+    skills: "manualSkills",
+    projects: "manualProjects",
+    certificates: "manualCertificates",
+    links: "manualLinks",
+  };
+  return t(`cvBuilder.import.${key[target]}`);
+}
+
 function sectionCount(
   result: CvBuilderImportResult,
   section: CvBuilderImportSectionId,
@@ -448,6 +462,21 @@ export default function CvBuilderImportDialog({
                         return (
                           <li key={`unassigned-${index}`}>
                             <span>{line}</span>
+                            {result.unrecognizedDetails[index] && (
+                              <small className="cv-import-unrecognized__meta">
+                                {t("cvBuilder.import.sourceLabel")}:{" "}
+                                {result.unrecognizedDetails[index].page
+                                  ? t("cvBuilder.import.sourcePage", { page: result.unrecognizedDetails[index].page ?? 0 })
+                                  : t("cvBuilder.import.sourceUnknown")}
+                                {result.unrecognizedDetails[index].sectionHeading
+                                  ? ` · ${result.unrecognizedDetails[index].sectionHeading}`
+                                  : ""}
+                                {" · "}
+                                {t("cvBuilder.import.reasonLabel")}: {t(`cvBuilder.import.reason.${result.unrecognizedDetails[index].reason}`)}
+                                {" · "}
+                                {t("cvBuilder.import.suggestionLabel")}: {manualTargetLabel(result.unrecognizedDetails[index].suggestedTarget, t)}
+                              </small>
+                            )}
                             <label>
                               <span>{t("cvBuilder.import.manualAssign")}</span>
                               <select
@@ -460,6 +489,8 @@ export default function CvBuilderImportDialog({
                               >
                                 <option value="ignore">{t("cvBuilder.import.manualIgnore")}</option>
                                 <option value="profile">{t("cvBuilder.import.manualProfile")}</option>
+                                <option value="experience">{t("cvBuilder.import.manualExperience")}</option>
+                                <option value="education">{t("cvBuilder.import.manualEducation")}</option>
                                 <option value="skills">{t("cvBuilder.import.manualSkills")}</option>
                                 <option value="projects">{t("cvBuilder.import.manualProjects")}</option>
                                 <option value="certificates">{t("cvBuilder.import.manualCertificates")}</option>

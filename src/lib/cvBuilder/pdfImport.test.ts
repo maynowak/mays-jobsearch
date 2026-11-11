@@ -514,3 +514,23 @@ https://github.com/example/project-a`);
     expect(result.draft.links.some((link) => link.url.includes('github.com/example/project-a'))).toBe(true);
   });
 });
+
+describe('CV-BUILDER-MAPPING-02C manual targets', () => {
+  it('can explicitly assign an unassigned line to education or experience', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Sonstiges
+Zusätzliche Information`);
+    const index = result.unrecognized.findIndex((line) => line.includes('Zusätzliche Information'));
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(result.unrecognizedDetails[index]).toMatchObject({
+      suggestedTarget: 'ignore',
+      reason: 'unknown-section',
+    });
+    const education = selectCvBuilderImportDraft(result, [], { [index]: 'education' });
+    expect(education.education[0]).toMatchObject({ institution: 'Zusätzliche Information', degree: '' });
+    const experience = selectCvBuilderImportDraft(result, [], { [index]: 'experience' });
+    expect(experience.experience[0]).toMatchObject({ position: 'Zusätzliche Information', employer: '' });
+  });
+});

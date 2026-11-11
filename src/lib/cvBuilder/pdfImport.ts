@@ -111,7 +111,6 @@ export type CvBuilderImportManualTarget =
   | "skills"
   | "projects"
   | "certificates"
-  | "languages"
   | "links";
 
 export type CvBuilderImportManualAssignments = Record<number, CvBuilderImportManualTarget>;
@@ -1049,7 +1048,7 @@ function suggestedTargetFor(reason: CvBuilderImportUnassignedReason): CvBuilderI
     case "incomplete-experience":
       return "experience";
     case "incomplete-language":
-      return "languages";
+      return "ignore";
     case "project-reference":
       return "projects";
     case "certification-goal":
@@ -1257,6 +1256,12 @@ export function selectCvBuilderImportDraft(
     } else if (target === "projects") {
       const entry = createProjectEntry();
       next.projects.push({ ...entry, name: line });
+    } else if (target === "experience") {
+      const entry = createExperienceEntry();
+      next.experience.push({ ...entry, position: line, employer: "", startMonth: "", current: false });
+    } else if (target === "education") {
+      const entry = createEducationEntry();
+      next.education.push({ ...entry, institution: line, degree: "", startMonth: "", current: false });
     } else if (target === "certificates") {
       const entry = createCertificateEntry();
       next.certificates.push({ ...entry, name: line });

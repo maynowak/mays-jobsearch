@@ -189,4 +189,19 @@ Zusätzliche Information`);
     fireEvent.click(screen.getByRole("button", { name: "Leeren Lebenslauf erstellen" }));
     expect(onCreateEmpty).toHaveBeenCalledTimes(1);
   });
+
+  it('shows source, reason and suggestion for an unassigned line', async () => {
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`${pdfText}
+
+Sonstiges
+Zusätzliche Information`);
+    const { container } = renderDialog();
+    await chooseLocal(container);
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+    fireEvent.click(screen.getByText(/nicht zugeordnete Angaben anzeigen/));
+    expect(screen.getByText("Zusätzliche Information")).toBeInTheDocument();
+    expect(screen.getByText(/S\. 1/)).toBeInTheDocument();
+    expect(screen.getByText(/Unbekannter Abschnitt/)).toBeInTheDocument();
+    expect(screen.getByText(/Vorschlag: Nicht übernehmen/)).toBeInTheDocument();
+  });
 });

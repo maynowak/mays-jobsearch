@@ -1,6 +1,6 @@
 # CV-BUILDER-MAPPING-02C — STRUCTURED CV DATA MAPPING
 
-**Status:** `IN PROGRESS — STEPS A–D COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–E COMPLETE`
 **Branch:** `feature/cv-builder-mapping-02c`
 **Base:** `feature/cv-builder-parser-02b` @ `e74cef5`
 **Zielstatus:** `CV-BUILDER-MAPPING-02C — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -12,8 +12,8 @@
 | A | Mapping-Vertrag und Provenienz | **COMPLETE** | `f64f927` |
 | B | Berufserfahrung und Freelance-Projekte | **COMPLETE** | `62eae60` |
 | C | Projekte und Technologien | **COMPLETE** | `ef0e180` |
-| D | Ausbildung und Qualifikationen | **COMPLETE** | `pending` |
-| E | Unklare Informationen und manuelle Zuordnung | OFFEN | — |
+| D | Ausbildung und Qualifikationen | **COMPLETE** | `bd87c71` |
+| E | Unklare Informationen und manuelle Zuordnung | **COMPLETE** | `pending` |
 | F | Qualitätsmessung | OFFEN | — |
 | G | Gesamtprüfung | OFFEN | — |
 
@@ -64,6 +64,23 @@ Test: 17 fokussierte Parser-Tests PASS; Build PASS.
   ohne eine Institution zu erfinden.
 
 Test: 17 fokussierte Parser-Tests PASS; Build PASS.
+
+## STEP E — Unklare Informationen
+
+Die manuelle Einzelzuordnung zeigt jetzt pro Zeile:
+
+- Quellseite (falls verfügbar)
+- Abschnittsüberschrift/Kategorie
+- Grund der Unsicherheit
+- vorgeschlagenes Ziel
+- die bisherigen und neuen Zieloptionen
+
+Neu manuell zuordenbar sind **Berufserfahrung** und **Ausbildung**. Die
+Übernahme bleibt opt-in; der Vorschlag wird nur angezeigt, nicht automatisch
+angewendet. Es gibt weiterhin keine pauschale Übernahme ins Kurzprofil und
+keine stille Löschung. Die Anzeige ist DE/EN und bleibt auf Mobile lesbar.
+
+Test: 17 Parser-Tests und 11 Dialog-Tests PASS; Build PASS.
 
 ## Recovery-Regel
 

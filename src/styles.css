@@ -13103,3 +13103,18 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   color: var(--text);
   line-height: 1.6;
 }
+
+/* CV-BUILDER-MAPPING-02C — unassigned provenance */
+.cv-import-unrecognized__meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+@media (max-width: 430px) {
+  .cv-import-unrecognized__meta {
+    overflow-wrap: anywhere;
+  }
+}

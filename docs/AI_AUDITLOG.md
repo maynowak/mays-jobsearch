@@ -5712,3 +5712,10 @@ angeboten. QA-Lab-Inhalte gelten nicht als AWS-Herstellerzertifikate. No-date-
 Bildungsblöcke übernehmen eine nachfolgende Degree-Zeile ohne erfundene
 Institution. 17 fokussierte Parser-Tests PASS, Build PASS. Keine echten
 CV-Daten, keine RIS/AWS/Cognito/Terraform-Änderung.
+
+**STEP E — Unklare Informationen:** Jede unassigned Zeile zeigt Quelle/Seite,
+Abschnitt, Grund, Vorschlag und Zielauswahl. Neu manuell zuordenbar sind
+Berufserfahrung und Ausbildung; die Übernahme bleibt opt-in (kein Auto-Apply).
+Keine pauschale Kurzprofil-Übernahme, keine stille Löschung. DE/EN-Strings und
+responsive Meta-Zeile ergänzt. 17 Parser- und 11 Dialog-Tests PASS, Build PASS.
+Keine echten CV-Daten, keine RIS/AWS/Cognito/Terraform-Änderung.
