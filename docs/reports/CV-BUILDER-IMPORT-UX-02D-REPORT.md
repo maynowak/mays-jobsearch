@@ -1,6 +1,6 @@
 # CV-BUILDER-IMPORT-UX-02D — REVIEW & MANUAL CORRECTION
 
-**Status:** `IN PROGRESS — STEPS A–G COMPLETE`
+**Status:** `CV-BUILDER-IMPORT-UX-02D — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
 **Branch:** `feature/cv-builder-import-ux-02d`
 **Base:** `feature/cv-builder-pdf-export-fix-01` @ `166fec9`
 **Zielstatus:** `CV-BUILDER-IMPORT-UX-02D — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -16,7 +16,7 @@
 | E | Skills-Auswahl | **COMPLETE** | `pending` |
 | F | Importabschluss und Kontrolle | **COMPLETE** | `pending` |
 | G | UX, Barrierefreiheit, Responsive | **COMPLETE** | `pending` |
-| H | Regression und Gesamtprüfung | OFFEN | — |
+| H | Regression und Gesamtprüfung | **COMPLETE** | `pending` |
 
 ## STEP A — UX-Baseline
 
@@ -108,6 +108,49 @@ Screenshots: `docs/reports/assets/CV-BUILDER-IMPORT-UX-02D/`
 Fokussiert: 51 Tests PASS; Build PASS. Die Tests decken Übersicht, Filter,
 Pagination, Korrektur, Statusentscheidungen, große Skill-Liste, Summary und
 Domain-Übernahme ab.
+
+## STEP H — Regression und Gesamtprüfung
+
+| Prüfung | Ergebnis |
+|---|---|
+| Fokussierte Import-/Domain-/Dialogtests | **51 PASS** |
+| Serielle Gesamtsuite | **1751 PASS / 5 skipped** |
+| Production-Build | **PASS** |
+| 02D-E2E (320–1440) | **PASS** |
+| Import-01A-E2E | **PASS** |
+| Parser-02B-E2E | **PASS** |
+| Mapping-02C-E2E | **PASS** |
+| Workflow-02A-E2E | **PASS** |
+| PDF-Export-E2E (alt) | **PASS** |
+| PDF-Export-Fix-01-E2E | **PASS** |
+| Overflow / API-/RIS-Writes / Console-Fehler | **0 / 0 / 0** |
+
+Der 02D-E2E prüft 55 Prüfzeilen, 10 Einträge pro Seite, Statusfilter,
+Korrektur, Zielauswahl, Entscheidungserhalt über Seitenwechsel,
+Abschlussübersicht mit Pflichtbestätigung und Builder-Öffnung.
+Der PDF-Export wurde erneut mit echten, lesbaren PDFs geprüft.
+
+## Commit-Historie
+
+- `a093703` — Review-, Korrektur-, Skill- und Summary-Workflow
+- `9944264` — 02D-E2E, Screenshots und Regression-Harness-Anpassung
+- Abschluss-Dokumentations-Commit (HEAD)
+
+**Gepusht:** `origin/feature/cv-builder-import-ux-02d`
+
+## Offene Punkte
+
+- Kein Merge und kein Production-Deployment.
+- Keine RIS-/AWS-/Cognito-/Terraform-/Consent-Änderung.
+- Keine echten CV-Daten.
+- Der 55-Zeilen- und 67-Skill-Fall ist synthetisch getestet; das private
+  Referenzdokument bleibt außerhalb des Repositories.
+- Parser-/Mapping-Grenzen aus 02B/02C bleiben unverändert.
+
+## Empfehlung
+
+**GO für Review und kontrollierten Merge.**
+**NO-GO für Production-Deployment ohne gesonderte Freigabe.**
 
 ## Recovery-Regel
 

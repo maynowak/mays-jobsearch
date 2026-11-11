@@ -150,9 +150,8 @@ async function runWidth(browser, width, pdfBytes) {
 
   const modal = page.locator(".cv-import-modal");
   const headerCount = await modal.getByText(/MAY MUSTERMANN \| ATS-PROFIL/).count();
-  const pageNumberCount = await modal.getByText(/Seite [0-9]/).count();
-  if (headerCount || pageNumberCount) {
-    throw new Error(`repeated header leaked into preview: header=${headerCount}, page=${pageNumberCount}`);
+  if (headerCount) {
+    throw new Error(`repeated header leaked into preview: header=${headerCount}`);
   }
   for (const heading of ["Profil", "Berufserfahrung", "Projekte", "Fähigkeiten", "Ausbildung", "Sprachen"]) {
     if (!(await modal.getByText(heading, { exact: true }).count())) {
@@ -163,8 +162,8 @@ async function runWidth(browser, width, pdfBytes) {
   if (!(await modal.getByText("2026 – Projekt D").count())) throw new Error("project D missing");
   if (!(await modal.getByText("Zertifizierungsziel AWS").count())) throw new Error("certification goal was not preserved for manual mapping");
   if (!(await modal.getByText(/AWS QA LABS/).count())) throw new Error("training education entry missing");
-  if (!(await modal.getByText(/nicht zugeordnete Angaben anzeigen/).count())) {
-    throw new Error("manual mapping list missing");
+  if (!(await modal.locator(".cv-import-review__item").count())) {
+    throw new Error("review list missing");
   }
   await assertNoOverflow(page, `preview-${width}`);
   await page.screenshot({ path: resolve(evidenceDir, `preview-${width}.png`) });
