@@ -5921,3 +5921,21 @@ checks success; no PR/CodeQL evidence. **STOP before merge/production**;
 automatic Git/Vercel builds remain active, so a main merge is a potential
 production release requiring separate approval. No merge/deploy/RIS/AWS/
 Cognito/Terraform/consent change.
+
+## 2026-11-11 — CV-BUILDER-02F-CORRECTION-01
+
+- Private 3-page reference re-imported locally against corrected code; no PDF
+  upload, only GET `/api/models`, no RIS writes.
+- Real result: personal 4/4; 5 experience fields correct; education split into
+  Bachelor, vocational qualification and Additional AWS training; 71 granular
+  skill candidates (0 preselected); project technologies 7/4/5; 3 certification
+  goals in review and 0 acquired; review 62→34; profile summary excludes
+  contact and ATS note; independent editor/preview scroll; private PDF export
+  3 pages with real download.
+- Causes fixed: repeated profile headers misclassified, section/heading
+  context, multiple education qualifications concatenated, project tech
+  evidence extraction, document notes in profile.
+- Full suite **1772 PASS / 5 skipped**, build PASS; all import/parser/mapping/
+  workflow/PDF/02E E2E PASS. Private data/artifacts only in /tmp, never repo.
+- No main merge, production deployment, RIS/AWS/Cognito/Terraform/consent
+  change, force-push or branch deletion.
