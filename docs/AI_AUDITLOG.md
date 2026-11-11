@@ -5921,3 +5921,24 @@ checks success; no PR/CodeQL evidence. **STOP before merge/production**;
 automatic Git/Vercel builds remain active, so a main merge is a potential
 production release requiring separate approval. No merge/deploy/RIS/AWS/
 Cognito/Terraform/consent change.
+
+## 2026-11-11 — CV-BUILDER-02E-MAIN-RELEASE-01
+
+- Baseline: main/live `78c0a7b`; current production deployments
+  `7716009586` (jobsearch) / `7716021731` (matcher). Previous recovery
+  deployments: `7713302555` / `7713306345` at `6de0d77`.
+- Preflight: source `e894229`, merge-base `78c0a7b`, 0 behind / 8 ahead, clean
+  scope, `git diff --check` and secret/privacy scan clean.
+- Gate: focused 61, serial **1767 PASS / 5 skipped**, build PASS; all import,
+  parser, mapping, 02D, workflow, PDF and 02E E2E PASS.
+- Fast-forward `78c0a7b..e894229`, one main push. Main = origin/main =
+  `e894229`; feature branch retained.
+- Automatic Production: jobsearch `7718729604` / matcher `7718741865`,
+  environment Production, commit `e894229`, READY/success. Domains serve
+  footer `production · main · e894229`; CodeQL and Vercel statuses success.
+- Live smoke (synthetic only): pages 200, DE/EN, import, personal, skills/cert
+  review, summary, independent scroll, session save and real PDF download
+  (2 pages) PASS; 0 console/server errors; no secret text. No RIS writes.
+- No manual production deployment, rollback, force-push or branch deletion.
+- Release report is on docs branch `docs/cv-builder-02e-main-release-01` to
+  avoid a second main-triggered Production build.
