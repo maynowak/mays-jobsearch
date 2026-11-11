@@ -640,3 +640,87 @@ Docker, GitHub Actions, Linux`);
     expect(result.draft.skills).not.toContain('PostgreSQL Docker');
   });
 });
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E certification goals', () => {
+  it('does not create certificates for goals or preparations in DE and EN', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+CERTIFICATIONS
+AWS Solutions Architect – in preparation
+Azure Fundamentals – planned
+CKA – in progress
+Security+ – pursuing
+AWS Cloud Practitioner | Amazon Web Services | 2023
+Deutsch B2 – in Vorbereitung
+ITIL Foundation – angestrebt`);
+    expect(result.draft.certificates.map((entry) => entry.name)).toEqual(['AWS Cloud Practitioner']);
+    const goalLines = result.unrecognizedDetails.filter((detail) => detail.reason === 'certification-goal');
+    expect(goalLines.map((detail) => detail.line)).toEqual(expect.arrayContaining([
+      'AWS Solutions Architect – in preparation',
+      'Azure Fundamentals – planned',
+      'CKA – in progress',
+      'Security+ – pursuing',
+      'Deutsch B2 – in Vorbereitung',
+      'ITIL Foundation – angestrebt',
+    ]));
+  });
+});
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E personal details', () => {
+  it('keeps name/contact separate and extracts a short location from the personal block', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+may.nowak@example.invalid
++49 170 1234567
+Berlin
+
+PROFIL
+Cloud Solution Architect
+Entwickelt sichere Cloud-Plattformen.`);
+    expect(result.draft.personal).toMatchObject({
+      fullName: 'May Nowak',
+      email: 'may.nowak@example.invalid',
+      phone: '+49 170 1234567',
+      location: 'Berlin',
+    });
+    expect(result.draft.profile).toMatchObject({
+      headline: 'Cloud Solution Architect',
+      summary: 'Entwickelt sichere Cloud-Plattformen.',
+    });
+  });
+});
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E training in experience', () => {
+  it('keeps undated training/lab lines out of an employment description', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+BERUFLICHER WERDEGANG
+2020–2024 | Solution Architect | Acme GmbH
+Entwicklung von Cloud-Plattformen.
+AWS QA LAB – in progress
+Praktische Cloud-Übungen.`);
+    expect(result.draft.experience).toHaveLength(1);
+    expect(result.draft.experience[0].description).not.toContain('AWS QA LAB');
+    expect(result.unrecognized.join('\n')).toContain('AWS QA LAB – in progress');
+    expect(result.mapping.timeline.find((item) => item.kind === 'training')).toMatchObject({
+      included: false,
+      reason: 'training',
+    });
+  });
+});
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E review reasons', () => {
+  it('carries the training reason to all lines of a training block', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+BERUFLICHER WERDEGANG
+2020–2024 | Solution Architect | Acme GmbH
+Entwicklung von Cloud-Plattformen.
+AWS QA LAB – in progress
+Praktische Cloud-Übungen.`);
+    const training = result.unrecognizedDetails.find((detail) => detail.line === 'Praktische Cloud-Übungen.');
+    expect(training).toMatchObject({ reason: 'training', suggestedTarget: 'education', page: 1 });
+  });
+});

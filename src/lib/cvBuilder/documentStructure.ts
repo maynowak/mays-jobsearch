@@ -363,6 +363,15 @@ export interface DetectedTimelineItem {
 const DATE_RANGE_AT_START = /^\s*((?:(?:0?[1-9]|1[0-2])[./])?(?:19|20)\d{2}\s*(?:[-–—]|bis|to)\s*(?:(?:0?[1-9]|1[0-2])[./])?(?:(?:19|20)\d{2}|heute|present|current|now|ongoing))\b/i;
 const SINGLE_DATE_AT_START = /^\s*((?:(?:0?[1-9]|1[0-2])[./])?(?:19|20)\d{2})\s*(?:\||·|–|—)/i;
 
+const TRAINING_LINE_RE = /\b(?:lab|training|weiterbildung|fortbildung|course|workshop|seminar|zertifizierung\w*|certification\w*|in preparation|preparing for|planned|in progress|pursuing|geplant|in vorbereitung|angestrebt)\b/i;
+
+function isTrainingContentLine(line: string): boolean {
+  return TRAINING_LINE_RE.test(line) &&
+    !/^[-•*–—]/.test(line) &&
+    !/[.!?]$/.test(line) &&
+    line.split(/\s+/).filter(Boolean).length <= 14;
+}
+
 function startDate(line: string): { dateText: string; current: boolean; uncertain: boolean } | null {
   const range = line.match(DATE_RANGE_AT_START);
   if (range) {
@@ -430,6 +439,10 @@ export function detectTimelineItems(blocks: PdfTextBlock[]): DetectedTimelineIte
       if (kind === "project" && lastFreelance) item.parentId = lastFreelance.id;
       if (kind === "freelance") lastFreelance = item;
       if (kind !== "project" && kind !== "freelance") lastFreelance = null;
+      continue;
+    }
+    if (isTrainingContentLine(block.text) && (!current || current.kind !== "training")) {
+      current = startItem(block, "training");
       continue;
     }
     if (!current) {

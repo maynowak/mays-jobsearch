@@ -5873,3 +5873,12 @@ contain no product change. No production deployment was performed.
   descriptions are converted to skills. Focused 24 parser + 14 structure tests
   PASS; build PASS. No real CV data, AI/OCR/backend/RIS/AWS/Terraform/Cognito
   changes, no merge/deploy/force-push.
+
+**STEPS C–F — Zertifikate, Personal, Timeline, Prüfliste:** Added DE/EN
+certification-goal/status detection (`in preparation`, planned, in progress,
+pursuing, geplant, in Vorbereitung, angestrebt), no fallback to acquired
+certificates. Fixed contact-line merging so name/email/phone/location are
+separated and extracted. Undated training/lab lines now start a training
+timeline item; their follow-up lines retain training reasons and sources in
+the review list. Focused 28 parser + 15 structure tests PASS, build PASS. No
+real data, AI/OCR/backend/RIS/AWS changes, no merge/deploy/force-push.

@@ -306,3 +306,16 @@ describe("CV-BUILDER-REAL-WORLD-QA-02E skill headings", () => {
     });
   });
 });
+
+describe("CV-BUILDER-REAL-WORLD-QA-02E training separation", () => {
+  it("starts an undated training/lab block instead of appending it to employment", () => {
+    const items = detectTimelineItems([
+      { page: 1, order: 0, text: "2020–2024 | Solution Architect | Acme GmbH", lines: [] },
+      { page: 1, order: 1, text: "Entwicklung von Cloud-Plattformen.", lines: [] },
+      { page: 1, order: 2, text: "AWS QA LAB – in progress", lines: [] },
+      { page: 1, order: 3, text: "Praktische Cloud-Übungen.", lines: [] },
+    ]);
+    expect(items.map((item) => item.kind)).toEqual(["employment", "training"]);
+    expect(items[1].lines).toEqual(["AWS QA LAB – in progress", "Praktische Cloud-Übungen."]);
+  });
+});

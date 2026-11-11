@@ -277,6 +277,8 @@ function mergeWrappedLines(lines: string[]): string[] {
       !sectionFor(previous) &&
       !LINK_RE.test(previous) &&
       !LINK_RE.test(line) &&
+      !EMAIL_RE.test(line) &&
+      !PHONE_RE.test(line) &&
       !/[.!?:]$/.test(previous) &&
       previous.length < 180
     ) {
@@ -507,7 +509,8 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
 function mapExperienceSection(
   section: DetectedDocumentSection,
   uncertain: Set<CvBuilderImportSectionId>,
-  unrecognized: string[]
+  unrecognized: string[],
+  reasonHints?: Map<string, CvBuilderImportUnassignedReason>
 ): { entries: CvBuilderDraftV1["experience"]; timeline: CvBuilderImportTimelineMapping[] } {
   const entries: CvBuilderDraftV1["experience"] = [];
   const timeline: CvBuilderImportTimelineMapping[] = [];
@@ -550,6 +553,7 @@ function mapExperienceSection(
             ? "incomplete-education"
             : "project-reference";
       unrecognized.push(...item.lines);
+      for (const line of item.lines) reasonHints?.set(line, reason);
       const mapping: CvBuilderImportTimelineMapping = {
         itemId: item.id,
         kind: item.kind,
@@ -580,7 +584,9 @@ function mapExperienceSection(
       timeline.push(mapping);
       byItem.set(item.id, mapping);
     } else {
-      unrecognized.push(...(local.length ? local : item.lines));
+      const failed = local.length ? local : item.lines;
+      unrecognized.push(...failed);
+      for (const line of failed) reasonHints?.set(line, "incomplete-experience");
       const mapping: CvBuilderImportTimelineMapping = {
         itemId: item.id,
         kind: item.kind,
@@ -718,10 +724,12 @@ function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>
   return entries;
 }
 
+const CERTIFICATION_GOAL_RE = /\b(?:zertifizierungsziel|zertifizierungsstatus|target certification|planned certification|in preparation|preparing for|planned|in progress|pursuing|geplant|in vorbereitung|angestrebt|not yet acquired|noch nicht erworben)\b/i;
+
 function parseCertificates(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["certificates"] {
   const entries: CvBuilderDraftV1["certificates"] = [];
   for (const line of nonEmpty(lines)) {
-    if (/\b(?:zertifizierungsziel|zertifizierungsstatus|target certification|planned certification|in planung|geplant)\b/i.test(line)) {
+    if (CERTIFICATION_GOAL_RE.test(line)) {
       uncertain.add("certificates");
       unrecognized.push(line);
       continue;
@@ -860,6 +868,22 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
       }
     }
     if (!personal.location && /,/.test(line) && !email && !LINK_RE.test(line) && !PHONE_RE.test(line) && line.length <= 100) {
+      personal.location = line;
+    }
+    if (
+      !personal.location &&
+      line !== personal.fullName &&
+      !email &&
+      !PHONE_RE.test(line) &&
+      !LINK_RE.test(line) &&
+      !line.includes(":") &&
+      line.length <= 100 &&
+      line.split(/\s+/).length <= 5 &&
+      !/[.!?]$/.test(line) &&
+      !/^\d/.test(line) &&
+      !titleLike(line) &&
+      !companyLike(line)
+    ) {
       personal.location = line;
     }
   }
@@ -1043,8 +1067,8 @@ function findSourceLine(
 
 function unassignedReason(line: string, category?: string, heading?: string): CvBuilderImportUnassignedReason {
   if (
-    /zertifizierungsziel|zertifizierungsstatus|target certification|planned certification|in planung|geplant/i.test(line) ||
-    (heading && /status|ziel|target|planned|planung|geplant/i.test(heading))
+    CERTIFICATION_GOAL_RE.test(line) ||
+    (heading && CERTIFICATION_GOAL_RE.test(heading))
   ) {
     return "certification-goal";
   }
@@ -1083,11 +1107,12 @@ function suggestedTargetFor(reason: CvBuilderImportUnassignedReason): CvBuilderI
 
 function buildUnassignedDetails(
   lines: string[],
-  structure: DetectedCvDocument
+  structure: DetectedCvDocument,
+  reasonHints: Map<string, CvBuilderImportUnassignedReason> = new Map()
 ): CvBuilderImportUnassignedDetail[] {
   return lines.map((line) => {
     const source = findSourceLine(line, structure);
-    const reason = unassignedReason(line, source.category, source.sectionHeading);
+    const reason = reasonHints.get(line) ?? unassignedReason(line, source.category, source.sectionHeading);
     return {
       line,
       ...(source.page ? { page: source.page } : {}),
@@ -1114,6 +1139,7 @@ export function parseCvBuilderImportText(
   };
   const experienceEntries: CvBuilderDraftV1["experience"] = [];
   const timelineMappings: CvBuilderImportTimelineMapping[] = [];
+  const reasonHints = new Map<string, CvBuilderImportUnassignedReason>();
   const document = source ?? documentFromText(preprocessLines(raw).join("\n"));
   const structure = detectCvDocument(document);
 
@@ -1136,7 +1162,7 @@ export function parseCvBuilderImportText(
         sections.education.push(...lines);
         break;
       case "certificates":
-        if (/status|ziel|target|planned|planung|geplant/i.test(section.heading)) {
+        if (CERTIFICATION_GOAL_RE.test(section.heading)) {
           uncertainSet.add("certificates");
           unrecognized.push(...lines);
           break;
@@ -1150,7 +1176,7 @@ export function parseCvBuilderImportText(
         sections.links.push(...lines);
         break;
       case "experience": {
-        const mapped = mapExperienceSection(section, uncertainSet, unrecognized);
+        const mapped = mapExperienceSection(section, uncertainSet, unrecognized, reasonHints);
         experienceEntries.push(...mapped.entries);
         timelineMappings.push(...mapped.timeline);
         if (mapped.timeline.some((item) => !item.included)) uncertainSet.add("experience");
@@ -1223,7 +1249,7 @@ export function parseCvBuilderImportText(
     detected,
     uncertain,
     unrecognized: finalUnrecognized,
-    unrecognizedDetails: buildUnassignedDetails(finalUnrecognized, structure),
+    unrecognizedDetails: buildUnassignedDetails(finalUnrecognized, structure, reasonHints),
     mapping: {
       sections: buildSectionMappings(structure.sections).map((section) =>
         section.category === "skills" && draft.skills.length > 25

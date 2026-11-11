@@ -1,6 +1,6 @@
 # CV-BUILDER-REAL-WORLD-QA-02E — REAL PDF IMPORT QUALITY & EDITOR UX
 
-**Status:** `IN PROGRESS — STEPS A–B COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–F COMPLETE`
 **Branch:** `feature/cv-builder-real-world-qa-02e`
 **Base:** `origin/main` @ `78c0a7b`
 **Zielstatus:** `CV-BUILDER-REAL-WORLD-QA-02E — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -11,10 +11,10 @@
 |---|---|---|---|
 | A | Evidence und Reproduktion | **COMPLETE** | `pending` |
 | B | Abschnittserkennung und Skills | **COMPLETE** | `pending` |
-| C | Zertifikatsstatus | OFFEN | — |
-| D | Persönliche Angaben und Kurzprofil | OFFEN | — |
-| E | Timeline und Weiterbildungen | OFFEN | — |
-| F | Prüfliste | OFFEN | — |
+| C | Zertifikatsstatus | **COMPLETE** | `pending` |
+| D | Persönliche Angaben und Kurzprofil | **COMPLETE** | `pending` |
+| E | Timeline und Weiterbildungen | **COMPLETE** | `pending` |
+| F | Prüfliste | **COMPLETE** | `pending` |
 | G | Desktop-Scroll und Editor-UX | OFFEN | — |
 | H | Praxistest und Regression | OFFEN | — |
 
@@ -54,6 +54,41 @@ synthetisch.
 - Die bestehende explizite Skill-Auswahl bleibt erhalten.
 
 Tests: 24 Parser-Tests und 14 Strukturtests PASS, Build PASS.
+
+## STEP C — Zertifikatsstatus
+
+`CERTIFICATION_GOAL_RE` erkennt jetzt unter anderem `in preparation`,
+`preparing for`, `planned`, `in progress`, `pursuing`, `geplant`,
+`in Vorbereitung`, `angestrebt` und `noch nicht erworben`. Solche Zeilen
+werden nicht zu `draft.certificates`, sondern mit `certification-goal` zur
+manuellen Prüfung angeboten. Echte Zertifikate mit Issuer/Datum bleiben
+erhalten. Tests: DE/EN-Ziele und ein echtes Zertifikat.
+
+## STEP D — Persönliche Angaben
+
+- Kontaktzeilen werden nicht mehr als vermeintliche Fortsetzung in den Namen
+  gemerged.
+- Ein kurzer Standort im persönlichen Block wird kontextabhängig erkannt, ohne
+  Titel/Firmen zu erfinden.
+- Name, E-Mail, Telefon, Standort, Profil-Headline und Kurzprofil werden aus
+  dem persönlichen/professionellen Kontext getrennt.
+
+## STEP E — Timeline/Weiterbildung
+
+- Undatierte Training-/Lab-Zeilen starten einen eigenen Trainingsblock statt
+  an die vorherige Berufsstation angehängt zu werden.
+- Trainingszeilen und ihre Folgezeilen bleiben mit Quelle/Seite erhalten.
+- Keine erfundenen Arbeitgeber oder Zeiträume.
+
+## STEP F — Prüfliste
+
+- Timeline-Gründe werden an alle Zeilen eines Trainingsblocks weitergegeben.
+- Training schlägt nicht mehr fälschlich `certification-goal` oder
+  `incomplete-experience` für die Folgezeile vor.
+- Quellseite, Abschnitt und Reihenfolge bleiben erhalten.
+- Keine stillen Löschungen.
+
+Tests: 28 Parser- und 15 Strukturtests PASS; Build PASS.
 
 ## Recovery-Regel
 
