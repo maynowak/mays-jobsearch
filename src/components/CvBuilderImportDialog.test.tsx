@@ -183,6 +183,22 @@ Zusätzliche Information`);
     expect(onImported.mock.calls[0][0].profile.summary).toBeUndefined();
   });
 
+  it("shows mapping provenance in English", async () => {
+    localStorage.setItem("mj-lang", "en");
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`${pdfText}
+
+Additional information
+Additional detail`);
+    const { container } = renderDialog();
+    await chooseLocal(container);
+    await screen.findByText("We found the following information in your CV.");
+    fireEvent.click(screen.getByText(/unassigned items/));
+    expect(screen.getByText("Additional detail")).toBeInTheDocument();
+    expect(screen.getByText(/p\. 1/)).toBeInTheDocument();
+    expect(screen.getByText(/Unknown section/)).toBeInTheDocument();
+    expect(screen.getByText(/Suggested: Do not use/)).toBeInTheDocument();
+  });
+
   it("keeps the empty-CV path available without importing", () => {
     const onCreateEmpty = vi.fn();
     renderDialog({ onCreateEmpty });
