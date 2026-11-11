@@ -45,6 +45,8 @@ describe('MAYS-UI-S2: Aurora dashboard preview', () => {
     expect(screen.getByText('dev@example.com')).toBeTruthy();
     expect(screen.getByText('dev-demo-user-123')).toBeTruthy();
     expect(screen.getByText('Konto-Status')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Mays Job Matcher wird weiterentwickelt' })).toBeTruthy();
+    expect(screen.getByText(/Während der Entwicklungsphase können sich einzelne Funktionen/)).toBeTruthy();
     expect(screen.getByText('Zukünftige Funktionen')).toBeTruthy();
     expect(screen.getAllByText('Demo').length).toBeGreaterThan(0);
     expect(screen.queryByText('Authentifiziert')).toBeNull();
@@ -218,17 +220,17 @@ describe('JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01', () => {
       </LangProvider>
     );
 
-    expect(screen.queryByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeNull();
-    const button = screen.getByRole('button', { name: /Hilfe von May/ });
+    expect(screen.queryByText('Hilfe zu diesem Bereich')).toBeNull();
+    const button = screen.getByRole('button', { name: 'Hilfe' });
     expect(button).toHaveAttribute('aria-expanded', 'false');
 
     fireEvent.click(button);
     expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeInTheDocument();
+    expect(screen.getByText('Hilfe zu diesem Bereich')).toBeInTheDocument();
     expect(localStorage.getItem('mj-may-help-open')).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Lebenslauf' }));
-    expect(screen.getByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeInTheDocument();
+    expect(screen.getByText('Hilfe zu diesem Bereich')).toBeInTheDocument();
 
     fireEvent.click(button);
     expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -244,7 +246,7 @@ describe('JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01', () => {
       </LangProvider>
     );
 
-    expect(screen.getByRole('button', { name: /Hilfe von May/ })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hilfe' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Hilfe zu diesem Bereich')).toBeInTheDocument();
   });
 });

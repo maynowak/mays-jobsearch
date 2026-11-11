@@ -243,6 +243,7 @@ export default function App() {
   const [cvBuilderImportOpen, setCvBuilderImportOpen] = useState(false);
   const [cvBuilderPendingName, setCvBuilderPendingName] = useState("");
   const [cvBuilderDirty, setCvBuilderDirty] = useState(false);
+  const [cvBuilderSaved, setCvBuilderSaved] = useState(false);
   const [cvBuilderSaving, setCvBuilderSaving] = useState(false);
   const [cvBuilderSaveError, setCvBuilderSaveError] = useState("");
   const cvBuilderHasContent = hasCvBuilderContent(cvBuilderDraft);
@@ -459,6 +460,7 @@ export default function App() {
       setCvBuilderImportOpen(false);
       setCvBuilderPendingName("");
       setCvBuilderDirty(false);
+      setCvBuilderSaved(false);
       setCvBuilderSaving(false);
       setCvBuilderSaveError("");
       setStatus(null);
@@ -1214,6 +1216,7 @@ export default function App() {
     setCvBuilderTemplate("classic");
     setCvBuilderOpen(false);
     setCvBuilderDirty(false);
+    setCvBuilderSaved(false);
     setCvBuilderSaveError("");
     if (manualShowsRemovedProfile) {
       setProfile({ ...INITIAL_MANUAL_PROFILE });
@@ -1278,6 +1281,7 @@ export default function App() {
       setCvBuilderTemplate(profile.template);
       setCvBuilderOpen(true);
       setCvBuilderDirty(false);
+      setCvBuilderSaved(true);
       setCvBuilderSaveError("");
     } catch (err) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
@@ -1300,6 +1304,7 @@ export default function App() {
       setCvBuilderTemplate(profile.template);
       setCvBuilderOpen(true);
       setCvBuilderDirty(false);
+      setCvBuilderSaved(true);
       setCvBuilderSaveError("");
     } catch (err) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
@@ -1317,6 +1322,7 @@ export default function App() {
     setCvBuilderTemplate(profile.template);
     setCvBuilderOpen(true);
     setCvBuilderDirty(false);
+    setCvBuilderSaved(true);
     setCvBuilderSaveError("");
   };
 
@@ -1330,6 +1336,7 @@ export default function App() {
     setCvBuilderTemplate("classic");
     setCvBuilderOpen(true);
     setCvBuilderDirty(true);
+    setCvBuilderSaved(false);
     setCvBuilderSaveError("");
   };
 
@@ -1374,6 +1381,7 @@ export default function App() {
         setCvBuilderDraft(cloneCvBuilderDraft(created.cvData));
         setCvBuilderTemplate(created.template);
         setCvBuilderDirty(false);
+        setCvBuilderSaved(true);
         return;
       }
       const current = cvProfileRepositoryRef.current.get(cvBuilderProfileId);
@@ -1390,6 +1398,7 @@ export default function App() {
       setCvBuilderDraft(cloneCvBuilderDraft(updated.cvData));
       setCvBuilderTemplate(updated.template);
       setCvBuilderDirty(false);
+      setCvBuilderSaved(true);
     } catch (err) {
       setCvBuilderSaveError(err instanceof Error ? err.message : t("cvBuilder.profiles.error"));
       throw err;
@@ -1436,6 +1445,7 @@ export default function App() {
       setCvBuilderTemplate("classic");
       setCvBuilderOpen(false);
       setCvBuilderDirty(false);
+      setCvBuilderSaved(false);
       setCvBuilderSaveError("");
     }
     setStatus({ type: "info", message: t("cvBuilder.profiles.deleted") });
@@ -3802,6 +3812,7 @@ export default function App() {
       }}
       onSave={handleSaveCvProfile}
       dirty={cvBuilderDirty}
+      saved={cvBuilderSaved}
       saving={cvBuilderSaving}
       saveError={cvBuilderSaveError}
     />

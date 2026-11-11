@@ -29,12 +29,12 @@ export default function MayHelp({ context, compact = false, className }: MayHelp
   return (
     <aside
       className={`may-help${compact ? ' may-help--compact' : ''}${className ? ` ${className}` : ''}`}
-      aria-label={t('dashboard.may.aria')}
+      aria-label={t('dashboard.help.aria')}
     >
       <div className="may-help__avatar" aria-hidden="true">M</div>
       <div className="may-help__body">
-        <p className="may-help__eyebrow">{t('dashboard.may.aria')}</p>
-        <h2 id={headingId} className="may-help__title">{t('dashboard.may.greeting')}</h2>
+        <p className="may-help__eyebrow">{t('dashboard.help.eyebrow')}</p>
+        <h2 id={headingId} className="may-help__title">{t('dashboard.help.title')}</h2>
         <p className="may-help__text">{t(CONTEXT_KEY[context])}</p>
       </div>
     </aside>

@@ -8,14 +8,33 @@ import { createEmptyCvBuilderDraft, type CvBuilderDraftV1 } from "../lib/cvBuild
 function Harness({
   initial = createEmptyCvBuilderDraft(),
   onClose = vi.fn(),
+  onSave,
+  dirty = false,
+  saved = false,
+  saving = false,
+  saveError = "",
 }: {
   initial?: CvBuilderDraftV1;
   onClose?: () => void;
+  onSave?: () => Promise<void> | void;
+  dirty?: boolean;
+  saved?: boolean;
+  saving?: boolean;
+  saveError?: string;
 }) {
   const [draft, setDraft] = useState(initial);
   return (
     <LangProvider>
-      <CvBuilderEditor draft={draft} onChange={setDraft} onClose={onClose} />
+      <CvBuilderEditor
+        draft={draft}
+        onChange={setDraft}
+        onClose={onClose}
+        onSave={onSave}
+        dirty={dirty}
+        saved={saved}
+        saving={saving}
+        saveError={saveError}
+      />
     </LangProvider>
   );
 }
@@ -174,4 +193,54 @@ describe("CV-BUILDER-01A editor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lebenslauf-Editor schließen" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+
+function SaveHarness({ onClose = vi.fn() }: { onClose?: () => void }) {
+  const [draft, setDraft] = useState(createEmptyCvBuilderDraft());
+  const [dirty, setDirty] = useState(true);
+  const [saved, setSaved] = useState(false);
+  return (
+    <LangProvider>
+      <CvBuilderEditor
+        draft={draft}
+        onChange={(next) => { setDraft(next); setDirty(true); }}
+        onClose={onClose}
+        onSave={async () => { setDirty(false); setSaved(true); }}
+        dirty={dirty}
+        saved={saved}
+      />
+    </LangProvider>
+  );
+}
+
+describe("CV-BUILDER-WORKFLOW-02A save status", () => {
+  it("shows the correct session status for unsaved, saved and modified drafts", () => {
+    const { rerender } = render(<Harness />);
+    expect(screen.getByText("Noch nicht gespeichert")).toBeInTheDocument();
+    rerender(<Harness saved />);
+    expect(screen.getByText("In dieser Sitzung gespeichert")).toBeInTheDocument();
+    rerender(<Harness saved dirty />);
+    expect(screen.getByText("Ungespeicherte Änderungen")).toBeInTheDocument();
+    rerender(<Harness saved={false} dirty />);
+    expect(screen.getByText("Noch nicht gespeichert")).toBeInTheDocument();
+  });
+
+  it("shows the success state with the close, continue and PDF actions", async () => {
+    const onClose = vi.fn();
+    render(<SaveHarness onClose={onClose} />);
+    fireEvent.click(screen.getByRole("button", { name: "Lebenslauf speichern" }));
+    expect((await screen.findAllByText("Dein Lebenslauf wurde in dieser Sitzung gespeichert.")).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Zur Lebenslaufübersicht" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Weiter bearbeiten" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Als PDF herunterladen" }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Zur Lebenslaufübersicht" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps save errors visible and does not fake a success", () => {
+    render(<Harness saveError="Speichern fehlgeschlagen" saved={false} />);
+    expect(screen.getAllByText("Speichern fehlgeschlagen").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Dein Lebenslauf wurde in dieser Sitzung gespeichert.")).toBeNull();
+  });
+});
 });

@@ -150,8 +150,7 @@ const DashboardV2 = ({
             else setMayOpen(true);
           }}
         >
-          <span aria-hidden="true">💚</span>
-          {t('dashboard.may.button')}
+          {t('dashboard.help.button')}
         </button>
         {mayOpen && (
           <div
@@ -220,6 +219,14 @@ const DashboardV2 = ({
                 <dd>{user.name || '-'}</dd>
               </div>
             </dl>
+          </Card>
+
+          <Card className="dashboard-v2__development-card">
+            <div className="dashboard-v2__card-heading">
+              <h2>{t('dashboard.development.title')}</h2>
+              <Badge tone="soon">{t('dashboard.development.badge')}</Badge>
+            </div>
+            <p>{t('dashboard.development.text')}</p>
           </Card>
 
           <StorageConsentOverview

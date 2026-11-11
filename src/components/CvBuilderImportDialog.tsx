@@ -277,7 +277,7 @@ export default function CvBuilderImportDialog({
 
         <div className="cv-import-modal__body">
           <details className="cv-import-modal__may">
-            <summary>{t("dashboard.may.button")}</summary>
+            <summary>{t("dashboard.help.button")}</summary>
             <MayHelp context="import" compact />
           </details>
 

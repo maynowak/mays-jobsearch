@@ -34,6 +34,7 @@ interface Props {
   onTemplateChange?: (template: CvBuilderTemplate) => void;
   onSave?: () => Promise<void> | void;
   dirty?: boolean;
+  saved?: boolean;
   saving?: boolean;
   saveError?: string;
 }
@@ -352,6 +353,7 @@ export default function CvBuilderEditor({
   onTemplateChange,
   onSave,
   dirty = false,
+  saved = false,
   saving = false,
   saveError = "",
 }: Props) {
@@ -365,6 +367,8 @@ export default function CvBuilderEditor({
   const exportingRef = useRef(false);
   const addRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [focusAfterRemove, setFocusAfterRemove] = useState<string | null>(null);
+  const [successDismissed, setSuccessDismissed] = useState(false);
+  const savingRef = useRef(false);
   const [template, setTemplate] = useState<CvBuilderTemplate>(initialTemplate);
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
   const [closeConfirm, setCloseConfirm] = useState(false);
@@ -415,18 +419,28 @@ export default function CvBuilderEditor({
   };
 
   const saveCurrent = async () => {
-    if (!onSave || saving) return;
-    await onSave();
+    if (!onSave || saving || savingRef.current) return;
+    savingRef.current = true;
+    try {
+      await onSave();
+    } catch {
+      // The parent keeps the editor open and reports the conflict.
+    } finally {
+      savingRef.current = false;
+    }
   };
 
   const saveAndClose = async () => {
-    if (!onSave || saving) return;
+    if (!onSave || saving || savingRef.current) return;
+    savingRef.current = true;
     try {
       await onSave();
       setCloseConfirm(false);
       onClose();
     } catch {
       // The parent keeps the editor open and reports the conflict.
+    } finally {
+      savingRef.current = false;
     }
   };
 
@@ -461,6 +475,10 @@ export default function CvBuilderEditor({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose, dirty, onSave, closeConfirm, saving]);
+
+  useEffect(() => {
+    if (dirty) setSuccessDismissed(false);
+  }, [dirty]);
 
   const updatePersonal = (key: keyof CvBuilderDraftV1["personal"], value: string) => {
     onChange({ ...draft, personal: { ...draft.personal, [key]: value } });
@@ -1264,6 +1282,45 @@ export default function CvBuilderEditor({
         </div>
 
         <div className="cv-builder-footer">
+          <div className={`cv-builder-save-status${saveError ? " is-error" : ""}`} role="status" aria-live="polite">
+            <span>
+              {saving
+                ? t("cvBuilder.status.saving")
+                : saveError
+                  ? t("cvBuilder.status.error")
+                  : dirty
+                    ? saved
+                      ? t("cvBuilder.status.unsaved")
+                      : t("cvBuilder.status.notSaved")
+                    : saved
+                      ? t("cvBuilder.status.saved")
+                      : t("cvBuilder.status.notSaved")}
+            </span>
+            {saved && !dirty && !saving && !saveError && !successDismissed && (
+              <strong>{t("cvBuilder.saveSuccess")}</strong>
+            )}
+          </div>
+          {saved && !dirty && !saving && !saveError && !successDismissed && (
+            <div className="cv-builder-save-success" role="status">
+              <p>{t("cvBuilder.saveSuccess")}</p>
+              <div className="cv-builder-footer__actions">
+                <button type="button" className="btn-ghost" onClick={onClose}>
+                  {t("cvBuilder.toCvOverview")}
+                </button>
+                <button type="button" className="btn-ghost" onClick={() => setSuccessDismissed(true)}>
+                  {t("cvBuilder.continueEditing")}
+                </button>
+                <button
+                  type="button"
+                  className="letter-btn"
+                  onClick={() => void handleExportPdf()}
+                  disabled={exporting || errorCount > 0 || !hasCvBuilderContent(draft)}
+                >
+                  {t("cvBuilder.exportPdf")}
+                </button>
+              </div>
+            </div>
+          )}
           <p className="cv-builder-hint">{t("cvBuilder.sectionHint")}</p>
           <div className="cv-builder-footer__actions">
             {onSave && (

@@ -7,14 +7,15 @@ beforeEach(() => localStorage.setItem("mj-lang", "de"));
 afterEach(() => cleanup());
 
 describe("MayHelp", () => {
-  it("shows the reusable greeting and contextual CV help", () => {
+  it("starts with contextual CV help instead of a self-introduction", () => {
     render(
       <LangProvider>
         <MayHelp context="cv" />
       </LangProvider>
     );
 
-    expect(screen.getByText("Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.")).toBeInTheDocument();
+    expect(screen.getByText("Hilfe zu diesem Bereich")).toBeInTheDocument();
+    expect(screen.queryByText("Hallo, ich bin May! Ich helfe dir bei deinen Bewerbungen.")).toBeNull();
     expect(screen.getByText(/Speicherfreigabe ist keine KI-Einwilligung/)).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).toBeNull();
   });
@@ -27,6 +28,6 @@ describe("MayHelp", () => {
     );
 
     expect(screen.getByText(/Starte hier: Konto und nächster Schritt/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Hilfe von May")).toHaveClass("may-help--compact");
+    expect(screen.getByLabelText("Hilfe zu diesem Bereich")).toHaveClass("may-help--compact");
   });
 });
