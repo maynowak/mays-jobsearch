@@ -9,14 +9,14 @@
 
 | Step | Thema | Status | Commit |
 |---|---|---|---|
-| A | Import-UX analysieren | **COMPLETE** | `pending` |
-| B | Importübersicht | **COMPLETE** | `pending` |
-| C | Prüfliste mit Filter/Pagination/Status | **COMPLETE** | `pending` |
-| D | Korrektur und manuelle Zuordnung | **COMPLETE** | `pending` |
-| E | Skills-Auswahl | **COMPLETE** | `pending` |
-| F | Importabschluss und Kontrolle | **COMPLETE** | `pending` |
-| G | UX, Barrierefreiheit, Responsive | **COMPLETE** | `pending` |
-| H | Regression und Gesamtprüfung | **COMPLETE** | `pending` |
+| A | Import-UX analysieren | **COMPLETE** | `a093703` |
+| B | Importübersicht | **COMPLETE** | `a093703` |
+| C | Prüfliste mit Filter/Pagination/Status | **COMPLETE** | `a093703` |
+| D | Korrektur und manuelle Zuordnung | **COMPLETE** | `a093703` |
+| E | Skills-Auswahl | **COMPLETE** | `a093703` |
+| F | Importabschluss und Kontrolle | **COMPLETE** | `a093703` |
+| G | UX, Barrierefreiheit, Responsive | **COMPLETE** | `9944264` |
+| H | Regression und Gesamtprüfung | **COMPLETE** | `ccd8ad5`, `829f603` |
 
 ## STEP A — UX-Baseline
 
@@ -132,9 +132,13 @@ Der PDF-Export wurde erneut mit echten, lesbaren PDFs geprüft.
 
 ## Commit-Historie
 
-- `a093703` — Review-, Korrektur-, Skill- und Summary-Workflow
-- `9944264` — 02D-E2E, Screenshots und Regression-Harness-Anpassung
-- Abschluss-Dokumentations-Commit (HEAD)
+- `a093703` — A–F: Review-, Korrektur-, Skill- und Summary-Workflow in einem
+  zusammenhängenden UI-/Domain-Schritt; Analyse, Übersicht, Prüfliste,
+  Korrektur, Skills und Summary teilen denselben State.
+- `9944264` — G: 02D-E2E, Screenshots und Regression-Harness-Anpassung.
+- `ccd8ad5` — H: Abschlussdokumentation, 1751-PASS-Nachweis.
+- `829f603` — H-Nachtrag: englischer Review-/Summary-Test und 1752-PASS-Nachweis.
+- `bf3202e` — Final-Review-Fix: explizit leere Korrekturen.
 
 **Gepusht:** `origin/feature/cv-builder-import-ux-02d`
 

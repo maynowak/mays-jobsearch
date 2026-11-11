@@ -5820,3 +5820,8 @@ shows an alert, marks the textarea and keeps the original text visible. Tests:
 empty, whitespace, valid correction, legacy callers. Focused 41 PASS, build
 PASS. No merge/deploy, no real data, no RIS/AWS/Cognito/Terraform/consent
 change.
+
+**FINAL MERGE REVIEW 01 — Evidence Matrix:** Step A–F are correctly attributed
+to the combined implementation commit `a093703`; G to `9944264`; H to
+`ccd8ad5` and the English-test follow-up `829f603`; the empty-correction review
+fix to `bf3202e`. No invented individual commits.
