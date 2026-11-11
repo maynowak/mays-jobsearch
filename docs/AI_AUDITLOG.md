@@ -5825,3 +5825,13 @@ change.
 to the combined implementation commit `a093703`; G to `9944264`; H to
 `ccd8ad5` and the English-test follow-up `829f603`; the empty-correction review
 fix to `bf3202e`. No invented individual commits.
+
+**FINAL MERGE REVIEW 01 — STEP 3/4:** Final 41 focused / **1754 PASS /
+5 skipped**, build PASS; all seven import/export/workflow E2E PASS at
+320–1440 where applicable; 0 overflow/API/RIS/console errors. `main` =
+`origin/main` `cef41cc`; branch 0 behind / 31 ahead, `origin/main` ancestor,
+fast-forward possible. Scope is the stacked 02B→02C→PDF-Fix→02D chain, no
+unexpected app/RIS/AWS paths. Vercel preview statuses at `c6430aa` success;
+no PR and no GitHub Actions check-run beyond Vercel Preview Comments.
+`git diff --check`/secret scan PASS. No merge, production deploy, real CV data
+or RIS/AWS/Cognito/Terraform/consent change.
