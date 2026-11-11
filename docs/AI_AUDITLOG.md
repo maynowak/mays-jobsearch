@@ -5950,3 +5950,16 @@ independent scroll, private PDF export 3 pages. Focused 66 PASS, full
 **1772 PASS / 5 skipped**, build PASS; E2E and Vercel preview/status PASS.
 Feature 3 ahead/0 behind, fast-forward possible; no CodeQL/PR observed.
 **STOP before merge/production**; no main/deploy/RIS/AWS/consent change.
+
+**EDUCATION PROVENANCE 01:** Reproduced the existing multi-degree institution
+bug in `parseEducation()` and corrected the regression test that had asserted
+the unproven shared institution. Institutions are now assigned by documented
+position/nearest evidence; missing institutions stay empty and set education
+uncertain; periods are attached only to the nearest degree. Six synthetic
+fixtures cover bachelor, vocational without institution, distinct institutions,
+explicitly shared institution, training without degree and unclear blocks.
+Private reference: Bachelor retains Hochschule Darmstadt; vocational
+qualification institution is empty; AWS training has no degree; review remains
+34, skills 71, project technologies 7/4/5. Parser 42 PASS, focused 71 PASS,
+full **1777 PASS / 5 skipped**, build PASS, five E2E chains PASS, privacy scan
+clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
