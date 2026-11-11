@@ -162,7 +162,7 @@ async function runWidth(browser, width, pdfBytes) {
   if (!(await modal.getByText("2026 – Projekt A").count())) throw new Error("project A missing");
   if (!(await modal.getByText("2026 – Projekt D").count())) throw new Error("project D missing");
   if (!(await modal.getByText("Zertifizierungsziel AWS").count())) throw new Error("certification goal was not preserved for manual mapping");
-  if (!(await modal.getByText("Praktische Übungen").count())) throw new Error("training content was not preserved for manual mapping");
+  if (!(await modal.getByText(/AWS QA LABS/).count())) throw new Error("training education entry missing");
   if (!(await modal.getByText(/nicht zugeordnete Angaben anzeigen/).count())) {
     throw new Error("manual mapping list missing");
   }

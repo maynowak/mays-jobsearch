@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "width": 320,
+      "preview": "PASS",
+      "editor": "PASS",
+      "headerLeaks": 0,
+      "apiCalls": 1
+    },
+    {
+      "width": 390,
+      "preview": "PASS",
+      "editor": "PASS",
+      "headerLeaks": 0,
+      "apiCalls": 1
+    },
+    {
+      "width": 430,
+      "preview": "PASS",
+      "editor": "PASS",
+      "headerLeaks": 0,
+      "apiCalls": 1
+    },
+    {
+      "width": 768,
+      "preview": "PASS",
+      "editor": "PASS",
+      "headerLeaks": 0,
+      "apiCalls": 1
+    },
+    {
+      "width": 1024,
+      "preview": "PASS",
+      "editor": "PASS",
+      "headerLeaks": 0,
+      "apiCalls": 1
+    },
+    {
+      "width": 1440,
+      "preview": "PASS",
+      "editor": "PASS",
+      "headerLeaks": 0,
+      "apiCalls": 1
+    }
+  ]
+}
