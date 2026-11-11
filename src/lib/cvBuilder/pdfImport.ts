@@ -896,7 +896,12 @@ function parseSkills(
   const seen = new Set<string>();
   const skills: string[] = [];
   const mergedLines: string[] = [];
-  for (const line of nonEmpty(lines)) {
+  for (const rawLine of lines) {
+    const line = cleanLine(rawLine);
+    if (!line) {
+      mergedLines.push("");
+      continue;
+    }
     const previous = mergedLines[mergedLines.length - 1];
     const continuation =
       previous &&
@@ -910,6 +915,7 @@ function parseSkills(
     else mergedLines.push(line);
   }
   for (const line of mergedLines) {
+    if (!line) continue;
     const cleaned = line.replace(SKILL_CATEGORY_PREFIX, "");
     const words = cleaned.split(/\s+/).filter(Boolean);
     if (!cleaned) continue;
@@ -1121,7 +1127,7 @@ export function parseCvBuilderImportText(
         sections.profile.push(...lines);
         break;
       case "skills":
-        sections.skills.push(...lines);
+        sections.skills.push(...lines, "");
         break;
       case "projects":
         sections.projects.push(...lines);

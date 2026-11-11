@@ -5856,3 +5856,20 @@ contain no product change. No production deployment was performed.
   no RIS/AWS/Cognito/Terraform/consent changes, no branch deletion, no force-push.
 - Remaining risk: Vercel main-push auto-production must be reviewed/disabled
   before normal main pushes; CodeQL check was still in progress.
+
+## 2026-11-11 — CV-BUILDER-REAL-WORLD-QA-02E (STEPS A–B)
+
+**Typ:** real-world PDF import quality / skill section recognition
+**Status:** `IN PROGRESS — STEPS A–B COMPLETE`
+
+- Branch `feature/cv-builder-real-world-qa-02e` from `origin/main` `78c0a7b`.
+- Synthetic 3-page reproduction: architecture/cloud/technologies headings were
+  unknown; skills merged across section boundaries (`Kubernetes Event-driven
+  Architecture`, `PostgreSQL Docker`); personal name/location missing;
+  certification-goal status and undated training need further fixes.
+- STEP B: architecture/cloud/software architecture/technologies headings map to
+  skills; headings containing project/projekt stay projects; skills are parsed
+  per section with blank separators, preventing cross-section merges. No project
+  descriptions are converted to skills. Focused 24 parser + 14 structure tests
+  PASS; build PASS. No real CV data, AI/OCR/backend/RIS/AWS/Terraform/Cognito
+  changes, no merge/deploy/force-push.

@@ -614,3 +614,29 @@ Originalzeile`);
     expect(objectWithoutText.projects[0].name).toBe('Originalzeile');
   });
 });
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E skills sections', () => {
+  it('keeps skills from separate architecture/cloud/technology sections apart', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+PROFIL
+Cloud Solution Architect
+Architecture & Cloud
+AWS, Azure, Terraform, Kubernetes
+Software Architecture
+Event-driven Architecture, API Design, Microservices
+Technical Skills
+Java, Spring Boot, TypeScript, PostgreSQL
+Technologies
+Docker, GitHub Actions, Linux`);
+    expect(result.draft.skills).toEqual([
+      'AWS', 'Azure', 'Terraform', 'Kubernetes',
+      'Event-driven Architecture', 'API Design', 'Microservices',
+      'Java', 'Spring Boot', 'TypeScript', 'PostgreSQL',
+      'Docker', 'GitHub Actions', 'Linux',
+    ]);
+    expect(result.draft.skills).not.toContain('Kubernetes Event-driven Architecture');
+    expect(result.draft.skills).not.toContain('PostgreSQL Docker');
+  });
+});

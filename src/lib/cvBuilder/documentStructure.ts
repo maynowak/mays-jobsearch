@@ -148,8 +148,8 @@ function categoryForPart(part: string): DocumentCategory | null {
   if (/\b(?:zielposition\w*|zielrollen|zielrolle|target roles?|target positions?)\b/.test(value)) return "target-roles";
   if (/\b(?:profil\w*|summary|zusammenfassung|über mich|ueber mich|about me)\b/.test(value)) return "profile";
   if (/\b(?:aws\s*qa\s*lab\w*|qa\s*lab\w*|labor\w*|lab\w*|training|praxisorientierte\w*|cloud-qualifizierung|qualifizierung)\b/.test(value)) return "training";
-  if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*)\b/.test(value)) return "skills";
-  if (/\b(?:projekt\w*|project\w*|architektur\w*)\b/.test(value)) return "projects";
+  if (/\b(?:projekt\w*|project\w*)\b/.test(value)) return "projects";
+  if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*|architektur\w*|architecture|cloud|technolog\w*)\b/.test(value)) return "skills";
   if (/\b(?:weiterbildung\w*|zertifikat\w*|zertifizierung\w*|certification\w*|certificate\w*|fortbildung\w*|further education|continuing education|courses?)\b/.test(value)) return "certificates";
   if (/\b(?:beruflicher werdegang|berufserfahrung\w*|arbeitserfahrung\w*|werdegang|professional experience|work experience|employment history|timeline)\b/.test(value)) return "experience";
   if (/\b(?:ausbildung\w*|education|qualifikation\w*|qualification\w*)\b/.test(value)) return "education";
@@ -174,6 +174,8 @@ const EXACT_HEADING_ALIASES = new Set([
   "zielpositionen", "zielrollen", "target roles", "target positions",
   "kernkompetenzen", "kompetenzen", "fähigkeiten", "faehigkeiten", "kenntnisse", "technische kenntnisse",
   "skills", "technical skills", "core skills", "core competencies", "competencies",
+  "architecture", "software architecture", "architecture & cloud", "architektur", "cloud", "cloud architecture",
+  "technologies", "technology", "technical technologies",
   "projekte", "project", "projects", "project experience", "project work", "projektarbeit",
   "selected current projects", "selected projects", "current projects", "key projects", "relevant projects",
   "berufserfahrung", "berufliche erfahrung", "arbeitserfahrung", "beruflicher werdegang", "werdegang",
@@ -209,7 +211,10 @@ export function matchDocumentHeading(text: string): DocumentHeadingMatch | null 
   if (continued) value = value.replace(CONTINUED_SUFFIX, "").trim();
   if (!value || !headingShapeAllowed(value, continued)) return null;
   const parts = headingParts(value);
-  const categories = [...new Set(parts.map(categoryForPart).filter((part): part is DocumentCategory => Boolean(part)))];
+  const hasProject = parts.some((part) => /(?:projekt|project)/i.test(part));
+  const categories = hasProject
+    ? ["projects" as DocumentCategory]
+    : [...new Set(parts.map(categoryForPart).filter((part): part is DocumentCategory => Boolean(part)))];
   if (!categories.length) return null;
   const category = categories.length > 1 ? "mixed" : categories[0];
   return {

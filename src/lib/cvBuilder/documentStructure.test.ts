@@ -290,3 +290,19 @@ describe("normalizePdfDocument repeated unknown headings", () => {
     expect(normalized.lines.filter((line) => line.block.text === "FACHLICHE SCHWERPUNKTE")).toHaveLength(2);
   });
 });
+
+describe("CV-BUILDER-REAL-WORLD-QA-02E skill headings", () => {
+  it("recognises architecture, cloud and technologies headings as skills", () => {
+    for (const heading of ["ARCHITECTURE & CLOUD", "SOFTWARE ARCHITECTURE", "TECHNICAL SKILLS", "TECHNOLOGIES"]) {
+      expect(matchDocumentHeading(heading)).toMatchObject({ category: "skills", categories: ["skills"] });
+    }
+    expect(matchDocumentHeading("Architecture & Cloud")).toMatchObject({ category: "skills" });
+  });
+
+  it("keeps architecture-and-projects headings as projects", () => {
+    expect(matchDocumentHeading("AKTUELLE ARCHITEKTUR- UND SOFTWAREPROJEKTE")).toMatchObject({
+      category: "projects",
+      categories: ["projects"],
+    });
+  });
+});
