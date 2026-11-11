@@ -5835,3 +5835,8 @@ unexpected app/RIS/AWS paths. Vercel preview statuses at `c6430aa` success;
 no PR and no GitHub Actions check-run beyond Vercel Preview Comments.
 `git diff --check`/secret scan PASS. No merge, production deploy, real CV data
 or RIS/AWS/Cognito/Terraform/consent change.
+
+**FINAL MERGE REVIEW 01 — Check note:** Product/test commit `c6430aa` had
+successful Vercel preview statuses. The subsequent docs-only report commit
+triggers new Vercel preview statuses; they were pending at the check time and
+contain no product change. No production deployment was performed.

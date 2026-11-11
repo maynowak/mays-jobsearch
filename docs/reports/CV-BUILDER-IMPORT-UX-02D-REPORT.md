@@ -224,6 +224,10 @@ Fokussiert: 41 PASS; Build PASS.
   `mays-jobsearch`, beide **success**.
 - Nicht ausgeführt: Production-Deployment, PR-Erstellung, GitHub-Actions-
   Workflowprüfung (keine vorhanden), Live-Test mit echten Konten.
+- Der reine Abschluss-Docs-Commit nach `c6430aa` enthält nur Report/Auditlog;
+  die zuletzt geprüften Produkt-/Test-Commit-Statuses (`c6430aa`) waren
+  erfolgreich. Neue Vercel-Preview-Statuses für den Docs-Commit waren zum
+  Prüfzeitpunkt pending und sind keine Produktänderung.
 
 ### Restprobleme
 
