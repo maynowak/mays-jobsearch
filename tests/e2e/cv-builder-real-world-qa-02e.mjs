@@ -73,7 +73,7 @@ async function makePdf() {
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   for (let index = 0; index < pageLines.length; index += 1) {
     const page = pdf.addPage([595, 842]);
-    page.drawText(`MAY NOWAK | CLOUD ARCHITECT | Seite ${index + 1}`, { x: 45, y: 805, size: 8, font });
+    page.drawText(`NORA BEISPIEL | CLOUD ARCHITECT | Seite ${index + 1}`, { x: 45, y: 805, size: 8, font });
     let y = 775;
     for (const line of pageLines[index]) {
       page.drawText(line, { x: 45, y, size: 10, font, maxWidth: 505 });

@@ -1336,7 +1336,7 @@ export function parseCvBuilderImportText(
     .filter((entry) => entry.reason === "page-header")
     .map((entry) => entry.block.text.split(/\s*[•|]\s*/)[0]?.trim())
     .filter((value): value is string => Boolean(value));
-  const personal = parsePersonal([...ignoredHeaderNames, ...sections.header, ...sections.personal]);
+  const personal = parsePersonal([...sections.header, ...sections.personal, ...ignoredHeaderNames]);
   draft.personal = personal.personal;
   detected.personal = personal.detected;
   if (personal.uncertain && personal.detected) uncertainSet.add("personal");
