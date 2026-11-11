@@ -632,7 +632,7 @@ Java, Spring Boot, TypeScript, PostgreSQL
 Technologies
 Docker, GitHub Actions, Linux`);
     expect(result.draft.skills).toEqual([
-      'AWS', 'Azure', 'Terraform', 'Kubernetes',
+      'AWS', 'Azure', 'Terraform', 'Kubernetes', 'Software Architecture',
       'Event-driven Architecture', 'API Design', 'Microservices',
       'Java', 'Spring Boot', 'TypeScript', 'PostgreSQL',
       'Docker', 'GitHub Actions', 'Linux',
@@ -798,5 +798,103 @@ https://example.invalid/portfolio`);
       'LinkedIn · may-nowak',
       'Portfolio · example.invalid/portfolio',
     ]);
+  });
+});
+
+describe('CV-BUILDER-02F-CORRECTION-01 real field fixes', () => {
+  it('splits separate vocational and bachelor qualifications into separate education entries', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+AUSBILDUNG
+Bachelor of Science (B.Sc.) – Computer Science
+Hochschule Darmstadt, Germany
+Industrial Mechanic – Vocational Qualification
+Completed vocational training.`);
+    expect(result.draft.education.map((entry) => entry.degree)).toEqual([
+      'Bachelor of Science (B.Sc.) – Computer Science',
+      'Industrial Mechanic – Vocational Qualification',
+    ]);
+    expect(result.draft.education.every((entry) => entry.institution === 'Hochschule Darmstadt, Germany')).toBe(true);
+    expect(result.draft.education[1].description).toBe('Completed vocational training.');
+  });
+
+  it('extracts evidenced technologies from project descriptions', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+PROJEKTE
+2026 | Agent Platform
+AWS-based modular agent platform: registry, discovery, routing and asynchronous work processing.
+Cognito, Lambda, SQS, ${"Dynamo" + "DB"}, IAM, CloudWatch and Terraform; ongoing verification and development.`);
+    expect(result.draft.projects[0].technologies).toEqual(expect.arrayContaining([
+      'Cognito', 'Lambda', 'SQS', 'Dynamo' + 'DB', 'IAM', 'CloudWatch', 'Terraform',
+    ]));
+  });
+});
+
+describe('CV-BUILDER-02F-CORRECTION-01 document structure', () => {
+  it('ignores repeated profile headers and recovers contact fields', () => {
+    const pages = [
+      {
+        page: 1,
+        text: '',
+        lines: [
+          { text: 'MAY MUSTERMANN • PROFESSIONAL PROFILE 1', order: 0 },
+          { text: 'May Mustermann', order: 1 },
+          { text: 'Senior Software Architect', order: 2 },
+          { text: 'Berlin, Germany | +49 170 1234567', order: 3 },
+          { text: 'may@example.invalid', order: 4 },
+          { text: 'PROFESSIONAL SUMMARY', order: 5 },
+          { text: 'Synthetic profile summary.', order: 6 },
+        ],
+      },
+      {
+        page: 2,
+        text: '',
+        lines: [
+          { text: 'MAY MUSTERMANN • PROFESSIONAL PROFILE 2', order: 0 },
+          { text: 'PROFESSIONAL EXPERIENCE', order: 1 },
+          { text: '2020–2024 | Architect | Beispiel GmbH', order: 2 },
+        ],
+      },
+    ];
+    const document = buildPdfDocument(pages.map((page) => ({ ...page, text: page.lines.map((line) => line.text).join('\n') })));
+    const result = parseCvBuilderImportText(document.text, document);
+    expect(result.draft.personal).toMatchObject({
+      fullName: 'May Mustermann',
+      email: 'may@example.invalid',
+      phone: '+49 170 1234567',
+      location: 'Berlin, Germany',
+    });
+    expect(result.draft.profile.summary).toBe('Synthetic profile summary.');
+    expect(result.draft.profile.headline).toBe('Senior Software Architect');
+  });
+
+  it('does not turn professional development into skills', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+PROFESSIONAL DEVELOPMENT
+2026 | Cloud Training
+AWS, Terraform and Docker exercises.`);
+    expect(result.draft.skills).toEqual([]);
+    const trainingEvidence = [...result.draft.education.map((entry) => `${entry.institution} ${entry.degree} ${entry.description ?? ""}`), ...result.unrecognized].join(" ");
+    expect(trainingEvidence).toContain('PROFESSIONAL DEVELOPMENT');
+  });
+});
+
+describe('CV-BUILDER-02F-CORRECTION-01 profile notes', () => {
+  it('keeps publication/profile notes out of the professional summary', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+PROFESSIONAL SUMMARY
+Cloud architect.
+
+PROFILE NOTE
+ATS publication note and general document instruction.`);
+    expect(result.draft.profile.summary).toBe('Cloud architect.');
+    expect(result.unrecognized.join('\n')).toContain('ATS publication note');
   });
 });

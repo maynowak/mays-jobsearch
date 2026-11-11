@@ -146,11 +146,13 @@ function categoryForPart(part: string): DocumentCategory | null {
   const value = part.toLocaleLowerCase("de").replace(/\s+/g, " ").trim();
   if (!value) return null;
   if (/\b(?:zielposition\w*|zielrollen|zielrolle|target roles?|target positions?)\b/.test(value)) return "target-roles";
-  if (/\b(?:profil\w*|summary|zusammenfassung|über mich|ueber mich|about me)\b/.test(value)) return "profile";
+  if (/\b(?:profile note|publication note|ats note|veröffentlichungshinweis\w*|veroeffentlichungshinweis\w*)\b/.test(value)) return "document-notes";
+  if (/\b(?:profil\w*|summary|zusammenfassung|über mich|ueber mich|about me|professional strengths|strengths)\b/.test(value)) return "profile";
   if (/\b(?:aws\s*qa\s*lab\w*|qa\s*lab\w*|labor\w*|lab\w*|training|praxisorientierte\w*|cloud-qualifizierung|qualifizierung)\b/.test(value)) return "training";
   if (/\b(?:projekt\w*|project\w*)\b/.test(value)) return "projects";
-  if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*|architektur\w*|architecture|cloud|technolog\w*|distributed systems|enterprise integration)\b/.test(value)) return "skills";
-  if (/\b(?:weiterbildung\w*|zertifikat\w*|zertifizierung\w*|certification\w*|certificate\w*|fortbildung\w*|further education|continuing education|courses?)\b/.test(value)) return "certificates";
+  if (/\b(?:professional development|hands-on practice|additional aws)\b/.test(value)) return "training";
+  if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*|architektur\w*|architecture|cloud|technolog\w*|distributed systems|enterprise integration|focus areas|data\s*&\s*integration|development|php|html|css|javascript|typescript|java|python|node\.js|integration)\b/.test(value)) return "skills";
+  if (/\b(?:weiterbildung\w*|zertifikat\w*|zertifizierung\w*|certification\w*|certificate\w*|fortbildung\w*|further education|continuing education|courses?|professional development|hands-on practice)\b/.test(value)) return "certificates";
   if (/\b(?:beruflicher werdegang|berufserfahrung\w*|arbeitserfahrung\w*|werdegang|professional experience|work experience|employment history|timeline)\b/.test(value)) return "experience";
   if (/\b(?:ausbildung\w*|education|qualifikation\w*|qualification\w*)\b/.test(value)) return "education";
   if (/\b(?:sprache\w*|language\w*)\b/.test(value)) return "languages";
@@ -171,22 +173,25 @@ function headingParts(text: string): string[] {
 const EXACT_HEADING_ALIASES = new Set([
   "personal", "personal details", "personal data", "contact", "kontakt", "persönliche daten", "persoenliche daten",
   "profil", "profile", "professional summary", "summary", "berufliches profil", "über mich", "ueber mich", "about me",
+  "selected professional strengths", "professional strengths",
   "zielpositionen", "zielrollen", "target roles", "target positions",
   "kernkompetenzen", "kompetenzen", "fähigkeiten", "faehigkeiten", "kenntnisse", "technische kenntnisse",
   "skills", "technical skills", "core skills", "core competencies", "competencies",
   "architecture", "software architecture", "solution architecture", "architecture & cloud", "architektur", "cloud", "cloud architecture",
   "technologies", "technology", "technical technologies", "distributed systems", "enterprise integration",
+  "focus areas", "data & integration", "development", "additional aws hands-on practice",
   "projekte", "project", "projects", "project experience", "project work", "projektarbeit",
   "selected current projects", "selected projects", "current projects", "key projects", "relevant projects",
   "berufserfahrung", "berufliche erfahrung", "arbeitserfahrung", "beruflicher werdegang", "werdegang",
   "work experience", "professional experience", "employment history", "work history", "experience",
   "ausbildung", "bildung", "bildungsweg", "akademische ausbildung", "education", "academic background",
+  "professional development", "selected professional strengths", "profile note",
   "education and qualifications", "education & qualifications", "education & certifications", "qualifications",
   "weiterbildung", "weiterbildungen", "fortbildung", "fortbildungen", "further education", "continuing education",
   "zertifikate", "zertifizierungen", "zertifikatsstatus", "certificates", "certifications", "courses",
   "sprachen", "sprachkenntnisse", "languages", "language skills",
   "links", "websites", "portfolio", "online profiles",
-  "hinweise", "veröffentlichungshinweise", "veroeffentlichungshinweise", "document notes", "publication notes", "notes",
+  "hinweise", "veröffentlichungshinweise", "veroeffentlichungshinweise", "document notes", "publication notes", "notes", "profile note",
   "sonstiges", "weitere angaben", "additional information", "misc",
 ]);
 
@@ -305,8 +310,9 @@ export function normalizePdfDocument(source: PdfDocumentStructure): NormalizedPd
     const knownHeading = matchDocumentHeading(text);
     const unknownHeading = !knownHeading && isLikelyUnknownHeading(text);
     const edge = edges.find((candidate) => candidate.block.order === block.order);
-    if (edge && repeatedSignatures.has(edge.signature) && !knownHeading) {
-      if (!(edge.edge === "top" && unknownHeading)) {
+    const headerLike = /(?:[•|].*\d+|\b(?:seite|page)\s+\d+)\s*$/i.test(text);
+    if (edge && repeatedSignatures.has(edge.signature) && (!knownHeading || headerLike)) {
+      if (!(edge.edge === "top" && unknownHeading && !headerLike)) {
         ignored.push({
           block,
           reason: edge.edge === "top" ? "page-header" : "page-footer",
@@ -484,6 +490,15 @@ export function detectDocumentSections(normalized: NormalizedPdfDocument): Detec
   };
 
   for (const line of normalized.lines) {
+    if (
+      line.kind === "heading" &&
+      current?.category === "skills" &&
+      line.heading?.category === "skills"
+    ) {
+      current.blocks.push(line.block);
+      current.pageEnd = Math.max(current.pageEnd, line.block.page);
+      continue;
+    }
     if (line.kind === "heading") {
       const known = line.heading;
       const category = known?.category ?? "unknown";

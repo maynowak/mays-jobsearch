@@ -436,7 +436,7 @@ function classifyExperiencePair(first: string, second: string): { employer: stri
 }
 
 function degreeLike(value: string): boolean {
-  return /\b(bachelor|master|b\.?sc|m\.?sc|b\.?a|m\.?a|diplom|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachwirt|mba)\b/i.test(value);
+  return /\b(bachelor|master|b\.?sc|m\.?sc|b\.?a|m\.?a|diplom|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachwirt|mba|vocational qualification|berufsqualifikation|berufsausbildung)\b/i.test(value);
 }
 
 const NON_EMPLOYMENT_RE = /\b(lab|labor|bootcamp|course|kurs|training|schulung|seminar|workshop|weiterbildung|fortbildung|certification|zertifizierung|universität|universitaet|university|hochschule|college|school|studium|education)\b/i;
@@ -694,6 +694,29 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
   for (const block of splitBlocks(lines)) {
     const dateIndex = block.findIndex((line) => parseDateRange(line) !== null);
     if (dateIndex < 0) {
+      const lines = nonEmpty(block);
+      const degreeLines = lines.filter((line) => degreeLike(line));
+      if (degreeLines.length > 1) {
+        const institution = lines.find((line) => educationInstitutionLike(line)) ?? "";
+        degreeLines.forEach((degreeLine, index) => {
+          const start = lines.indexOf(degreeLine);
+          const nextDegree = degreeLines[index + 1];
+          const end = nextDegree ? lines.indexOf(nextDegree) : lines.length;
+          const description = lines
+            .slice(start + 1, end)
+            .filter((line) => line !== institution && !degreeLike(line));
+          const entry = createEducationEntry();
+          entries.push({
+            ...entry,
+            institution,
+            degree: degreeLine,
+            startMonth: "",
+            current: false,
+            ...(description.length ? { description: description.join("\n") } : {}),
+          });
+        });
+        continue;
+      }
       const entry = buildEducationEntry(block, null, uncertain, unrecognized);
       if (entry) entries.push(entry);
       continue;
@@ -705,10 +728,50 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
     const afterText = dateLine.slice(date.matchIndex).replace(DATE_RANGE, "").replace(SINCE_DATE, "").replace(/^[|,;–—-]\s*/, "").trim();
     const before = [...nonEmpty(block.slice(0, dateIndex)), ...splitLineParts(beforeText)];
     const after = [...(afterText ? splitLineParts(afterText) : []), ...nonEmpty(block.slice(dateIndex + 1))];
-    const entry = buildEducationEntry([...before, ...after], date, uncertain, unrecognized);
+    const candidates = [...before, ...after];
+    const degreeLines = nonEmpty(candidates).filter((line) => degreeLike(line));
+    if (degreeLines.length > 1) {
+      const institution = nonEmpty(candidates).find((line) => educationInstitutionLike(line)) ?? "";
+      const allLines = nonEmpty(candidates);
+      degreeLines.forEach((degreeLine, index) => {
+        const start = allLines.indexOf(degreeLine);
+        const nextDegree = degreeLines[index + 1];
+        const end = nextDegree ? allLines.indexOf(nextDegree) : allLines.length;
+        const description = allLines
+          .slice(start + 1, end)
+          .filter((line) => line !== institution && !degreeLike(line));
+        const entry = createEducationEntry();
+        entries.push({
+          ...entry,
+          institution,
+          degree: degreeLine,
+          startMonth: date.startMonth,
+          ...(date.endMonth ? { endMonth: date.endMonth } : {}),
+          current: date.current,
+          ...(description.length ? { description: description.join("\n") } : {}),
+        });
+      });
+      continue;
+    }
+    const entry = buildEducationEntry(candidates, date, uncertain, unrecognized);
     if (entry) entries.push(entry);
   }
   return entries;
+}
+
+const KNOWN_TECH_RE = /\b(?:AWS|Lambda|SQS|Dynamo(?:DB)|IAM|Cognito|CloudWatch|CloudTrail|Terraform|Docker|Kubernetes|Serverless|API Gateway|React|TypeScript|JavaScript|Java|Spring Boot|Node\.js|PostgreSQL|MySQL|Oracle|Vercel|OpenRouter|EdenAI|LLM|LLMs|GitHub Actions|Git|Jenkins|Vite|PHP|HTML|CSS|Microservices|REST APIs)\b/gi;
+
+function knownTechnologiesInLine(line: string): string[] {
+  const matches = line.match(KNOWN_TECH_RE) ?? [];
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const match of matches) {
+    const key = match.toLocaleLowerCase("de");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(match);
+  }
+  return unique.length >= 2 ? unique : [];
 }
 
 function splitProjectName(value: string): { name: string; period?: string } {
@@ -752,7 +815,7 @@ function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>
       if (linksInLine(line).length > 0 && line.replace(LINK_RE, "").replace(/[·|:]/g, "").trim().length < 20) {
         return false;
       }
-      for (const candidate of technologiesInLine(line)) {
+      for (const candidate of [...technologiesInLine(line), ...knownTechnologiesInLine(line)]) {
         const key = candidate.toLocaleLowerCase("de");
         if (seenTechnologies.has(key)) continue;
         seenTechnologies.add(key);
@@ -913,15 +976,22 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
         !/\b(professional|profile|profil|summary|experience|erfahrung|curriculum)\b/i.test(candidate) &&
         /[a-zäöüß]/i.test(candidate)
       ) {
-        personal.fullName = candidate;
+        personal.fullName = candidate === candidate.toLocaleUpperCase("de")
+          ? candidate.toLocaleLowerCase("de").replace(/(^|\s)(\p{L})/gu, (_match, space: string, letter: string) => `${space}${letter.toLocaleUpperCase("de")}`)
+          : candidate;
       }
     }
-    if (!personal.location && /,/.test(line) && !email && !LINK_RE.test(line) && !PHONE_RE.test(line) && line.length <= 100) {
-      personal.location = line;
+    const locationPart = line
+      .split(/\s*[|•]\s*/)
+      .map((part) => part.trim())
+      .find((part) => /,/.test(part) && !EMAIL_RE.test(part) && !PHONE_RE.test(part) && !LINK_RE.test(part) && part.length <= 100);
+    if (!personal.location && locationPart) {
+      personal.location = locationPart;
     }
     if (
       !personal.location &&
       line !== personal.fullName &&
+      line.toLocaleUpperCase("de") !== personal.fullName?.toLocaleUpperCase("de") &&
       !email &&
       !PHONE_RE.test(line) &&
       !LINK_RE.test(line) &&
@@ -946,6 +1016,7 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
 
 const SKILL_CATEGORY_PREFIX = /^(?:architecture|programming(?: languages?)?|languages?|frameworks?|libraries|tools?|platforms?|databases?|cloud|cloud\s*[&+]\s*devops|software\s*[&+]\s*architektur|software\s*[&+]\s*data|aws\s*[&+]\s*infrastruktur|web\s*[&+]\s*daten|data\s*[&+]\s*integration|ai engineering|development|infrastructure|devops|methoden|methodologies|technologien|technologies)\s*[:\-]\s*/i;
 const SKILL_SENTENCE_WORDS = /\b(developed|built|implemented|responsible|worked|created|designed|managed|supported|led|maintained|entwickelt|umgesetzt|verantwortlich|betreut|erstellt|konzipiert|unterstützt|geleitet|gewartet|durchgeführt)\b/i;
+const SKILL_GROUP_LABEL_RE = /^(?:architecture\s*&\s*cloud|ai engineering|technical skills|technologies|infrastructure|focus areas|data\s*&\s*integration|professional development|additional aws hands-on practice|selected professional strengths|profile note)$/i;
 
 function isSkillCandidate(value: string): boolean {
   const item = value.replace(/^[-•*–—]\s*/, "").replace(/[,;|]+$/, "").trim();
@@ -980,7 +1051,7 @@ function parseSkills(
       previous &&
       !/[.!?]$/.test(previous) &&
       !/:$/.test(previous) &&
-      /^[A-ZÄÖÜ]/.test(line) &&
+      (/^[a-zäöüß]/.test(line) || /[,;\/]$/.test(previous)) &&
       !SKILL_CATEGORY_PREFIX.test(line) &&
       !SKILL_SENTENCE_WORDS.test(line) &&
       !sectionFor(line);
@@ -997,8 +1068,9 @@ function parseSkills(
       uncertain.add("skills");
       continue;
     }
-    const candidates = cleaned.split(/[,;|•]/).map((value) => value.trim()).filter(Boolean);
+    const candidates = cleaned.split(/[,;|•·]|\s+\/\s+/).map((value) => value.trim()).filter(Boolean);
     for (const candidate of candidates) {
+      if (SKILL_GROUP_LABEL_RE.test(candidate)) continue;
       if (!isSkillCandidate(candidate)) {
         unrecognized.push(candidate);
         uncertain.add("skills");
@@ -1186,6 +1258,7 @@ export function parseCvBuilderImportText(
   const sections: Record<WorkingSection, string[]> = {
     header: [], misc: [], personal: [], profile: [], experience: [], education: [], skills: [], projects: [], certificates: [], languages: [], links: [],
   };
+  const profileSummaryLines: string[] = [];
   const experienceEntries: CvBuilderDraftV1["experience"] = [];
   const timelineMappings: CvBuilderImportTimelineMapping[] = [];
   const reasonHints = new Map<string, CvBuilderImportUnassignedReason>();
@@ -1199,7 +1272,11 @@ export function parseCvBuilderImportText(
         sections.personal.push(...lines);
         break;
       case "profile":
-        sections.profile.push(...lines);
+        if (/summary|zusammenfassung|strengths/i.test(section.heading)) {
+          profileSummaryLines.push(...lines);
+        } else {
+          sections.profile.push(...lines);
+        }
         break;
       case "skills":
         sections.skills.push(...lines, "");
@@ -1208,7 +1285,7 @@ export function parseCvBuilderImportText(
         sections.projects.push(...lines);
         break;
       case "education":
-        sections.education.push(...lines);
+        sections.education.push(...lines, "");
         break;
       case "certificates":
         if (CERTIFICATION_GOAL_RE.test(section.heading)) {
@@ -1235,7 +1312,7 @@ export function parseCvBuilderImportText(
         const languageLines = lines.filter(isLanguageLine);
         const nonLanguageLines = lines.filter((line) => !isLanguageLine(line));
         sections.languages.push(...languageLines);
-        sections.education.push(...nonLanguageLines);
+        sections.education.push(...nonLanguageLines, "");
         if (languageLines.length && nonLanguageLines.length) uncertainSet.add("education");
         break;
       }
@@ -1255,23 +1332,41 @@ export function parseCvBuilderImportText(
     }
   }
 
-  const personal = parsePersonal([...sections.header, ...sections.personal]);
+  const ignoredHeaderNames = structure.ignored
+    .filter((entry) => entry.reason === "page-header")
+    .map((entry) => entry.block.text.split(/\s*[•|]\s*/)[0]?.trim())
+    .filter((value): value is string => Boolean(value));
+  const personal = parsePersonal([...ignoredHeaderNames, ...sections.header, ...sections.personal]);
   draft.personal = personal.personal;
   detected.personal = personal.detected;
   if (personal.uncertain && personal.detected) uncertainSet.add("personal");
 
   const profileLines = nonEmpty(sections.profile);
+  const summaryLines = nonEmpty(profileSummaryLines);
   if (profileLines.length) {
     draft.profile.headline = profileLines[0];
     if (profileLines.length > 1) draft.profile.summary = profileLines.slice(1).join("\n");
-    detected.profile = true;
   }
+  if (summaryLines.length) {
+    draft.profile.summary = [draft.profile.summary, summaryLines.join("\n")].filter(Boolean).join("\n");
+  }
+  if (!draft.profile.headline) {
+    const role = [...sections.personal, ...ignoredHeaderNames]
+      .map(cleanLine)
+      .find((line) => titleLike(line) && !EMAIL_RE.test(line) && !PHONE_RE.test(line) && !LINK_RE.test(line) && line.length <= 120);
+    if (role) draft.profile.headline = role;
+  }
+  detected.profile = Boolean(draft.profile.headline || draft.profile.summary);
 
   draft.experience = experienceEntries;
   detected.experience = draft.experience.length > 0;
   draft.education = parseEducation(sections.education, uncertainSet, unrecognized);
   detected.education = draft.education.length > 0;
   draft.skills = parseSkills(sections.skills, uncertainSet, unrecognized);
+  if (draft.personal.fullName) {
+    const name = draft.personal.fullName.toLocaleLowerCase("de");
+    draft.skills = draft.skills.filter((skill) => skill.toLocaleLowerCase("de") !== name);
+  }
   detected.skills = draft.skills.length > 0;
   if (draft.skills.length > 25) uncertainSet.add("skills");
   draft.projects = parseProjects(sections.projects, uncertainSet, unrecognized);
