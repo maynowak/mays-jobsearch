@@ -301,11 +301,13 @@ export function normalizePdfDocument(source: PdfDocumentStructure): NormalizedPd
     const unknownHeading = !knownHeading && isLikelyUnknownHeading(text);
     const edge = edges.find((candidate) => candidate.block.order === block.order);
     if (edge && repeatedSignatures.has(edge.signature) && !knownHeading) {
-      ignored.push({
-        block,
-        reason: edge.edge === "top" ? "page-header" : "page-footer",
-      });
-      continue;
+      if (!(edge.edge === "top" && unknownHeading)) {
+        ignored.push({
+          block,
+          reason: edge.edge === "top" ? "page-header" : "page-footer",
+        });
+        continue;
+      }
     }
     lines.push({
       block,

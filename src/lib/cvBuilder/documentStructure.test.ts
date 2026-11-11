@@ -263,3 +263,30 @@ describe("continued headings and timeline structure", () => {
     expect(items[4].lines[0]).toContain("2020–2023");
   });
 });
+
+
+describe("normalizePdfDocument repeated unknown headings", () => {
+  it("keeps a repeated top heading when it is not a running page header", () => {
+    const normalized = normalizePdfDocument(
+      buildPdfDocument([
+        {
+          page: 1,
+          text: "FACHLICHE SCHWERPUNKTE\nCloud",
+          lines: [
+            { text: "FACHLICHE SCHWERPUNKTE", order: 0 },
+            { text: "Cloud", order: 1 },
+          ],
+        },
+        {
+          page: 2,
+          text: "FACHLICHE SCHWERPUNKTE\nSecurity",
+          lines: [
+            { text: "FACHLICHE SCHWERPUNKTE", order: 0 },
+            { text: "Security", order: 1 },
+          ],
+        },
+      ])
+    );
+    expect(normalized.lines.filter((line) => line.block.text === "FACHLICHE SCHWERPUNKTE")).toHaveLength(2);
+  });
+});
