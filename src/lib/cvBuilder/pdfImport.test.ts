@@ -815,8 +815,75 @@ Completed vocational training.`);
       'Bachelor of Science (B.Sc.) – Computer Science',
       'Industrial Mechanic – Vocational Qualification',
     ]);
-    expect(result.draft.education.every((entry) => entry.institution === 'Hochschule Darmstadt, Germany')).toBe(true);
+    expect(result.draft.education[0].institution).toBe('Hochschule Darmstadt, Germany');
+    expect(result.draft.education[1].institution).toBe('');
     expect(result.draft.education[1].description).toBe('Completed vocational training.');
+    expect(result.uncertain.education).toBe(true);
+  });
+
+  it('keeps a vocational qualification without a proven institution empty and reviewable', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+AUSBILDUNG
+Industrial Mechanic – Vocational Qualification
+Completed vocational training.`);
+    expect(result.draft.education).toHaveLength(1);
+    expect(result.draft.education[0].institution).toBe('');
+    expect(result.draft.education[0].degree).toBe('Industrial Mechanic – Vocational Qualification');
+    expect(result.uncertain.education).toBe(true);
+  });
+
+  it('assigns two qualifications with different institutions to the matching entries', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+AUSBILDUNG
+Hochschule A
+Bachelor of Science (B.Sc.) – Computer Science
+Fachschule B
+Industrial Mechanic – Vocational Qualification`);
+    expect(result.draft.education.map((entry) => [entry.institution, entry.degree])).toEqual([
+      ['Hochschule A', 'Bachelor of Science (B.Sc.) – Computer Science'],
+      ['Fachschule B', 'Industrial Mechanic – Vocational Qualification'],
+    ]);
+  });
+
+  it('uses an institution before multiple qualifications only as an explicit shared institution', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+AUSBILDUNG
+Hochschule A
+Bachelor of Science (B.Sc.) – Computer Science
+Master of Science (M.Sc.) – Distributed Systems`);
+    expect(result.draft.education.map((entry) => entry.institution)).toEqual(['Hochschule A', 'Hochschule A']);
+    expect(result.uncertain.education).toBe(false);
+  });
+
+  it('does not copy one qualification period to another qualification', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+AUSBILDUNG
+10/2020–09/2024 | Hochschule A
+Bachelor of Science (B.Sc.) – Computer Science
+Industrial Mechanic – Vocational Qualification`);
+    expect(result.draft.education[0]).toMatchObject({ institution: 'Hochschule A', startMonth: '2020-10', endMonth: '2024-09' });
+    expect(result.draft.education[1].startMonth).toBe('');
+    expect(result.draft.education[1].endMonth).toBeUndefined();
+  });
+
+  it('keeps an unclear education block reviewable without inventing a degree', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel
+E-Mail: nora.beispiel@example.invalid
+
+AUSBILDUNG
+Weiterbildung Cloud
+ohne Abschluss`);
+    const entry = result.draft.education[0];
+    expect(entry?.degree ?? '').toBe('');
+    expect(result.uncertain.education).toBe(true);
   });
 
   it('extracts evidenced technologies from project descriptions', () => {

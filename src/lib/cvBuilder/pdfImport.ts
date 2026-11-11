@@ -629,7 +629,7 @@ function mapExperienceSection(
 }
 
 function educationInstitutionLike(value: string): boolean {
-  return companyLike(value) || /\b(universität|universitaet|university|hochschule|college|school|akademie|institut|institute|fachhochschule)\b/i.test(value);
+  return companyLike(value) || /\b(universität|universitaet|university|hochschule|college|school|akademie|institut|institute|fachhochschule|fachschule|berufsschule|vocational school)\b/i.test(value);
 }
 
 function buildEducationEntry(
@@ -689,6 +689,96 @@ function buildEducationEntry(
   };
 }
 
+type EducationInstitutionAssignment = {
+  institution: string;
+  uncertain: boolean;
+};
+
+function assignEducationInstitutions(lines: string[], degreeLines: string[]): EducationInstitutionAssignment[] {
+  const degreeIndices: number[] = [];
+  let cursor = 0;
+  for (const degree of degreeLines) {
+    let index = lines.indexOf(degree, cursor);
+    if (index < 0) index = lines.indexOf(degree);
+    degreeIndices.push(index);
+    if (index >= 0) cursor = index + 1;
+  }
+  const institutionIndices = lines
+    .map((line, index) => (educationInstitutionLike(line) ? index : -1))
+    .filter((index) => index >= 0);
+  const assignments: EducationInstitutionAssignment[] = degreeLines.map(() => ({
+    institution: "",
+    uncertain: true,
+  }));
+  if (!institutionIndices.length) return assignments;
+
+  if (institutionIndices.length === 1) {
+    const institutionIndex = institutionIndices[0];
+    const institution = lines[institutionIndex];
+    const firstDegree = Math.min(...degreeIndices.filter((index) => index >= 0));
+    if (institutionIndex < firstDegree) {
+      return degreeLines.map(() => ({ institution, uncertain: false }));
+    }
+    let best = -1;
+    let bestScore = Number.POSITIVE_INFINITY;
+    degreeIndices.forEach((degreeIndex, index) => {
+      if (degreeIndex < 0) return;
+      const distance = Math.abs(degreeIndex - institutionIndex);
+      const tiePreference = degreeIndex < institutionIndex ? 0 : 1;
+      const score = distance * 2 + tiePreference;
+      if (score < bestScore) {
+        bestScore = score;
+        best = index;
+      }
+    });
+    if (best >= 0) assignments[best] = { institution, uncertain: false };
+    return assignments;
+  }
+
+  const bestByDegree = new Map<number, { institution: string; distance: number }>();
+  for (const institutionIndex of institutionIndices) {
+    const institution = lines[institutionIndex];
+    let best = -1;
+    let bestScore = Number.POSITIVE_INFINITY;
+    degreeIndices.forEach((degreeIndex, index) => {
+      if (degreeIndex < 0 || bestByDegree.has(index)) return;
+      const distance = Math.abs(degreeIndex - institutionIndex);
+      const tiePreference = degreeIndex < institutionIndex ? 0 : 1;
+      const score = distance * 2 + tiePreference;
+      if (score < bestScore) {
+        bestScore = score;
+        best = index;
+      }
+    });
+    if (best < 0) continue;
+    const distance = Math.abs(degreeIndices[best] - institutionIndex);
+    bestByDegree.set(best, { institution, distance });
+  }
+  bestByDegree.forEach((value, index) => {
+    assignments[index] = { institution: value.institution, uncertain: false };
+  });
+  return assignments;
+}
+
+function educationDescriptionLines(lines: string[], start: number, end: number): string[] {
+  return lines
+    .slice(start + 1, end)
+    .filter((line) => !degreeLike(line) && !educationInstitutionLike(line));
+}
+
+function educationDateDegreeIndex(block: string[], dateIndex: number, degreeLines: string[]): number | null {
+  const distances = degreeLines.map((degree) => {
+    const index = block.indexOf(degree);
+    return index >= 0 ? Math.abs(index - dateIndex) : Number.POSITIVE_INFINITY;
+  });
+  const minimum = Math.min(...distances);
+  if (!Number.isFinite(minimum)) return null;
+  const winners = distances
+    .map((distance, index) => (distance === minimum ? index : -1))
+    .filter((index) => index >= 0);
+  return winners.length === 1 ? winners[0] : null;
+}
+
 function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["education"] {
   const entries: CvBuilderDraftV1["education"] = [];
   for (const block of splitBlocks(lines)) {
@@ -697,18 +787,18 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
       const lines = nonEmpty(block);
       const degreeLines = lines.filter((line) => degreeLike(line));
       if (degreeLines.length > 1) {
-        const institution = lines.find((line) => educationInstitutionLike(line)) ?? "";
+        const assignments = assignEducationInstitutions(lines, degreeLines);
         degreeLines.forEach((degreeLine, index) => {
           const start = lines.indexOf(degreeLine);
           const nextDegree = degreeLines[index + 1];
           const end = nextDegree ? lines.indexOf(nextDegree) : lines.length;
-          const description = lines
-            .slice(start + 1, end)
-            .filter((line) => line !== institution && !degreeLike(line));
+          const description = educationDescriptionLines(lines, start, end);
+          const assignment = assignments[index];
+          if (assignment.uncertain) uncertain.add("education");
           const entry = createEducationEntry();
           entries.push({
             ...entry,
-            institution,
+            institution: assignment.institution,
             degree: degreeLine,
             startMonth: "",
             current: false,
@@ -731,23 +821,26 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
     const candidates = [...before, ...after];
     const degreeLines = nonEmpty(candidates).filter((line) => degreeLike(line));
     if (degreeLines.length > 1) {
-      const institution = nonEmpty(candidates).find((line) => educationInstitutionLike(line)) ?? "";
       const allLines = nonEmpty(candidates);
+      const assignments = assignEducationInstitutions(allLines, degreeLines);
+      const dateDegreeIndex = educationDateDegreeIndex(block, dateIndex, degreeLines);
+      if (dateDegreeIndex === null) uncertain.add("education");
       degreeLines.forEach((degreeLine, index) => {
         const start = allLines.indexOf(degreeLine);
         const nextDegree = degreeLines[index + 1];
         const end = nextDegree ? allLines.indexOf(nextDegree) : allLines.length;
-        const description = allLines
-          .slice(start + 1, end)
-          .filter((line) => line !== institution && !degreeLike(line));
+        const description = educationDescriptionLines(allLines, start, end);
+        const assignment = assignments[index];
+        const receivesDate = dateDegreeIndex === index;
+        if (assignment.uncertain) uncertain.add("education");
         const entry = createEducationEntry();
         entries.push({
           ...entry,
-          institution,
+          institution: assignment.institution,
           degree: degreeLine,
-          startMonth: date.startMonth,
-          ...(date.endMonth ? { endMonth: date.endMonth } : {}),
-          current: date.current,
+          startMonth: receivesDate ? date.startMonth : "",
+          ...(receivesDate && date.endMonth ? { endMonth: date.endMonth } : {}),
+          current: receivesDate ? date.current : false,
           ...(description.length ? { description: description.join("\n") } : {}),
         });
       });
