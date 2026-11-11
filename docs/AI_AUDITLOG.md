@@ -5607,3 +5607,10 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 was amended and updated with `git push --force-with-lease`; no product commit
 was rewritten. This was a process deviation from the “no force-push” rule and is
 recorded here for transparency.
+
+**Nachtrag — Integration nach main:** `02A` wurde kontrolliert per
+Fast-Forward von `baac910` auf `96361a7` nach `main` integriert; R1 ist damit
+ebenfalls auf `main`. Build PASS; serielle Gesamtsuite auf `main`
+**1719 PASS / 5 skipped**. Ein erster Lauf hatte zwei App-Timeouts, beide Tests
+liefen isoliert PASS und der Wiederholungslauf war vollständig grün. Kein
+Production-Deployment, keine RIS/AWS/Cognito/Terraform-/Consent-Änderung.

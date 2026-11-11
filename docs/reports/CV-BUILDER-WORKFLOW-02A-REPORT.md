@@ -1,6 +1,6 @@
 # CV-BUILDER-WORKFLOW-02A — SAVE, CLOSE & DEVELOPMENT UX
 
-**Status:** `CV-BUILDER-WORKFLOW-02A — VERIFIED / FEATURE BRANCH PUSHED / READY FOR REVIEW`
+**Status:** `CV-BUILDER-WORKFLOW-02A — MERGED TO MAIN / VERIFIED / DEPLOYMENT PENDING`
 **Base:** `origin/feature/cv-builder-import-01b-r1` (`eaed775`)
 **Branch:** `feature/cv-builder-workflow-02a`
 **Initial feature commit:** `7c32187`
@@ -109,9 +109,19 @@ Geprüft:
 - `a90904d` — Responsive-/Workflow-E2E und Screenshots
 - Dokumentations-Commit (HEAD) — Bericht und Auditlog
 
-**Gepusht:** `origin/feature/cv-builder-workflow-02a`
+**Gepusht:** `origin/feature/cv-builder-workflow-02a` und anschließend `origin/main`
 
-## 9. Offene Punkte
+## 9. Integration nach main
+
+- Kontrollierter Fast-Forward-Merge: `baac910..96361a7` auf `main`.
+- Damit sind R1 und 02A gemeinsam auf `main`; keine Konflikte, kein Rewrite.
+- Build auf `main`: **PASS**.
+- Serielle Gesamtsuite auf `main`: **1719 PASS / 5 skipped**.
+- Erster Gesamtlauf zeigte zwei App-Timeouts; beide Tests liefen isoliert
+  **PASS**, der Wiederholungslauf der Gesamtsuite war vollständig grün.
+- Kein Production-Deployment, keine RIS-/AWS-/Cognito-/Terraform-Änderung.
+
+## 10. Offene Punkte
 
 - Kein Merge nach `main`.
 - Kein Production-Deployment.
@@ -120,7 +130,7 @@ Geprüft:
 - Keine echten Benutzerdaten in Tests.
 - Keine Änderung an Consent-Verträgen, RIS, AWS, Cognito oder Terraform.
 
-## 10. Empfehlung
+## 11. Empfehlung
 
 **GO für Review und kontrollierten Merge.**
 **NO-GO für Production-Deployment ohne gesonderte Freigabe.**
