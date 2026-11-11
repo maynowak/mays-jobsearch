@@ -255,6 +255,12 @@ Unklare Angabe`);
     await screen.findByRole("heading", { name: "Lebenslauf analysiert" });
     fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Korrigierter Text" }), {
+      target: { value: "   " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Korrektur übernehmen" }));
+    expect(await screen.findByText("Bitte gib vor dem Übernehmen einen korrigierten Text ein.")).toBeInTheDocument();
+    expect(screen.getByText("Unklare Angabe")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Korrigierter Text" }), {
       target: { value: "Korrigiertes Projekt" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Korrektur übernehmen" }));

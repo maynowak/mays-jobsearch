@@ -145,6 +145,7 @@ export default function CvBuilderImportReview({
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
+  const [editError, setEditError] = useState("");
   const pageSize = 10;
 
   const decisionsFor = (index: number) => decisions[index] ?? fallbackDecision(result, index);
@@ -194,11 +195,17 @@ export default function CvBuilderImportReview({
   const startEditing = (index: number) => {
     setEditing(index);
     setEditText(decisionsFor(index).text);
+    setEditError("");
   };
 
   const saveEditing = (index: number) => {
+    if (!editText.trim()) {
+      setEditError(t("cvBuilder.import.reviewCorrectionRequired"));
+      return;
+    }
     onUpdateDecision(index, { text: editText, edited: true, status: "pending" });
     setEditing(null);
+    setEditError("");
   };
 
   return (
@@ -363,20 +370,37 @@ export default function CvBuilderImportReview({
                   <strong>{t("cvBuilder.import.reviewSourcePage", { page: detail?.page ?? 0 })}</strong>
                   <span className={`cv-import-review__status is-${decision.status}`}>{statusLabel(decision.status, t)}</span>
                 </div>
-                {editing !== index && decision.edited && (
+                {editing === index ? (
                   <p className="cv-import-review__original">{decision.original}</p>
-                )}
+                ) : decision.edited ? (
+                  <p className="cv-import-review__original">{decision.original}</p>
+                ) : null}
                 {editing === index ? (
                   <div className="cv-import-review__edit">
                     <label>
                       <span>{t("cvBuilder.import.reviewCorrectedText")}</span>
-                      <textarea autoFocus value={editText} onChange={(event) => setEditText(event.target.value)} rows={2} />
+                      <textarea
+                        autoFocus
+                        value={editText}
+                        aria-invalid={Boolean(editError)}
+                        aria-describedby={editError ? `cv-import-edit-error-${index}` : undefined}
+                        onChange={(event) => {
+                          setEditText(event.target.value);
+                          if (editError) setEditError("");
+                        }}
+                        rows={2}
+                      />
                     </label>
+                    {editError && (
+                      <p id={`cv-import-edit-error-${index}`} className="cv-import-review__edit-error" role="alert">
+                        {editError}
+                      </p>
+                    )}
                     <div className="cv-import-review__actions">
                       <button type="button" className="letter-btn" onClick={() => saveEditing(index)}>
                         {t("cvBuilder.import.reviewSaveCorrection")}
                       </button>
-                      <button type="button" className="btn-ghost" onClick={() => setEditing(null)}>
+                      <button type="button" className="btn-ghost" onClick={() => { setEditing(null); setEditError(""); }}>
                         {t("cvBuilder.import.reviewCancelCorrection")}
                       </button>
                     </div>

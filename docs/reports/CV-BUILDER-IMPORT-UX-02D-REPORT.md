@@ -152,6 +152,25 @@ Der PDF-Export wurde erneut mit echten, lesbaren PDFs geprüft.
 **GO für Review und kontrollierten Merge.**
 **NO-GO für Production-Deployment ohne gesonderte Freigabe.**
 
+## FINAL MERGE REVIEW 01 — STEP 1
+
+Review-Befund: `decision.text?.trim() || line` konnte eine explizit leere oder
+nur aus Leerzeichen bestehende Korrektur still durch den Originaltext ersetzen.
+
+Behoben:
+
+- Domain: ein vorhandener `text`-Wert wird nicht mehr auf `line` zurückgesetzt;
+  leere/Whitespace-Korrekturen werden nicht übernommen.
+- Alte Aufrufer mit String-Target oder ohne `text` bleiben rückwärtskompatibel.
+- UI: leere Korrektur zeigt einen Alert, markiert das Textfeld und bleibt im
+  Bearbeitungsmodus; Originaltext bleibt sichtbar.
+- Gültige Korrekturen und bestätigte Übernahmen bleiben unverändert.
+
+Regressionstests: leerer Text, Leerzeichen, gültige Korrektur, String-Altaufruf
+und Objekt-Altaufruf ohne `text`.
+
+Fokussiert: 41 PASS; Build PASS.
+
 ## Recovery-Regel
 
 Maßgeblich sind diese Datei und der letzte gepushte Commit auf

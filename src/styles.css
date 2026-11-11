@@ -13478,3 +13478,10 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     max-height: 320px;
   }
 }
+
+.cv-import-review__edit-error {
+  margin: 0;
+  color: #991b1b;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}

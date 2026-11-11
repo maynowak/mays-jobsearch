@@ -578,3 +578,39 @@ React, TypeScript, Terraform`);
     expect(draft.skills).toEqual(['React', 'Terraform']);
   });
 });
+
+
+describe('CV-BUILDER-02D-FINAL-MERGE-REVIEW-01 empty corrections', () => {
+  it('never falls back to the original line for explicit empty or whitespace corrections', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Sonstiges
+Originalzeile`);
+    const index = result.unrecognized.findIndex((line) => line === 'Originalzeile');
+    expect(index).toBeGreaterThanOrEqual(0);
+    const empty = selectCvBuilderImportDraft(result, [], {
+      [index]: { target: 'projects', status: 'accepted', text: '' },
+    });
+    const whitespace = selectCvBuilderImportDraft(result, [], {
+      [index]: { target: 'projects', status: 'accepted', text: '   ' },
+    });
+    expect(empty.projects).toEqual([]);
+    expect(whitespace.projects).toEqual([]);
+  });
+
+  it('keeps old callers without correction text backward-compatible', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Sonstiges
+Originalzeile`);
+    const index = result.unrecognized.findIndex((line) => line === 'Originalzeile');
+    const stringCaller = selectCvBuilderImportDraft(result, [], { [index]: 'projects' });
+    const objectWithoutText = selectCvBuilderImportDraft(result, [], {
+      [index]: { target: 'projects', status: 'accepted' },
+    });
+    expect(stringCaller.projects[0].name).toBe('Originalzeile');
+    expect(objectWithoutText.projects[0].name).toBe('Originalzeile');
+  });
+});

@@ -1267,7 +1267,7 @@ export function selectCvBuilderImportDraft(
       : assignment;
     const target = decision.target;
     const status = decision.status ?? (target === "ignore" ? "ignored" : "accepted");
-    const text = decision.text?.trim() || line;
+    const text = (decision.text === undefined ? line : decision.text).trim();
     if (!line || !text || target === "ignore" || status !== "accepted") continue;
     if (target === "profile") {
       next.profile = {

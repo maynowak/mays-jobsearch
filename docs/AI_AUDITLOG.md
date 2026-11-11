@@ -5811,3 +5811,12 @@ Workflow-02A, alter PDF-Export und PDF-Fix-01 E2E PASS; 0 Overflow/API-/RIS-/
 Console-Fehler. Import-Harnesse wurden auf den neuen Summary-Schritt
 aktualisiert. Kein Merge, Deployment, RIS/AWS/Cognito/Terraform/Consent-
 Eingriff; keine echten CV-Daten.
+
+**FINAL MERGE REVIEW 01 — Empty Import Corrections:** The domain no longer
+falls back to the original line when a review decision carries an explicit
+empty/whitespace correction. Such decisions are not transferred; old
+string-target/object-without-text callers remain compatible. The review UI now
+shows an alert, marks the textarea and keeps the original text visible. Tests:
+empty, whitespace, valid correction, legacy callers. Focused 41 PASS, build
+PASS. No merge/deploy, no real data, no RIS/AWS/Cognito/Terraform/consent
+change.
