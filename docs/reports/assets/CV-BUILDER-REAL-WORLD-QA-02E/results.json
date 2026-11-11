@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "width": 320,
+      "personal": "PASS",
+      "scroll": "mobile-single"
+    },
+    {
+      "width": 390,
+      "personal": "PASS",
+      "scroll": "mobile-single"
+    },
+    {
+      "width": 430,
+      "personal": "PASS",
+      "scroll": "mobile-single"
+    },
+    {
+      "width": 768,
+      "personal": "PASS",
+      "scroll": "mobile-single"
+    },
+    {
+      "width": 1024,
+      "personal": "PASS",
+      "scroll": "independent"
+    },
+    {
+      "width": 1440,
+      "personal": "PASS",
+      "scroll": "independent"
+    }
+  ]
+}

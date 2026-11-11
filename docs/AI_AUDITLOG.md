@@ -5882,3 +5882,9 @@ separated and extracted. Undated training/lab lines now start a training
 timeline item; their follow-up lines retain training reasons and sources in
 the review list. Focused 28 parser + 15 structure tests PASS, build PASS. No
 real data, AI/OCR/backend/RIS/AWS changes, no merge/deploy/force-push.
+
+**STEP G — Desktop/Mobile Scroll:** Desktop editor and preview are independent
+scroll containers; modal/window stay fixed. Mobile/tablet keep single-column
+layout and scroll the modal so the workspace does not collapse. Browser E2E
+320–1440 PASS; 1024/1440 independent scroll assertions PASS; no horizontal
+overflow. No product data or external calls.

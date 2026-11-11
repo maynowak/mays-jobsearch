@@ -1,6 +1,6 @@
 # CV-BUILDER-REAL-WORLD-QA-02E — REAL PDF IMPORT QUALITY & EDITOR UX
 
-**Status:** `IN PROGRESS — STEPS A–F COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–G COMPLETE`
 **Branch:** `feature/cv-builder-real-world-qa-02e`
 **Base:** `origin/main` @ `78c0a7b`
 **Zielstatus:** `CV-BUILDER-REAL-WORLD-QA-02E — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -15,7 +15,7 @@
 | D | Persönliche Angaben und Kurzprofil | **COMPLETE** | `pending` |
 | E | Timeline und Weiterbildungen | **COMPLETE** | `pending` |
 | F | Prüfliste | **COMPLETE** | `pending` |
-| G | Desktop-Scroll und Editor-UX | OFFEN | — |
+| G | Desktop-Scroll und Editor-UX | **COMPLETE** | `pending` |
 | H | Praxistest und Regression | OFFEN | — |
 
 ## STEP A — Reproduktion
@@ -89,6 +89,20 @@ erhalten. Tests: DE/EN-Ziele und ein echtes Zertifikat.
 - Keine stillen Löschungen.
 
 Tests: 28 Parser- und 15 Strukturtests PASS; Build PASS.
+
+## STEP G — Desktop-Scroll und Editor-UX
+
+- Desktop (>900 px): Modal bleibt stehen; Editor und Live-Vorschau sind
+  getrennte Scroll-Container mit `overscroll-behavior: contain`.
+- Kopf, Navigation und Aktionen bleiben erreichbar; Abschnittslinks scrollen
+  den Editor, nicht das ganze Modal.
+- Mobile/Tablet (≤900 px): einspaltige Ansicht; das Modal scrollt als Ganzes,
+  damit der Workspace auf 320 px nicht kollabiert.
+- Kein horizontales Overflow.
+
+Browser-E2E: 320/390/430/768/1024/1440 px PASS; bei 1024/1440 независимо
+Editor-/Preview-Scroll und Modal-/Window-Scroll `0`; Screenshots unter
+`docs/reports/assets/CV-BUILDER-REAL-WORLD-QA-02E/`.
 
 ## Recovery-Regel
 

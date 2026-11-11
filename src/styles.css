@@ -13485,3 +13485,67 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   font-size: var(--text-sm);
   font-weight: 700;
 }
+
+/* CV-BUILDER-REAL-WORLD-QA-02E — independent desktop editor/preview scrolling */
+.cv-builder-modal__box {
+  overflow: hidden;
+}
+
+.cv-builder-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cv-builder-editor-pane,
+.cv-builder-preview-pane {
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-bottom: var(--space-4);
+}
+
+.cv-builder-editor-pane .cv-builder-sections {
+  padding-bottom: var(--space-4);
+}
+
+.cv-builder-preview-pane .cv-preview {
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .cv-builder-workspace {
+    overflow: hidden;
+  }
+
+  .cv-builder-editor-pane,
+  .cv-builder-preview-pane {
+    max-height: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .cv-builder-editor-pane,
+  .cv-builder-preview-pane {
+    padding-inline: var(--space-3);
+  }
+}
+
+@media (max-width: 900px) {
+  .cv-builder-modal__box {
+    overflow-y: auto;
+  }
+
+  .cv-builder-workspace {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .cv-builder-editor-pane,
+  .cv-builder-preview-pane {
+    max-height: none;
+    overflow: visible;
+  }
+}
