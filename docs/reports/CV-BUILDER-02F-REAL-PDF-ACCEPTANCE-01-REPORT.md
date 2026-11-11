@@ -45,7 +45,7 @@ Reported baseline → current production `e894229`:
 | Projects | 3 | 3 names correct; all technology fields empty | **PARTIAL / DEFECT** |
 | Review list | 83 unverified | 62 unverified | Improved, but still high |
 | Editor scroll | coupled | Editor/preview independently scroll; modal/window stay at 0 | **PASS** |
-| PDF export | actual download | Synthetic production smoke: valid 2-page PDF, actual download PASS; private PDF export not executed to avoid private artifact | **PARTIAL / NOT EXECUTED for private** |
+| PDF export | actual download | Private PDF exported locally: valid 2-page PDF, actual download; Berufserfahrung/Ausbildung/Projekte present; Fähigkeiten absent because 0 skills were selected. No private artifact committed. | **PASS (local artifact only)** |
 
 ### Experience values verified
 
@@ -103,7 +103,8 @@ These are **observed defects**, not regressions inferred from counts alone.
 - Production footer on both domains: `Version 2.2.0 · production · main · e894229`
 - The imported fields were read from the actual production editor after the
   import summary; no backend persistence was used.
-- No files were saved to the repository.
+- No files were saved to the repository. The private export was written only to
+  `/tmp` for verification and is not committed.
 - No main, production, RIS, AWS, Cognito, Terraform or consent changes were made.
 
 ## 6. Result

@@ -5938,3 +5938,8 @@ Cognito/Terraform/consent change.
 - Status: `CV-BUILDER-02F — DEFECTS IDENTIFIED / CORRECTION REQUIRED`.
 - Report on docs branch `docs/cv-builder-02f-real-pdf-acceptance-01`; no main,
   production, RIS, AWS, Cognito, Terraform or consent change.
+
+**02F private PDF export:** Exported the imported private CV locally to /tmp
+only; valid `%PDF`, 2 pages, sections Berufserfahrung/Ausbildung/Projekte
+present, Fähigkeiten absent because 0 skills were selected. No PDF upload and
+only GET `/api/models`; no private artifact committed.
