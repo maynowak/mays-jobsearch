@@ -5736,3 +5736,18 @@ PASS; DE/EN-Provenienztest PASS; 0 Overflow, 0 Header-Leaks, 0 RIS-Writes.
 Der bekannte reale PDF-Export-Fehler wurde nicht behoben und wird ausdrücklich
 nicht als funktional VERIFIED bezeichnet. Kein Merge, Deployment, RIS/AWS/
 Cognito/Terraform- oder Consent-Eingriff; keine echten CV-Daten.
+
+## 2026-11-11 — CV-BUILDER-PDF-EXPORT-FIX-01 (STEP A)
+
+**Typ:** PDF export validation defect / reproduction
+**Status:** `IN PROGRESS — STEP A COMPLETE`
+
+- Branch `feature/cv-builder-pdf-export-fix-01` from `1ed3312`.
+- Reproduced with synthetic 02C import in Chromium at 390 px: export button
+  disabled, editor reports `10 Einträge · 6 Validierungshinweise`, no
+  export-specific feedback on click.
+- Validation paths: experience start months missing (year-only source),
+  training education degree/start month missing. These are legitimately
+  optional for rendering; `pdfExport.ts` already handles missing values.
+- Font loading, PDF generation, browser download and import/mapping were not
+  the cause. No real CV data, no AI/OCR/RIS/AWS change, no merge/deploy.
