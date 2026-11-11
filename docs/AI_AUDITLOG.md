@@ -5921,3 +5921,20 @@ checks success; no PR/CodeQL evidence. **STOP before merge/production**;
 automatic Git/Vercel builds remain active, so a main merge is a potential
 production release requiring separate approval. No merge/deploy/RIS/AWS/
 Cognito/Terraform/consent change.
+
+## 2026-11-11 — CV-BUILDER-02F REAL PDF ACCEPTANCE
+
+- Production `e894229`; private 3-page reference used only in a controlled
+  local browser session. Only GET `/api/models` was observed; no PDF upload,
+  no non-GET API/RIS write; session discarded.
+- Actual production import: 3 pages, 5 experience, 3 projects, 1 education,
+  2 broad skill candidates (0 selected), 62 review items (baseline 83).
+  Experience fields spot-checked correct; certificate goals 0 acquired/3 review;
+  editor/preview scroll independent and modal/window fixed.
+- Defects: all personal fields empty; education degree conflates vocational
+  qualification + Bachelor; project technology fields empty; skills too broad.
+  Review reasons: 22 unknown section, 15 incomplete experience, 15 project
+  reference, 5 training, 3 certification goal, 1 ambiguous, 1 language.
+- Status: `CV-BUILDER-02F — DEFECTS IDENTIFIED / CORRECTION REQUIRED`.
+- Report on docs branch `docs/cv-builder-02f-real-pdf-acceptance-01`; no main,
+  production, RIS, AWS, Cognito, Terraform or consent change.
