@@ -30,6 +30,7 @@
     "test:e2e:direct-search": "node tests/e2e/direct-search-from-profiles.mjs",
     "test:e2e:cv-builder-import": "node tests/e2e/cv-builder-import-01a.mjs",
     "test:e2e:cv-builder-workflow-02a": "node tests/e2e/cv-builder-workflow-02a.mjs",
+    "test:e2e:cv-builder-parser-02b": "node tests/e2e/cv-builder-parser-02b.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",
