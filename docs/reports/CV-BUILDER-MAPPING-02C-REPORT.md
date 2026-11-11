@@ -1,6 +1,6 @@
 # CV-BUILDER-MAPPING-02C — STRUCTURED CV DATA MAPPING
 
-**Status:** `IN PROGRESS — STEPS A–E COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–F COMPLETE`
 **Branch:** `feature/cv-builder-mapping-02c`
 **Base:** `feature/cv-builder-parser-02b` @ `e74cef5`
 **Zielstatus:** `CV-BUILDER-MAPPING-02C — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -13,8 +13,8 @@
 | B | Berufserfahrung und Freelance-Projekte | **COMPLETE** | `62eae60` |
 | C | Projekte und Technologien | **COMPLETE** | `ef0e180` |
 | D | Ausbildung und Qualifikationen | **COMPLETE** | `bd87c71` |
-| E | Unklare Informationen und manuelle Zuordnung | **COMPLETE** | `pending` |
-| F | Qualitätsmessung | OFFEN | — |
+| E | Unklare Informationen und manuelle Zuordnung | **COMPLETE** | `60b8986` |
+| F | Qualitätsmessung | **COMPLETE** | `pending` |
 | G | Gesamtprüfung | OFFEN | — |
 
 ## STEP B — Berufserfahrung und Freelance-Projekte
@@ -81,6 +81,35 @@ angewendet. Es gibt weiterhin keine pauschale Übernahme ins Kurzprofil und
 keine stille Löschung. Die Anzeige ist DE/EN und bleibt auf Mobile lesbar.
 
 Test: 17 Parser-Tests und 11 Dialog-Tests PASS; Build PASS.
+
+## STEP F — Qualitätsmessung
+
+Private vierseitige Referenz, lokal ausgewertet; keine Rohinhalte im Repo.
+Vergleich 02B `e74cef5` → 02C.
+
+| Messpunkt | 02B | 02C |
+|---|---:|---:|
+| Seiten / Sections | 4 / 10 | 4 / 10 |
+| Falsche Abschnittszuordnungen | 0 | 0 |
+| Berufsstationen im Builder | 5 | 5 |
+| Strukturelle Timeline | 9 employment, 4 project | 9 employment, 4 project |
+| Freelance-Phasen der Referenz | 0 | 0 (keine im Dokument) |
+| Projekte | 4 | 4 |
+| Ausbildung | 1 | 2 (Weiterbildung zusätzlich) |
+| Skills | 67 | 67 Kandidaten, 0 Kategoriepräfixe, `review` markiert |
+| Sprachen | 1 | 1 |
+| Zertifikate | 0 | 0 |
+| Zertifizierungsziele/-status explizit markiert | 1 Zeile | 10 Details mit `certification-goal` |
+| Manuell zu prüfen | 66 Zeilen | 55 Zeilen mit Quelle/Grund/Vorschlag |
+| Quellseite vorhanden | nein | 55/55 Details |
+
+Die Referenz enthält keine eigenständige Freelance-Phase; die Parent-Zuordnung
+wird deshalb über den synthetischen Fixture-Test abgesichert. Die 67
+ATS-Kandidaten werden nicht als fachlich endgültig bezeichnet: Sie bleiben
+vollständig, sind aber als `skill-candidates-review` markiert. Zertifizierungs-
+ziele und QA-Lab-Status werden nicht zu Zertifikaten.
+
+Test: 19 fokussierte Parser-Tests PASS; Build PASS.
 
 ## Recovery-Regel
 

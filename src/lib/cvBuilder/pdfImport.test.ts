@@ -534,3 +534,17 @@ Zusätzliche Information`);
     expect(experience.experience[0]).toMatchObject({ position: 'Zusätzliche Information', employer: '' });
   });
 });
+
+describe('CV-BUILDER-MAPPING-02C skill review', () => {
+  it('flags a large ATS candidate list for review instead of treating it as final', () => {
+    const skills = Array.from({ length: 26 }, (_, index) => `Skill ${index + 1}`).join(', ');
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Fähigkeiten
+${skills}`);
+    expect(result.draft.skills).toHaveLength(26);
+    expect(result.uncertain.skills).toBe(true);
+    expect(result.mapping.sections.find((section) => section.category === 'skills')?.notes).toContain('skill-candidates-review');
+  });
+});

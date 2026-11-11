@@ -5719,3 +5719,12 @@ Berufserfahrung und Ausbildung; die Übernahme bleibt opt-in (kein Auto-Apply).
 Keine pauschale Kurzprofil-Übernahme, keine stille Löschung. DE/EN-Strings und
 responsive Meta-Zeile ergänzt. 17 Parser- und 11 Dialog-Tests PASS, Build PASS.
 Keine echten CV-Daten, keine RIS/AWS/Cognito/Terraform-Änderung.
+
+**STEP F — Qualitätsmessung:** Private Referenz 02B `e74cef5` → 02C lokal
+verglichen. 4 Seiten/10 Sections, 0 falsche Abschnittszuordnungen, 5
+Berufsstationen, 4 Projekte, Ausbildung 1→2 (Weiterbildung zusätzlich),
+Sprachen 1, Zertifikate 0. 67 ATS-Skills bleiben als Kandidaten vollständig,
+0 Kategoriepräfixe, `skill-candidates-review`; 55 statt 66 manuelle Zeilen,
+alle mit Quellseite/Grund/Vorschlag; 10 Zertifizierungsziel-/Statusdetails
+statt 1 erkannter Zeile. Keine erfundenen Monate/Arbeitgeber/Rollen. 19
+fokussierte Parser-Tests PASS, Build PASS. Keine echten CV-Daten im Repo.
