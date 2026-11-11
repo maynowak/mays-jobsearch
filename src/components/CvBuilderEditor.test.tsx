@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import CvBuilderEditor from "./CvBuilderEditor";
-import { createEmptyCvBuilderDraft, type CvBuilderDraftV1 } from "../lib/cvBuilder/contractTypes";
+import { createEducationEntry, createEmptyCvBuilderDraft, createExperienceEntry, type CvBuilderDraftV1 } from "../lib/cvBuilder/contractTypes";
 
 function Harness({
   initial = createEmptyCvBuilderDraft(),
@@ -243,4 +243,27 @@ describe("CV-BUILDER-WORKFLOW-02A save status", () => {
     expect(screen.queryByText("Dein Lebenslauf wurde in dieser Sitzung gespeichert.")).toBeNull();
   });
 });
+});
+
+
+describe("CV-BUILDER-PDF-EXPORT-FIX-01 editor", () => {
+  it("enables export for imported entries with unknown months and no degree", () => {
+    const draft = createEmptyCvBuilderDraft();
+    draft.personal.fullName = "Import Test";
+    draft.experience = [{
+      ...createExperienceEntry(),
+      employer: "Beispiel GmbH",
+      position: "Architekt",
+      startMonth: "",
+    }];
+    draft.education = [{
+      ...createEducationEntry(),
+      institution: "Weiterbildung",
+      degree: "",
+      startMonth: "",
+    }];
+    render(<Harness initial={draft} />);
+    expect(screen.getByText("2 Einträge · 0 Validierungshinweise")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Als PDF herunterladen" })).toBeEnabled();
+  });
 });

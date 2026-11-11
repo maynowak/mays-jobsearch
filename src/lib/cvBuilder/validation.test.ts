@@ -46,12 +46,31 @@ describe("CV-BUILDER-01A domain validation", () => {
     expect(validateCvBuilderDraft(draft)).toEqual([]);
   });
 
-  it("requires core fields inside a partially filled experience entry", () => {
+  it("requires position but permits unknown months in a partially filled experience entry", () => {
     const draft = createEmptyCvBuilderDraft();
     draft.experience = [{ ...createExperienceEntry(), employer: "Beispiel GmbH" }];
     expect(validateCvBuilderDraft(draft).map((error) => error.path)).toEqual(
-      expect.arrayContaining(["experience.0.position", "experience.0.startMonth"])
+      expect.arrayContaining(["experience.0.position"])
     );
+    expect(validateCvBuilderDraft(draft).map((error) => error.path)).not.toContain("experience.0.startMonth");
+  });
+
+  it("accepts imported entries with unknown months or a missing degree", () => {
+    const draft = createEmptyCvBuilderDraft();
+    draft.experience = [{
+      ...createExperienceEntry(),
+      employer: "Beispiel GmbH",
+      position: "Architekt",
+      startMonth: "",
+    }];
+    draft.education = [{
+      id: "edu-training",
+      institution: "Weiterbildung",
+      degree: "",
+      startMonth: "",
+      current: false,
+    }];
+    expect(validateCvBuilderDraft(draft)).toEqual([]);
   });
 
   it("rejects current entries with an end date and reversed periods", () => {

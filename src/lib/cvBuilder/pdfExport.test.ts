@@ -142,6 +142,20 @@ describe("CV-BUILDER-01C PDF export", () => {
     expect((await PDFDocument.load(threePages)).getPageCount()).toBe(3);
   });
 
+  it("exports imported entries with unknown months and no degree", async () => {
+    const draft = richDraft();
+    draft.experience[0].startMonth = "";
+    draft.education[0].degree = "";
+    draft.education[0].startMonth = "";
+    const bytes = await createCvBuilderPdf(draft, "classic", {
+      fontBytes: await fontBytes(),
+      language: "de",
+    });
+    expect(Buffer.from(bytes).subarray(0, 4).toString()).toBe("%PDF");
+    const document = await PDFDocument.load(bytes);
+    expect(document.getPageCount()).toBeGreaterThan(0);
+  });
+
   it("rejects invalid and empty drafts", async () => {
     await expect(createCvBuilderPdf(createEmptyCvBuilderDraft(), "classic", {
       fontBytes: await fontBytes(),

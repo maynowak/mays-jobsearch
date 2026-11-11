@@ -117,7 +117,6 @@ function validateExperience(errors: CvBuilderValidationError[], entries: CvBuild
     const base = `experience.${index}`;
     checkRequired(errors, entry.employer, `${base}.employer`);
     checkRequired(errors, entry.position, `${base}.position`);
-    checkRequired(errors, entry.startMonth, `${base}.startMonth`);
     checkText(errors, entry.employer, `${base}.employer`, LIMITS.employer);
     checkText(errors, entry.position, `${base}.position`, LIMITS.position);
     checkText(errors, entry.description, `${base}.description`, LIMITS.description);
@@ -131,8 +130,6 @@ function validateEducation(errors: CvBuilderValidationError[], entries: CvBuilde
     if (isCvBuilderEntryEmpty(entry as unknown as Record<string, unknown>)) return;
     const base = `education.${index}`;
     checkRequired(errors, entry.institution, `${base}.institution`);
-    checkRequired(errors, entry.degree, `${base}.degree`);
-    checkRequired(errors, entry.startMonth, `${base}.startMonth`);
     checkText(errors, entry.institution, `${base}.institution`, LIMITS.institution);
     checkText(errors, entry.degree, `${base}.degree`, LIMITS.degree);
     checkText(errors, entry.description, `${base}.description`, LIMITS.description);

@@ -5751,3 +5751,13 @@ Cognito/Terraform- oder Consent-Eingriff; keine echten CV-Daten.
   optional for rendering; `pdfExport.ts` already handles missing values.
 - Font loading, PDF generation, browser download and import/mapping were not
   the cause. No real CV data, no AI/OCR/RIS/AWS change, no merge/deploy.
+
+**STEP B — PDF-Export-Fix:** Die Ursache war eine zu strenge Validierung: bei
+02C-Importen fehlen teilweise Monate (Jahr-only) und bei Weiterbildungen der
+Degree. Diese Felder sind für den vorhandenen Renderer optional. Entfernt
+wurden nur die `required`-Prüfungen für `experience.startMonth`,
+`education.startMonth` und `education.degree`; Arbeitgeber, Position,
+Institution und alle Format-/URL-/E-Mail-/Limitprüfungen bleiben. Der Renderer
+nutzt bei fehlendem Degree die Institution als Titel. Keine Datenlöschung,
+keine falsche Erfolgsmeldung, kein Doppel-Export. 32 fokussierte Tests PASS,
+Build PASS. Keine RIS/AWS-/Cognito-/Terraform-Änderung.

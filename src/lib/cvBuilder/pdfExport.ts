@@ -519,8 +519,8 @@ export async function createCvBuilderPdf(
   if (education.length) {
     writer.section(labels.education, sectionLead);
     education.forEach((entry) => writer.historyEntry(
-      entry.degree,
-      entry.institution,
+      entry.degree || entry.institution,
+      entry.degree ? entry.institution : "",
       formatRange(entry, presentLabel),
       entry.description
     ));
