@@ -5667,3 +5667,20 @@ Kopfzeilen-Leaks, 0 unerwartete API-/RIS-Schreibzugriffe. Screenshots unter
 `docs/reports/assets/CV-BUILDER-PARSER-02B/`. Letzter Fix `ef111ae` bewahrt
 wiederholte unbekannte Top-Überschriften. Kein Merge, Deployment, RIS/AWS/
 Terraform/Cognito- oder Consent-Eingriff; keine echten Benutzerdaten.
+
+## 2026-11-11 — CV-BUILDER-MAPPING-02C (STEP A)
+
+**Typ:** structured CV mapping / provenance
+**Status:** `IN PROGRESS — STEP A COMPLETE`
+
+- Branch `feature/cv-builder-mapping-02c` from `e74cef5`.
+- Persistent `CvBuilderDraftV1` unchanged. Import result now carries section
+  mappings with page ranges, target fields, confidence and item counts;
+  timeline mappings are prepared; unassigned details carry source page,
+  section heading/category, suggested target and reason. Existing
+  `unrecognized: string[]` remains for compatibility.
+- Mixed sections map to education + languages; training, target roles,
+  document notes and unknown sections are not silently attached to a previous
+  builder category. 15 focused parser tests PASS; build PASS.
+- No real CV data, AI/OCR/backend, RIS/AWS/Terraform/Cognito or consent change.
+  No merge, deployment or force-push.

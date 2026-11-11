@@ -40,20 +40,77 @@ export const CV_BUILDER_IMPORT_SECTIONS: CvBuilderImportSectionId[] = [
   "links",
 ];
 
+export type CvBuilderImportConfidence = "confirmed" | "partial" | "uncertain";
+
+export type CvBuilderImportUnassignedReason =
+  | "unknown-section"
+  | "training"
+  | "certification-goal"
+  | "target-roles"
+  | "document-notes"
+  | "incomplete-experience"
+  | "incomplete-education"
+  | "incomplete-language"
+  | "project-reference"
+  | "ambiguous";
+
+export interface CvBuilderImportSectionMapping {
+  sectionId: string;
+  category: string;
+  heading: string;
+  pageStart: number;
+  pageEnd: number;
+  targets: Array<CvBuilderImportSectionId | "manual" | "ignored">;
+  confidence: CvBuilderImportConfidence;
+  itemCount: number;
+  notes: string[];
+}
+
+export interface CvBuilderImportTimelineMapping {
+  itemId: string;
+  kind: string;
+  parentId?: string;
+  page: number;
+  dateText: string;
+  entryIndex?: number;
+  included: boolean;
+  reason?: CvBuilderImportUnassignedReason;
+}
+
+export interface CvBuilderImportUnassignedDetail {
+  line: string;
+  page?: number;
+  sectionId?: string;
+  sectionHeading?: string;
+  category?: string;
+  suggestedTarget: CvBuilderImportManualTarget;
+  reason: CvBuilderImportUnassignedReason;
+}
+
+export interface CvBuilderImportMapping {
+  sections: CvBuilderImportSectionMapping[];
+  timeline: CvBuilderImportTimelineMapping[];
+}
+
 export interface CvBuilderImportResult {
   draft: CvBuilderDraftV1;
   detected: Record<CvBuilderImportSectionId, boolean>;
   uncertain: Record<CvBuilderImportSectionId, boolean>;
   unrecognized: string[];
+  unrecognizedDetails: CvBuilderImportUnassignedDetail[];
+  mapping: CvBuilderImportMapping;
   structure: DetectedCvDocument;
 }
 
 export type CvBuilderImportManualTarget =
   | "ignore"
   | "profile"
+  | "experience"
+  | "education"
   | "skills"
   | "projects"
   | "certificates"
+  | "languages"
   | "links";
 
 export type CvBuilderImportManualAssignments = Record<number, CvBuilderImportManualTarget>;
@@ -786,6 +843,136 @@ function mergeSectionLines(section: { blocks: Array<{ text: string }> }): string
   return mergeWrappedLines(section.blocks.map((block) => block.text));
 }
 
+function sectionTargets(category: string): Array<CvBuilderImportSectionId | "manual" | "ignored"> {
+  switch (category) {
+    case "personal":
+    case "profile":
+    case "experience":
+    case "education":
+    case "skills":
+    case "projects":
+    case "certificates":
+    case "languages":
+    case "links":
+      return [category];
+    case "mixed":
+      return ["education", "languages"];
+    case "target-roles":
+      return ["profile"];
+    case "training":
+      return ["education"];
+    default:
+      return ["manual"];
+  }
+}
+
+function sectionConfidence(category: string, uncertain: boolean): CvBuilderImportConfidence {
+  if (["unknown", "training", "target-roles", "document-notes", "misc"].includes(category)) return "uncertain";
+  if (category === "mixed" || uncertain) return "partial";
+  return "confirmed";
+}
+
+function buildSectionMappings(sections: DetectedCvDocument["sections"]): CvBuilderImportSectionMapping[] {
+  return sections.map((section) => ({
+    sectionId: section.id,
+    category: section.category,
+    heading: section.heading,
+    pageStart: section.pageStart,
+    pageEnd: section.pageEnd,
+    targets: sectionTargets(section.category),
+    confidence: sectionConfidence(section.category, section.uncertain),
+    itemCount: section.blocks.length,
+    notes: [
+      ...(section.continued ? ["continued"] : []),
+      ...(section.uncertain ? ["review-recommended"] : []),
+    ],
+  }));
+}
+
+function findSourceLine(
+  line: string,
+  structure: DetectedCvDocument
+): { page?: number; sectionId?: string; sectionHeading?: string; category?: string } {
+  for (const section of structure.sections) {
+    if (section.blocks.some((block) => block.text === line)) {
+      return {
+        page: section.blocks.find((block) => block.text === line)?.page,
+        sectionId: section.id,
+        sectionHeading: section.heading,
+        category: section.category,
+      };
+    }
+  }
+  for (const section of structure.sections) {
+    if (section.blocks.some((block) => block.text.includes(line) || line.includes(block.text))) {
+      const block = section.blocks.find((candidate) => candidate.text.includes(line) || line.includes(candidate.text));
+      return {
+        page: block?.page,
+        sectionId: section.id,
+        sectionHeading: section.heading,
+        category: section.category,
+      };
+    }
+  }
+  return {};
+}
+
+function unassignedReason(line: string, category?: string): CvBuilderImportUnassignedReason {
+  if (/zertifizierungsziel|zertifizierungsstatus|target certification|planned certification|in planung|geplant/i.test(line)) {
+    return "certification-goal";
+  }
+  if (category === "training") return "training";
+  if (category === "target-roles") return "target-roles";
+  if (category === "document-notes") return "document-notes";
+  if (category === "unknown" || category === "misc") return "unknown-section";
+  if (category === "experience") return "incomplete-experience";
+  if (category === "education") return "incomplete-education";
+  if (category === "languages") return "incomplete-language";
+  if (category === "projects") return "project-reference";
+  return "ambiguous";
+}
+
+function suggestedTargetFor(reason: CvBuilderImportUnassignedReason): CvBuilderImportManualTarget {
+  switch (reason) {
+    case "target-roles":
+      return "profile";
+    case "training":
+    case "incomplete-education":
+      return "education";
+    case "incomplete-experience":
+      return "experience";
+    case "incomplete-language":
+      return "languages";
+    case "project-reference":
+      return "projects";
+    case "certification-goal":
+    case "document-notes":
+    case "unknown-section":
+    case "ambiguous":
+    default:
+      return "ignore";
+  }
+}
+
+function buildUnassignedDetails(
+  lines: string[],
+  structure: DetectedCvDocument
+): CvBuilderImportUnassignedDetail[] {
+  return lines.map((line) => {
+    const source = findSourceLine(line, structure);
+    const reason = unassignedReason(line, source.category);
+    return {
+      line,
+      ...(source.page ? { page: source.page } : {}),
+      ...(source.sectionId ? { sectionId: source.sectionId } : {}),
+      ...(source.sectionHeading ? { sectionHeading: source.sectionHeading } : {}),
+      ...(source.category ? { category: source.category } : {}),
+      suggestedTarget: suggestedTargetFor(reason),
+      reason,
+    };
+  });
+}
+
 export function parseCvBuilderImportText(
   raw: string,
   source?: PdfDocumentStructure
@@ -900,7 +1087,19 @@ export function parseCvBuilderImportText(
   if (!CV_BUILDER_IMPORT_SECTIONS.some((section) => detected[section])) {
     unrecognized.push(...nonEmpty(raw.split("\n")));
   }
-  return { draft, detected, uncertain, unrecognized: [...new Set(unrecognized)], structure };
+  const finalUnrecognized = [...new Set(unrecognized)];
+  return {
+    draft,
+    detected,
+    uncertain,
+    unrecognized: finalUnrecognized,
+    unrecognizedDetails: buildUnassignedDetails(finalUnrecognized, structure),
+    mapping: {
+      sections: buildSectionMappings(structure.sections),
+      timeline: [],
+    },
+    structure,
+  };
 }
 
 export function hasCvBuilderImportContent(

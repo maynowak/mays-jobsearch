@@ -398,6 +398,45 @@ describe('CV-BUILDER-PARSER-02B structured document', () => {
     expect(result.unrecognized.join('\n')).toContain('Dieses Dokument ist ein Bewerbungsprofil.');
     expect(result.unrecognized.join('\n')).toContain('Additional Enterprise Projects');
   });
+
+  it('exposes section, page and unassigned provenance for review', () => {
+    const pagesWithText = pages.map((page) => ({ ...page, text: page.lines.map((line) => line.text).join('\n') }));
+    const document = buildPdfDocument(pagesWithText);
+    const result = parseCvBuilderImportText(document.text, document);
+
+    expect(result.mapping.sections.map((section) => section.category)).toEqual([
+      'personal',
+      'profile',
+      'skills',
+      'projects',
+      'training',
+      'certificates',
+      'experience',
+      'mixed',
+      'document-notes',
+    ]);
+    expect(result.mapping.sections.find((section) => section.category === 'experience')).toMatchObject({
+      targets: ['experience'],
+      pageStart: 3,
+      pageEnd: 3,
+      confidence: 'confirmed',
+    });
+    expect(result.mapping.sections.find((section) => section.category === 'mixed')?.targets).toEqual(['education', 'languages']);
+    expect(result.mapping.sections.find((section) => section.category === 'training')?.confidence).toBe('uncertain');
+    expect(result.unrecognizedDetails).toHaveLength(result.unrecognized.length);
+    const training = result.unrecognizedDetails.find((detail) => detail.line === 'Praktische Übungen');
+    expect(training).toMatchObject({
+      page: 2,
+      suggestedTarget: 'education',
+      reason: 'training',
+    });
+    const goal = result.unrecognizedDetails.find((detail) => detail.line === 'Zertifizierungsziel AWS');
+    expect(goal).toMatchObject({
+      page: 3,
+      suggestedTarget: 'ignore',
+      reason: 'certification-goal',
+    });
+  });
 });
 
 
