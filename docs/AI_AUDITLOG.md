@@ -5602,3 +5602,8 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Screenshots under `docs/reports/assets/CV-BUILDER-WORKFLOW-02A/`.
 - No merge, no production deployment, no RIS/AWS/Cognito/Terraform/consent
   change and no real user data.
+
+**Process note:** The final docs-only whitespace cleanup on this feature branch
+was amended and updated with `git push --force-with-lease`; no product commit
+was rewritten. This was a process deviation from the “no force-push” rule and is
+recorded here for transparency.
