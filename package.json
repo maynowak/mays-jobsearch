@@ -19,6 +19,7 @@
     "test:e2e:applications": "node tests/e2e/applications-dashboard.mjs",
     "test:e2e:cv-builder": "node tests/e2e/cv-builder.mjs",
     "test:e2e:cv-builder-pdf": "node tests/e2e/cv-builder-pdf.mjs",
+    "test:e2e:cv-builder-pdf-export-fix-01": "node tests/e2e/cv-builder-pdf-export-fix-01.mjs",
     "test:e2e:search-results": "node tests/e2e/search-results-mobile-ux.mjs",
     "test:e2e:search-ux": "node tests/e2e/search-ux-03.mjs",
     "test:e2e:nav-scroll": "node tests/e2e/nav-scroll-ux.mjs",

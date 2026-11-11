@@ -5761,3 +5761,11 @@ Institution und alle Format-/URL-/E-Mail-/Limitprüfungen bleiben. Der Renderer
 nutzt bei fehlendem Degree die Institution als Titel. Keine Datenlöschung,
 keine falsche Erfolgsmeldung, kein Doppel-Export. 32 fokussierte Tests PASS,
 Build PASS. Keine RIS/AWS-/Cognito-/Terraform-Änderung.
+
+**STEP C — echter PDF-Download:** Neuer E2E importiert ein synthetisches
+vierseitiges CV-PDF mit unbekannten Monaten/Weiterbildung ohne Degree und
+lädt echte PDFs über den Browser. Geprüft: `%PDF`-Signatur, `pdfinfo`,
+`pdftotext`, Dateiname, Umlaute, Abschnitte, Projekte, Freelance, Bildung,
+Classic/Modern/Kompakt, 320–1440 px, 0 Overflow/API-/Console-Fehler. Classic
+und Modern 2 Seiten, Kompakt 1 Seite, jeweils vollständig. Evidenz unter
+`docs/reports/assets/CV-BUILDER-PDF-EXPORT-FIX-01/`. Keine echten CV-Daten.

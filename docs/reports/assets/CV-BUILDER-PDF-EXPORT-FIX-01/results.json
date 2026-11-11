@@ -1,0 +1,58 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "width": 320,
+      "pages": 2,
+      "bytes": 25492,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    },
+    {
+      "width": 390,
+      "pages": 2,
+      "bytes": 25492,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    },
+    {
+      "width": 430,
+      "pages": 2,
+      "bytes": 25492,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    },
+    {
+      "width": 768,
+      "pages": 2,
+      "bytes": 25492,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    },
+    {
+      "width": 1024,
+      "pages": 2,
+      "bytes": 25492,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    },
+    {
+      "width": 1440,
+      "pages": 2,
+      "bytes": 25492,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    }
+  ],
+  "templates": {
+    "classic": {
+      "pages": 2,
+      "bytes": 25492,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    },
+    "modern": {
+      "pages": 2,
+      "bytes": 24013,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    },
+    "compact": {
+      "pages": 1,
+      "bytes": 23694,
+      "filename": "Lebenslauf-Zoe-Beispiel.pdf"
+    }
+  }
+}

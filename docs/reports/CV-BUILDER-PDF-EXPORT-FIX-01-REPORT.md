@@ -1,6 +1,6 @@
 # CV-BUILDER-PDF-EXPORT-FIX-01
 
-**Status:** `IN PROGRESS — STEPS A–B COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–C COMPLETE`
 **Branch:** `feature/cv-builder-pdf-export-fix-01`
 **Base:** `feature/cv-builder-mapping-02c` @ `1ed3312`
 **Zielstatus:** `CV-BUILDER-PDF-EXPORT-FIX-01 — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -10,8 +10,8 @@
 | Step | Thema | Status | Commit |
 |---|---|---|---|
 | A | Fehler reproduzieren und Ursache bestimmen | **COMPLETE** | `f57a57d` |
-| B | Gezielter Bugfix | **COMPLETE** | `pending` |
-| C | Tatsächlichen PDF-Download prüfen | OFFEN | — |
+| B | Gezielter Bugfix | **COMPLETE** | `fd9ef8a` |
+| C | Tatsächlichen PDF-Download prüfen | **COMPLETE** | `pending` |
 | D | Gesamtverifikation | OFFEN | — |
 
 ## STEP A — Reproduktion
@@ -64,6 +64,43 @@ Nicht ursächlich:
   gesetzt, der bestehende Export-Guard bleibt.
 
 Tests: 32 fokussierte Validierungs-/PDF-/Editor-Tests PASS; Build PASS.
+
+## STEP C — Tatsächlicher Download
+
+Neuer Browser-E2E `tests/e2e/cv-builder-pdf-export-fix-01.mjs`:
+
+- importiert ein synthetisches vierseitiges CV-PDF mit unbekannten Monaten,
+  Weiterbildung ohne Degree, Umlaut und mehreren Projekten,
+- klickt den Export-Button tatsächlich,
+- wartet auf ein echtes Download-Event,
+- prüft `%PDF`-Signatur, `pdfinfo`-Seitenzahl und `pdftotext`-Inhalt,
+- prüft Dateiname `Lebenslauf-Zoe-Beispiel.pdf`,
+- prüft Umlaute, Abschnitte, Projekte, Freelance-Eintrag und Bildung,
+- prüft Classic/Modern/Kompakt,
+- prüft 320/390/430/768/1024/1440 px ohne Overflow,
+- prüft 0 Validierungshinweise, 0 unerwartete API-Aufrufe und 0 Console-Fehler.
+
+Ergebnis:
+
+| Breite | Seiten | Datei |
+|---|---:|---|
+| 320 | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| 390 | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| 430 | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| 768 | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| 1024 | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| 1440 | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| Classic | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| Modern | 2 | `Lebenslauf-Zoe-Beispiel.pdf` |
+| Kompakt | 1 | `Lebenslauf-Zoe-Beispiel.pdf` |
+
+Die PDFs enthalten auswählbaren Text; die Marker für Name, Berufserfahrung,
+Ausbildung, Fähigkeiten, Projekte, AWS-QA-Lab, Projekt A, Freelance und
+Deutsch sind über die Seiten hinweg vorhanden. Kein Ersatzzeichen
+`U+FFFD`. Die Kompakt-Variante passt den Inhalt auf eine Seite, ohne Inhalte
+zu verlieren; die anderen Varianten sind mehrseitig.
+
+Evidenz: `docs/reports/assets/CV-BUILDER-PDF-EXPORT-FIX-01/`.
 
 ## Recovery-Regel
 
