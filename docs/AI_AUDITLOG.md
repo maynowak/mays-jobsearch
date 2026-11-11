@@ -5575,3 +5575,30 @@ Ergänzung zum FINAL-PLAN-Eintrag oben; keine Duplikation:
 - Two-column extraction remains limited by `extractPdfText()` reading order.
   No OCR, no AI, no real user data, no RIS/AWS/Cognito/consent change. No push,
   merge or deployment.
+
+## 2026-11-11 — CV-BUILDER-WORKFLOW-02A SAVE / CLOSE / DEVELOPMENT UX
+
+**Typ:** CV builder save/close workflow / profile notice / help simplification
+**Status:** `CV-BUILDER-WORKFLOW-02A — VERIFIED / FEATURE BRANCH PUSHED / READY FOR REVIEW`
+
+- Branch `feature/cv-builder-workflow-02a` based on pushed R1 `eaed775`, so the
+  R1 parser/import quality remains included and was not overwritten.
+- Builder save status now distinguishes not saved, unsaved changes, saving,
+  saved in this session and save failure. Session-only storage is stated
+  explicitly; no durable RIS claim, no upload and no automatic PDF export.
+- On success the editor shows “Dein Lebenslauf wurde in dieser Sitzung
+  gespeichert.” with Back to CV overview, Continue editing and existing PDF
+  download. Unsaved close still offers save-and-close, discard and continue.
+  Save errors preserve input; duplicate save starts are guarded.
+- “Mein Profil” now contains a friendly Aurora development notice with DE/EN
+  text. It is not a global warning and does not alter account status, consent
+  or privacy notices.
+- The help toggle is now simply “Hilfe” / “Help”; the open panel starts with
+  “Hilfe zu diesem Bereich”, retains context, keyboard/focus behavior and the
+  existing `mj-may-help-open` preference. No chatbot.
+- Verification: focused 130 PASS, serial full **1719 PASS / 5 skipped**, build
+  PASS. Workflow E2E at 320/390/430/768/1024/1440: save success/actions,
+  unsaved close, development notice, help and DE/EN PASS, 0 overflow.
+- Screenshots under `docs/reports/assets/CV-BUILDER-WORKFLOW-02A/`.
+- No merge, no production deployment, no RIS/AWS/Cognito/Terraform/consent
+  change and no real user data.
