@@ -1,6 +1,6 @@
 # CV-BUILDER-MAPPING-02C — STRUCTURED CV DATA MAPPING
 
-**Status:** `IN PROGRESS — STEPS A–F COMPLETE`
+**Status:** `CV-BUILDER-MAPPING-02C — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
 **Branch:** `feature/cv-builder-mapping-02c`
 **Base:** `feature/cv-builder-parser-02b` @ `e74cef5`
 **Zielstatus:** `CV-BUILDER-MAPPING-02C — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -14,8 +14,8 @@
 | C | Projekte und Technologien | **COMPLETE** | `ef0e180` |
 | D | Ausbildung und Qualifikationen | **COMPLETE** | `bd87c71` |
 | E | Unklare Informationen und manuelle Zuordnung | **COMPLETE** | `60b8986` |
-| F | Qualitätsmessung | **COMPLETE** | `pending` |
-| G | Gesamtprüfung | OFFEN | — |
+| F | Qualitätsmessung | **COMPLETE** | `85303e0` |
+| G | Gesamtprüfung | **COMPLETE** | `1c185d4`, `a94e5f5` |
 
 ## STEP B — Berufserfahrung und Freelance-Projekte
 
@@ -110,6 +110,59 @@ vollständig, sind aber als `skill-candidates-review` markiert. Zertifizierungs-
 ziele und QA-Lab-Status werden nicht zu Zertifikaten.
 
 Test: 19 fokussierte Parser-Tests PASS; Build PASS.
+
+## STEP G — Gesamtprüfung
+
+| Prüfung | Ergebnis |
+|---|---|
+| Fokussierte Parser-/Mapping-/Dialogtests | **31 PASS** |
+| Serielle Gesamtsuite | **1741 PASS / 5 skipped** |
+| Production-Build | **PASS** |
+| 02C-E2E (320–1440 px) | **PASS** |
+| Parser-02B-Regression | **PASS** |
+| Import-E2E lokal + RIS (6 Breiten) | **PASS** |
+| Workflow-02A-E2E | **PASS** |
+| DE/EN-Provenienzanzeige | **PASS** |
+| Overflow / Header-Leaks / RIS-Writes | **0 / 0 / 0** |
+
+Der 02C-E2E prüft Abschnitts-, Projekt-, Ausbildungs- und Quellenanzeige,
+manuelle Zuordnung und den Editor auf 320/390/430/768/1024/1440 px.
+Screenshots: `docs/reports/assets/CV-BUILDER-MAPPING-02C/`.
+
+**PDF-Export:** Der bereits gemeldete reale PDF-Export-Fehler wurde in 02C
+nicht behoben und der Export wird hier ausdrücklich **nicht als funktional
+VERIFIED** bezeichnet. Der bestehende E2E-Download-Smoke ist kein Nachweis
+für den gemeldeten Fehler.
+
+## Commit-Historie
+
+- `f64f927` — Mapping-Vertrag/Provenienz
+- `62eae60` — Timeline-/Freelance-Mapping
+- `ef0e180` — Projekttechnologien/Skills
+- `bd87c71` — Ausbildung/Qualifikationen
+- `60b8986` — manuelle Zuordnung und Quellenanzeige
+- `85303e0` — Referenz-Qualitätsmessung
+- `1c185d4` — 02C-Responsive-E2E
+- `a94e5f5` — DE/EN-Provenienztest
+- Abschluss-Dokumentations-Commit (HEAD)
+
+**Gepusht:** `origin/feature/cv-builder-mapping-02c`
+
+## Offene Punkte
+
+- Der reale PDF-Export-Fehler bleibt separat zu reproduzieren und zu beheben.
+- Zwei-Spalten-PDFs bleiben durch PDF.js-Lesereihenfolge begrenzt.
+- 67 ATS-Skill-Kandidaten bleiben als Prüfmenge markiert; eine fachliche
+  Endauswahl ist Benutzer-/Curating-Aufgabe.
+- 55 unklare Zeilen der Referenz bleiben manuell prüfbar; keine stillen
+  Ergänzungen.
+- Kein Merge, kein Production-Deployment, keine RIS-/AWS-/Cognito-/
+  Terraform-Änderung, keine echten CV-Daten.
+
+## Empfehlung
+
+**GO für Review von 02C und die nachfolgende PDF-Export-Fehleranalyse.**
+**NO-GO für Merge/Production ohne gesonderte Freigabe.**
 
 ## Recovery-Regel
 

@@ -5728,3 +5728,11 @@ Sprachen 1, Zertifikate 0. 67 ATS-Skills bleiben als Kandidaten vollständig,
 alle mit Quellseite/Grund/Vorschlag; 10 Zertifizierungsziel-/Statusdetails
 statt 1 erkannter Zeile. Keine erfundenen Monate/Arbeitgeber/Rollen. 19
 fokussierte Parser-Tests PASS, Build PASS. Keine echten CV-Daten im Repo.
+
+**STEP G — Gesamtprüfung:** Fokussierte Parser-/Mapping-/Dialogtests **31 PASS**;
+serielle Gesamtsuite **1741 PASS / 5 skipped**; Build PASS. 02C-E2E
+(320–1440), Parser-02B-Regression, Import-E2E lokal/RIS und Workflow-02A-E2E
+PASS; DE/EN-Provenienztest PASS; 0 Overflow, 0 Header-Leaks, 0 RIS-Writes.
+Der bekannte reale PDF-Export-Fehler wurde nicht behoben und wird ausdrücklich
+nicht als funktional VERIFIED bezeichnet. Kein Merge, Deployment, RIS/AWS/
+Cognito/Terraform- oder Consent-Eingriff; keine echten CV-Daten.
