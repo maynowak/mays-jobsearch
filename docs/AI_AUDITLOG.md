@@ -5840,3 +5840,19 @@ or RIS/AWS/Cognito/Terraform/consent change.
 successful Vercel preview statuses. The subsequent docs-only report commit
 triggers new Vercel preview statuses; they were pending at the check time and
 contain no product change. No production deployment was performed.
+
+## 2026-11-11 — CV-BUILDER-02D MAIN INTEGRATION (FAST-FORWARD)
+
+- Preflight: `main`/`origin/main` `cef41cc`; source `4d29141`; merge-base
+  `cef41cc`; 33 ahead / 0 behind; diff/secret scan clean.
+- Fast-forward `cef41cc..4d29141`; no merge commit, no force-push; feature
+  branch retained. Main verification: focused 54, serial **1754 PASS /
+  5 skipped**, build PASS; all import/parser/mapping/workflow/PDF/02D E2E PASS.
+- Vercel deviation: the main push automatically started Production deployments
+  for jobsearch (6see…) and matcher (2hm…). No `vercel --prod` was run. The
+  previous production deployments (`dpl_4gu…`, `dpl_3iz…`) were promoted back;
+  live footers now show `production · main · cef41cc` on both domains.
+- Final production state: previous `cef41cc`, not 02D. No real CV data,
+  no RIS/AWS/Cognito/Terraform/consent changes, no branch deletion, no force-push.
+- Remaining risk: Vercel main-push auto-production must be reviewed/disabled
+  before normal main pushes; CodeQL check was still in progress.
