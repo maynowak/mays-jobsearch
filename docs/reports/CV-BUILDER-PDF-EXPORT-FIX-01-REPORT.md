@@ -1,6 +1,6 @@
 # CV-BUILDER-PDF-EXPORT-FIX-01
 
-**Status:** `IN PROGRESS — STEPS A–C COMPLETE`
+**Status:** `CV-BUILDER-PDF-EXPORT-FIX-01 — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
 **Branch:** `feature/cv-builder-pdf-export-fix-01`
 **Base:** `feature/cv-builder-mapping-02c` @ `1ed3312`
 **Zielstatus:** `CV-BUILDER-PDF-EXPORT-FIX-01 — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -11,8 +11,8 @@
 |---|---|---|---|
 | A | Fehler reproduzieren und Ursache bestimmen | **COMPLETE** | `f57a57d` |
 | B | Gezielter Bugfix | **COMPLETE** | `fd9ef8a` |
-| C | Tatsächlichen PDF-Download prüfen | **COMPLETE** | `pending` |
-| D | Gesamtverifikation | OFFEN | — |
+| C | Tatsächlichen PDF-Download prüfen | **COMPLETE** | `9d67b68` |
+| D | Gesamtverifikation | **COMPLETE** | `pending` |
 
 ## STEP A — Reproduktion
 
@@ -101,6 +101,51 @@ Deutsch sind über die Seiten hinweg vorhanden. Kein Ersatzzeichen
 zu verlieren; die anderen Varianten sind mehrseitig.
 
 Evidenz: `docs/reports/assets/CV-BUILDER-PDF-EXPORT-FIX-01/`.
+
+## STEP D — Gesamtverifikation
+
+| Prüfung | Ergebnis |
+|---|---|
+| Validierungs-/PDF-/Editor-Tests | **32 PASS** |
+| Serielle Gesamtsuite | **1744 PASS / 5 skipped** |
+| Production-Build | **PASS** |
+| Echter PDF-E2E Fix-01 (320–1440) | **PASS**, 6/6 echte Downloads |
+| Classic / Modern / Kompakt | **PASS**, 2 / 2 / 1 Seiten |
+| Bestehender PDF-Export-E2E | **PASS**, Guest/EN/Auth |
+| Parser-02B-Regression | **PASS** |
+| Mapping-02C-Regression | **PASS** |
+| Workflow-02A-Regression | **PASS** |
+| Unerwartete API-/RIS-/Console-Fehler | **0 / 0 / 0** |
+| `git diff --check` | **PASS** |
+
+Die echten PDFs wurden mit `%PDF`-Signatur, `pdfinfo`, `pdftotext`, Dateiname,
+Umlauten, Abschnittsmarkern und Mehrseitigkeit geprüft. Compact passt den
+Inhalt auf eine Seite; Classic und Modern bleiben mehrseitig. Keine
+Einträge wurden gelöscht oder erfunden.
+
+## Commit-Historie
+
+- `f57a57d` — Reproduktion/Ursachendokumentation
+- `fd9ef8a` — Validierungs-/Renderer-Fix
+- `9d67b68` — echter Browser-PDF-Download-E2E
+- Abschluss-Dokumentations-Commit (HEAD)
+
+**Gepusht:** `origin/feature/cv-builder-pdf-export-fix-01`
+
+## Offene Punkte / Restprobleme
+
+- Kein Merge und kein Production-Deployment.
+- Kein RIS-/AWS-/Cognito-/Terraform-/Consent-Eingriff.
+- Keine echten CV-Daten.
+- Der Fix betrifft nur den nachgewiesenen Validierungs-/Exportpfad; keine
+  Änderung an Import oder Mapping.
+- PDF-Export mit fehlenden Monaten/Degrees ist möglich; die Daten bleiben
+  unvollständig und werden nicht ergänzt.
+
+## Empfehlung
+
+**GO für Review und kontrollierten Merge.**
+**NO-GO für Production-Deployment ohne gesonderte Freigabe.**
 
 ## Recovery-Regel
 

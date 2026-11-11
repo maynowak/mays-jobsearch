@@ -5769,3 +5769,11 @@ lädt echte PDFs über den Browser. Geprüft: `%PDF`-Signatur, `pdfinfo`,
 Classic/Modern/Kompakt, 320–1440 px, 0 Overflow/API-/Console-Fehler. Classic
 und Modern 2 Seiten, Kompakt 1 Seite, jeweils vollständig. Evidenz unter
 `docs/reports/assets/CV-BUILDER-PDF-EXPORT-FIX-01/`. Keine echten CV-Daten.
+
+**STEP D — Gesamtverifikation:** 32 fokussierte Validierungs-/PDF-/Editor-Tests
+PASS; serielle Gesamtsuite **1744 PASS / 5 skipped**; Build PASS. Fix-01-E2E
+mit echten Downloads auf 320–1440, Classic/Modern/Kompakt, bestehender
+PDF-E2E (Guest/EN/Auth), 02B-, 02C- und 02A-Regression PASS; 0 Overflow,
+0 unerwartete API-/RIS-/Console-Fehler. `git diff --check` PASS. Kein Merge,
+Deployment, RIS/AWS/Cognito/Terraform/Consent-Eingriff; keine echten
+CV-Daten.
