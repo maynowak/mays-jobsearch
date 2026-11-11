@@ -5635,3 +5635,25 @@ Production-Deployment, keine RIS/AWS/Cognito/Terraform-/Consent-Änderung.
 - Private reference PDF remains outside the repository; no PII in fixtures,
   logs or reports. No AI, OCR, backend, RIS/AWS/Terraform/Cognito or consent
   change. No merge, deployment or force-push.
+
+**STEP C–F — Abschnittserkennung, Timeline, Struktur und Referenzmessung**
+
+- STEP C `7f7a9a2`: composite headings, unknown-heading isolation, strict
+  heading shape against dated/content lines. 9 structural tests PASS.
+- STEP D `6c1550b`: continued headings and timeline kinds (`employment`,
+  `freelance`, `project`, `training`, `qualification`, `unclear`), parent IDs
+  for freelance projects, no date correction. Build failure due an unused
+  parameter was fixed in `2620685`; build PASS afterward.
+- STEP E `ab7da56`: `CvBuilderImportResult.structure` added; parser accepts an
+  optional `PdfDocumentStructure`; dialog uses structured extraction with
+  fallback for existing mocks. Page ranges, ignored blocks, unknown blocks,
+  unused blocks and uncertain sections are available. Build PASS.
+- STEP F `2bf6d79`: private four-page reference measured outside the repository.
+  Baseline `cef41cc`: 3 detected builder sections, 0 experience/projects/
+  skills/education/languages, 1 header leak. After: 4 pages, 143 blocks,
+  9 headings, 0 wrong assignments, 0 unused blocks, 4 page headers ignored,
+  3 cross-page sections, 0 header leaks, 66 unassigned lines and 27 unknown
+  blocks preserved, 5 complete experience entries, 9 structural employment and
+  4 structural project items, 4 projects, 0 certificates, 1 education,
+  1 language. Certification goals are not treated as certificates. No PII
+  committed or logged.
