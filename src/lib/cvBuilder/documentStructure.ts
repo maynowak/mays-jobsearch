@@ -112,7 +112,7 @@ export interface NormalizedPdfDocument {
   ignored: IgnoredDocumentBlock[];
 }
 
-const CONTINUED_SUFFIX = /\s*(?:[–—\-]\s*)?(?:fortsetzung|continued|cont(?:inued)?\.?)\s*$/i;
+const CONTINUED_SUFFIX = /\s*(?:[–—\-]\s*)?(?:\((?:fortsetzung|continued)\)|fortsetzung|continued|cont\.?)\s*$/i;
 const PAGE_NUMBER_LINE = /^(?:seite|page|p\.?)\s*\d+(?:\s*(?:von|of|\/)\s*\d+)?$/i;
 const PAGE_NUMBER_SUFFIX = /\b(?:seite|page)\s+\d+(?:\s*(?:von|of|\/)\s*\d+)?\s*$/i;
 const BARE_PAGE_NUMBER = /^\d{1,3}(?:\s*\/\s*\d{1,3})?$/;
@@ -321,12 +321,97 @@ export interface DetectedDocumentSection {
   pageStart: number;
   pageEnd: number;
   blocks: PdfTextBlock[];
+  timeline?: DetectedTimelineItem[];
   uncertain: boolean;
   continued: boolean;
 }
 
 function sameHeading(left: string, right: string): boolean {
   return headingSignature(left) === headingSignature(right);
+}
+
+export type TimelineItemKind =
+  | "employment"
+  | "freelance"
+  | "project"
+  | "training"
+  | "qualification"
+  | "unclear";
+
+export interface DetectedTimelineItem {
+  id: string;
+  kind: TimelineItemKind;
+  page: number;
+  lines: string[];
+  dateText: string;
+  current: boolean;
+  uncertainDate: boolean;
+  parentId?: string;
+}
+
+const DATE_RANGE_AT_START = /^\s*((?:(?:0?[1-9]|1[0-2])[./])?(?:19|20)\d{2}\s*(?:[-–—]|bis|to)\s*(?:(?:0?[1-9]|1[0-2])[./])?(?:(?:19|20)\d{2}|heute|present|current|now|ongoing))\b/i;
+const SINGLE_DATE_AT_START = /^\s*((?:(?:0?[1-9]|1[0-2])[./])?(?:19|20)\d{2})\s*(?:\||·|–|—)/i;
+
+function startDate(line: string): { dateText: string; current: boolean; uncertain: boolean } | null {
+  const range = line.match(DATE_RANGE_AT_START);
+  if (range) {
+    const current = /heute|present|current|now|ongoing/i.test(range[1]);
+    const hasMonthInStart = /^(?:0?[1-9]|1[0-2])[./]/.test(range[1]);
+    return { dateText: range[1].trim(), current, uncertain: !hasMonthInStart };
+  }
+  const single = line.match(SINGLE_DATE_AT_START);
+  if (single) return { dateText: single[1].trim(), current: false, uncertain: true };
+  return null;
+}
+
+function timelineKind(line: string, date: { uncertain: boolean }): TimelineItemKind {
+  if (/\b(?:freelance|freiberuflich|selbstständig|selbststaendig|self[- ]employed)\b/i.test(line)) return "freelance";
+  if (/\b(?:training|kurs|course|workshop|seminar|weiterbildung|fortbildung|lab|labor|zertifizierung\w*|certification\w*)\b/i.test(line)) return "training";
+  if (/\b(?:projekt\w*|project\w*|projektphase)\b/i.test(line)) return "project";
+  if (/\b(?:ausbildung|studium|bachelor|master|diplom|phd|doktor|zertifikat\w*|qualifikation\w*)\b/i.test(line)) return "qualification";
+  return "employment";
+}
+
+export function detectTimelineItems(blocks: PdfTextBlock[]): DetectedTimelineItem[] {
+  const items: DetectedTimelineItem[] = [];
+  let current: DetectedTimelineItem | null = null;
+  let itemIndex = 0;
+  let lastFreelance: DetectedTimelineItem | null = null;
+  for (const block of blocks) {
+    const date = startDate(block.text);
+    if (date) {
+      const kind = timelineKind(block.text, date);
+      const item: DetectedTimelineItem = {
+        id: `timeline-${itemIndex++}`,
+        kind,
+        page: block.page,
+        lines: [block.text],
+        dateText: date.dateText,
+        current: date.current,
+        uncertainDate: date.uncertain,
+        ...(kind === "project" && lastFreelance ? { parentId: lastFreelance.id } : {}),
+      };
+      if (kind === "freelance") lastFreelance = item;
+      if (kind !== "project" && kind !== "freelance") lastFreelance = null;
+      items.push(item);
+      current = item;
+    } else if (current) {
+      current.lines.push(block.text);
+      current.page = Math.min(current.page, block.page);
+    } else {
+      current = {
+        id: `timeline-${itemIndex++}`,
+        kind: "unclear",
+        page: block.page,
+        lines: [block.text],
+        dateText: "",
+        current: false,
+        uncertainDate: true,
+      };
+      items.push(current);
+    }
+  }
+  return items;
 }
 
 export function detectDocumentSections(normalized: NormalizedPdfDocument): DetectedDocumentSection[] {
@@ -392,5 +477,9 @@ export function detectDocumentSections(normalized: NormalizedPdfDocument): Detec
     current.pageEnd = Math.max(current.pageEnd, line.block.page);
   }
 
-  return sections;
+  return sections.map((section) =>
+    section.category === "experience"
+      ? { ...section, timeline: detectTimelineItems(section.blocks) }
+      : section
+  );
 }

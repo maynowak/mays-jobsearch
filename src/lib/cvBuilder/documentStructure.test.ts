@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPdfDocument, detectDocumentSections, normalizePdfDocument, type PdfSourcePage } from "./documentStructure";
+import { buildPdfDocument, detectDocumentSections, detectTimelineItems, matchDocumentHeading, normalizePdfDocument, type PdfSourcePage } from "./documentStructure";
 
 const pages: PdfSourcePage[] = [
   {
@@ -223,5 +223,43 @@ describe("detectDocumentSections", () => {
     const sections = detectDocumentSections(normalized);
     expect(sections).toHaveLength(1);
     expect(sections[0].blocks.map((block) => block.text)).toEqual(["2026 – Projekt A", "Beschreibung"]);
+  });
+});
+
+
+describe("continued headings and timeline structure", () => {
+  it("recognizes English continued headings without treating them as a position", () => {
+    expect(matchDocumentHeading("PROFESSIONAL EXPERIENCE (CONTINUED)")).toMatchObject({
+      category: "experience",
+      continued: true,
+    });
+  });
+
+  it("separates freelance projects, training, qualifications and overlapping employment", () => {
+    const items = detectTimelineItems([
+      { page: 1, order: 0, text: "2012–10/2019 | Freelance Software Developer | Enterprise Projects", lines: [] },
+      { page: 2, order: 1, text: "• Projekt A", lines: [] },
+      { page: 2, order: 2, text: "03/2026–10/2026 | Project Lead | Cloud Project", lines: [] },
+      { page: 2, order: 3, text: "2022 | Zertifizierungsziel AWS", lines: [] },
+      { page: 3, order: 4, text: "2020–2022 | Senior Architect | Example GmbH", lines: [] },
+      { page: 3, order: 5, text: "2020–2023 | Parallel Role | Example AG", lines: [] },
+    ]);
+
+    expect(items.map((item) => item.kind)).toEqual([
+      "freelance",
+      "project",
+      "training",
+      "employment",
+      "employment",
+    ]);
+    expect(items[1].parentId).toBe(items[0].id);
+    expect(items[0].dateText).toBe("2012–10/2019");
+    expect(items[0].uncertainDate).toBe(true);
+    expect(items[2].dateText).toBe("2022");
+    expect(items[2].uncertainDate).toBe(true);
+    expect(items[3].dateText).toBe("2020–2022");
+    expect(items[4].dateText).toBe("2020–2023");
+    expect(items[3].lines[0]).toContain("2020–2022");
+    expect(items[4].lines[0]).toContain("2020–2023");
   });
 });
