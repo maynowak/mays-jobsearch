@@ -277,7 +277,7 @@ describe("CV-BUILDER-REAL-WORLD-QA-02E import quality", () => {
   it("shows import review separately from field validation", () => {
     render(
       <Harness
-        initial={{ ...createEmptyCvBuilderDraft(), personal: { fullName: "May Nowak" } }}
+        initial={{ ...createEmptyCvBuilderDraft(), personal: { fullName: "Nora Beispiel" } }}
         importReview={{ total: 4, pending: 2, accepted: 1, ignored: 1 }}
       />
     );

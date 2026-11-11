@@ -5905,3 +5905,9 @@ evidence extraction; link labels include repository/profile paths; editor
 shows field validation and import review separately. Focused 61 PASS, serial
 full **1767 PASS / 5 skipped**, build PASS. No real CV data, no AI/OCR/backend,
 no merge/deploy/RIS/AWS/Cognito/Terraform/consent change.
+
+**FINAL REVIEW 01 — Privacy Hygiene:** New 02E fixtures/screenshots now use
+the clearly fictional identity `Nora Beispiel` / `nora.beispiel@example.invalid`
+instead of a realistic person's name. Existing unrelated anonymization tests
+were left unchanged. Focused 46 PASS, 02E-E2E 320–1440 PASS. No real PDFs,
+contact data or private screenshots committed.

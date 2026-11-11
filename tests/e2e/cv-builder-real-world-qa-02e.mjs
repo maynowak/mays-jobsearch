@@ -23,8 +23,8 @@ const models = {
 const longDescription = "Entwickelt sichere Cloud-Plattformen, eventgetriebene Systeme und automatisierte Deployments. ".repeat(6);
 const pageLines = [
   [
-    "May Nowak",
-    "may.nowak@example.invalid",
+    "Nora Beispiel",
+    "nora.beispiel@example.invalid",
     "+49 170 1234567",
     "Berlin",
     "PROFIL",
@@ -144,7 +144,7 @@ async function importToEditor(page, pdfBytes) {
   });
   await page.getByRole("heading", { name: "Lebenslauf analysiert" }).waitFor();
   const modal = page.locator(".cv-import-modal");
-  if (!(await modal.getByText("May Nowak").count())) throw new Error("name not recognised");
+  if (!(await modal.getByText("Nora Beispiel").count())) throw new Error("name not recognised");
   if (!(await modal.getByText("Berlin").count())) throw new Error("location not recognised");
   if (!(await modal.getByText("AWS").count())) throw new Error("cloud skill not recognised");
   if (!(await modal.getByText("Zertifizierungsziel, kein erworbenes Zertifikat").count())) {
@@ -168,8 +168,8 @@ async function runWidth(browser, width, pdfBytes) {
   const preview = page.locator(".cv-builder-preview-pane");
   const editorDialog = page.getByRole("dialog", { name: "Strukturierter Lebenslauf-Editor" });
   await editor.getByText("Persönliche Angaben", { exact: true }).click();
-  if ((await editorDialog.getByLabel("Vollständiger Name").inputValue()) !== "May Nowak") throw new Error("personal name missing in editor");
-  if ((await editorDialog.getByLabel("E-Mail").inputValue()) !== "may.nowak@example.invalid") throw new Error("email missing in editor");
+  if ((await editorDialog.getByLabel("Vollständiger Name").inputValue()) !== "Nora Beispiel") throw new Error("personal name missing in editor");
+  if ((await editorDialog.getByLabel("E-Mail").inputValue()) !== "nora.beispiel@example.invalid") throw new Error("email missing in editor");
   if ((await editorDialog.getByLabel("Standort").inputValue()) !== "Berlin") throw new Error("location missing in editor");
   if (width >= 1024) {
     const before = await preview.evaluate((element) => element.scrollTop);

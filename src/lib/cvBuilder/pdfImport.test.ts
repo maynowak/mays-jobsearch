@@ -618,7 +618,7 @@ Originalzeile`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E skills sections', () => {
   it('keeps skills from separate architecture/cloud/technology sections apart', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 PROFIL
@@ -644,7 +644,7 @@ Docker, GitHub Actions, Linux`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E certification goals', () => {
   it('does not create certificates for goals or preparations in DE and EN', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 CERTIFICATIONS
@@ -670,8 +670,8 @@ ITIL Foundation – angestrebt`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E personal details', () => {
   it('keeps name/contact separate and extracts a short location from the personal block', () => {
-    const result = parseCvBuilderImportText(`May Nowak
-may.nowak@example.invalid
+    const result = parseCvBuilderImportText(`Nora Beispiel
+nora.beispiel@example.invalid
 +49 170 1234567
 Berlin
 
@@ -679,8 +679,8 @@ PROFIL
 Cloud Solution Architect
 Entwickelt sichere Cloud-Plattformen.`);
     expect(result.draft.personal).toMatchObject({
-      fullName: 'May Nowak',
-      email: 'may.nowak@example.invalid',
+      fullName: 'Nora Beispiel',
+      email: 'nora.beispiel@example.invalid',
       phone: '+49 170 1234567',
       location: 'Berlin',
     });
@@ -693,7 +693,7 @@ Entwickelt sichere Cloud-Plattformen.`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E training in experience', () => {
   it('keeps undated training/lab lines out of an employment description', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 BERUFLICHER WERDEGANG
@@ -713,7 +713,7 @@ Praktische Cloud-Übungen.`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E review reasons', () => {
   it('carries the training reason to all lines of a training block', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 BERUFLICHER WERDEGANG
@@ -728,7 +728,7 @@ Praktische Cloud-Übungen.`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E experience fields', () => {
   it('separates role-like values from employers instead of relying on word order', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 BERUFLICHER WERDEGANG
@@ -743,7 +743,7 @@ BERUFLICHER WERDEGANG
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E education fields', () => {
   it('keeps institution, field, degree and period separate', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 AUSBILDUNG
@@ -764,7 +764,7 @@ Schwerpunkt verteilte Systeme.`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E project fields', () => {
   it('cleans dated project names, preserves the period and extracts evidenced technologies', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 PROJEKTE
@@ -784,7 +784,7 @@ https://github.com/example/cloud`);
 
 describe('CV-BUILDER-REAL-WORLD-QA-02E link labels', () => {
   it('uses repository/profile names instead of identical generic labels', () => {
-    const result = parseCvBuilderImportText(`May Nowak
+    const result = parseCvBuilderImportText(`Nora Beispiel
 E-Mail: may@example.invalid
 
 LINKS

@@ -198,6 +198,17 @@ Screenshots/PDFs: `docs/reports/assets/CV-BUILDER-REAL-WORLD-QA-02E/`.
 **GO für Review und kontrollierten Merge.**
 **NO-GO für Production-Deployment ohne gesonderte Freigabe.**
 
+## FINAL REVIEW 01 — Datenschutz-Hygiene
+
+Neue 02E-Fixtures und Screenshots verwenden jetzt die eindeutig fiktive
+Identität **Nora Beispiel** (`nora.beispiel@example.invalid`) statt eines
+realitätsnahen Personennamens. Bestehende, unabhängige Anonymisierungstests
+mit explizitem Namensbezug wurden nicht verändert. Screenshots wurden mit der
+fiktiven Identität neu erzeugt; kein privates PDF und keine realen
+Kontaktdaten im Repository.
+
+Fokussiert: 46 PASS; 02E-E2E 320–1440 PASS.
+
 ## Recovery-Regel
 
 Maßgeblich sind diese Datei und der letzte gepushte Commit auf
