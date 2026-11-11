@@ -341,4 +341,20 @@ ${lines}`);
     expect(screen.getByText("Prüfzeile 2")).toBeInTheDocument();
   });
 
+
+  it("renders the overview and summary in English", async () => {
+    localStorage.setItem("mj-lang", "en");
+    const onImported = vi.fn();
+    const { container } = renderDialog({ onImported });
+    await chooseLocal(container);
+    expect(await screen.findByRole("heading", { name: "CV analysed" })).toBeInTheDocument();
+    expect(screen.getByText("Review list")).toBeInTheDocument();
+    expect(screen.getByText("Not reviewed")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Use these details" }));
+    expect(screen.getByRole("heading", { name: "Your import selection" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply selection" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Apply selection" }));
+    expect(onImported).toHaveBeenCalledTimes(1);
+  });
+
 });

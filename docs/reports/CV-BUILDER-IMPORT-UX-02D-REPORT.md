@@ -113,8 +113,8 @@ Domain-Übernahme ab.
 
 | Prüfung | Ergebnis |
 |---|---|
-| Fokussierte Import-/Domain-/Dialogtests | **51 PASS** |
-| Serielle Gesamtsuite | **1751 PASS / 5 skipped** |
+| Fokussierte Import-/Domain-/Dialogtests | **52 PASS** |
+| Serielle Gesamtsuite | **1752 PASS / 5 skipped** |
 | Production-Build | **PASS** |
 | 02D-E2E (320–1440) | **PASS** |
 | Import-01A-E2E | **PASS** |
