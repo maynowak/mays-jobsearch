@@ -145,17 +145,17 @@ export function isPageNumberLine(text: string): boolean {
 function categoryForPart(part: string): DocumentCategory | null {
   const value = part.toLocaleLowerCase("de").replace(/\s+/g, " ").trim();
   if (!value) return null;
-  if (/\b(?:zielposition|zielrollen|zielrolle|target role|target position)\b/.test(value)) return "target-roles";
-  if (/\b(?:profil|profile|summary|zusammenfassung|über mich|about me)\b/.test(value)) return "profile";
-  if (/\b(?:aws\s*qa\s*lab|qa\s*lab|labor|lab|training|praxisorientierte|cloud-qualifizierung|qualifizierung)\b/.test(value)) return "training";
-  if (/\b(?:kernkompetenz|kompetenz|fähigkeit|faehigkeit|kenntnis|skill|competenc|suchbegriff)\b/.test(value)) return "skills";
-  if (/\b(?:projekt|project|architektur)\b/.test(value)) return "projects";
-  if (/\b(?:weiterbildung|zertifikat|zertifizierung|certification|certificate|fortbildung)\b/.test(value)) return "certificates";
-  if (/\b(?:beruflicher werdegang|berufserfahrung|arbeitserfahrung|werdegang|professional experience|work experience|employment history|timeline)\b/.test(value)) return "experience";
-  if (/\b(?:ausbildung|education|qualifikation|qualification)\b/.test(value)) return "education";
-  if (/\b(?:sprache|sprachen|language|languages)\b/.test(value)) return "languages";
-  if (/\b(?:link|links|website|websites|portfolio|online profile)\b/.test(value)) return "links";
-  if (/\b(?:hinweis|hinweise|veröffentlichung|veroeffentlichung|publication|notes?)\b/.test(value)) return "document-notes";
+  if (/\b(?:zielposition\w*|zielrollen|zielrolle|target roles?|target positions?)\b/.test(value)) return "target-roles";
+  if (/\b(?:profil\w*|summary|zusammenfassung|über mich|ueber mich|about me)\b/.test(value)) return "profile";
+  if (/\b(?:aws\s*qa\s*lab\w*|qa\s*lab\w*|labor\w*|lab\w*|training|praxisorientierte\w*|cloud-qualifizierung|qualifizierung)\b/.test(value)) return "training";
+  if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*)\b/.test(value)) return "skills";
+  if (/\b(?:projekt\w*|project\w*|architektur\w*)\b/.test(value)) return "projects";
+  if (/\b(?:weiterbildung\w*|zertifikat\w*|zertifizierung\w*|certification\w*|certificate\w*|fortbildung\w*)\b/.test(value)) return "certificates";
+  if (/\b(?:beruflicher werdegang|berufserfahrung\w*|arbeitserfahrung\w*|werdegang|professional experience|work experience|employment history|timeline)\b/.test(value)) return "experience";
+  if (/\b(?:ausbildung\w*|education|qualifikation\w*|qualification\w*)\b/.test(value)) return "education";
+  if (/\b(?:sprache\w*|language\w*)\b/.test(value)) return "languages";
+  if (/\b(?:link\w*|website\w*|portfolio|online profile\w*)\b/.test(value)) return "links";
+  if (/\b(?:hinweis\w*|veröffentlichung\w*|veroeffentlichung\w*|publication\w*|notes?)\b/.test(value)) return "document-notes";
   if (/\b(?:sonstiges|weitere angaben|additional information|misc)\b/.test(value)) return "misc";
   return null;
 }
@@ -168,12 +168,45 @@ function headingParts(text: string): string[] {
     .filter(Boolean);
 }
 
+const EXACT_HEADING_ALIASES = new Set([
+  "personal", "personal details", "personal data", "contact", "kontakt", "persönliche daten", "persoenliche daten",
+  "profil", "profile", "professional summary", "summary", "berufliches profil", "über mich", "ueber mich", "about me",
+  "zielpositionen", "zielrollen", "target roles", "target positions",
+  "kernkompetenzen", "kompetenzen", "fähigkeiten", "faehigkeiten", "kenntnisse", "technische kenntnisse",
+  "skills", "technical skills", "core skills", "core competencies", "competencies",
+  "projekte", "project", "projects", "project experience", "project work", "projektarbeit",
+  "berufserfahrung", "berufliche erfahrung", "arbeitserfahrung", "beruflicher werdegang", "werdegang",
+  "work experience", "professional experience", "employment history", "work history", "experience",
+  "ausbildung", "bildung", "bildungsweg", "akademische ausbildung", "education", "academic background",
+  "education and qualifications", "education & qualifications", "education & certifications", "qualifications",
+  "weiterbildung", "weiterbildungen", "fortbildung", "fortbildungen", "further education", "continuing education",
+  "zertifikate", "zertifizierungen", "zertifikatsstatus", "certificates", "certifications", "courses",
+  "sprachen", "sprachkenntnisse", "languages", "language skills",
+  "links", "websites", "portfolio", "online profiles",
+  "hinweise", "veröffentlichungshinweise", "veroeffentlichungshinweise", "document notes", "publication notes", "notes",
+  "sonstiges", "weitere angaben", "additional information", "misc",
+]);
+
+function headingShapeAllowed(value: string, continued: boolean): boolean {
+  if (/@|https?:\/\//i.test(value)) return false;
+  if (/^[-•*–—]/.test(value)) return false;
+  if (/[;]$/.test(value)) return false;
+  if (/\b\d{1,2}[./]\d{4}\b/.test(value) && !uppercaseHeadingLike(value)) return false;
+  if (/^\d{4}\s*(?:[-–—]|\|)/.test(value) && !uppercaseHeadingLike(value)) return false;
+  if (/^(?:jan|feb|mär|maerz|apr|mai|jun|jul|aug|sep|okt|oct|nov|dez|dec)\w*\.?\s+\d{4}/i.test(value) && !uppercaseHeadingLike(value)) return false;
+  const words = value.split(/\s+/).filter(Boolean);
+  if (words.length > 14) return false;
+  if (uppercaseHeadingLike(value)) return true;
+  const normalized = value.toLocaleLowerCase("de").replace(/\s+/g, " ").trim();
+  return EXACT_HEADING_ALIASES.has(normalized) && (continued || words.length <= 6);
+}
+
 export function matchDocumentHeading(text: string): DocumentHeadingMatch | null {
   let value = cleanHeadingText(text);
   if (!value || value.length > 110) return null;
   const continued = CONTINUED_SUFFIX.test(value);
   if (continued) value = value.replace(CONTINUED_SUFFIX, "").trim();
-  if (!value) return null;
+  if (!value || !headingShapeAllowed(value, continued)) return null;
   const parts = headingParts(value);
   const categories = [...new Set(parts.map(categoryForPart).filter((part): part is DocumentCategory => Boolean(part)))];
   if (!categories.length) return null;
@@ -277,4 +310,87 @@ export function normalizePdfDocument(source: PdfDocumentStructure): NormalizedPd
     });
   }
   return { source, lines, ignored };
+}
+
+export interface DetectedDocumentSection {
+  id: string;
+  category: DocumentCategory;
+  categories: DocumentCategory[];
+  heading: string;
+  headingBlocks: PdfTextBlock[];
+  pageStart: number;
+  pageEnd: number;
+  blocks: PdfTextBlock[];
+  uncertain: boolean;
+  continued: boolean;
+}
+
+function sameHeading(left: string, right: string): boolean {
+  return headingSignature(left) === headingSignature(right);
+}
+
+export function detectDocumentSections(normalized: NormalizedPdfDocument): DetectedDocumentSection[] {
+  const sections: DetectedDocumentSection[] = [];
+  let current: DetectedDocumentSection | null = null;
+  let sectionIndex = 0;
+
+  const startSection = (
+    line: NormalizedDocumentLine,
+    category: DocumentCategory,
+    categories: DocumentCategory[],
+    heading: string,
+    uncertain: boolean,
+    continued: boolean
+  ): DetectedDocumentSection => {
+    const section: DetectedDocumentSection = {
+      id: `section-${sectionIndex++}`,
+      category,
+      categories,
+      heading,
+      headingBlocks: [line.block],
+      pageStart: line.block.page,
+      pageEnd: line.block.page,
+      blocks: [],
+      uncertain,
+      continued,
+    };
+    sections.push(section);
+    return section;
+  };
+
+  for (const line of normalized.lines) {
+    if (line.kind === "heading") {
+      const known = line.heading;
+      const category = known?.category ?? "unknown";
+      const categories = known?.categories ?? ["unknown"];
+      const isContinuation =
+        current !== null &&
+        current.category === category &&
+        (Boolean(known?.continued) || sameHeading(current.heading, line.block.text));
+      if (isContinuation && current) {
+        current.continued = true;
+        current.headingBlocks.push(line.block);
+        current.pageEnd = Math.max(current.pageEnd, line.block.page);
+        if (known?.uncertain) current.uncertain = true;
+        continue;
+      }
+      current = startSection(
+        line,
+        category,
+        categories,
+        line.block.text,
+        known?.uncertain ?? true,
+        Boolean(known?.continued)
+      );
+      continue;
+    }
+
+    if (!current) {
+      current = startSection(line, "personal", ["personal"], "Kopfdaten", false, false);
+    }
+    current.blocks.push(line.block);
+    current.pageEnd = Math.max(current.pageEnd, line.block.page);
+  }
+
+  return sections;
 }

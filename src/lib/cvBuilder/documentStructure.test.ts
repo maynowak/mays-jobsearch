@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPdfDocument, normalizePdfDocument, type PdfSourcePage } from "./documentStructure";
+import { buildPdfDocument, detectDocumentSections, normalizePdfDocument, type PdfSourcePage } from "./documentStructure";
 
 const pages: PdfSourcePage[] = [
   {
@@ -149,5 +149,79 @@ describe("normalizePdfDocument", () => {
     );
     expect(normalized.ignored).toEqual([]);
     expect(normalized.lines.map((line) => line.block.text)).toEqual(["2026", "Projekt"]);
+  });
+});
+
+
+describe("detectDocumentSections", () => {
+  it("keeps composite headings, section boundaries and continued timelines separate", () => {
+    const normalized = normalizePdfDocument(buildPdfDocument(fourPageDocument()));
+    const sections = detectDocumentSections(normalized);
+
+    expect(sections.map((section) => section.category)).toEqual([
+      "profile",
+      "target-roles",
+      "skills",
+      "projects",
+      "training",
+      "certificates",
+      "experience",
+      "mixed",
+      "document-notes",
+    ]);
+    const skills = sections.find((section) => section.category === "skills");
+    const projects = sections.find((section) => section.category === "projects");
+    const experience = sections.find((section) => section.category === "experience");
+    const mixed = sections.find((section) => section.category === "mixed");
+    expect(skills?.blocks.map((block) => block.text)).toEqual(["AWS, Terraform, TypeScript"]);
+    expect(projects?.blocks.map((block) => block.text)).toContain("2026 – Projekt A");
+    expect(projects?.blocks.map((block) => block.text)).not.toContain("AWS, Terraform, TypeScript");
+    expect(experience?.continued).toBe(true);
+    expect(experience?.headingBlocks).toHaveLength(2);
+    expect(experience?.pageStart).toBe(3);
+    expect(experience?.pageEnd).toBe(3);
+    expect(mixed?.categories).toEqual(["education", "languages"]);
+  });
+
+  it("does not attach an unknown heading or its content to the previous section", () => {
+    const normalized = normalizePdfDocument(
+      buildPdfDocument([
+        {
+          page: 1,
+          text: "PROFIL\nKurzprofil\nFACHLICHE SCHWERPUNKTE\nCloud Architektur",
+          lines: [
+            { text: "PROFIL", order: 0 },
+            { text: "Kurzprofil", order: 1 },
+            { text: "FACHLICHE SCHWERPUNKTE", order: 2 },
+            { text: "Cloud Architektur", order: 3 },
+          ],
+        },
+      ])
+    );
+    const sections = detectDocumentSections(normalized);
+
+    expect(sections.map((section) => section.category)).toEqual(["profile", "unknown"]);
+    expect(sections[0].blocks.map((block) => block.text)).toEqual(["Kurzprofil"]);
+    expect(sections[1].blocks.map((block) => block.text)).toEqual(["Cloud Architektur"]);
+    expect(sections[1].uncertain).toBe(true);
+  });
+
+  it("does not treat dated project lines as headings", () => {
+    const normalized = normalizePdfDocument(
+      buildPdfDocument([
+        {
+          page: 1,
+          text: "PROJEKTE\n2026 – Projekt A\nBeschreibung",
+          lines: [
+            { text: "PROJEKTE", order: 0 },
+            { text: "2026 – Projekt A", order: 1 },
+            { text: "Beschreibung", order: 2 },
+          ],
+        },
+      ])
+    );
+    const sections = detectDocumentSections(normalized);
+    expect(sections).toHaveLength(1);
+    expect(sections[0].blocks.map((block) => block.text)).toEqual(["2026 – Projekt A", "Beschreibung"]);
   });
 });
