@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
   "functions": {
     "api/**/*.mjs": {
       "maxDuration": 60
