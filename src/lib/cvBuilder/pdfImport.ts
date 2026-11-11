@@ -1,4 +1,10 @@
 import {
+  detectCvDocument,
+  documentFromText,
+  type DetectedCvDocument,
+  type PdfDocumentStructure,
+} from "./documentStructure";
+import {
   createCertificateEntry,
   createEducationEntry,
   createExperienceEntry,
@@ -39,6 +45,7 @@ export interface CvBuilderImportResult {
   detected: Record<CvBuilderImportSectionId, boolean>;
   uncertain: Record<CvBuilderImportSectionId, boolean>;
   unrecognized: string[];
+  structure: DetectedCvDocument;
 }
 
 export type CvBuilderImportManualTarget =
@@ -532,9 +539,14 @@ function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>
   return entries;
 }
 
-function parseCertificates(lines: string[], uncertain: Set<CvBuilderImportSectionId>): CvBuilderDraftV1["certificates"] {
+function parseCertificates(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["certificates"] {
   const entries: CvBuilderDraftV1["certificates"] = [];
   for (const line of nonEmpty(lines)) {
+    if (/\b(?:zertifizierungsziel|zertifizierungsstatus|target certification|planned certification|in planung|geplant)\b/i.test(line)) {
+      uncertain.add("certificates");
+      unrecognized.push(line);
+      continue;
+    }
     const parts = line.split(/\s*(?:\||;|·)\s*/).map(cleanLine).filter(Boolean);
     if (!parts.length) continue;
     const date = parseDateRange(line);
@@ -759,7 +771,21 @@ function hasSectionContent(draft: CvBuilderDraftV1, section: CvBuilderImportSect
   }
 }
 
-export function parseCvBuilderImportText(raw: string): CvBuilderImportResult {
+const LANGUAGE_NAME_RE = /\b(?:deutsch|englisch|französisch|franzoesisch|spanisch|italienisch|portugiesisch|russisch|polnisch|türkisch|tuerkisch|niederländisch|niederlaendisch|chinesisch|japanisch|arabisch|german|english|french|spanish|italian|portuguese|russian|polish|turkish|dutch|chinese|japanese|arabic)\b/i;
+const LANGUAGE_LEVEL_RE = /\b(?:muttersprache|native|fließend|fliessend|fluent|verhandlungssicher|professional|business|gute kenntnisse|konversation|conversational|intermediate|mittelstufe|grundkenntnisse|basic|anfänger|anfaenger|beginner|a1|a2|b1|b2|c1|c2)\b/i;
+
+function isLanguageLine(line: string): boolean {
+  return LANGUAGE_NAME_RE.test(line) && (LANGUAGE_LEVEL_RE.test(line) || /^(?:deutsch|englisch|german|english)\b/i.test(cleanLine(line)));
+}
+
+function mergeSectionLines(section: { blocks: Array<{ text: string }> }): string[] {
+  return mergeWrappedLines(section.blocks.map((block) => block.text));
+}
+
+export function parseCvBuilderImportText(
+  raw: string,
+  source?: PdfDocumentStructure
+): CvBuilderImportResult {
   const draft = createEmptyCvBuilderDraft();
   const detected = emptyDetected();
   const uncertain = emptyUncertain();
@@ -768,30 +794,70 @@ export function parseCvBuilderImportText(raw: string): CvBuilderImportResult {
   const sections: Record<WorkingSection, string[]> = {
     header: [], misc: [], personal: [], profile: [], experience: [], education: [], skills: [], projects: [], certificates: [], languages: [], links: [],
   };
-  let current: WorkingSection = "header";
-  for (const rawLine of mergeWrappedLines(preprocessLines(raw))) {
-    const line = rawLine.trim();
-    if (!line) {
-      sections[current].push("");
-      continue;
+  const document = source ?? documentFromText(preprocessLines(raw).join("\n"));
+  const structure = detectCvDocument(document);
+
+  for (const section of structure.sections) {
+    const lines = mergeSectionLines(section);
+    switch (section.category) {
+      case "personal":
+        sections.personal.push(...lines);
+        break;
+      case "profile":
+        sections.profile.push(...lines);
+        break;
+      case "skills":
+        sections.skills.push(...lines);
+        break;
+      case "projects":
+        sections.projects.push(...lines);
+        break;
+      case "education":
+        sections.education.push(...lines);
+        break;
+      case "certificates":
+        sections.certificates.push(...lines);
+        break;
+      case "languages":
+        sections.languages.push(...lines);
+        break;
+      case "links":
+        sections.links.push(...lines);
+        break;
+      case "experience": {
+        const timeline = section.timeline ?? [];
+        const excluded = timeline.filter((item) => item.kind === "project" || item.kind === "training" || item.kind === "qualification");
+        if (excluded.length) uncertainSet.add("experience");
+        for (const item of excluded) unrecognized.push(...item.lines);
+        const keptItems = timeline.filter((item) => !excluded.includes(item));
+        const kept = keptItems.flatMap((item) => [...item.lines, ""]);
+        sections.experience.push(...(kept.length ? kept : lines));
+        break;
+      }
+      case "mixed": {
+        const languageLines = lines.filter(isLanguageLine);
+        const nonLanguageLines = lines.filter((line) => !isLanguageLine(line));
+        sections.languages.push(...languageLines);
+        sections.education.push(...nonLanguageLines);
+        if (languageLines.length && nonLanguageLines.length) uncertainSet.add("education");
+        break;
+      }
+      case "target-roles":
+      case "training":
+      case "document-notes":
+      case "unknown":
+      case "misc":
+        unrecognized.push(...lines);
+        if (section.category === "unknown") uncertainSet.add("profile");
+        break;
+      default:
+        unrecognized.push(...lines);
     }
-    const normalized = normalizedHeading(line);
-    if (["sonstiges", "weitere angaben", "additional information", "other", "misc"].includes(normalized)) {
-      current = "misc";
-      continue;
-    }
-    const section = sectionFor(line);
-    if (section) {
-      current = section;
-      detected[section] = true;
-      continue;
-    }
-    sections[current].push(line);
   }
 
   const personal = parsePersonal([...sections.header, ...sections.personal]);
   draft.personal = personal.personal;
-  detected.personal = detected.personal || personal.detected;
+  detected.personal = personal.detected;
   if (personal.uncertain && personal.detected) uncertainSet.add("personal");
 
   const profileLines = nonEmpty(sections.profile);
@@ -802,30 +868,30 @@ export function parseCvBuilderImportText(raw: string): CvBuilderImportResult {
   }
 
   draft.experience = parseExperience(sections.experience, uncertainSet, unrecognized);
-  detected.experience = detected.experience || draft.experience.length > 0;
+  detected.experience = draft.experience.length > 0;
   draft.education = parseEducation(sections.education, uncertainSet, unrecognized);
-  detected.education = detected.education || draft.education.length > 0;
+  detected.education = draft.education.length > 0;
   draft.skills = parseSkills(sections.skills, uncertainSet, unrecognized);
-  detected.skills = detected.skills || draft.skills.length > 0;
+  detected.skills = draft.skills.length > 0;
   draft.projects = parseProjects(sections.projects, uncertainSet, unrecognized);
-  detected.projects = detected.projects || draft.projects.length > 0;
-  draft.certificates = parseCertificates(sections.certificates, uncertainSet);
-  detected.certificates = detected.certificates || draft.certificates.length > 0;
+  detected.projects = draft.projects.length > 0;
+  draft.certificates = parseCertificates(sections.certificates, uncertainSet, unrecognized);
+  detected.certificates = draft.certificates.length > 0;
   draft.languages = parseLanguages(sections.languages, uncertainSet, unrecognized);
-  detected.languages = detected.languages || draft.languages.length > 0;
+  detected.languages = draft.languages.length > 0;
   draft.links = parseLinks(sections.links, unrecognized);
   const linksOutsideSections = collectLinks(Object.values(sections).flat());
   for (const entry of linksOutsideSections) {
     if (!draft.links.some((existing) => existing.url === entry.url)) draft.links.push(entry);
   }
-  detected.links = detected.links || draft.links.length > 0;
+  detected.links = draft.links.length > 0;
 
   unrecognized.push(...nonEmpty(sections.misc));
   for (const section of uncertainSet) uncertain[section] = true;
   if (!CV_BUILDER_IMPORT_SECTIONS.some((section) => detected[section])) {
     unrecognized.push(...nonEmpty(raw.split("\n")));
   }
-  return { draft, detected, uncertain, unrecognized: [...new Set(unrecognized)] };
+  return { draft, detected, uncertain, unrecognized: [...new Set(unrecognized)], structure };
 }
 
 export function hasCvBuilderImportContent(

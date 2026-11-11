@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildPdfDocument, type PdfSourcePage } from './documentStructure';
 import {
   hasCvBuilderImportContent,
   parseCvBuilderImportText,
@@ -293,5 +294,108 @@ Nur ein Zeitraum und eine Beschreibung.`);
     const draft = selectCvBuilderImportDraft(result, ['personal'], { [index]: 'projects' });
     expect(draft.projects[0].name).toBe('Zusätzliche Information');
     expect(draft.profile.summary).toBeUndefined();
+  });
+});
+
+
+describe('CV-BUILDER-PARSER-02B structured document', () => {
+  const pages: PdfSourcePage[] = [
+    {
+      page: 1,
+      text: '',
+      lines: [
+        { text: 'MAY MUSTERMANN | ATS-PROFIL | 13.10.2026 Seite 1', order: 0 },
+        { text: 'May Mustermann', order: 1 },
+        { text: 'E-Mail: may@example.invalid', order: 2 },
+        { text: 'PROFIL', order: 3 },
+        { text: 'Cloud Architekt', order: 4 },
+        { text: 'KERNKOMPETENZEN – ATS-SUCHBEGRIFFE', order: 5 },
+        { text: 'AWS, Terraform', order: 6 },
+      ],
+    },
+    {
+      page: 2,
+      text: '',
+      lines: [
+        { text: 'MAY MUSTERMANN | ATS-PROFIL | 13.10.2026 Seite 2', order: 0 },
+        { text: 'AKTUELLE ARCHITEKTUR- UND SOFTWAREPROJEKTE', order: 1 },
+        { text: '2026 – Projekt A', order: 2 },
+        { text: 'Projektbeschreibung', order: 3 },
+        { text: 'AWS QA LABS – PRAXISORIENTIERTE CLOUD-QUALIFIZIERUNG (2026)', order: 4 },
+        { text: 'Praktische Übungen', order: 5 },
+      ],
+    },
+    {
+      page: 3,
+      text: '',
+      lines: [
+        { text: 'MAY MUSTERMANN | ATS-PROFIL | 13.10.2026 Seite 3', order: 0 },
+        { text: 'WEITERBILDUNG & ZERTIFIKATSSTATUS', order: 1 },
+        { text: 'Zertifizierungsziel AWS', order: 2 },
+        { text: 'BERUFLICHER WERDEGANG – LANGE TIMELINE', order: 3 },
+        { text: '2020–2026 | Architekt | Beispiel GmbH', order: 4 },
+        { text: 'BERUFLICHER WERDEGANG – FORTSETZUNG', order: 5 },
+        { text: '2012–10/2019 | Freelance Software Developer | Enterprise Projects', order: 6 },
+        { text: '• Projekt im Kundenauftrag', order: 7 },
+        { text: '2008–2009 | Additional Enterprise Projects', order: 8 },
+      ],
+    },
+    {
+      page: 4,
+      text: '',
+      lines: [
+        { text: 'MAY MUSTERMANN | ATS-PROFIL | 13.10.2026 Seite 4', order: 0 },
+        { text: 'AUSBILDUNG, SPRACHEN & WEITERE QUALIFIKATIONEN', order: 1 },
+        { text: 'Technische Universität Berlin', order: 2 },
+        { text: 'M.Sc. Informatik', order: 3 },
+        { text: 'Okt 2014 – Sep 2016', order: 4 },
+        { text: 'Deutsch (Muttersprache)', order: 5 },
+        { text: 'ATS- UND VERÖFFENTLICHUNGSSHINWEISE', order: 6 },
+        { text: 'Dieses Dokument ist ein Bewerbungsprofil.', order: 7 },
+      ],
+    },
+  ];
+
+  it('keeps page ranges, composite sections and unknown content', () => {
+    const pagesWithText = pages.map((page) => ({ ...page, text: page.lines.map((line) => line.text).join('\n') }));
+    const document = buildPdfDocument(pagesWithText);
+    const result = parseCvBuilderImportText(document.text, document);
+
+    expect(result.structure.pageCount).toBe(4);
+    expect(result.structure.sections.map((section) => section.category)).toEqual([
+      'personal',
+      'profile',
+      'skills',
+      'projects',
+      'training',
+      'certificates',
+      'experience',
+      'mixed',
+      'document-notes',
+    ]);
+    expect(result.structure.sections.find((section) => section.category === 'experience')?.pageEnd).toBe(3);
+    expect(result.structure.sections.find((section) => section.category === 'projects')?.pageStart).toBe(2);
+    expect(result.structure.unknownBlocks.length).toBeGreaterThan(0);
+    expect(result.structure.unusedBlocks).toEqual([]);
+  });
+
+  it('does not turn training, projects or certification goals into certificates or extra employment', () => {
+    const pagesWithText = pages.map((page) => ({ ...page, text: page.lines.map((line) => line.text).join('\n') }));
+    const document = buildPdfDocument(pagesWithText);
+    const result = parseCvBuilderImportText(document.text, document);
+
+    expect(result.draft.experience).toHaveLength(2);
+    expect(result.draft.experience.some((entry) => `${entry.employer} ${entry.position}`.includes('Additional Enterprise Projects'))).toBe(false);
+    expect(result.draft.certificates).toEqual([]);
+    expect(result.uncertain.certificates).toBe(true);
+    expect(result.uncertain.experience).toBe(true);
+    expect(result.draft.projects[0].name).toBe('2026 – Projekt A');
+    expect(result.draft.skills).toEqual(['AWS', 'Terraform']);
+    expect(result.draft.education[0].institution).toBe('Technische Universität Berlin');
+    expect(result.draft.languages[0].language).toBe('Deutsch');
+    expect(result.unrecognized.join('\n')).toContain('Praktische Übungen');
+    expect(result.unrecognized.join('\n')).toContain('Zertifizierungsziel AWS');
+    expect(result.unrecognized.join('\n')).toContain('Dieses Dokument ist ein Bewerbungsprofil.');
+    expect(result.unrecognized.join('\n')).toContain('Additional Enterprise Projects');
   });
 });

@@ -3,6 +3,7 @@ import { useLang } from "../i18n";
 import type { PersistentCv } from "../lib/cvStorageApi";
 import { validateCvFile } from "../lib/cvFileValidation";
 import { extractPdfText } from "../lib/pdf";
+import type { PdfDocumentStructure } from "../lib/cvBuilder/documentStructure";
 import type { CvBuilderDraftV1 } from "../lib/cvBuilder/contractTypes";
 import {
   CV_BUILDER_IMPORT_SECTIONS,
@@ -179,13 +180,22 @@ export default function CvBuilderImportDialog({
     setError(null);
     setStep("loading");
     try {
-      const text = await extractPdfText(file);
+      let document: PdfDocumentStructure | null = null;
+      try {
+        const pdfModule = await import("../lib/pdf");
+        if (typeof pdfModule.extractPdfDocument === "function") {
+          document = await pdfModule.extractPdfDocument(file);
+        }
+      } catch {
+        document = null;
+      }
+      const text = document?.text ?? await extractPdfText(file);
       if (!text.trim()) {
         const noText = new Error("no_text") as Error & { code: string };
         noText.code = "no_text";
         throw noText;
       }
-      const parsed = parseCvBuilderImportText(text);
+      const parsed = parseCvBuilderImportText(text, document ?? undefined);
       if (!CV_BUILDER_IMPORT_SECTIONS.some((section) => hasCvBuilderImportContent(parsed, section))) {
         const noStructure = new Error("no_structure") as Error & { code: string };
         noStructure.code = "no_structure";

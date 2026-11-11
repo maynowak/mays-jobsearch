@@ -150,7 +150,7 @@ function categoryForPart(part: string): DocumentCategory | null {
   if (/\b(?:aws\s*qa\s*lab\w*|qa\s*lab\w*|labor\w*|lab\w*|training|praxisorientierte\w*|cloud-qualifizierung|qualifizierung)\b/.test(value)) return "training";
   if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*)\b/.test(value)) return "skills";
   if (/\b(?:projekt\w*|project\w*|architektur\w*)\b/.test(value)) return "projects";
-  if (/\b(?:weiterbildung\w*|zertifikat\w*|zertifizierung\w*|certification\w*|certificate\w*|fortbildung\w*)\b/.test(value)) return "certificates";
+  if (/\b(?:weiterbildung\w*|zertifikat\w*|zertifizierung\w*|certification\w*|certificate\w*|fortbildung\w*|further education|continuing education|courses?)\b/.test(value)) return "certificates";
   if (/\b(?:beruflicher werdegang|berufserfahrung\w*|arbeitserfahrung\w*|werdegang|professional experience|work experience|employment history|timeline)\b/.test(value)) return "experience";
   if (/\b(?:ausbildung\w*|education|qualifikation\w*|qualification\w*)\b/.test(value)) return "education";
   if (/\b(?:sprache\w*|language\w*)\b/.test(value)) return "languages";
@@ -175,6 +175,7 @@ const EXACT_HEADING_ALIASES = new Set([
   "kernkompetenzen", "kompetenzen", "fähigkeiten", "faehigkeiten", "kenntnisse", "technische kenntnisse",
   "skills", "technical skills", "core skills", "core competencies", "competencies",
   "projekte", "project", "projects", "project experience", "project work", "projektarbeit",
+  "selected current projects", "selected projects", "current projects", "key projects", "relevant projects",
   "berufserfahrung", "berufliche erfahrung", "arbeitserfahrung", "beruflicher werdegang", "werdegang",
   "work experience", "professional experience", "employment history", "work history", "experience",
   "ausbildung", "bildung", "bildungsweg", "akademische ausbildung", "education", "academic background",
@@ -284,7 +285,10 @@ export function normalizePdfDocument(source: PdfDocumentStructure): NormalizedPd
   const lines: NormalizedDocumentLine[] = [];
   for (const block of source.blocks) {
     const text = block.text.trim();
-    if (!text) continue;
+    if (!text) {
+      lines.push({ block, kind: "content" });
+      continue;
+    }
     if (isPurePageNumberLine(text)) {
       ignored.push({ block, reason: "page-number" });
       continue;
@@ -377,39 +381,55 @@ export function detectTimelineItems(blocks: PdfTextBlock[]): DetectedTimelineIte
   let current: DetectedTimelineItem | null = null;
   let itemIndex = 0;
   let lastFreelance: DetectedTimelineItem | null = null;
+
+  const startItem = (block: PdfTextBlock, kind: TimelineItemKind): DetectedTimelineItem => {
+    const item: DetectedTimelineItem = {
+      id: `timeline-${itemIndex++}`,
+      kind,
+      page: block.page,
+      lines: [block.text],
+      dateText: "",
+      current: false,
+      uncertainDate: true,
+    };
+    items.push(item);
+    current = item;
+    return item;
+  };
+
   for (const block of blocks) {
+    if (!block.text.trim()) {
+      current = null;
+      continue;
+    }
     const date = startDate(block.text);
+    if (date && current && !current.dateText) {
+      current.lines.push(block.text);
+      current.dateText = date.dateText;
+      current.current = date.current;
+      current.uncertainDate = date.uncertain;
+      current.kind = timelineKind(block.text);
+      if (current.kind === "project" && lastFreelance) current.parentId = lastFreelance.id;
+      if (current.kind === "freelance") lastFreelance = current;
+      if (current.kind !== "freelance" && current.kind !== "project") lastFreelance = null;
+      continue;
+    }
     if (date) {
       const kind = timelineKind(block.text);
-      const item: DetectedTimelineItem = {
-        id: `timeline-${itemIndex++}`,
-        kind,
-        page: block.page,
-        lines: [block.text],
-        dateText: date.dateText,
-        current: date.current,
-        uncertainDate: date.uncertain,
-        ...(kind === "project" && lastFreelance ? { parentId: lastFreelance.id } : {}),
-      };
+      const item = startItem(block, kind);
+      item.dateText = date.dateText;
+      item.current = date.current;
+      item.uncertainDate = date.uncertain;
+      if (kind === "project" && lastFreelance) item.parentId = lastFreelance.id;
       if (kind === "freelance") lastFreelance = item;
       if (kind !== "project" && kind !== "freelance") lastFreelance = null;
-      items.push(item);
-      current = item;
-    } else if (current) {
-      current.lines.push(block.text);
-      current.page = Math.min(current.page, block.page);
-    } else {
-      current = {
-        id: `timeline-${itemIndex++}`,
-        kind: "unclear",
-        page: block.page,
-        lines: [block.text],
-        dateText: "",
-        current: false,
-        uncertainDate: true,
-      };
-      items.push(current);
+      continue;
     }
+    if (!current) {
+      current = startItem(block, "unclear");
+      continue;
+    }
+    current.lines.push(block.text);
   }
   return items;
 }
@@ -482,4 +502,60 @@ export function detectDocumentSections(normalized: NormalizedPdfDocument): Detec
       ? { ...section, timeline: detectTimelineItems(section.blocks) }
       : section
   );
+}
+
+export interface DetectedCvDocument {
+  pageCount: number;
+  sections: DetectedDocumentSection[];
+  ignored: IgnoredDocumentBlock[];
+  sourceBlocks: PdfTextBlock[];
+  unknownBlocks: PdfTextBlock[];
+  unusedBlocks: PdfTextBlock[];
+  uncertainSections: DetectedDocumentSection[];
+}
+
+export function documentFromText(raw: string): PdfDocumentStructure {
+  const sourceLines = raw.replace(/\r/g, "").split("\n");
+  let order = 0;
+  const blocks: PdfTextBlock[] = sourceLines.map((text) => ({
+    page: 1,
+    order: order++,
+    text: text.trim(),
+    lines: [text.trim()],
+  }));
+  return {
+    pageCount: 1,
+    text: raw.trim(),
+    pages: [{ page: 1, text: raw.trim(), blocks }],
+    blocks,
+  };
+}
+
+export function detectCvDocument(source: PdfDocumentStructure): DetectedCvDocument {
+  const normalized = normalizePdfDocument(source);
+  const sections = detectDocumentSections(normalized);
+  const used = new Set<number>();
+  for (const section of sections) {
+    for (const block of section.headingBlocks) used.add(block.order);
+    for (const block of section.blocks) used.add(block.order);
+  }
+  const ignored = new Set(normalized.ignored.map((entry) => entry.block.order));
+  const unknownCategories = new Set<DocumentCategory>([
+    "unknown",
+    "target-roles",
+    "training",
+    "document-notes",
+    "misc",
+  ]);
+  return {
+    pageCount: source.pageCount,
+    sections,
+    ignored: normalized.ignored,
+    sourceBlocks: source.blocks,
+    unknownBlocks: sections
+      .filter((section) => unknownCategories.has(section.category))
+      .flatMap((section) => section.blocks),
+    unusedBlocks: source.blocks.filter((block) => !used.has(block.order) && !ignored.has(block.order)),
+    uncertainSections: sections.filter((section) => section.uncertain),
+  };
 }
