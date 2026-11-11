@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "width": 320,
+      "source": "builder"
+    },
+    {
+      "width": 320,
+      "source": "profile"
+    },
+    {
+      "width": 390,
+      "source": "builder"
+    },
+    {
+      "width": 390,
+      "source": "profile"
+    },
+    {
+      "width": 430,
+      "source": "builder"
+    },
+    {
+      "width": 430,
+      "source": "profile"
+    },
+    {
+      "width": 768,
+      "source": "builder"
+    },
+    {
+      "width": 768,
+      "source": "profile"
+    },
+    {
+      "width": 1024,
+      "source": "builder"
+    },
+    {
+      "width": 1024,
+      "source": "profile"
+    },
+    {
+      "width": 1440,
+      "source": "builder"
+    },
+    {
+      "width": 1440,
+      "source": "profile"
+    },
+    {
+      "width": 390,
+      "source": "unsaved"
+    }
+  ]
+}

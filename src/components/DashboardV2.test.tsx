@@ -249,4 +249,14 @@ describe('JM-RIS-CV-PROFILE-VISIBILITY-AND-MAY-HELP-01', () => {
     expect(screen.getByRole('button', { name: 'Hilfe' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('Hilfe zu diesem Bereich')).toBeInTheDocument();
   });
+
+  it("renders the development notice and simplified help in English", () => {
+    localStorage.setItem('mj-lang', 'en');
+    renderDashboard();
+    expect(screen.getByRole('heading', { name: 'Mays Job Matcher is being developed' })).toBeTruthy();
+    const help = screen.getByRole('button', { name: 'Help' });
+    fireEvent.click(help);
+    expect(screen.getByRole('heading', { name: 'Help for this area' })).toBeTruthy();
+    expect(screen.queryByText(/Hello, I'm May/)).toBeNull();
+  });
 });

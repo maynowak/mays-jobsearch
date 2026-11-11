@@ -1296,9 +1296,6 @@ export default function CvBuilderEditor({
                       ? t("cvBuilder.status.saved")
                       : t("cvBuilder.status.notSaved")}
             </span>
-            {saved && !dirty && !saving && !saveError && !successDismissed && (
-              <strong>{t("cvBuilder.saveSuccess")}</strong>
-            )}
           </div>
           {saved && !dirty && !saving && !saveError && !successDismissed && (
             <div className="cv-builder-save-success" role="status">
