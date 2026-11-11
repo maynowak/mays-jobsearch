@@ -5614,3 +5614,24 @@ ebenfalls auf `main`. Build PASS; serielle Gesamtsuite auf `main`
 **1719 PASS / 5 skipped**. Ein erster Lauf hatte zwei App-Timeouts, beide Tests
 liefen isoliert PASS und der Wiederholungslauf war vollständig grün. Kein
 Production-Deployment, keine RIS/AWS/Cognito/Terraform-/Consent-Änderung.
+
+## 2026-11-11 — CV-BUILDER-PARSER-02B DOCUMENT STRUCTURE (STEP A/B)
+
+**Typ:** PDF document structure recognition / normalization
+**Status:** `IN PROGRESS — STEP A/B COMPLETE`
+
+- Branch `feature/cv-builder-parser-02b` from `origin/main` `cef41cc`.
+- STEP A `b5d3420`: `extractPdfDocument(file)` added; `extractPdfText(file)`
+  remains compatible. `PdfTextBlock`/`PdfDocumentStructure` assign text blocks
+  to PDF pages and preserve source order; optional font size is retained for
+  later heading decisions. 3 focused tests PASS.
+- STEP B `51d0dbc`: `normalizePdfDocument()` removes pure page numbers, running
+  page headers with page-number suffixes, and repeated top/bottom edge lines.
+  Known section headings and continuation headings are never removed merely
+  because they repeat. Ignored blocks retain a reason (`page-number`,
+  `page-header`, `page-footer`); no raw personal text is logged.
+- 6 focused structural tests PASS with a synthetic four-page document; every
+  source block is either content or explicitly ignored. Build PASS.
+- Private reference PDF remains outside the repository; no PII in fixtures,
+  logs or reports. No AI, OCR, backend, RIS/AWS/Terraform/Cognito or consent
+  change. No merge, deployment or force-push.
