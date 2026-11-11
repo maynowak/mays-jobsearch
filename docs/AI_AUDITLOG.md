@@ -5897,3 +5897,11 @@ certificates, review reasons/sources retained. Focused 61 PASS; serial full
 Workflow-02A, PDF and PDF-Fix-01 E2E PASS; 0 overflow/API/RIS/console errors.
 No real CV data, no AI/OCR/backend, no merge/deploy/RIS/AWS/Cognito/Terraform/
 consent change.
+
+**SECOND PASS — FIELD QUALITY:** Experience pair classification now uses
+role/company evidence; education separates institution, field, degree and
+period; project names are cleaned with `Zeitraum:` preservation and tech
+evidence extraction; link labels include repository/profile paths; editor
+shows field validation and import review separately. Focused 61 PASS, serial
+full **1767 PASS / 5 skipped**, build PASS. No real CV data, no AI/OCR/backend,
+no merge/deploy/RIS/AWS/Cognito/Terraform/consent change.

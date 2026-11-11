@@ -9,14 +9,17 @@
 
 | Step | Thema | Status | Commit |
 |---|---|---|---|
-| A | Evidence und Reproduktion | **COMPLETE** | `pending` |
-| B | Abschnittserkennung und Skills | **COMPLETE** | `pending` |
-| C | Zertifikatsstatus | **COMPLETE** | `pending` |
-| D | Persönliche Angaben und Kurzprofil | **COMPLETE** | `pending` |
-| E | Timeline und Weiterbildungen | **COMPLETE** | `pending` |
-| F | Prüfliste | **COMPLETE** | `pending` |
-| G | Desktop-Scroll und Editor-UX | **COMPLETE** | `pending` |
-| H | Praxistest und Regression | **COMPLETE** | `pending` |
+| A | Evidence und Reproduktion | **COMPLETE** | `69dd4a6` |
+| B | Persönliche Angaben und Kurzprofil | **COMPLETE** | `ba7d628` |
+| C | Berufserfahrung aufteilen | **COMPLETE** | `08a6b87` |
+| D | Ausbildung/Weiterbildung | **COMPLETE** | `08a6b87` |
+| E | Skills-Erkennung | **COMPLETE** | `69dd4a6`, `08a6b87` |
+| F | Zertifikatsstatus | **COMPLETE** | `ba7d628` |
+| G | Projekte und Technologien | **COMPLETE** | `08a6b87` |
+| H | Sprachen, Links, Inhaltsqualität | **COMPLETE** | `08a6b87` |
+| I | Editor-Layout/Scrollen | **COMPLETE** | `a7a32aa` |
+| J | Importqualität sichtbar | **COMPLETE** | `08a6b87` |
+| K | End-to-End-Verifikation | **COMPLETE** | `08a6b87` + Abschluss-Doku |
 
 ## STEP A — Reproduktion
 
@@ -104,7 +107,32 @@ Browser-E2E: 320/390/430/768/1024/1440 px PASS; bei 1024/1440 unabhängig
 Editor-/Preview-Scroll und Modal-/Window-Scroll `0`; Screenshots unter
 `docs/reports/assets/CV-BUILDER-REAL-WORLD-QA-02E/`.
 
-## STEP H — Praxistest und Regression
+## Second Pass — C/D/E/G/H/J
+
+Die Feldzuordnung wurde nach der ersten 02E-Runde an den Praxisbeispielen
+nachgeschärft:
+
+- **C Erfahrung:** `roleLike` und `classifyExperiencePair` unterscheiden
+  DevOps/Web Services/E-Commerce von Unternehmensnamen; Tests prüfen
+  `BaFin/Web Services`, `Contenido/E-Commerce`, `DevOps/Unternehmen GmbH`
+  als konkrete Feldwerte.
+- **D Ausbildung:** Einrichtung, Fachrichtung, Abschluss und Zeitraum werden
+  getrennt. `Computer Science` + `Bachelor of Science` + Hochschule ergibt
+  Hochschule als Institution, `Computer Science – Bachelor ...` als Degree,
+  ohne die Hochschule in die Beschreibung zu verschieben.
+- **E Skills:** Solution Architecture, Enterprise Integration, Distributed
+  Systems und Architektur-/Cloud-/Technologies-Überschriften werden als
+  Kandidaten erkannt; Abschnittstrennung bleibt erhalten.
+- **G Projekte:** Datierte Namen werden bereinigt, der Zeitraum bleibt als
+  `Zeitraum: …` in der Beschreibung; Technologien werden nur aus explicit
+  tech evidence/„mit …“ extrahiert und dedupliziert.
+- **H Links:** GitHub-/LinkedIn-/Portfolio-Labels enthalten Repository-/
+  Profilpfade statt identischer Generik; URLs bleiben editierbar.
+- **J Importqualität:** Editor zeigt Feldvalidierung und Importprüfung
+  getrennt (`Feldvalidierung: Keine Feldfehler` · `Importprüfung: …`), ohne
+  einen künstlichen Qualitätswert.
+
+## STEP K — Praxistest und Regression
 
 ### Qualitätsmatrix
 
@@ -135,7 +163,7 @@ kommt aus Abschnitts-, Personal- und Timeline-Erkennung.
 | Prüfung | Ergebnis |
 |---|---|
 | Fokussierte Parser-/Struktur-/Dialogtests | **61 PASS** |
-| Serielle Gesamtsuite | **1762 PASS / 5 skipped** |
+| Serielle Gesamtsuite | **1767 PASS / 5 skipped** |
 | Production-Build | **PASS** |
 | 02E-Praxisfixture 320–1440 px | **PASS** |
 | Import-01A / 02B / 02C / 02D | **PASS** |
@@ -149,9 +177,11 @@ Screenshots/PDFs: `docs/reports/assets/CV-BUILDER-REAL-WORLD-QA-02E/`.
 
 ### Commit-Historie
 
-- `69dd4a6` — A/B: Architektur-/Cloud-/Technologies-Skills, Abschnittstrennung
-- `ba7d628` — C–F: Zertifikatsziele, Personal, Training, Review-Gründe
-- `a7a32aa` — G: unabhängiges Desktop-Scrolling und 02E-E2E
+- `69dd4a6` — A/E: Architektur-/Cloud-/Technologies-Skills, Abschnittstrennung
+- `ba7d628` — B/F: Zertifikatsziele, Personal, Training, Review-Gründe
+- `a7a32aa` — I: unabhängiges Desktop-Scrolling und 02E-E2E
+- `08a6b87` — C/D/E/G/H/J: Erfahrungs-, Bildungs-, Projekt-, Link- und
+  Importqualitäts-Fixes
 - Abschluss-Dokumentations-Commit (HEAD)
 
 **Gepusht:** `origin/feature/cv-builder-real-world-qa-02e`
