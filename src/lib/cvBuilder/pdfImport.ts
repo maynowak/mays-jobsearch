@@ -113,7 +113,22 @@ export type CvBuilderImportManualTarget =
   | "certificates"
   | "links";
 
-export type CvBuilderImportManualAssignments = Record<number, CvBuilderImportManualTarget>;
+export type CvBuilderImportManualStatus = "pending" | "accepted" | "ignored";
+
+export interface CvBuilderImportManualDecision {
+  target: CvBuilderImportManualTarget;
+  status?: CvBuilderImportManualStatus;
+  text?: string;
+}
+
+export type CvBuilderImportManualAssignments = Record<
+  number,
+  CvBuilderImportManualTarget | CvBuilderImportManualDecision
+>;
+
+export interface CvBuilderImportSelectionOptions {
+  selectedSkills?: Iterable<string>;
+}
 
 type WorkingSection = CvBuilderImportSectionId | "header" | "misc";
 
@@ -1225,7 +1240,8 @@ export function hasCvBuilderImportContent(
 export function selectCvBuilderImportDraft(
   result: CvBuilderImportResult,
   selected: Iterable<CvBuilderImportSectionId>,
-  manualAssignments: CvBuilderImportManualAssignments = {}
+  manualAssignments: CvBuilderImportManualAssignments = {},
+  options: CvBuilderImportSelectionOptions = {}
 ): CvBuilderDraftV1 {
   const selectedSet = new Set(selected);
   const next = createEmptyCvBuilderDraft();
@@ -1233,7 +1249,10 @@ export function selectCvBuilderImportDraft(
   if (selectedSet.has("profile")) next.profile = { ...result.draft.profile };
   if (selectedSet.has("experience")) next.experience = result.draft.experience.map((entry) => ({ ...entry }));
   if (selectedSet.has("education")) next.education = result.draft.education.map((entry) => ({ ...entry }));
-  if (selectedSet.has("skills")) next.skills = [...result.draft.skills];
+  if (selectedSet.has("skills")) {
+    const allowed = options.selectedSkills === undefined ? null : new Set(options.selectedSkills);
+    next.skills = result.draft.skills.filter((skill) => !allowed || allowed.has(skill));
+  }
   if (selectedSet.has("projects")) {
     next.projects = result.draft.projects.map((entry) => ({ ...entry, technologies: [...entry.technologies] }));
   }
@@ -1241,32 +1260,38 @@ export function selectCvBuilderImportDraft(
   if (selectedSet.has("languages")) next.languages = result.draft.languages.map((entry) => ({ ...entry }));
   if (selectedSet.has("links")) next.links = result.draft.links.map((entry) => ({ ...entry }));
 
-  for (const [rawIndex, target] of Object.entries(manualAssignments)) {
+  for (const [rawIndex, assignment] of Object.entries(manualAssignments)) {
     const line = result.unrecognized[Number(rawIndex)];
-    if (!line || target === "ignore") continue;
+    const decision = typeof assignment === "string"
+      ? { target: assignment, status: assignment === "ignore" ? "ignored" as const : "accepted" as const }
+      : assignment;
+    const target = decision.target;
+    const status = decision.status ?? (target === "ignore" ? "ignored" : "accepted");
+    const text = decision.text?.trim() || line;
+    if (!line || !text || target === "ignore" || status !== "accepted") continue;
     if (target === "profile") {
       next.profile = {
         ...next.profile,
-        summary: [next.profile.summary, line].filter(Boolean).join("\n"),
+        summary: [next.profile.summary, text].filter(Boolean).join("\n"),
       };
     } else if (target === "skills") {
-      for (const candidate of line.split(/[,;|•]/).map((value) => value.trim()).filter(Boolean)) {
+      for (const candidate of text.split(/[,;|•]/).map((value) => value.trim()).filter(Boolean)) {
         if (!next.skills.includes(candidate)) next.skills.push(candidate);
       }
     } else if (target === "projects") {
       const entry = createProjectEntry();
-      next.projects.push({ ...entry, name: line });
+      next.projects.push({ ...entry, name: text });
     } else if (target === "experience") {
       const entry = createExperienceEntry();
-      next.experience.push({ ...entry, position: line, employer: "", startMonth: "", current: false });
+      next.experience.push({ ...entry, position: text, employer: "", startMonth: "", current: false });
     } else if (target === "education") {
       const entry = createEducationEntry();
-      next.education.push({ ...entry, institution: line, degree: "", startMonth: "", current: false });
+      next.education.push({ ...entry, institution: text, degree: "", startMonth: "", current: false });
     } else if (target === "certificates") {
       const entry = createCertificateEntry();
-      next.certificates.push({ ...entry, name: line });
+      next.certificates.push({ ...entry, name: text });
     } else if (target === "links") {
-      for (const entry of collectLinks([line])) {
+      for (const entry of collectLinks([text])) {
         if (!next.links.some((existing) => existing.url === entry.url)) next.links.push(entry);
       }
     }

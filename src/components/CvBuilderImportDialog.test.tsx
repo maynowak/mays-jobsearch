@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import CvBuilderImportDialog from "./CvBuilderImportDialog";
 import { extractPdfText } from "../lib/pdf";
@@ -84,6 +84,8 @@ describe("CvBuilderImportDialog", () => {
     expect(screen.getByText(/2 Kandidaten/)).toBeInTheDocument();
     expect(screen.getAllByText("Details anzeigen").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    expect(screen.getByRole("heading", { name: "Deine Importauswahl" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
 
     expect(onImported).toHaveBeenCalledTimes(1);
     const draft = onImported.mock.calls[0][0];
@@ -98,9 +100,10 @@ describe("CvBuilderImportDialog", () => {
     const { container } = renderDialog({ onImported });
     await chooseLocal(container);
     await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
-    const skillsSection = screen.getByText("Fähigkeiten").closest("section") as HTMLElement;
+    const skillsSection = container.querySelector("#cv-import-section-skills") as HTMLElement;
     fireEvent.click(skillsSection.querySelector('input[type="checkbox"]') as HTMLInputElement);
     fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
     expect(onImported.mock.calls[0][0].skills).toEqual([]);
   });
 
@@ -113,6 +116,7 @@ describe("CvBuilderImportDialog", () => {
     await waitFor(() => expect(onDownloadRis).toHaveBeenCalledWith(cv));
     await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
     fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
     expect(onImported.mock.calls[0][0].personal.fullName).toBe("Max Mustermann");
   });
 
@@ -177,7 +181,9 @@ Zusätzliche Information`);
     await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
     const select = screen.getByRole("combobox", { name: /Zuordnen zu/ });
     fireEvent.change(select, { target: { value: "projects" } });
+    fireEvent.click(screen.getByRole("button", { name: "Übernehmen" }));
     fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
     expect(onImported).toHaveBeenCalledTimes(1);
     expect(onImported.mock.calls[0][0].projects[0].name).toBe("Zusätzliche Information");
     expect(onImported.mock.calls[0][0].profile.summary).toBeUndefined();
@@ -192,11 +198,10 @@ Additional detail`);
     const { container } = renderDialog();
     await chooseLocal(container);
     await screen.findByText("We found the following information in your CV.");
-    fireEvent.click(screen.getByText(/unassigned items/));
     expect(screen.getByText("Additional detail")).toBeInTheDocument();
     expect(screen.getByText(/p\. 1/)).toBeInTheDocument();
-    expect(screen.getByText(/Unknown section/)).toBeInTheDocument();
-    expect(screen.getByText(/Suggested: Do not use/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Unknown section/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Suggested: Do not use/).length).toBeGreaterThan(0);
   });
 
   it("keeps the empty-CV path available without importing", () => {
@@ -214,10 +219,122 @@ Zusätzliche Information`);
     const { container } = renderDialog();
     await chooseLocal(container);
     await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
-    fireEvent.click(screen.getByText(/nicht zugeordnete Angaben anzeigen/));
     expect(screen.getByText("Zusätzliche Information")).toBeInTheDocument();
     expect(screen.getByText(/S\. 1/)).toBeInTheDocument();
-    expect(screen.getByText(/Unbekannter Abschnitt/)).toBeInTheDocument();
-    expect(screen.getByText(/Vorschlag: Nicht übernehmen/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Unbekannter Abschnitt/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Vorschlag: Nicht übernehmen/).length).toBeGreaterThan(0);
   });
+
+  it("shows the compact overview and keeps review decisions across pages", async () => {
+    const lines = Array.from({ length: 12 }, (_, index) => `Zusatz ${index + 1}`).join("\n");
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`${pdfText}
+
+Sonstiges
+${lines}`);
+    const { container } = renderDialog();
+    await chooseLocal(container);
+    expect(await screen.findByRole("heading", { name: "Lebenslauf analysiert" })).toBeInTheDocument();
+    expect(screen.getAllByText(/Zusatz \d+/).length).toBe(10);
+    expect(screen.getByText("Seite 1 von 2")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByText("Zusatz 12")).toBeInTheDocument();
+    expect(screen.getByText("Seite 2 von 2")).toBeInTheDocument();
+    const pagination = screen.getByRole("navigation", { name: "Prüfseiten" });
+    fireEvent.click(within(pagination).getByRole("button", { name: "Zurück" }));
+    expect(screen.getByText("Zusatz 1")).toBeInTheDocument();
+  });
+
+  it("supports explicit correction and mapping before summary", async () => {
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`${pdfText}
+
+Sonstiges
+Unklare Angabe`);
+    const onImported = vi.fn();
+    const { container } = renderDialog({ onImported });
+    await chooseLocal(container);
+    await screen.findByRole("heading", { name: "Lebenslauf analysiert" });
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Korrigierter Text" }), {
+      target: { value: "Korrigiertes Projekt" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Korrektur übernehmen" }));
+    const select = screen.getByRole("combobox", { name: /Zuordnen zu/ });
+    fireEvent.change(select, { target: { value: "projects" } });
+    fireEvent.click(screen.getByRole("button", { name: "Übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
+    expect(onImported.mock.calls[0][0].projects[0].name).toBe("Korrigiertes Projekt");
+  });
+
+  it("keeps large skill lists unselected until the user chooses", async () => {
+    const skills = Array.from({ length: 67 }, (_, index) => `Skill ${index + 1}`).join(", ");
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`Max Mustermann
+E-Mail: max@example.com
+
+Fähigkeiten
+${skills}`);
+    const onImported = vi.fn();
+    const { container } = renderDialog({ onImported });
+    await chooseLocal(container);
+    await screen.findByRole("heading", { name: "Lebenslauf analysiert" });
+    expect(screen.getByText("0 von 67 ausgewählt")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Alle auswählen" }));
+    expect(screen.getByText("67 von 67 ausgewählt")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl zurücksetzen" }));
+    expect(screen.getByText("0 von 67 ausgewählt")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Skill 1"));
+    fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
+    expect(onImported.mock.calls[0][0].skills).toEqual(["Skill 1"]);
+  });
+
+  it("requires explicit acknowledgement when pending review items remain", async () => {
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`${pdfText}
+
+Sonstiges
+Offene Angabe`);
+    const onImported = vi.fn();
+    const { container } = renderDialog({ onImported });
+    await chooseLocal(container);
+    await screen.findByRole("heading", { name: "Lebenslauf analysiert" });
+    fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    const apply = screen.getByRole("button", { name: "Auswahl übernehmen" });
+    expect(apply).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Ich lasse 1 ungeprüfte Angaben vorerst aus/ }));
+    expect(apply).toBeEnabled();
+    fireEvent.click(apply);
+    expect(onImported).toHaveBeenCalledTimes(1);
+    expect(onImported.mock.calls[0][0].profile.summary ?? "").not.toContain("Offene Angabe");
+  });
+
+
+  it("keeps review decisions and page context when filtering 55 items", async () => {
+    const lines = Array.from({ length: 55 }, (_, index) => `Prüfzeile ${index + 1}`).join("\n");
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`Max Mustermann
+E-Mail: max@example.com
+
+Sonstiges
+${lines}`);
+    const { container } = renderDialog();
+    await chooseLocal(container);
+    await screen.findByRole("heading", { name: "Lebenslauf analysiert" });
+    expect(screen.getByText("Seite 1 von 6")).toBeInTheDocument();
+    expect(screen.getAllByText(/Prüfzeile \d+/).length).toBe(10);
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    fireEvent.change(screen.getByRole("textbox", { name: "Korrigierter Text" }), {
+      target: { value: "Prüfzeile 1 korrigiert" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Korrektur übernehmen" }));
+    fireEvent.change(screen.getAllByRole("combobox", { name: /Zuordnen zu/ })[0], {
+      target: { value: "projects" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: "Übernehmen" })[0]);
+    const statusFilter = screen.getByLabelText("Status");
+    fireEvent.change(statusFilter, { target: { value: "accepted" } });
+    expect(screen.getByText("Prüfzeile 1 korrigiert")).toBeInTheDocument();
+    expect(screen.queryByText("Prüfzeile 2")).toBeNull();
+    fireEvent.change(statusFilter, { target: { value: "all" } });
+    expect(screen.getByText("Prüfzeile 2")).toBeInTheDocument();
+  });
+
 });

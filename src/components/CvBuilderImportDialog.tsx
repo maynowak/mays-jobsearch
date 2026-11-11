@@ -10,12 +10,14 @@ import {
   hasCvBuilderImportContent,
   parseCvBuilderImportText,
   selectCvBuilderImportDraft,
-  type CvBuilderImportManualAssignments,
-  type CvBuilderImportManualTarget,
   type CvBuilderImportResult,
   type CvBuilderImportSectionId,
 } from "../lib/cvBuilder/pdfImport";
 import MayHelp from "./MayHelp";
+import CvBuilderImportReview, {
+  CvBuilderImportSummary,
+  type ManualReviewDecision,
+} from "./CvBuilderImportReview";
 
 interface Props {
   open: boolean;
@@ -28,7 +30,7 @@ interface Props {
   onImported: (draft: CvBuilderDraftV1, sourceName: string) => void;
 }
 
-type ImportStep = "source" | "loading" | "preview";
+type ImportStep = "source" | "loading" | "preview" | "summary";
 
 function importErrorKey(error: unknown): string {
   if (error && typeof error === "object") {
@@ -42,93 +44,6 @@ function importErrorKey(error: unknown): string {
     if (code === "session_ended") return "cvBuilder.import.errorSession";
   }
   return "cvBuilder.import.errorGeneric";
-}
-
-function sectionSummary(
-  result: CvBuilderImportResult,
-  section: CvBuilderImportSectionId,
-  t: (key: string, vars?: Record<string, string | number>) => string
-): string[] {
-  const draft = result.draft;
-  switch (section) {
-    case "personal":
-      return [
-        draft.personal.fullName,
-        draft.personal.email,
-        draft.personal.phone,
-        draft.personal.location,
-      ].filter((value): value is string => Boolean(value));
-    case "profile":
-      return [draft.profile.headline, draft.profile.summary].filter((value): value is string => Boolean(value));
-    case "experience":
-      return draft.experience.map((entry) => {
-        const period = [entry.startMonth, entry.current ? t("cvBuilder.preview.present") : entry.endMonth]
-          .filter(Boolean)
-          .join(" – ");
-        return [entry.position, entry.employer, period].filter(Boolean).join(" · ");
-      });
-    case "education":
-      return draft.education.map((entry) => {
-        const period = [entry.startMonth, entry.current ? t("cvBuilder.preview.present") : entry.endMonth]
-          .filter(Boolean)
-          .join(" – ");
-        return [entry.degree, entry.institution, period].filter(Boolean).join(" · ");
-      });
-    case "skills":
-      return draft.skills;
-    case "projects":
-      return draft.projects.map((entry) => [
-        entry.name,
-        entry.technologies.length ? entry.technologies.join(", ") : "",
-      ].filter(Boolean).join(" · "));
-    case "certificates":
-      return draft.certificates.map((entry) =>
-        [entry.name, entry.issuer, entry.date].filter(Boolean).join(" · ")
-      );
-    case "languages":
-      return draft.languages.map((entry) =>
-        `${entry.language} · ${t(`cvBuilder.level.${entry.level}`)}`
-      );
-    case "links":
-      return draft.links.map((entry) => `${entry.label}: ${entry.url}`);
-    default:
-      return [];
-  }
-}
-
-function manualTargetLabel(target: CvBuilderImportManualTarget, t: (key: string) => string): string {
-  const key: Record<CvBuilderImportManualTarget, string> = {
-    ignore: "manualIgnore",
-    profile: "manualProfile",
-    experience: "manualExperience",
-    education: "manualEducation",
-    skills: "manualSkills",
-    projects: "manualProjects",
-    certificates: "manualCertificates",
-    links: "manualLinks",
-  };
-  return t(`cvBuilder.import.${key[target]}`);
-}
-
-function sectionCount(
-  result: CvBuilderImportResult,
-  section: CvBuilderImportSectionId,
-  t: (key: string, vars?: Record<string, string | number>) => string
-): string {
-  const count = sectionSummary(result, section, t).length;
-  if (section === "personal" || section === "profile") {
-    return count === 1
-      ? t("cvBuilder.import.fieldCountOne")
-      : t("cvBuilder.import.fieldCount", { count });
-  }
-  if (section === "skills") {
-    return count === 1
-      ? t("cvBuilder.import.skillCountOne")
-      : t("cvBuilder.import.skillCount", { count });
-  }
-  return count === 1
-    ? t("cvBuilder.import.itemCountOne")
-    : t("cvBuilder.import.itemCount", { count });
 }
 
 export default function CvBuilderImportDialog({
@@ -149,7 +64,10 @@ export default function CvBuilderImportDialog({
   const [result, setResult] = useState<CvBuilderImportResult | null>(null);
   const [sourceName, setSourceName] = useState("");
   const [selected, setSelected] = useState<Set<CvBuilderImportSectionId>>(new Set());
-  const [manualAssignments, setManualAssignments] = useState<CvBuilderImportManualAssignments>({});
+  const [manualDecisions, setManualDecisions] = useState<Record<number, ManualReviewDecision>>({});
+  const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
+  const [summaryDraft, setSummaryDraft] = useState<CvBuilderDraftV1 | null>(null);
+  const [pendingAcknowledged, setPendingAcknowledged] = useState(false);
   const [selectedRisId, setSelectedRisId] = useState("");
   const [busyRisId, setBusyRisId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -161,7 +79,10 @@ export default function CvBuilderImportDialog({
     setResult(null);
     setSourceName("");
     setSelected(new Set());
-    setManualAssignments({});
+    setManualDecisions({});
+    setSelectedSkills(new Set());
+    setSummaryDraft(null);
+    setPendingAcknowledged(false);
     setBusyRisId(null);
     setSelectedRisId(persistentCvs[0]?.cvId ?? "");
     window.setTimeout(() => headingRef.current?.focus(), 0);
@@ -169,6 +90,13 @@ export default function CvBuilderImportDialog({
     // preview that is already being reviewed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (step === "summary") {
+      window.setTimeout(() => document.getElementById("cv-import-summary-title")?.focus(), 0);
+    }
+  }, [open, step]);
 
   useEffect(() => {
     if (!open) return;
@@ -220,7 +148,21 @@ export default function CvBuilderImportDialog({
       setSelected(new Set(
         CV_BUILDER_IMPORT_SECTIONS.filter((section) => hasCvBuilderImportContent(parsed, section))
       ));
-      setManualAssignments({});
+      setManualDecisions(Object.fromEntries(parsed.unrecognized.map((line, index) => {
+        const detail = parsed.unrecognizedDetails[index];
+        return [index, {
+          target: detail?.suggestedTarget ?? "ignore",
+          status: "pending" as const,
+          text: line,
+          original: line,
+          edited: false,
+        }];
+      })));
+      setSelectedSkills(new Set(
+        parsed.uncertain.skills || parsed.draft.skills.length > 25 ? [] : parsed.draft.skills
+      ));
+      setSummaryDraft(null);
+      setPendingAcknowledged(false);
       setStep("preview");
     } catch (err) {
       setError(t(importErrorKey(err)));
@@ -261,15 +203,48 @@ export default function CvBuilderImportDialog({
     });
   };
 
-  const confirm = () => {
+  const buildDraft = (): CvBuilderDraftV1 => {
+    if (!result) return summaryDraft ?? {
+      schemaVersion: 1,
+      personal: {}, profile: {}, experience: [], education: [], skills: [], projects: [], certificates: [], languages: [], links: [],
+    };
+    const assignments = Object.fromEntries(Object.entries(manualDecisions).map(([index, decision]) => [index, {
+      target: decision.target,
+      status: decision.status,
+      text: decision.text,
+    }]));
+    return selectCvBuilderImportDraft(result, selected, assignments, {
+      selectedSkills: selected.has("skills") ? selectedSkills : [],
+    });
+  };
+
+  const openSummary = () => {
     if (!result) return;
-    const hasManual = Object.values(manualAssignments).some((target) => target !== "ignore");
-    if (selected.size === 0 && !hasManual) {
+    const hasAcceptedManual = Object.values(manualDecisions).some((decision) => decision.status === "accepted");
+    if (selected.size === 0 && !hasAcceptedManual) {
       setError(t("cvBuilder.import.noSections"));
       return;
     }
-    const draft = selectCvBuilderImportDraft(result, selected, manualAssignments);
-    onImported(draft, sourceName);
+    setError(null);
+    setSummaryDraft(buildDraft());
+    setPendingAcknowledged(false);
+    setStep("summary");
+  };
+
+  const toggleSkill = (skill: string) => {
+    setSelectedSkills((current) => {
+      const next = new Set(current);
+      if (next.has(skill)) next.delete(skill);
+      else next.add(skill);
+      return next;
+    });
+  };
+
+  const updateDecision = (index: number, patch: Partial<ManualReviewDecision>) => {
+    setManualDecisions((current) => ({
+      ...current,
+      [index]: { ...current[index], ...patch },
+    }));
   };
 
   if (!open) return null;
@@ -392,144 +367,60 @@ export default function CvBuilderImportDialog({
           )}
 
           {step === "preview" && result && (
-            <div className="cv-import-preview">
-              <h4>{t("cvBuilder.import.previewTitle")}</h4>
-              <p>{t("cvBuilder.import.previewHint")}</p>
-
-              <div className="cv-import-preview__sections">
-                {CV_BUILDER_IMPORT_SECTIONS.map((section) => {
-                  const items = sectionSummary(result, section, t);
-                  const hasContent = hasCvBuilderImportContent(result, section);
-                  if (!hasContent) return null;
-                  return (
-                    <section key={section} className="cv-import-section">
-                      <div className="cv-import-section__head">
-                        <label className="cv-import-section__select">
-                          <input
-                            type="checkbox"
-                            checked={selected.has(section)}
-                            onChange={() => toggleSection(section)}
-                          />
-                          <strong>{t(`cvBuilder.import.section.${section}`)}</strong>
-                        </label>
-                        <span className={`cv-import-section__status${result.uncertain[section] ? " is-uncertain" : ""}`}>
-                          {result.uncertain[section]
-                            ? t("cvBuilder.import.statusReview")
-                            : t("cvBuilder.import.statusDetected")}
-                          {" · "}
-                          {sectionCount(result, section, t)}
-                        </span>
-                      </div>
-                      <details className="cv-import-section__details">
-                        <summary>{t("cvBuilder.import.details")}</summary>
-                        <ul>
-                          {items.map((item, index) => <li key={`${section}-${index}`}>{item}</li>)}
-                        </ul>
-                      </details>
-                      {result.uncertain[section] && (
-                        <p className="cv-import-section__uncertain" role="note">
-                          {t("cvBuilder.import.uncertain")}
-                        </p>
-                      )}
-                    </section>
-                  );
-                })}
-              </div>
-
-              {CV_BUILDER_IMPORT_SECTIONS.some((section) => !hasCvBuilderImportContent(result, section)) && (
-                <section className="cv-import-missing">
-                  <h5>{t("cvBuilder.import.notDetected")}</h5>
-                  <p>
-                    {CV_BUILDER_IMPORT_SECTIONS
-                      .filter((section) => !hasCvBuilderImportContent(result, section))
-                      .map((section) => t(`cvBuilder.import.section.${section}`))
-                      .join(" · ")}
-                  </p>
-                </section>
-              )}
-
-              {result.unrecognized.length > 0 && (
-                <section className="cv-import-unrecognized">
-                  <h5>{t("cvBuilder.import.unrecognizedTitle")}</h5>
-                  <p>{t("cvBuilder.import.unrecognizedHint")}</p>
-                  <details className="cv-import-section__details">
-                    <summary>
-                      {t("cvBuilder.import.manualDetails", { count: result.unrecognized.length })}
-                    </summary>
-                    <ul className="cv-import-unrecognized__list">
-                      {result.unrecognized.map((line, index) => {
-                        const value = manualAssignments[index] ?? "ignore";
-                        return (
-                          <li key={`unassigned-${index}`}>
-                            <span>{line}</span>
-                            {result.unrecognizedDetails[index] && (
-                              <small className="cv-import-unrecognized__meta">
-                                {t("cvBuilder.import.sourceLabel")}:{" "}
-                                {result.unrecognizedDetails[index].page
-                                  ? t("cvBuilder.import.sourcePage", { page: result.unrecognizedDetails[index].page ?? 0 })
-                                  : t("cvBuilder.import.sourceUnknown")}
-                                {result.unrecognizedDetails[index].sectionHeading
-                                  ? ` · ${result.unrecognizedDetails[index].sectionHeading}`
-                                  : ""}
-                                {" · "}
-                                {t("cvBuilder.import.reasonLabel")}: {t(`cvBuilder.import.reason.${result.unrecognizedDetails[index].reason}`)}
-                                {" · "}
-                                {t("cvBuilder.import.suggestionLabel")}: {manualTargetLabel(result.unrecognizedDetails[index].suggestedTarget, t)}
-                              </small>
-                            )}
-                            <label>
-                              <span>{t("cvBuilder.import.manualAssign")}</span>
-                              <select
-                                aria-label={`${t("cvBuilder.import.manualAssign")}: ${line.slice(0, 60)}`}
-                                value={value}
-                                onChange={(event) => {
-                                  const target = event.target.value as CvBuilderImportManualTarget;
-                                  setManualAssignments((current) => ({ ...current, [index]: target }));
-                                }}
-                              >
-                                <option value="ignore">{t("cvBuilder.import.manualIgnore")}</option>
-                                <option value="profile">{t("cvBuilder.import.manualProfile")}</option>
-                                <option value="experience">{t("cvBuilder.import.manualExperience")}</option>
-                                <option value="education">{t("cvBuilder.import.manualEducation")}</option>
-                                <option value="skills">{t("cvBuilder.import.manualSkills")}</option>
-                                <option value="projects">{t("cvBuilder.import.manualProjects")}</option>
-                                <option value="certificates">{t("cvBuilder.import.manualCertificates")}</option>
-                                <option value="links">{t("cvBuilder.import.manualLinks")}</option>
-                              </select>
-                            </label>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </details>
-                </section>
-              )}
-            </div>
+            <CvBuilderImportReview
+              result={result}
+              selected={selected}
+              onToggleSection={toggleSection}
+              decisions={manualDecisions}
+              onUpdateDecision={updateDecision}
+              selectedSkills={selectedSkills}
+              onToggleSkill={toggleSkill}
+              onSelectAllSkills={() => setSelectedSkills(new Set(result.draft.skills))}
+              onClearSkills={() => setSelectedSkills(new Set())}
+            />
           )}
-        </div>
 
-        <div className="modal-actions cv-import-modal__actions">
-          {step === "preview" && (
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => {
-                setError(null);
-                setStep("source");
+          {step === "summary" && result && summaryDraft && (
+            <CvBuilderImportSummary
+              draft={summaryDraft}
+              decisions={manualDecisions}
+              selected={selected}
+              pendingAcknowledged={pendingAcknowledged}
+              onToggleAcknowledged={setPendingAcknowledged}
+              onBack={() => {
+                setPendingAcknowledged(false);
+                setStep("preview");
               }}
-            >
-              {t("cvBuilder.import.back")}
-            </button>
-          )}
-          <button type="button" className="btn-ghost" onClick={onClose}>
-            {t("cvBuilder.import.cancel")}
-          </button>
-          {step === "preview" && (
-            <button type="button" className="letter-btn" onClick={confirm}>
-              {t("cvBuilder.import.take")}
-            </button>
+              onApply={() => onImported(summaryDraft, sourceName)}
+              onCancel={onClose}
+            />
           )}
         </div>
+
+        {step !== "summary" && (
+          <div className="modal-actions cv-import-modal__actions">
+            {step === "preview" && (
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  setError(null);
+                  setStep("source");
+                }}
+              >
+                {t("cvBuilder.import.back")}
+              </button>
+            )}
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              {t("cvBuilder.import.cancel")}
+            </button>
+            {step === "preview" && (
+              <button type="button" className="letter-btn" onClick={openSummary}>
+                {t("cvBuilder.import.take")}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

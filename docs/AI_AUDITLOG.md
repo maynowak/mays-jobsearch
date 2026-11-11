@@ -5777,3 +5777,21 @@ PDF-E2E (Guest/EN/Auth), 02B-, 02C- und 02A-Regression PASS; 0 Overflow,
 0 unerwartete API-/RIS-/Console-Fehler. `git diff --check` PASS. Kein Merge,
 Deployment, RIS/AWS/Cognito/Terraform/Consent-Eingriff; keine echten
 CV-Daten.
+
+## 2026-11-11 — CV-BUILDER-IMPORT-UX-02D (STEPS A–F)
+
+**Typ:** import review UX / manual correction / skill selection
+**Status:** `IN PROGRESS — STEPS A–F COMPLETE`
+
+- Branch `feature/cv-builder-import-ux-02d` from `166fec9`.
+- Baseline: preview rendered all 55 review lines at once, 67 ATS skills were
+  selected only at section level, no filter/status/correction/summary, and
+  unassigned lines were omitted without an explicit decision.
+- Added overview, section navigation, paginated review list with
+  pending/accepted/ignored status, target/reason filters, original/corrected
+  text, undo, individual skill selection/search/count/reset, and an explicit
+  final summary with open-point acknowledgement.
+- `selectCvBuilderImportDraft()` now accepts detailed decisions and an explicit
+  selected-skill list; pending/ignored decisions are never transferred.
+- 51 focused tests PASS; build PASS. No real CV data, AI/OCR/backend/RIS/AWS/
+  Terraform/Cognito/consent change. No merge, deployment or force-push.

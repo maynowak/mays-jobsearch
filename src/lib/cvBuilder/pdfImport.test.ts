@@ -548,3 +548,33 @@ ${skills}`);
     expect(result.mapping.sections.find((section) => section.category === 'skills')?.notes).toContain('skill-candidates-review');
   });
 });
+
+describe('CV-BUILDER-IMPORT-UX-02D selection', () => {
+  it('applies accepted corrected text but never pending or ignored decisions', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Sonstiges
+Erste Angabe
+Zweite Angabe`);
+    const first = result.unrecognized.findIndex((line) => line.includes('Erste'));
+    const second = result.unrecognized.findIndex((line) => line.includes('Zweite'));
+    const draft = selectCvBuilderImportDraft(result, [], {
+      [first]: { target: 'projects', status: 'accepted', text: 'Korrigiertes Projekt' },
+      [second]: { target: 'projects', status: 'pending', text: 'Nicht übernehmen' },
+    });
+    expect(draft.projects.map((entry) => entry.name)).toEqual(['Korrigiertes Projekt']);
+  });
+
+  it('filters skills only through the explicit skill selection', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Fähigkeiten
+React, TypeScript, Terraform`);
+    const draft = selectCvBuilderImportDraft(result, ['skills'], {}, {
+      selectedSkills: ['React', 'Terraform'],
+    });
+    expect(draft.skills).toEqual(['React', 'Terraform']);
+  });
+});
