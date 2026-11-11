@@ -396,7 +396,15 @@ describe('CV-BUILDER-PARSER-02B structured document', () => {
     expect(result.unrecognized.join('\n')).toContain('Praktische Übungen');
     expect(result.unrecognized.join('\n')).toContain('Zertifizierungsziel AWS');
     expect(result.unrecognized.join('\n')).toContain('Dieses Dokument ist ein Bewerbungsprofil.');
-    expect(result.unrecognized.join('\n')).toContain('Additional Enterprise Projects');
+    const freelance = result.draft.experience.find((entry) => `${entry.position} ${entry.employer}`.includes('Freelance'));
+    expect(freelance?.description).toContain('Additional Enterprise Projects');
+    const freelanceMapping = result.mapping.timeline.find((item) => item.kind === 'freelance');
+    expect(freelanceMapping).toMatchObject({ included: true, entryIndex: 1 });
+    expect(result.mapping.timeline.find((item) => item.kind === 'project')).toMatchObject({
+      included: true,
+      parentId: freelanceMapping?.itemId,
+      entryIndex: 1,
+    });
   });
 
   it('exposes section, page and unassigned provenance for review', () => {
@@ -462,5 +470,28 @@ Beschreibung D`);
       '2023 – Projekt D',
     ]);
     expect(result.draft.projects[0].technologies).toEqual(['React', 'AWS']);
+  });
+});
+
+describe('CV-BUILDER-MAPPING-02C experience mapping', () => {
+  it('keeps overlapping dates and exposes incomplete experience for review', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Berufserfahrung
+2019–2021 | Senior Engineer | Beispiel GmbH
+2020–2022 | Lead Engineer | Zweite AG
+
+2023–2024
+Nur ein Zeitraum und eine Beschreibung.`);
+    expect(result.draft.experience).toHaveLength(2);
+    expect(result.draft.experience.map((entry) => entry.startMonth)).toEqual(['', '']);
+    expect(result.mapping.timeline.filter((item) => item.included).map((item) => item.dateText)).toEqual(['2019–2021', '2020–2022']);
+    const incomplete = result.mapping.timeline.find((item) => !item.included);
+    expect(incomplete?.reason).toBe('incomplete-experience');
+    expect(result.unrecognizedDetails.find((detail) => detail.line.includes('Nur ein Zeitraum'))).toMatchObject({
+      suggestedTarget: 'experience',
+      reason: 'incomplete-experience',
+    });
   });
 });

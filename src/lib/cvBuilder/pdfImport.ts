@@ -2,6 +2,7 @@ import {
   detectCvDocument,
   documentFromText,
   type DetectedCvDocument,
+  type DetectedDocumentSection,
   type PdfDocumentStructure,
 } from "./documentStructure";
 import {
@@ -487,6 +488,99 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
     });
   }
   return entries;
+}
+
+function mapExperienceSection(
+  section: DetectedDocumentSection,
+  uncertain: Set<CvBuilderImportSectionId>,
+  unrecognized: string[]
+): { entries: CvBuilderDraftV1["experience"]; timeline: CvBuilderImportTimelineMapping[] } {
+  const entries: CvBuilderDraftV1["experience"] = [];
+  const timeline: CvBuilderImportTimelineMapping[] = [];
+  const byItem = new Map<string, CvBuilderImportTimelineMapping>();
+  const timelineItems = section.timeline ?? [];
+  if (!timelineItems.length) {
+    const local: string[] = [];
+    const parsed = parseExperience(mergeWrappedLines(section.blocks.map((block) => block.text)), uncertain, local);
+    unrecognized.push(...local);
+    entries.push(...parsed);
+    return { entries, timeline };
+  }
+
+  for (const item of timelineItems) {
+    const isProject = item.kind === "project";
+    const parent = item.parentId ? byItem.get(item.parentId) : undefined;
+    if (isProject && parent?.included && parent.entryIndex !== undefined) {
+      const entry = entries[parent.entryIndex];
+      if (entry) {
+        entry.description = [entry.description, item.lines.join("\n")].filter(Boolean).join("\n");
+        const mapping: CvBuilderImportTimelineMapping = {
+          itemId: item.id,
+          kind: item.kind,
+          parentId: item.parentId,
+          page: item.page,
+          dateText: item.dateText,
+          entryIndex: parent.entryIndex,
+          included: true,
+        };
+        timeline.push(mapping);
+        byItem.set(item.id, mapping);
+        continue;
+      }
+    }
+    if (isProject || item.kind === "training" || item.kind === "qualification") {
+      const reason: CvBuilderImportUnassignedReason =
+        item.kind === "training"
+          ? "training"
+          : item.kind === "qualification"
+            ? "incomplete-education"
+            : "project-reference";
+      unrecognized.push(...item.lines);
+      const mapping: CvBuilderImportTimelineMapping = {
+        itemId: item.id,
+        kind: item.kind,
+        ...(item.parentId ? { parentId: item.parentId } : {}),
+        page: item.page,
+        dateText: item.dateText,
+        included: false,
+        reason,
+      };
+      timeline.push(mapping);
+      byItem.set(item.id, mapping);
+      continue;
+    }
+    const local: string[] = [];
+    const parsed = parseExperience([...item.lines, ""], uncertain, local);
+    if (parsed.length) {
+      const entryIndex = entries.length;
+      entries.push(...parsed);
+      const mapping: CvBuilderImportTimelineMapping = {
+        itemId: item.id,
+        kind: item.kind,
+        ...(item.parentId ? { parentId: item.parentId } : {}),
+        page: item.page,
+        dateText: item.dateText,
+        entryIndex,
+        included: true,
+      };
+      timeline.push(mapping);
+      byItem.set(item.id, mapping);
+    } else {
+      unrecognized.push(...(local.length ? local : item.lines));
+      const mapping: CvBuilderImportTimelineMapping = {
+        itemId: item.id,
+        kind: item.kind,
+        ...(item.parentId ? { parentId: item.parentId } : {}),
+        page: item.page,
+        dateText: item.dateText,
+        included: false,
+        reason: "incomplete-experience",
+      };
+      timeline.push(mapping);
+      byItem.set(item.id, mapping);
+    }
+  }
+  return { entries, timeline };
 }
 
 function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["education"] {
@@ -985,6 +1079,8 @@ export function parseCvBuilderImportText(
   const sections: Record<WorkingSection, string[]> = {
     header: [], misc: [], personal: [], profile: [], experience: [], education: [], skills: [], projects: [], certificates: [], languages: [], links: [],
   };
+  const experienceEntries: CvBuilderDraftV1["experience"] = [];
+  const timelineMappings: CvBuilderImportTimelineMapping[] = [];
   const document = source ?? documentFromText(preprocessLines(raw).join("\n"));
   const structure = detectCvDocument(document);
 
@@ -1021,13 +1117,10 @@ export function parseCvBuilderImportText(
         sections.links.push(...lines);
         break;
       case "experience": {
-        const timeline = section.timeline ?? [];
-        const excluded = timeline.filter((item) => item.kind === "project" || item.kind === "training" || item.kind === "qualification");
-        if (excluded.length) uncertainSet.add("experience");
-        for (const item of excluded) unrecognized.push(...item.lines);
-        const keptItems = timeline.filter((item) => !excluded.includes(item));
-        const kept = keptItems.flatMap((item) => [...item.lines, ""]);
-        sections.experience.push(...(kept.length ? kept : lines));
+        const mapped = mapExperienceSection(section, uncertainSet, unrecognized);
+        experienceEntries.push(...mapped.entries);
+        timelineMappings.push(...mapped.timeline);
+        if (mapped.timeline.some((item) => !item.included)) uncertainSet.add("experience");
         break;
       }
       case "mixed": {
@@ -1063,7 +1156,7 @@ export function parseCvBuilderImportText(
     detected.profile = true;
   }
 
-  draft.experience = parseExperience(sections.experience, uncertainSet, unrecognized);
+  draft.experience = experienceEntries;
   detected.experience = draft.experience.length > 0;
   draft.education = parseEducation(sections.education, uncertainSet, unrecognized);
   detected.education = draft.education.length > 0;
@@ -1096,7 +1189,7 @@ export function parseCvBuilderImportText(
     unrecognizedDetails: buildUnassignedDetails(finalUnrecognized, structure),
     mapping: {
       sections: buildSectionMappings(structure.sections),
-      timeline: [],
+      timeline: timelineMappings,
     },
     structure,
   };

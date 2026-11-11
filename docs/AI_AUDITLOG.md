@@ -5684,3 +5684,13 @@ Terraform/Cognito- oder Consent-Eingriff; keine echten Benutzerdaten.
   builder category. 15 focused parser tests PASS; build PASS.
 - No real CV data, AI/OCR/backend, RIS/AWS/Terraform/Cognito or consent change.
   No merge, deployment or force-push.
+
+**STEP B — Erfahrung/Freelance-Mapping:** `mapExperienceSection()` nutzt die
+02B-Timeline itemgenau. Employment/Freelance erzeugen Builder-Einträge;
+Projektitems mit Parent-ID werden in die Beschreibung des Freelance-Parents
+übernommen und erzeugen keine zusätzlichen Arbeitgeber. Training,
+Qualifikationen und unvollständige Items bleiben mit Quelle und Grund erhalten.
+Überlappende Zeiträume bleiben unverändert; Jahresangaben ohne Monat werden
+nicht erfunden, der Original-`dateText` bleibt in `mapping.timeline`. 16
+fokussierte Parser-Tests PASS, Build PASS. Keine echten CV-Daten, keine
+RIS/AWS/Terraform/Cognito-Änderung, kein Merge/Deploy/Force-Push.
