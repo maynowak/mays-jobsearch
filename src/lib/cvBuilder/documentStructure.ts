@@ -364,7 +364,7 @@ function startDate(line: string): { dateText: string; current: boolean; uncertai
   return null;
 }
 
-function timelineKind(line: string, date: { uncertain: boolean }): TimelineItemKind {
+function timelineKind(line: string): TimelineItemKind {
   if (/\b(?:freelance|freiberuflich|selbstständig|selbststaendig|self[- ]employed)\b/i.test(line)) return "freelance";
   if (/\b(?:training|kurs|course|workshop|seminar|weiterbildung|fortbildung|lab|labor|zertifizierung\w*|certification\w*)\b/i.test(line)) return "training";
   if (/\b(?:projekt\w*|project\w*|projektphase)\b/i.test(line)) return "project";
@@ -380,7 +380,7 @@ export function detectTimelineItems(blocks: PdfTextBlock[]): DetectedTimelineIte
   for (const block of blocks) {
     const date = startDate(block.text);
     if (date) {
-      const kind = timelineKind(block.text, date);
+      const kind = timelineKind(block.text);
       const item: DetectedTimelineItem = {
         id: `timeline-${itemIndex++}`,
         kind,
