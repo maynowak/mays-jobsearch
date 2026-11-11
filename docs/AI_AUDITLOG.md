@@ -5657,3 +5657,13 @@ Production-Deployment, keine RIS/AWS/Cognito/Terraform-/Consent-Änderung.
   4 structural project items, 4 projects, 0 certificates, 1 education,
   1 language. Certification goals are not treated as certificates. No PII
   committed or logged.
+
+**STEP G — Regression / E2E:** Fokussierte Parser-, Struktur- und Dialogtests
+**35 PASS**; serielle Gesamtsuite **1734 PASS / 5 skipped**; Build PASS.
+Bestehender Import-E2E (lokal + gemocktes RIS, 320–1440), Workflow-02A-E2E
+(320–1440 + unsaved) und neuer vierseitiger 02B-E2E (320–1440) PASS.
+Der neue E2E nutzt ausschließlich synthetische PDFs; 0 Overflow, 0
+Kopfzeilen-Leaks, 0 unerwartete API-/RIS-Schreibzugriffe. Screenshots unter
+`docs/reports/assets/CV-BUILDER-PARSER-02B/`. Letzter Fix `ef111ae` bewahrt
+wiederholte unbekannte Top-Überschriften. Kein Merge, Deployment, RIS/AWS/
+Terraform/Cognito- oder Consent-Eingriff; keine echten Benutzerdaten.
