@@ -5888,3 +5888,12 @@ scroll containers; modal/window stay fixed. Mobile/tablet keep single-column
 layout and scroll the modal so the workspace does not collapse. Browser E2E
 320–1440 PASS; 1024/1440 independent scroll assertions PASS; no horizontal
 overflow. No product data or external calls.
+
+**STEP H — Praxistest/Regression:** Synthetic 3-page fixture: skills 6→14
+without cross-section merges, personal name/location recovered, training
+separated from employment, certificate goals kept out of acquired
+certificates, review reasons/sources retained. Focused 61 PASS; serial full
+**1762 PASS / 5 skipped**; build PASS. 02E, Import-01A, Parser-02B, Mapping-02C,
+Workflow-02A, PDF and PDF-Fix-01 E2E PASS; 0 overflow/API/RIS/console errors.
+No real CV data, no AI/OCR/backend, no merge/deploy/RIS/AWS/Cognito/Terraform/
+consent change.

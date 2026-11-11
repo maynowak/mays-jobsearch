@@ -1,6 +1,6 @@
 # CV-BUILDER-REAL-WORLD-QA-02E — REAL PDF IMPORT QUALITY & EDITOR UX
 
-**Status:** `IN PROGRESS — STEPS A–G COMPLETE`
+**Status:** `CV-BUILDER-REAL-WORLD-QA-02E — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
 **Branch:** `feature/cv-builder-real-world-qa-02e`
 **Base:** `origin/main` @ `78c0a7b`
 **Zielstatus:** `CV-BUILDER-REAL-WORLD-QA-02E — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -16,7 +16,7 @@
 | E | Timeline und Weiterbildungen | **COMPLETE** | `pending` |
 | F | Prüfliste | **COMPLETE** | `pending` |
 | G | Desktop-Scroll und Editor-UX | **COMPLETE** | `pending` |
-| H | Praxistest und Regression | OFFEN | — |
+| H | Praxistest und Regression | **COMPLETE** | `pending` |
 
 ## STEP A — Reproduktion
 
@@ -100,9 +100,73 @@ Tests: 28 Parser- und 15 Strukturtests PASS; Build PASS.
   damit der Workspace auf 320 px nicht kollabiert.
 - Kein horizontales Overflow.
 
-Browser-E2E: 320/390/430/768/1024/1440 px PASS; bei 1024/1440 независимо
+Browser-E2E: 320/390/430/768/1024/1440 px PASS; bei 1024/1440 unabhängig
 Editor-/Preview-Scroll und Modal-/Window-Scroll `0`; Screenshots unter
 `docs/reports/assets/CV-BUILDER-REAL-WORLD-QA-02E/`.
+
+## STEP H — Praxistest und Regression
+
+### Qualitätsmatrix
+
+Die gemeldeten Praxiswerte (0 Skills, 83 ungeprüfte Angaben) stammen aus dem
+realen Nutzerfall. Die reproduzierbare synthetische 3-Seiten-Fixture zeigt die
+technische Ursache und den korrigierten Zustand:
+
+| Messpunkt | Synthetisch vorher | Synthetisch nachher |
+|---|---:|---:|
+| Architektur-/Cloud-/Technologies-Abschnitte | 2 unknown, Technologies verloren | 4 als Skills erkannt |
+| Skills | 6, mit abschnittsübergreifenden Zusammenziehungen | 14, getrennt und dedupliziert |
+| Persönliche Angaben | Name/Standort fehlten | Name, E-Mail, Telefon, Standort vollständig |
+| Profil | Headline/Summary vorhanden | unverändert korrekt |
+| Zertifikate | Ziel-/Statuszeilen konnten als Zertifikat erscheinen | nur erworbenes Zertifikat; Ziele separat |
+| Ausbildung | 1 | 1 |
+| Projekte | 3 | 3 |
+| Berufsstationen | 2, Training an letzte Station gehängt | 2, Training separat |
+| Ungeprüfte Angaben | 4 | 4, mit korrigierten Gründen/Quellen |
+| Quellseiten | teils falsch/fehlend | 2/2/3-Seitenzuordnung geprüft |
+| Desktop-Scroll | Editor/Preview gekoppelt | unabhängig; Modal/Windowe scrollen nicht |
+| Mobile | einspaltig | einspaltig, Modal scrollt, kein Overflow |
+
+Die Zahl der Prüfkandidaten wurde nicht künstlich reduziert; die Verbesserung
+kommt aus Abschnitts-, Personal- und Timeline-Erkennung.
+
+### Verifikation
+
+| Prüfung | Ergebnis |
+|---|---|
+| Fokussierte Parser-/Struktur-/Dialogtests | **61 PASS** |
+| Serielle Gesamtsuite | **1762 PASS / 5 skipped** |
+| Production-Build | **PASS** |
+| 02E-Praxisfixture 320–1440 px | **PASS** |
+| Import-01A / 02B / 02C / 02D | **PASS** |
+| Workflow-02A | **PASS** |
+| PDF-Export mit echtem Download | **PASS** |
+| PDF-Export-Fix-01 | **PASS** |
+| `git diff --check` / Secret-Scan | **PASS** |
+| Overflow / API-/RIS-Writes / Console | **0 / 0 / 0** |
+
+Screenshots/PDFs: `docs/reports/assets/CV-BUILDER-REAL-WORLD-QA-02E/`.
+
+### Commit-Historie
+
+- `69dd4a6` — A/B: Architektur-/Cloud-/Technologies-Skills, Abschnittstrennung
+- `ba7d628` — C–F: Zertifikatsziele, Personal, Training, Review-Gründe
+- `a7a32aa` — G: unabhängiges Desktop-Scrolling und 02E-E2E
+- Abschluss-Dokumentations-Commit (HEAD)
+
+**Gepusht:** `origin/feature/cv-builder-real-world-qa-02e`
+
+### Restprobleme
+
+- Kein Merge und kein Production-Deployment.
+- Keine echten CV-Daten im Repository; die reale Referenz bleibt privat.
+- Parser bleibt regelbasiert; keine KI/OCR.
+- Exotische Zwei-Spalten-/Layout-PDFs bleiben durch PDF.js-Lesereihenfolge
+  begrenzt.
+- Keine RIS-/AWS-/Cognito-/Terraform-/Consent-Änderung.
+
+**GO für Review und kontrollierten Merge.**
+**NO-GO für Production-Deployment ohne gesonderte Freigabe.**
 
 ## Recovery-Regel
 
