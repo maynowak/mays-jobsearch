@@ -1,6 +1,6 @@
 # CV-BUILDER-MAPPING-02C — STRUCTURED CV DATA MAPPING
 
-**Status:** `IN PROGRESS — STEPS A–C COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–D COMPLETE`
 **Branch:** `feature/cv-builder-mapping-02c`
 **Base:** `feature/cv-builder-parser-02b` @ `e74cef5`
 **Zielstatus:** `CV-BUILDER-MAPPING-02C — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -11,8 +11,8 @@
 |---|---|---|---|
 | A | Mapping-Vertrag und Provenienz | **COMPLETE** | `f64f927` |
 | B | Berufserfahrung und Freelance-Projekte | **COMPLETE** | `62eae60` |
-| C | Projekte und Technologien | **COMPLETE** | `pending` |
-| D | Ausbildung und Qualifikationen | OFFEN | — |
+| C | Projekte und Technologien | **COMPLETE** | `ef0e180` |
+| D | Ausbildung und Qualifikationen | **COMPLETE** | `pending` |
 | E | Unklare Informationen und manuelle Zuordnung | OFFEN | — |
 | F | Qualitätsmessung | OFFEN | — |
 | G | Gesamtprüfung | OFFEN | — |
@@ -48,6 +48,20 @@ Projekte werden weiterhin einzeln aus datierten Projektstarts gebildet. Neu:
 - Große ATS-Kandidatenlisten (>25 Skills) werden als
   `skill-candidates-review` markiert; es wird keine künstliche Obergrenze
   eingeführt und nichts unbelegt gelöscht.
+
+Test: 17 fokussierte Parser-Tests PASS; Build PASS.
+
+## STEP D — Ausbildung und Qualifikationen
+
+- Gemischte Abschnitte werden weiterhin in Ausbildung und Sprachen getrennt.
+- Weiterbildung/Training wird als unsicherer Bildungs-/Qualifikationseintrag
+  übernommen, nicht als Berufserfahrung und nicht als bestandenes Zertifikat.
+- Zertifizierungsziele und Zertifikatsstatus bleiben außerhalb von
+  `draft.certificates`; sie werden mit `certification-goal` zur Prüfung
+  angeboten.
+- QA-Lab-/Kursinhalte werden nicht als AWS-Herstellerzertifikat interpretiert.
+- No-date-Bildungsblöcke können eine nachfolgende Degree-Zeile übernehmen,
+  ohne eine Institution zu erfinden.
 
 Test: 17 fokussierte Parser-Tests PASS; Build PASS.
 

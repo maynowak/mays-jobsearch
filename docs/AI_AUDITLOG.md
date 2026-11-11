@@ -5703,3 +5703,12 @@ dupliziert. Skill-Kategoriepräfixe (`Software & Architektur:`,
 bleiben vollständig, werden aber als `skill-candidates-review` markiert. Keine
 künstliche Kappung, keine unbelegten Technologiezuordnungen. 17 fokussierte
 Parser-Tests PASS, Build PASS. Keine echten CV-Daten, keine RIS/AWS-Änderung.
+
+**STEP D — Ausbildung/Qualifikationen:** Training/Weiterbildung wird als
+unsicherer Bildungs-/Qualifikationseintrag gemappt; gemischte Abschnitte bleiben
+Ausbildung + Sprachen. Zertifizierungsziele und Zertifikatsstatus werden nicht
+zu `draft.certificates`, sondern mit `certification-goal` zur Prüfung
+angeboten. QA-Lab-Inhalte gelten nicht als AWS-Herstellerzertifikate. No-date-
+Bildungsblöcke übernehmen eine nachfolgende Degree-Zeile ohne erfundene
+Institution. 17 fokussierte Parser-Tests PASS, Build PASS. Keine echten
+CV-Daten, keine RIS/AWS/Cognito/Terraform-Änderung.

@@ -597,11 +597,19 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
       }
       let institution = "";
       let degree = "";
+      let descriptionLines = lines.slice(1);
       if (degreeLike(lines[0])) {
         const split = lines[0].split(/\s+(?:–|—|-|at|an)\s+/i);
         degree = split[0].trim();
         institution = split[1]?.trim() ?? "";
-      } else institution = lines[0];
+      } else {
+        institution = lines[0];
+        const degreeLine = descriptionLines.find((line) => degreeLike(line));
+        if (degreeLine) {
+          degree = degreeLine;
+          descriptionLines = descriptionLines.filter((line) => line !== degreeLine);
+        }
+      }
       if (!institution && !degree) {
         unrecognized.push(...lines);
         continue;
@@ -614,7 +622,7 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
         degree,
         startMonth: "",
         current: false,
-        ...(lines.length > 1 ? { description: lines.slice(1).join("\n") } : {}),
+        ...(descriptionLines.length ? { description: descriptionLines.join("\n") } : {}),
       });
       continue;
     }
@@ -1013,8 +1021,11 @@ function findSourceLine(
   return {};
 }
 
-function unassignedReason(line: string, category?: string): CvBuilderImportUnassignedReason {
-  if (/zertifizierungsziel|zertifizierungsstatus|target certification|planned certification|in planung|geplant/i.test(line)) {
+function unassignedReason(line: string, category?: string, heading?: string): CvBuilderImportUnassignedReason {
+  if (
+    /zertifizierungsziel|zertifizierungsstatus|target certification|planned certification|in planung|geplant/i.test(line) ||
+    (heading && /status|ziel|target|planned|planung|geplant/i.test(heading))
+  ) {
     return "certification-goal";
   }
   if (category === "training") return "training";
@@ -1056,7 +1067,7 @@ function buildUnassignedDetails(
 ): CvBuilderImportUnassignedDetail[] {
   return lines.map((line) => {
     const source = findSourceLine(line, structure);
-    const reason = unassignedReason(line, source.category);
+    const reason = unassignedReason(line, source.category, source.sectionHeading);
     return {
       line,
       ...(source.page ? { page: source.page } : {}),
@@ -1133,8 +1144,11 @@ export function parseCvBuilderImportText(
         if (languageLines.length && nonLanguageLines.length) uncertainSet.add("education");
         break;
       }
-      case "target-roles":
       case "training":
+        sections.education.push(section.heading, ...lines, "");
+        uncertainSet.add("education");
+        break;
+      case "target-roles":
       case "document-notes":
       case "unknown":
       case "misc":

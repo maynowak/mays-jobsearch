@@ -391,9 +391,12 @@ describe('CV-BUILDER-PARSER-02B structured document', () => {
     expect(result.uncertain.experience).toBe(true);
     expect(result.draft.projects[0].name).toBe('2026 – Projekt A');
     expect(result.draft.skills).toEqual(['AWS', 'Terraform']);
-    expect(result.draft.education[0].institution).toBe('Technische Universität Berlin');
+    const university = result.draft.education.find((entry) => entry.institution === 'Technische Universität Berlin');
+    expect(university?.degree).toBe('M.Sc. Informatik');
+    const training = result.draft.education.find((entry) => entry.institution.includes('AWS QA LABS'));
+    expect(training?.description).toContain('Praktische Übungen');
     expect(result.draft.languages[0].language).toBe('Deutsch');
-    expect(result.unrecognized.join('\n')).toContain('Praktische Übungen');
+    expect(result.unrecognized.join('\n')).not.toContain('Praktische Übungen');
     expect(result.unrecognized.join('\n')).toContain('Zertifizierungsziel AWS');
     expect(result.unrecognized.join('\n')).toContain('Dieses Dokument ist ein Bewerbungsprofil.');
     const freelance = result.draft.experience.find((entry) => `${entry.position} ${entry.employer}`.includes('Freelance'));
@@ -432,12 +435,7 @@ describe('CV-BUILDER-PARSER-02B structured document', () => {
     expect(result.mapping.sections.find((section) => section.category === 'mixed')?.targets).toEqual(['education', 'languages']);
     expect(result.mapping.sections.find((section) => section.category === 'training')?.confidence).toBe('uncertain');
     expect(result.unrecognizedDetails).toHaveLength(result.unrecognized.length);
-    const training = result.unrecognizedDetails.find((detail) => detail.line === 'Praktische Übungen');
-    expect(training).toMatchObject({
-      page: 2,
-      suggestedTarget: 'education',
-      reason: 'training',
-    });
+    expect(result.mapping.sections.find((section) => section.category === 'training')?.targets).toEqual(['education']);
     const goal = result.unrecognizedDetails.find((detail) => detail.line === 'Zertifizierungsziel AWS');
     expect(goal).toMatchObject({
       page: 3,
