@@ -10,6 +10,13 @@ import {
 
 export type ManualReviewStatus = "pending" | "accepted" | "ignored";
 
+export interface CvBuilderImportReviewSummary {
+  total: number;
+  pending: number;
+  accepted: number;
+  ignored: number;
+}
+
 export interface ManualReviewDecision {
   target: CvBuilderImportManualTarget;
   status: ManualReviewStatus;

@@ -206,7 +206,21 @@ function linkEntry(url: string): CvBuilderDraftV1["links"][number] {
   if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`;
   const lower = normalized.toLocaleLowerCase("en");
   const kind = lower.includes("github") ? "github" : lower.includes("linkedin") ? "linkedin" : "portfolio";
-  const label = kind === "github" ? "GitHub" : kind === "linkedin" ? "LinkedIn" : "Portfolio";
+  let label: string;
+  try {
+    const parsed = new URL(normalized);
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    if (kind === "github") {
+      label = segments.length >= 2 ? `GitHub · ${segments[0]}/${segments[1]}` : `GitHub · ${parsed.hostname}`;
+    } else if (kind === "linkedin") {
+      const profile = segments[0] === "in" ? segments[1] : segments[0];
+      label = profile ? `LinkedIn · ${profile}` : `LinkedIn · ${parsed.hostname}`;
+    } else {
+      label = `Portfolio · ${parsed.hostname}${segments.length ? `/${segments.at(-1)}` : ""}`;
+    }
+  } catch {
+    label = kind === "github" ? "GitHub" : kind === "linkedin" ? "LinkedIn" : "Portfolio";
+  }
   const entry = createLinkEntry();
   return { ...entry, kind, label, url: normalized };
 }
@@ -410,6 +424,17 @@ function titleLike(value: string): boolean {
   return /\b(engineer|developer|manager|consultant|analyst|designer|architect|architekt|leiter|leitung|spezialist|specialist|praktikant|intern|assistant|berater|referent|director|lead|head|scientist|techniker|pflegefachkraft)\b/i.test(value);
 }
 
+function roleLike(value: string): boolean {
+  return titleLike(value) || /\b(devops|sre|cloud|platform|integration|e-commerce|ecommerce|web services|software|data|operations|administrator|architektur|architecture)\b/i.test(value);
+}
+
+function classifyExperiencePair(first: string, second: string): { employer: string; position: string; uncertain: boolean } {
+  if (companyLike(first) && !companyLike(second)) return { employer: first, position: second, uncertain: !roleLike(second) };
+  if (roleLike(first) && !roleLike(second)) return { employer: second, position: first, uncertain: !second };
+  if (roleLike(second) && !roleLike(first)) return { employer: first, position: second, uncertain: false };
+  return { employer: first, position: second, uncertain: !roleLike(second) };
+}
+
 function degreeLike(value: string): boolean {
   return /\b(bachelor|master|b\.?sc|m\.?sc|b\.?a|m\.?a|diplom|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachwirt|mba)\b/i.test(value);
 }
@@ -458,30 +483,30 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
     let employer = "";
     let position = "";
     if (!before.length && afterParts.length) {
-      position = afterParts[0];
-      employer = afterParts[1] ?? "";
-      after = [...afterParts.slice(2), ...nonEmpty(block.slice(dateIndex + 1))];
-      if (!employer) uncertain.add("experience");
+      if (afterParts.length >= 2) {
+        const pair = classifyExperiencePair(afterParts[0], afterParts[1]);
+        employer = pair.employer;
+        position = pair.position;
+        if (pair.uncertain) uncertain.add("experience");
+        after = [...afterParts.slice(2), ...nonEmpty(block.slice(dateIndex + 1))];
+      } else {
+        position = afterParts[0];
+        employer = "";
+        after = nonEmpty(block.slice(dateIndex + 1));
+        uncertain.add("experience");
+      }
     } else if (before.length === 1) {
       if (companyLike(before[0])) employer = before[0];
-      else if (titleLike(before[0])) position = before[0];
+      else if (roleLike(before[0])) position = before[0];
       else {
         employer = before[0];
         uncertain.add("experience");
       }
     } else if (before.length >= 2) {
-      const first = before[0];
-      const second = before[1];
-      if (companyLike(first) && !companyLike(second)) {
-        employer = first;
-        position = second;
-      } else if (titleLike(first) && !titleLike(second)) {
-        position = first;
-        employer = second;
-      } else {
-        employer = first;
-        position = second;
-      }
+      const pair = classifyExperiencePair(before[0], before[1]);
+      employer = pair.employer;
+      position = pair.position;
+      if (pair.uncertain) uncertain.add("experience");
     }
     if (!employer && /self[- ]employed|freelance/i.test(position)) {
       employer = /freelance/i.test(position) ? "Freelance" : "Self-Employed";
@@ -603,47 +628,74 @@ function mapExperienceSection(
   return { entries, timeline };
 }
 
+function educationInstitutionLike(value: string): boolean {
+  return companyLike(value) || /\b(universität|universitaet|university|hochschule|college|school|akademie|institut|institute|fachhochschule)\b/i.test(value);
+}
+
+function buildEducationEntry(
+  candidateLines: string[],
+  date: {
+    startMonth: CvBuilderDateMonth;
+    endMonth?: CvBuilderDateMonth;
+    current: boolean;
+    uncertain: boolean;
+  } | null,
+  uncertain: Set<CvBuilderImportSectionId>,
+  unrecognized: string[]
+): CvBuilderDraftV1["education"][number] | null {
+  const lines = nonEmpty(candidateLines);
+  if (!lines.length) return null;
+  if (/^(professional development|certifications?|certificates?|further education|weiterbildung|fortbildung)\b/i.test(lines[0])) {
+    unrecognized.push(...lines);
+    uncertain.add("education");
+    return null;
+  }
+
+  const degreeLine = lines.find((line) => degreeLike(line));
+  const institutionLine = lines.find((line) => educationInstitutionLike(line));
+  let institution = institutionLine ?? "";
+  let degree = degreeLine ?? "";
+  const used = new Set<string>([degreeLine, institutionLine].filter((line): line is string => Boolean(line)));
+  const remaining = lines.filter((line) => !used.has(line));
+
+  if (degreeLine && remaining.length) {
+    const fieldLine = remaining.find((line) =>
+      line.split(/\s+/).length <= 6 &&
+      !/[.!?]$/.test(line) &&
+      !/^\d/.test(line) &&
+      !educationInstitutionLike(line)
+    );
+    if (fieldLine) {
+      degree = `${fieldLine} – ${degree}`;
+      used.add(fieldLine);
+    }
+  }
+
+  if (!institution && !degree) {
+    institution = lines[0];
+    used.add(lines[0]);
+  }
+  const description = lines.filter((line) => !used.has(line));
+  if (!institution || !degree || !date || date.uncertain) uncertain.add("education");
+  const entry = createEducationEntry();
+  return {
+    ...entry,
+    institution,
+    degree,
+    startMonth: date?.startMonth ?? "",
+    ...(date?.endMonth ? { endMonth: date.endMonth } : {}),
+    current: date?.current ?? false,
+    ...(description.length ? { description: description.join("\n") } : {}),
+  };
+}
+
 function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["education"] {
   const entries: CvBuilderDraftV1["education"] = [];
   for (const block of splitBlocks(lines)) {
     const dateIndex = block.findIndex((line) => parseDateRange(line) !== null);
     if (dateIndex < 0) {
-      const lines = nonEmpty(block);
-      if (!lines.length) continue;
-      if (/^(professional development|certifications?|certificates?|further education|weiterbildung|fortbildung)\b/i.test(lines[0])) {
-        unrecognized.push(...lines);
-        uncertain.add("education");
-        continue;
-      }
-      let institution = "";
-      let degree = "";
-      let descriptionLines = lines.slice(1);
-      if (degreeLike(lines[0])) {
-        const split = lines[0].split(/\s+(?:–|—|-|at|an)\s+/i);
-        degree = split[0].trim();
-        institution = split[1]?.trim() ?? "";
-      } else {
-        institution = lines[0];
-        const degreeLine = descriptionLines.find((line) => degreeLike(line));
-        if (degreeLine) {
-          degree = degreeLine;
-          descriptionLines = descriptionLines.filter((line) => line !== degreeLine);
-        }
-      }
-      if (!institution && !degree) {
-        unrecognized.push(...lines);
-        continue;
-      }
-      uncertain.add("education");
-      const entry = createEducationEntry();
-      entries.push({
-        ...entry,
-        institution,
-        degree,
-        startMonth: "",
-        current: false,
-        ...(descriptionLines.length ? { description: descriptionLines.join("\n") } : {}),
-      });
+      const entry = buildEducationEntry(block, null, uncertain, unrecognized);
+      if (entry) entries.push(entry);
       continue;
     }
     const date = parseDateRange(block[dateIndex]);
@@ -652,36 +704,26 @@ function parseEducation(lines: string[], uncertain: Set<CvBuilderImportSectionId
     const beforeText = dateLine.slice(0, date.matchIndex).replace(/[|,;–—-]\s*$/, "").trim();
     const afterText = dateLine.slice(date.matchIndex).replace(DATE_RANGE, "").replace(SINCE_DATE, "").replace(/^[|,;–—-]\s*/, "").trim();
     const before = [...nonEmpty(block.slice(0, dateIndex)), ...splitLineParts(beforeText)];
-    const after = [...(afterText ? [afterText] : []), ...nonEmpty(block.slice(dateIndex + 1))];
-    let institution = "";
-    let degree = "";
-    if (before.length === 1) {
-      if (degreeLike(before[0])) degree = before[0];
-      else institution = before[0];
-    } else if (before.length >= 2) {
-      const first = before[0];
-      const second = before[1];
-      if (degreeLike(first) && !degreeLike(second)) {
-        degree = first;
-        institution = second;
-      } else {
-        institution = first;
-        degree = second;
-      }
-    }
-    if (!institution || !degree || date.uncertain) uncertain.add("education");
-    const entry = createEducationEntry();
-    entries.push({
-      ...entry,
-      institution,
-      degree,
-      startMonth: date.startMonth,
-      ...(date.endMonth ? { endMonth: date.endMonth } : {}),
-      current: date.current,
-      ...(after.length ? { description: after.join("\n") } : {}),
-    });
+    const after = [...(afterText ? splitLineParts(afterText) : []), ...nonEmpty(block.slice(dateIndex + 1))];
+    const entry = buildEducationEntry([...before, ...after], date, uncertain, unrecognized);
+    if (entry) entries.push(entry);
   }
   return entries;
+}
+
+function splitProjectName(value: string): { name: string; period?: string } {
+  const match = value.match(/^((?:19|20)\d{2}(?:\s*[-–—]\s*(?:19|20)\d{2})?)\s*(?:\||[-–—])\s*(.+)$/);
+  if (!match) return { name: value.trim() };
+  return { name: match[2].trim(), period: match[1].trim() };
+}
+
+function technologiesInLine(line: string): string[] {
+  const match = line.match(/\b(?:technologien|technologies|tech(?: stack)?|stack|tools|mit|using|based on|auf basis von)\b\s*[:\-]?\s*(.+)$/i);
+  if (!match) return [];
+  return match[1]
+    .split(/\s*(?:,|;|\||\/|\bund\b|\band\b)\s*/i)
+    .map((entry) => entry.trim().replace(/[.]+$/, ""))
+    .filter(isSkillCandidate);
 }
 
 function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["projects"] {
@@ -689,11 +731,12 @@ function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>
   for (const block of splitProjectBlocks(lines)) {
     const cleaned = nonEmpty(block);
     if (!cleaned.length) continue;
-    const name = cleaned[0];
-    if (!name) continue;
+    const parsedName = splitProjectName(cleaned[0]);
+    if (!parsedName.name) continue;
     let descriptionLines = cleaned.slice(1);
     const technologies: string[] = [];
     const seenTechnologies = new Set<string>();
+    if (parsedName.period) descriptionLines = [`Zeitraum: ${parsedName.period}`, ...descriptionLines];
     descriptionLines = descriptionLines.filter((line) => {
       const tech = line.match(/^(?:technologien|technologies|tech(?: stack)?|stack|tools)\s*[:\-]\s*(.+)$/i);
       if (tech) {
@@ -709,13 +752,19 @@ function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>
       if (linksInLine(line).length > 0 && line.replace(LINK_RE, "").replace(/[·|:]/g, "").trim().length < 20) {
         return false;
       }
+      for (const candidate of technologiesInLine(line)) {
+        const key = candidate.toLocaleLowerCase("de");
+        if (seenTechnologies.has(key)) continue;
+        seenTechnologies.add(key);
+        technologies.push(candidate);
+      }
       return true;
     });
     if (!descriptionLines.length && !technologies.length) uncertain.add("projects");
     const entry = createProjectEntry();
     entries.push({
       ...entry,
-      name,
+      name: parsedName.name,
       ...(descriptionLines.length ? { description: descriptionLines.join("\n") } : {}),
       technologies,
     });

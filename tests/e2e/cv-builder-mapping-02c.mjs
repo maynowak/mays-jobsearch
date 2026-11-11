@@ -158,8 +158,8 @@ async function runWidth(browser, width, pdfBytes) {
       throw new Error(`missing section: ${heading}`);
     }
   }
-  if (!(await modal.getByText("2026 – Projekt A").count())) throw new Error("project A missing");
-  if (!(await modal.getByText("2026 – Projekt D").count())) throw new Error("project D missing");
+  if (!(await modal.getByText("Projekt A").count())) throw new Error("project A missing");
+  if (!(await modal.getByText("Projekt D").count())) throw new Error("project D missing");
   if (!(await modal.getByText(/AWS QA LABS/).count())) throw new Error("training education entry missing");
   if (!(await modal.getByText("Zertifizierungsziel AWS").count())) throw new Error("certification goal missing");
   if (!(await modal.locator(".cv-import-review__item").count())) {

@@ -35,6 +35,7 @@ import ApplicationsSection from "./components/ApplicationsSection";
 import CvDocumentList from "./components/CvDocumentList";
 import CvBuilderEditor from "./components/CvBuilderEditor";
 import CvBuilderImportDialog from "./components/CvBuilderImportDialog";
+import type { CvBuilderImportReviewSummary } from "./components/CvBuilderImportReview";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
@@ -245,6 +246,7 @@ export default function App() {
   const [cvBuilderDirty, setCvBuilderDirty] = useState(false);
   const [cvBuilderSaved, setCvBuilderSaved] = useState(false);
   const [cvBuilderSaving, setCvBuilderSaving] = useState(false);
+  const [cvBuilderImportReview, setCvBuilderImportReview] = useState<CvBuilderImportReviewSummary | null>(null);
   const [cvBuilderSaveError, setCvBuilderSaveError] = useState("");
   const cvBuilderHasContent = hasCvBuilderContent(cvBuilderDraft);
 
@@ -1283,6 +1285,7 @@ export default function App() {
       setCvBuilderDirty(false);
       setCvBuilderSaved(true);
       setCvBuilderSaveError("");
+      setCvBuilderImportReview(null);
     } catch (err) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
     }
@@ -1306,6 +1309,7 @@ export default function App() {
       setCvBuilderDirty(false);
       setCvBuilderSaved(true);
       setCvBuilderSaveError("");
+      setCvBuilderImportReview(null);
     } catch (err) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
     }
@@ -1324,9 +1328,14 @@ export default function App() {
     setCvBuilderDirty(false);
     setCvBuilderSaved(true);
     setCvBuilderSaveError("");
+    setCvBuilderImportReview(null);
   };
 
-  const handleImportedCvBuilderDraft = (draft: CvBuilderDraftV1, sourceName: string) => {
+  const handleImportedCvBuilderDraft = (
+    draft: CvBuilderDraftV1,
+    sourceName: string,
+    reviewSummary?: CvBuilderImportReviewSummary
+  ) => {
     setCvBuilderImportOpen(false);
     setCvBuilderProfileId(null);
     setCvBuilderPendingName(
@@ -1338,6 +1347,7 @@ export default function App() {
     setCvBuilderDirty(true);
     setCvBuilderSaved(false);
     setCvBuilderSaveError("");
+    setCvBuilderImportReview(reviewSummary ?? null);
   };
 
   const handleDownloadRisForImport = async (cv: PersistentCv): Promise<File> => {
@@ -3815,6 +3825,7 @@ export default function App() {
       saved={cvBuilderSaved}
       saving={cvBuilderSaving}
       saveError={cvBuilderSaveError}
+      importReview={cvBuilderImportReview}
     />
   ) : null;
 

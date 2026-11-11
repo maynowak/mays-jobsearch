@@ -16,6 +16,7 @@ import {
 import MayHelp from "./MayHelp";
 import CvBuilderImportReview, {
   CvBuilderImportSummary,
+  type CvBuilderImportReviewSummary,
   type ManualReviewDecision,
 } from "./CvBuilderImportReview";
 
@@ -27,7 +28,7 @@ interface Props {
   risLoading?: boolean;
   persistentCvs: PersistentCv[];
   onDownloadRis: (cv: PersistentCv) => Promise<File>;
-  onImported: (draft: CvBuilderDraftV1, sourceName: string) => void;
+  onImported: (draft: CvBuilderDraftV1, sourceName: string, reviewSummary?: CvBuilderImportReviewSummary) => void;
 }
 
 type ImportStep = "source" | "loading" | "preview" | "summary";
@@ -391,7 +392,15 @@ export default function CvBuilderImportDialog({
                 setPendingAcknowledged(false);
                 setStep("preview");
               }}
-              onApply={() => onImported(summaryDraft, sourceName)}
+              onApply={() => {
+                const reviewSummary: CvBuilderImportReviewSummary = {
+                  total: Object.keys(manualDecisions).length,
+                  pending: Object.values(manualDecisions).filter((decision) => decision.status === "pending").length,
+                  accepted: Object.values(manualDecisions).filter((decision) => decision.status === "accepted").length,
+                  ignored: Object.values(manualDecisions).filter((decision) => decision.status === "ignored").length,
+                };
+                onImported(summaryDraft, sourceName, reviewSummary);
+              }}
               onCancel={onClose}
             />
           )}

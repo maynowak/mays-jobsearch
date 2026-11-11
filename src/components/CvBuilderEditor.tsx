@@ -21,6 +21,7 @@ import {
 } from "../lib/cvBuilder/validation";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
 import CvBuilderPreview from "./CvBuilderPreview";
+import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 import {
   CV_BUILDER_TEMPLATES,
   type CvBuilderTemplate,
@@ -37,6 +38,7 @@ interface Props {
   saved?: boolean;
   saving?: boolean;
   saveError?: string;
+  importReview?: CvBuilderImportReviewSummary | null;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -356,6 +358,7 @@ export default function CvBuilderEditor({
   saved = false,
   saving = false,
   saveError = "",
+  importReview = null,
 }: Props) {
   const { t, lang } = useLang();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -568,6 +571,24 @@ export default function CvBuilderEditor({
           <p className="cv-builder-validation-summary" role="alert">
             {t("cvBuilder.validationSummary")}
           </p>
+        )}
+        {importReview && (
+          <div className="cv-builder-import-quality" role="status">
+            <p>
+              <strong>{t("cvBuilder.importQuality.validation")}:</strong>{" "}
+              {errorCount > 0
+                ? t("cvBuilder.importQuality.validationErrors", { count: errorCount })
+                : t("cvBuilder.importQuality.validationClean")}
+            </p>
+            <p>
+              <strong>{t("cvBuilder.importQuality.import")}:</strong>{" "}
+              {t("cvBuilder.importQuality.summary", {
+                pending: importReview.pending,
+                accepted: importReview.accepted,
+                ignored: importReview.ignored,
+              })}
+            </p>
+          </div>
         )}
         <p className="cv-builder-counts" role="status">
           {t("cvBuilder.counts", { entries: entryCount, errors: errorCount })}

@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { LangProvider } from "../i18n";
 import CvBuilderEditor from "./CvBuilderEditor";
 import { createEducationEntry, createEmptyCvBuilderDraft, createExperienceEntry, type CvBuilderDraftV1 } from "../lib/cvBuilder/contractTypes";
+import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 
 function Harness({
   initial = createEmptyCvBuilderDraft(),
@@ -13,6 +14,7 @@ function Harness({
   saved = false,
   saving = false,
   saveError = "",
+  importReview = null,
 }: {
   initial?: CvBuilderDraftV1;
   onClose?: () => void;
@@ -21,6 +23,7 @@ function Harness({
   saved?: boolean;
   saving?: boolean;
   saveError?: string;
+  importReview?: CvBuilderImportReviewSummary | null;
 }) {
   const [draft, setDraft] = useState(initial);
   return (
@@ -34,6 +37,7 @@ function Harness({
         saved={saved}
         saving={saving}
         saveError={saveError}
+        importReview={importReview}
       />
     </LangProvider>
   );
@@ -265,5 +269,21 @@ describe("CV-BUILDER-PDF-EXPORT-FIX-01 editor", () => {
     render(<Harness initial={draft} />);
     expect(screen.getByText("2 Einträge · 0 Validierungshinweise")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Als PDF herunterladen" })).toBeEnabled();
+  });
+});
+
+
+describe("CV-BUILDER-REAL-WORLD-QA-02E import quality", () => {
+  it("shows import review separately from field validation", () => {
+    render(
+      <Harness
+        initial={{ ...createEmptyCvBuilderDraft(), personal: { fullName: "May Nowak" } }}
+        importReview={{ total: 4, pending: 2, accepted: 1, ignored: 1 }}
+      />
+    );
+    expect(screen.getByText("Feldvalidierung:")).toBeInTheDocument();
+    expect(screen.getByText("Keine Feldfehler")).toBeInTheDocument();
+    expect(screen.getByText("Importprüfung:")).toBeInTheDocument();
+    expect(screen.getByText(/2 ungeprüft · 1 manuell übernommen · 1 bewusst ausgeschlossen/)).toBeInTheDocument();
   });
 });

@@ -13549,3 +13549,26 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     overflow: visible;
   }
 }
+
+/* CV-BUILDER-REAL-WORLD-QA-02E — import quality is separate from validation */
+.cv-builder-import-quality {
+  display: grid;
+  gap: 2px;
+  margin: 0 20px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.cv-builder-import-quality p {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .cv-builder-import-quality {
+    margin-inline: 12px;
+  }
+}

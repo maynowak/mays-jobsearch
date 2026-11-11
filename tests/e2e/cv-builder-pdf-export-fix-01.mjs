@@ -31,7 +31,8 @@ const pageLines = [
   ],
   [
     "AKTUELLE ARCHITEKTUR- UND SOFTWAREPROJEKTE",
-    "2026 – Projekt A",
+    "Projekt A",
+    "Zeitraum: 2026",
     "Projektbeschreibung A – synthetische Architektur und Umsetzung.",
     "Projektbeschreibung A – Cloud-Integration, Tests und Dokumentation.",
     "Projektbeschreibung A – Betrieb, Monitoring und Übergabe.",
@@ -196,7 +197,8 @@ async function downloadPdf(page, label, targetPath, minPages = 2) {
     "Fähigkeiten",
     "Projekte",
     "AWS QA LABS",
-    "2026 – Projekt A",
+    "Projekt A",
+    "Zeitraum: 2026",
     "Freelance Software Developer",
     "Deutsch",
   ]) {

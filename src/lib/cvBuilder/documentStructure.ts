@@ -149,7 +149,7 @@ function categoryForPart(part: string): DocumentCategory | null {
   if (/\b(?:profil\w*|summary|zusammenfassung|über mich|ueber mich|about me)\b/.test(value)) return "profile";
   if (/\b(?:aws\s*qa\s*lab\w*|qa\s*lab\w*|labor\w*|lab\w*|training|praxisorientierte\w*|cloud-qualifizierung|qualifizierung)\b/.test(value)) return "training";
   if (/\b(?:projekt\w*|project\w*)\b/.test(value)) return "projects";
-  if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*|architektur\w*|architecture|cloud|technolog\w*)\b/.test(value)) return "skills";
+  if (/\b(?:kernkompetenz\w*|kompetenz\w*|fähigkeit\w*|faehigkeit\w*|kenntnis\w*|skill\w*|competenc\w*|suchbegriff\w*|architektur\w*|architecture|cloud|technolog\w*|distributed systems|enterprise integration)\b/.test(value)) return "skills";
   if (/\b(?:weiterbildung\w*|zertifikat\w*|zertifizierung\w*|certification\w*|certificate\w*|fortbildung\w*|further education|continuing education|courses?)\b/.test(value)) return "certificates";
   if (/\b(?:beruflicher werdegang|berufserfahrung\w*|arbeitserfahrung\w*|werdegang|professional experience|work experience|employment history|timeline)\b/.test(value)) return "experience";
   if (/\b(?:ausbildung\w*|education|qualifikation\w*|qualification\w*)\b/.test(value)) return "education";
@@ -174,8 +174,8 @@ const EXACT_HEADING_ALIASES = new Set([
   "zielpositionen", "zielrollen", "target roles", "target positions",
   "kernkompetenzen", "kompetenzen", "fähigkeiten", "faehigkeiten", "kenntnisse", "technische kenntnisse",
   "skills", "technical skills", "core skills", "core competencies", "competencies",
-  "architecture", "software architecture", "architecture & cloud", "architektur", "cloud", "cloud architecture",
-  "technologies", "technology", "technical technologies",
+  "architecture", "software architecture", "solution architecture", "architecture & cloud", "architektur", "cloud", "cloud architecture",
+  "technologies", "technology", "technical technologies", "distributed systems", "enterprise integration",
   "projekte", "project", "projects", "project experience", "project work", "projektarbeit",
   "selected current projects", "selected projects", "current projects", "key projects", "relevant projects",
   "berufserfahrung", "berufliche erfahrung", "arbeitserfahrung", "beruflicher werdegang", "werdegang",

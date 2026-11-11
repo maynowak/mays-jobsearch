@@ -389,7 +389,8 @@ describe('CV-BUILDER-PARSER-02B structured document', () => {
     expect(result.draft.certificates).toEqual([]);
     expect(result.uncertain.certificates).toBe(true);
     expect(result.uncertain.experience).toBe(true);
-    expect(result.draft.projects[0].name).toBe('2026 – Projekt A');
+    expect(result.draft.projects[0].name).toBe('Projekt A');
+    expect(result.draft.projects[0].description).toContain('Zeitraum: 2026');
     expect(result.draft.skills).toEqual(['AWS', 'Terraform']);
     const university = result.draft.education.find((entry) => entry.institution === 'Technische Universität Berlin');
     expect(university?.degree).toBe('M.Sc. Informatik');
@@ -462,10 +463,10 @@ Beschreibung C
 2023 – Projekt D
 Beschreibung D`);
     expect(result.draft.projects.map((entry) => entry.name)).toEqual([
-      '2026 – Projekt A',
-      '2025 – Projekt B',
-      '2024 – Projekt C',
-      '2023 – Projekt D',
+      'Projekt A',
+      'Projekt B',
+      'Projekt C',
+      'Projekt D',
     ]);
     expect(result.draft.projects[0].technologies).toEqual(['React', 'AWS']);
   });
@@ -722,5 +723,80 @@ AWS QA LAB – in progress
 Praktische Cloud-Übungen.`);
     const training = result.unrecognizedDetails.find((detail) => detail.line === 'Praktische Cloud-Übungen.');
     expect(training).toMatchObject({ reason: 'training', suggestedTarget: 'education', page: 1 });
+  });
+});
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E experience fields', () => {
+  it('separates role-like values from employers instead of relying on word order', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+BERUFLICHER WERDEGANG
+2019–2021 | DevOps | Unternehmensbezeichnung GmbH
+2018–2019 | BaFin | Web Services
+2017–2018 | Contenido | E-Commerce`);
+    expect(result.draft.experience[0]).toMatchObject({ position: 'DevOps', employer: 'Unternehmensbezeichnung GmbH' });
+    expect(result.draft.experience[1]).toMatchObject({ position: 'Web Services', employer: 'BaFin' });
+    expect(result.draft.experience[2]).toMatchObject({ position: 'E-Commerce', employer: 'Contenido' });
+  });
+});
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E education fields', () => {
+  it('keeps institution, field, degree and period separate', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+AUSBILDUNG
+Computer Science
+Bachelor of Science (B.Sc.)
+Technische Hochschule Berlin
+Okt 2014 – Sep 2017
+Schwerpunkt verteilte Systeme.`);
+    expect(result.draft.education[0]).toMatchObject({
+      institution: 'Technische Hochschule Berlin',
+      degree: 'Computer Science – Bachelor of Science (B.Sc.)',
+      startMonth: '2014-10',
+      endMonth: '2017-09',
+    });
+    expect(result.draft.education[0].description).toBe('Schwerpunkt verteilte Systeme.');
+  });
+});
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E project fields', () => {
+  it('cleans dated project names, preserves the period and extracts evidenced technologies', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+PROJEKTE
+2026 | Projekt Cloud
+Beschreibung mit React, TypeScript und AWS.
+Technologien: Terraform, Docker
+https://github.com/example/cloud`);
+    expect(result.draft.projects[0]).toMatchObject({
+      name: 'Projekt Cloud',
+      technologies: ['React', 'TypeScript', 'AWS', 'Terraform', 'Docker'],
+    });
+    expect(result.draft.projects[0].description).toContain('Zeitraum: 2026');
+    expect(result.draft.projects[0].description).toContain('Beschreibung mit React');
+    expect(result.draft.projects[0].description).not.toContain('https://github.com/example/cloud');
+  });
+});
+
+describe('CV-BUILDER-REAL-WORLD-QA-02E link labels', () => {
+  it('uses repository/profile names instead of identical generic labels', () => {
+    const result = parseCvBuilderImportText(`May Nowak
+E-Mail: may@example.invalid
+
+LINKS
+https://github.com/may/one
+https://github.com/may/two
+https://www.linkedin.com/in/may-nowak
+https://example.invalid/portfolio`);
+    expect(result.draft.links.map((link) => link.label)).toEqual([
+      'GitHub · may/one',
+      'GitHub · may/two',
+      'LinkedIn · may-nowak',
+      'Portfolio · example.invalid/portfolio',
+    ]);
   });
 });
