@@ -665,15 +665,17 @@ function parseProjects(lines: string[], uncertain: Set<CvBuilderImportSectionId>
     if (!name) continue;
     let descriptionLines = cleaned.slice(1);
     const technologies: string[] = [];
+    const seenTechnologies = new Set<string>();
     descriptionLines = descriptionLines.filter((line) => {
       const tech = line.match(/^(?:technologien|technologies|tech(?: stack)?|stack|tools)\s*[:\-]\s*(.+)$/i);
       if (tech) {
-        technologies.push(
-          ...tech[1]
-            .split(/[,;|]/)
-            .map((item) => item.trim().replace(/[.]+$/, ""))
-            .filter(isSkillCandidate)
-        );
+        for (const item of tech[1].split(/[,;|]/).map((entry) => entry.trim().replace(/[.]+$/, ""))) {
+          if (!isSkillCandidate(item)) continue;
+          const key = item.toLocaleLowerCase("de");
+          if (seenTechnologies.has(key)) continue;
+          seenTechnologies.add(key);
+          technologies.push(item);
+        }
         return false;
       }
       if (linksInLine(line).length > 0 && line.replace(LINK_RE, "").replace(/[·|:]/g, "").trim().length < 20) {
@@ -847,7 +849,7 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
   };
 }
 
-const SKILL_CATEGORY_PREFIX = /^(?:architecture|programming(?: languages?)?|languages?|frameworks?|libraries|tools?|platforms?|databases?|cloud|cloud\s*[&+]\s*devops|software\s*[&+]\s*data|data\s*[&+]\s*integration|ai engineering|development|infrastructure|devops|methoden|methodologies|technologien|technologies)\s*[:\-]\s*/i;
+const SKILL_CATEGORY_PREFIX = /^(?:architecture|programming(?: languages?)?|languages?|frameworks?|libraries|tools?|platforms?|databases?|cloud|cloud\s*[&+]\s*devops|software\s*[&+]\s*architektur|software\s*[&+]\s*data|aws\s*[&+]\s*infrastruktur|web\s*[&+]\s*daten|data\s*[&+]\s*integration|ai engineering|development|infrastructure|devops|methoden|methodologies|technologien|technologies)\s*[:\-]\s*/i;
 const SKILL_SENTENCE_WORDS = /\b(developed|built|implemented|responsible|worked|created|designed|managed|supported|led|maintained|entwickelt|umgesetzt|verantwortlich|betreut|erstellt|konzipiert|unterstützt|geleitet|gewartet|durchgeführt)\b/i;
 
 function isSkillCandidate(value: string): boolean {
@@ -1162,6 +1164,7 @@ export function parseCvBuilderImportText(
   detected.education = draft.education.length > 0;
   draft.skills = parseSkills(sections.skills, uncertainSet, unrecognized);
   detected.skills = draft.skills.length > 0;
+  if (draft.skills.length > 25) uncertainSet.add("skills");
   draft.projects = parseProjects(sections.projects, uncertainSet, unrecognized);
   detected.projects = draft.projects.length > 0;
   draft.certificates = parseCertificates(sections.certificates, uncertainSet, unrecognized);
@@ -1188,7 +1191,11 @@ export function parseCvBuilderImportText(
     unrecognized: finalUnrecognized,
     unrecognizedDetails: buildUnassignedDetails(finalUnrecognized, structure),
     mapping: {
-      sections: buildSectionMappings(structure.sections),
+      sections: buildSectionMappings(structure.sections).map((section) =>
+        section.category === "skills" && draft.skills.length > 25
+          ? { ...section, notes: [...section.notes, "skill-candidates-review"] }
+          : section
+      ),
       timeline: timelineMappings,
     },
     structure,

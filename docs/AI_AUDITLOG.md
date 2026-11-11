@@ -5694,3 +5694,12 @@ Qualifikationen und unvollständige Items bleiben mit Quelle und Grund erhalten.
 nicht erfunden, der Original-`dateText` bleibt in `mapping.timeline`. 16
 fokussierte Parser-Tests PASS, Build PASS. Keine echten CV-Daten, keine
 RIS/AWS/Terraform/Cognito-Änderung, kein Merge/Deploy/Force-Push.
+
+**STEP C — Projekte/Technologien:** Projekttechnologien werden case-insensitiv
+dedupliziert und nur plausible Kandidaten übernommen. Repository-Links aus
+Projekten werden in `draft.links` gesammelt und nicht als Skill/Beschreibung
+dupliziert. Skill-Kategoriepräfixe (`Software & Architektur:`,
+`AWS & Infrastruktur:`, `Web & Daten:`) werden entfernt; große ATS-Listen (>25)
+bleiben vollständig, werden aber als `skill-candidates-review` markiert. Keine
+künstliche Kappung, keine unbelegten Technologiezuordnungen. 17 fokussierte
+Parser-Tests PASS, Build PASS. Keine echten CV-Daten, keine RIS/AWS-Änderung.

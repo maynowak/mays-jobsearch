@@ -495,3 +495,24 @@ Nur ein Zeitraum und eine Beschreibung.`);
     });
   });
 });
+
+describe('CV-BUILDER-MAPPING-02C projects and skills', () => {
+  it('deduplicates technologies, strips skill category labels and keeps project links out of skills', () => {
+    const result = parseCvBuilderImportText(`Max Mustermann
+E-Mail: max@example.invalid
+
+Fähigkeiten
+Software & Architektur: Java, Spring Boot
+AWS & Infrastruktur: AWS Lambda, AWS Lambda, Terraform
+
+Projekte
+2026 – Projekt A
+Beschreibung mit React.
+Technologien: React, React, AWS Lambda, AWS Lambda
+https://github.com/example/project-a`);
+    expect(result.draft.skills).toEqual(['Java', 'Spring Boot', 'AWS Lambda', 'Terraform']);
+    expect(result.draft.projects[0].technologies).toEqual(['React', 'AWS Lambda']);
+    expect(result.draft.projects[0].description).not.toContain('https://github.com/example/project-a');
+    expect(result.draft.links.some((link) => link.url.includes('github.com/example/project-a'))).toBe(true);
+  });
+});

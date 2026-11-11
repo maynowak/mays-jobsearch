@@ -1,6 +1,6 @@
 # CV-BUILDER-MAPPING-02C — STRUCTURED CV DATA MAPPING
 
-**Status:** `IN PROGRESS — STEPS A–B COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–C COMPLETE`
 **Branch:** `feature/cv-builder-mapping-02c`
 **Base:** `feature/cv-builder-parser-02b` @ `e74cef5`
 **Zielstatus:** `CV-BUILDER-MAPPING-02C — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -10,8 +10,8 @@
 | Step | Thema | Status | Commit |
 |---|---|---|---|
 | A | Mapping-Vertrag und Provenienz | **COMPLETE** | `f64f927` |
-| B | Berufserfahrung und Freelance-Projekte | **COMPLETE** | `pending` |
-| C | Projekte und Technologien | OFFEN | — |
+| B | Berufserfahrung und Freelance-Projekte | **COMPLETE** | `62eae60` |
+| C | Projekte und Technologien | **COMPLETE** | `pending` |
 | D | Ausbildung und Qualifikationen | OFFEN | — |
 | E | Unklare Informationen und manuelle Zuordnung | OFFEN | — |
 | F | Qualitätsmessung | OFFEN | — |
@@ -33,6 +33,23 @@ Die Erfahrungsabschnitte werden jetzt itemgenau aus `section.timeline` gemappt:
   den Originaltext.
 
 Test: 16 fokussierte Parser-Tests PASS; Build PASS.
+
+## STEP C — Projekte und Technologien
+
+Projekte werden weiterhin einzeln aus datierten Projektstarts gebildet. Neu:
+
+- Technologien werden case-insensitiv dedupliziert.
+- Technologien müssen durch `isSkillCandidate` plausibel sein.
+- Projekt-Repository-Links werden in `draft.links` gesammelt und nicht als
+  Skill oder Projektbeschreibung dupliziert.
+- Skill-Kategorien wie `Software & Architektur:`, `AWS & Infrastruktur:` und
+  `Web & Daten:` werden entfernt; die dahinterliegenden Begriffe bleiben
+  erhalten.
+- Große ATS-Kandidatenlisten (>25 Skills) werden als
+  `skill-candidates-review` markiert; es wird keine künstliche Obergrenze
+  eingeführt und nichts unbelegt gelöscht.
+
+Test: 17 fokussierte Parser-Tests PASS; Build PASS.
 
 ## Recovery-Regel
 
