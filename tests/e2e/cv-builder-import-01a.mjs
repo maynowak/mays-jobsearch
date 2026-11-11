@@ -244,6 +244,10 @@ async function finishPreview(page) {
   await page.getByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.").waitFor();
   await assertNoOverflow(page, "preview");
   await page.getByRole("button", { name: "Angaben übernehmen" }).click();
+  await page.getByRole("heading", { name: "Deine Importauswahl" }).waitFor();
+  const acknowledgement = page.getByRole("checkbox", { name: /Ich lasse .* ungeprüfte Angaben vorerst aus/ });
+  if (await acknowledgement.count()) await acknowledgement.check();
+  await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   await page.locator("summary").filter({ hasText: "Persönliche Angaben" }).click();
   await page.locator(".cv-builder-modal").getByLabel("Vollständiger Name").waitFor();

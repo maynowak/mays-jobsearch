@@ -1,6 +1,6 @@
 # CV-BUILDER-IMPORT-UX-02D — REVIEW & MANUAL CORRECTION
 
-**Status:** `IN PROGRESS — STEPS A–F COMPLETE`
+**Status:** `IN PROGRESS — STEPS A–G COMPLETE`
 **Branch:** `feature/cv-builder-import-ux-02d`
 **Base:** `feature/cv-builder-pdf-export-fix-01` @ `166fec9`
 **Zielstatus:** `CV-BUILDER-IMPORT-UX-02D — IMPLEMENTED / VERIFIED LOCAL / FEATURE BRANCH PUSHED`
@@ -15,7 +15,7 @@
 | D | Korrektur und manuelle Zuordnung | **COMPLETE** | `pending` |
 | E | Skills-Auswahl | **COMPLETE** | `pending` |
 | F | Importabschluss und Kontrolle | **COMPLETE** | `pending` |
-| G | UX, Barrierefreiheit, Responsive | OFFEN | — |
+| G | UX, Barrierefreiheit, Responsive | **COMPLETE** | `pending` |
 | H | Regression und Gesamtprüfung | OFFEN | — |
 
 ## STEP A — UX-Baseline
@@ -82,6 +82,26 @@ Vor der Übernahme zeigt die Zusammenfassung:
 - explizite Bestätigung, offene Prüfpunkte vorerst auszulassen
 - Aktionen: Zurück zur Prüfung, Auswahl übernehmen, Import abbrechen
 - erst „Auswahl übernehmen“ öffnet den Builder; kein automatisches Speichern
+
+## STEP G — UX, Barrierefreiheit, Responsive
+
+Der neue Browser-E2E importiert ein synthetisches sechsseitiges PDF mit 55
+Prüfzeilen und prüft auf 320/390/430/768/1024/1440 px:
+
+- kompakte Übersicht und Abschnittsnavigation
+- 10 Prüfzeilen pro Seite, „Seite 1 von 6“
+- Statusfilter, Korrektur, Zielauswahl und Übernehmen
+- Entscheidung bleibt nach Filter- und Seitenwechsel erhalten
+- Abschlussübersicht, Pflichtbestätigung für offene Punkte und Übernahme
+- keine horizontalen Überläufe
+- keine API-/RIS-/Console-Fehler
+
+Zusätzlich prüfen Komponententests: 67-Skill-Liste standardmäßig unausgewählt,
+Suche, Alle auswählen, Zurücksetzen, Einzelauswahl; 55 Prüfzeilen paginiert;
+Korrektur und Pending-Bestätigung.
+
+Screenshots: `docs/reports/assets/CV-BUILDER-IMPORT-UX-02D/`
+(`preview-{width}.png`, `summary-390.png`, `editor-390.png`, `results.json`).
 
 ## Tests
 

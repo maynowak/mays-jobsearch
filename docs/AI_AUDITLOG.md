@@ -5795,3 +5795,11 @@ CV-Daten.
   selected-skill list; pending/ignored decisions are never transferred.
 - 51 focused tests PASS; build PASS. No real CV data, AI/OCR/backend/RIS/AWS/
   Terraform/Cognito/consent change. No merge, deployment or force-push.
+
+**STEP G — UX/Responsive:** Neuer E2E importiert ein synthetisches
+sechsseitiges PDF mit 55 Prüfzeilen und prüft Übersicht, Navigation,
+Pagination (10/Seite), Statusfilter, Korrektur, Zielauswahl, Entscheidung
+über Seitenwechsel, Abschlussübersicht und Pending-Bestätigung auf
+320–1440 px. 0 Overflow/API-/Console-Fehler. Komponententests decken 67
+Skills (default unausgewählt, Suche, Select all/Clear, Einzelauswahl) ab.
+Screenshots unter `docs/reports/assets/CV-BUILDER-IMPORT-UX-02D/`.

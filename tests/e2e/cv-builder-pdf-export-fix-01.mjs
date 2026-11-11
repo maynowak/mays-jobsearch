@@ -150,6 +150,10 @@ async function openImportedEditor(page, pdfBytes) {
   await input.setInputFiles({ name: "vierseitig.pdf", mimeType: "application/pdf", buffer: pdfBytes });
   await page.getByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.").waitFor();
   await page.getByRole("button", { name: "Angaben übernehmen" }).click();
+  await page.getByRole("heading", { name: "Deine Importauswahl" }).waitFor();
+  const acknowledgement = page.getByRole("checkbox", { name: /Ich lasse .* ungeprüfte Angaben vorerst aus/ });
+  if (await acknowledgement.count()) await acknowledgement.check();
+  await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
 }
 

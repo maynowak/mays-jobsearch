@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "width": 320,
+      "reviewItems": 10,
+      "pagination": "1/6"
+    },
+    {
+      "width": 390,
+      "reviewItems": 10,
+      "pagination": "1/6"
+    },
+    {
+      "width": 430,
+      "reviewItems": 10,
+      "pagination": "1/6"
+    },
+    {
+      "width": 768,
+      "reviewItems": 10,
+      "pagination": "1/6"
+    },
+    {
+      "width": 1024,
+      "reviewItems": 10,
+      "pagination": "1/6"
+    },
+    {
+      "width": 1440,
+      "reviewItems": 10,
+      "pagination": "1/6"
+    }
+  ]
+}

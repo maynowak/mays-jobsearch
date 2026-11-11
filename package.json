@@ -33,6 +33,7 @@
     "test:e2e:cv-builder-workflow-02a": "node tests/e2e/cv-builder-workflow-02a.mjs",
     "test:e2e:cv-builder-parser-02b": "node tests/e2e/cv-builder-parser-02b.mjs",
     "test:e2e:cv-builder-mapping-02c": "node tests/e2e/cv-builder-mapping-02c.mjs",
+    "test:e2e:cv-builder-import-ux-02d": "node tests/e2e/cv-builder-import-ux-02d.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",
     "test:lock:redis": "node tests/tools/verify-lock-lua.mjs",

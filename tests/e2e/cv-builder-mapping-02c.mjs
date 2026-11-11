@@ -178,6 +178,10 @@ async function runWidth(browser, width, pdfBytes) {
   await page.screenshot({ path: resolve(evidenceDir, `preview-${width}.png`) });
 
   await page.getByRole("button", { name: "Angaben übernehmen" }).click();
+  await page.getByRole("heading", { name: "Deine Importauswahl" }).waitFor();
+  const acknowledgement = page.getByRole("checkbox", { name: /Ich lasse .* ungeprüfte Angaben vorerst aus/ });
+  if (await acknowledgement.count()) await acknowledgement.check();
+  await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
   await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
   const editorSummary = page.locator(".cv-builder-sections");
   for (const label of ["Berufserfahrung", "Ausbildung", "Fähigkeiten", "Projekte", "Sprachen und Links"]) {

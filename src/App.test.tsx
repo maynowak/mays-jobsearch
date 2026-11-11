@@ -2830,6 +2830,8 @@ React, TypeScript`);
 
     expect(await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    expect(await screen.findByRole("heading", { name: "Deine Importauswahl" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
     expect(await screen.findByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).toBeInTheDocument();
     expect(screen.getByLabelText("Vollständiger Name")).toHaveValue("Max Mustermann");
     expect(screen.getByLabelText("Berufsbezeichnung")).toHaveValue("Senior Frontend Engineer");
