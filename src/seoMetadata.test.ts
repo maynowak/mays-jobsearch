@@ -50,8 +50,7 @@ describe("landing page SEO metadata (index.html)", () => {
   });
 
   it("allows indexing and sets the canonical landing URL", () => {
-    expect(content(indexDoc, 'meta[name="robots"]')).toContain("index");
-    expect(content(indexDoc, 'meta[name="robots"]')).toContain("follow");
+    expect(content(indexDoc, 'meta[name="robots"]')).toBe("index,follow,max-image-preview:large");
     expect(indexDoc.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe(HOME_URL);
   });
 
@@ -98,6 +97,7 @@ describe("robots.txt and sitemap.xml", () => {
   it("allows crawling and references the canonical sitemap", () => {
     expect(robotsTxt).toMatch(/User-agent:\s*\*/i);
     expect(robotsTxt).toMatch(/Allow:\s*\//i);
+    expect(robotsTxt).toContain("Disallow: /api/");
     expect(robotsTxt).toContain("Sitemap: https://www.mays-job-matcher.app/sitemap.xml");
   });
 
@@ -170,5 +170,41 @@ describe("vercel.json routing and platform configuration", () => {
   it("does not rewrite the homepage to the app shell", () => {
     expect(rewriteFor("/")).toBeUndefined();
     expect(rewriteFor("/index.html")).toBeUndefined();
+  });
+});
+
+describe("route inventory drift guard", () => {
+  const appSource = readFileSync(resolve(root, "src/App.tsx"), "utf8");
+  const rootRouteSource = readFileSync(resolve(root, "src/rootRoute.ts"), "utf8");
+
+  const routeLiterals = () => {
+    const found = new Set<string>();
+    const sources = `${appSource}\n${rootRouteSource}`;
+    const patterns = [
+      /window\.location\.pathname === "([^"]+)"/g,
+      /\bpath === "([^"]+)"/g,
+      /\bpathname === "([^"]+)"/g,
+    ];
+    for (const pattern of patterns) {
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(sources)) !== null) found.add(match[1]);
+    }
+    return [...found].filter((route) => route !== "/" && !route.startsWith("/dev/")).sort();
+  };
+
+  it("keeps the non-API rewrite list identical to APP_ROUTES", () => {
+    const configured = (vercel.rewrites ?? [])
+      .map((rewrite) => rewrite.source)
+      .filter((source) => !source.startsWith("/api/"))
+      .sort();
+    expect(configured).toEqual([...APP_ROUTES].sort());
+  });
+
+  it("covers every route literal used by App.tsx and rootRoute.ts", () => {
+    const literals = routeLiterals();
+    expect(literals.length).toBeGreaterThan(0);
+    for (const route of literals) {
+      expect(APP_ROUTES, `route ${route} is missing from APP_ROUTES`).toContain(route);
+    }
   });
 });

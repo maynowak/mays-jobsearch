@@ -28,7 +28,7 @@ export function applyRouteSeoHead(pathname: string, doc?: Document): void {
   const target = doc ?? (typeof document === "undefined" ? null : document);
   if (!target) return;
 
-  const isHome = (pathname || "/") === "/";
+  const isHome = (pathname || "/") === "/" || pathname === "/index.html";
   let robots = target.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
   if (!robots) {
     robots = target.createElement("meta");

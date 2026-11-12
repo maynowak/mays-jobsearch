@@ -8,7 +8,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { APP_ROUTES, HOME_URL } from "./lib/seoHead";
 
@@ -34,6 +34,11 @@ const matchesSource = (source: string, pathname: string) => {
 };
 
 const resolveFile = (pathname: string) => {
+  // Vercel gives the filesystem precedence over rewrites. A static
+  // public/<route>/index.html therefore wins over the app.html rewrite.
+  if (pathname !== "/" && existsSync(resolve(root, "public", pathname.slice(1), "index.html"))) {
+    return { file: `public${pathname}/index.html`, type: "text/html; charset=utf-8" };
+  }
   const rewrite = (config.rewrites ?? []).find((entry) => entry.source === pathname);
   const target = (rewrite?.destination ?? pathname).split("?")[0];
   if (target === "/") return { file: "index.html", type: "text/html; charset=utf-8" };
@@ -79,21 +84,23 @@ afterAll(async () => {
 });
 
 const get = (pathname: string) => fetch(`${baseUrl}${pathname}`);
+const parseHtml = (body: string) => new DOMParser().parseFromString(body, "text/html");
+const robotsContent = (body: string) =>
+  parseHtml(body).querySelector('meta[name="robots"]')?.getAttribute("content") ?? "";
 
 describe("served landing page", () => {
   it("returns indexable metadata with the canonical URL", async () => {
     const response = await get("/");
     const body = await response.text();
+    const doc = parseHtml(body);
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(response.headers.get("x-robots-tag")).toBeNull();
-    expect(body).toContain('rel="canonical" href="https://www.mays-job-matcher.app/"');
-    expect(body).toContain('name="robots" content="index,follow,max-image-preview:large"');
-    expect(body).toContain('property="og:url" content="https://www.mays-job-matcher.app/"');
-    expect(body).toContain(
-      "<title>KI-gestützte Jobsuche &amp; Job Matching | May's Job Matcher</title>",
-    );
+    expect(doc.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe(HOME_URL);
+    expect(robotsContent(body)).toBe("index,follow,max-image-preview:large");
+    expect(doc.querySelector('meta[property="og:url"]')?.getAttribute("content")).toBe(HOME_URL);
+    expect(doc.title).toBe("KI-gestützte Jobsuche & Job Matching | May's Job Matcher");
   });
 });
 
@@ -101,23 +108,25 @@ describe.each([...APP_ROUTES])("served private route %s", (route) => {
   it("returns no canonical and noindex at HTTP level", async () => {
     const response = await get(route);
     const body = await response.text();
+    const doc = parseHtml(body);
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-robots-tag")).toContain("noindex");
-    expect(body).not.toContain('rel="canonical"');
-    expect(body).not.toContain('property="og:url"');
-    expect(body).toContain('name="robots" content="noindex,nofollow"');
+    expect(doc.querySelector('link[rel="canonical"]')).toBeNull();
+    expect(doc.querySelector('meta[property="og:url"]')).toBeNull();
+    expect(robotsContent(body)).toContain("noindex");
   });
 });
 
 describe("technical SEO files", () => {
-  it("serves robots.txt with a sitemap reference", async () => {
+  it("serves robots.txt with a sitemap reference and no API crawling", async () => {
     const response = await get("/robots.txt");
     const body = await response.text();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/plain");
     expect(body).toContain(`Sitemap: ${HOME_URL}sitemap.xml`);
+    expect(body).toContain("Disallow: /api/");
   });
 
   it("serves a sitemap limited to the landing page", async () => {

@@ -59,6 +59,16 @@ describe("applyRouteSeoHead", () => {
     expect(robotsContent()).toBe("index,follow,max-image-preview:large");
   });
 
+  it("treats /index.html as the landing page", () => {
+    createHead("https://example.invalid/");
+
+    applyRouteSeoHead("/index.html");
+
+    expect(canonicalLinks()).toHaveLength(1);
+    expect(canonicalLinks()[0].getAttribute("href")).toBe(HOME_URL);
+    expect(robotsContent()).toBe("index,follow,max-image-preview:large");
+  });
+
   it("is idempotent and repairs a wrong canonical", () => {
     createHead("https://example.invalid/");
 

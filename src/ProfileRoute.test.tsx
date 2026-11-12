@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
+import { act } from "react";
 import { LangProvider } from "./i18n";
 import App from "./App";
 import type { ModelsResponse } from "./types";
@@ -54,6 +55,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   cleanup();
+  document.head.innerHTML = "";
   window.history.pushState({}, "", "/search");
 });
 
@@ -129,5 +131,33 @@ describe("PROFILE-ROUTING-FIX-01: /profil rendert die Profilseite", () => {
     renderAt("/impressum");
     expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
     expect(screen.queryByText("Benutzer-ID")).toBeNull();
+  });
+
+  it("entfernt auf /profil das Landing-Canonical und setzt noindex", () => {
+    document.head.innerHTML =
+      '<meta name="robots" content="index,follow"><link rel="canonical" href="https://www.mays-job-matcher.app/">';
+
+    renderAt("/profil");
+
+    expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
+    expect(document.head.querySelector('meta[name="robots"]')?.getAttribute("content")).toBe(
+      "noindex,nofollow",
+    );
+  });
+
+  it("entfernt das Canonical auch bei popstate auf eine private Route", () => {
+    renderAt("/search");
+    document.head.innerHTML =
+      '<meta name="robots" content="index,follow"><link rel="canonical" href="https://www.mays-job-matcher.app/">';
+
+    act(() => {
+      window.history.pushState({}, "", "/profil");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
+    expect(document.head.querySelector('meta[name="robots"]')?.getAttribute("content")).toBe(
+      "noindex,nofollow",
+    );
   });
 });
