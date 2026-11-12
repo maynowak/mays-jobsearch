@@ -5982,3 +5982,22 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Focused 84 PASS, serial full **1788 PASS / 5 skipped**, build PASS; existing
   02A–02F/PDF E2E and new workspace E2E PASS. Code commit `36ca447`; no main
   merge, deployment, RIS/AWS/Cognito/Terraform/consent change or private data.
+
+## 2026-11-12 — CV-BUILDER-03A HANDOFF SAFETY
+
+- Handoff protocol now requires workspace `accepted` before source closes the
+  import/editor state and waits for `return-result`; only `applied` is shown as
+  success. `conflict` keeps workspace data, identity/session results clear it.
+- Failed/blocked/closed/timeout/new-tab-not-confirmed paths keep the source
+  import review and skill selection intact; E2E covers blocked, closed and
+  timeout cases.
+- Source checks current identity, session epoch and CV repository generation
+  immediately before repository writes; identity changes invalidate active
+  handoffs and send `session-ended`; workspace clears all local CV data.
+- `workspaceOwnershipRejection` unit tests cover identity/epoch/generation;
+  stale repeated return E2E shows conflict without overwrite. Authenticated
+  logout/user-switch browser E2E was not possible without an approved test
+  identity and is explicitly documented as a verification boundary.
+- Focused 88 PASS, serial full **1792 PASS / 5 skipped**, build PASS; all
+  existing 02A–02F/PDF E2E and the expanded full-page E2E PASS. No main merge,
+  deployment, RIS/AWS/Cognito/Terraform/consent change or private data.
