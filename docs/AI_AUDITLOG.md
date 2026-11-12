@@ -6026,3 +6026,52 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Added exact rewrite `/cv-builder/workspace -> /index.html`; no workspace
   code/behavior changed. Live re-verification required after corrected
   deployment.
+
+## 2026-11-12 — JM-MARKETING-01A — SEO FOUNDATION
+
+**Typ:** Technical SEO / Indexing protection / SPA delivery
+**Status:** `IMPLEMENTED — TESTED (LOCAL) — READY FOR PREVIEW REVIEW — NOT PUSHED/DEPLOYED`
+
+- Git baseline: `origin/main` `a0dc1ec`; feature branch
+  `feature/jm-marketing-01a-seo-foundation`; commits `afb5bf1`, `0a99b1f`,
+  `1822674`, `b93c8c2` (+ docs commit). 4/0 ahead, no push, no merge, no
+  deployment.
+- Landing metadata in `index.html`: German title/description from the
+  assignment, canonical `https://www.mays-job-matcher.app/`, Open Graph,
+  Twitter `summary_large_image`, `lang="de"`; `og:image` uses the existing
+  public/verified `job-matcher-next-step.webp` asset.
+- Indexing protection: new `app.html` shell without canonical/OG-URL and with
+  `noindex,nofollow`; all non-home SPA rewrites now point to `/app.html`;
+  `X-Robots-Tag: noindex, nofollow` for `/search`, `/cv-builder/workspace`,
+  `/landingspage2`, `/registrieren`, `/anmelden`, `/auth/callback`, `/profil`,
+  `/email-bestaetigen`, `/impressum`, `/datenschutz`,
+  `/datenschutzprinzipien`, `/app.html`, `/dev/(.*)`. The existing static
+  `public/datenschutzprinzipien/index.html` keeps filesystem precedence and
+  now also carries `noindex,nofollow`; a delivery test models that precedence.
+- `public/robots.txt` (Allow `/`, `Disallow: /api/`, Sitemap reference) and
+  `public/sitemap.xml` (only `/`) added. API rewrites, redirects, cron,
+  functions and `git.deploymentEnabled` unchanged; no new dependencies.
+- Client-side `src/lib/seoHead.ts` removes the landing canonical and sets
+  `noindex` in the Vite dev fallback and on SPA/popstate transitions;
+  HTTP-level delivery remains the primary control. Drift tests compare
+  `APP_ROUTES` with the non-API rewrite list and with route literals in
+  `App.tsx`/`rootRoute.ts`.
+- Tests: focused SEO/routing **77/77 PASS**; two full-suite runs each hit
+  timeouts in `ManualSearchProfiles.integration.test.tsx` under parallel load
+  (1 and 2 tests), isolated **8/8 PASS**, full rerun **1864 passed /
+  5 skipped**; build (`tsc -b` + Vite) PASS; `git diff --check` PASS;
+  `dist/app.html`, `dist/index.html`, `dist/robots.txt`, `dist/sitemap.xml`
+  and the noindex principles page present.
+- Local HTTP simulation of the built files + `vercel.json`: `/` 200 with
+  canonical and no `X-Robots-Tag`; every listed app route 200 with
+  `X-Robots-Tag: noindex, nofollow` and no canonical; robots/sitemap 200 with
+  correct content types. This is not a Vercel-preview proof.
+- Live baseline (read-only): non-www → www 308; production still serves the
+  old generic title and 404 for robots/sitemap until a deployment occurs.
+- Privacy/security: independent scope and security reviews returned READY
+  without blockers; no new data flows, no RIS/AWS/Cognito/Terraform changes,
+  no secrets or personal data; `noindex` is explicitly not access control.
+- Open: real Vercel preview header/rewrite/filesystem verification,
+  `og:image` format, metadata/product decision for legal pages, push/preview
+  approval.
+- Report: `docs/reports/JM-MARKETING-01A-SEO-FOUNDATION-REPORT.md`.
