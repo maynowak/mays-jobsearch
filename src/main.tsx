@@ -6,6 +6,7 @@ import { LangProvider } from "./i18n";
 import { rootComponentFor } from "./rootRoute";
 import { AuthProvider } from "react-oidc-context";
 import { oidcConfig } from "./lib/oidcConfig";
+import { applyRouteSeoHead } from "./lib/seoHead";
 
 // LANDINGPAGE-SWAP: "/" rendert LandingPage2 (PRODUKTIONS-Landingpage,
 // OHNE App-Logik; Historie siehe LandingPage2.tsx Kopfkommentar), alles
@@ -14,6 +15,11 @@ import { oidcConfig } from "./lib/oidcConfig";
 // Entscheidung testbar in rootRoute.ts.
 const rootComponent =
   typeof window !== "undefined" ? rootComponentFor(window.location.pathname) : "app";
+
+if (typeof window !== "undefined") {
+  applyRouteSeoHead(window.location.pathname);
+  window.addEventListener("popstate", () => applyRouteSeoHead(window.location.pathname));
+}
 
 createRoot(document.getElementById("root")!).render(
   <LangProvider>

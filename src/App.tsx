@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "./lib/scrollLock";
+import { applyRouteSeoHead } from "./lib/seoHead";
 import type { Job, Match, Profile, StatusMessage, CvDocument, CvProcessingState, AnonymizationMode, ProcessingGoal, EmploymentType } from "./types";
 import { fetchJobs, fetchMatches, isFreeQuotaExceeded, isModelUnavailable, withModelFallback, createProfile, analyzeATS, applyCvImprovement, computeMatchImpact, ApiError } from "./api";
 import { useLang } from "./i18n";
@@ -292,7 +293,7 @@ export default function App() {
   // Zustimmung zu erteilen. Der Consent bleibt dann ausstehend und kann über
   // "Einwilligung anzeigen" erneut geöffnet werden.
   const [consentDismissed, setConsentDismissed] = useState(false);
-  const [, setNavigationVersion] = useState(0);
+  const [navigationVersion, setNavigationVersion] = useState(0);
   const cvOperationRef = useRef<string | null>(null);
   // BUG-19: aktiven CV-Step fokussieren (Scroll-Handling siehe Effekt unten)
   const cvWorkflowRef = useRef<HTMLElement | null>(null);
@@ -622,6 +623,11 @@ export default function App() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // JM-MARKETING-01A: never leave the landing-page canonical on an application route.
+  useEffect(() => {
+    applyRouteSeoHead(window.location.pathname);
+  }, [navigationVersion]);
 
   const navigateInApp = (href: string) => {
     if (window.location.pathname + window.location.search === href) return;
