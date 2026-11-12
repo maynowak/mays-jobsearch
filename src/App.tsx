@@ -36,7 +36,16 @@ import CvDocumentList from "./components/CvDocumentList";
 import CvBuilderEditor from "./components/CvBuilderEditor";
 import CvBuilderImportDialog from "./components/CvBuilderImportDialog";
 import type { CvBuilderImportReviewSummary } from "./components/CvBuilderImportReview";
-import { applyWorkspaceEditorReturn, openCvBuilderWorkspace, type CvBuilderImportSession, type CvBuilderWorkspaceReturnPayload } from "./lib/cvBuilder/workspaceHandoff";
+import {
+  applyWorkspaceEditorReturn,
+  invalidateWorkspaceHandoffs,
+  openCvBuilderWorkspace,
+  workspaceOwnershipRejection,
+  type CvBuilderImportSession,
+  type CvBuilderWorkspaceOwnership,
+  type CvBuilderWorkspaceReturnPayload,
+  type CvBuilderWorkspaceReturnStatus,
+} from "./lib/cvBuilder/workspaceHandoff";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
@@ -90,6 +99,7 @@ import type { CvBuilderTemplate } from "./lib/cvBuilder/templates";
 import {
   beginNewCvBuilderSession,
   createCvBuilderProfileRepository,
+  currentCvBuilderSessionGeneration,
 } from "./lib/cvBuilder/profileRepository";
 import {
   cloneCvBuilderDraft,
@@ -301,6 +311,10 @@ export default function App() {
   // `iss` + `sub` is the stable identity combination. Email is not used as an
   // identity fallback because identical addresses must not merge users.
   const authProfileKey = deriveAuthProfileKey(isAuth, auth.user?.profile);
+  // Handoff callbacks are created when a tab is opened. The ref always reflects
+  // the identity at the moment a return is written to the repository.
+  const authProfileKeyRef = useRef(authProfileKey);
+  authProfileKeyRef.current = authProfileKey;
   const [applicationStorageMode, setApplicationStorageMode] = useState<"session" | "remote">("session");
   const [cvStorageMode, setCvStorageMode] = useState<"session" | "persistent">("session");
   const cvStorageAutoSelectedRef = useRef(false);
@@ -415,6 +429,8 @@ export default function App() {
     const previous = previousAuthProfileKeyRef.current;
     if (previous !== undefined && previous !== authProfileKey) {
       sessionEpochRef.current += 1;
+      // A handoff from the previous identity can never return into the new one.
+      invalidateWorkspaceHandoffs();
       // Invalidate every repository instance created for the previous identity
       // so a late operation cannot write into the new session.
       beginNewProfileSession();
@@ -1263,26 +1279,45 @@ export default function App() {
     return profiles;
   };
 
+  const workspaceExpectation = (): CvBuilderWorkspaceOwnership => ({
+    identityKey: authProfileKeyRef.current,
+    epoch: sessionEpochRef.current,
+    cvGeneration: currentCvBuilderSessionGeneration(),
+  });
+
+  const workspaceOpenFailure = (reason: "blocked" | "timeout" | "closed" | "invalid") => {
+    const key = reason === "blocked"
+      ? "cvBuilder.workspace.popupBlocked"
+      : reason === "closed"
+        ? "cvBuilder.workspace.handoffClosed"
+        : "cvBuilder.workspace.handoffNotAccepted";
+    setStatus({ type: "error", message: t(key) });
+  };
+
   const handleOpenImportWorkspace = (session: CvBuilderImportSession) => {
-    const opened = openCvBuilderWorkspace(
-      { kind: "import", identityKey: authProfileKey, session },
-      handleWorkspaceReturn
-    );
-    if (!opened) {
-      setStatus({ type: "error", message: t("cvBuilder.workspace.popupBlocked") });
-      return;
-    }
-    setCvBuilderImportOpen(false);
+    const expected = workspaceExpectation();
+    void openCvBuilderWorkspace(
+      { kind: "import", identityKey: expected.identityKey, session },
+      (payload) => handleWorkspaceReturn(payload, expected)
+    ).then((result) => {
+      if (!result.ok) {
+        // The import dialog stays open with every decision intact.
+        workspaceOpenFailure(result.reason);
+        return;
+      }
+      setCvBuilderImportOpen(false);
+    });
   };
 
   const handleOpenEditorWorkspace = () => {
     const profile = cvBuilderProfileId
       ? cvProfileRepositoryRef.current?.get(cvBuilderProfileId) ?? null
       : null;
-    const opened = openCvBuilderWorkspace(
+    const expected = workspaceExpectation();
+    void openCvBuilderWorkspace(
       {
         kind: "editor",
-        identityKey: authProfileKey,
+        identityKey: expected.identityKey,
         editor: {
           draft: cloneCvBuilderDraft(cvBuilderDraft),
           template: cvBuilderTemplate,
@@ -1293,22 +1328,46 @@ export default function App() {
           dirty: cvBuilderDirty,
         },
       },
-      handleWorkspaceReturn
-    );
-    if (!opened) {
-      setStatus({ type: "error", message: t("cvBuilder.workspace.popupBlocked") });
-      return;
-    }
-    setCvBuilderOpen(false);
+      (payload) => handleWorkspaceReturn(payload, expected)
+    ).then((result) => {
+      if (!result.ok) {
+        workspaceOpenFailure(result.reason);
+        return;
+      }
+      setCvBuilderOpen(false);
+    });
   };
 
-  const handleWorkspaceReturn = (payload: CvBuilderWorkspaceReturnPayload) => {
-    if (payload.identityKey !== authProfileKey) {
+  const handleWorkspaceReturn = (
+    payload: CvBuilderWorkspaceReturnPayload,
+    expected: CvBuilderWorkspaceOwnership
+  ): CvBuilderWorkspaceReturnStatus => {
+    // These checks run immediately before the repository write. Do not rely on
+    // the identity/session values captured when the tab was opened.
+    const rejection = workspaceOwnershipRejection(
+      payload.identityKey,
+      expected,
+      {
+        identityKey: authProfileKeyRef.current,
+        epoch: sessionEpochRef.current,
+        cvGeneration: currentCvBuilderSessionGeneration(),
+      }
+    );
+    if (rejection === "identity_changed") {
+      invalidateWorkspaceHandoffs();
       setStatus({ type: "error", message: t("cvBuilder.workspace.identityChanged") });
-      return;
+      return "identity_changed";
+    }
+    if (rejection === "session_ended") {
+      invalidateWorkspaceHandoffs();
+      setStatus({ type: "error", message: t("cvBuilder.workspace.sessionEnded") });
+      return "session_ended";
     }
     const repository = cvProfileRepositoryRef.current;
-    if (!repository) return;
+    if (!repository) {
+      setStatus({ type: "error", message: t("cvBuilder.profiles.error") });
+      return "error";
+    }
     const editor = payload.editor;
     try {
       const result = applyWorkspaceEditorReturn(
@@ -1320,7 +1379,7 @@ export default function App() {
         setCvBuilderOpen(true);
         setCvBuilderSaveError(t("cvBuilder.workspace.conflict"));
         setStatus({ type: "error", message: t("cvBuilder.workspace.conflict") });
-        return;
+        return "conflict";
       }
       if (result.status === "created" || result.status === "updated") {
         refreshCvProfiles();
@@ -1334,7 +1393,7 @@ export default function App() {
         setCvBuilderImportReview(editor.importReview);
         setCvBuilderOpen(true);
         setStatus({ type: "info", message: t("cvBuilder.workspace.returnSuccess") });
-        return;
+        return "applied";
       }
       setCvBuilderProfileId(null);
       setCvBuilderDraft(cloneCvBuilderDraft(editor.draft));
@@ -1346,10 +1405,12 @@ export default function App() {
       setCvBuilderImportReview(editor.importReview);
       setCvBuilderOpen(true);
       setStatus({ type: "info", message: t("cvBuilder.workspace.returnSuccess") });
+      return "applied";
     } catch {
       setCvBuilderOpen(true);
       setCvBuilderSaveError(t("cvBuilder.profiles.error"));
       setStatus({ type: "error", message: t("cvBuilder.profiles.error") });
+      return "error";
     }
   };
 

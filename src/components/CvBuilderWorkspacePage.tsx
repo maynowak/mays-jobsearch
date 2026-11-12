@@ -13,6 +13,7 @@ import CvBuilderImportDialog from "./CvBuilderImportDialog";
 import CvBuilderEditor from "./CvBuilderEditor";
 import {
   WORKSPACE_PATH,
+  acceptWorkspaceHandoff,
   hasWorkspaceOpener,
   readHandoffId,
   requestWorkspaceHandoff,
@@ -68,6 +69,7 @@ export default function CvBuilderWorkspacePage() {
   const [workspaceMessage, setWorkspaceMessage] = useState("");
   const repoRef = useRef<CvBuilderProfileRepository | null>(null);
   const requestedRef = useRef(false);
+  const handoffCleanupRef = useRef<(() => void) | null>(null);
 
   if (!repoRef.current) {
     repoRef.current = createCvBuilderProfileRepository();
@@ -89,6 +91,33 @@ export default function CvBuilderWorkspacePage() {
     setSaveError("");
     setMode("editor");
   };
+
+  const clearWorkspaceData = (message: string) => {
+    handoffCleanupRef.current?.();
+    handoffCleanupRef.current = null;
+    repoRef.current?.invalidate();
+    repoRef.current = createCvBuilderProfileRepository();
+    setInitialImportSession(null);
+    setSession(null);
+    setDraft(emptyDraft());
+    setTemplate("classic");
+    setProfileId(null);
+    setProfileName("");
+    setBaseVersion(null);
+    setImportReview(null);
+    setDirty(false);
+    setSaved(false);
+    setSaving(false);
+    setSaveError("");
+    setWorkspaceMessage("");
+    setHandoffError(message);
+    setMode("error");
+  };
+
+  useEffect(() => () => {
+    handoffCleanupRef.current?.();
+    handoffCleanupRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (!handoffId) {
@@ -112,6 +141,9 @@ export default function CvBuilderWorkspacePage() {
       setHandoffIdentity(payload.identityKey);
       activeHandoffIdRef.current = handoffId;
       window.history.replaceState({}, "", WORKSPACE_PATH);
+      handoffCleanupRef.current = acceptWorkspaceHandoff(handoffId, () => {
+        clearWorkspaceData(t("cvBuilder.workspace.sessionEnded"));
+      });
       if (payload.kind === "import") {
         setInitialImportSession(payload.session);
         setSession(payload.session);
@@ -127,8 +159,7 @@ export default function CvBuilderWorkspacePage() {
   useEffect(() => {
     if (handoffIdentity === undefined) return;
     if (handoffIdentity !== currentIdentity) {
-      setHandoffError(t("cvBuilder.workspace.identityChanged"));
-      setMode("error");
+      clearWorkspaceData(t("cvBuilder.workspace.identityChanged"));
     }
   }, [currentIdentity, handoffIdentity, t]);
 
@@ -220,7 +251,7 @@ export default function CvBuilderWorkspacePage() {
     setMode("start");
   };
 
-  const handleReturnToApp = () => {
+  const handleReturnToApp = async () => {
     const activeHandoffId = activeHandoffIdRef.current;
     if (!activeHandoffId) {
       setWorkspaceMessage(t("cvBuilder.workspace.returnUnavailable"));
@@ -243,11 +274,32 @@ export default function CvBuilderWorkspacePage() {
         dirty,
       },
     };
-    if (!sendWorkspaceReturn(activeHandoffId, payload)) {
+    const result = await sendWorkspaceReturn(activeHandoffId, payload);
+    if (result === "applied") {
+      setWorkspaceMessage(t("cvBuilder.workspace.returnSuccess"));
+      return;
+    }
+    if (result === "conflict") {
+      setWorkspaceMessage(t("cvBuilder.workspace.conflict"));
+      return;
+    }
+    if (result === "identity_changed") {
+      clearWorkspaceData(t("cvBuilder.workspace.identityChanged"));
+      return;
+    }
+    if (result === "session_ended") {
+      clearWorkspaceData(t("cvBuilder.workspace.sessionEnded"));
+      return;
+    }
+    if (result === "unreachable") {
       setWorkspaceMessage(t("cvBuilder.workspace.returnUnavailable"));
       return;
     }
-    setWorkspaceMessage(t("cvBuilder.workspace.returnSuccess"));
+    if (result === "timeout") {
+      setWorkspaceMessage(t("cvBuilder.workspace.returnNotConfirmed"));
+      return;
+    }
+    setWorkspaceMessage(t("cvBuilder.workspace.returnError"));
   };
 
   const header = (

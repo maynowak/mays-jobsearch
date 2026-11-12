@@ -115,6 +115,7 @@ async function run() {
     await popup.getByRole("heading", { name: "Vorhandenen Lebenslauf importieren" }).waitFor();
     if ((await popup.locator(".cv-import-workspace").count()) !== 1) throw new Error("full-page import layout missing");
     if ((await popup.locator(".modal.cv-import-modal").count()) !== 0) throw new Error("import is still a modal");
+    if ((await page.locator(".cv-import-modal").count()) !== 0) throw new Error("source dialog closed before acceptance");
     if ((await popup.locator(".cv-import-skills__count").innerText()) !== selectedSkillCount) {
       throw new Error("skill selection was not preserved in new tab");
     }
@@ -192,6 +193,15 @@ async function run() {
       throw new Error("editor handoff return did not update the source form");
     }
 
+    // The editor workspace still has baseVersion 1. After the source was
+    // updated to version 2, a second return must be rejected, not overwrite.
+    await editorPopup.getByLabel("Vollständiger Name").fill("Nora Conflict Attempt");
+    await editorPopup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
+    await editorPopup.getByText("Der Lebenslauf wurde im Hauptfenster geändert. Die Workspace-Änderungen wurden nicht übernommen. Prüfe die Versionen vor dem erneuten Speichern.").waitFor();
+    if ((await page.getByLabel("Vollständiger Name").inputValue()) !== "Nora Beispiel 03A Tab") {
+      throw new Error("stale editor return overwrote the source profile");
+    }
+
     const direct = await context.newPage();
     await direct.goto(`${base}/cv-builder/workspace`, { waitUntil: "networkidle" });
     await direct.getByRole("heading", { name: "CV-Workspace starten" }).waitFor();
@@ -205,9 +215,50 @@ async function run() {
     await blocked.addInitScript(() => localStorage.setItem("mj-lang", "de"));
     await mockApi(blocked);
     await importPreview(blocked, pdf);
+    await blocked.locator('.cv-import-skills__list input[type="checkbox"]').first().uncheck();
+    const blockedSkillCount = await blocked.locator(".cv-import-skills__count").innerText();
     await blocked.evaluate(() => { window.open = () => null; });
     await blocked.getByRole("button", { name: /In neuem Tab öffnen/ }).click();
     await blocked.getByText("Der Browser hat den neuen Tab blockiert. Erlaube Pop-ups und versuche es erneut.").waitFor();
+    if ((await blocked.locator(".cv-import-modal").count()) !== 1) throw new Error("blocked handoff lost the import review");
+    if ((await blocked.locator(".cv-import-skills__count").innerText()) !== blockedSkillCount) throw new Error("blocked handoff lost skill selection");
+
+    const timeoutPage = await context.newPage();
+    await timeoutPage.addInitScript(() => localStorage.setItem("mj-lang", "de"));
+    await mockApi(timeoutPage);
+    await importPreview(timeoutPage, pdf);
+    await timeoutPage.evaluate(() => {
+      const original = window.open.bind(window);
+      window.open = (url, target, features) => original("/__workspace_never_ready__", target, features);
+    });
+    await timeoutPage.getByRole("button", { name: /In neuem Tab öffnen/ }).click();
+    await timeoutPage.getByText("Der neue Tab hat die Übergabe nicht bestätigt. Deine Importprüfung bleibt verfügbar.").waitFor({ timeout: 25000 });
+    if ((await timeoutPage.locator(".cv-import-modal").count()) !== 1) throw new Error("timed-out handoff lost the import review");
+    await timeoutPage.close();
+
+    const closing = await context.newPage();
+    await closing.addInitScript(() => localStorage.setItem("mj-lang", "de"));
+    await mockApi(closing);
+    await importPreview(closing, pdf);
+    const closingPopupPromise = context.waitForEvent("page");
+    await closing.getByRole("button", { name: /In neuem Tab öffnen/ }).click();
+    const closingPopup = await closingPopupPromise;
+    await closingPopup.close();
+    await closing.waitForTimeout(1200);
+    if ((await closing.locator(".cv-import-modal").count()) !== 1) throw new Error("closed handoff lost the import review");
+    await blocked.close();
+    await closing.close();
+
+    const orphanPopupPromise = context.waitForEvent("page");
+    await page.getByRole("button", { name: /Editor in neuem Tab öffnen/ }).click();
+    const orphanPopup = await orphanPopupPromise;
+    await orphanPopup.waitForLoadState("networkidle");
+    await orphanPopup.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
+    const orphanName = await orphanPopup.getByLabel("Vollständiger Name").inputValue();
+    await page.close();
+    await orphanPopup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
+    await orphanPopup.getByText("Das Hauptfenster ist geschlossen. Bearbeite lokal weiter und exportiere die PDF.").waitFor();
+    if ((await orphanPopup.getByLabel("Vollständiger Name").inputValue()) !== orphanName) throw new Error("closed source changed local workspace data");
 
     if (apiCalls.some((entry) => !entry.startsWith("GET "))) throw new Error(`non-GET API: ${apiCalls.join(", ")}`);
     if (apiCalls.some((entry) => entry.includes("/api/ris/"))) throw new Error(`RIS API call: ${apiCalls.join(", ")}`);
@@ -217,9 +268,13 @@ async function run() {
       handoff: { sourceSkillCount, selectedSkillCount, popupSkillCount: selectedSkillCount },
       screenshot: { beforeOpen, afterOpen, viewportResults, screenshotBytes: screenshotStat.size },
       return: "PASS",
+      conflict: "PASS",
       editorHandoff: "PASS",
       directRoute: "PASS",
       popupBlocker: "PASS",
+      timeoutHandoff: "review-preserved",
+      closedHandoff: "review-preserved",
+      closedSource: "local-data-preserved",
       apiCalls,
     };
     console.log(JSON.stringify(result, null, 2));

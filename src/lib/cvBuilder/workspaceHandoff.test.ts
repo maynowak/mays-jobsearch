@@ -5,6 +5,7 @@ import {
   isWorkspaceReturnPayload,
   readHandoffId,
   sendWorkspaceReturn,
+  workspaceOwnershipRejection,
   workspaceUrl,
   type CvBuilderWorkspaceOpenPayload,
   type CvBuilderWorkspaceReturnPayload,
@@ -101,15 +102,15 @@ describe("CV-BUILDER-03A workspace handoff", () => {
     expect(isWorkspaceReturnPayload({ ...returned, identityKey: 1 })).toBe(false);
   });
 
-  it("returns false without an opener instead of pretending a transfer", () => {
-    expect(sendWorkspaceReturn("24f6c5c3-7e5d-4a0b-9c9f-0b48ba5e75d2", returned)).toBe(false);
+  it("reports an unreachable opener instead of pretending a transfer", async () => {
+    await expect(sendWorkspaceReturn("24f6c5c3-7e5d-4a0b-9c9f-0b48ba5e75d2", returned)).resolves.toBe("unreachable");
   });
 
   it("returns false when the popup is blocked", () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
-    const modulePromise = import("./workspaceHandoff").then((module) => module.openCvBuilderWorkspace(openImport, () => undefined));
+    const modulePromise = import("./workspaceHandoff").then((module) => module.openCvBuilderWorkspace(openImport, () => "applied"));
     return modulePromise.then((result) => {
-      expect(result).toBe(false);
+      expect(result).toEqual({ ok: false, reason: "blocked" });
       open.mockRestore();
     });
   });
@@ -164,5 +165,26 @@ describe("CV-BUILDER-03A workspace return ownership", () => {
     const repository = createCvBuilderProfileRepository();
     const result = applyWorkspaceEditorReturn(repository, { ...editor, profile: null, baseVersion: null }, "Fallback");
     expect(result.status).toBe("draft");
+  });
+});
+
+describe("CV-BUILDER-03A workspace ownership checks", () => {
+  const expected = { identityKey: "issuer|user-a", epoch: 3, cvGeneration: 7 };
+
+  it("accepts the same identity and session generation", () => {
+    expect(workspaceOwnershipRejection("issuer|user-a", expected, expected)).toBeNull();
+  });
+
+  it("rejects a different current identity", () => {
+    expect(workspaceOwnershipRejection("issuer|user-a", expected, { ...expected, identityKey: "issuer|user-b" })).toBe("identity_changed");
+  });
+
+  it("rejects a payload from an old identity", () => {
+    expect(workspaceOwnershipRejection("issuer|user-b", expected, expected)).toBe("identity_changed");
+  });
+
+  it("rejects a changed session epoch or CV session generation", () => {
+    expect(workspaceOwnershipRejection("issuer|user-a", expected, { ...expected, epoch: 4 })).toBe("session_ended");
+    expect(workspaceOwnershipRejection("issuer|user-a", expected, { ...expected, cvGeneration: 8 })).toBe("session_ended");
   });
 });

@@ -9,7 +9,19 @@ import type { CvBuilderImportReviewSummary } from "../../components/CvBuilderImp
 export const WORKSPACE_PATH = "/cv-builder/workspace";
 const HANDOFF_PARAM = "handoff";
 const MESSAGE_SOURCE = "mays-cv-workspace";
-const READY_TIMEOUT_MS = 60_000;
+const READY_TIMEOUT_MS = 20_000;
+const RETURN_TIMEOUT_MS = 10_000;
+
+export type CvBuilderWorkspaceReturnStatus =
+  | "applied"
+  | "conflict"
+  | "identity_changed"
+  | "session_ended"
+  | "error";
+
+export type CvBuilderWorkspaceOpenResult =
+  | { ok: true }
+  | { ok: false; reason: "blocked" | "timeout" | "closed" | "invalid" };
 
 export type CvBuilderImportStep = "source" | "preview" | "summary";
 
@@ -54,8 +66,23 @@ export interface CvBuilderWorkspaceReturnPayload {
 type WorkspaceMessage =
   | { source: typeof MESSAGE_SOURCE; type: "ready"; handoffId: string }
   | { source: typeof MESSAGE_SOURCE; type: "handoff"; handoffId: string; payload: CvBuilderWorkspaceOpenPayload }
-  | { source: typeof MESSAGE_SOURCE; type: "ack"; handoffId: string }
-  | { source: typeof MESSAGE_SOURCE; type: "return"; handoffId: string; payload: CvBuilderWorkspaceReturnPayload };
+  | { source: typeof MESSAGE_SOURCE; type: "accepted"; handoffId: string }
+  | { source: typeof MESSAGE_SOURCE; type: "session-ended"; handoffId: string }
+  | { source: typeof MESSAGE_SOURCE; type: "return"; handoffId: string; payload: CvBuilderWorkspaceReturnPayload }
+  | { source: typeof MESSAGE_SOURCE; type: "return-result"; handoffId: string; result: CvBuilderWorkspaceReturnStatus }
+  | { source: typeof MESSAGE_SOURCE; type: "return-timeout"; handoffId: string };
+
+interface ActiveHandoff {
+  accepted: boolean;
+  invalidate: () => void;
+}
+
+const activeHandoffs = new Map<string, ActiveHandoff>();
+
+export function invalidateWorkspaceHandoffs(): void {
+  for (const handoff of [...activeHandoffs.values()]) handoff.invalidate();
+  activeHandoffs.clear();
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -140,56 +167,102 @@ export function readHandoffId(): string | null {
 }
 
 /**
- * Opens a same-origin workspace tab and delivers the CV snapshot only after the
- * new tab proves that it is the expected window. The URL contains only the
- * random handoff id. Returns false when the browser blocks the popup.
+ * Opens a same-origin workspace tab and resolves only after the new tab has
+ * confirmed receipt and hydration of the handoff. A successful `window.open`
+ * or `postMessage` alone is not acceptance.
  */
 export function openCvBuilderWorkspace(
   payload: CvBuilderWorkspaceOpenPayload,
-  onReturn: (payload: CvBuilderWorkspaceReturnPayload) => void
-): boolean {
-  if (typeof window === "undefined") return false;
+  onReturn: (payload: CvBuilderWorkspaceReturnPayload) => CvBuilderWorkspaceReturnStatus | Promise<CvBuilderWorkspaceReturnStatus>
+): Promise<CvBuilderWorkspaceOpenResult> {
+  if (typeof window === "undefined") return Promise.resolve({ ok: false, reason: "blocked" });
+  invalidateWorkspaceHandoffs();
   const handoffId = createHandoffId();
   const child = window.open(workspaceUrl(handoffId), "_blank");
-  if (!child) return false;
+  if (!child) return Promise.resolve({ ok: false, reason: "blocked" });
 
-  let delivered = false;
-  let closed = false;
-  let readyTimer = 0;
-  const cleanup = () => {
-    if (closed) return;
-    closed = true;
-    window.clearTimeout(readyTimer);
-    window.removeEventListener("message", handleMessage);
-  };
-  const handleMessage = (event: MessageEvent<unknown>) => {
-    if (event.origin !== window.location.origin) return;
-    if (event.source !== child) return;
-    if (!isRecord(event.data) || event.data.source !== MESSAGE_SOURCE) return;
-    if (event.data.handoffId !== handoffId) return;
-    if (event.data.type === "ready" && !delivered) {
-      delivered = true;
+  return new Promise((resolve) => {
+    let delivered = false;
+    let accepted = false;
+    let settled = false;
+    let disposed = false;
+    let readyTimer = 0;
+    let closedTimer = 0;
+    const cleanup = () => {
+      if (disposed) return;
+      disposed = true;
       window.clearTimeout(readyTimer);
-      postTo(child, {
-        source: MESSAGE_SOURCE,
-        type: "handoff",
-        handoffId,
-        payload,
-      });
-      return;
-    }
-    if (event.data.type === "return" && isWorkspaceReturnPayload(event.data.payload)) {
-      onReturn(event.data.payload);
+      window.clearInterval(closedTimer);
+      window.removeEventListener("message", handleMessage);
+      activeHandoffs.delete(handoffId);
+    };
+    const fail = (reason: "timeout" | "closed" | "invalid") => {
+      if (settled) {
+        cleanup();
+        return;
+      }
+      settled = true;
       cleanup();
-    }
-  };
-  window.addEventListener("message", handleMessage);
-  readyTimer = window.setTimeout(() => {
-    if (delivered) return;
-    cleanup();
-    try { child.close(); } catch { /* ignore */ }
-  }, READY_TIMEOUT_MS);
-  return true;
+      try { child.close(); } catch { /* ignore */ }
+      resolve({ ok: false, reason });
+    };
+    const respond = (result: CvBuilderWorkspaceReturnStatus) => {
+      postTo(child, { source: MESSAGE_SOURCE, type: "return-result", handoffId, result });
+    };
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.source !== child) return;
+      if (!isRecord(event.data) || event.data.source !== MESSAGE_SOURCE) return;
+      if (event.data.handoffId !== handoffId) return;
+      if (event.data.type === "ready" && !delivered) {
+        delivered = true;
+        window.clearTimeout(readyTimer);
+        postTo(child, {
+          source: MESSAGE_SOURCE,
+          type: "handoff",
+          handoffId,
+          payload,
+        });
+        return;
+      }
+      if (event.data.type === "accepted" && !settled) {
+        accepted = true;
+        settled = true;
+        window.clearTimeout(readyTimer);
+        resolve({ ok: true });
+        return;
+      }
+      if (event.data.type === "return" && !accepted) {
+        respond("error");
+        return;
+      }
+      if (event.data.type === "return" && isWorkspaceReturnPayload(event.data.payload)) {
+        void Promise.resolve(onReturn(event.data.payload))
+          .then((result) => respond(result))
+          .catch(() => respond("error"));
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    activeHandoffs.set(handoffId, {
+      get accepted() { return accepted; },
+      invalidate: () => {
+        if (!accepted) {
+          fail("closed");
+          return;
+        }
+        postTo(child, { source: MESSAGE_SOURCE, type: "session-ended", handoffId });
+        cleanup();
+      },
+    } as ActiveHandoff);
+    readyTimer = window.setTimeout(() => {
+      if (!accepted) fail("timeout");
+    }, READY_TIMEOUT_MS);
+    closedTimer = window.setInterval(() => {
+      if (!child.closed) return;
+      if (!accepted) fail("closed");
+      else cleanup();
+    }, 500);
+  });
 }
 
 /**
@@ -221,7 +294,6 @@ export function requestWorkspaceHandoff(
         return;
       }
       cleanup();
-      postTo(opener, { source: MESSAGE_SOURCE, type: "ack", handoffId });
       resolve(event.data.payload);
     };
     const timer = window.setTimeout(() => {
@@ -235,17 +307,98 @@ export function requestWorkspaceHandoff(
 }
 
 /**
- * Explicit return only. If the original tab is gone, this returns false and
- * the workspace must stay local rather than pretending a successful transfer.
+ * The workspace confirms that the payload has been accepted and hydrated.
+ * Only after this message may the source close its import/editor state.
+ */
+export function acceptWorkspaceHandoff(
+  handoffId: string,
+  onSessionEnded: () => void
+): () => void {
+  const opener = window.opener as Window | null;
+  if (!opener || opener.closed) return () => undefined;
+  let disposed = false;
+  const cleanup = () => {
+    if (disposed) return;
+    disposed = true;
+    window.removeEventListener("message", handleMessage);
+  };
+  const handleMessage = (event: MessageEvent<unknown>) => {
+    if (event.origin !== window.location.origin) return;
+    if (event.source !== opener) return;
+    if (!isRecord(event.data) || event.data.source !== MESSAGE_SOURCE) return;
+    if (event.data.handoffId !== handoffId) return;
+    if (event.data.type === "session-ended") {
+      cleanup();
+      onSessionEnded();
+    }
+  };
+  window.addEventListener("message", handleMessage);
+  postTo(opener, { source: MESSAGE_SOURCE, type: "accepted", handoffId });
+  return cleanup;
+}
+
+/**
+ * Explicit return only. The workspace must wait for the source result. A
+ * successful `postMessage` is not success: only `applied` is.
  */
 export function sendWorkspaceReturn(
   handoffId: string,
-  payload: CvBuilderWorkspaceReturnPayload
-): boolean {
+  payload: CvBuilderWorkspaceReturnPayload,
+  timeoutMs = RETURN_TIMEOUT_MS
+): Promise<CvBuilderWorkspaceReturnStatus | "timeout" | "unreachable" | "invalid"> {
   const opener = window.opener as Window | null;
-  if (!opener || opener.closed) return false;
-  postTo(opener, { source: MESSAGE_SOURCE, type: "return", handoffId, payload });
-  return true;
+  if (!opener || opener.closed) return Promise.resolve("unreachable");
+  return new Promise((resolve) => {
+    let settled = false;
+    const cleanup = () => {
+      settled = true;
+      window.clearTimeout(timer);
+      window.removeEventListener("message", handleMessage);
+    };
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      if (settled) return;
+      if (event.origin !== window.location.origin) return;
+      if (event.source !== opener) return;
+      if (!isRecord(event.data) || event.data.source !== MESSAGE_SOURCE) return;
+      if (event.data.handoffId !== handoffId) return;
+      if (event.data.type !== "return-result") return;
+      const result = event.data.result;
+      if (result !== "applied" && result !== "conflict" && result !== "identity_changed" && result !== "session_ended" && result !== "error") {
+        cleanup();
+        resolve("invalid");
+        return;
+      }
+      cleanup();
+      resolve(result);
+    };
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      cleanup();
+      resolve("timeout");
+    }, timeoutMs);
+    window.addEventListener("message", handleMessage);
+    postTo(opener, { source: MESSAGE_SOURCE, type: "return", handoffId, payload });
+  });
+}
+
+export interface CvBuilderWorkspaceOwnership {
+  identityKey: string | null;
+  epoch: number;
+  cvGeneration: number;
+}
+
+export function workspaceOwnershipRejection(
+  payloadIdentity: string | null,
+  expected: CvBuilderWorkspaceOwnership,
+  current: CvBuilderWorkspaceOwnership
+): "identity_changed" | "session_ended" | null {
+  if (payloadIdentity !== current.identityKey || current.identityKey !== expected.identityKey) {
+    return "identity_changed";
+  }
+  if (current.epoch !== expected.epoch || current.cvGeneration !== expected.cvGeneration) {
+    return "session_ended";
+  }
+  return null;
 }
 
 export type CvBuilderWorkspaceApplyResult =
