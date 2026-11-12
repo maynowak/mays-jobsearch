@@ -5963,3 +5963,22 @@ qualification institution is empty; AWS training has no degree; review remains
 34, skills 71, project technologies 7/4/5. Parser 42 PASS, focused 71 PASS,
 full **1777 PASS / 5 skipped**, build PASS, five E2E chains PASS, privacy scan
 clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
+
+## 2026-11-12 — CV-BUILDER-03A FULL-PAGE WORKSPACE
+
+- Added regular `/cv-builder/workspace` route, full-page import/editor layouts,
+  same-origin `postMessage` handoff with random URL id only, explicit return,
+  identity/version checks and screenshot display mode. Reused existing
+  import/editor/parser/repository logic; no second CV implementation.
+- Security: no CV data/PDF/tokens in URL; no localStorage/sessionStorage CV
+  storage; origin/source/id/schema validation; 60s ready timeout; blocked
+  popup, closed opener, invalid payload, identity change and version conflict
+  paths handled without silent overwrite.
+- Synthetic E2E: import skill selection preserved in new tab; full-page editor;
+  screenshot mode expanded 8 sections at 320/390/768/1024/1440/1920 with 0
+  overflow and visible page scrolling; save/return and editor handoff/return
+  PASS; direct start view and DE/EN PASS; popup blocker PASS; only
+  `GET /api/models`.
+- Focused 84 PASS, serial full **1788 PASS / 5 skipped**, build PASS; existing
+  02A–02F/PDF E2E and new workspace E2E PASS. Code commit `36ca447`; no main
+  merge, deployment, RIS/AWS/Cognito/Terraform/consent change or private data.
