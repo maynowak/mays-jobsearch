@@ -6026,3 +6026,16 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Added exact rewrite `/cv-builder/workspace -> /index.html`; no workspace
   code/behavior changed. Live re-verification required after corrected
   deployment.
+
+## 2026-11-12 — CV-BUILDER-03C EXISTING UI PERSISTENCE
+
+- Inventory: Jobsearch CV builder profiles are session-only; existing BFF/OpenAPI
+  exposes PDF/CV documents, manual/CV/ATS search profiles, identity profile and
+  consents — no structured CV-builder draft/template/import-review/version
+  resource.
+- Did not reuse PDF storage, search-profile storage or `/me/profile`; that would
+  violate the explicit contract boundary and owner/consent semantics.
+- Blocked pending a separately authorized RIS structured-CV contract (schema,
+  consent purpose, versioning, capacity, export/erasure, retention/audit) and
+  BFF implementation. No product code, tests, AWS/Terraform/consent, RIS
+  changes, main merge or deployment.
