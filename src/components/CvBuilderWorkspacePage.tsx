@@ -54,6 +54,7 @@ export default function CvBuilderWorkspacePage() {
   const [mode, setMode] = useState<Mode>(handoffId ? "loading" : "start");
   const [handoffError, setHandoffError] = useState("");
   const [handoffIdentity, setHandoffIdentity] = useState<string | null | undefined>(undefined);
+  const directIdentityRef = useRef<string | null | undefined>(undefined);
   const [initialImportSession, setInitialImportSession] = useState<CvBuilderImportSession | null>(null);
   const [session, setSession] = useState<CvBuilderImportSession | null>(null);
   const [draft, setDraft] = useState<CvBuilderDraftV1>(emptyDraft);
@@ -121,7 +122,8 @@ export default function CvBuilderWorkspacePage() {
 
   useEffect(() => {
     if (!handoffId) {
-      if (!requestedRef.current) setMode("start");
+      // The initial direct-route mode is already "start"; auth loading must not
+      // reset an active direct workspace back to the start view.
       return;
     }
     if (auth.isLoading) return;
@@ -155,6 +157,22 @@ export default function CvBuilderWorkspacePage() {
     // currentIdentity is checked again below after auth settles.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handoffId, auth.isLoading]);
+
+  useEffect(() => {
+    // Handoff mode has a declared identity and is checked by the handoff effect.
+    if (auth.isLoading || handoffIdentity !== undefined) return;
+    // Direct mode has no handoff identity. Capture a baseline only after the
+    // initial auth load, so an initial guest/loading state is not mistaken for
+    // a user switch. Any later change clears all local CV data.
+    if (directIdentityRef.current === undefined) {
+      directIdentityRef.current = currentIdentity;
+      return;
+    }
+    if (directIdentityRef.current !== currentIdentity) {
+      directIdentityRef.current = currentIdentity;
+      clearWorkspaceData(t("cvBuilder.workspace.identityChanged"));
+    }
+  }, [auth.isLoading, currentIdentity, handoffIdentity, t]);
 
   useEffect(() => {
     if (handoffIdentity === undefined) return;
