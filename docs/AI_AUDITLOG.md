@@ -6046,3 +6046,17 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Focused 112 PASS, serial full **1800 PASS / 5 skipped**, build PASS; existing
   02A–02F/PDF and 03A E2E plus new 71-skill/review 03B E2E PASS. No main merge,
   deployment, RIS/AWS/Cognito/Terraform/consent change.
+
+## 2026-11-12 — CV-BUILDER-03B REVIEW INTEGRITY
+
+- Review items now separate `accepted` decision from `applied` actual draft
+  write; duplicate apply is blocked for experience, education, skills,
+  projects and certificates. Invalid experience/education/link mappings show
+  errors without changing or marking the item applied.
+- Added session-only profile→report store wired through App save/reopen/switch/
+  duplicate/delete and identity reset; no CV/profile schema, localStorage or
+  RIS persistence change.
+- Added store and idempotence tests; editor backlog repeated-apply/error tests.
+  Focused 116 PASS, serial full **1806 PASS / 5 skipped**, build PASS; 03A/03B
+  and 02A–02F/PDF E2E PASS. No main merge/deploy, private data, RIS/AWS/
+  Cognito/Terraform/consent change.
