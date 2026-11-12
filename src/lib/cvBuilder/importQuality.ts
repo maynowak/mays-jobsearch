@@ -31,6 +31,7 @@ export interface CvBuilderImportReviewItem {
   edited: boolean;
   target: CvBuilderImportManualTarget;
   status: ManualReviewStatus;
+  applied?: boolean;
   page?: number;
   sectionHeading?: string;
   reason: CvBuilderImportUnassignedReason;
@@ -110,10 +111,10 @@ export function buildCvBuilderImportReport(
 export function updateCvBuilderImportReviewItem(
   report: CvBuilderImportReviewSummary,
   id: string,
-  patch: Partial<Pick<CvBuilderImportReviewItem, "text" | "target" | "status">>
+  patch: Partial<Pick<CvBuilderImportReviewItem, "text" | "target" | "status" | "applied">>
 ): CvBuilderImportReviewSummary {
   const items = (report.items ?? []).map((item) => item.id === id
-    ? { ...item, ...patch, ...(patch.text !== undefined ? { edited: true } : {}) }
+    ? { ...item, ...patch, ...(patch.text !== undefined ? { edited: true, applied: false } : {}) }
     : item);
   return {
     ...report,
@@ -125,57 +126,99 @@ export function updateCvBuilderImportReviewItem(
 }
 
 /** Adds an explicitly accepted review item without changing the CV schema. */
+export interface ApplyImportReviewItemResult {
+  draft: CvBuilderDraftV1;
+  applied: boolean;
+  error?: "invalid-experience" | "invalid-education" | "invalid-link";
+}
+
+/** Adds an explicitly accepted review item without changing the CV schema. */
 export function applyImportReviewItem(
   draft: CvBuilderDraftV1,
   item: CvBuilderImportReviewItem
-): CvBuilderDraftV1 {
+): ApplyImportReviewItemResult {
   const text = item.text.trim();
-  if (!text) return draft;
+  if (!text) return { draft, applied: false };
   const key = text.toLocaleLowerCase("de");
   switch (item.target) {
     case "skills":
-      if (draft.skills.some((skill) => skill.toLocaleLowerCase("de") === key)) return draft;
-      return { ...draft, skills: [...draft.skills, text] };
-    case "experience":
+      if (draft.skills.some((skill) => skill.toLocaleLowerCase("de") === key)) return { draft, applied: true };
+      return { draft: { ...draft, skills: [...draft.skills, text] }, applied: true };
+    case "experience": {
+      const parts = text.split(/\s*(?:\||–|—)\s*/).map((part) => part.trim()).filter(Boolean);
+      if (parts.length < 2) return { draft, applied: false, error: "invalid-experience" };
+      const position = parts[0];
+      const employer = parts[1];
+      if (draft.experience.some((entry) => entry.position.toLocaleLowerCase("de") === position.toLocaleLowerCase("de") && entry.employer.toLocaleLowerCase("de") === employer.toLocaleLowerCase("de"))) {
+        return { draft, applied: true };
+      }
       return {
-        ...draft,
-        experience: [
-          ...draft.experience,
-          { ...createExperienceEntry(), position: text, employer: "" },
-        ],
-      };
-    case "education":
-      return {
-        ...draft,
-        education: [
-          ...draft.education,
-          { ...createEducationEntry(), institution: "", degree: text },
-        ],
-      };
-    case "projects":
-      if (draft.projects.some((project) => project.name.toLocaleLowerCase("de") === key)) return draft;
-      return { ...draft, projects: [...draft.projects, { ...createProjectEntry(), name: text }] };
-    case "certificates":
-      if (draft.certificates.some((certificate) => certificate.name.toLocaleLowerCase("de") === key)) return draft;
-      return { ...draft, certificates: [...draft.certificates, { ...createCertificateEntry(), name: text }] };
-    case "profile":
-      return {
-        ...draft,
-        profile: {
-          ...draft.profile,
-          summary: [draft.profile.summary, text].filter(Boolean).join("\n").slice(0, 4000),
+        draft: {
+          ...draft,
+          experience: [...draft.experience, { ...createExperienceEntry(), position, employer }],
         },
+        applied: true,
+      };
+    }
+    case "education": {
+      const parts = text.split(/\s*(?:\||–|—)\s*/).map((part) => part.trim()).filter(Boolean);
+      if (parts.length < 2) return { draft, applied: false, error: "invalid-education" };
+      const institution = parts.at(-1) ?? "";
+      const degree = parts[0];
+      if (draft.education.some((entry) => entry.institution.toLocaleLowerCase("de") === institution.toLocaleLowerCase("de") && entry.degree.toLocaleLowerCase("de") === degree.toLocaleLowerCase("de"))) {
+        return { draft, applied: true };
+      }
+      return {
+        draft: {
+          ...draft,
+          education: [...draft.education, { ...createEducationEntry(), institution, degree }],
+        },
+        applied: true,
+      };
+    }
+    case "projects":
+      if (draft.projects.some((project) => project.name.toLocaleLowerCase("de") === key)) return { draft, applied: true };
+      return { draft: { ...draft, projects: [...draft.projects, { ...createProjectEntry(), name: text }] }, applied: true };
+    case "certificates":
+      if (draft.certificates.some((certificate) => certificate.name.toLocaleLowerCase("de") === key)) return { draft, applied: true };
+      return { draft: { ...draft, certificates: [...draft.certificates, { ...createCertificateEntry(), name: text }] }, applied: true };
+    case "profile":
+      if (draft.profile.summary?.toLocaleLowerCase("de").includes(key)) return { draft, applied: true };
+      return {
+        draft: {
+          ...draft,
+          profile: {
+            ...draft.profile,
+            summary: [draft.profile.summary, text].filter(Boolean).join("\n").slice(0, 4000),
+          },
+        },
+        applied: true,
       };
     case "links": {
-      if (!/^https?:\/\//i.test(text)) return draft;
-      if (draft.links.some((link) => link.url === text)) return draft;
-      return {
-        ...draft,
-        links: [...draft.links, { ...createLinkEntry(), label: text, url: text }],
-      };
+      if (!/^https?:\/\//i.test(text)) return { draft, applied: false, error: "invalid-link" };
+      if (draft.links.some((link) => link.url === text)) return { draft, applied: true };
+      return { draft: { ...draft, links: [...draft.links, { ...createLinkEntry(), label: text, url: text }] }, applied: true };
     }
     case "ignore":
     default:
-      return draft;
+      return { draft, applied: false };
   }
+}
+
+export interface CvBuilderImportReviewStore {
+  get(cvId: string): CvBuilderImportReviewSummary | null;
+  set(cvId: string, report: CvBuilderImportReviewSummary): void;
+  delete(cvId: string): void;
+  clear(): void;
+}
+
+/** Session-only profile → import report mapping. Never persisted. */
+export function createCvBuilderImportReviewStore(): CvBuilderImportReviewStore {
+  const reports = new Map<string, CvBuilderImportReviewSummary>();
+  return {
+    get(cvId) { return reports.get(cvId) ?? null; },
+    set(cvId, report) { reports.set(cvId, report); },
+    delete(cvId) { reports.delete(cvId); },
+    clear() { reports.clear(); },
+  };
 }

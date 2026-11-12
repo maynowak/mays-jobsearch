@@ -20,21 +20,30 @@ interface Props {
 export default function CvBuilderImportBacklog({ report, draft, onDraftChange, onReportChange }: Props) {
   const { t } = useLang();
   const [filter, setFilter] = useState<"all" | ManualReviewStatus>("all");
+  const [applyError, setApplyError] = useState<string>("");
   const items = report.items ?? [];
   const visibleItems = filter === "all" ? items : items.filter((item) => item.status === filter);
   if (!items.length) return null;
 
-  const update = (item: CvBuilderImportReviewItem, patch: Partial<Pick<CvBuilderImportReviewItem, "text" | "target" | "status">>) => {
+  const update = (item: CvBuilderImportReviewItem, patch: Partial<Pick<CvBuilderImportReviewItem, "text" | "target" | "status" | "applied">>) => {
     onReportChange(updateCvBuilderImportReviewItem(report, item.id, patch));
   };
 
   const apply = (item: CvBuilderImportReviewItem) => {
+    if (item.applied) return;
     if (item.target === "ignore") {
-      update(item, { status: "ignored" });
+      update(item, { status: "ignored", applied: false });
       return;
     }
-    onDraftChange(applyImportReviewItem(draft, item));
-    update(item, { status: "accepted" });
+    const result = applyImportReviewItem(draft, item);
+    if (!result.applied) {
+      setApplyError(t(`cvBuilder.import.backlogError.${result.error ?? "invalid-experience"}`));
+      update(item, { status: "pending", applied: false });
+      return;
+    }
+    setApplyError("");
+    onDraftChange(result.draft);
+    update(item, { status: "accepted", applied: true });
   };
 
   return (
@@ -61,6 +70,7 @@ export default function CvBuilderImportBacklog({ report, draft, onDraftChange, o
               <input
                 aria-label={t("cvBuilder.import.backlogEdit")}
                 value={item.text}
+                disabled={item.applied}
                 onChange={(event) => update(item, { text: event.target.value })}
               />
               <small>
@@ -72,6 +82,7 @@ export default function CvBuilderImportBacklog({ report, draft, onDraftChange, o
               <span>{t("cvBuilder.import.backlogTarget")}</span>
               <select
                 value={item.target}
+                disabled={item.applied}
                 onChange={(event) => update(item, { target: event.target.value as CvBuilderImportReviewItem["target"] })}
               >
                 {(["ignore", "experience", "education", "skills", "projects", "certificates", "profile", "links"] as const).map((target) => (
@@ -90,11 +101,12 @@ export default function CvBuilderImportBacklog({ report, draft, onDraftChange, o
                 ))}
               </select>
             </label>
-            <button type="button" className="letter-btn" onClick={() => apply(item)}>
-              {t("cvBuilder.import.backlogApply")}
+            <button type="button" className="letter-btn" onClick={() => apply(item)} disabled={item.applied}>
+              {item.applied ? t("cvBuilder.import.backlogApplied") : t("cvBuilder.import.backlogApply")}
             </button>
           </li>
         ))}
+      {applyError && <p className="alert alert-error" role="alert">{applyError}</p>}
       </ul>
     </details>
   );

@@ -46,6 +46,7 @@ import {
   type CvBuilderWorkspaceReturnPayload,
   type CvBuilderWorkspaceReturnStatus,
 } from "./lib/cvBuilder/workspaceHandoff";
+import { createCvBuilderImportReviewStore } from "./lib/cvBuilder/importQuality";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
@@ -258,6 +259,7 @@ export default function App() {
   const [cvBuilderSaved, setCvBuilderSaved] = useState(false);
   const [cvBuilderSaving, setCvBuilderSaving] = useState(false);
   const [cvBuilderImportReview, setCvBuilderImportReview] = useState<CvBuilderImportReviewSummary | null>(null);
+  const cvBuilderImportReviewsRef = useRef(createCvBuilderImportReviewStore());
   const [cvBuilderSaveError, setCvBuilderSaveError] = useState("");
   const cvBuilderHasContent = hasCvBuilderContent(cvBuilderDraft);
 
@@ -477,6 +479,7 @@ export default function App() {
       setCvBuilderTemplate("classic");
       setCvBuilderOpen(false);
       setCvBuilderImportOpen(false);
+      cvBuilderImportReviewsRef.current.clear();
       setCvBuilderImportReview(null);
       setCvBuilderPendingName("");
       setCvBuilderDirty(false);
@@ -1384,6 +1387,8 @@ export default function App() {
       }
       if (result.status === "created" || result.status === "updated") {
         refreshCvProfiles();
+        if (editor.importReview) cvBuilderImportReviewsRef.current.set(result.profile.cvId, editor.importReview);
+        else cvBuilderImportReviewsRef.current.delete(result.profile.cvId);
         setCvBuilderProfileId(result.profile.cvId);
         setCvBuilderDraft(cloneCvBuilderDraft(result.profile.cvData));
         setCvBuilderTemplate(result.profile.template);
@@ -1431,6 +1436,7 @@ export default function App() {
       const profile = cvProfileRepositoryRef.current?.create({ name });
       if (!profile) return;
       refreshCvProfiles();
+      cvBuilderImportReviewsRef.current.delete(profile.cvId);
       setCvBuilderProfileId(profile.cvId);
       setCvBuilderDraft(createEmptyCvBuilderDraft());
       setCvBuilderTemplate(profile.template);
@@ -1455,6 +1461,8 @@ export default function App() {
       });
       if (!profile) return;
       refreshCvProfiles();
+      if (cvBuilderImportReview) cvBuilderImportReviewsRef.current.set(profile.cvId, cvBuilderImportReview);
+      else cvBuilderImportReviewsRef.current.delete(profile.cvId);
       setCvBuilderProfileId(profile.cvId);
       setCvBuilderDraft(cloneCvBuilderDraft(profile.cvData));
       setCvBuilderTemplate(profile.template);
@@ -1481,7 +1489,7 @@ export default function App() {
     setCvBuilderDirty(false);
     setCvBuilderSaved(true);
     setCvBuilderSaveError("");
-    setCvBuilderImportReview(null);
+    setCvBuilderImportReview(cvBuilderImportReviewsRef.current.get(profile.cvId) ?? null);
   };
 
   const handleImportedCvBuilderDraft = (
@@ -1539,6 +1547,8 @@ export default function App() {
           template: cvBuilderTemplate,
         });
         refreshCvProfiles();
+        if (cvBuilderImportReview) cvBuilderImportReviewsRef.current.set(created.cvId, cvBuilderImportReview);
+        else cvBuilderImportReviewsRef.current.delete(created.cvId);
         setCvBuilderProfileId(created.cvId);
         setCvBuilderPendingName("");
         setCvBuilderDraft(cloneCvBuilderDraft(created.cvData));
@@ -1558,6 +1568,8 @@ export default function App() {
         { cvData: cvBuilderDraft, template: cvBuilderTemplate }
       );
       refreshCvProfiles();
+      if (cvBuilderImportReview) cvBuilderImportReviewsRef.current.set(updated.cvId, cvBuilderImportReview);
+      else cvBuilderImportReviewsRef.current.delete(updated.cvId);
       setCvBuilderDraft(cloneCvBuilderDraft(updated.cvData));
       setCvBuilderTemplate(updated.template);
       setCvBuilderDirty(false);
@@ -1577,11 +1589,16 @@ export default function App() {
       return;
     }
     try {
-      cvProfileRepositoryRef.current?.duplicate(
+      const duplicate = cvProfileRepositoryRef.current?.duplicate(
         cvId,
         profile.version,
         t("cvBuilder.profiles.duplicateName", { name: profile.name })
       );
+      if (duplicate) {
+        const sourceReport = cvBuilderImportReviewsRef.current.get(cvId);
+        if (sourceReport) cvBuilderImportReviewsRef.current.set(duplicate.cvId, sourceReport);
+        else cvBuilderImportReviewsRef.current.delete(duplicate.cvId);
+      }
       refreshCvProfiles();
       setStatus({ type: "info", message: t("cvBuilder.profiles.duplicated") });
     } catch (err) {
@@ -1601,6 +1618,7 @@ export default function App() {
     const profile = cvProfileRepositoryRef.current?.get(cvId);
     if (!profile) throw new Error(t("cvBuilder.profiles.error"));
     cvProfileRepositoryRef.current?.delete(cvId, profile.version);
+    cvBuilderImportReviewsRef.current.delete(cvId);
     refreshCvProfiles();
     if (cvBuilderProfileId === cvId) {
       setCvBuilderProfileId(null);
