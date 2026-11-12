@@ -6026,3 +6026,23 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Added exact rewrite `/cv-builder/workspace -> /index.html`; no workspace
   code/behavior changed. Live re-verification required after corrected
   deployment.
+
+## 2026-11-12 — CV-BUILDER-03B REAL-WORLD IMPORT QUALITY
+
+- Local count-only private baseline: ATS 0 experience/3 projects/1 education/
+  58 skills/44 review; two-column 5/3/3/71/34. After parser changes: ATS
+  **8** experience/3/1/58/**18** review, personal 4/4; two-column unchanged
+  5/3/3/71/34, personal 4/4. No private content committed.
+- Added safe header/furniture handling, role-heading exclusion, month-name and
+  date-last experience detection, date-first multi-line headers, heading
+  removal from timeline, single-line degree/institution split, broader degree
+  forms, stricter phone/location/name handling.
+- Added session-only import quality report with per-item text/page/section/
+  reason/status/target; editor backlog "Importprüfung fortsetzen" with filter,
+  edit, target/status and explicit apply. No CV/profile schema change.
+- Added selected/total skill count, zero-selection warning, filtered
+  select/clear, summary warnings, and return label "Änderungen übernehmen &
+  zurück" with focus only after applied.
+- Focused 112 PASS, serial full **1800 PASS / 5 skipped**, build PASS; existing
+  02A–02F/PDF and 03A E2E plus new 71-skill/review 03B E2E PASS. No main merge,
+  deployment, RIS/AWS/Cognito/Terraform/consent change.
