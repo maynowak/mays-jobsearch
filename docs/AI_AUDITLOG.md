@@ -6001,3 +6001,19 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Focused 88 PASS, serial full **1792 PASS / 5 skipped**, build PASS; all
   existing 02A–02F/PDF E2E and the expanded full-page E2E PASS. No main merge,
   deployment, RIS/AWS/Cognito/Terraform/consent change or private data.
+
+## 2026-11-12 — CV-BUILDER-03A FINAL MAIN REVIEW
+
+- Confirmed and fixed direct-route identity gap: direct `/cv-builder/workspace`
+  had no handoff identity baseline and auth loading could reset the start view.
+  Added post-auth-load direct baseline; initial guest/loading is not a user
+  switch, later identity change clears all workspace CV data.
+- Added synthetic component tests for direct identity change and initial auth
+  load. Re-reviewed handoff `accepted`/`return-result`/`session-ended`,
+  origin/window/UUID/schema checks, timeouts, version conflict, failed returns
+  and closed-source behavior.
+- Final focused 90 PASS, serial full **1794 PASS / 5 skipped**, build PASS;
+  existing 02A–02F/PDF E2E and full-page handoff E2E PASS. Authenticated
+  logout/user-switch E2E remains a documented test-identity boundary.
+- No main merge, deployment, RIS/AWS/Cognito/Terraform/consent change, private
+  data, force-push or history rewrite.
