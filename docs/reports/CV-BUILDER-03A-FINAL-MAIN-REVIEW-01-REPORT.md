@@ -119,3 +119,23 @@ This remains a documented verification boundary, not a claimed live-auth PASS.
 - No real production deployment was performed.
 
 **STOP before main integration and production release.**
+
+## 7. Post-release production-route correction
+
+The first production verification after the main integration found that
+`/cv-builder/workspace` returned **404** on both Vercel production projects.
+Local Vite behavior was correct, but `vercel.json` had no rewrite for the new
+route.
+
+Correction:
+
+```json
+{
+  "source": "/cv-builder/workspace",
+  "destination": "/index.html"
+}
+```
+
+This is a deployment-routing fix only; the workspace implementation and its
+tests are unchanged. The route must be re-verified on both production domains
+after the corrected main deployment.

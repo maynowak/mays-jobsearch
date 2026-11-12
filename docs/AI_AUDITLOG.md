@@ -6017,3 +6017,12 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   logout/user-switch E2E remains a documented test-identity boundary.
 - No main merge, deployment, RIS/AWS/Cognito/Terraform/consent change, private
   data, force-push or history rewrite.
+
+## 2026-11-12 — CV-BUILDER-03A PRODUCTION ROUTE FIX
+
+- Live post-merge check found `/cv-builder/workspace` 404 on both Vercel
+  production domains. Root cause: missing SPA rewrite in `vercel.json`; local
+  Vite fallback masked it.
+- Added exact rewrite `/cv-builder/workspace -> /index.html`; no workspace
+  code/behavior changed. Live re-verification required after corrected
+  deployment.
