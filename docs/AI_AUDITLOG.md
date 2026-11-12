@@ -5963,3 +5963,31 @@ qualification institution is empty; AWS training has no degree; review remains
 34, skills 71, project technologies 7/4/5. Parser 42 PASS, focused 71 PASS,
 full **1777 PASS / 5 skipped**, build PASS, five E2E chains PASS, privacy scan
 clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
+
+## 2026-11-12 — CV-BUILDER-02F MAIN RELEASE
+
+- Baseline read-only: jobsearch `dpl_74mgG33mZBXeuQAZrCc6AEJJ7SGm` / matcher
+  `dpl_82vUBrmEz6YfjdAw5qy75sfU2TPD`, both production READY at `e894229`, aliases
+  and footers `main · e894229`.
+- Git preflight: feature `4192353`, main `e894229`, merge-base `e894229`,
+  6 ahead / 0 behind, 8-file scope; no private data, secrets or RIS/AWS/
+  Vercel-config changes.
+- Prior matcher preview `c67883a` failure investigated: `dpl_AGyNPnZ...` was
+  `CANCELED` with reason “canceled because a newer deployment superseded it”;
+  not a reproducible product/build failure. `4192353` Vercel statuses all
+  success. No branch protection/ruleset/CodeQL requirement; no CodeQL run.
+- Gate: focused 71 PASS, serial full **1777 PASS / 5 skipped**, build PASS,
+  02B/02C/02D/PDF-Fix/02E E2E PASS, `git diff --check`/privacy scan PASS.
+- Integration: fast-forward `e894229..4192353`, exactly one `git push origin
+  main`; no merge commit/rebase/force-push/manual `vercel --prod`.
+- Production: automatic deployments `dpl_Etm24jySSS4Tx57q7szmDq2eGqAZ`
+  (jobsearch) and `dpl_7dSXqX86hXU6dBYHfiDc4TakC5D1` (matcher), both READY at
+  `4192353`; domains aliased; footers `production · main · 4192353`.
+- Live synthetic smoke both domains: pages 200, DE/EN, personal 4/4, Bachelor
+  institution vs blank vocational institution, 15 separate skills, manual
+  selection, project tech, 0 acquired cert goals, 6 review items, independent
+  scroll, 390px overflow 0, valid 2-page PDF downloads, only GET `/api/models`,
+  no RIS/non-GET writes, 0 console errors, no secret-like DOM values.
+- Recovery targets retained; no rollback needed. Documentation on
+  `docs/cv-builder-02f-main-release-01`; no second main push. Feature branch
+  retained. **STOP after release.**
