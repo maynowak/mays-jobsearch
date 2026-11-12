@@ -15,6 +15,60 @@
       "schedule": "0 7 * * *"
     }
   ],
+  "headers": [
+    {
+      "source": "/search",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/cv-builder/workspace",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/landingspage2",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/registrieren",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/anmelden",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/auth/callback",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/profil",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/email-bestaetigen",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/impressum",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/datenschutz",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/datenschutzprinzipien",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/app.html",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/dev/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
+  ],
   "redirects": [
     {
       "source": "/api/ris/router",
@@ -53,47 +107,47 @@
     },
     {
       "source": "/search",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/cv-builder/workspace",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/landingspage2",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/registrieren",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/anmelden",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/auth/callback",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/profil",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/impressum",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/email-bestaetigen",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/datenschutz",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/datenschutzprinzipien",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ]
 }
