@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import LandingPage2 from "./components/LandingPage2";
+import CvBuilderWorkspacePage from "./components/CvBuilderWorkspacePage";
 import { LangProvider } from "./i18n";
 import { rootComponentFor } from "./rootRoute";
 import { AuthProvider } from "react-oidc-context";
@@ -19,6 +20,8 @@ createRoot(document.getElementById("root")!).render(
     <AuthProvider {...oidcConfig}>
       {rootComponent === "landing2" ? (
         <LandingPage2 />
+      ) : rootComponent === "cvBuilderWorkspace" ? (
+        <CvBuilderWorkspacePage />
       ) : (
         <App />
       )}

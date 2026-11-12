@@ -19,9 +19,14 @@ import CvBuilderImportReview, {
   type CvBuilderImportReviewSummary,
   type ManualReviewDecision,
 } from "./CvBuilderImportReview";
+import type { CvBuilderImportSession } from "../lib/cvBuilder/workspaceHandoff";
 
 interface Props {
   open: boolean;
+  layoutMode?: "modal" | "fullpage";
+  initialSession?: CvBuilderImportSession | null;
+  onSessionChange?: (session: CvBuilderImportSession) => void;
+  onOpenWorkspace?: (session: CvBuilderImportSession) => void;
   onClose: () => void;
   onCreateEmpty: () => void;
   risAvailable: boolean;
@@ -49,6 +54,10 @@ function importErrorKey(error: unknown): string {
 
 export default function CvBuilderImportDialog({
   open,
+  layoutMode = "modal",
+  initialSession = null,
+  onSessionChange,
+  onOpenWorkspace,
   onClose,
   onCreateEmpty,
   risAvailable,
@@ -60,6 +69,10 @@ export default function CvBuilderImportDialog({
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const hydratedHandoffRef = useRef(false);
+  const onSessionChangeRef = useRef(onSessionChange);
+  onSessionChangeRef.current = onSessionChange;
+  const fullpage = layoutMode === "fullpage";
   const [step, setStep] = useState<ImportStep>("source");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CvBuilderImportResult | null>(null);
@@ -74,7 +87,28 @@ export default function CvBuilderImportDialog({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      hydratedHandoffRef.current = false;
+      return;
+    }
+    if (initialSession && !hydratedHandoffRef.current) {
+      hydratedHandoffRef.current = true;
+      setStep(initialSession.step);
+      setError(null);
+      setResult(initialSession.result);
+      setSourceName(initialSession.sourceName);
+      setSelected(new Set(initialSession.selected));
+      setManualDecisions({ ...initialSession.manualDecisions });
+      setSelectedSkills(new Set(initialSession.selectedSkills));
+      setSummaryDraft(initialSession.summaryDraft);
+      setPendingAcknowledged(initialSession.pendingAcknowledged);
+      setBusy(false);
+      setBusyRisId(null);
+      setSelectedRisId(persistentCvs[0]?.cvId ?? "");
+      window.setTimeout(() => headingRef.current?.focus(), 0);
+      return;
+    }
+    hydratedHandoffRef.current = false;
     setStep("source");
     setError(null);
     setResult(null);
@@ -90,7 +124,7 @@ export default function CvBuilderImportDialog({
     // Reset only when the dialog opens; document updates must not discard a
     // preview that is already being reviewed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, initialSession]);
 
   useEffect(() => {
     if (!open) return;
@@ -106,6 +140,31 @@ export default function CvBuilderImportDialog({
       return persistentCvs[0]?.cvId ?? "";
     });
   }, [open, persistentCvs]);
+
+  useEffect(() => {
+    if (!open) return;
+    onSessionChangeRef.current?.({
+      step: step === "loading" ? "source" : step,
+      result,
+      sourceName,
+      selected: [...selected],
+      manualDecisions,
+      selectedSkills: [...selectedSkills],
+      summaryDraft,
+      pendingAcknowledged,
+    });
+  }, [open, step, result, sourceName, selected, manualDecisions, selectedSkills, summaryDraft, pendingAcknowledged]);
+
+  const currentSession = (): CvBuilderImportSession => ({
+    step: step === "loading" ? "source" : step,
+    result,
+    sourceName,
+    selected: [...selected],
+    manualDecisions,
+    selectedSkills: [...selectedSkills],
+    summaryDraft,
+    pendingAcknowledged,
+  });
 
   const parseFile = async (file: File, name: string) => {
     const rejection = validateCvFile(file);
@@ -252,27 +311,39 @@ export default function CvBuilderImportDialog({
 
   return (
     <div
-      className="modal cv-import-modal"
-      onClick={(event) => {
+      className={fullpage ? "cv-import-workspace" : "modal cv-import-modal"}
+      onClick={fullpage ? undefined : (event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
-        className="modal-box cv-import-modal__box"
-        role="dialog"
-        aria-modal="true"
+        className={fullpage ? "cv-import-workspace__box" : "modal-box cv-import-modal__box"}
+        role={fullpage ? "region" : "dialog"}
+        aria-modal={fullpage ? undefined : true}
         aria-labelledby="cv-import-title"
       >
-        <div className="modal-head">
+        <div className={fullpage ? "modal-head cv-import-workspace__head" : "modal-head"}>
           <div>
             <h3 ref={headingRef} id="cv-import-title" tabIndex={-1}>
               {t("cvBuilder.import.title")}
             </h3>
             <p className="modal-sub">{t("cvBuilder.import.subtitle")}</p>
           </div>
-          <button type="button" className="modal-close" aria-label={t("cvBuilder.cancel")} onClick={onClose}>
-            ×
-          </button>
+          <div className="cv-import-workspace__head-actions">
+            {onOpenWorkspace && (
+              <button
+                type="button"
+                className="btn-ghost cv-import-workspace__open"
+                disabled={busy || step === "loading"}
+                onClick={() => onOpenWorkspace(currentSession())}
+              >
+                {t("cvBuilder.workspace.openImport")}
+              </button>
+            )}
+            <button type="button" className="modal-close" aria-label={t("cvBuilder.cancel")} onClick={onClose}>
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="cv-import-modal__body">

@@ -31,6 +31,9 @@ interface Props {
   draft: CvBuilderDraftV1;
   onChange: (draft: CvBuilderDraftV1) => void;
   onClose: () => void;
+  layoutMode?: "modal" | "fullpage";
+  onOpenWorkspace?: () => void;
+  onReturnToApp?: () => void;
   initialTemplate?: CvBuilderTemplate;
   onTemplateChange?: (template: CvBuilderTemplate) => void;
   onSave?: () => Promise<void> | void;
@@ -351,6 +354,9 @@ export default function CvBuilderEditor({
   draft,
   onChange,
   onClose,
+  layoutMode = "modal",
+  onOpenWorkspace,
+  onReturnToApp,
   initialTemplate = "classic",
   onTemplateChange,
   onSave,
@@ -378,6 +384,9 @@ export default function CvBuilderEditor({
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
   const [exportError, setExportError] = useState("");
+  const [screenshotMode, setScreenshotMode] = useState(false);
+  const screenshotOpenStatesRef = useRef<boolean[]>([]);
+  const fullpage = layoutMode === "fullpage";
   const errors = useMemo(() => validateCvBuilderDraft(draft), [draft]);
   const errorCount = errors.length;
   const entryCount =
@@ -389,14 +398,18 @@ export default function CvBuilderEditor({
     draft.links.length;
 
   useEffect(() => {
-    previousFocusRef.current = document.activeElement as HTMLElement | null;
-    acquireBodyScrollLock();
+    if (!fullpage) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+      acquireBodyScrollLock();
+    }
     headingRef.current?.focus();
     return () => {
-      releaseBodyScrollLock();
-      previousFocusRef.current?.focus?.();
+      if (!fullpage) {
+        releaseBodyScrollLock();
+        previousFocusRef.current?.focus?.();
+      }
     };
-  }, []);
+  }, [fullpage]);
 
   useEffect(() => {
     if (!focusAfterRemove) return;
@@ -455,12 +468,13 @@ export default function CvBuilderEditor({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (fullpage) return;
         event.preventDefault();
         if (closeConfirm) setCloseConfirm(false);
         else requestClose();
         return;
       }
-      if (event.key !== "Tab" || !dialogRef.current) return;
+      if (fullpage || event.key !== "Tab" || !dialogRef.current) return;
       const focusable = Array.from(
         dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
       ).filter((element) => !element.hasAttribute("disabled"));
@@ -477,7 +491,7 @@ export default function CvBuilderEditor({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose, dirty, onSave, closeConfirm, saving]);
+  }, [onClose, dirty, onSave, closeConfirm, saving, fullpage]);
 
   useEffect(() => {
     if (dirty) setSuccessDismissed(false);
@@ -528,21 +542,38 @@ export default function CvBuilderEditor({
     }
   };
 
+  const toggleScreenshotMode = () => {
+    const sections = Array.from(
+      dialogRef.current?.querySelectorAll<HTMLDetailsElement>(".cv-builder-section") ?? []
+    );
+    if (!screenshotMode) {
+      screenshotOpenStatesRef.current = sections.map((section) => section.open);
+      sections.forEach((section) => { section.open = true; });
+      setScreenshotMode(true);
+      return;
+    }
+    sections.forEach((section, index) => {
+      section.open = screenshotOpenStatesRef.current[index] ?? section.open;
+    });
+    setScreenshotMode(false);
+  };
+
   const emptyLabel = (entry: Record<string, unknown>) =>
     isCvBuilderEntryEmpty(entry) ? <p className="cv-builder-empty-entry">{t("cvBuilder.emptyEntry")}</p> : null;
 
   return (
     <div
-      className="modal cv-builder-modal"
-      onClick={(event) => {
+      className={`${fullpage ? "cv-builder-fullpage" : "modal cv-builder-modal"}${screenshotMode ? " cv-builder-modal--screenshot" : ""}`}
+      data-layout={layoutMode}
+      onClick={fullpage ? undefined : (event) => {
         if (event.target === event.currentTarget) requestClose();
       }}
     >
       <div
         ref={dialogRef}
-        className="modal-box cv-builder-modal__box"
-        role="dialog"
-        aria-modal="true"
+        className={`${fullpage ? "cv-builder-fullpage__box" : "modal-box cv-builder-modal__box"}${screenshotMode ? " cv-builder-modal__box--screenshot" : ""}`}
+        role={fullpage ? "region" : "dialog"}
+        aria-modal={fullpage ? undefined : true}
         aria-labelledby="cv-builder-title"
       >
         <div className="modal-head cv-builder-modal__head">
@@ -552,14 +583,26 @@ export default function CvBuilderEditor({
             </h3>
             <p className="modal-sub">{t("cvBuilder.intro")}</p>
           </div>
-          <button
-            type="button"
-            className="modal-close"
-            aria-label={t("cvBuilder.close")}
-            onClick={requestClose}
-          >
-            ×
-          </button>
+          <div className="cv-builder-modal__head-actions">
+            {!fullpage && onOpenWorkspace && (
+              <button type="button" className="btn-ghost cv-builder-open-tab" onClick={onOpenWorkspace}>
+                {t("cvBuilder.workspace.openEditor")}
+              </button>
+            )}
+            {fullpage && (
+              <button type="button" className="btn-ghost cv-builder-screenshot-toggle" onClick={toggleScreenshotMode}>
+                {screenshotMode ? t("cvBuilder.workspace.screenshotExit") : t("cvBuilder.workspace.screenshot")}
+              </button>
+            )}
+            <button
+              type="button"
+              className="modal-close"
+              aria-label={t("cvBuilder.close")}
+              onClick={requestClose}
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="cv-builder-notice" role="note">
@@ -1361,6 +1404,11 @@ export default function CvBuilderEditor({
             >
               {exporting ? t("cvBuilder.exporting") : t("cvBuilder.exportPdf")}
             </button>
+            {fullpage && onReturnToApp && (
+              <button type="button" className="btn-ghost" onClick={onReturnToApp}>
+                {t("cvBuilder.workspace.return")}
+              </button>
+            )}
             <button type="button" className="btn-ghost" onClick={requestClose}>
               {t("cvBuilder.closeFooter")}
             </button>

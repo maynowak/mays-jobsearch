@@ -4,8 +4,9 @@
 // "/search" [TOP-MENU-01, vorher "/top"], Impressum).
 // Reine Funktion, damit der Swap unit-testbar bleibt (main.tsx hat
 // Seiteneffekte beim Import und ist nicht direkt testbar).
-export type RootComponent = "landing2" | "app";
+export type RootComponent = "landing2" | "app" | "cvBuilderWorkspace";
 
 export function rootComponentFor(pathname: string): RootComponent {
+  if (pathname === "/cv-builder/workspace") return "cvBuilderWorkspace";
   return pathname === "/" ? "landing2" : "app";
 }

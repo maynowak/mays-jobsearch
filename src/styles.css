@@ -13572,3 +13572,328 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     margin-inline: 12px;
   }
 }
+
+/* CV-BUILDER-03A-FULL-PAGE-WORKSPACE-01
+   A non-modal workspace route. The existing import/editor logic is reused;
+   these rules only change layout, scrolling and screenshot presentation. */
+.cv-workspace-page {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.cv-workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(100%, 1600px);
+  margin: 0 auto;
+  padding: 18px clamp(16px, 4vw, 48px);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.cv-workspace-brand {
+  color: var(--text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.cv-workspace-header > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cv-workspace-kicker {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.cv-workspace-lang {
+  display: flex;
+  gap: 4px;
+}
+
+.cv-workspace-lang button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cv-workspace-lang button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+}
+
+.cv-workspace-main {
+  width: min(100%, 1600px);
+  margin: 0 auto;
+  padding: clamp(18px, 4vw, 48px);
+}
+
+.cv-workspace-main--editor,
+.cv-workspace-main--import {
+  padding-top: 18px;
+}
+
+.cv-workspace-start {
+  max-width: 760px;
+  margin: 8vh auto 0;
+  padding: clamp(22px, 4vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+
+.cv-workspace-start h1 {
+  margin-top: 0;
+}
+
+.cv-workspace-start__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cv-workspace-start__actions button {
+  min-height: 44px;
+}
+
+.cv-workspace-local-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.cv-workspace-loading {
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  min-height: 45vh;
+  text-align: center;
+}
+
+.cv-builder-modal__head-actions,
+.cv-import-workspace__head-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cv-builder-open-tab,
+.cv-import-workspace__open {
+  min-height: 44px;
+}
+
+/* Full-page editor: no fixed overlay, no body lock, no inner scroll height. */
+.cv-builder-fullpage {
+  width: 100%;
+  background: transparent;
+  padding: 0;
+}
+
+.cv-builder-fullpage__box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  min-height: 0;
+  overflow: visible;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.cv-builder-fullpage .cv-builder-modal__head {
+  position: static;
+}
+
+.cv-builder-fullpage .cv-builder-workspace {
+  flex: 0 0 auto;
+  overflow: visible;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+}
+
+.cv-builder-fullpage .cv-builder-editor-pane,
+.cv-builder-fullpage .cv-builder-preview-pane {
+  max-height: none;
+  overflow: visible;
+}
+
+.cv-builder-fullpage .cv-builder-footer {
+  position: static;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.cv-builder-fullpage .cv-builder-modal__open {
+  display: none;
+}
+
+/* Screenshot mode is display-only. It expands details and removes every inner
+   height/overflow constraint so the browser's full-page screenshot can capture
+   the complete workspace. */
+.cv-builder-modal--screenshot .cv-builder-fullpage__box,
+.cv-builder-modal--screenshot .cv-builder-workspace,
+.cv-builder-modal--screenshot .cv-builder-editor-pane,
+.cv-builder-modal--screenshot .cv-builder-preview-pane {
+  max-height: none !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+.cv-builder-modal--screenshot .cv-builder-workspace {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+}
+
+.cv-builder-modal--screenshot .cv-builder-inner,
+.cv-builder-modal--screenshot .cv-builder-modal__box {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.cv-builder-modal--screenshot .cv-builder-section,
+.cv-builder-modal--screenshot .cv-builder-entry,
+.cv-builder-modal--screenshot .cv-preview {
+  break-inside: avoid;
+}
+
+.cv-builder-screenshot-toggle {
+  min-height: 44px;
+}
+
+.cv-builder-modal--screenshot .cv-builder-section > summary {
+  cursor: default;
+}
+
+/* Full-page import: normal document flow, no overlay or dialog trap. */
+.cv-import-workspace {
+  width: 100%;
+}
+
+.cv-import-workspace__box {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 28px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.cv-import-workspace__head {
+  position: static;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cv-import-workspace .cv-import-modal__body {
+  padding-inline: 0;
+}
+
+.cv-import-workspace .cv-import-modal__actions {
+  padding-inline: 0;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .cv-builder-fullpage .cv-builder-workspace,
+  .cv-builder-modal--screenshot .cv-builder-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-builder-fullpage .cv-builder-editor-pane,
+  .cv-builder-fullpage .cv-builder-preview-pane {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .cv-builder-modal--screenshot .cv-builder-workspace[data-view="edit"] .cv-builder-preview-pane,
+  .cv-builder-modal--screenshot .cv-builder-workspace[data-view="preview"] .cv-builder-editor-pane {
+    display: block !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .cv-workspace-header {
+    align-items: flex-start;
+    padding: 14px 12px;
+  }
+
+  .cv-workspace-header > div {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cv-workspace-kicker {
+    font-size: 0.78rem;
+  }
+
+  .cv-workspace-main {
+    padding: 12px;
+  }
+
+  .cv-workspace-start {
+    margin-top: 4vh;
+    padding: 18px;
+  }
+
+  .cv-workspace-start__actions > button {
+    flex: 1 1 100%;
+  }
+
+  .cv-builder-fullpage__box,
+  .cv-import-workspace__box {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+
+  .cv-builder-modal__head-actions,
+  .cv-import-workspace__head-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .cv-builder-open-tab,
+  .cv-import-workspace__open,
+  .cv-builder-screenshot-toggle {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 390px) {
+  .cv-workspace-header {
+    gap: 8px;
+  }
+
+  .cv-workspace-brand {
+    max-width: 150px;
+    overflow-wrap: anywhere;
+  }
+
+  .cv-builder-fullpage__box,
+  .cv-import-workspace__box {
+    width: 100%;
+  }
+}

@@ -36,6 +36,7 @@ import CvDocumentList from "./components/CvDocumentList";
 import CvBuilderEditor from "./components/CvBuilderEditor";
 import CvBuilderImportDialog from "./components/CvBuilderImportDialog";
 import type { CvBuilderImportReviewSummary } from "./components/CvBuilderImportReview";
+import { applyWorkspaceEditorReturn, openCvBuilderWorkspace, type CvBuilderImportSession, type CvBuilderWorkspaceReturnPayload } from "./lib/cvBuilder/workspaceHandoff";
 import CvConsentGate from "./components/CvConsentGate";
 import CvProcessingStatus from "./components/CvProcessingStatus";
 import CvProcessingSteps from "./components/CvProcessingSteps";
@@ -1260,6 +1261,96 @@ export default function App() {
     const profiles = cvProfileRepositoryRef.current?.list() ?? [];
     setCvProfiles(profiles);
     return profiles;
+  };
+
+  const handleOpenImportWorkspace = (session: CvBuilderImportSession) => {
+    const opened = openCvBuilderWorkspace(
+      { kind: "import", identityKey: authProfileKey, session },
+      handleWorkspaceReturn
+    );
+    if (!opened) {
+      setStatus({ type: "error", message: t("cvBuilder.workspace.popupBlocked") });
+      return;
+    }
+    setCvBuilderImportOpen(false);
+  };
+
+  const handleOpenEditorWorkspace = () => {
+    const profile = cvBuilderProfileId
+      ? cvProfileRepositoryRef.current?.get(cvBuilderProfileId) ?? null
+      : null;
+    const opened = openCvBuilderWorkspace(
+      {
+        kind: "editor",
+        identityKey: authProfileKey,
+        editor: {
+          draft: cloneCvBuilderDraft(cvBuilderDraft),
+          template: cvBuilderTemplate,
+          profile,
+          baseVersion: profile?.version ?? null,
+          pendingName: cvBuilderPendingName,
+          importReview: cvBuilderImportReview,
+          dirty: cvBuilderDirty,
+        },
+      },
+      handleWorkspaceReturn
+    );
+    if (!opened) {
+      setStatus({ type: "error", message: t("cvBuilder.workspace.popupBlocked") });
+      return;
+    }
+    setCvBuilderOpen(false);
+  };
+
+  const handleWorkspaceReturn = (payload: CvBuilderWorkspaceReturnPayload) => {
+    if (payload.identityKey !== authProfileKey) {
+      setStatus({ type: "error", message: t("cvBuilder.workspace.identityChanged") });
+      return;
+    }
+    const repository = cvProfileRepositoryRef.current;
+    if (!repository) return;
+    const editor = payload.editor;
+    try {
+      const result = applyWorkspaceEditorReturn(
+        repository,
+        editor,
+        t("cvBuilder.profiles.defaultName", { count: cvProfiles.length + 1 })
+      );
+      if (result.status === "conflict") {
+        setCvBuilderOpen(true);
+        setCvBuilderSaveError(t("cvBuilder.workspace.conflict"));
+        setStatus({ type: "error", message: t("cvBuilder.workspace.conflict") });
+        return;
+      }
+      if (result.status === "created" || result.status === "updated") {
+        refreshCvProfiles();
+        setCvBuilderProfileId(result.profile.cvId);
+        setCvBuilderDraft(cloneCvBuilderDraft(result.profile.cvData));
+        setCvBuilderTemplate(result.profile.template);
+        setCvBuilderPendingName("");
+        setCvBuilderDirty(false);
+        setCvBuilderSaved(true);
+        setCvBuilderSaveError("");
+        setCvBuilderImportReview(editor.importReview);
+        setCvBuilderOpen(true);
+        setStatus({ type: "info", message: t("cvBuilder.workspace.returnSuccess") });
+        return;
+      }
+      setCvBuilderProfileId(null);
+      setCvBuilderDraft(cloneCvBuilderDraft(editor.draft));
+      setCvBuilderTemplate(editor.template);
+      setCvBuilderPendingName(editor.pendingName);
+      setCvBuilderDirty(true);
+      setCvBuilderSaved(false);
+      setCvBuilderSaveError("");
+      setCvBuilderImportReview(editor.importReview);
+      setCvBuilderOpen(true);
+      setStatus({ type: "info", message: t("cvBuilder.workspace.returnSuccess") });
+    } catch {
+      setCvBuilderOpen(true);
+      setCvBuilderSaveError(t("cvBuilder.profiles.error"));
+      setStatus({ type: "error", message: t("cvBuilder.profiles.error") });
+    }
   };
 
   const handleOpenCvBuilderImport = () => {
@@ -3807,6 +3898,8 @@ export default function App() {
         setCvBuilderDraft(draft);
         setCvBuilderDirty(true);
       }}
+      layoutMode="modal"
+      onOpenWorkspace={handleOpenEditorWorkspace}
       onClose={() => {
         setCvBuilderOpen(false);
         setCvBuilderDirty(false);
@@ -3832,6 +3925,9 @@ export default function App() {
   const cvBuilderImportNode = cvBuilderImportOpen ? (
     <CvBuilderImportDialog
       open={cvBuilderImportOpen}
+      layoutMode="modal"
+      onOpenWorkspace={handleOpenImportWorkspace}
+      onSessionChange={() => undefined}
       onClose={() => setCvBuilderImportOpen(false)}
       onCreateEmpty={handleCreateCvProfile}
       risAvailable={persistentCvStorage.enabled}

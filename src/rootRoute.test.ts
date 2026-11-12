@@ -6,6 +6,10 @@ describe("rootRoute (LANDINGPAGE-SWAP)", () => {
     expect(rootComponentFor("/")).toBe("landing2");
   });
 
+  it("workspace path renders the full-page workspace", () => {
+    expect(rootComponentFor("/cv-builder/workspace")).toBe("cvBuilderWorkspace");
+  });
+
   it("landingspage2, top and impressum render App", () => {
     expect(rootComponentFor("/landingspage2")).toBe("app");
     expect(rootComponentFor("/search")).toBe("app");
