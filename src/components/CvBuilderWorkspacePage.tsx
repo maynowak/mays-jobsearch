@@ -294,6 +294,8 @@ export default function CvBuilderWorkspacePage() {
     };
     const result = await sendWorkspaceReturn(activeHandoffId, payload);
     if (result === "applied") {
+      // Only after the source confirmed the write may we switch attention back.
+      try { window.opener?.focus(); } catch { /* browser may block focus */ }
       setWorkspaceMessage(t("cvBuilder.workspace.returnSuccess"));
       return;
     }
@@ -395,6 +397,7 @@ export default function CvBuilderWorkspacePage() {
             saving={saving}
             saveError={saveError}
             importReview={importReview}
+            onImportReviewChange={setImportReview}
             onReturnToApp={handleReturnToApp}
           />
           {workspaceMessage && <p className="cv-workspace-local-note" role="status">{workspaceMessage}</p>}

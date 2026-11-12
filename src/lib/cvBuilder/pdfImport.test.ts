@@ -965,3 +965,65 @@ ATS publication note and general document instruction.`);
     expect(result.unrecognized.join('\n')).toContain('ATS publication note');
   });
 });
+
+describe('CV-BUILDER-03B real-world import quality', () => {
+  it('parses month-name dates and a date-first multi-line station without losing the entry', () => {
+    const document = buildPdfDocument([{ page: 1, text: '', lines: [
+      { text: 'BERUFSERFAHRUNG', order: 0 },
+      { text: 'Januar 2020 – Dezember 2021', order: 1 },
+      { text: 'Senior Engineer', order: 2 },
+      { text: 'Acme GmbH', order: 3 },
+      { text: 'Led migration.', order: 4 },
+      { text: '2022 – 2024 | Developer | Beta AG', order: 5 },
+      { text: 'Built APIs.', order: 6 },
+    ] }]);
+    const result = parseCvBuilderImportText(document.text, document);
+    expect(result.draft.experience).toHaveLength(2);
+    expect(result.draft.experience[0]).toMatchObject({ position: 'Senior Engineer', employer: 'Acme GmbH', startMonth: '2020-01', endMonth: '2021-12' });
+    expect(result.draft.experience[1]).toMatchObject({ position: 'Developer', employer: 'Beta AG' });
+  });
+
+  it('parses a single month date at the end of a station header', () => {
+    const document = buildPdfDocument([{ page: 1, text: '', lines: [
+      { text: 'BERUFSERFAHRUNG', order: 0 },
+      { text: 'Senior Engineer | Acme GmbH | 03/2021', order: 1 },
+      { text: 'Built APIs.', order: 2 },
+    ] }]);
+    const result = parseCvBuilderImportText(document.text, document);
+    expect(result.draft.experience[0]).toMatchObject({ position: 'Senior Engineer', employer: 'Acme GmbH', startMonth: '2021-03' });
+  });
+
+  it('splits a single-line degree and institution without duplicating them', () => {
+    const result = parseCvBuilderImportText(`Nora Beispiel\nE-Mail: nora.beispiel@example.invalid\n\nAUSBILDUNG\nB.Sc. Computer Science – Hochschule Musterstadt`);
+    expect(result.draft.education[0]).toMatchObject({ degree: 'B.Sc. Computer Science', institution: 'Hochschule Musterstadt' });
+    expect(result.draft.education[0].degree).not.toBe(result.draft.education[0].institution);
+  });
+
+  it('keeps contact fields and dot-separated location while rejecting birth dates as phone', () => {
+    const result = parseCvBuilderImportText(`NORA BEISPIEL\nSENIOR SOFTWARE ARCHITECT\nBerlin · Deutschland · +49 170 1234567\nnora.beispiel@example.invalid\nGeburtsdatum: 01.01.1990`);
+    expect(result.draft.personal).toMatchObject({ fullName: 'Nora Beispiel', email: 'nora.beispiel@example.invalid', phone: '+49 170 1234567', location: 'Berlin, Deutschland' });
+    expect(result.draft.personal.phone).not.toContain('1990');
+  });
+
+  it('ignores repeated profile headers without a page number', () => {
+    const pages = [
+      { page: 1, text: '', lines: [
+        { text: 'NORA BEISPIEL • PROFESSIONAL PROFILE', order: 0 },
+        { text: 'Nora Beispiel', order: 1 },
+        { text: 'Berlin, Deutschland', order: 2 },
+        { text: 'nora.beispiel@example.invalid', order: 3 },
+        { text: 'PROFESSIONAL SUMMARY', order: 4 },
+        { text: 'Synthetic summary.', order: 5 },
+      ] },
+      { page: 2, text: '', lines: [
+        { text: 'NORA BEISPIEL • PROFESSIONAL PROFILE', order: 0 },
+        { text: 'PROFESSIONAL EXPERIENCE', order: 1 },
+        { text: '2020 – 2024 | Engineer | Acme GmbH', order: 2 },
+      ] },
+    ];
+    const document = buildPdfDocument(pages.map((page) => ({ ...page, text: page.lines.map((line) => line.text).join('\n') })));
+    const result = parseCvBuilderImportText(document.text, document);
+    expect(result.draft.personal).toMatchObject({ fullName: 'Nora Beispiel', email: 'nora.beispiel@example.invalid', location: 'Berlin, Deutschland' });
+    expect(result.structure.sections.filter((section) => section.category === 'unknown')).toHaveLength(0);
+  });
+});

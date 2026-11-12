@@ -477,6 +477,7 @@ export default function App() {
       setCvBuilderTemplate("classic");
       setCvBuilderOpen(false);
       setCvBuilderImportOpen(false);
+      setCvBuilderImportReview(null);
       setCvBuilderPendingName("");
       setCvBuilderDirty(false);
       setCvBuilderSaved(false);
@@ -3980,6 +3981,7 @@ export default function App() {
       saving={cvBuilderSaving}
       saveError={cvBuilderSaveError}
       importReview={cvBuilderImportReview}
+      onImportReviewChange={setCvBuilderImportReview}
     />
   ) : null;
 

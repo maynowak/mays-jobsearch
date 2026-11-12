@@ -20,6 +20,7 @@ import CvBuilderImportReview, {
   type ManualReviewDecision,
 } from "./CvBuilderImportReview";
 import type { CvBuilderImportSession } from "../lib/cvBuilder/workspaceHandoff";
+import { buildCvBuilderImportReport } from "../lib/cvBuilder/importQuality";
 
 interface Props {
   open: boolean;
@@ -464,13 +465,10 @@ export default function CvBuilderImportDialog({
                 setStep("preview");
               }}
               onApply={() => {
-                const reviewSummary: CvBuilderImportReviewSummary = {
-                  total: Object.keys(manualDecisions).length,
-                  pending: Object.values(manualDecisions).filter((decision) => decision.status === "pending").length,
-                  accepted: Object.values(manualDecisions).filter((decision) => decision.status === "accepted").length,
-                  ignored: Object.values(manualDecisions).filter((decision) => decision.status === "ignored").length,
-                };
-                onImported(summaryDraft, sourceName, reviewSummary);
+                const reviewSummary = result
+                  ? buildCvBuilderImportReport(result, manualDecisions, selected, selectedSkills, pendingAcknowledged, sourceName)
+                  : null;
+                onImported(summaryDraft, sourceName, reviewSummary ?? undefined);
               }}
               onCancel={onClose}
             />

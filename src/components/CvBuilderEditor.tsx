@@ -21,6 +21,7 @@ import {
 } from "../lib/cvBuilder/validation";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
 import CvBuilderPreview from "./CvBuilderPreview";
+import CvBuilderImportBacklog from "./CvBuilderImportBacklog";
 import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 import {
   CV_BUILDER_TEMPLATES,
@@ -42,6 +43,7 @@ interface Props {
   saving?: boolean;
   saveError?: string;
   importReview?: CvBuilderImportReviewSummary | null;
+  onImportReviewChange?: (report: CvBuilderImportReviewSummary) => void;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -365,6 +367,7 @@ export default function CvBuilderEditor({
   saving = false,
   saveError = "",
   importReview = null,
+  onImportReviewChange,
 }: Props) {
   const { t, lang } = useLang();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -631,7 +634,24 @@ export default function CvBuilderEditor({
                 ignored: importReview.ignored,
               })}
             </p>
+            {importReview.skills && (
+              <p>
+                <strong>{t("cvBuilder.import.section.skills")}:</strong>{" "}
+                {t("cvBuilder.import.skillSelectedCount", {
+                  selected: importReview.skills.selected,
+                  total: importReview.skills.total,
+                })}
+              </p>
+            )}
           </div>
+        )}
+        {importReview && onImportReviewChange && (
+          <CvBuilderImportBacklog
+            report={importReview}
+            draft={draft}
+            onDraftChange={onChange}
+            onReportChange={onImportReviewChange}
+          />
         )}
         <p className="cv-builder-counts" role="status">
           {t("cvBuilder.counts", { entries: entryCount, errors: errorCount })}

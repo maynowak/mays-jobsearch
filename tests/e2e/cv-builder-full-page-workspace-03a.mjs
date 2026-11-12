@@ -168,7 +168,7 @@ async function run() {
 
     await popup.getByRole("button", { name: "Lebenslauf speichern" }).click();
     await popup.getByText("In dieser Sitzung gespeichert", { exact: true }).waitFor();
-    await popup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
+    await popup.getByRole("button", { name: "Änderungen übernehmen & zurück" }).click();
     await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
     if ((await page.getByLabel("Vollständiger Name").inputValue()) !== "Nora Beispiel 03A") {
       throw new Error("workspace return did not reach the source editor");
@@ -186,7 +186,7 @@ async function run() {
     await editorPopup.getByLabel("Vollständiger Name").fill("Nora Beispiel 03A Tab");
     await editorPopup.getByRole("button", { name: "Lebenslauf speichern" }).click();
     await editorPopup.getByText("In dieser Sitzung gespeichert", { exact: true }).waitFor();
-    await editorPopup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
+    await editorPopup.getByRole("button", { name: "Änderungen übernehmen & zurück" }).click();
     await page.waitForFunction(() => document.body.innerText.includes("Nora Beispiel 03A Tab"));
     await page.locator("#cv-builder-personal summary").click();
     if ((await page.getByLabel("Vollständiger Name").inputValue()) !== "Nora Beispiel 03A Tab") {
@@ -196,7 +196,7 @@ async function run() {
     // The editor workspace still has baseVersion 1. After the source was
     // updated to version 2, a second return must be rejected, not overwrite.
     await editorPopup.getByLabel("Vollständiger Name").fill("Nora Conflict Attempt");
-    await editorPopup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
+    await editorPopup.getByRole("button", { name: "Änderungen übernehmen & zurück" }).click();
     await editorPopup.getByText("Der Lebenslauf wurde im Hauptfenster geändert. Die Workspace-Änderungen wurden nicht übernommen. Prüfe die Versionen vor dem erneuten Speichern.").waitFor();
     if ((await page.getByLabel("Vollständiger Name").inputValue()) !== "Nora Beispiel 03A Tab") {
       throw new Error("stale editor return overwrote the source profile");
@@ -256,7 +256,7 @@ async function run() {
     await orphanPopup.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
     const orphanName = await orphanPopup.getByLabel("Vollständiger Name").inputValue();
     await page.close();
-    await orphanPopup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
+    await orphanPopup.getByRole("button", { name: "Änderungen übernehmen & zurück" }).click();
     await orphanPopup.getByText("Das Hauptfenster ist geschlossen. Bearbeite lokal weiter und exportiere die PDF.").waitFor();
     if ((await orphanPopup.getByLabel("Vollständiger Name").inputValue()) !== orphanName) throw new Error("closed source changed local workspace data");
 

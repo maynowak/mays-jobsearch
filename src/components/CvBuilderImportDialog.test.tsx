@@ -81,7 +81,7 @@ describe("CvBuilderImportDialog", () => {
     expect(screen.getByText("Max Mustermann")).toBeInTheDocument();
     expect(screen.getByText("Senior Frontend Engineer")).toBeInTheDocument();
     expect(screen.getByText("React")).toBeInTheDocument();
-    expect(screen.getByText(/2 Kandidaten/)).toBeInTheDocument();
+    expect(screen.getAllByText(/von 2 ausgewählt/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Details anzeigen").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
     expect(screen.getByRole("heading", { name: "Deine Importauswahl" })).toBeInTheDocument();
@@ -284,6 +284,12 @@ ${skills}`);
     await chooseLocal(container);
     await screen.findByRole("heading", { name: "Lebenslauf analysiert" });
     expect(screen.getByText("0 von 67 ausgewählt")).toBeInTheDocument();
+    expect(screen.getByText(/keine ausgewählt/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Fähigkeiten suchen"), { target: { value: "Skill 67" } });
+    fireEvent.click(screen.getByRole("button", { name: "Gefilterte auswählen" }));
+    expect(screen.getByText("1 von 67 ausgewählt")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Gefilterte zurücksetzen" }));
+    fireEvent.change(screen.getByLabelText("Fähigkeiten suchen"), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "Alle auswählen" }));
     expect(screen.getByText("67 von 67 ausgewählt")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Auswahl zurücksetzen" }));
@@ -315,6 +321,9 @@ Offene Angabe`);
     fireEvent.click(apply);
     expect(onImported).toHaveBeenCalledTimes(1);
     expect(onImported.mock.calls[0][0].profile.summary ?? "").not.toContain("Offene Angabe");
+    const report = onImported.mock.calls[0][2];
+    expect(report.items).toHaveLength(1);
+    expect(report.items[0]).toMatchObject({ status: "pending", reason: "unknown-section" });
   });
 
 

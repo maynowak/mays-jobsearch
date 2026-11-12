@@ -3,8 +3,7 @@ import type { CvBuilderTemplate } from "./templates";
 import type { CvBuilderProfileV1 } from "./profileTypes";
 import type { CvBuilderProfileRepository } from "./profileRepository";
 import type { CvBuilderImportResult, CvBuilderImportSectionId } from "./pdfImport";
-import type { ManualReviewDecision } from "../../components/CvBuilderImportReview";
-import type { CvBuilderImportReviewSummary } from "../../components/CvBuilderImportReview";
+import type { ManualReviewDecision, CvBuilderImportReviewSummary } from "./importQuality";
 
 export const WORKSPACE_PATH = "/cv-builder/workspace";
 const HANDOFF_PARAM = "handoff";

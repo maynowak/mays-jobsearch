@@ -8,22 +8,8 @@ import {
   type CvBuilderImportSectionId,
 } from "../lib/cvBuilder/pdfImport";
 
-export type ManualReviewStatus = "pending" | "accepted" | "ignored";
-
-export interface CvBuilderImportReviewSummary {
-  total: number;
-  pending: number;
-  accepted: number;
-  ignored: number;
-}
-
-export interface ManualReviewDecision {
-  target: CvBuilderImportManualTarget;
-  status: ManualReviewStatus;
-  text: string;
-  original: string;
-  edited: boolean;
-}
+export type { ManualReviewStatus, ManualReviewDecision, CvBuilderImportReviewSummary, CvBuilderImportReviewItem } from "../lib/cvBuilder/importQuality";
+import type { ManualReviewStatus, ManualReviewDecision } from "../lib/cvBuilder/importQuality";
 
 export interface CvBuilderImportReviewProps {
   result: CvBuilderImportResult;
@@ -85,14 +71,18 @@ function sectionSummary(
 function sectionCount(
   result: CvBuilderImportResult,
   section: CvBuilderImportSectionId,
-  t: (key: string, vars?: Record<string, string | number>) => string
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  selectedSkills: Set<string>
 ): string {
   const count = sectionSummary(result, section, t).length;
   if (section === "personal" || section === "profile") {
     return count === 1 ? t("cvBuilder.import.fieldCountOne") : t("cvBuilder.import.fieldCount", { count });
   }
   if (section === "skills") {
-    return count === 1 ? t("cvBuilder.import.skillCountOne") : t("cvBuilder.import.skillCount", { count });
+    return t("cvBuilder.import.skillSelectedCount", {
+      selected: selectedSkills.size,
+      total: count,
+    });
   }
   return count === 1 ? t("cvBuilder.import.itemCountOne") : t("cvBuilder.import.itemCount", { count });
 }
@@ -263,7 +253,7 @@ export default function CvBuilderImportReview({
                 <span className={`cv-import-section__status${result.uncertain[section] ? " is-uncertain" : ""}`}>
                   {result.uncertain[section] ? t("cvBuilder.import.statusReview") : t("cvBuilder.import.statusDetected")}
                   {" · "}
-                  {sectionCount(result, section, t)}
+                  {sectionCount(result, section, t, selectedSkills)}
                 </span>
               </div>
               {isSkills ? (
@@ -285,11 +275,34 @@ export default function CvBuilderImportReview({
                       <button type="button" className="btn-ghost" onClick={onClearSkills}>
                         {t("cvBuilder.import.skillClear")}
                       </button>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => visibleSkills.forEach((skill) => {
+                          if (!selectedSkills.has(skill)) onToggleSkill(skill);
+                        })}
+                      >
+                        {t("cvBuilder.import.skillSelectFiltered")}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => visibleSkills.forEach((skill) => {
+                          if (selectedSkills.has(skill)) onToggleSkill(skill);
+                        })}
+                      >
+                        {t("cvBuilder.import.skillClearFiltered")}
+                      </button>
                     </div>
                   </div>
                   <p className="cv-import-skills__count" aria-live="polite">
                     {t("cvBuilder.import.skillSelectedCount", { selected: selectedSkills.size, total: result.draft.skills.length })}
                   </p>
+                  {selectedSkills.size === 0 && result.draft.skills.length > 0 && (
+                    <p className="alert alert-error" role="alert">
+                      {t("cvBuilder.import.skillZeroWarning", { count: result.draft.skills.length })}
+                    </p>
+                  )}
                   <ul className="cv-import-skills__list">
                     {visibleSkills.map((skill) => (
                       <li key={skill}>
@@ -522,6 +535,12 @@ export function CvBuilderImportSummary({
         <div><strong>{ignored}</strong><span>{t("cvBuilder.import.summaryIgnored")}</span></div>
         <div><strong>{pending}</strong><span>{t("cvBuilder.import.summaryPending")}</span></div>
       </div>
+      {draft.experience.length === 0 && (
+        <p className="alert alert-error" role="alert">{t("cvBuilder.import.qualityNoExperience")}</p>
+      )}
+      {draft.skills.length === 0 && (
+        <p className="alert alert-error" role="alert">{t("cvBuilder.import.qualityNoSkills")}</p>
+      )}
       <p className="cv-import-summary__sections">
         {t("cvBuilder.import.summarySections")}: {[...selected].map((section) => t(`cvBuilder.import.section.${section}`)).join(" · ") || t("cvBuilder.import.summaryNone")}
       </p>
