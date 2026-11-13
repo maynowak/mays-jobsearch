@@ -6260,3 +6260,29 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   CV data. Authenticated 403/503/428/timeout/logout browser and combined
   import→durable 71/44 browser runs remain release-gate items.
 - Report: `docs/reports/JM-CV-BUILDER-03C-HARDENING-02-REPORT.md`.
+
+## 2026-11-13 — JM-CV-BUILDER-03C-RELEASE-GATE-01
+
+**Status:** `PREVIEW VERIFIED / LOCAL INTEGRITY VERIFIED / PRODUCTION BLOCKED`
+
+- Branch `feature/jm-cv-builder-03c-release-gate-01` from `414e85e`; commits
+  `e9ec185` (Vercel fix/idempotency) and `a4efb81` (combined E2E).
+- Vercel Jobsearch and Matcher failures at `414e85e` were both caused by
+  `src/lib/cvBuilderProfilesApi.test.ts(201,52): TS2345` (`string | number`
+  passed to `number`), confirmed in both build logs. Fixed with an explicit
+  `Array<[number, string]>`; no pipeline/config change.
+- Removed unsafe same-name/template adoption after uncertain duplicate create.
+  Stable per-source-version idempotency keys and identical payload are retained
+  for deliberate same-key retry; uncertainty is shown and local state preserved.
+- Added one combined synthetic mock-BFF E2E: import → review → editor → durable
+  save → reload → load → 58 skills/44 review entries → update. Screenshot
+  `combined-71-44-roundtrip.png`.
+- Vercel status for `e9ec185` and `a4efb81`: Jobsearch success, Matcher success,
+  Deployments aggregate success. Latest previews
+  `dpl_4Jn5ZM7vSm3gSQam2XTcVJULXKv9` / `dpl_DQYFgakBSffhTrecQUWi5LxRJSS1` are
+  READY; `/profil?tab=cv` 200, new BFF/consent 503 disabled.
+- Tests: API 609 PASS / 5 skipped; frontend 1917 PASS / 5 skipped; 03A/03B/
+  03C/PDF E2E PASS; build, TypeScript, API syntax, diff and secret scans PASS.
+- No real RIS/AWS/Consent mutation, main merge, production deployment or real
+  CV data. Authenticated production variants remain release-gated.
+- Report: `docs/reports/JM-CV-BUILDER-03C-RELEASE-GATE-01-REPORT.md`.
