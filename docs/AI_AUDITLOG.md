@@ -6178,3 +6178,55 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Keine RIS-/AWS-/Cognito-/Terraform-, Auth-, Consent-, Payment- oder
   Bewerbungsdatenänderung; keine neuen Dependencies/Tracking-Dienste.
 - Report: `docs/reports/JM-MARKETING-02-PRODUCT-POSITIONING-LANDING-PAGE-REPORT.md`.
+
+## 2026-11-13 — JM-MARKETING-02B — LANDING PAGE VISUAL POLISH
+
+**Typ:** Landing-Page-Visual-Polish / CTA-Interaktion / Conversion / Accessibility
+**Status:** `VISUAL POLISH IMPLEMENTED — TESTED — READY FOR PREVIEW REVIEW — NO MERGE/DEPLOY`
+
+- Git: Branch `feature/jm-marketing-02-product-positioning` auf `origin/main`
+  `b3b8525`; Commits `01458a3` (CTA/Readability/Closing CTA), `7ba790c`
+  (Tests/Evidence), `d7f1803` (Preview-E2E) + Docs-Commit. Kein Merge, kein
+  Deployment, keine Branch-Löschung; vier untracked Fremddateien unverändert.
+- Primärer CTA „Jetzt passende Jobs finden“ → `/search`: 0,2-s-Transition,
+  Hover mit `translateY(-2px) scale(1.02)`, Cyan-Glow, hellerem Hintergrund;
+  Mouseout vollständig zurück; `:active` mit reduzierter Skalierung;
+  `:focus-visible` 3 px Cyan. Computed Styles auf der Preview gemessen.
+- Sekundärer CTA „So funktioniert's“ → `#lp2-how`: transluzenter Cyan-Hintergrund,
+  Cyan-Rahmen, dezenter Glow, `translateY(-2px)`, keine Skalierung; bleibt
+  optisch klar hinter dem Primär-CTA.
+- Hero-Lesbarkeit: lokaler radialer Lesbarkeitshof, stärkere Textschatten,
+  Subheadline 19–20 px mit 1.5 Zeilenhöhe, `text-wrap`-Optimierungen; keine
+  großflächige Abdunklung, Markenbild/JobStream/MatchPulse unverändert.
+- Karten: Fließtexte auf 1rem/0.98rem vergrößert, Kontrast auf `#4b5563`
+  erhöht, `line-height: 1.6`, einheitliche Innenabstände/Überschriften,
+  gleichmäßige Grid-Höhen; dezenter Border-/Shadow-Hover ohne Bewegung und
+  ohne Pointer-Cursor.
+- Neuer abschließender CTA oberhalb des Footers („Bereit für deinen nächsten
+  Karriereschritt?“ / „Jetzt Jobs finden“ → `/search`) im bestehenden Design,
+  mit eigenem Hover-/Focus-/Active-Zustand, mobil volle Breite.
+- Accessibility: Hover nur unter `(hover: hover) and (pointer: fine)`;
+  Touch-Kontext ohne Hover-Transformation; `prefers-reduced-motion` entfernt
+  Transform/Skalierung vollständig, Farb-/Kontrastfeedback bleibt;
+  Fokusringe auf Navigation und CTAs; Keyboard-Enter öffnet `/search`;
+  Sekundär-CTA scrollt zu `#lp2-how`.
+- Responsive: 320/390/768/1024/1440 px in DE/EN, kein horizontaler Overflow,
+  CTAs und Hinweis im ersten Viewport, Footer erreichbar.
+- SEO: `index.html`, `app.html`, Canonical, OG/Twitter, robots/sitemap,
+  Vercel-Rewrites und Private-Noindex unverändert; nur Landing-CSS/TSX,
+  Tests und Evidence geändert.
+- Browser-E2E: `node tests/e2e/landing-visual-polish.mjs` lokal **PASS** und
+  gegen Preview **PASS**; prüft computed Styles vor/nach Hover, Mouseout,
+  Active, Focus, Klicknavigation, Reduced Motion und Touch-Medienabfrage.
+  Screenshots unter `docs/reports/assets/JM-MARKETING-02B/`.
+- Tests: fokussiert **18/18 PASS**; `npx vitest run --maxWorkers=2`
+  **1871 passed / 5 skipped**; `npm run build` PASS (1,49 s);
+  `git diff --check` PASS. Bekannter Standard-Timeout-Flake bleibt dokumentiert.
+- Preview: `dpl_9nXP9udgRHgYza8L8LK5SwuNxUGH`,
+  `https://mays-job-matcher-i0246a3l3-maymilly.vercel.app`, READY, Commit
+  `7ba790c`, Build Identity `Version 2.2.0 · preview ·
+  feature/jm-marketing-02-product-positioning · 7ba790c`. Production bleibt
+  `b3b8525`.
+- Keine RIS-/AWS-/Cognito-/Terraform-, Auth-, Consent-, Payment-, Matching-
+  oder Bewerbungsdatenänderung; keine neuen Dependencies.
+- Report: `docs/reports/JM-MARKETING-02B-VISUAL-POLISH-CONVERSION-REPORT.md`.
