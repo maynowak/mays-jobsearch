@@ -6230,3 +6230,21 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Keine RIS-/AWS-/Cognito-/Terraform-, Auth-, Consent-, Payment-, Matching-
   oder Bewerbungsdatenänderung; keine neuen Dependencies.
 - Report: `docs/reports/JM-MARKETING-02B-VISUAL-POLISH-CONVERSION-REPORT.md`.
+
+
+## 2026-11-13 — MAYS-XREPO-SHARED-STATE-RECONCILIATION-02
+
+**Status:** `LOCAL VERIFIED / READY FOR CONTROLLED ROLLOUT`
+
+- Both receivers now bind source+destination issues to the exact task ID and
+  reconstruct trusted state from bot comments on both issues; markers are
+  written only to the destination issue. No event-schema/app-secret change.
+- Fail-closed cases: mixed same-sequence states, conflicting event IDs,
+  untrusted/ordinary text, unreadable history and missing source read access.
+- `python3 -m pytest -q scripts/xrepo`: 76 PASS / 4 subtests in both repos.
+- Concurrency: repository-local groups only; simultaneous cross-repo dispatches
+  are unsupported. Controlled sequential handoff and human conflict recovery
+  documented; no automatic repair/COMPLETED from a conflict.
+- No live dispatch, main merge, AWS/Terraform, consent activation or production
+  deployment. RIS RC1 `4bfd08f` unchanged.
+- Report: `docs/reports/MAYS-XREPO-SHARED-STATE-RECONCILIATION-02-REPORT.md`.
