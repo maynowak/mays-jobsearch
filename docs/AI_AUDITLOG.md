@@ -6226,6 +6226,10 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   1913 PASS / 5 skipped (`--maxWorkers=2`); production build PASS; synthetic
   mock-BFF E2E PASS (create/save/reload/update/409/duplicate/delete, 320/390/
   768/1440); diff/secret scans PASS.
+- Automatic previews `dpl_9HQouaKtBZ61MF2GVdqhy6BmV892` (jobsearch) and
+  `dpl_H9r2rQ1UdmV88wSwg852yX44MCMC` (matcher) are READY; `/profil?tab=cv`
+  returns 200, the new BFF and structured consent return 503 disabled, no RIS
+  write occurred.
 - No real RIS/AWS/Consent mutation, main merge, production deployment or real
   CV data. Authenticated 403/503/428/timeout/logout full-browser variants
   remain deployment/test-identity gated.

@@ -166,6 +166,14 @@ no RIS deployment are available in this task.
 - Frontend suite (`--maxWorkers=2`): **1913 passed / 5 skipped**.
 - Production build: PASS.
 - Synthetic durable E2E: PASS.
+- Automatic branch previews are READY:
+  - Jobsearch `dpl_9HQouaKtBZ61MF2GVdqhy6BmV892` at
+    `mays-jobsearch-4ray7zl6w-maymilly.vercel.app`.
+  - Matcher `dpl_H9r2rQ1UdmV88wSwg852yX44MCMC` at
+    `mays-job-matcher-513quijwd-maymilly.vercel.app`.
+  - Preview `/profil?tab=cv` → 200; `/api/ris/cv-builder-profiles` → 503
+    `cv_builder_profile_storage_disabled`; structured consent status → 503
+    `consent_disabled`. No RIS write occurred.
 - `node --check`/API syntax, TypeScript build, `git diff --check`: PASS.
 - Secret/privacy scan: no credentials or private CV data in changed files.
 
