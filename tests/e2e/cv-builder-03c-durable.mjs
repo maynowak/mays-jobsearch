@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -177,6 +178,32 @@ async function mockApi(route) {
   return route.fulfill({ status: 405, contentType: "application/json", body: JSON.stringify({ error: "method", code: "METHOD_NOT_ALLOWED" }) });
 }
 
+const importSkills = Array.from({ length: 71 }, (_, index) => `Synthetic Skill ${String(index + 1).padStart(2, "0")}`);
+const importReviewLines = Array.from({ length: 44 }, (_, index) => `Offene synthetische Angabe ${String(index + 1).padStart(2, "0")}`);
+
+async function makeImportPdf() {
+  const groups = [
+    ["NORA BEISPIEL", "SENIOR SOFTWARE ARCHITECT", "Berlin · Deutschland", "nora.beispiel@example.invalid"],
+    ["PROFIL", "Synthetic profile summary for the combined 03B/03C roundtrip."],
+    ["ARCHITECTURE & CLOUD", importSkills.join(", ")],
+    ["BERUFSERFAHRUNG", "Januar 2020 – Dezember 2021", "Senior Engineer", "Acme GmbH", "Synthetic description.", "2022 – 2024 | Developer | Beta AG"],
+    ["AUSBILDUNG", "B.Sc. Computer Science – Hochschule Musterstadt"],
+    ["UNBEKANNTER ABSCHNITT", ...importReviewLines],
+  ];
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  for (const group of groups) {
+    const page = pdf.addPage([595, 842]);
+    page.drawText("NORA BEISPIEL · SYNTHETIC CV", { x: 45, y: 805, size: 8, font });
+    let y = 775;
+    for (const line of group) {
+      page.drawText(line, { x: 45, y, size: line.length > 70 ? 6 : 10, font, maxWidth: 505 });
+      y -= 16;
+    }
+  }
+  return Buffer.from(await pdf.save());
+}
+
 function startVite() {
   return spawn("npm", ["run", "dev", "--", "--port", String(port), "--strictPort"], {
     cwd: repoRoot,
@@ -200,7 +227,7 @@ async function waitForServer() {
   throw new Error("Vite did not start");
 }
 
-async function newPage(browser, width, height) {
+async function newPage(browser, width, height, path = "/profil?tab=cv") {
   const context = await browser.newContext({ viewport: { width, height }, locale: "de-DE", acceptDownloads: true });
   await context.addInitScript(({ key, future }) => {
     localStorage.setItem("mj-lang", "de");
@@ -215,8 +242,7 @@ async function newPage(browser, width, height) {
   const consoleErrors = [];
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
   await page.route("**/api/**", mockApi);
-  await page.goto(`${base}/profil?tab=cv`, { waitUntil: "networkidle" });
-  await page.locator(".cv-builder-profiles").waitFor();
+  await page.goto(`${base}${path}`, { waitUntil: "networkidle" });
   return { context, page, consoleErrors };
 }
 
@@ -286,6 +312,68 @@ try {
     await page.getByText("Importprüfung fortsetzen").waitFor();
     await page.locator(".cv-builder-backlog").first().waitFor();
     await page.screenshot({ path: resolve(evidenceDir, "review-44-restored.png"), fullPage: false });
+    await context.close();
+  }
+
+  // Combined 03B import -> review -> editor -> durable save -> reload -> load -> update.
+  profiles.clear();
+  idempotency.clear();
+  calls = [];
+  {
+    const pdf = await makeImportPdf();
+    const { context, page } = await newPage(browser, 1024, 1000, "/profil?tab=cv");
+    await page.getByRole("button", { name: "Lebenslauf erstellen", exact: true }).click();
+    await page.getByRole("heading", { name: "Vorhandenen Lebenslauf importieren" }).waitFor();
+    await page.locator('.cv-import-modal input[type="file"]').setInputFiles({ name: "synthetic-71-44.pdf", mimeType: "application/pdf", buffer: pdf });
+    await page.getByRole("heading", { name: "Lebenslauf analysiert" }).waitFor();
+    const checkboxes = page.locator('.cv-import-skills__list input[type="checkbox"]');
+    await checkboxes.first().waitFor();
+    const importedCount = await checkboxes.count();
+    if (importedCount !== 71) {
+      console.log("combined-import-debug", (await page.locator(".cv-import-modal").innerText()).slice(0, 3000));
+      throw new Error(`combined: expected 71 skills, got ${importedCount}`);
+    }
+    if (!(await page.getByText(/0 von 71 ausgewählt/).count())) throw new Error("combined: zero skill selection missing");
+    await page.getByRole("button", { name: "Alle auswählen" }).click();
+    for (let index = 58; index < 71; index += 1) await checkboxes.nth(index).uncheck();
+    if (!(await page.getByText("58 von 71 ausgewählt").count())) throw new Error("combined: 58 selection missing");
+    const popupPromise = context.waitForEvent("page");
+    await page.getByRole("button", { name: /In neuem Tab öffnen/ }).click();
+    const popup = await popupPromise;
+    await popup.waitForLoadState("networkidle");
+    await popup.getByRole("heading", { name: "Vorhandenen Lebenslauf importieren" }).waitFor();
+    await popup.getByRole("button", { name: "Angaben übernehmen" }).click();
+    await popup.getByRole("heading", { name: "Deine Importauswahl" }).waitFor();
+    const ack = popup.getByRole("checkbox", { name: /Ich lasse .* ungeprüfte Angaben vorerst aus/ });
+    if (await ack.count()) await ack.check();
+    await popup.getByRole("button", { name: "Auswahl übernehmen" }).click();
+    await popup.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
+    const importedSkills = await popup.locator("#cv-builder-skills textarea").inputValue();
+    if (importedSkills.split(/[\n,]/).map((value) => value.trim()).filter(Boolean).length !== 58) throw new Error("combined: 58 skills not in editor");
+    await popup.getByRole("button", { name: "Änderungen übernehmen & zurück" }).click();
+    await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
+    await page.getByText("Importprüfung fortsetzen").waitFor();
+    await saveAndClose(page);
+    await page.locator(".cv-builder-profiles").waitFor();
+    await page.locator(".cv-builder-profiles__item").first().waitFor();
+    await page.locator(".cv-builder-profiles__item").first()
+      .getByRole("button", { name: "Dauerhaft speichern" }).click();
+    await page.getByText("Im Konto gespeichert", { exact: true }).waitFor();
+    if (!profiles.size) throw new Error("combined: durable create missing");
+    await page.reload({ waitUntil: "networkidle" });
+    await page.locator(".cv-builder-profiles").waitFor();
+    await page.locator(".cv-builder-profiles__item").first()
+      .getByRole("button", { name: "Bearbeiten" }).click();
+    await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
+    const restoredSkills = await page.locator("#cv-builder-skills textarea").inputValue();
+    if (restoredSkills.split(/[\n,]/).map((value) => value.trim()).filter(Boolean).length !== 58) throw new Error("combined: 58 skills not restored");
+    await page.getByText("Importprüfung fortsetzen").waitFor();
+    await page.locator(".cv-builder-backlog").first().waitFor();
+    if (!(await page.getByText(/44/).count())) throw new Error("combined: 44 review entries not restored");
+    await page.getByRole("button", { name: "Lebenslauf speichern" }).click();
+    await page.getByText("In dieser Sitzung gespeichert").waitFor().catch(() => undefined);
+    if (!calls.some((call) => call.startsWith("PATCH "))) throw new Error("combined: durable update missing");
+    await page.screenshot({ path: resolve(evidenceDir, "combined-71-44-roundtrip.png"), fullPage: false });
     await context.close();
   }
 
