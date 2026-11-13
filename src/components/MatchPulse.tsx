@@ -17,7 +17,11 @@ function reducedMotion(): boolean {
   );
 }
 
-export default function MatchPulse(): React.ReactElement {
+export default function MatchPulse({
+  label = "Mit KI pulsieren, Job-Stream aktualisieren",
+}: {
+  label?: string;
+}): React.ReactElement {
   const containerRef = useRef<HTMLButtonElement>(null);
   const visualTimeoutRef = useRef<number | null>(null);
   const doubleTimeoutRef = useRef<number | null>(null);
@@ -91,7 +95,7 @@ export default function MatchPulse(): React.ReactElement {
       type="button"
       className="mp"
       ref={containerRef}
-      aria-label="Mit KI pulsieren, Job-Stream aktualisieren"
+      aria-label={label}
       onClick={() => {
         triggerVisualPulse();
         window.dispatchEvent(new CustomEvent(USER_PULSE_EVENT));
