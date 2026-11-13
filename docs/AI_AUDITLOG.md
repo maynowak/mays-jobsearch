@@ -6286,3 +6286,15 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No real RIS/AWS/Consent mutation, main merge, production deployment or real
   CV data. Authenticated production variants remain release-gated.
 - Report: `docs/reports/JM-CV-BUILDER-03C-RELEASE-GATE-01-REPORT.md`.
+
+
+## 2026-11-13 — JM-RIS-STRUCTURED-CV-CONSENT-READINESS-01
+
+**Status:** `CONSENT LIFECYCLE TECHNICALLY PREPARED / LEGAL APPROVAL REQUIRED`
+
+- Added read-only consent classifier `structuredCvConsentReadiness.ts` and
+  lifecycle/UX spec; no grant/withdraw implementation or DRAFT activation.
+- Explicit states: loading/error/missing/DRAFT/granted/withdrawn/unknown;
+  writes only for GRANTED under approved notice; future ACTIVE supported.
+- Focused classifier tests 5 PASS. No real RIS consent mutation.
+- Report: `docs/reports/JM-RIS-STRUCTURED-CV-CONSENT-READINESS-01-REPORT.md`.
