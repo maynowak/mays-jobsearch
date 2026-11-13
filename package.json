@@ -23,6 +23,7 @@
     "test:e2e:search-results": "node tests/e2e/search-results-mobile-ux.mjs",
     "test:e2e:search-ux": "node tests/e2e/search-ux-03.mjs",
     "test:e2e:nav-scroll": "node tests/e2e/nav-scroll-ux.mjs",
+    "test:e2e:landing-polish": "node tests/e2e/landing-visual-polish.mjs",
     "test:e2e:search-nav-final": "node tests/e2e/search-nav-ux-finalization.mjs",
     "test:e2e:profile-storage-consent": "node tests/e2e/profile-storage-consent.mjs",
     "test:e2e:profile-ux-final": "node tests/e2e/profile-ux-final-polish.mjs",

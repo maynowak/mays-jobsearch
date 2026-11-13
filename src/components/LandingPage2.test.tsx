@@ -73,6 +73,9 @@ describe("LandingPage2 (JM-MARKETING-02 positioning)", () => {
     ).toBeTruthy();
     expect(screen.getByRole("heading", { level: 2, name: "Mehr als eine Jobsuche" })).toBeTruthy();
     expect(screen.getByRole("heading", { level: 2, name: "Gut zu wissen" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Bereit für deinen nächsten Karriereschritt?" })
+    ).toBeTruthy();
     const how = document.querySelector("#lp2-how") as HTMLElement;
     expect(how.getAttribute("aria-labelledby")).toBe("lp2-how-title");
     expect(document.querySelector("#lp2-how-title")).toBeTruthy();
@@ -112,6 +115,25 @@ describe("LandingPage2 (JM-MARKETING-02 positioning)", () => {
     expect(text).toContain("an einen KI-Dienst übermittelt");
     expect(text).toContain("standardmäßig in der aktuellen Sitzung");
     expect(text.toLowerCase()).not.toContain("vollständig anonym");
+  });
+
+  it("bietet einen abschließenden Conversion-CTA ohne Registrierungsbarriere", () => {
+    renderPage();
+    const finalCta = document.querySelector(".lp2-final-cta") as HTMLElement;
+    expect(finalCta).toBeTruthy();
+    expect(
+      within(finalCta).getByRole("heading", {
+        level: 2,
+        name: "Bereit für deinen nächsten Karriereschritt?",
+      })
+    ).toBeTruthy();
+    expect(
+      within(finalCta).getByText(
+        "Entdecke passende Stellen und starte deine persönliche Jobsuche."
+      )
+    ).toBeTruthy();
+    const button = within(finalCta).getByRole("link", { name: "Jetzt Jobs finden" });
+    expect(button.getAttribute("href")).toBe("/search");
   });
 
   it("keine dritte Headline-Zeile und keine Hero-Card", () => {
@@ -217,10 +239,12 @@ describe("LandingPage2 (JM-MARKETING-02 positioning)", () => {
     fireEvent.click(screen.getByText("EN"));
     expect(screen.getByText("Find jobs")).toBeTruthy();
     expect(screen.getByText("How it works", { selector: "h2" })).toBeTruthy();
+    expect(screen.getByText("Ready for your next career move?", { selector: "h2" })).toBeTruthy();
     expect(window.localStorage.getItem("mj-lang")).toBe("en");
     fireEvent.click(screen.getByText("DE"));
     expect(screen.getByText("Finde Jobs,")).toBeTruthy();
     expect(screen.getByText("So funktioniert's", { selector: "h2" })).toBeTruthy();
+    expect(screen.getByText("Bereit für deinen nächsten Karriereschritt?", { selector: "h2" })).toBeTruthy();
     expect(window.localStorage.getItem("mj-lang")).toBe("de");
   });
 });
