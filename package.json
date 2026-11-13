@@ -36,6 +36,7 @@
     "test:e2e:cv-builder-import-ux-02d": "node tests/e2e/cv-builder-import-ux-02d.mjs",
     "test:e2e:cv-builder-real-world-qa-02e": "node tests/e2e/cv-builder-real-world-qa-02e.mjs",
     "test:e2e:cv-builder-full-page-workspace-03a": "node tests/e2e/cv-builder-full-page-workspace-03a.mjs",
+    "test:e2e:cv-builder-03c-durable": "node tests/e2e/cv-builder-03c-durable.mjs",
     "test:e2e:cv-builder-import-quality-03b": "node tests/e2e/cv-builder-import-quality-03b.mjs",
     "test:budget:redis": "node tests/tools/verify-budget-lua.mjs",
     "test:ip-quota:redis": "node tests/tools/verify-ip-quota-lua.mjs",

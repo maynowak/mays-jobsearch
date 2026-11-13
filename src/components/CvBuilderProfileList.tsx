@@ -5,6 +5,7 @@ import {
   CV_BUILDER_NAME_MAX_LENGTH,
   cvBuilderProfileHasContent,
 } from "../lib/cvBuilder/profileTypes";
+import type { DurableProfileStatus } from "../lib/cvBuilder/durableProfileRef";
 
 interface Props {
   profiles: CvBuilderProfileV1[];
@@ -13,11 +14,14 @@ interface Props {
   assignedCvIds?: string[];
   onCreate: () => void;
   onAdoptDraft?: () => void;
-  onEdit: (cvId: string) => void;
-  onDuplicate: (cvId: string) => void;
-  onRename: (cvId: string, name: string) => void;
-  onDelete: (cvId: string) => void;
+  onEdit: (cvId: string) => void | Promise<void>;
+  onDuplicate: (cvId: string) => void | Promise<void>;
+  onRename: (cvId: string, name: string) => void | Promise<void>;
+  onDelete: (cvId: string) => void | Promise<void>;
   onDownload: (cvId: string) => void;
+  durableStates?: Record<string, DurableProfileStatus>;
+  structuredStorageEnabled?: boolean;
+  onSaveDurable?: (cvId: string) => Promise<void> | void;
 }
 
 function formatUpdatedAt(value: string, locale: string): string {
@@ -41,6 +45,9 @@ export default function CvBuilderProfileList({
   onRename,
   onDelete,
   onDownload,
+  durableStates = {},
+  structuredStorageEnabled = false,
+  onSaveDurable,
 }: Props) {
   const { t, lang } = useLang();
   const locale = lang === "de" ? "de-DE" : "en-GB";
@@ -48,6 +55,7 @@ export default function CvBuilderProfileList({
   const [renameValue, setRenameValue] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [savingDurableId, setSavingDurableId] = useState<string | null>(null);
 
   const startRename = (profile: CvBuilderProfileV1) => {
     setRenamingId(profile.cvId);
@@ -58,21 +66,27 @@ export default function CvBuilderProfileList({
   const saveRename = () => {
     if (!renamingId) return;
     try {
-      onRename(renamingId, renameValue);
+      const pending = onRename(renamingId, renameValue);
       setRenamingId(null);
       setRenameValue("");
       setError("");
+      Promise.resolve(pending).catch((err) => {
+        setError(err instanceof Error ? err.message : t("cvBuilder.profiles.error"));
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("cvBuilder.profiles.error"));
     }
   };
 
-  const confirmDelete = () => {
-    if (!deleteId) return;
+  const confirmDelete = (profileId = deleteId) => {
+    if (!profileId) return;
     try {
-      onDelete(deleteId);
-      setDeleteId(null);
-      setError("");
+      Promise.resolve(onDelete(profileId)).then(() => {
+        setDeleteId(null);
+        setError("");
+      }).catch((err) => {
+        setError(err instanceof Error ? err.message : t("cvBuilder.profiles.error"));
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("cvBuilder.profiles.error"));
     }
@@ -118,14 +132,14 @@ export default function CvBuilderProfileList({
                           maxLength={CV_BUILDER_NAME_MAX_LENGTH}
                           onChange={(event) => setRenameValue(event.target.value)}
                           onKeyDown={(event) => {
-                            if (event.key === "Enter") saveRename();
+                            if (event.key === "Enter") void saveRename();
                             if (event.key === "Escape") setRenamingId(null);
                           }}
                           autoFocus
                         />
                       </label>
                       <div className="cv-builder-profiles__rename-actions">
-                        <button type="button" className="letter-btn" onClick={saveRename}>
+                        <button type="button" className="letter-btn" onClick={() => void saveRename()}>
                           {t("cvBuilder.profiles.renameSave")}
                         </button>
                         <button type="button" className="btn-ghost" onClick={() => setRenamingId(null)}>
@@ -147,6 +161,9 @@ export default function CvBuilderProfileList({
                           {t("cvBuilder.profiles.emptyContent")}
                         </span>
                       )}
+                      <span className={`cv-builder-profiles__durable-status durable-${durableStates[profile.cvId] ?? "session-only"}`}>
+                        {t(`cvBuilder.profiles.durableStatus.${durableStates[profile.cvId] ?? "session-only"}`)}
+                      </span>
                     </>
                   )}
                 </div>
@@ -160,8 +177,8 @@ export default function CvBuilderProfileList({
                       className="btn-ghost"
                       onClick={() => {
                         try {
-                          onDuplicate(profile.cvId);
-                          setError("");
+                          void Promise.resolve(onDuplicate(profile.cvId))
+                            .catch((err) => setError(err instanceof Error ? err.message : t("cvBuilder.profiles.error")));
                         } catch (err) {
                           setError(err instanceof Error ? err.message : t("cvBuilder.profiles.error"));
                         }
@@ -175,6 +192,27 @@ export default function CvBuilderProfileList({
                     <button type="button" className="btn-ghost" onClick={() => onDownload(profile.cvId)}>
                       {t("cvBuilder.profiles.download")}
                     </button>
+                    {structuredStorageEnabled && onSaveDurable
+                      && (durableStates[profile.cvId] ?? "session-only") !== "durable"
+                      && (durableStates[profile.cvId] ?? "session-only") !== "saving" && (
+                      <button
+                        type="button"
+                        className="btn-ghost cv-builder-profiles__durable-save"
+                        disabled={savingDurableId === profile.cvId}
+                        aria-busy={savingDurableId === profile.cvId}
+                        onClick={() => {
+                          setSavingDurableId(profile.cvId);
+                          setError("");
+                          Promise.resolve(onSaveDurable(profile.cvId))
+                            .catch((err) => setError(err instanceof Error ? err.message : t("cvBuilder.profiles.error")))
+                            .finally(() => setSavingDurableId(null));
+                        }}
+                      >
+                        {savingDurableId === profile.cvId
+                          ? t("cvBuilder.profiles.savingDurable")
+                          : t("cvBuilder.profiles.saveDurable")}
+                      </button>
+                    )}
                     <button type="button" className="btn-ghost" onClick={() => setDeleteId(profile.cvId)}>
                       {t("cvBuilder.profiles.delete")}
                     </button>
@@ -189,7 +227,7 @@ export default function CvBuilderProfileList({
                       </p>
                     )}
                     <div className="cv-builder-profiles__actions">
-                      <button type="button" className="letter-btn" onClick={confirmDelete}>
+                      <button type="button" className="letter-btn" onClick={() => void confirmDelete(profile.cvId)}>
                         {t("cvBuilder.profiles.deleteYes")}
                       </button>
                       <button type="button" className="btn-ghost" onClick={() => setDeleteId(null)}>
