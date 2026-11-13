@@ -6296,5 +6296,6 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   lifecycle/UX spec; no grant/withdraw implementation or DRAFT activation.
 - Explicit states: loading/error/missing/DRAFT/granted/withdrawn/unknown;
   writes only for GRANTED under approved notice; future ACTIVE supported.
-- Focused classifier tests 5 PASS. No real RIS consent mutation.
+- Focused classifier tests 5 PASS; full frontend 1922 PASS / 5 skipped; build
+  PASS. No real RIS consent mutation.
 - Report: `docs/reports/JM-RIS-STRUCTURED-CV-CONSENT-READINESS-01-REPORT.md`.

@@ -35,6 +35,7 @@ Art. 9 attestation, post-withdrawal policy, authenticated production consent E2E
 
 Focused classifier tests: **5 passed** (missing/loading/error, DRAFT,
 approved mock, granted, withdrawn, NOT_GRANTED, unknown and future ACTIVE notice).
+Full frontend suite: **1922 passed / 5 skipped**; production build PASS.
 No real RIS consent mutation was performed.
 
 ## Release gates
