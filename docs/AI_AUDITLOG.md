@@ -6133,3 +6133,34 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Kein Merge, kein Production-Deployment, keine Branch-Löschung, keine
   Search-Console-Einreichung.
 - Report: `docs/reports/JM-MARKETING-01B-SEO-PREVIEW-VERIFICATION-REPORT.md`.
+
+## 2026-11-13 — JM-RIS-STRUCTURED-CV-BFF-01
+
+**Status:** `JM-RIS-STRUCTURED-CV-BFF-01 — VERIFIED LOCAL / READY FOR UI INTEGRATION PLANNING`
+
+- Baseline verified against remote `main` `b3b8525`; branch
+  `feature/jm-ris-structured-cv-bff-01`, implementation commits `3e29bdc` and
+  `a4c6d09`.
+- Added fixed BFF route `/api/ris/cv-builder-profiles` through the central
+  router and one Vercel rewrite. The upstream namespace
+  `/v1/partner/me/cv-builder-profiles` is server-selected; ids, cursors,
+  actions, body size and identity fields are validated. Existing routes and
+  PDF/search-profile behavior are unchanged.
+- Extended the shared RIS transport backward-compatibly with allowlisted
+  `Idempotency-Key`/`If-Match` forwarding and RIS `ETag` preservation. Browser
+  credentials/identity headers are not forwarded.
+- Added the default-off `RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED` server flag,
+  `VITE_RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED` client flag and read-only
+  `cv-builder-profile-storage` consent status. The notice remains DRAFT; the
+  BFF blocks grant/withdraw mutations and reuses no other consent purpose.
+- Added the typed browser client with stable idempotency-key handling, no
+  automatic retry, 409 no-overwrite behavior, full 03B review DTO normalization
+  and no browser persistence. No UI integration or session-profile migration.
+- Tests: focused 54 PASS; API group **609 passed / 5 skipped**; full frontend
+  suite **1898 passed / 5 skipped** with `--maxWorkers=2`; production build,
+  API syntax, diff and secret scan PASS. One parallel-load timeout in
+  `CvBuilderEditorPdf.test.tsx` passed in isolation (4/4).
+- No RIS/AWS/Terraform/Cognito/CloudFront/DNS/consent mutation, no main merge,
+  no production deployment and no real CV data. Vercel preview, if created,
+  must remain fail-closed with flags absent.
+- Report: `docs/reports/JM-RIS-STRUCTURED-CV-BFF-01-REPORT.md`.
