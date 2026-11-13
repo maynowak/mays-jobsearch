@@ -767,10 +767,10 @@
 
 .lp2-subtitle {
   margin: 1.1rem auto 1.75rem;
-  max-width: 560px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 19px;
-  line-height: 1.45;
+  max-width: 600px;
+  color: rgba(255, 255, 255, 0.93);
+  font-size: clamp(19px, 1.5vw, 20px);
+  line-height: 1.5;
   text-wrap: pretty;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.38);
 }
@@ -799,12 +799,19 @@
 .lp2-cta-secondary {
   display: inline-flex;
   align-items: center;
-  min-height: 46px;
-  padding: 0.7rem 1.7rem;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.72rem 1.7rem;
   border-radius: 999px;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
 }
 
 .lp2-cta-primary {
@@ -818,6 +825,56 @@
   border: 1px solid rgba(255, 255, 255, 0.7);
   background: rgba(255, 255, 255, 0.08);
   font-weight: 600;
+}
+
+/* JM-MARKETING-02B: Hover nur auf echten Zeigegeräten, damit Touch-Geräte
+   keinen dauerhaft hängenden Hover-Zustand bekommen. */
+@media (hover: hover) and (pointer: fine) {
+  .lp2-cta-primary:hover {
+    background: #ecfeff;
+    color: #0b3b5e;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+      0 10px 30px rgba(34, 211, 238, 0.42),
+      0 2px 10px rgba(8, 30, 60, 0.22);
+  }
+
+  .lp2-cta-secondary:hover {
+    background: rgba(34, 211, 238, 0.18);
+    border-color: rgba(165, 243, 252, 0.92);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(34, 211, 238, 0.24);
+  }
+
+  /* Sehr dezenter Karten-Hover: nur Rahmen/Schatten, keine Bewegung,
+     kein Pointer-Cursor (die Karten sind nicht interaktiv). */
+  .lp2-step:hover,
+  .lp2-card:hover {
+    border-color: rgba(13, 148, 136, 0.32);
+    box-shadow: 0 8px 22px rgba(8, 30, 60, 0.07);
+  }
+}
+
+.lp2-cta-primary:active,
+.lp2-cta-secondary:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.lp2-cta-primary:active {
+  box-shadow: 0 2px 10px rgba(8, 30, 60, 0.28);
+}
+
+.lp2-cta-secondary:active {
+  background: rgba(34, 211, 238, 0.24);
+  box-shadow: 0 3px 12px rgba(8, 30, 60, 0.2);
+}
+
+.lp2-cta-primary[aria-disabled="true"],
+.lp2-cta-secondary[aria-disabled="true"] {
+  opacity: 0.55;
+  pointer-events: none;
+  transform: none;
 }
 
 .lp2-cta-primary:focus-visible,
@@ -879,9 +936,10 @@
 
 .lp2-section-lead {
   margin: 0;
-  color: var(--muted);
-  font-size: 1.02rem;
-  line-height: 1.55;
+  color: #4b5563;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  text-wrap: pretty;
 }
 
 #lp2-how {
@@ -899,10 +957,16 @@
 }
 
 .lp2-step {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.15rem 1.1rem 1.2rem;
+  padding: 1.25rem 1.2rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .lp2-step-number {
@@ -919,16 +983,18 @@
 }
 
 .lp2-step h3 {
-  margin: 0.75rem 0 0.4rem;
-  font-size: 1.04rem;
-  line-height: 1.25;
+  margin: 0.75rem 0 0.45rem;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  color: var(--text);
 }
 
 .lp2-step p {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-  line-height: 1.55;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-wrap: pretty;
 }
 
 /* ---------- Produktvorteile ---------- */
@@ -941,23 +1007,31 @@
 }
 
 .lp2-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.15rem;
+  padding: 1.25rem 1.2rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .lp2-card h3 {
   margin: 0 0 0.5rem;
   font-size: 1.05rem;
-  line-height: 1.25;
+  line-height: 1.3;
+  color: var(--text);
 }
 
 .lp2-card p {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-  line-height: 1.55;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-wrap: pretty;
 }
 
 /* ---------- Transparenz / Gut zu wissen ---------- */
@@ -975,20 +1049,81 @@
   border-left: 3px solid var(--brand);
   border-radius: 0 var(--radius) var(--radius) 0;
   background: var(--surface);
-  padding: 1rem 1.1rem;
+  padding: 1.25rem 1.2rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .lp2-note h3 {
-  margin: 0 0 0.4rem;
-  font-size: 0.98rem;
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
   line-height: 1.3;
+  color: var(--text);
 }
 
 .lp2-note p {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.55;
+  color: #4b5563;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* ---------- Abschließender Conversion-CTA ---------- */
+.lp2-final-cta {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 0 0;
+}
+
+.lp2-final-cta-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  text-align: center;
+  padding: clamp(1.75rem, 4vw, 2.75rem) clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid rgba(13, 148, 136, 0.24);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ecfeff 0%, #f0fdfa 100%);
+}
+
+.lp2-final-cta h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  line-height: 1.2;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.lp2-final-cta p {
+  margin: 0;
+  max-width: 560px;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.lp2-final-cta .lp2-cta-primary {
+  margin-top: 0.35rem;
+  background: #0f766e;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(15, 118, 110, 0.28);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp2-final-cta .lp2-cta-primary:hover {
+    background: #0d9488;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(13, 148, 136, 0.38);
+  }
+}
+
+.lp2-final-cta .lp2-cta-primary:active {
+  background: #0b5f59;
+  color: #fff;
 }
 
 /* ---------- Footer ---------- */
@@ -1077,6 +1212,15 @@
 
   .lp2-section h2 {
     font-size: 1.55rem;
+  }
+
+  .lp2-final-cta-inner {
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .lp2-final-cta .lp2-cta-primary {
+    width: 100%;
   }
 
   /* Match Pulse kompakter (Sats aus – Platz/Lesbarkeit). */
@@ -1190,6 +1334,23 @@
   }
 
   .lp2-subtitle {
-    font-size: 17px;
+    font-size: 18px;
+  }
+}
+
+/* JM-MARKETING-02B: Muss nach den Hover-/Active-Regeln stehen, damit die
+   Bewegung bei reduzierter Bewegung zuverlässig entfällt. Farb-/Kontrast-
+   wechsel bleiben erhalten. */
+@media (prefers-reduced-motion: reduce) {
+  .lp2-cta-primary,
+  .lp2-cta-secondary {
+    transition-property: background-color, border-color, box-shadow, color;
+  }
+
+  .lp2-cta-primary:hover,
+  .lp2-cta-secondary:hover,
+  .lp2-cta-primary:active,
+  .lp2-cta-secondary:active {
+    transform: none;
   }
 }

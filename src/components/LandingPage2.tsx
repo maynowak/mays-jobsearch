@@ -59,6 +59,9 @@ interface Lp2Copy {
   notesTitle: string;
   notesLead: string;
   notes: Lp2Card[];
+  finalTitle: string;
+  finalText: string;
+  finalButton: string;
 }
 
 const STRINGS: Record<Lp2Lang, Lp2Copy> = {
@@ -135,6 +138,9 @@ const STRINGS: Record<Lp2Lang, Lp2Copy> = {
         text: "Bewerbungsdaten bleiben standardmäßig in der aktuellen Sitzung. Dauerhafte Speicherung nur mit entsprechender Freigabe.",
       },
     ],
+    finalTitle: "Bereit für deinen nächsten Karriereschritt?",
+    finalText: "Entdecke passende Stellen und starte deine persönliche Jobsuche.",
+    finalButton: "Jetzt Jobs finden",
   },
   en: {
     eyebrow: "MAY'S JOB MATCHER",
@@ -208,6 +214,9 @@ const STRINGS: Record<Lp2Lang, Lp2Copy> = {
         text: "Application data stays in the current session by default. Permanent storage only with the corresponding consent.",
       },
     ],
+    finalTitle: "Ready for your next career move?",
+    finalText: "Discover matching jobs and start your personal job search.",
+    finalButton: "Find jobs now",
   },
 };
 
@@ -319,6 +328,16 @@ export default function LandingPage2(): React.ReactElement {
                 <p>{note.text}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="lp2-final-cta" aria-labelledby="lp2-final-title">
+          <div className="lp2-final-cta-inner">
+            <h2 id="lp2-final-title">{t.finalTitle}</h2>
+            <p>{t.finalText}</p>
+            <a className="lp2-cta-primary" href="/search">
+              {t.finalButton}
+            </a>
           </div>
         </section>
       </main>
