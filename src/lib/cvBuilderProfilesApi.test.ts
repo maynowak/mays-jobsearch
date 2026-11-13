@@ -197,7 +197,10 @@ describe("structured CV review DTO compatibility", () => {
   });
 
   it("maps 403, 428 and 503 without retrying or exposing content", async () => {
-    for (const [status, code] of [[403, "forbidden"], [428, "precondition_required"], [503, "storage_disabled"]]) {
+    const cases: Array<[number, string]> = [
+      [403, "forbidden"], [428, "precondition_required"], [503, "storage_disabled"],
+    ];
+    for (const [status, code] of cases) {
       fetchMock.mockResolvedValueOnce(jsonResponse(status, { error: "safe", code: "SAFE_CODE" }));
       await expect(getStructuredCvProfile("token", PROFILE_ID)).rejects.toMatchObject({ code, status });
     }

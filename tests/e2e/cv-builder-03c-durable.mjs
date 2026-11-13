@@ -317,8 +317,12 @@ try {
   abortNextCreate = true;
   await page.locator(".cv-builder-profiles__item").first()
     .getByRole("button", { name: "Duplizieren" }).click();
+  await page.getByText(/Ergebnis der Duplizierung ist unklar/).waitFor();
+  if (profiles.size !== 2) throw new Error(`timeout before duplicate response left ${profiles.size} profiles`);
+  await page.locator(".cv-builder-profiles__item").first()
+    .getByRole("button", { name: "Duplizieren" }).click();
   await page.getByText("Im Konto gespeichert", { exact: true }).waitFor();
-  if (profiles.size !== 2) throw new Error(`uncertain duplicate created ${profiles.size} profiles`);
+  if (profiles.size !== 2) throw new Error(`unsafe duplicate created ${profiles.size} profiles`);
   await page.locator(".cv-builder-profiles__item").first()
     .getByRole("button", { name: "Löschen" }).click();
   await page.getByRole("button", { name: "Lebenslauf löschen" }).click();

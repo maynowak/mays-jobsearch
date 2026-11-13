@@ -1965,6 +1965,7 @@ export default function App() {
         return;
       }
       const epoch = sessionEpochRef.current;
+      let uncertainDuplicate = false;
       try {
         const source = await getStructuredCvProfile(cvStorageAccessToken, ref.profileId);
         if (sessionEpochRef.current !== epoch) return;
@@ -2004,21 +2005,20 @@ export default function App() {
         } catch (err) {
           const uncertain = ["unavailable", "aborted"].includes((err as { code?: string })?.code ?? "");
           if (uncertain) {
-            const page = await listStructuredCvProfiles(cvStorageAccessToken, { limit: 50 });
-            const candidate = page.items.find((item) => item.name === input.name
-              && item.template === input.template);
-            if (candidate) {
-              const fullCandidate = await getStructuredCvProfile(cvStorageAccessToken, candidate.profileId);
-              if (sessionEpochRef.current === epoch) adopt(fullCandidate.profile);
-              return;
-            }
+            uncertainDuplicate = true;
+            // No server endpoint attests that a same-name/same-template profile
+            // belongs to this create. Keep the stable key and local state; a
+            // deliberate retry replays the exact payload/key.
+            setStatus({ type: "error", message: t("cvBuilder.profiles.duplicateUncertain") });
           }
           throw err;
         }
         if (sessionEpochRef.current !== epoch) return;
         adopt(duplicate.profile);
       } catch {
-        setStatus({ type: "error", message: t("cvBuilder.profiles.durableSaveError") });
+        if (!uncertainDuplicate) {
+          setStatus({ type: "error", message: t("cvBuilder.profiles.durableSaveError") });
+        }
       }
       return;
     }
