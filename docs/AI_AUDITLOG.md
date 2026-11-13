@@ -6230,3 +6230,46 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Keine RIS-/AWS-/Cognito-/Terraform-, Auth-, Consent-, Payment-, Matching-
   oder Bewerbungsdatenänderung; keine neuen Dependencies.
 - Report: `docs/reports/JM-MARKETING-02B-VISUAL-POLISH-CONVERSION-REPORT.md`.
+
+## 2026-11-13 — JM-MARKETING-02C — LANDING PAGE PRODUCTION RELEASE
+
+**Typ:** Production Release / Landing-Page-Verifikation / SEO-/Security-Smoke
+**Status:** `PRODUCTION LANDING PAGE VERIFIED — RELEASE COMPLETE — NO ROLLBACK`
+
+- Git: `origin/main` vor Release `b3b8525`; Feature-Branch
+  `feature/jm-marketing-02-product-positioning` @ `854da77`; Fast-Forward-Push
+  `b3b8525..854da77` auf `main`, kein Merge-Commit, kein Force-Push. Danach
+  `origin/main` = lokaler `main` = Feature-HEAD = `854da77`. Produkt-Commit
+  `7ba790c`; `854da77` ergänzt nur den 02B-Doku-Commit.
+- Deployment: `dpl_BgP9YMHdzNZTgjY5qwiRZxrDm5Zh`,
+  `https://mays-job-matcher-h075jg4xh-maymilly.vercel.app`, Environment
+  `production`, READY, Source `main`, Commit `854da77`, Aliases inkl.
+  `www.mays-job-matcher.app`. Footer-Build-Identity:
+  `Version 2.2.0 · production · main · 854da77`; Deployment-Commit =
+  Main-HEAD = Build Identity. Genau ein Production-Deployment.
+- Recovery-Referenz: vorheriges Production `dpl_DyLwwPbW1zLQT8v4X8vJv5QLzZJx`
+  @ `b3b8525`. Kein Rollback.
+- Production-Browser-E2E (`tests/e2e/landing-visual-polish.mjs` mit
+  `BASE_URL=https://www.mays-job-matcher.app`) **PASS**: Primär-/Sekundär-CTA
+  Hover, Mouseout, Active, Focus, Klicknavigation, abschließender CTA,
+  Reduced Motion und Touch-Medienabfrage. Primär-Hover:
+  `rgb(236,254,255)`, `matrix(1.02,0,0,1.02,0,-2)`, Cyan-Glow.
+- Responsive DE/EN 320/390/768/1024/1440 px: kein horizontaler Overflow,
+  CTAs/Hinweis im ersten Viewport, abschließender CTA/Footer erreichbar,
+  0 Console-/Page-Errors. Hintergrundbild, Job-Stream, MatchPulse und
+  Glass-Navigation vorhanden.
+- SEO: `/` 200 ohne `X-Robots-Tag`, `index,follow`, genau ein Canonical
+  `https://www.mays-job-matcher.app/`, freigegebene Description, vollständige
+  OG-/Twitter-Tags; `robots.txt`/`sitemap.xml` 200, Sitemap nur `/`;
+  private Routen `noindex, nofollow` ohne Canonical; HTTP→HTTPS und
+  non-www→www 308 ohne Loops; API-Rewrites (`/api/ris/router` 307,
+  `/api/ris/applications` 401 JSON) intakt.
+- Security: keine Secret-Muster im Production-Bundle, keine privaten Daten im
+  initialen HTML, Auth-/Profil-/Workspace-Routen 200 ohne Fehler, keine neuen
+  Tracking-/Datenverarbeitungsfunktionen.
+- Tests: Build PASS (1,36 s), fokussiert 87/87 PASS,
+  `--maxWorkers=2` 1871 PASS / 5 SKIPPED, `git diff --check` PASS.
+- Findings: kein axe-Audit, synthetische Maus-Events, bekannter Standard-Flake;
+  keine BLOCKER/MAJOR.
+- Kein Rollback, keine Branch-Löschung, kein Docs-only-Production-Deploy.
+- Report: `docs/reports/JM-MARKETING-02C-LANDING-PAGE-PRODUCTION-RELEASE-REPORT.md`.
