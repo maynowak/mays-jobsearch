@@ -36,7 +36,7 @@ const content = (doc: Document, selector: string) =>
 
 const EXPECTED_TITLE = "KI-gestützte Jobsuche & Job Matching | May's Job Matcher";
 const EXPECTED_DESCRIPTION =
-  "Finde passende Stellen mit individuellen Suchprofilen, KI-gestütztem Job Matching und Lebenslaufanalyse. Organisiere deine Jobsuche mit May's Job Matcher.";
+  "Finde Jobs, die wirklich zu dir passen – mit individuellen Suchprofilen, KI-gestütztem Job Matching und Lebenslaufanalyse. Organisiere deine Jobsuche mit May's Job Matcher.";
 const EXPECTED_IMAGE = "https://www.mays-job-matcher.app/job-matcher-next-step.webp";
 
 describe("landing page SEO metadata (index.html)", () => {
@@ -47,6 +47,10 @@ describe("landing page SEO metadata (index.html)", () => {
   it("sets title and meta description", () => {
     expect(indexDoc.title).toBe(EXPECTED_TITLE);
     expect(content(indexDoc, 'meta[name="description"]')).toBe(EXPECTED_DESCRIPTION);
+  });
+
+  it("keeps the meta description aligned with the landing headline", () => {
+    expect(EXPECTED_DESCRIPTION).toContain("Finde Jobs, die wirklich zu dir passen");
   });
 
   it("allows indexing and sets the canonical landing URL", () => {
