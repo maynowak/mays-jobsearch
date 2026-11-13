@@ -6202,3 +6202,31 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   Focused 116 PASS, serial full **1806 PASS / 5 skipped**, build PASS; 03A/03B
   and 02A–02F/PDF E2E PASS. No main merge/deploy, private data, RIS/AWS/
   Cognito/Terraform/consent change.
+
+## 2026-11-13 — JM-CV-BUILDER-03C-UI-INTEGRATION-01
+
+**Status:** `VERIFIED LOCAL / PRODUCTION ACTIVATION BLOCKED`
+
+- Branch `feature/jm-cv-builder-03c-ui-integration-01` from BFF
+  `f7080f3`; remote main `b3b8525`. Consolidation merge `6247d66`; UI commit
+  `c24ce18`.
+- Merged `c4c2cde` 03B into the current SEO/BFF baseline. Only the append-only
+  audit log conflicted; both sides retained. 03B import/review/handoff changes
+  and tests are present.
+- Reused the existing `CvBuilderProfileList`; added durable/session status,
+  explicit durable save, load/update/rename/delete/duplicate via the structured
+  CV BFF, version/ETag handling and conflict/error preservation. No second
+  overview, no auto-migration and no browser persistence.
+- Session-only `DurableProfileRef` keeps local `cvId` and RIS `profileId`
+  separate. Logout/identity reset clears refs, review maps and drafts; session
+  generation rejects late responses.
+- Consent purpose remains DRAFT; server/client flags remain default-off. No
+  DRAFT grant or productive activation exists.
+- Tests: 03B/CV/API focused 159 PASS; API 609 PASS / 5 skipped; frontend
+  1913 PASS / 5 skipped (`--maxWorkers=2`); production build PASS; synthetic
+  mock-BFF E2E PASS (create/save/reload/update/409/duplicate/delete, 320/390/
+  768/1440); diff/secret scans PASS.
+- No real RIS/AWS/Consent mutation, main merge, production deployment or real
+  CV data. Authenticated 403/503/428/timeout/logout full-browser variants
+  remain deployment/test-identity gated.
+- Report: `docs/reports/JM-CV-BUILDER-03C-UI-INTEGRATION-01-REPORT.md`.
