@@ -6160,7 +6160,11 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   suite **1898 passed / 5 skipped** with `--maxWorkers=2`; production build,
   API syntax, diff and secret scan PASS. One parallel-load timeout in
   `CvBuilderEditorPdf.test.tsx` passed in isolation (4/4).
+- Automatic branch previews `dpl_2zwd7sXMXZuDtkE1RzmfcUh7iYGE` (jobsearch)
+  and `dpl_6L6eYhw5xrKKYxNETkziQHeYmBcR` (matcher) are READY. Preview smoke
+  returned 503 `cv_builder_profile_storage_disabled` for the new BFF, 503
+  `consent_disabled` for its consent status and 503 `cv_storage_disabled` for
+  the existing CV BFF; no RIS write occurred.
 - No RIS/AWS/Terraform/Cognito/CloudFront/DNS/consent mutation, no main merge,
-  no production deployment and no real CV data. Vercel preview, if created,
-  must remain fail-closed with flags absent.
+  no production deployment and no real CV data.
 - Report: `docs/reports/JM-RIS-STRUCTURED-CV-BFF-01-REPORT.md`.

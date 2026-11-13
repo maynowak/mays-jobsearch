@@ -162,8 +162,16 @@ it is an existing test-environment flake, not a product failure.
   because the server flag is absent/false.
 - RIS deployment, Terraform/AWS, Cognito, CloudFront, DNS and consent
   activation were not touched.
-- Vercel preview deployment, if produced, is not production; its build identity
-  and disabled BFF response require separate verification.
+- Automatic branch previews were produced and are not production:
+  - `dpl_2zwd7sXMXZuDtkE1RzmfcUh7iYGE` — jobsearch, `READY`,
+    `https://mays-jobsearch-goabrv2ja-maymilly.vercel.app`.
+  - `dpl_6L6eYhw5xrKKYxNETkziQHeYmBcR` — matcher, `READY`,
+    `https://mays-job-matcher-f37pmsa0o-maymilly.vercel.app`.
+  - Branch alias: `mays-jobsearch-git-feature-jm-ris-structured-cv-bff-01-maymilly.vercel.app`.
+  - Preview smoke: `/api/ris/cv-builder-profiles` → HTTP 503
+    `cv_builder_profile_storage_disabled`; structured consent status → 503
+    `consent_disabled`; existing `/api/ris/cvs` → 503 `cv_storage_disabled`.
+    No RIS write occurred and the new surface remained fail-closed.
 
 ## 10. Open privacy decisions
 
