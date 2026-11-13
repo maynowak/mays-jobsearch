@@ -6075,3 +6075,61 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `og:image` format, metadata/product decision for legal pages, push/preview
   approval.
 - Report: `docs/reports/JM-MARKETING-01A-SEO-FOUNDATION-REPORT.md`.
+
+## 2026-11-13 — JM-MARKETING-01B — SEO PREVIEW VERIFICATION
+
+**Typ:** Preview deployment / HTTP-SEO verification / Indexing protection / Routing regression
+**Status:** `PREVIEW VERIFIED WITH FINDINGS — READY FOR PRODUCTION REVIEW — NO MERGE/DEPLOY`
+
+- Git: Branch `feature/jm-marketing-01a-seo-foundation` von `origin/main`
+  `a0dc1ec`; Produkt-HEAD `93bdfe7`; 5/0 vor `origin/main`; Remote-Branch
+  `origin/feature/jm-marketing-01a-seo-foundation` = `93bdfe7`. Kein
+  Force-Push, kein Merge, keine Branch-Löschung. Vier untracked Fremddateien
+  unverändert.
+- Preview: Deployment `dpl_FRzzqvtQsq79pqKxdQvCoyGMzHBH`, URL
+  `https://mays-job-matcher-4vbbu98uc-maymilly.vercel.app`, Environment
+  `preview`, Status `READY`, Git-Commit `93bdfe7`. Footer/Bundle-Build-Identity:
+  `Version 2.2.0 · preview · feature/jm-marketing-01a-seo-foundation ·
+  93bdfe7`; Deployment-Commit = Build Identity.
+- Landing `/`: 200, `lang="de"`, korrekter Title/Description, genau ein
+  Canonical auf `https://www.mays-job-matcher.app/`, `index,follow`, OG- und
+  Twitter-Tags vollständig. Preview-Plattform setzt zusätzlich
+  `X-Robots-Tag: noindex` (gewollter Preview-Schutz); die deployte
+  `vercel.json` hat keine `/`-Header-Regel.
+- App-Routen `/search`, `/cv-builder/workspace` (auch mit synthetischem
+  `?handoff=`), `/landingspage2`, `/registrieren`, `/anmelden`,
+  `/auth/callback`, `/profil`, `/email-bestaetigen`, `/impressum`,
+  `/datenschutz`, `/datenschutzprinzipien`, `/app.html`: 200,
+  `X-Robots-Tag: noindex, nofollow`, kein Canonical, keine `og:url`, keine
+  privaten Inhalte im initialen HTML. `/datenschutzprinzipien` wird statisch
+  aus `public/` ausgeliefert und trägt `noindex` im HTML.
+- `robots.txt`: 200 `text/plain`, `Allow: /`, `Disallow: /api/`,
+  Sitemap-Referenz. `sitemap.xml`: 200 `application/xml`, valides XML, genau
+  eine Produktions-URL, keine Preview-/Auth-/API-Routen.
+- Redirects: HTTP→HTTPS 308; non-www→www 308 (max. 2 Hops); keine Loops;
+  keine doppelten Canonicals; Canonical-Domain konsistent.
+- Social: OG-/Twitter-Tags vorhanden; `og:image` HTTP 200, `image/webp`,
+  1536×1024, 114.688 Bytes, ohne Auth. Externe Social-Validatoren nicht
+  ausgeführt; WebP-Kompatibilität als nicht blockierendes Finding dokumentiert.
+- Routing: Browser-Prüfung (Playwright, ohne echte Konten, synthetische
+  E-Mail) für Landing, Suche, Registrierung, Login, Auth-Callback, Profil,
+  Impressum, Datenschutz, Prinzipien, Workspace und E-Mail-Bestätigung:
+  gerendert, 0 Console-/Page-Errors. Footer zeigt `93bdfe7`.
+- Vercel-Konfiguration: Functions, Cron, Redirect, alle API-Rewrites,
+  SPA-Rewrites, Headers und `git.deploymentEnabled` entsprechen dem
+  Repository-Stand. API-Stichproben `/api/ris/applications` und `/api/ris/cvs`
+  liefern BFF-JSON (503 disabled), kein HTML-Fallback; `/api/ris/router` 307
+  nach `/404`.
+- Tests: Build PASS (1,01 s), `git diff --check` PASS. Standard-`npm test`
+  hatte 1–2 Timeouts ausschließlich in
+  `src/ManualSearchProfiles.integration.test.tsx` (5 s) unter voller
+  Parallelität; isoliert 8/8 PASS, `--maxWorkers=2` 1864 passed / 5 skipped.
+  Kein Produkt-/SEO-Fehler; keine fremden Tests oder Produktlogik geändert.
+- Security/Privacy: keine Secrets, keine echten Bewerberdaten, keine
+  RIS-/AWS-/Cognito-/Terraform-Änderung; `noindex` ist nicht Zugriffsschutz.
+- Findings: F1 vorbestehender Test-Flake; F2 Preview-Noindex vs. Production;
+  F3 WebP-OG-Bild; F4 Rechtsseiten vorläufig noindex; F5 Datenschutz-Version
+  1.2 (bestehend). Keine BLOCKER/MAJOR.
+- Kein Merge, kein Production-Deployment, keine Branch-Löschung, keine
+  Search-Console-Einreichung.
+- Report: `docs/reports/JM-MARKETING-01B-SEO-PREVIEW-VERIFICATION-REPORT.md`.
