@@ -6133,3 +6133,57 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Kein Merge, kein Production-Deployment, keine Branch-Löschung, keine
   Search-Console-Einreichung.
 - Report: `docs/reports/JM-MARKETING-01B-SEO-PREVIEW-VERIFICATION-REPORT.md`.
+
+## 2026-11-13 — JM-MARKETING-01C — SEO PRODUCTION RELEASE
+
+**Typ:** Production Release / Deployment Identity / SEO Verification / Search Console Onboarding
+**Status:** `PRODUCTION SEO VERIFIED — SEARCH CONSOLE PENDING — NO ROLLBACK`
+
+- Git: `origin/main` vor Release `a0dc1ec`, unverändert seit 01B. Feature-Branch
+  `feature/jm-marketing-01a-seo-foundation` @ `b3b8525`; Fast-Forward-Push auf
+  `main` (`a0dc1ec..b3b8525`), kein Merge-Commit, kein Force-Push. Danach
+  `origin/main` = local `main` = Feature-HEAD = `b3b8525`. Der zuvor divergierte
+  lokale `main`-Tip `05a0e3e` wurde ohne Löschung als
+  `backup/local-main-pre-01c-05a0e3e` gesichert.
+- Release-Readiness: Build PASS (1,25 s), `git diff --check` PASS,
+  `npx vitest run --maxWorkers=2` **1864 passed / 5 skipped**; bekannter
+  Standard-Timeout-Flake in `ManualSearchProfiles.integration` isoliert 8/8
+  PASS. Nur freigegebener SEO-Scope (17 Dateien, +1.521/−14).
+- Production-Deployment: `dpl_DyLwwPbW1zLQT8v4X8vJv5QLzZJx`,
+  `https://mays-job-matcher-p14jr7m9q-maymilly.vercel.app`, Environment
+  `production`, Status `READY`, Source `main`, Git-Commit `b3b8525`,
+  Aliases inkl. `www.mays-job-matcher.app`. Footer-Build-Identity:
+  `Version 2.2.0 · production · main · b3b8525`; Deployment-Commit =
+  Build Identity. Genau ein Production-Deployment, kein zusätzliches
+  `vercel --prod`.
+- Vorheriger Production-Stand als Recovery-Referenz:
+  `dpl_C26fHGZUgu36cuzvoTm2xXPGUJFc` @ `a0dc1ec`, Footer `a0dc1ec`.
+  Kein Rollback ausgeführt.
+- Production-HTTP: `/` 200, kein `X-Robots-Tag`, `index,follow`, genau ein
+  Canonical `https://www.mays-job-matcher.app/`, vollständige OG-/Twitter-Tags;
+  `/search`, `/cv-builder/workspace` (auch `?handoff=synthetic-test`),
+  `/landingspage2`, `/registrieren`, `/anmelden`, `/auth/callback`, `/profil`,
+  `/email-bestaetigen`, `/impressum`, `/datenschutz`,
+  `/datenschutzprinzipien`, `/app.html`: 200, `X-Robots-Tag: noindex,
+  nofollow`, kein Canonical/keine `og:url`, keine privaten Inhalte.
+  `/dev/dashboard` 404 mit noindex.
+- `robots.txt` 200 `text/plain`, `Allow: /`, `Disallow: /api/`, Sitemap auf
+  Production. `sitemap.xml` 200 `application/xml`, valides XML, nur
+  `https://www.mays-job-matcher.app/`, keine Preview-/Auth-/API-Routen.
+- Redirects: HTTP→HTTPS 308, non-www→www 308, keine Loops, keine doppelten
+  Canonicals. `og:image` 200 `image/webp` (1536×1024, 114.688 Bytes).
+- Browser-Smoke (Playwright, ohne echte Konten): Landing, Suche,
+  Registrierung, Login, Auth-Callback, Profil, Impressum, Datenschutz,
+  Prinzipien, Workspace rendern mit 0 Console-/Page-Errors und 0 failed
+  Requests; Footer `b3b8525`. API-Rewrites liefern weiterhin BFF-JSON
+  (`/api/ris/applications` 401, `/api/ris/cvs` 401, `/api/ris/router` 307).
+- Google Search Console: **PENDING** — keine GSC-/Google-Credentials,
+  kein `gcloud`-Login, kein DNS-TXT `google-site-verification`, keine
+  Verifikationsdatei. Keine Property, Sitemap-Einreichung oder URL Inspection
+  behauptet. Manueller berechtigter Google-Zugriff und DNS-TXT-Verifikation
+  erforderlich; SPF/MX/DKIM unverändert.
+- Keine RIS-/AWS-/Cognito-/Terraform-, Payment-, Auth-, Consent- oder
+  Bewerbungsdatenänderung; keine neuen Secrets; keine Branch-Löschung.
+- Report-Commit liegt auf dem Feature-Branch, damit kein Docs-only-Deploy auf
+  `main` ausgelöst wird; `main`/Production bleiben auf `b3b8525`.
+- Report: `docs/reports/JM-MARKETING-01C-SEO-PRODUCTION-RELEASE-REPORT.md`.
