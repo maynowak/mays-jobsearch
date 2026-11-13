@@ -191,7 +191,7 @@ const DATE_END = `(?:${DATE_POINT}|present|heute|current|now|ongoing|bis heute)`
 const DATE_RANGE = new RegExp(`(${DATE_POINT})\\s*(?:-|–|—|bis|to)\\s*(${DATE_END})`, "i");
 const SINCE_DATE = new RegExp(`^(?:seit|since)\\s+(${DATE_POINT})`, "i");
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
-const PHONE_RE = /(?:\+?\d[\d ()/.-]{6,}\d)/;
+const PHONE_RE = /(?:\+\d{1,3}|00\d{1,3}|0)[\d ()/.-]{5,}\d/;
 const LINK_RE = /(https?:\/\/[^\s<>()]+|(?:www\.)?(?:github|linkedin)\.com\/[^\s<>()]+)/i;
 const MONTH_RE = /^(\d{4})-(\d{2})$/;
 
@@ -436,7 +436,7 @@ function classifyExperiencePair(first: string, second: string): { employer: stri
 }
 
 function degreeLike(value: string): boolean {
-  return /\b(bachelor|master|b\.?sc|m\.?sc|b\.?a|m\.?a|diplom|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachwirt|mba|vocational qualification|berufsqualifikation|berufsausbildung)\b/i.test(value);
+  return /\b(bachelor|master|b\.?sc|m\.?sc|b\.eng|m\.eng|b\.?a|m\.?a|diplom(?:-ing)?|magister|ll\.m|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachwirt|mba|realschulabschluss|mittlere reife|fachhochschulreife|staatlich geprüft|vocational qualification|berufsqualifikation|berufsausbildung)\b/i.test(value);
 }
 
 const NON_EMPLOYMENT_RE = /\b(lab|labor|bootcamp|course|kurs|training|schulung|seminar|workshop|weiterbildung|fortbildung|certification|zertifizierung|universität|universitaet|university|hochschule|college|school|studium|education)\b/i;
@@ -444,7 +444,11 @@ const NON_EMPLOYMENT_RE = /\b(lab|labor|bootcamp|course|kurs|training|schulung|s
 function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionId>, unrecognized: string[]): CvBuilderDraftV1["experience"] {
   const entries: CvBuilderDraftV1["experience"] = [];
   for (const block of splitBlocks(lines)) {
-    const dateIndex = block.findIndex((line) => parseDateRange(line) !== null || /^\s*\d{4}\s*\|/.test(line));
+    const dateIndex = block.findIndex((line) =>
+      parseDateRange(line) !== null ||
+      /^\s*(?:\d{1,2}[./])?\d{4}\s*\|/.test(line) ||
+      /\s*(?:\||·|[-–—])\s*(?:(?:0?[1-9]|1[0-2])[./])?\d{4}\s*$/.test(line)
+    );
     if (dateIndex < 0) {
       unrecognized.push(...nonEmpty(block));
       continue;
@@ -452,25 +456,39 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
     const dateLine = block[dateIndex];
     let date = parseDateRange(dateLine);
     let singlePrefix = "";
+    let hasEndDate = false;
     if (!date) {
-      const single = dateLine.match(new RegExp(`^\s*(${DATE_POINT})\s*\|\s*`, "i"));
-      if (!single) {
+      const single = dateLine.match(new RegExp(`^\\s*(${DATE_POINT})\\s*\\|\\s*`, "i"));
+      const endSingle = dateLine.match(new RegExp(`\\s*(?:\\||·|[-–—])\\s*(${DATE_POINT})\\s*$`, "i"));
+      hasEndDate = Boolean(endSingle);
+      if (!single && !endSingle) {
         unrecognized.push(...nonEmpty(block));
         continue;
       }
-      singlePrefix = single[0];
-      const startMonth = parseMonthToken(single[1]);
+      singlePrefix = single?.[0] ?? "";
+      const singleDate = single?.[1] ?? endSingle?.[1] ?? "";
+      const startMonth = parseMonthToken(singleDate);
       date = {
         startMonth: startMonth ?? "",
         current: false,
         uncertain: true,
-        matchIndex: 0,
+        matchIndex: endSingle?.index ?? 0,
       };
     }
-    const beforeText = singlePrefix ? "" : dateLine.slice(0, date.matchIndex).replace(/[|,;–—-]\s*$/, "").trim();
-    const afterText = singlePrefix
-      ? dateLine.slice(singlePrefix.length).trim()
-      : dateLine.slice(date.matchIndex).replace(DATE_RANGE, "").replace(SINCE_DATE, "").replace(/^[|,;–—-]\s*/, "").trim();
+    const beforeText = hasEndDate
+      ? dateLine.slice(0, date.matchIndex).replace(/[|,;·–—]\s*$/, "").trim()
+      : singlePrefix
+        ? (dateLine.match(new RegExp(`\\s*(?:\\||·|[-–—])\\s*${DATE_POINT}\\s*$`, "i"))
+            ? dateLine.slice(0, dateLine.search(new RegExp(`\\s*(?:\\||·|[-–—])\\s*${DATE_POINT}\\s*$`, "i"))).trim()
+            : "")
+        : dateLine.slice(0, date.matchIndex).replace(/[|,;–—]\s*$/, "").trim();
+    const afterText = hasEndDate
+      ? ""
+      : singlePrefix
+        ? (dateLine.match(new RegExp(`^\\s*${DATE_POINT}\\s*\\|\\s*`, "i"))
+            ? dateLine.replace(new RegExp(`^\\s*${DATE_POINT}\\s*\\|\\s*`, "i"), "").trim()
+            : "")
+        : dateLine.slice(date.matchIndex).replace(DATE_RANGE, "").replace(SINCE_DATE, "").replace(/^[|,;–—]\s*/, "").trim();
     const before = [...nonEmpty(block.slice(0, dateIndex)), ...splitLineParts(beforeText)];
     const afterParts = afterText ? splitLineParts(afterText) : [];
     let after = [...afterParts.slice(2), ...nonEmpty(block.slice(dateIndex + 1))];
@@ -482,6 +500,24 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
     }
     let employer = "";
     let position = "";
+    if (!before.length && !afterParts.length && after.length) {
+      const first = after[0];
+      const second = after[1] ?? "";
+      const firstLooksHeader = first && !/[.!?]$/.test(first) && first.split(/\s+/).filter(Boolean).length <= 10;
+      const secondLooksHeader = second && !/[.!?]$/.test(second) && second.split(/\s+/).filter(Boolean).length <= 10;
+      if (firstLooksHeader && secondLooksHeader && (roleLike(first) || companyLike(first) || roleLike(second) || companyLike(second))) {
+        const pair = classifyExperiencePair(first, second);
+        employer = pair.employer;
+        position = pair.position;
+        if (pair.uncertain) uncertain.add("experience");
+        after = after.slice(2);
+      } else if (firstLooksHeader && (roleLike(first) || companyLike(first))) {
+        if (roleLike(first)) position = first;
+        else employer = first;
+        after = after.slice(1);
+        uncertain.add("experience");
+      }
+    }
     if (!before.length && afterParts.length) {
       if (afterParts.length >= 2) {
         const pair = classifyExperiencePair(afterParts[0], afterParts[1]);
@@ -629,7 +665,7 @@ function mapExperienceSection(
 }
 
 function educationInstitutionLike(value: string): boolean {
-  return companyLike(value) || /\b(universität|universitaet|university|hochschule|college|school|akademie|institut|institute|fachhochschule|fachschule|berufsschule|vocational school)\b/i.test(value);
+  return companyLike(value) || /\b(universität|universitaet|university|hochschule|college|school|akademie|institut|institute|fachhochschule|fachschule|berufsschule|vocational school|tu|rwth|kit|eth|fh|hs|dhib|dhbw|lmu|tum)\b/i.test(value);
 }
 
 function buildEducationEntry(
@@ -651,8 +687,17 @@ function buildEducationEntry(
     return null;
   }
 
-  const degreeLine = lines.find((line) => degreeLike(line));
-  const institutionLine = lines.find((line) => educationInstitutionLike(line));
+  let degreeLine = lines.find((line) => degreeLike(line));
+  let institutionLine = lines.find((line) => educationInstitutionLike(line));
+  if (degreeLine && institutionLine && degreeLine === institutionLine) {
+    const parts = degreeLine.split(/\s*(?:–|—|,)\s*/);
+    const tail = parts.at(-1)?.trim() ?? "";
+    const head = parts.slice(0, -1).join(" – ").trim();
+    if (head && tail && educationInstitutionLike(tail) && degreeLike(head)) {
+      degreeLine = head;
+      institutionLine = tail;
+    }
+  }
   let institution = institutionLine ?? "";
   let degree = degreeLine ?? "";
   const used = new Set<string>([degreeLine, institutionLine].filter((line): line is string => Boolean(line)));
@@ -1055,15 +1100,20 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
     const email = line.match(EMAIL_RE);
     if (email && !personal.email) personal.email = email[0];
     const phone = line.match(PHONE_RE);
-    if (phone && !personal.phone) personal.phone = phone[0].trim();
+    const birthDate = /^\s*(?:geburtsdatum|date of birth|geb\.?)\b/i.test(line) || /^\s*\d{1,2}[./]\d{1,2}[./]\d{2,4}\s*$/.test(line);
+    if (phone && !birthDate && !personal.phone) personal.phone = phone[0].trim();
     if (!personal.fullName && !email && !LINK_RE.test(line) && !PHONE_RE.test(line) && !line.includes(":")) {
-      const candidate = line.replace(/^(herr|frau|mr|mrs|ms)\.?\s+/i, "").trim();
+      const candidate = line
+        .replace(/^(herr|frau|mr|mrs|ms)\.?\s+/i, "")
+        .replace(/^(?:dr|prof|dipl\.?-?ing|mag)\.?\s+/i, "")
+        .trim();
       if (
         candidate.length >= 2 &&
         candidate.length <= 80 &&
         candidate.split(/\s+/).length >= 2 &&
         candidate.split(/\s+/).length <= 4 &&
         !/[.!?]$/.test(candidate) &&
+        !/[,@\d]/.test(candidate) &&
         !titleLike(candidate) &&
         !companyLike(candidate) &&
         !/\b(professional|profile|profil|summary|experience|erfahrung|curriculum)\b/i.test(candidate) &&
@@ -1074,10 +1124,25 @@ function parsePersonal(lines: string[]): { personal: CvBuilderDraftV1["personal"
           : candidate;
       }
     }
-    const locationPart = line
-      .split(/\s*[|•]\s*/)
-      .map((part) => part.trim())
+    const contactSegments = line.split(/\s*[|•·;]\s*/).map((part) => part.trim());
+    let locationPart = contactSegments
       .find((part) => /,/.test(part) && !EMAIL_RE.test(part) && !PHONE_RE.test(part) && !LINK_RE.test(part) && part.length <= 100);
+    if (!locationPart) {
+      const commaParts = contactSegments
+        .flatMap((part) => part.split(/\s*,\s*/))
+        .filter((part) => part && !EMAIL_RE.test(part) && !PHONE_RE.test(part) && !LINK_RE.test(part) && !/^\d/.test(part));
+      if (commaParts.length >= 2) locationPart = commaParts.join(", ");
+    }
+    if (!locationPart && contactSegments.length > 1) {
+      const plain = contactSegments.filter((part) =>
+        part.length >= 2 && part.length <= 40 &&
+        !EMAIL_RE.test(part) && !PHONE_RE.test(part) && !LINK_RE.test(part) &&
+        !/^\d/.test(part) &&
+        part.toLocaleUpperCase("de") !== personal.fullName?.toLocaleUpperCase("de") &&
+        !/\b(?:deutschland|germany|austria|schweiz|switzerland)\b/i.test(part)
+      );
+      if (plain.length) locationPart = plain[0];
+    }
     if (!personal.location && locationPart) {
       personal.location = locationPart;
     }

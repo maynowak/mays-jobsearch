@@ -6168,3 +6168,37 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No RIS/AWS/Terraform/Cognito/CloudFront/DNS/consent mutation, no main merge,
   no production deployment and no real CV data.
 - Report: `docs/reports/JM-RIS-STRUCTURED-CV-BFF-01-REPORT.md`.
+
+## 2026-11-12 — CV-BUILDER-03B REAL-WORLD IMPORT QUALITY
+
+- Local count-only private baseline: ATS 0 experience/3 projects/1 education/
+  58 skills/44 review; two-column 5/3/3/71/34. After parser changes: ATS
+  **8** experience/3/1/58/**18** review, personal 4/4; two-column unchanged
+  5/3/3/71/34, personal 4/4. No private content committed.
+- Added safe header/furniture handling, role-heading exclusion, month-name and
+  date-last experience detection, date-first multi-line headers, heading
+  removal from timeline, single-line degree/institution split, broader degree
+  forms, stricter phone/location/name handling.
+- Added session-only import quality report with per-item text/page/section/
+  reason/status/target; editor backlog "Importprüfung fortsetzen" with filter,
+  edit, target/status and explicit apply. No CV/profile schema change.
+- Added selected/total skill count, zero-selection warning, filtered
+  select/clear, summary warnings, and return label "Änderungen übernehmen &
+  zurück" with focus only after applied.
+- Focused 112 PASS, serial full **1800 PASS / 5 skipped**, build PASS; existing
+  02A–02F/PDF and 03A E2E plus new 71-skill/review 03B E2E PASS. No main merge,
+  deployment, RIS/AWS/Cognito/Terraform/consent change.
+
+## 2026-11-12 — CV-BUILDER-03B REVIEW INTEGRITY
+
+- Review items now separate `accepted` decision from `applied` actual draft
+  write; duplicate apply is blocked for experience, education, skills,
+  projects and certificates. Invalid experience/education/link mappings show
+  errors without changing or marking the item applied.
+- Added session-only profile→report store wired through App save/reopen/switch/
+  duplicate/delete and identity reset; no CV/profile schema, localStorage or
+  RIS persistence change.
+- Added store and idempotence tests; editor backlog repeated-apply/error tests.
+  Focused 116 PASS, serial full **1806 PASS / 5 skipped**, build PASS; 03A/03B
+  and 02A–02F/PDF E2E PASS. No main merge/deploy, private data, RIS/AWS/
+  Cognito/Terraform/consent change.

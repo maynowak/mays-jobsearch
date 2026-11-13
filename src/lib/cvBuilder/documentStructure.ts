@@ -246,6 +246,7 @@ export function isLikelyUnknownHeading(text: string): boolean {
   if (/[.!?]$/.test(value)) return false;
   if (/@|https?:\/\//i.test(value)) return false;
   if (/\b(?:gmbh|ag|inc|ltd|llc|corp|kg|ug|ohg|gbr)\b/i.test(value)) return false;
+  if (/\b(?:senior|junior|lead|principal|engineer|developer|manager|consultant|architect|architekt|entwickler|ingenieur|specialist|director|head|universität|universitaet|hochschule|institut|institute)\b/i.test(value)) return false;
   if (/^(?:seite|page)\s+\d+/i.test(value)) return false;
   const words = value.split(/\s+/).filter(Boolean);
   if (words.length < 2) return false;
@@ -310,7 +311,7 @@ export function normalizePdfDocument(source: PdfDocumentStructure): NormalizedPd
     const knownHeading = matchDocumentHeading(text);
     const unknownHeading = !knownHeading && isLikelyUnknownHeading(text);
     const edge = edges.find((candidate) => candidate.block.order === block.order);
-    const headerLike = /(?:[•|].*\d+|\b(?:seite|page)\s+\d+)\s*$/i.test(text);
+    const headerLike = /(?:[•|·]|\b(?:seite|page|professional cv)\s+\d+)/i.test(text);
     if (edge && repeatedSignatures.has(edge.signature) && (!knownHeading || headerLike)) {
       if (!(edge.edge === "top" && unknownHeading && !headerLike)) {
         ignored.push({
@@ -366,8 +367,11 @@ export interface DetectedTimelineItem {
   parentId?: string;
 }
 
-const DATE_RANGE_AT_START = /^\s*((?:(?:0?[1-9]|1[0-2])[./])?(?:19|20)\d{2}\s*(?:[-–—]|bis|to)\s*(?:(?:0?[1-9]|1[0-2])[./])?(?:(?:19|20)\d{2}|heute|present|current|now|ongoing))\b/i;
-const SINGLE_DATE_AT_START = /^\s*((?:(?:0?[1-9]|1[0-2])[./])?(?:19|20)\d{2})\s*(?:\||·|–|—)/i;
+const MONTH_WORD = "(?:jan(?:uar)?|feb(?:ruar)?|mär(?:z)?|maerz|apr(?:il)?|mai|may|jun(?:i)?|jul(?:i)?|aug(?:ust)?|sep(?:t|tember)?|okt(?:ober)?|oct(?:ober)?|nov(?:ember)?|dez(?:ember)?|dec(?:ember)?)";
+const DATE_POINT_AT_START = `(?:${MONTH_WORD}\\.?\\s+\\d{4}|\\d{1,2}[./]\\d{4}|\\d{4}-\\d{2}|\\d{4})`;
+const DATE_RANGE_AT_START = new RegExp(`^\\s*(${DATE_POINT_AT_START}\\s*(?:[-–—]|bis|to)\\s*(?:${DATE_POINT_AT_START}|heute|present|current|now|ongoing))\\b`, "i");
+const SINGLE_DATE_AT_START = new RegExp(`^\\s*(${DATE_POINT_AT_START})\\s*(?:\\||·|–|—)`, "i");
+const DATE_AT_END = new RegExp(`\\s*(?:\\||·|[-–—])\\s*(${DATE_POINT_AT_START})\\s*$`, "i");
 
 const TRAINING_LINE_RE = /\b(?:lab|training|weiterbildung|fortbildung|course|workshop|seminar|zertifizierung\w*|certification\w*|in preparation|preparing for|planned|in progress|pursuing|geplant|in vorbereitung|angestrebt)\b/i;
 
@@ -382,18 +386,30 @@ function startDate(line: string): { dateText: string; current: boolean; uncertai
   const range = line.match(DATE_RANGE_AT_START);
   if (range) {
     const current = /heute|present|current|now|ongoing/i.test(range[1]);
-    const hasMonthInStart = /^(?:0?[1-9]|1[0-2])[./]/.test(range[1]);
+    const hasMonthInStart = /^(?:0?[1-9]|1[0-2])[./]/.test(range[1]) || new RegExp(`^${MONTH_WORD}`, "i").test(range[1]);
     return { dateText: range[1].trim(), current, uncertain: !hasMonthInStart };
   }
   const single = line.match(SINGLE_DATE_AT_START);
   if (single) return { dateText: single[1].trim(), current: false, uncertain: true };
+  const end = line.match(DATE_AT_END);
+  if (end && /\b(?:engineer|developer|manager|consultant|architect|analyst|entwickler|ingenieur|berater|gmbh|ag|inc|ltd|llc)\b/i.test(line)) {
+    return { dateText: end[1].trim(), current: false, uncertain: true };
+  }
   return null;
 }
 
+function looksLikeStationHeader(line: string): boolean {
+  if (!line.trim() || /[.!?]$/.test(line)) return false;
+  if (line.split(/\s+/).filter(Boolean).length > 9) return false;
+  if (/\b(?:gmbh|ag|inc|ltd|llc|corp|kg|ug|ohg|gbr)\b/i.test(line)) return true;
+  if (/\b(?:engineer|developer|manager|consultant|architect|analyst|designer|entwickler|ingenieur|berater|leiter|specialist|director|freelance|freelancer)\b/i.test(line)) return true;
+  return /[|·]/.test(line);
+}
+
 function timelineKind(line: string): TimelineItemKind {
-  if (/\b(?:freelance|freiberuflich|selbstständig|selbststaendig|self[- ]employed)\b/i.test(line)) return "freelance";
+  if (/\b(?:freelance|freelancer|freiberuflich|selbstständig|selbständig|selbststaendig|self[- ]employed|eigenes unternehmen)\b/i.test(line)) return "freelance";
   if (/\b(?:training|kurs|course|workshop|seminar|weiterbildung|fortbildung|lab|labor|zertifizierung\w*|certification\w*)\b/i.test(line)) return "training";
-  if (/\b(?:projekt\w*|project\w*|projektphase)\b/i.test(line)) return "project";
+  if (/\b(?:projekt\w*|project\w*|projektphase)\b/i.test(line) && !/\b(?:manager|leiter|engineer|developer|consultant|architekt|architect|specialist|director|head)\b/i.test(line)) return "project";
   if (/\b(?:ausbildung|studium|bachelor|master|diplom|phd|doktor|zertifikat\w*|qualifikation\w*)\b/i.test(line)) return "qualification";
   return "employment";
 }
@@ -419,7 +435,8 @@ export function detectTimelineItems(blocks: PdfTextBlock[]): DetectedTimelineIte
     return item;
   };
 
-  for (const block of blocks) {
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+    const block = blocks[blockIndex];
     if (!block.text.trim()) {
       current = null;
       continue;
@@ -449,6 +466,20 @@ export function detectTimelineItems(blocks: PdfTextBlock[]): DetectedTimelineIte
     }
     if (isTrainingContentLine(block.text) && (!current || current.kind !== "training")) {
       current = startItem(block, "training");
+      continue;
+    }
+    const upcoming = blocks.slice(blockIndex + 1, blockIndex + 3);
+    const upcomingDateIndex = upcoming.findIndex((next) => Boolean(startDate(next.text)));
+    const upcomingIsHeaderOnly = upcomingDateIndex >= 0 &&
+      upcoming.slice(0, upcomingDateIndex).every((next) => looksLikeStationHeader(next.text));
+    if (
+      !date &&
+      current?.dateText &&
+      current.kind !== "training" &&
+      looksLikeStationHeader(block.text) &&
+      upcomingIsHeaderOnly
+    ) {
+      current = startItem(block, "unclear");
       continue;
     }
     if (!current) {
@@ -532,11 +563,14 @@ export function detectDocumentSections(normalized: NormalizedPdfDocument): Detec
     current.pageEnd = Math.max(current.pageEnd, line.block.page);
   }
 
-  return sections.map((section) =>
-    section.category === "experience"
-      ? { ...section, timeline: detectTimelineItems(section.blocks) }
-      : section
-  );
+  return sections.map((section) => {
+    if (section.category !== "experience") return section;
+    const headingOrders = new Set(section.headingBlocks.map((block) => block.order));
+    return {
+      ...section,
+      timeline: detectTimelineItems(section.blocks.filter((block) => !headingOrders.has(block.order))),
+    };
+  });
 }
 
 export interface DetectedCvDocument {

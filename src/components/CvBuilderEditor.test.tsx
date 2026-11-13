@@ -15,6 +15,7 @@ function Harness({
   saving = false,
   saveError = "",
   importReview = null,
+  onImportReviewChange,
 }: {
   initial?: CvBuilderDraftV1;
   onClose?: () => void;
@@ -24,8 +25,10 @@ function Harness({
   saving?: boolean;
   saveError?: string;
   importReview?: CvBuilderImportReviewSummary | null;
+  onImportReviewChange?: (report: CvBuilderImportReviewSummary) => void;
 }) {
   const [draft, setDraft] = useState(initial);
+  const [review, setReview] = useState<CvBuilderImportReviewSummary | null>(importReview ?? null);
   return (
     <LangProvider>
       <CvBuilderEditor
@@ -37,7 +40,11 @@ function Harness({
         saved={saved}
         saving={saving}
         saveError={saveError}
-        importReview={importReview}
+        importReview={review}
+        onImportReviewChange={(next) => {
+          setReview(next);
+          onImportReviewChange?.(next);
+        }}
       />
     </LangProvider>
   );
@@ -285,5 +292,55 @@ describe("CV-BUILDER-REAL-WORLD-QA-02E import quality", () => {
     expect(screen.getByText("Keine Feldfehler")).toBeInTheDocument();
     expect(screen.getByText("Importprüfung:")).toBeInTheDocument();
     expect(screen.getByText(/2 ungeprüft · 1 manuell übernommen · 1 bewusst ausgeschlossen/)).toBeInTheDocument();
+  });
+});
+
+
+describe('CV-BUILDER-03B import review preservation', () => {
+  it('shows the individual backlog and can apply an accepted item', () => {
+    const onReportChange = vi.fn();
+    render(
+      <Harness
+        initial={{ ...createEmptyCvBuilderDraft(), skills: ['Existing'] }}
+        importReview={{
+          total: 1,
+          pending: 1,
+          accepted: 0,
+          ignored: 0,
+          items: [{ id: 'review-0-1', index: 0, text: 'Cloud Architecture', original: 'Cloud Architecture', edited: false, target: 'skills', status: 'pending', page: 1, reason: 'ambiguous', suggestedTarget: 'skills' }],
+        }}
+        onImportReviewChange={onReportChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Importprüfung fortsetzen', { selector: 'summary strong' }));
+    expect(screen.getAllByDisplayValue('Cloud Architecture').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'In Lebenslauf übernehmen' }));
+    expect(onReportChange).toHaveBeenCalled();
+    expect(screen.getAllByDisplayValue('Cloud Architecture').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Bereits übernommen' })).toBeDisabled();
+  });
+});
+
+
+describe('CV-BUILDER-03B review integrity errors', () => {
+  it('keeps an incomplete experience item and shows a visible error', () => {
+    const onReportChange = vi.fn();
+    render(
+      <Harness
+        importReview={{
+          total: 1,
+          pending: 1,
+          accepted: 0,
+          ignored: 0,
+          items: [{ id: 'review-0-1', index: 0, text: 'Only a role', original: 'Only a role', edited: false, target: 'experience', status: 'pending', page: 1, reason: 'incomplete-experience', suggestedTarget: 'experience' }],
+        }}
+        onImportReviewChange={onReportChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Importprüfung fortsetzen', { selector: 'summary strong' }));
+    fireEvent.click(screen.getByRole('button', { name: 'In Lebenslauf übernehmen' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(/Position und Arbeitgeber/);
+    expect(screen.getByDisplayValue('Only a role')).toBeInTheDocument();
+    expect(onReportChange).toHaveBeenCalled();
   });
 });
