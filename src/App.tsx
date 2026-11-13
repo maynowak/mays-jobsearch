@@ -111,15 +111,19 @@ import {
   createStructuredCvProfile,
   deleteStructuredCvProfile,
   getStructuredCvProfile,
+  getStructuredCvConsentStatus,
   isRisStructuredCvStorageEnabled,
   listStructuredCvProfiles,
   updateStructuredCvProfile,
   type StructuredCvProfileSummary,
+  type StructuredCvProfileV1,
   type StructuredCvImportReviewInput,
+  type StructuredCvConsentState,
 } from "./lib/cvBuilderProfilesApi";
 import {
   durableCvId,
   isDurableCvId,
+  isDurableConsentReady,
   type DurableProfileRef,
   type DurableProfileStatus,
 } from "./lib/cvBuilder/durableProfileRef";
@@ -267,9 +271,14 @@ export default function App() {
     cvProfileRepositoryRef.current?.list() ?? []
   );
   const [structuredCvProfiles, setStructuredCvProfiles] = useState<CvBuilderProfileV1[]>([]);
+  const [loadedStructuredCvIds, setLoadedStructuredCvIds] = useState<string[]>([]);
+  const [structuredConsent, setStructuredConsent] = useState<StructuredCvConsentState | null>(null);
+  const [structuredConsentLoading, setStructuredConsentLoading] = useState(false);
+  const [structuredConsentError, setStructuredConsentError] = useState("");
   const [durableRefs, setDurableRefs] = useState<Record<string, DurableProfileRef>>({});
   const durableRefsRef = useRef<Record<string, DurableProfileRef>>({});
   const pendingDurableKeysRef = useRef<Record<string, string>>({});
+  const duplicateKeysRef = useRef<Record<string, string>>({});
   const [cvBuilderProfileId, setCvBuilderProfileId] = useState<string | null>(null);
   const [cvBuilderDraft, setCvBuilderDraft] = useState<CvBuilderDraftV1>(createEmptyCvBuilderDraft);
   const [cvBuilderTemplate, setCvBuilderTemplate] = useState<CvBuilderTemplate>("classic");
@@ -498,8 +507,12 @@ export default function App() {
       setCvProfiles([]);
       durableRefsRef.current = {};
       pendingDurableKeysRef.current = {};
+      duplicateKeysRef.current = {};
       setDurableRefs({});
       setStructuredCvProfiles([]);
+      setLoadedStructuredCvIds([]);
+      setStructuredConsent(null);
+      setStructuredConsentError("");
       setCvBuilderProfileId(null);
       setCvBuilderDraft(createEmptyCvBuilderDraft());
       setCvBuilderTemplate("classic");
@@ -1267,8 +1280,12 @@ export default function App() {
     setCvProfiles([]);
     durableRefsRef.current = {};
     pendingDurableKeysRef.current = {};
+    duplicateKeysRef.current = {};
     setDurableRefs({});
     setStructuredCvProfiles([]);
+    setLoadedStructuredCvIds([]);
+    setStructuredConsent(null);
+    setStructuredConsentError("");
     setCvBuilderProfileId(null);
     setCvBuilderDraft(createEmptyCvBuilderDraft());
     setCvBuilderTemplate("classic");
@@ -1357,6 +1374,12 @@ export default function App() {
     () => Object.fromEntries(Object.entries(durableRefs).map(([cvId, ref]) => [cvId, ref.status])),
     [durableRefs],
   );
+  const notLoadedCvIds = useMemo(
+    () => structuredCvProfiles
+      .filter((profile) => !loadedStructuredCvIds.includes(profile.cvId))
+      .map((profile) => profile.cvId),
+    [structuredCvProfiles, loadedStructuredCvIds],
+  );
 
   useEffect(() => {
     if (!cvBuilderProfileId || !cvBuilderDirty) return;
@@ -1405,6 +1428,7 @@ export default function App() {
         ...row,
         cvData: createEmptyCvBuilderDraft(),
       })));
+      setLoadedStructuredCvIds([]);
     })().catch(() => {
       if (cancelled || sessionEpochRef.current !== epoch) return;
       setStructuredCvProfiles([]);
@@ -1414,6 +1438,44 @@ export default function App() {
     // The token/identity pair is the session boundary.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structuredCvEnabled, cvStorageAccessToken, authProfileKey]);
+
+  useEffect(() => {
+    if (!structuredCvEnabled || !cvStorageAccessToken) {
+      setStructuredConsent(null);
+      setStructuredConsentError("");
+      setStructuredConsentLoading(false);
+      return;
+    }
+    const epoch = sessionEpochRef.current;
+    let cancelled = false;
+    setStructuredConsentLoading(true);
+    setStructuredConsentError("");
+    void getStructuredCvConsentStatus(cvStorageAccessToken)
+      .then((state) => {
+        if (cancelled || sessionEpochRef.current !== epoch) return;
+        setStructuredConsent(state);
+      })
+      .catch(() => {
+        if (cancelled || sessionEpochRef.current !== epoch) return;
+        setStructuredConsent(null);
+        setStructuredConsentError(t("cvBuilder.profiles.consentLoadError"));
+      })
+      .finally(() => {
+        if (!cancelled && sessionEpochRef.current === epoch) setStructuredConsentLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [structuredCvEnabled, cvStorageAccessToken, authProfileKey, t]);
+
+  const durableConsentReady = isDurableConsentReady(structuredConsent);
+  const durableConsentMessage = structuredConsentLoading
+    ? t("cvBuilder.profiles.consentLoading")
+    : structuredConsentError
+      ? structuredConsentError
+      : structuredConsent?.noticeState === "DRAFT" || structuredConsent?.noticeApproved !== true
+        ? t("cvBuilder.profiles.consentNotApproved")
+        : structuredConsent?.consent?.status === "GRANTED"
+          ? ""
+          : t("cvBuilder.profiles.consentRequired");
 
   const workspaceExpectation = (): CvBuilderWorkspaceOwnership => ({
     identityKey: authProfileKeyRef.current,
@@ -1629,6 +1691,7 @@ export default function App() {
         setStructuredCvProfiles((current) => [
           ...current.filter((item) => item.cvId !== local.cvId), local,
         ]);
+        setLoadedStructuredCvIds((current) => current.includes(local.cvId) ? current : [...current, local.cvId]);
         setCvBuilderProfileId(local.cvId);
         setCvBuilderDraft(cloneCvBuilderDraft(profile.cvData));
         setCvBuilderTemplate(profile.template);
@@ -1739,6 +1802,7 @@ export default function App() {
         setStructuredCvProfiles((current) => [
           ...current.filter((item) => item.cvId !== updatedLocal.cvId), updatedLocal,
         ]);
+        setLoadedStructuredCvIds((current) => current.includes(updatedLocal.cvId) ? current : [...current, updatedLocal.cvId]);
         setCvBuilderDraft(cloneCvBuilderDraft(result.profile.cvData));
         setCvBuilderTemplate(result.profile.template);
         setCvBuilderDirty(false);
@@ -1904,34 +1968,55 @@ export default function App() {
       try {
         const source = await getStructuredCvProfile(cvStorageAccessToken, ref.profileId);
         if (sessionEpochRef.current !== epoch) return;
-        const duplicate = await createStructuredCvProfile(
-          cvStorageAccessToken,
-          {
-            name: t("cvBuilder.profiles.duplicateName", { name: source.profile.name }),
-            cvData: source.profile.cvData,
-            template: source.profile.template,
-            ...(source.profile.importReview
-              ? { importReview: source.profile.importReview as unknown as StructuredCvImportReviewInput }
-              : {}),
-          },
-          { idempotencyKey: `structured-cv-copy-${crypto.randomUUID?.() ?? Date.now()}` },
-        );
-        if (sessionEpochRef.current !== epoch) return;
-        const localId = durableCvId(duplicate.profile.profileId);
-        rememberDurableRef({
-          localCvId: localId, profileId: duplicate.profile.profileId,
-          version: duplicate.profile.version, etag: duplicate.etag,
-          status: "durable", idempotencyKey: `structured-cv-copy-${Date.now()}`,
-        });
-        setStructuredCvProfiles((current) => [
-          ...current, toLocalDurableProfile(duplicate.profile),
-        ]);
-        if (source.profile.importReview) {
-          cvBuilderImportReviewsRef.current.set(
-            localId, source.profile.importReview as unknown as CvBuilderImportReviewSummary,
-          );
+        const operationKey = `${cvId}:${ref.version}`;
+        const key = duplicateKeysRef.current[operationKey]
+          ?? `structured-cv-copy-${crypto.randomUUID?.() ?? Date.now()}`;
+        duplicateKeysRef.current[operationKey] = key;
+        const input = {
+          name: t("cvBuilder.profiles.duplicateName", { name: source.profile.name }),
+          cvData: source.profile.cvData,
+          template: source.profile.template,
+          ...(source.profile.importReview
+            ? { importReview: source.profile.importReview as unknown as StructuredCvImportReviewInput }
+            : {}),
+        };
+        const adopt = (profile: StructuredCvProfileV1) => {
+          const localId = durableCvId(profile.profileId);
+          rememberDurableRef({
+            localCvId: localId, profileId: profile.profileId,
+            version: profile.version, etag: `"v${profile.version}"`,
+            status: "durable", idempotencyKey: key,
+          });
+          const duplicateLocal = toLocalDurableProfile(profile);
+          setStructuredCvProfiles((current) => [...current, duplicateLocal]);
+          setLoadedStructuredCvIds((current) => current.includes(duplicateLocal.cvId) ? current : [...current, duplicateLocal.cvId]);
+          if (profile.importReview) {
+            cvBuilderImportReviewsRef.current.set(
+              localId, profile.importReview as unknown as CvBuilderImportReviewSummary,
+            );
+          }
+          delete duplicateKeysRef.current[operationKey];
+          setStatus({ type: "info", message: t("cvBuilder.profiles.duplicated") });
+        };
+        let duplicate;
+        try {
+          duplicate = await createStructuredCvProfile(cvStorageAccessToken, input, { idempotencyKey: key });
+        } catch (err) {
+          const uncertain = ["unavailable", "aborted"].includes((err as { code?: string })?.code ?? "");
+          if (uncertain) {
+            const page = await listStructuredCvProfiles(cvStorageAccessToken, { limit: 50 });
+            const candidate = page.items.find((item) => item.name === input.name
+              && item.template === input.template);
+            if (candidate) {
+              const fullCandidate = await getStructuredCvProfile(cvStorageAccessToken, candidate.profileId);
+              if (sessionEpochRef.current === epoch) adopt(fullCandidate.profile);
+              return;
+            }
+          }
+          throw err;
         }
-        setStatus({ type: "info", message: t("cvBuilder.profiles.duplicated") });
+        if (sessionEpochRef.current !== epoch) return;
+        adopt(duplicate.profile);
       } catch {
         setStatus({ type: "error", message: t("cvBuilder.profiles.durableSaveError") });
       }
@@ -4480,6 +4565,9 @@ export default function App() {
       onDownloadCvProfile={handleDownloadCvProfile}
       durableCvStates={durableCvStates}
       structuredCvStorageEnabled={structuredCvEnabled}
+      structuredStorageReady={durableConsentReady}
+      structuredStorageMessage={durableConsentMessage}
+      notLoadedCvIds={notLoadedCvIds}
       onSaveDurableCvProfile={handleSaveDurableCvProfile}
       cvStorageEnabled={persistentCvStorage.enabled}
       cvStorageMode={cvStorageMode}

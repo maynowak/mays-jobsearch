@@ -35,6 +35,7 @@ function renderList(overrides: Partial<React.ComponentProps<typeof CvBuilderProf
       <CvBuilderProfileList
         profiles={[profile("cvb-1", "Session"), profile("durable-cvp-1", "Account")]}
         structuredStorageEnabled
+        structuredStorageReady
         durableStates={{
           "cvb-1": "session-only",
           "durable-cvp-1": "durable",
@@ -58,6 +59,26 @@ describe("structured CV profile status", () => {
     expect(screen.getAllByRole("button", { name: "Dauerhaft speichern" })).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Dauerhaft speichern" }));
     expect(callbacks.onSaveDurable).toHaveBeenCalledWith("cvb-1");
+  });
+
+  it("disables durable save until consent is explicitly ready", () => {
+    const callbacks = renderList({
+      structuredStorageReady: false,
+      structuredStorageMessage: "Dauerhafte Kontospeicherung ist noch nicht rechtlich freigegeben.",
+    });
+    expect(screen.getByText(/noch nicht rechtlich freigegeben/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dauerhaft speichern" })).toBeNull();
+    expect(callbacks.onSaveDurable).not.toHaveBeenCalled();
+  });
+
+  it("does not label an unloaded durable summary as empty", () => {
+    renderList({
+      profiles: [profile("durable-cvp-1", "Account")],
+      durableStates: { "durable-cvp-1": "durable" },
+      notLoadedCvIds: ["durable-cvp-1"],
+    });
+    expect(screen.getByText("Inhalt noch nicht geladen")).toBeInTheDocument();
+    expect(screen.queryByText("Leerer Lebenslauf")).toBeNull();
   });
 
   it("shows conflict/error/unsaved states without hiding the local profile", () => {

@@ -21,6 +21,7 @@ const models = { models: [{ id: "mock-model", name: "Mock Model" }], defaultMode
 const profiles = new Map();
 const idempotency = new Map();
 let conflict = false;
+let abortNextCreate = false;
 let calls = [];
 
 function now() {
@@ -40,6 +41,45 @@ function summary(profile) {
 
 function full(profile) {
   return profile;
+}
+
+function seededReviewItems() {
+  return Array.from({ length: 44 }, (_, index) => ({
+    id: `review-${index}`, index,
+    text: `Korrigierter synthetischer Text ${index}`,
+    original: `Original synthetischer Text ${index}`,
+    edited: index % 4 === 0,
+    target: "skills",
+    status: index % 2 === 0 ? "pending" : "accepted",
+    applied: index % 2 === 1,
+    page: (index % 3) + 1,
+    sectionHeading: "Kenntnisse",
+    reason: "ambiguous",
+    suggestedTarget: "skills",
+  }));
+}
+
+function seededReviewProfile() {
+  const items = seededReviewItems();
+  return {
+    schemaVersion: 1,
+    profileId: "cvp-00000044",
+    name: "Review 44",
+    template: "modern",
+    cvData: {
+      schemaVersion: 1, personal: { fullName: "Synthetische Person" }, profile: {},
+      experience: [], education: [],
+      skills: Array.from({ length: 71 }, (_, index) => `Synthetischer Skill ${index + 1}`),
+      projects: [], certificates: [], languages: [], links: [],
+    },
+    importReview: {
+      schemaVersion: 1, sourceName: "synthetic-71.pdf", pageCount: 3, pendingAcknowledged: true,
+      selectedSections: ["skills"], skills: { total: 71, selected: 58, unselected: 13, limited: false },
+      items, total: 44, pending: 22, accepted: 22, ignored: 0,
+    },
+    version: 3,
+    createdAt: now(), updatedAt: now(),
+  };
 }
 
 function makeProfile(body, key) {
@@ -75,9 +115,13 @@ async function mockApi(route) {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        consent: null, noticeVersion: "structured-cv-profile-storage-2026-11-12-draft-1",
-        noticeState: "DRAFT", noticeApproved: false, acceptedForNewGrant: false,
-        grantAllowed: false, noticeReason: "notice_not_active",
+        consent: {
+          purpose: "cv-builder-profile-storage", status: "GRANTED",
+          noticeVersion: "synthetic-approved-v1", version: 1,
+        },
+        noticeVersion: "synthetic-approved-v1",
+        noticeState: "APPROVED", noticeApproved: true, acceptedForNewGrant: true,
+        grantAllowed: true, noticeReason: null,
       }),
     });
   }
@@ -103,6 +147,10 @@ async function mockApi(route) {
     const key = request.headers()["idempotency-key"] ?? "";
     if (!key) return route.fulfill({ status: 422, contentType: "application/json", body: JSON.stringify({ error: "missing key", code: "INVALID_IDEMPOTENCY_KEY" }) });
     const profile = makeProfile(body, key);
+    if (abortNextCreate) {
+      abortNextCreate = false;
+      return route.abort("timedout");
+    }
     return route.fulfill({ status: 201, contentType: "application/json", headers: { ETag: `"v${profile.version}"` }, body: JSON.stringify(full(profile)) });
   }
 
@@ -220,6 +268,27 @@ try {
     await context.close();
   }
 
+  // Full 71-skill / 44-review durable load roundtrip.
+  profiles.clear();
+  idempotency.clear();
+  const reviewProfile = seededReviewProfile();
+  profiles.set(reviewProfile.profileId, reviewProfile);
+  {
+    const { context, page } = await newPage(browser, 1024, 900);
+    await page.getByText("Review 44").waitFor();
+    await page.locator(".cv-builder-profiles__item").filter({ hasText: "Review 44" })
+      .getByRole("button", { name: "Bearbeiten" }).click();
+    await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
+    const skills = await page.locator("#cv-builder-skills textarea").inputValue();
+    if (skills.split(/[\n,]/).map((value) => value.trim()).filter(Boolean).length !== 71) {
+      throw new Error("71 seeded skills were not restored");
+    }
+    await page.getByText("Importprüfung fortsetzen").waitFor();
+    await page.locator(".cv-builder-backlog").first().waitFor();
+    await page.screenshot({ path: resolve(evidenceDir, "review-44-restored.png"), fullPage: false });
+    await context.close();
+  }
+
   // Conflict + delete + duplicate in a fresh durable entry.
   profiles.clear();
   idempotency.clear();
@@ -245,9 +314,11 @@ try {
   conflict = false;
   await page.getByRole("button", { name: "Lebenslauf-Editor schließen" }).click();
   await page.getByRole("button", { name: "Verwerfen und schließen" }).click();
+  abortNextCreate = true;
   await page.locator(".cv-builder-profiles__item").first()
     .getByRole("button", { name: "Duplizieren" }).click();
   await page.getByText("Im Konto gespeichert", { exact: true }).waitFor();
+  if (profiles.size !== 2) throw new Error(`uncertain duplicate created ${profiles.size} profiles`);
   await page.locator(".cv-builder-profiles__item").first()
     .getByRole("button", { name: "Löschen" }).click();
   await page.getByRole("button", { name: "Lebenslauf löschen" }).click();

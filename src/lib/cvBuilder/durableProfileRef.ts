@@ -35,3 +35,15 @@ export function durableServerProfileId(cvId: string | null | undefined): string 
     ? String(cvId).slice(DURABLE_CV_PREFIX.length)
     : null;
 }
+
+
+export interface DurableConsentLike {
+  consent?: { status?: unknown } | null;
+  noticeApproved?: unknown;
+  noticeState?: unknown;
+}
+
+/** Only an already granted consent under an approved notice may open writes. */
+export function isDurableConsentReady(state: DurableConsentLike | null | undefined): boolean {
+  return state?.consent?.status === "GRANTED" && state?.noticeApproved === true;
+}

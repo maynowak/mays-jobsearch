@@ -47,6 +47,9 @@ interface Props {
   onDownloadCvProfile?: (cvId: string) => void;
   durableCvStates?: Record<string, import('../lib/cvBuilder/durableProfileRef').DurableProfileStatus>;
   structuredCvStorageEnabled?: boolean;
+  structuredStorageReady?: boolean;
+  structuredStorageMessage?: string;
+  notLoadedCvIds?: string[];
   onSaveDurableCvProfile?: (cvId: string) => Promise<void> | void;
   // JM-ATS-OVERLAY-PARITY-08A: same session-adapter handler as the search page.
   cvStorageEnabled?: boolean;
@@ -101,6 +104,9 @@ const DashboardV2CvSection = ({
   onDownloadCvProfile,
   durableCvStates = {},
   structuredCvStorageEnabled = false,
+  structuredStorageReady = false,
+  structuredStorageMessage = "",
+  notLoadedCvIds = [],
   onSaveDurableCvProfile,
   cvStorageEnabled = false,
   cvStorageMode = "session",
@@ -216,6 +222,9 @@ const DashboardV2CvSection = ({
             onDownload={onDownloadCvProfile}
             durableStates={durableCvStates}
             structuredStorageEnabled={structuredCvStorageEnabled}
+            structuredStorageReady={structuredStorageReady}
+            structuredStorageMessage={structuredStorageMessage}
+            notLoadedCvIds={notLoadedCvIds}
             onSaveDurable={onSaveDurableCvProfile}
           />
         )}

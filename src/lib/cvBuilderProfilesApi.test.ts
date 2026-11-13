@@ -196,6 +196,14 @@ describe("structured CV review DTO compatibility", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("maps 403, 428 and 503 without retrying or exposing content", async () => {
+    for (const [status, code] of [[403, "forbidden"], [428, "precondition_required"], [503, "storage_disabled"]]) {
+      fetchMock.mockResolvedValueOnce(jsonResponse(status, { error: "safe", code: "SAFE_CODE" }));
+      await expect(getStructuredCvProfile("token", PROFILE_ID)).rejects.toMatchObject({ code, status });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it("reads the technical consent status through the read-only BFF route", async () => {
     fetchMock.mockResolvedValue(jsonResponse(200, {
       consent: null, noticeVersion: null, noticeState: "DRAFT", noticeApproved: false,

@@ -3,6 +3,7 @@ import {
   DURABLE_CV_PREFIX,
   durableCvId,
   durableServerProfileId,
+  isDurableConsentReady,
   isDurableCvId,
 } from "./durableProfileRef";
 
@@ -16,5 +17,19 @@ describe("durable CV profile reference", () => {
     expect(isDurableCvId("cvb-local")).toBe(false);
     expect(durableServerProfileId(localId)).toBe(serverId);
     expect(durableServerProfileId("cvb-local")).toBeNull();
+  });
+
+  it("opens writes only for granted consent under an approved notice", () => {
+    expect(isDurableConsentReady(null)).toBe(false);
+    expect(isDurableConsentReady({ consent: null, noticeApproved: false })).toBe(false);
+    expect(isDurableConsentReady({
+      consent: { status: "GRANTED" }, noticeApproved: false, noticeState: "DRAFT",
+    })).toBe(false);
+    expect(isDurableConsentReady({
+      consent: { status: "GRANTED" }, noticeApproved: true, noticeState: "APPROVED",
+    })).toBe(true);
+    expect(isDurableConsentReady({
+      consent: { status: "WITHDRAWN" }, noticeApproved: true, noticeState: "APPROVED",
+    })).toBe(false);
   });
 });

@@ -21,6 +21,9 @@ interface Props {
   onDownload: (cvId: string) => void;
   durableStates?: Record<string, DurableProfileStatus>;
   structuredStorageEnabled?: boolean;
+  structuredStorageReady?: boolean;
+  structuredStorageMessage?: string;
+  notLoadedCvIds?: string[];
   onSaveDurable?: (cvId: string) => Promise<void> | void;
 }
 
@@ -47,6 +50,9 @@ export default function CvBuilderProfileList({
   onDownload,
   durableStates = {},
   structuredStorageEnabled = false,
+  structuredStorageReady = false,
+  structuredStorageMessage = "",
+  notLoadedCvIds = [],
   onSaveDurable,
 }: Props) {
   const { t, lang } = useLang();
@@ -98,6 +104,11 @@ export default function CvBuilderProfileList({
         <div>
           <h3 id="cv-builder-profiles-title">{t("cvBuilder.profiles.title")}</h3>
           <p>{t("cvBuilder.profiles.hint")}</p>
+          {structuredStorageEnabled && structuredStorageMessage && (
+            <p className="cv-builder-profiles__consent-note" role="status">
+              {structuredStorageMessage}
+            </p>
+          )}
         </div>
         <div className="cv-builder-profiles__create-actions">
           {canAdoptDraft && onAdoptDraft && (
@@ -156,7 +167,11 @@ export default function CvBuilderProfileList({
                           date: formatUpdatedAt(profile.updatedAt, locale),
                         })}
                       </span>
-                      {!cvBuilderProfileHasContent(profile) && (
+                      {notLoadedCvIds.includes(profile.cvId) ? (
+                        <span className="cv-builder-profiles__status">
+                          {t("cvBuilder.profiles.notLoaded")}
+                        </span>
+                      ) : !cvBuilderProfileHasContent(profile) && (
                         <span className="cv-builder-profiles__status">
                           {t("cvBuilder.profiles.emptyContent")}
                         </span>
@@ -192,7 +207,7 @@ export default function CvBuilderProfileList({
                     <button type="button" className="btn-ghost" onClick={() => onDownload(profile.cvId)}>
                       {t("cvBuilder.profiles.download")}
                     </button>
-                    {structuredStorageEnabled && onSaveDurable
+                    {structuredStorageEnabled && structuredStorageReady && onSaveDurable
                       && (durableStates[profile.cvId] ?? "session-only") !== "durable"
                       && (durableStates[profile.cvId] ?? "session-only") !== "saving" && (
                       <button
