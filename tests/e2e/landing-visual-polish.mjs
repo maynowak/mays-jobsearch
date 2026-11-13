@@ -15,7 +15,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-MARKETING-02B");
 const port = 5211;
-const base = `http://localhost:${port}`;
+const externalBase = process.env.BASE_URL?.replace(/\/$/, "");
+const base = externalBase || `http://localhost:${port}`;
 
 const PRIMARY = ".lp2-hero .lp2-cta-primary";
 const SECONDARY = ".lp2-hero .lp2-cta-secondary";
@@ -239,7 +240,7 @@ async function checkTouch(browser) {
 
 async function main() {
   await mkdir(evidenceDir, { recursive: true });
-  const vite = startVite();
+  const vite = externalBase ? null : startVite();
   try {
     await waitForServer();
     const browser = await playwright.chromium.launch();
@@ -293,10 +294,12 @@ async function main() {
       await browser.close();
     }
   } finally {
-    try {
-      process.kill(-vite.pid, "SIGTERM");
-    } catch {
-      /* already stopped */
+    if (vite) {
+      try {
+        process.kill(-vite.pid, "SIGTERM");
+      } catch {
+        /* already stopped */
+      }
     }
   }
 }
