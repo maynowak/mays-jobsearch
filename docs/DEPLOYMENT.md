@@ -264,6 +264,24 @@ Option A applies: manual profiles have no CV parent; CV-search profiles need a
 durable RIS `cvId`; ATS profiles need a durable CV-search profile id. Session
 CVs and their profile lists remain session-only.
 
+## Structured CV-builder profile storage (separate BFF)
+
+`/api/ris/cv-builder-profiles` is a separate, default-off surface for editable
+structured CV-builder profiles. It does not reuse PDF or search-profile
+storage, and it never auto-creates or auto-saves a browser profile.
+
+| Variable | Purpose |
+| --- | --- |
+| `RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED` | Enables `/api/ris/cv-builder-profiles` (server-only); default `false`. |
+| `RIS_CV_BUILDER_CONSENT_NOTICE_VERSION` | Optional RIS notice mapping for read-only `cv-builder-profile-storage` status. The notice is DRAFT; this is not an approval. |
+| `VITE_RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED` | Browser opt-in for a later structured-CV UI; default `false`. |
+| `CV_BUILDER_PROFILE_STORAGE_CONSENT_ENFORCED` (RIS) | RIS-side consent enforcement. The BFF does not grant or withdraw this purpose. |
+
+The BFF forwards only validated `Idempotency-Key` and `If-Match` values and
+preserves RIS `ETag` responses. The browser never supplies owner/tenant
+identity or the RIS partner credential. Consent status is read-only; grant and
+withdraw are deferred until a separate legal/approval contract exists.
+
 ## Account erasure (existing RIS lifecycle)
 
 The Jobsearch BFF forwards the verified user token to the existing partner-edge

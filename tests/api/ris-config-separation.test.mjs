@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { risConfig, risConsentConfig, risCvConfig } from "../../api/_lib/ris/config.mjs";
+import {
+  risConfig, risConsentConfig, risCvConfig, risCvBuilderProfilesConfig,
+  risCvBuilderConsentConfig,
+} from "../../api/_lib/ris/config.mjs";
 
 const SHARED = {
   RIS_API_BASE_URL: "https://ris.example.invalid",
@@ -97,6 +100,34 @@ describe("RIS consent/application activation separation", () => {
       enabled: true,
       path: "/v1/partner/me/cvs",
       timeoutMs: 25000,
+    });
+  });
+});
+
+
+describe("structured CV builder profile flags", () => {
+  it("is off by default and uses the fixed RIS namespace when enabled", () => {
+    expect(risCvBuilderProfilesConfig(env({}))).toMatchObject({
+      enabled: false, error: "cv_builder_profile_storage_disabled",
+    });
+    expect(risCvBuilderProfilesConfig(env({
+      RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED: "true",
+    }))).toMatchObject({
+      enabled: true, path: "/v1/partner/me/cv-builder-profiles",
+    });
+  });
+
+  it("keeps consent configuration read-only and unmapped", () => {
+    const config = env({
+      RIS_CONSENT_SERVICE_ENABLED: "true",
+      RIS_CV_BUILDER_CONSENT_NOTICE_VERSION: "structured-cv-profile-storage-2026-11-12-draft-1",
+    });
+    expect(risCvBuilderConsentConfig(config)).toMatchObject({
+      enabled: true,
+      purpose: "cv-builder-profile-storage",
+      textApproved: false,
+      syntheticTextAllowed: false,
+      textMapped: false,
     });
   });
 });

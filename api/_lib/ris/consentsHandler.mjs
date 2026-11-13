@@ -9,6 +9,7 @@ import {
   risConsentConfig,
   risCvConsentConfig,
   risSearchProfileConsentConfig,
+  risCvBuilderConsentConfig,
 } from "./config.mjs";
 import { RisAuthError, verifyAccessToken } from "./auth.mjs";
 import { RisClientError, risRequest } from "./client.mjs";
@@ -99,6 +100,7 @@ export default async function handler(req, res) {
     "application-storage",
     "cv-storage",
     "search-profile-storage",
+    "cv-builder-profile-storage",
   ].includes(requestedPurpose)) {
     return fail(res, 422, "unknown_purpose", "Purpose is not supported");
   }
@@ -106,7 +108,9 @@ export default async function handler(req, res) {
     ? risCvConsentConfig()
     : requestedPurpose === "search-profile-storage"
       ? risSearchProfileConsentConfig()
-      : risConsentConfig();
+      : requestedPurpose === "cv-builder-profile-storage"
+        ? risCvBuilderConsentConfig()
+        : risConsentConfig();
   const textAllowed = cfg.textApproved === true || cfg.syntheticTextAllowed === true;
   if (!cfg.enabled) return fail(res, 503, "consent_disabled", "RIS consent service is disabled");
   if (cfg.error) return fail(res, 503, "missing_config", "RIS consent service is not configured");
@@ -125,6 +129,13 @@ export default async function handler(req, res) {
   }
   if (!isAllowedTestUser(identity, cfg)) {
     return fail(res, 403, "test_user_not_allowed", "This test user is not enabled for RIS consent storage");
+  }
+
+  // This purpose has no legal notice approval. The BFF exposes read-only
+  // status only; it never creates or withdraws a DRAFT consent.
+  if (requestedPurpose === "cv-builder-profile-storage" && req.method !== "GET") {
+    return fail(res, 403, "consent_grant_not_available",
+      "Consent mutations for this purpose are not available");
   }
 
   const action = typeof query.action === "string" ? query.action : "";

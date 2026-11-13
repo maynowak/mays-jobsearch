@@ -102,6 +102,10 @@
       "destination": "/api/ris/router?__ris_search_profiles=1"
     },
     {
+      "source": "/api/ris/cv-builder-profiles",
+      "destination": "/api/ris/router?__ris_cv_builder_profiles=1"
+    },
+    {
       "source": "/api/ris/erasure",
       "destination": "/api/ris/router?__ris_erasure=1"
     },

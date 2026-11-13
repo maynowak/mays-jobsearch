@@ -12,6 +12,8 @@ const CV_PATH = "/v1/partner/me/cvs";
 const CV_CONSENT_PURPOSE = "cv-storage";
 const SEARCH_PROFILE_PATH = "/v1/partner/me";
 const SEARCH_PROFILE_CONSENT_PURPOSE = "search-profile-storage";
+const CV_BUILDER_PROFILE_PATH = "/v1/partner/me/cv-builder-profiles";
+const CV_BUILDER_PROFILE_CONSENT_PURPOSE = "cv-builder-profile-storage";
 
 function httpsUrl(value) {
   try {
@@ -226,6 +228,53 @@ export function risSearchProfileConsentConfig(env = process.env) {
   if (!shared) {
     return { enabled: true, error: "missing_config", ...consent };
   }
+  return { enabled: true, ...shared, ...consent };
+}
+
+/**
+ * Durable structured CV-builder profile BFF configuration. Disabled unless
+ * explicitly enabled; RIS remains authoritative for identity, consent,
+ * idempotency, versions and capacity.
+ */
+export function risCvBuilderProfilesConfig(env = process.env) {
+  const enabled = String(env.RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED ?? "")
+    .toLowerCase() === "true";
+  if (!enabled) {
+    return { enabled: false, error: "cv_builder_profile_storage_disabled" };
+  }
+  const shared = sharedRisConfig(env);
+  if (!shared) return { enabled: true, error: "missing_config" };
+  return {
+    enabled: true,
+    ...shared,
+    path: CV_BUILDER_PROFILE_PATH,
+  };
+}
+
+/**
+ * Read-only consent-status configuration for cv-builder-profile-storage.
+ * It deliberately carries no approved text, no synthetic draft allowance and
+ * no grant path. Grant/withdraw mutations for this purpose are not exposed by
+ * the BFF in this phase.
+ */
+export function risCvBuilderConsentConfig(env = process.env) {
+  const enabled = String(env.RIS_CONSENT_SERVICE_ENABLED ?? "").toLowerCase() === "true";
+  const noticeVersion = String(env.RIS_CV_BUILDER_CONSENT_NOTICE_VERSION ?? "").trim();
+  const consent = {
+    path: CONSENT_PATH,
+    purpose: CV_BUILDER_PROFILE_CONSENT_PURPOSE,
+    noticeVersion: noticeVersion || null,
+    textVersion: null,
+    textHash: null,
+    textState: "DRAFT",
+    textMapped: false,
+    textApproved: false,
+    syntheticTextAllowed: false,
+    textReason: "consent_text_not_approved",
+  };
+  if (!enabled) return { enabled: false, error: "consent_disabled", ...consent };
+  const shared = sharedRisConfig(env);
+  if (!shared) return { enabled: true, error: "missing_config", ...consent };
   return { enabled: true, ...shared, ...consent };
 }
 

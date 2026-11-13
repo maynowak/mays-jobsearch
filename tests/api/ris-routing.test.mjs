@@ -69,6 +69,7 @@ function makeReq(path, { method = "GET", headers = {}, body, query = {} } = {}) 
     "/api/ris/cv-consents": ["cv-consents", "__ris_cv_consents"],
     "/api/ris/search-profile-consents": ["search-profile-consents", "__ris_search_profile_consents"],
     "/api/ris/search-profiles": ["search-profiles", "__ris_search_profiles"],
+    "/api/ris/cv-builder-profiles": ["cv-builder-profiles", "__ris_cv_builder_profiles"],
     "/api/ris/erasure": ["erasure", "__ris_erasure"],
   };
   const [exactRoute, flagKey] = routeMap[url.pathname] ?? ["", ""];
@@ -117,6 +118,7 @@ beforeEach(() => {
   process.env.RIS_APPLICATION_STORAGE_ENABLED = "true";
   process.env.RIS_CV_STORAGE_ENABLED = "true";
   process.env.RIS_SEARCH_PROFILE_STORAGE_ENABLED = "true";
+  process.env.RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED = "true";
   process.env.RIS_CONSENT_SERVICE_ENABLED = "true";
   process.env.RIS_API_BASE_URL = "https://ris.example.invalid";
   process.env.RIS_PARTNER_CREDENTIAL = CREDENTIAL;
@@ -142,6 +144,7 @@ afterEach(() => {
     "RIS_APPLICATION_STORAGE_ENABLED",
     "RIS_CV_STORAGE_ENABLED",
     "RIS_SEARCH_PROFILE_STORAGE_ENABLED",
+    "RIS_CV_BUILDER_PROFILE_STORAGE_ENABLED",
     "RIS_CONSENT_SERVICE_ENABLED",
     "RIS_API_BASE_URL",
     "RIS_PARTNER_CREDENTIAL",
@@ -156,7 +159,7 @@ afterEach(() => {
 });
 
 describe("RIS single-entry routing", () => {
-  it("konfiguriert ausschließlich die sieben RIS-Rewrites und blockt den Router direkt", () => {
+  it("konfiguriert ausschließlich die acht RIS-Rewrites und blockt den Router direkt", () => {
     const config = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"));
     const risRewrites = config.rewrites.filter((rewrite) => rewrite.source.startsWith("/api/ris/"));
     expect(risRewrites).toEqual([
@@ -166,6 +169,7 @@ describe("RIS single-entry routing", () => {
       { source: "/api/ris/cv-consents", destination: "/api/ris/router?__ris_cv_consents=1" },
       { source: "/api/ris/search-profile-consents", destination: "/api/ris/router?__ris_search_profile_consents=1" },
       { source: "/api/ris/search-profiles", destination: "/api/ris/router?__ris_search_profiles=1" },
+      { source: "/api/ris/cv-builder-profiles", destination: "/api/ris/router?__ris_cv_builder_profiles=1" },
       { source: "/api/ris/erasure", destination: "/api/ris/router?__ris_erasure=1" },
     ]);
     expect(config.redirects).toContainEqual({
@@ -275,12 +279,28 @@ describe("RIS single-entry routing", () => {
     expect(payload.noticeVersion).toBe("1.0");
   });
 
+  it("leitet /api/ris/cv-builder-profiles an den Structured-CV-Handler", async () => {
+    risResponse = response(200, {
+      items: [{ profileId: "cvp-12345678", name: "Synthetic", template: "classic", version: 1,
+        createdAt: "2026-11-13T00:00:00Z", updatedAt: "2026-11-13T00:00:00Z" }],
+      nextCursor: null,
+    });
+    const res = makeRes();
+    await router(
+      makeReq("/api/ris/cv-builder-profiles?limit=2", {
+        headers: { authorization: `Bearer ${token()}` },
+      }), res,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(String(risCalls()[0][0])).toContain("/v1/partner/me/cv-builder-profiles?limit=2");
+  });
+
   it("kann per Query-Parameter nicht auf den anderen Handler umschalten", async () => {
     const res = makeRes();
     await router(
       makeReq("/api/ris/applications?limit=1", {
         headers: { authorization: `Bearer ${token()}` },
-        query: { __ris_consents: "1" },
+        query: { __ris_cv_builder_profiles: "1" },
       }),
       res
     );

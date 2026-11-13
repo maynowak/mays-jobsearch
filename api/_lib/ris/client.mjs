@@ -1,4 +1,5 @@
 const ALLOWED_SUFFIX = new Set(["", "/status", "/history", "/cover-letter-versions", "/export", "/metrics"]);
+const ALLOWED_REQUEST_HEADERS = new Set(["Idempotency-Key", "If-Match"]);
 
 export class RisClientError extends Error {
   constructor(code, status, message) {
@@ -33,6 +34,13 @@ export async function risRequest(cfg, token, method, path, body, fetchImpl = glo
     "X-Api-Credential": cfg.credential,
     Accept: "application/json",
   };
+  // Only server-selected, validated concurrency/idempotency headers may be
+  // added. Browser headers are never bulk-forwarded by this transport.
+  for (const [name, value] of Object.entries(cfg.requestHeaders ?? {})) {
+    if (ALLOWED_REQUEST_HEADERS.has(name) && typeof value === "string") {
+      headers[name] = value;
+    }
+  }
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
   let response;
@@ -51,5 +59,11 @@ export async function risRequest(cfg, token, method, path, body, fetchImpl = glo
   if (response.status !== 204) {
     data = await response.json().catch(() => null);
   }
-  return { status: response.status, data };
+  return {
+    status: response.status,
+    data,
+    etag: typeof response.headers?.get === "function"
+      ? response.headers.get("etag")
+      : null,
+  };
 }
