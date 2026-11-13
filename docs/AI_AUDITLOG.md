@@ -6133,3 +6133,48 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Kein Merge, kein Production-Deployment, keine Branch-Löschung, keine
   Search-Console-Einreichung.
 - Report: `docs/reports/JM-MARKETING-01B-SEO-PREVIEW-VERIFICATION-REPORT.md`.
+
+## 2026-11-13 — JM-MARKETING-02 — PRODUCT POSITIONING & LANDING PAGE
+
+**Typ:** Landing-Page-Positionierung / UX / Accessibility / SEO-Regression
+**Status:** `IMPLEMENTED & VERIFIED — READY FOR PREVIEW REVIEW — NO MERGE/DEPLOY`
+
+- Git: neuer Branch `feature/jm-marketing-02-product-positioning` von
+  `origin/main` `b3b8525`; Commits `11ca542` (Landing/Positionierung) und
+  `341f5c4` (SEO-Description) + Docs-Commit. Kein Merge, kein Deployment,
+  keine Branch-Löschung; vier untracked Fremddateien unverändert.
+- Positionierung: „Finde Jobs, die wirklich zu dir passen.“ / „Find jobs that
+  really fit you.“ Hero mit individuellem Suchprofil-, Quellen- und
+  KI-Unterstützungs-Nutzen; primärer CTA „Jetzt passende Jobs finden“ →
+  `/search`, sekundär „So funktioniert's“ → `#lp2-how`.
+- Landing: neuer Vier-Schritte-Ablauf (Suchprofil, Stellen entdecken, Passung
+  vergleichen, Bewerbung organisieren), vier Vorteilskarten (Stellensuche,
+  individuelle Suchprofile, KI-Matching, Bewerbungsorganisation) und
+  Transparenzabschnitt (Konto/Consent, lokale PDF-Verarbeitung mit möglicher
+  KI-Textübermittlung, sitzungsbasierte Bewerbungen). Markenbild, Glass-Nav,
+  Job-Stream, MatchPulse und Footer bleiben erhalten.
+- Wahrheitsprüfung: keine „alle Jobbörsen“-, Garantie-, Anonymitäts- oder
+  Unbegrenzt-Aussagen. Quellen als „verfügbare Job-Quellen“; JobsPipe/
+  Theirstack nicht beworben. Dauerhafte Suchprofile nur mit Konto und
+  separater Einwilligung; Bewerbungen standardmäßig sitzungsbasiert.
+- SEO: Meta-/OG-/Twitter-Description an die neue Headline angepasst; Title,
+  Canonical, robots/sitemap, index.html/app.html, Vercel-Rewrites und
+  Private-Noindex unverändert. Keine Indexierungsstrategie geändert.
+- Accessibility: h1/h2/h3-Hierarchie, benannte Abschnitte, geordnete
+  Schrittliste, sichtbare `:focus-visible`-Ringe (3 px Cyan), Touch-Ziele
+  ≥ 44 px, reduced-motion respektiert, Lesbarkeitshof/Textschatten im Hero,
+  übersetzbares MatchPulse-Label. Kein automatisierter axe-Audit (keine
+  Dependency); Kontrast über Bild visuell/manuell geprüft.
+- Responsive: 320/390/768/1024/1440 px in DE/EN ohne horizontalen Überlauf;
+  CTA und Hinweis im ersten Viewport sichtbar; 4/2/1-Spalten-Layout.
+- Browser (Playwright, lokaler Production-Build): 10 Viewport-/Sprach-
+  Kombinationen, 0 Console-/Page-Errors, 0 fehlgeschlagene Requests;
+  Primär-CTA → `/search` mit sichtbarer Suche; Sekundär-CTA scrollt zu
+  `#lp2-how`; Fokusring und reduced motion bestätigt.
+- Tests: fokussiert **86/86 PASS**; `npx vitest run --maxWorkers=2`
+  **1869 passed / 5 skipped**; `npm run build` PASS (1,24 s);
+  `git diff --check` PASS. Bekannter Standard-Timeout-Flake in
+  `ManualSearchProfiles.integration` bleibt dokumentiert.
+- Keine RIS-/AWS-/Cognito-/Terraform-, Auth-, Consent-, Payment- oder
+  Bewerbungsdatenänderung; keine neuen Dependencies/Tracking-Dienste.
+- Report: `docs/reports/JM-MARKETING-02-PRODUCT-POSITIONING-LANDING-PAGE-REPORT.md`.
