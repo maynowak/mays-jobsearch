@@ -6234,3 +6234,29 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   CV data. Authenticated 403/503/428/timeout/logout full-browser variants
   remain deployment/test-identity gated.
 - Report: `docs/reports/JM-CV-BUILDER-03C-UI-INTEGRATION-01-REPORT.md`.
+
+## 2026-11-13 — JM-CV-BUILDER-03C-HARDENING-02
+
+**Status:** `VERIFIED LOCAL / READY FOR RELEASE GATE REVIEW`
+
+- Branch `feature/jm-cv-builder-03c-hardening-02` from `ace901c`; hardening
+  commit `4c87748`.
+- Added read-only durable consent loading and UI gating. Only granted consent
+  under an approved notice enables durable save; DRAFT, missing, loading and
+  error states keep session management available and expose no active write.
+- Durable list metadata rows now distinguish `not-loaded` from empty content;
+  content is evaluated only after full get. No per-row list GET and pagination
+  remains.
+- Duplicate creates keep stable per-source-version idempotency keys; uncertain
+  outcomes reconcile against the server list before any further create. No
+  automatic mutating retry or 409 overwrite.
+- Session invalidation clears durable refs, loaded state, consent state, review
+  maps and drafts; late responses are discarded by epoch checks.
+- Tests: API 609 PASS / 5 skipped; frontend 1916 PASS / 5 skipped; focused
+  consent/list/client PASS; 03C durable mock E2E PASS including timeout
+  duplicate reconciliation and seeded 71-skill/44-review reload; 03B import,
+  03A handoff and PDF E2E PASS; build/syntax/diff/secret scans PASS.
+- No real RIS/AWS/Consent mutation, main merge, production deployment or real
+  CV data. Authenticated 403/503/428/timeout/logout browser and combined
+  import→durable 71/44 browser runs remain release-gate items.
+- Report: `docs/reports/JM-CV-BUILDER-03C-HARDENING-02-REPORT.md`.
