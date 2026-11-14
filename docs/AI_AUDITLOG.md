@@ -6262,3 +6262,21 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Concurrency remains controlled-sequential-only; simultaneous cross-repo
   dispatches unsupported, conflict recovery is human-gated. RIS RC1 unchanged.
 - Report: `docs/reports/MAYS-XREPO-SHARED-STATE-REVIEW-GATE-03-REPORT.md`.
+
+## 2026-11-14 — JM-CV-BUILDER-PDF-RIS-STORAGE-01
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL / RELEASE REVIEW PENDING`
+
+- Reused the existing `/api/ris/cvs`, `cvStorageApi`, `usePersistentCvStorage`,
+  `cvFileValidation` and `pdfExport` paths for a builder-generated PDF snapshot.
+- Added the explicit “In RIS speichern” action to modal and fullpage builder
+  editors; download remains independent; duplicate uploads are blocked.
+- Reused `cv-storage` consent and existing 10-CV/10-MB/empty-file guards.
+  No RIS, Terraform, AWS, new consent purpose or Structured-CV activation.
+- Tests: 20 focused PASS; full Jobsearch 1879 PASS / 11 skipped; production
+  build PASS; local mock-BFF E2E create/upload/complete PASS. No real RIS
+  call, live E2E or production deployment.
+- Privacy open point: current consent wording (`uploaded CV file`) versus
+  generated PDFs must be confirmed; notice text was not silently changed.
+- Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-01-REPORT.md`;
+  implementation commit `5cd47eb`.
