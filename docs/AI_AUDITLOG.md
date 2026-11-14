@@ -6262,3 +6262,48 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Concurrency remains controlled-sequential-only; simultaneous cross-repo
   dispatches unsupported, conflict recovery is human-gated. RIS RC1 unchanged.
 - Report: `docs/reports/MAYS-XREPO-SHARED-STATE-REVIEW-GATE-03-REPORT.md`.
+
+## 2026-11-14 — JM-MARKETING-03 — ORGANIC GROWTH LAUNCH
+
+**Typ:** Marketing-Strategie / Content-Entwürfe / Compliance / Messkonzept
+**Status:** `ORGANIC GROWTH CAMPAIGN READY — CONTENT REVIEW PENDING — NOTHING PUBLISHED`
+
+- Git: neuer Branch `feature/jm-marketing-03-organic-growth` von `origin/main`
+  `a5640d1`; der im Auftrag genannte Stand `854da77` ist darin enthalten.
+  Ausschließlich Dokumentation; kein Merge, kein Deployment, keine
+  Branch-Löschung; vier untracked Fremddateien unverändert. Production
+  (read-only) läuft auf `a5640d1`, Landingpage unverändert.
+- Erstellt: `docs/marketing/` mit README, Organic-Growth-Strategie,
+  Claims-/Compliance-Matrix, Launch-Kampagne, sechs LinkedIn-Posts (DE) +
+  englischem Launch-Post, drei SEO-Konzepten, 90-s-Demo-Drehbuch,
+  Messkonzept und 30-Tage-Kalender.
+- Positionierung: „Finde Jobs, die wirklich zu dir passen.“ / „Find jobs that
+  really fit you.“ Zielgruppen-Hypothesen: IT/Tech, berufserfahrene
+  Fachkräfte, Wiedereinsteiger. Keine demografischen Tatsachenbehauptungen.
+- Kanäle: LinkedIn primär; SEO/YouTube/GitHub/Weiterbildungsträger/Fachblogs
+  nachgelagert; Reddit nicht als Launch-Kanal. Regeln am 2026-11-14 geprüft:
+  `r/jobs` verbietet Self-Promotion, `r/arbeitsleben` verbietet Eigenwerbung
+  und LLM-Inhalte, `r/resumes` verbietet Werbung und KI-Inhalte,
+  `r/InformatikKarriere` erlaubt Werbung nur nach Mod-Absprache. Nichts
+  gepostet.
+- Google Search Console: `SEARCH CONSOLE OWNERSHIP VERIFICATION PENDING`.
+  Landingpage/robots/sitemap 200; kein DNS-TXT `google-site-verification`,
+  keine Meta-/Datei-Verifikation; Property/Sitemap nicht eingereicht; keine
+  Indexierung behauptet. Konkrete DNS-/GSC-Anleitung dokumentiert.
+- Messung: keine Analytics/Cookies/Pixel/Fingerprinting implementiert.
+  UTM-Parameter (`jm_launch_2026`) vorbereitet, aber ohne Analytics nicht
+  auswertbar. Websitebesucher/Start der Suche/Profilnutzung/Wiederkehr sind
+  heute nicht messbar; nur Plattform-Aggregate und freiwilliges Feedback.
+  100 Besucher/10 Testnutzer sind Planungsziele, keine Prognosen.
+- Compliance: Claims-Matrix gegen Produktstand; keine Garantien, keine
+  „alle Jobbörsen“, keine unbegrenzte KI, keine vollständige Anonymität,
+  keine dauerhafte Speicherung ohne Consent, keine erfundenen Zahlen.
+- QA: 9 Marketing-Dateien; lokale Verweise vorhanden; 19 externe URLs
+  (Produktion/Reddit) am 2026-11-14 HTTP 200; Meta-Descriptions 140/138/135
+  Zeichen; `git diff --check` PASS; Secret-Audit ohne Funde. Keine App-Tests
+  ausgeführt, da keine Produktcodeänderung.
+- Offene Findings: GSC pending, keine Website-Analytics, Reddit-Regeln,
+  SEO-Artikel nur Konzepte, Content-Freigabe ausstehend. Keine BLOCKER.
+- Keine RIS-/AWS-/Cognito-/Terraform-, Auth-, Consent-, Payment-, Matching-
+  oder Produktionsänderung; keine Veröffentlichung.
+- Report: `docs/reports/JM-MARKETING-03-ORGANIC-GROWTH-LAUNCH-REPORT.md`.
