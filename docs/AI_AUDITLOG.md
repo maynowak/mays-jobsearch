@@ -6318,3 +6318,36 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No product code, RIS/Terraform/AWS mutation, live E2E, main merge or
   production deployment. Decision remains with Privacy/Legal.
 - Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-03-PRIVACY-DECISION.md`.
+
+## 2026-11-14 — JM-CV-BUILDER-PDF-RIS-STORAGE-04 — OPTION A (V1)
+
+**Status:** `EXISTING V1 SCOPE DOCUMENTED — OPERATOR DECISION RECORDED — PRIVACY/LEGAL CONFIRMATION OPEN — PILOT E2E PREPARED (NOT EXECUTED)`
+
+- Branch `feature/jm-cv-builder-pdf-ris-storage-04` von
+  `origin/feature/jm-cv-builder-pdf-ris-storage-01` `20f842a`; ausschließlich
+  Dokumentation, kein Produktcode, kein RIS/Terraform/AWS, kein Deployment,
+  kein Live-E2E.
+- Betreiberentscheidung (2026-11-14): bestehende `cv-storage`-Einwilligung v1
+  wird für explizit im CV-Builder erzeugte und per „In RIS speichern“
+  übertragene PDFs weiterverwendet. Begründung: gleicher Zweck, Empfänger,
+  Datenkategorien, Retention/Widerruf und Pilot; Unterschied ist nur die
+  lokale PDF-Herkunft vor dem expliziten Upload.
+- v1 unverändert: Version `cv-storage-consent-2026-11-08-v1`, SHA-256
+  `2fe65fd158a3a2953cf3869ff864aae626971012d68cfb8849db84e04579d036`
+  (aus den sechs Absätzen lokal nachgerechnet), RIS-Notice `cv-storage/1.0`,
+  `legalApprovalRef=JM-CV-STORAGE-V1-BETA-2026-11-08`. Keine Änderung an
+  `cvStorageConsent.ts`, `cvConsentText.mjs`, `consentNotice.mjs`.
+- Formelle Privacy-/Legal-Bestätigung der Auslegung bleibt ausdrücklich
+  **OFFEN**; die Betreiberentscheidung ersetzt keine rechtliche Freigabe. Ohne
+  Bestätigung keine echte Nutzerfreigabe, kein Live-E2E, kein Deployment.
+- v2-Vorbereitung für diesen PDF-Snapshot-Use-Case beendet: 03-Option-B-Draft
+  (`cv-storage-consent-2026-11-14-v2`, Draft-Hash `7baee3ce…`) ist als
+  historisch/nicht aktiv markiert; keine Client-/BFF-/Env-/RIS-Mapping-Änderung.
+- Synthetischer Pilot-E2E-Runbook vorbereitet, **nicht ausgeführt**:
+  Consent-v1-Baseline, explizites Builder-Speichern, List/Reload,
+  Download-Hash, Delete, Withdraw/Write-Block, Negativfälle, Cleanup.
+- Keine Änderung an Auth, Consent-Logik, Matching, Applications oder
+  Bewerbungsdaten. STOP BEFORE LIVE E2E AND PRODUCTION DEPLOYMENT.
+- Reports:
+  `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-04-OPTION-A-V1-SCOPE.md`,
+  `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-04-SYNTHETIC-PILOT-E2E-RUNBOOK.md`.
