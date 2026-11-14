@@ -1,6 +1,14 @@
 # JM-CV-BUILDER-PDF-RIS-STORAGE-03 — PRIVACY DECISION
 
-**Status:** `PRIVACY DECISION PENDING`
+> **SUPERSEDED FOR THE PDF-SNAPSHOT USE CASE (2026-11-14):**
+> Die Betreiberin hat **Option A** gewählt: Die bestehende
+> `cv-storage`-Einwilligung v1 wird für explizit gespeicherte Builder-PDFs
+> weiterverwendet. Die v2-Vorbereitung in Abschnitt 5 ist für diesen Use-Case
+> **beendet und nicht aktiv**. Die formelle Privacy-/Legal-Bestätigung bleibt
+> offen. Siehe
+> `JM-CV-BUILDER-PDF-RIS-STORAGE-04-OPTION-A-V1-SCOPE.md`.
+
+**Status:** `OPTION A SELECTED BY OPERATOR — PRIVACY/LEGAL CONFIRMATION OPEN — V2 DRAFT NOT ACTIVE`
 
 **Date:** 2026-11-14
 **Repository:** `maynowak/mays-jobsearch`
@@ -105,6 +113,11 @@ is covered by the existing wording:
 Approver: Privacy/Legal + operator release owner. Date/signature: pending.
 
 ## 5. Option B — minimal text amendment required
+
+> **NICHT AKTIV (2026-11-14):** Für den PDF-Snapshot-Use-Case wurde Option A
+> gewählt. Der folgende v2-Draft ist historische Dokumentation und darf nicht
+> aktiviert, gemappt oder deployt werden. Siehe
+> `JM-CV-BUILDER-PDF-RIS-STORAGE-04-OPTION-A-V1-SCOPE.md` §6.
 
 If the wording is not sufficient, use a new notice version; do not edit v1 in place.
 
