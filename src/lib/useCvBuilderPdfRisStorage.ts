@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { MAX_PERSISTENT_CVS } from "./cvStorageApi";
 import type { PersistentCvStorageState } from "./usePersistentCvStorage";
 
@@ -24,14 +24,10 @@ export function useCvBuilderPdfRisStorage(
   identityVerified: boolean,
   identityKey: string | null
 ): CvBuilderPdfRisStorage {
-  const identityEpochRef = useRef(0);
-  const previousIdentityRef = useRef(identityKey);
-
-  useEffect(() => {
-    if (previousIdentityRef.current === identityKey) return;
-    previousIdentityRef.current = identityKey;
-    identityEpochRef.current += 1;
-  }, [identityKey]);
+  const identityKeyRef = useRef(identityKey);
+  // Update during render so an old callback cannot start an upload after the
+  // authenticated identity has changed while PDF generation was in flight.
+  identityKeyRef.current = identityKey;
 
   const status: CvBuilderPdfRisStatus = !identityVerified
     ? "unauthenticated"
@@ -46,18 +42,22 @@ export function useCvBuilderPdfRisStorage(
             : "available";
 
   const save = useCallback(async (file: File): Promise<boolean> => {
+    // The expected identity is captured when this callback is created. A
+    // callback from a previous render must not start an upload for a newer or
+    // logged-out identity, even if PDF generation finished later.
+    const expectedIdentity = identityKey;
+    if (identityKeyRef.current !== expectedIdentity) return false;
     if (status !== "available") return false;
-    const identityEpoch = identityEpochRef.current;
     try {
       const saved = await storage.upload(file);
       // A user switch while the upload was in flight must never be reported as
       // a successful save for the newly active identity.
-      if (identityEpoch !== identityEpochRef.current) return false;
+      if (identityKeyRef.current !== expectedIdentity) return false;
       return saved;
     } catch {
       return false;
     }
-  }, [status, storage.upload]);
+  }, [identityKey, status, storage.upload]);
 
   return { status, save };
 }

@@ -77,6 +77,7 @@ export function usePersistentCvStorage(
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const generationRef = useRef(0);
+  const uploadInFlightRef = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!enabled || !token) {
@@ -138,6 +139,8 @@ export function usePersistentCvStorage(
       setError(`Maximal ${MAX_PERSISTENT_CVS} dauerhaft gespeicherte Lebensläufe sind erlaubt.`);
       return false;
     }
+    if (uploadInFlightRef.current) return false;
+    uploadInFlightRef.current = true;
     setBusy(true);
     setError(null);
     setNotice(`„${file.name}“ wird dauerhaft gespeichert …`);
@@ -158,6 +161,7 @@ export function usePersistentCvStorage(
       await refresh();
       return false;
     } finally {
+      uploadInFlightRef.current = false;
       setBusy(false);
     }
   }, [consent?.consent?.status, documents.length, enabled, refresh, token]);
