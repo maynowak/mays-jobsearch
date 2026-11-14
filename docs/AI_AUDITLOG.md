@@ -6300,3 +6300,21 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Residual: existing upload has no network abort for session/consent withdrawal
   mid-flight; old token cannot store into another user's account.
 - Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-02-RELEASE-REVIEW.md`.
+
+## 2026-11-14 — JM-CV-BUILDER-PDF-RIS-STORAGE-03
+
+**Status:** `PRIVACY DECISION PENDING`
+
+- Reviewed approved `cv-storage-consent-2026-11-08-v1` (SHA-256
+  `2fe65fd1…`), RIS notice `cv-storage/1.0` (`APPROVED`, limited beta,
+  `JM-CV-STORAGE-V1-BETA-2026-11-08`) and the builder PDF data flow.
+- Purpose, storage destination, metadata, deletion/retention and pilot remain
+  unchanged; the only difference is that the PDF was generated in the builder
+  before explicit saving. The approved text specifically says “hochgeladener”
+  CV, so the legal scope for generated PDFs is not inferred.
+- Prepared Option A (existing consent sufficient) and Option B (minimal v2
+  wording; draft version/hash `cv-storage-consent-2026-11-14-v2` /
+  `7baee3ce…`, not active). No text, notice, purpose or pilot change.
+- No product code, RIS/Terraform/AWS mutation, live E2E, main merge or
+  production deployment. Decision remains with Privacy/Legal.
+- Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-03-PRIVACY-DECISION.md`.
