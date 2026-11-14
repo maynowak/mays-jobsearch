@@ -6318,3 +6318,20 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No product code, RIS/Terraform/AWS mutation, live E2E, main merge or
   production deployment. Decision remains with Privacy/Legal.
 - Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-03-PRIVACY-DECISION.md`.
+
+## 2026-11-14 — JM-CV-BUILDER-PDF-RIS-STORAGE-04
+
+**Status:** `EXISTING V1 SCOPE DOCUMENTED / PILOT E2E READINESS`
+
+- Operator decided to retain existing `cv-storage` v1 for builder-generated PDF
+  snapshots because purpose, storage, metadata, deletion/retention and pilot
+  remain unchanged; no new consent version is desired.
+- v1 text/hash/notice unchanged (`cv-storage-consent-2026-11-08-v1`, SHA
+  `2fe65fd1…`, RIS `cv-storage/1.0`). v2 preparation is stopped for this use
+  case; draft `7baee3ce…` is not active.
+- Formal Privacy/Legal confirmation of the “hochgeladener Lebenslauf” scope
+  for generated PDFs/Art. 9 remains OPEN; no approval was inferred.
+- Prepared the synthetic pilot E2E sequence and preconditions. Live E2E,
+  production deployment, main merge and product/RIS/AWS changes were not
+  executed.
+- Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-04-OPTION-A-DECISION.md`.
