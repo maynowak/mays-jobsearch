@@ -6280,3 +6280,23 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   generated PDFs must be confirmed; notice text was not silently changed.
 - Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-01-REPORT.md`;
   implementation commit `5cd47eb`.
+
+## 2026-11-14 — JM-CV-BUILDER-PDF-RIS-STORAGE-02
+
+**Status:** `TECHNICAL REVIEW VERIFIED / PRIVACY APPROVAL PENDING`
+
+- Independent review against `origin/main` confirmed existing `/api/ris/cvs`,
+  storage hook, validation and PDF generation are reused; no RIS/API/Terraform/
+  AWS/new consent or Structured-CV change.
+- Fixed P2 identity transition: old save callbacks no longer start an upload
+  after the authenticated identity changes (`7b39e46`). Fixed P2 parallel save
+  races (`7b39e46`/`5d29217`). Fixed failed-upload error being cleared by the
+  storage refresh (`7866d4e`).
+- Tests: 26 focused PASS; final full Jobsearch 1882 PASS / 11 skipped; build
+  PASS; mock-BFF create/upload/complete E2E PASS. Live RIS E2E not executed.
+- Privacy gate remains open: current `cv-storage` wording says uploaded CV;
+  generated PDFs need Privacy/Legal confirmation or a separately approved
+  notice/version/hash change. No text or consent activation changed.
+- Residual: existing upload has no network abort for session/consent withdrawal
+  mid-flight; old token cannot store into another user's account.
+- Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-02-RELEASE-REVIEW.md`.
