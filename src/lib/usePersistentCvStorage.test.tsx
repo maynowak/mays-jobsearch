@@ -143,6 +143,47 @@ describe("usePersistentCvStorage", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("fails closed when the upload ticket, S3 PUT or complete step fails", async () => {
+    for (const failAt of ["ticket", "put", "complete"] as const) {
+      fetchMock.mockImplementation(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+        const url = String(input);
+        const method = String(init.method ?? "GET").toUpperCase();
+        if (url.includes("/api/ris/cv-consents")) return jsonResponse(200, consentState());
+        if (url.includes("/api/ris/cvs?") && method === "GET") {
+          return jsonResponse(200, { items: [], nextCursor: null });
+        }
+        if (url.endsWith("/api/ris/cvs") && method === "POST") {
+          return jsonResponse(201, {
+            cvId: "cv-1", filename: "Lebenslauf.pdf", processingStatus: "pending",
+            createdAt: "2026-11-08T10:00:00Z", updatedAt: "2026-11-08T10:00:00Z", version: 1,
+          });
+        }
+        if (url.includes("action=upload")) {
+          if (failAt === "ticket") return jsonResponse(500, { error: "ticket failed" });
+          return jsonResponse(200, {
+            cvId: "cv-1", documentId: "doc-1", uploadUrl: "https://s3.example/put",
+            expiresAt: "2026-11-08T10:15:00Z", requiredHeaders: { "Content-Type": "application/pdf" },
+          });
+        }
+        if (url === "https://s3.example/put") {
+          return failAt === "put" ? jsonResponse(500, {}) : jsonResponse(200, {});
+        }
+        if (url.includes("action=complete")) {
+          return failAt === "complete" ? jsonResponse(500, { error: "complete failed" }) : jsonResponse(200, readyCv());
+        }
+        throw new Error(`unexpected fetch ${method} ${url}`);
+      });
+      const { result, unmount } = renderHook(() => usePersistentCvStorage("token", true));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      const file = new File([new Uint8Array([1])], "Lebenslauf.pdf", { type: "application/pdf" });
+      let uploaded = true;
+      await act(async () => { uploaded = await result.current.upload(file); });
+      expect(uploaded).toBe(false);
+      expect(result.current.error).toBeTruthy();
+      unmount();
+    }
+  });
+
   it("shows a retryable timeout message instead of a generic outage", async () => {
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
       const url = String(input);

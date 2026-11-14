@@ -156,9 +156,12 @@ export function usePersistentCvStorage(
       await refresh();
       return true;
     } catch (err) {
-      setError(messageOf(err));
+      const message = messageOf(err);
       setNotice(null);
       await refresh();
+      // Keep the failed-upload reason visible; refresh() intentionally clears
+      // stale list errors at its start.
+      setError(message);
       return false;
     } finally {
       uploadInFlightRef.current = false;
