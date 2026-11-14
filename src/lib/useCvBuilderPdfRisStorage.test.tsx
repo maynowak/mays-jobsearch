@@ -25,6 +25,29 @@ function storage(upload: PersistentCvStorageState["upload"]): PersistentCvStorag
 }
 
 describe("useCvBuilderPdfRisStorage", () => {
+  it("serializes saves from the same authenticated hook", async () => {
+    let resolveUpload!: (value: boolean) => void;
+    const upload = vi.fn(
+      () => new Promise<boolean>((resolve) => { resolveUpload = resolve; })
+    );
+    const { result } = renderHook(
+      () => useCvBuilderPdfRisStorage(storage(upload), true, "issuer|user-a"),
+      { initialProps: { identityKey: "issuer|user-a" } }
+    );
+    const file = new File([new Uint8Array([1])], "cv.pdf", { type: "application/pdf" });
+
+    let first: Promise<boolean>;
+    act(() => {
+      first = result.current.save(file);
+    });
+    await waitFor(() => expect(upload).toHaveBeenCalledTimes(1));
+    await expect(result.current.save(file)).resolves.toBe(false);
+    expect(upload).toHaveBeenCalledTimes(1);
+
+    resolveUpload(true);
+    await expect(first!).resolves.toBe(true);
+  });
+
   it("does not start an upload from an old callback after identity change", async () => {
     const upload = vi.fn().mockResolvedValue(true);
     const { result, rerender } = renderHook(
