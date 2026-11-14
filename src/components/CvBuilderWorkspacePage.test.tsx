@@ -66,6 +66,15 @@ describe("CV-BUILDER-03A direct workspace identity isolation", () => {
     expect(screen.queryByDisplayValue("Direkter Workspace A")).not.toBeInTheDocument();
   });
 
+  it("keeps RIS PDF saving disabled without a verified identity", async () => {
+    renderPage();
+    await enterDraft("Workspace ohne Anmeldung");
+
+    const save = screen.getByRole("button", { name: "In RIS speichern" });
+    expect(save).toBeDisabled();
+    expect(screen.getByText("Bitte melde dich an, um das PDF dauerhaft zu speichern.")).toBeInTheDocument();
+  });
+
   it("does not treat the initial auth load as an identity change", async () => {
     authState.current = { isLoading: true, isAuthenticated: false, user: undefined };
     const view = renderPage();

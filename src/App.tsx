@@ -77,6 +77,7 @@ import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib
 import { downloadCvFile, isRisCvStorageEnabled, type PersistentCv } from "./lib/cvStorageApi";
 import { persistentCvProcessBlocker } from "./lib/cvProcessingHandoff";
 import { usePersistentCvStorage } from "./lib/usePersistentCvStorage";
+import { useCvBuilderPdfRisStorage } from "./lib/useCvBuilderPdfRisStorage";
 import { isRisSearchProfileStorageEnabled } from "./lib/searchProfilesApi";
 import { usePersistentSearchProfiles } from "./lib/usePersistentSearchProfiles";
 import {
@@ -391,6 +392,11 @@ export default function App() {
   const cvStorageAccessToken = auth.user?.access_token ?? "";
   const cvStorageEnabled = isRisCvStorageEnabled() && identityVerified;
   const persistentCvStorage = usePersistentCvStorage(cvStorageAccessToken, cvStorageEnabled);
+  const pdfRisStorage = useCvBuilderPdfRisStorage(
+    persistentCvStorage,
+    identityVerified,
+    authProfileKey
+  );
   const searchProfileStorageEnabled = isRisSearchProfileStorageEnabled() && identityVerified;
   const persistentSearchProfiles = usePersistentSearchProfiles(
     cvStorageAccessToken,
@@ -3986,6 +3992,12 @@ export default function App() {
       saving={cvBuilderSaving}
       saveError={cvBuilderSaveError}
       importReview={cvBuilderImportReview}
+      onSavePdfToRis={async (file) => {
+        const saved = await pdfRisStorage.save(file);
+        if (saved) setCvStorageMode("persistent");
+        return saved;
+      }}
+      pdfRisStatus={pdfRisStorage.status}
     />
   ) : null;
 

@@ -20,6 +20,9 @@ import {
   type CvBuilderValidationError,
 } from "../lib/cvBuilder/validation";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "../lib/scrollLock";
+import { MAX_PERSISTENT_CVS } from "../lib/cvStorageApi";
+import { validateCvFile } from "../lib/cvFileValidation";
+import type { CvBuilderPdfRisStatus } from "../lib/useCvBuilderPdfRisStorage";
 import CvBuilderPreview from "./CvBuilderPreview";
 import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 import {
@@ -42,6 +45,8 @@ interface Props {
   saving?: boolean;
   saveError?: string;
   importReview?: CvBuilderImportReviewSummary | null;
+  onSavePdfToRis?: (file: File) => Promise<boolean>;
+  pdfRisStatus?: CvBuilderPdfRisStatus;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -365,6 +370,8 @@ export default function CvBuilderEditor({
   saving = false,
   saveError = "",
   importReview = null,
+  onSavePdfToRis,
+  pdfRisStatus = "unavailable",
 }: Props) {
   const { t, lang } = useLang();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -374,6 +381,7 @@ export default function CvBuilderEditor({
   const viewMountedRef = useRef(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const exportingRef = useRef(false);
+  const savingPdfToRisRef = useRef(false);
   const addRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [focusAfterRemove, setFocusAfterRemove] = useState<string | null>(null);
   const [successDismissed, setSuccessDismissed] = useState(false);
@@ -384,6 +392,9 @@ export default function CvBuilderEditor({
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
   const [exportError, setExportError] = useState("");
+  const [savingPdfToRis, setSavingPdfToRis] = useState(false);
+  const [pdfRisMessage, setPdfRisMessage] = useState("");
+  const [pdfRisError, setPdfRisError] = useState("");
   const [screenshotMode, setScreenshotMode] = useState(false);
   const screenshotOpenStatesRef = useRef<boolean[]>([]);
   const fullpage = layoutMode === "fullpage";
@@ -515,8 +526,69 @@ export default function CvBuilderEditor({
   const removeAt = <T,>(list: T[], index: number): T[] =>
     list.filter((_, entryIndex) => entryIndex !== index);
 
+  const pdfRisStatusMessage = (): string => {
+    switch (pdfRisStatus) {
+      case "unauthenticated":
+        return t("cvBuilder.risStorage.loginRequired");
+      case "unavailable":
+        return t("cvStorage.unavailable");
+      case "loading":
+        return t("cvBuilder.risStorage.checking");
+      case "consent-required":
+        return t("cvStorage.consentRequired");
+      case "capacity":
+        return t("cvStorage.capacityReached", { max: MAX_PERSISTENT_CVS });
+      default:
+        return "";
+    }
+  };
+
+  const handleSavePdfToRis = async () => {
+    if (!onSavePdfToRis || savingPdfToRisRef.current || exportingRef.current) return;
+    setPdfRisMessage("");
+    setPdfRisError("");
+    if (pdfRisStatus !== "available") {
+      setPdfRisError(pdfRisStatusMessage());
+      return;
+    }
+    if (errorCount > 0) {
+      setPdfRisError(t("cvBuilder.exportInvalid"));
+      return;
+    }
+    if (!hasCvBuilderContent(draft)) {
+      setPdfRisError(t("cvBuilder.exportNoData"));
+      return;
+    }
+    savingPdfToRisRef.current = true;
+    setSavingPdfToRis(true);
+    try {
+      const pdfExport = await import("../lib/cvBuilder/pdfExport");
+      const bytes = await pdfExport.createCvBuilderPdf(draft, template, { language: lang });
+      const fileBytes = new Uint8Array(bytes);
+      const file = new File([fileBytes.buffer], pdfExport.cvBuilderFileName(draft), {
+        type: "application/pdf",
+      });
+      const rejection = validateCvFile(file);
+      if (rejection) {
+        setPdfRisError(t(`cvBuilder.risStorage.${rejection}`));
+        return;
+      }
+      const saved = await onSavePdfToRis(file);
+      if (saved) {
+        setPdfRisMessage(t("cvBuilder.risStorage.success"));
+      } else {
+        setPdfRisError(t("cvBuilder.risStorage.error"));
+      }
+    } catch {
+      setPdfRisError(t("cvBuilder.risStorage.error"));
+    } finally {
+      savingPdfToRisRef.current = false;
+      setSavingPdfToRis(false);
+    }
+  };
+
   const handleExportPdf = async () => {
-    if (exportingRef.current) return;
+    if (exportingRef.current || savingPdfToRisRef.current) return;
     setExportMessage("");
     setExportError("");
     if (errorCount > 0) {
@@ -1399,11 +1471,29 @@ export default function CvBuilderEditor({
               type="button"
               className="letter-btn cv-builder-export"
               onClick={() => void handleExportPdf()}
-              disabled={exporting || errorCount > 0 || !hasCvBuilderContent(draft)}
+              disabled={exporting || savingPdfToRis || errorCount > 0 || !hasCvBuilderContent(draft)}
               aria-busy={exporting}
             >
               {exporting ? t("cvBuilder.exporting") : t("cvBuilder.exportPdf")}
             </button>
+            {onSavePdfToRis && (
+              <button
+                type="button"
+                className="btn-ghost cv-builder-save-ris"
+                onClick={() => void handleSavePdfToRis()}
+                disabled={
+                  savingPdfToRis ||
+                  exporting ||
+                  pdfRisStatus !== "available" ||
+                  errorCount > 0 ||
+                  !hasCvBuilderContent(draft)
+                }
+                aria-busy={savingPdfToRis}
+                title={pdfRisStatus !== "available" ? pdfRisStatusMessage() : undefined}
+              >
+                {savingPdfToRis ? t("cvBuilder.risStorage.saving") : t("cvBuilder.risStorage.save")}
+              </button>
+            )}
             {fullpage && onReturnToApp && (
               <button type="button" className="btn-ghost" onClick={onReturnToApp}>
                 {t("cvBuilder.workspace.return")}
@@ -1414,8 +1504,13 @@ export default function CvBuilderEditor({
             </button>
           </div>
           {saveError && <p className="letter-review-warning" role="alert">{saveError}</p>}
+          {onSavePdfToRis && pdfRisStatus !== "available" && (
+            <p className="cv-builder-hint" role="status">{pdfRisStatusMessage()}</p>
+          )}
           {exportMessage && <p className="letter-review-success" role="status">{exportMessage}</p>}
+          {pdfRisMessage && <p className="letter-review-success" role="status">{pdfRisMessage}</p>}
           {exportError && <p className="letter-review-warning" role="alert">{exportError}</p>}
+          {pdfRisError && <p className="letter-review-warning" role="alert">{pdfRisError}</p>}
           {closeConfirm && (
             <div className="cv-builder-unsaved" role="alertdialog" aria-label={t("cvBuilder.unsavedTitle")}>
               <h4>{t("cvBuilder.unsavedTitle")}</h4>

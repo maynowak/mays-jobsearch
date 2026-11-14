@@ -23,7 +23,10 @@ import {
   type CvBuilderWorkspaceOpenPayload,
   type CvBuilderWorkspaceReturnPayload,
 } from "../lib/cvBuilder/workspaceHandoff";
-import { deriveAuthProfileKey } from "../lib/authIdentity";
+import { deriveAuthProfileKey, isVerifiedAuthProfileKey } from "../lib/authIdentity";
+import { isRisCvStorageEnabled } from "../lib/cvStorageApi";
+import { usePersistentCvStorage } from "../lib/usePersistentCvStorage";
+import { useCvBuilderPdfRisStorage } from "../lib/useCvBuilderPdfRisStorage";
 import { cloneCvBuilderDraft, cloneCvBuilderProfile } from "../lib/cvBuilder/profileTypes";
 
 type Mode = "loading" | "start" | "import" | "editor" | "error";
@@ -49,6 +52,16 @@ export default function CvBuilderWorkspacePage() {
   const { t, lang, setLang } = useLang();
   const auth = useAuth() ?? { isAuthenticated: false, user: undefined, isLoading: false };
   const currentIdentity = deriveAuthProfileKey(auth.isAuthenticated, auth.user?.profile);
+  const identityVerified = isVerifiedAuthProfileKey(currentIdentity);
+  const persistentCvStorage = usePersistentCvStorage(
+    auth.user?.access_token ?? "",
+    isRisCvStorageEnabled() && identityVerified
+  );
+  const pdfRisStorage = useCvBuilderPdfRisStorage(
+    persistentCvStorage,
+    identityVerified,
+    currentIdentity
+  );
   const handoffId = readHandoffId();
   const activeHandoffIdRef = useRef<string | null>(handoffId);
   const [mode, setMode] = useState<Mode>(handoffId ? "loading" : "start");
@@ -396,6 +409,8 @@ export default function CvBuilderWorkspacePage() {
             saveError={saveError}
             importReview={importReview}
             onReturnToApp={handleReturnToApp}
+            onSavePdfToRis={pdfRisStorage.save}
+            pdfRisStatus={pdfRisStorage.status}
           />
           {workspaceMessage && <p className="cv-workspace-local-note" role="status">{workspaceMessage}</p>}
         </main>
