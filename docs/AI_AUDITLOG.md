@@ -6360,3 +6360,21 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Screenshots: `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/`.
 - Formal Privacy/Legal confirmation and live synthetic identity/preview
   authorization remain missing; no production/main/RIS/AWS change.
+
+## 2026-11-15 — JM-CV-BUILDER-PDF-RIS-STORAGE-06 — MAIN INTEGRATION
+
+**Status:** `MAIN INTEGRATED / TESTS PASS / MOCK E2E VERIFIED`
+**Additional:** `REAL RIS E2E PENDING`
+
+- Controlled fast-forward `main a5640d1..f4cb0a3`; no force-push, no rewrite,
+  clean worktree. Release Owner explicitly directed the merge; automatic
+  Vercel main deployment was accepted.
+- Post-merge main: `npm ci`, build, serial full **1882 PASS / 11 skipped**,
+  mock-BFF browser E2E PASS (save/reload/list/download/delete). CodeQL and
+  Vercel main statuses SUCCESS.
+- Production verified: `www.mays-job-matcher.app` 200; asset
+  `main-l3bemNCe.js` contains “In RIS speichern” and build SHA `f4cb0a3`.
+  No manual `vercel --prod`.
+- Existing v1 consent/notice/pilot unchanged; formal Privacy/Legal
+  confirmation and real RIS live E2E remain pending. No RIS/AWS/Terraform
+  change, no general rollout, no XRepo completion.
