@@ -228,11 +228,13 @@ async function main() {
     await page.reload({ waitUntil: "networkidle" });
     await page.getByText("Lebenslauf-Alex-Beispiel.pdf").waitFor();
     await page.screenshot({ path: resolve(evidenceDir, "03-reloaded-list.png") });
-    const popupPromise = page.waitForEvent("popup");
+    const popupPromise = page.waitForEvent("popup").catch(() => null);
     await page.getByRole("button", { name: "Herunterladen" }).click();
     const popup = await popupPromise;
-    await popup.waitForLoadState("domcontentloaded");
-    await popup.close();
+    for (let attempt = 0; attempt < 50 && !writes.includes("GET download.invalid"); attempt += 1) {
+      await page.waitForTimeout(100);
+    }
+    if (popup) await popup.close();
     await page.getByRole("button", { name: "Löschen" }).click();
     await page.getByRole("button", { name: "Dauerhaft löschen" }).click();
     await page.getByText("Gelöscht").waitFor();
