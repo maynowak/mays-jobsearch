@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { analyzeATS, type AtsAnalysisResponse, fetchModels } from "../api";
 import type { Job, Profile, ModelOption } from "../types";
+import type { ATSCriteriaV1 } from "../lib/profiles/contractTypes";
 import { useLang } from "../i18n";
 import { ConsentGate } from "./ConsentGate";
 import { PrivacyNotice } from "./PrivacyNotice";
@@ -18,7 +19,23 @@ interface Props {
   cvHash?: string | null;
   activeAtsId?: string | null;
   activeSearchId?: string | null;
+  criteria?: ATSCriteriaV1 | null;
   onSkillAdded?: (skill: string) => Promise<void>;
+}
+
+function atsJobPayload(job: Job) {
+  return {
+    title: job.title,
+    tags: job.tags,
+    slug: job.slug,
+    descriptionPlain: job.descriptionPlain,
+    description: job.description,
+    location: job.location,
+    remote: job.remote,
+    jobTypes: job.jobTypes,
+    contractType: job.contractType,
+    language: job.language,
+  };
 }
 
 const STATUS_LABEL_MAP: Record<string, string> = {
@@ -36,7 +53,7 @@ function getUserFacingStatus(status: string): string {
   return key ? key : status;
 }
 
-export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSkillAdded }: Props) {
+export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, criteria, onSkillAdded }: Props) {
   const { t } = useLang();
   const [analysis, setAnalysis] = useState<AtsAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,8 +99,8 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
     setLoading(true);
     setError("");
     analyzeATS(
-      { title: job.title, tags: job.tags, slug: job.slug },
-      { skills: skillsForAts },
+      atsJobPayload(job),
+      { skills: skillsForAts, targetRoles: profile?.targetRoles ?? [], criteria: criteria ?? undefined },
       { enabled: false }
     )
       .then((result) => {
@@ -102,7 +119,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
     return () => {
       cancelled = true;
     };
-  }, [job, t, onAtsAnalyzed]);
+  }, [job, profile?.targetRoles, criteria, t, onAtsAnalyzed]);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -127,9 +144,13 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
 
     try {
       // Nutzt die effektiven Skills (inkl. bestätigter Ergänzungen).
-      const profileForAts = { skills: effectiveSkillsRef.current };
+      const profileForAts = {
+        skills: effectiveSkillsRef.current,
+        targetRoles: profile?.targetRoles ?? [],
+        criteria: criteria ?? undefined,
+      };
       const refreshed = await analyzeATS(
-        { title: job.title, tags: job.tags, slug: job.slug },
+        atsJobPayload(job),
         profileForAts,
         { enabled: true, consent: true, ...(selectedModel ? { model: selectedModel } : {}) }
       );
@@ -187,8 +208,12 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
     setPreviousScore(analysis?.analysis?.score ?? null);
     try {
       const result = await analyzeATS(
-        { title: job.title, tags: job.tags, slug: job.slug },
-        { skills: mergedSkills },
+        atsJobPayload(job),
+        {
+          skills: mergedSkills,
+          targetRoles: profile?.targetRoles ?? [],
+          criteria: criteria ?? undefined,
+        },
         { enabled: false }
       );
       setAnalysis(result);
@@ -271,7 +296,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
         category: "sharpen",
         titleKey: "ats.tips.category.sharpen",
         descKey: "ats.tips.category.sharpen.desc",
-        items: matchedRequirements.map((r) => r.text),
+        items: [t("ats.tips.matchedCount", { count: matchedRequirements.length })],
       });
     }
 
@@ -319,21 +344,33 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
 
   const renderScore = () => {
     if (!analysis) return null;
-    const currentScore = Math.round(analysis.analysis?.score ?? 0);
+    const result = analysis.analysis;
+    const status = result?.analysisStatus ?? "complete";
+    const currentScore = Math.round(result?.score ?? 0);
     const hasPrevious = previousScore !== null;
     const delta = hasPrevious ? currentScore - previousScore : 0;
+    const coverage = Math.min(
+      100,
+      Math.max(0, Math.round(result?.requirementCoverage ?? result?.keywordCoverage?.overall ?? 0))
+    );
+    const roleMatch = result?.roleMatch;
 
     return renderSection(
       "ats.section.score.title",
       "ats.section.score.annotation",
-      (
+      status === "insufficient" ? (
+        <div className="ats-score ats-score--limited">
+          <div className="ats-score-value">{t("ats.score.insufficient")}</div>
+          <p className="ats-score-label">{t("ats.score.insufficientHint")}</p>
+        </div>
+      ) : (
         <div className="ats-score">
           <div className="ats-score-value">
             {currentScore}/100
             {hasPrevious && (
-              <span style={{ 
-                fontSize: '0.75rem', 
-                marginLeft: '8px', 
+              <span style={{
+                fontSize: '0.75rem',
+                marginLeft: '8px',
                 color: delta >= 0 ? 'var(--green)' : 'var(--red)',
                 fontWeight: 'bold'
               }}>
@@ -342,9 +379,16 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
             )}
           </div>
           <div className="ats-score-label">
-            Keyword Coverage:{' '}
-            {Math.min(100, Math.max(0, Math.round(analysis.analysis?.keywordCoverage?.overall ?? 0)))}%
+            {t("ats.score.requirementCoverage")}: {coverage}%
           </div>
+          {typeof roleMatch === "number" && (
+            <div className="ats-score-label">
+              {t("ats.score.roleMatch")}: {roleMatch}%
+            </div>
+          )}
+          {status === "limited" && (
+            <p className="ats-score-label">{t("ats.score.limitedHint")}</p>
+          )}
         </div>
       ),
       !!analysis
@@ -447,19 +491,12 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, onSki
       "ats.section.matches.title",
       "ats.section.matches.annotation",
       (
-        <div className="ats-criteria">
-          {matchedRequirements.map((req, idx) => (
-            // ATS-TABLE-LAYOUT-01: ohne Flex-Wrapper fallen Text und Status
-            // als Inline-Elemente ohne Abstand zusammen ("devopsPasst").
-            // Gleiche Zeilen-Struktur wie renderRequirements().
-            <div key={req.id || idx} className="ats-requirement matched">
-              <div className="ats-requirement-row">
-                <span className="ats-requirement-text">{req.text}</span>
-                <span className="ats-requirement-status matched">{t("ats.status.matched")}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        // The complete requirement list above already shows the individual
+        // matched terms once. Keep this section as a compact summary instead of
+        // repeating every keyword a second time.
+        <p className="ats-section-annotation">
+          {t("ats.matches.summary", { count: matchedRequirements.length })}
+        </p>
       ),
       true
     );

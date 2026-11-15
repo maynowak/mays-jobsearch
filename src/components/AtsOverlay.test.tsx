@@ -90,6 +90,39 @@ function createMockAnalysis(overrides: Partial<AtsAnalysisResponse> = {}): AtsAn
   return { ...base, ...overrides };
 }
 
+describe("JM-ATS-MATCHING-QUALITY-01: payload", () => {
+  it("sends the full description and ATS profile fields to the existing API", async () => {
+    vi.mocked(analyzeATS).mockClear();
+    vi.mocked(analyzeATS).mockResolvedValue(createMockAnalysis());
+    render(
+      <LangProvider>
+        <AtsOverlay
+          job={baseJob}
+          profile={baseProfile}
+          criteria={{ schemaVersion: 1, requiredSkills: ["React"], preferredSkills: [], excludedTerms: [] }}
+          onClose={vi.fn()}
+        />
+      </LangProvider>
+    );
+    await screen.findByText("ATS-Bewertung");
+    expect(vi.mocked(analyzeATS)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: baseJob.title,
+        tags: baseJob.tags,
+        slug: baseJob.slug,
+        descriptionPlain: baseJob.descriptionPlain,
+        description: baseJob.description,
+      }),
+      expect.objectContaining({
+        skills: baseProfile.skills,
+        targetRoles: baseProfile.targetRoles,
+        criteria: expect.objectContaining({ requiredSkills: ["React"] }),
+      }),
+      { enabled: false }
+    );
+  });
+});
+
 describe("ATS-UI-IMPROVEMENT-01: AtsOverlay user-facing presentation", () => {
   it("zeigt deutsche user-facing Status-Labels statt technischer Begriffe", async () => {
     const analysis = createMockAnalysis();
@@ -134,7 +167,7 @@ describe("ATS-UI-IMPROVEMENT-01: AtsOverlay user-facing presentation", () => {
     expect(screen.getByText("Wo noch etwas fehlt")).toBeInTheDocument();
     
     // Annotationen unter den Überschriften (Teiltext reicht)
-    expect(screen.getByText(/Wie gut dein ausgewähltes ATS-Profil/i)).toBeInTheDocument();
+    expect(screen.getByText(/Anforderungsabdeckung auf Basis der tatsächlichen Stellenanzeige/i)).toBeInTheDocument();
     expect(screen.getByText(/Welche Anforderungen aus der Stellenanzeige/i)).toBeInTheDocument();
     expect(screen.getByText(/Anforderungen, die durch dein Profil belegt sind/i)).toBeInTheDocument();
     expect(screen.getByText(/keinen eindeutigen Nachweis enthält/i)).toBeInTheDocument();
@@ -233,6 +266,30 @@ describe("ATS-UI-IMPROVEMENT-01: AtsOverlay user-facing presentation", () => {
     // KI-Sektion deutlich gekennzeichnet (mindestens einmal)
     expect(screen.getAllByText("KI-formulierte Erläuterung").length).toBeGreaterThan(0);
     expect(screen.getByText("Diese Erläuterung wurde anhand der ATS-Analyse formuliert.")).toBeInTheDocument();
+  });
+
+  it("zeigt bei fehlender Anforderungsbasis keine 100-%-Zahl", async () => {
+    const analysis = createMockAnalysis({
+      analysis: {
+        score: 0,
+        keywordCoverage: { overall: 0 },
+        analysisStatus: "insufficient",
+        requirementCoverage: 0,
+        roleMatch: 100,
+        basis: { requirementCount: 0, titleRequirementCount: 2, hasDescription: false, roleMatchAvailable: true },
+        criticalGaps: [],
+        requirements: [],
+        matches: [],
+      },
+    });
+    vi.mocked(analyzeATS).mockResolvedValue(analysis);
+    render(
+      <LangProvider>
+        <AtsOverlay job={baseJob} profile={baseProfile} onClose={vi.fn()} />
+      </LangProvider>
+    );
+    await screen.findByText("Nicht ausreichend bewertbar");
+    expect(screen.queryByText("0/100")).not.toBeInTheDocument();
   });
 
   it("englische Labels bei EN-Sprache", async () => {
@@ -353,9 +410,9 @@ describe("ATS-TABLE-LAYOUT-01: Anforderungs-Tabellen trennen Text und Status", (
     // Abstand). Nachweis daher ueber getrennte Element-Knoten:
     // getByText("devops") matcht nur ein Element mit EXAKT diesem Text.
     // Waere der Text mit dem Status verschmolzen, schlaegt das fehl.
-    expect(screen.getAllByText("devops").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("engineer").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("cloud-architect").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("devops")).toHaveLength(1);
+    expect(screen.getAllByText("engineer")).toHaveLength(1);
+    expect(screen.getAllByText("cloud-architect")).toHaveLength(1);
     expect(screen.getAllByText("Passt").length).toBeGreaterThan(0);
     cleanup();
   });
@@ -363,11 +420,10 @@ describe("ATS-TABLE-LAYOUT-01: Anforderungs-Tabellen trennen Text und Status", (
   it("gibt jeder Anforderungszeile einen Flex-Wrapper (.ats-requirement-row)", async () => {
     const container = await renderLayout();
 
-    // Jede Zeile in BEIDEN Tabellen nutzt dieselbe Wrapper-Klasse.
-    // Ohne Wrapper stehen Text und Status als Inline-Elemente direkt
-    // nebeneinander und laufen optisch zusammen.
+    // Each requirement is rendered once; the former second table was
+    // replaced by a compact summary to avoid repeating the same keywords.
     const rows = container.querySelectorAll(".ats-requirement-row");
-    expect(rows.length).toBeGreaterThanOrEqual(6); // 3 Anforderungen + 3 Matches
+    expect(rows.length).toBeGreaterThanOrEqual(3); // individual requirements are rendered once
 
     // Wrapper beinhaltet getrennte Text- und Status-Spalten.
     const first = rows[0];
@@ -376,7 +432,7 @@ describe("ATS-TABLE-LAYOUT-01: Anforderungs-Tabellen trennen Text und Status", (
     cleanup();
   });
 
-  it("nutzt in BEIDEN Tabellen die identische Zeilen-Struktur", async () => {
+  it("rendert jede Anforderungszeile einmal mit der identischen Zeilen-Struktur", async () => {
     const container = await renderLayout();
 
     // "Anforderungen der Stelle" und "Was bereits passt" muessen beide
@@ -385,7 +441,7 @@ describe("ATS-TABLE-LAYOUT-01: Anforderungs-Tabellen trennen Text und Status", (
     const requirementRows = container.querySelectorAll(
       ".ats-requirement .ats-requirement-row"
     );
-    expect(requirementRows.length).toBeGreaterThanOrEqual(6);
+    expect(requirementRows.length).toBeGreaterThanOrEqual(3); // matched rows are summarised, not repeated as a second table
 
     // Keine Anforderungszeile darf ohne Wrapper auskommen.
     const orphanRows = Array.from(

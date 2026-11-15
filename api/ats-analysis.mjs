@@ -133,6 +133,11 @@ export default async function handler(req, res) {
       analysis: {
         score: analysis.scores.overall,
         keywordCoverage: { overall: analysis.scores.keywordMatch },
+        requirementCoverage: analysis.scores.requirementMatch,
+        profileEvidenceCoverage: analysis.scores.profileEvidence,
+        roleMatch: analysis.scores.roleMatch,
+        analysisStatus: analysis.analysisStatus,
+        basis: analysis.basis,
         criticalGaps: analysis.criticalGaps,
         requirements: analysis.requirements.map(r => ({
           id: r.id,

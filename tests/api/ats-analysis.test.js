@@ -104,6 +104,24 @@ describe("STEP 37E - ATS Analysis API", () => {
     expect(mockRes.statusCode).toBe(200);
   });
 
+  it("I) full description reaches the deterministic analysis", async () => {
+    mockReq.body = {
+      job: {
+        slug: "ai-platform-engineer",
+        title: "AI Platform Engineer",
+        tags: [],
+        descriptionPlain: "Build MCP servers with OAuth and LLM agents. Apply IAM, evaluation, observability, Python and TypeScript.",
+      },
+      profile: { skills: "platform, engineer", targetRoles: ["AI Platform Engineer"] },
+    };
+    await handler(mockReq, mockRes);
+    expect(mockRes.statusCode).toBe(200);
+    expect(mockRes.data.analysis.analysisStatus).toBe("complete");
+    expect(mockRes.data.analysis.requirements.map((r) => r.text)).toContain("MCP");
+    expect(mockRes.data.analysis.score).toBeLessThan(100);
+    expect(mockRes.data.analysis.roleMatch).toBe(100);
+  });
+
   it("H) API returns proper structure", async () => {
     mockReq.body = {
       job: { title: "React Developer", tags: ["react"] },

@@ -4454,6 +4454,7 @@ export default function App() {
               cvHash={listSourceDoc?.hash}
               activeAtsId={activeAtsEntryId}
               activeSearchId={selectedSavedSearchId}
+              criteria={activeAtsEntry?.criteria}
               onSkillAdded={async (skill) => {
                 if (!listSourceDoc?.hash || !activeAtsEntryId || !selectedSavedSearchId || !activeAtsEntry) {
                   throw new Error(t("cv.errorProfileMissing"));
