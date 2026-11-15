@@ -4,6 +4,7 @@
 // Run: node tests/e2e/cv-builder-pdf-ris-storage-01.mjs
 
 import { spawn } from "node:child_process";
+import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import playwright from "playwright";
@@ -12,6 +13,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const port = 5231;
 const base = `http://localhost:${port}`;
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05");
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";
 const CLIENT_ID = "5hb3f6dj5ialg77jf4blur9g6g";
 const USER_KEY = `oidc.user:${AUTHORITY}:${CLIENT_ID}`;
@@ -73,7 +75,7 @@ async function waitForServer(timeoutMs = 30000) {
 }
 
 async function preparePage(browser) {
-  const context = await browser.newContext({ viewport: { width: 1024, height: 900 }, locale: "de-DE" });
+  const context = await browser.newContext({ viewport: { width: 1024, height: 900 }, locale: "de-DE", acceptDownloads: true });
   await context.addInitScript(
     ({ userKey, expiry }) => {
       localStorage.setItem("mj-lang", "de");
@@ -99,6 +101,7 @@ async function preparePage(browser) {
   const consoleErrors = [];
   const writes = [];
   let completed = false;
+  let documents = [];
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
@@ -134,11 +137,19 @@ async function preparePage(browser) {
         }),
       });
     }
+    if (path === "/api/ris/cvs" && method === "GET" && url.searchParams.get("action") === "document") {
+      writes.push("GET /api/ris/cvs?action=document");
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ downloadUrl: "https://download.invalid/cv-builder.pdf" }),
+      });
+    }
     if (path === "/api/ris/cvs" && method === "GET") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ items: completed ? [savedCv] : [], nextCursor: null }),
+        body: JSON.stringify({ items: documents, nextCursor: null }),
       });
     }
     if (path === "/api/ris/cvs" && method === "POST") {
@@ -160,6 +171,7 @@ async function preparePage(browser) {
       if (action === "complete") {
         writes.push("POST /api/ris/cvs?action=complete");
         completed = true;
+        documents = [savedCv];
         return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(savedCv) });
       }
       writes.push("POST /api/ris/cvs");
@@ -169,7 +181,17 @@ async function preparePage(browser) {
         body: JSON.stringify({ ...savedCv, processingStatus: "pending" }),
       });
     }
+    if (path === "/api/ris/cvs" && method === "DELETE") {
+      writes.push("DELETE /api/ris/cvs");
+      documents = [];
+      completed = false;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ deleted: true, physicalPurge: false }) });
+    }
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not mocked" }) });
+  });
+  await context.route("https://download.invalid/cv-builder.pdf", (route) => {
+    writes.push("GET download.invalid");
+    return route.fulfill({ status: 200, contentType: "application/pdf", body: Buffer.from("%PDF-1.4\n%synthetic\n") });
   });
   await page.route("https://upload.invalid/cv-builder.pdf", (route) => {
     writes.push("PUT upload.invalid");
@@ -179,8 +201,9 @@ async function preparePage(browser) {
 }
 
 async function main() {
+  await mkdir(evidenceDir, { recursive: true });
   const vite = startVite();
-  const browser = await playwright.chromium.launch();
+  const browser = await playwright.chromium.launch({ headless: process.env.HEADED !== "1" });
   try {
     await waitForServer();
     const { context, page, consoleErrors, writes } = await preparePage(browser);
@@ -190,8 +213,10 @@ async function main() {
     await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
     await page.locator("summary").filter({ hasText: "Persönliche Angaben" }).click();
     await page.locator(".cv-builder-modal").getByLabel("Vollständiger Name").fill("Alex Beispiel");
+    await page.screenshot({ path: resolve(evidenceDir, "01-builder-ready.png") });
     await page.getByRole("button", { name: "In RIS speichern" }).click();
     await page.getByText("PDF wurde in RIS gespeichert.").waitFor();
+    await page.screenshot({ path: resolve(evidenceDir, "02-pdf-saved.png") });
     if (writes.filter((entry) => entry === "POST /api/ris/cvs").length !== 1) {
       throw new Error(`unexpected create count: ${JSON.stringify(writes)}`);
     }
@@ -199,6 +224,23 @@ async function main() {
         !writes.includes("POST /api/ris/cvs?action=complete") ||
         !writes.includes("PUT upload.invalid")) {
       throw new Error(`upload flow incomplete: ${JSON.stringify(writes)}`);
+    }
+    await page.reload({ waitUntil: "networkidle" });
+    await page.getByText("Lebenslauf-Alex-Beispiel.pdf").waitFor();
+    await page.screenshot({ path: resolve(evidenceDir, "03-reloaded-list.png") });
+    const popupPromise = page.waitForEvent("popup");
+    await page.getByRole("button", { name: "Herunterladen" }).click();
+    const popup = await popupPromise;
+    await popup.waitForLoadState("domcontentloaded");
+    await popup.close();
+    await page.getByRole("button", { name: "Löschen" }).click();
+    await page.getByRole("button", { name: "Dauerhaft löschen" }).click();
+    await page.getByText("Gelöscht").waitFor();
+    await page.screenshot({ path: resolve(evidenceDir, "04-deleted.png") });
+    if (!writes.includes("GET /api/ris/cvs?action=document") ||
+        !writes.includes("GET download.invalid") ||
+        !writes.includes("DELETE /api/ris/cvs")) {
+      throw new Error(`download/delete flow incomplete: ${JSON.stringify(writes)}`);
     }
     if (consoleErrors.length) throw new Error(`console errors: ${consoleErrors.join(" | ")}`);
     await context.close();

@@ -87,12 +87,36 @@ No real applicant data is permitted.
 | Check | Status |
 |---|---|
 | Local implementation | VERIFIED LOCAL (prior review) |
-| Mock-BFF E2E | PASS (prior review) |
+| Mock-BFF E2E | **PASS — visible browser run** |
 | Live pilot E2E | **NOT EXECUTED — BLOCKED** |
 | Privacy/Legal confirmation | **PENDING** |
 | Test identity/environment approval | **PENDING** |
 | Production deployment | NOT AUTHORIZED |
 | Main merge | NOT AUTHORIZED |
+
+## 6a. Visible mock browser E2E evidence
+
+A visible local Chromium run was executed with a synthetic OIDC session and mocked
+`/api/ris/cvs`/`/api/ris/cv-consents` endpoints. It covered:
+
+1. builder CV creation;
+2. explicit “In RIS speichern”;
+3. create + presigned upload + complete;
+4. success message;
+5. page reload and persisted-list lookup;
+6. download URL/open;
+7. delete and `Gelöscht` state;
+8. no real RIS/AWS request.
+
+Screenshots (synthetic data only):
+
+- `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/01-builder-ready.png`
+- `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/02-pdf-saved.png`
+- `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/03-reloaded-list.png`
+- `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/04-deleted.png`
+
+This is a browser integration proof, **not** a live RIS pilot. The live gate in Sections 3–4
+remains blocked.
 
 ## 7. Boundaries
 

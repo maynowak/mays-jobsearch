@@ -6348,3 +6348,15 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Prepared gate checklist and exact E2E sequence; no identity, token, endpoint,
   real data, RIS/AWS/Terraform operation, main merge or production deployment.
 - Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-05-PILOT-E2E-GATE.md`.
+
+## 2026-11-15 — JM-CV-BUILDER-PDF-RIS-STORAGE-05 — MOCK BROWSER E2E
+
+**Status:** `MOCK BROWSER E2E PASS / LIVE PILOT STILL BLOCKED`
+
+- Ran the prepared visible Chromium E2E against local Vite with synthetic OIDC
+  session and mocked `/api/ris/cvs`/`/api/ris/cv-consents` only.
+- Verified builder PDF → explicit save → create/upload/complete → reload/list
+  → download URL/open → delete (`Gelöscht`). No real RIS/AWS data or request.
+- Screenshots: `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/`.
+- Formal Privacy/Legal confirmation and live synthetic identity/preview
+  authorization remain missing; no production/main/RIS/AWS change.
