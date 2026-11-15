@@ -6360,3 +6360,22 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Screenshots: `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/`.
 - Formal Privacy/Legal confirmation and live synthetic identity/preview
   authorization remain missing; no production/main/RIS/AWS change.
+
+## 2026-11-15 — JM-ATS-MATCHING-QUALITY-01
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL / RELEASE REVIEW PENDING`
+
+- Root cause fixed: `AtsOverlay` now sends full `descriptionPlain`/`description`
+  plus needed job metadata to the existing `/api/ats-analysis` endpoint.
+- `extractSkillsFromText` now uses a conservative technical vocabulary with
+  multi-word terms; title-only terms are excluded from requirement scoring.
+  Added targetRoles role matching and existing ATS criteria handling.
+- Score semantics now separate role match, requirement coverage and profile
+  evidence; title-only/empty-description results are marked insufficient or
+  limited and no longer show a misleading 100/100. UI renders each requirement
+  once; matched items are summarized instead of repeated three times.
+- Tests: build PASS; serial full suite 1888 PASS / 11 skipped; ATS-focused
+  80 PASS. New regression coverage includes full-description transfer, technical
+  extraction, title-only insufficient state, criteria and deduplicated display.
+- No RIS, AWS, Terraform, Cognito, persistence-contract or production change.
+- Report: `docs/reports/JM-ATS-MATCHING-QUALITY-01.md`.
