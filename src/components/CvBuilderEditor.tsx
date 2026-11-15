@@ -56,6 +56,37 @@ function errorId(path: string): string {
   return `cv-builder-error-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
+function fieldId(path: string): string {
+  // Skills are edited in one comma-separated textarea; per-index errors must
+  // still focus that single control.
+  if (path === "skills" || path.startsWith("skills.")) return "cv-builder-field-skills";
+  return `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+const ERROR_SECTION_BY_ROOT: Record<string, string> = {
+  personal: "personal",
+  profile: "profile",
+  experience: "experience",
+  education: "education",
+  skills: "skills",
+  projects: "projects",
+  certificates: "certificates",
+  languages: "languages",
+  links: "languages",
+};
+
+function sectionForErrorPath(path: string): string {
+  return ERROR_SECTION_BY_ROOT[path.split(".")[0]] ?? "personal";
+}
+
+function reducedMotionPreferred(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 function FieldError({ errors, path }: { errors: CvBuilderValidationError[]; path: string }) {
   const { t } = useLang();
   const matches = cvBuilderErrorsFor(errors, path);
@@ -89,7 +120,7 @@ function TextField({
   placeholder?: string;
 }) {
   const invalid = cvBuilderErrorsFor(errors, path).length > 0;
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -131,7 +162,7 @@ function TextAreaField({
   placeholder?: string;
 }) {
   const invalid = cvBuilderErrorsFor(errors, path).length > 0;
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -168,7 +199,7 @@ function MonthField({
   disabled?: boolean;
 }) {
   const invalid = cvBuilderErrorsFor(errors, path).length > 0;
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -202,6 +233,7 @@ function LanguagesInput({
       <label>
         <span>{t("cvBuilder.skillsLabel")}</span>
         <textarea
+          id="cv-builder-field-skills"
           value={text}
           onChange={(event) => {
             setText(event.target.value);
@@ -229,7 +261,7 @@ function TechnologiesInput({
 }) {
   const { t } = useLang();
   const [text, setText] = useState(() => formatTargetRoles(value));
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -397,9 +429,16 @@ export default function CvBuilderEditor({
   const [pdfRisError, setPdfRisError] = useState("");
   const [screenshotMode, setScreenshotMode] = useState(false);
   const screenshotOpenStatesRef = useRef<boolean[]>([]);
+  const [pendingErrorFocus, setPendingErrorFocus] = useState<string | null>(null);
   const fullpage = layoutMode === "fullpage";
   const errors = useMemo(() => validateCvBuilderDraft(draft), [draft]);
   const errorCount = errors.length;
+  const errorSectionKeys = Array.from(
+    new Set(errors.map((error) => sectionForErrorPath(error.path)))
+  );
+  const errorSectionsLabel = errorSectionKeys
+    .map((section) => t(`cvBuilder.section.${section}`))
+    .join(", ");
   const entryCount =
     draft.experience.length +
     draft.education.length +
@@ -427,6 +466,40 @@ export default function CvBuilderEditor({
     addRefs.current[focusAfterRemove]?.focus();
     setFocusAfterRemove(null);
   }, [focusAfterRemove, draft]);
+
+  useEffect(() => {
+    if (!pendingErrorFocus) return;
+    const path = pendingErrorFocus;
+    // Defer one tick: if the mobile view switches from preview to edit, the
+    // view-change effect would otherwise focus the editor pane afterwards and
+    // overwrite the field focus.
+    const timeout = window.setTimeout(() => {
+      const sectionKey = sectionForErrorPath(path);
+      const section = document.getElementById(`cv-builder-${sectionKey}`);
+      const details = section?.querySelector("details");
+      if (details instanceof HTMLDetailsElement) details.open = true;
+      const field = document.getElementById(fieldId(path));
+      const target = field ?? details?.querySelector("summary") ?? section;
+      if (target) {
+        target.scrollIntoView?.({
+          block: "center",
+          behavior: reducedMotionPreferred() ? "auto" : "smooth",
+        });
+        (target as HTMLElement).focus?.({ preventScroll: true });
+      }
+      setPendingErrorFocus(null);
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [pendingErrorFocus]);
+
+  const goToFirstError = () => {
+    const firstError = errors[0];
+    if (!firstError) return;
+    // On mobile the editor may currently show the preview pane; switch back
+    // before opening/focusing the affected section.
+    setMobileView("edit");
+    setPendingErrorFocus(firstError.path);
+  };
 
   useEffect(() => {
     if (!viewMountedRef.current) {
@@ -683,9 +756,17 @@ export default function CvBuilderEditor({
         </div>
 
         {errorCount > 0 && (
-          <p className="cv-builder-validation-summary" role="alert">
-            {t("cvBuilder.validationSummary")}
-          </p>
+          <div className="cv-builder-validation-summary">
+            <p role="alert">{t("cvBuilder.validationSummary")}</p>
+            <p>
+              {t("cvBuilder.validationAffectedSections", {
+                sections: errorSectionsLabel,
+              })}
+            </p>
+            <button type="button" className="btn-ghost" onClick={goToFirstError}>
+              {t("cvBuilder.goToFirstError")}
+            </button>
+          </div>
         )}
         {importReview && (
           <div className="cv-builder-import-quality" role="status">
@@ -1281,6 +1362,7 @@ export default function CvBuilderEditor({
                     <label className="cv-builder-field">
                       <span>{t("cvBuilder.languageLevel")}</span>
                       <select
+                        id={fieldId(`languages.${index}.level`)}
                         value={entry.level}
                         onChange={(event) =>
                           onChange({
@@ -1291,6 +1373,12 @@ export default function CvBuilderEditor({
                                 : item
                             ),
                           })
+                        }
+                        aria-invalid={cvBuilderErrorsFor(errors, `languages.${index}.level`).length > 0}
+                        aria-describedby={
+                          cvBuilderErrorsFor(errors, `languages.${index}.level`).length
+                            ? errorId(`languages.${index}.level`)
+                            : undefined
                         }
                       >
                         {(["basic", "conversational", "professional", "fluent", "native"] as const).map((level) => (
@@ -1455,6 +1543,11 @@ export default function CvBuilderEditor({
             </div>
           )}
           <p className="cv-builder-hint">{t("cvBuilder.sectionHint")}</p>
+          {errorCount > 0 && (
+            <p className="cv-builder-hint cv-builder-validation-blocks" role="status">
+              {t("cvBuilder.validationBlocksSave")}
+            </p>
+          )}
           <div className="cv-builder-footer__actions">
             {onSave && (
               <button
@@ -1473,6 +1566,7 @@ export default function CvBuilderEditor({
               onClick={() => void handleExportPdf()}
               disabled={exporting || savingPdfToRis || errorCount > 0 || !hasCvBuilderContent(draft)}
               aria-busy={exporting}
+              title={errorCount > 0 ? t("cvBuilder.validationBlocksSave") : undefined}
             >
               {exporting ? t("cvBuilder.exporting") : t("cvBuilder.exportPdf")}
             </button>
@@ -1489,7 +1583,13 @@ export default function CvBuilderEditor({
                   !hasCvBuilderContent(draft)
                 }
                 aria-busy={savingPdfToRis}
-                title={pdfRisStatus !== "available" ? pdfRisStatusMessage() : undefined}
+                title={
+                  errorCount > 0
+                    ? t("cvBuilder.risStorage.blockedByValidation")
+                    : pdfRisStatus !== "available"
+                      ? pdfRisStatusMessage()
+                      : undefined
+                }
               >
                 {savingPdfToRis ? t("cvBuilder.risStorage.saving") : t("cvBuilder.risStorage.save")}
               </button>

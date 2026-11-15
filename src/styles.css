@@ -10659,8 +10659,28 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 .cv-builder-validation-summary {
   margin: 12px 20px 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--red) 7%, var(--surface));
   color: #991b1b;
   font-weight: 700;
+}
+
+.cv-builder-validation-summary p {
+  margin: 0 0 6px;
+}
+
+.cv-builder-validation-summary .btn-ghost {
+  min-height: 40px;
+  margin-top: 2px;
+  color: #7f1d1d;
+  border-color: color-mix(in srgb, var(--red) 35%, var(--border));
+}
+
+.cv-builder-validation-blocks {
+  color: #991b1b;
+  font-weight: 600;
 }
 
 .cv-builder-counts {

@@ -1434,6 +1434,10 @@ const en: Dict = {
   "cvBuilder.linkLabel": "Label",
   "cvBuilder.linkUrl": "URL",
   "cvBuilder.validationSummary": "Please check the marked fields.",
+  "cvBuilder.validationAffectedSections": "Affected sections: {sections}",
+  "cvBuilder.goToFirstError": "Go to first error",
+  "cvBuilder.validationBlocksSave":
+    "PDF export and RIS saving are available after the marked fields are corrected.",
   "cvBuilder.noEntries": "No entries yet.",
   "cvBuilder.error.required": "This field is required.",
   "cvBuilder.error.too_long": "This field is too long.",
@@ -1469,6 +1473,8 @@ const en: Dict = {
   "cvBuilder.risStorage.saving": "Saving in RIS…",
   "cvBuilder.risStorage.success": "PDF saved in RIS.",
   "cvBuilder.risStorage.error": "The PDF could not be saved in RIS.",
+  "cvBuilder.risStorage.blockedByValidation":
+    "Permanent saving is available after the marked fields are corrected.",
   "cvBuilder.risStorage.loginRequired": "Sign in to save the PDF permanently.",
   "cvBuilder.risStorage.checking": "Checking storage availability…",
   "cvBuilder.risStorage.empty": "The generated PDF is empty.",
@@ -3140,6 +3146,10 @@ const de: Dict = {
   "cvBuilder.linkLabel": "Bezeichnung",
   "cvBuilder.linkUrl": "URL",
   "cvBuilder.validationSummary": "Bitte prüfe die markierten Felder.",
+  "cvBuilder.validationAffectedSections": "Betroffene Abschnitte: {sections}",
+  "cvBuilder.goToFirstError": "Zum ersten Fehler",
+  "cvBuilder.validationBlocksSave":
+    "PDF-Export und RIS-Speicherung sind erst nach Korrektur der markierten Felder möglich.",
   "cvBuilder.noEntries": "Noch keine Einträge.",
   "cvBuilder.error.required": "Dieses Feld ist erforderlich.",
   "cvBuilder.error.too_long": "Dieses Feld ist zu lang.",
@@ -3175,6 +3185,8 @@ const de: Dict = {
   "cvBuilder.risStorage.saving": "Wird in RIS gespeichert…",
   "cvBuilder.risStorage.success": "PDF wurde in RIS gespeichert.",
   "cvBuilder.risStorage.error": "Das PDF konnte nicht in RIS gespeichert werden.",
+  "cvBuilder.risStorage.blockedByValidation":
+    "Dauerhaftes Speichern ist erst möglich, wenn die markierten Felder korrigiert sind.",
   "cvBuilder.risStorage.loginRequired": "Bitte melde dich an, um das PDF dauerhaft zu speichern.",
   "cvBuilder.risStorage.checking": "Speicherstatus wird geprüft…",
   "cvBuilder.risStorage.empty": "Das erzeugte PDF ist leer.",

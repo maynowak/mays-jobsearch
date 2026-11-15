@@ -7,6 +7,7 @@ import type { CvBuilderPdfRisStatus } from "../lib/useCvBuilderPdfRisStorage";
 import CvBuilderEditor from "./CvBuilderEditor";
 import {
   createEmptyCvBuilderDraft,
+  createExperienceEntry,
   type CvBuilderDraftV1,
 } from "../lib/cvBuilder/contractTypes";
 
@@ -212,5 +213,108 @@ describe("CV builder PDF snapshot to existing RIS CV storage", () => {
   it("does not offer the action when no storage callback is provided", () => {
     render(<Harness />);
     expect(screen.queryByRole("button", { name: "In RIS speichern" })).not.toBeInTheDocument();
+  });
+});
+
+describe("CV builder save blocker UX", () => {
+  it("keeps upload blocked for an invalid draft and explains the affected section", () => {
+    const draft = validDraft();
+    draft.personal.email = "invalid";
+    const onSave = vi.fn().mockResolvedValue(true);
+    render(<Harness initial={draft} onSave={onSave} />);
+
+    expect(saveButton()).toBeDisabled();
+    expect(saveButton()).toHaveAttribute(
+      "title",
+      "Dauerhaftes Speichern ist erst möglich, wenn die markierten Felder korrigiert sind."
+    );
+    expect(screen.getByText("Betroffene Abschnitte: Persönliche Angaben")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "PDF-Export und RIS-Speicherung sind erst nach Korrektur der markierten Felder möglich."
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(saveButton());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it.each(["modal", "fullpage"] as const)(
+    "opens the first affected section and focuses its field in %s mode",
+    async (layoutMode) => {
+      const draft = validDraft();
+      draft.personal.email = "invalid";
+      render(<Harness initial={draft} layoutMode={layoutMode} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+      const email = screen.getByLabelText("E-Mail");
+      await waitFor(() => expect(email).toHaveFocus());
+      const details = document.querySelector("#cv-builder-personal details");
+      expect(details).toHaveProperty("open", true);
+      expect(email).toHaveAttribute("aria-invalid", "true");
+    }
+  );
+
+  it("switches back from preview to edit before focusing the first error", async () => {
+    const draft = validDraft();
+    draft.personal.email = "invalid";
+    render(<Harness initial={draft} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Vorschau" }));
+    expect(document.querySelector(".cv-builder-workspace")).toHaveAttribute("data-view", "preview");
+
+    fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+    expect(document.querySelector(".cv-builder-workspace")).toHaveAttribute("data-view", "edit");
+    await waitFor(() => expect(screen.getByLabelText("E-Mail")).toHaveFocus());
+  });
+
+  it("focuses the offending entry field instead of only the section", async () => {
+    const draft = validDraft();
+    draft.experience = [
+      {
+        ...createExperienceEntry(),
+        position: "Entwicklerin",
+        employer: "",
+      },
+    ];
+    render(<Harness initial={draft} />);
+
+    expect(screen.getByText("Betroffene Abschnitte: Berufserfahrung")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+    const employer = screen.getByLabelText("Arbeitgeber");
+    await waitFor(() => expect(employer).toHaveFocus());
+    expect(document.querySelector("#cv-builder-experience details")).toHaveProperty("open", true);
+  });
+
+  it("focuses the shared skills field for a duplicate-skill error", async () => {
+    const draft = validDraft();
+    draft.skills = ["React", "react"];
+    render(<Harness initial={draft} />);
+
+    expect(screen.getByText("Betroffene Abschnitte: Fähigkeiten")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+    const skills = document.getElementById("cv-builder-field-skills") as HTMLTextAreaElement;
+    await waitFor(() => expect(skills).toHaveFocus());
+    expect(document.querySelector("#cv-builder-skills details")).toHaveProperty("open", true);
+  });
+
+  it("re-enables saving after the invalid field is corrected", async () => {
+    const draft = validDraft();
+    draft.personal.email = "invalid";
+    const onSave = vi.fn().mockResolvedValue(true);
+    render(<Harness initial={draft} onSave={onSave} />);
+    expect(saveButton()).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("E-Mail"), {
+      target: { value: "alex@example.invalid" },
+    });
+
+    expect(saveButton()).toBeEnabled();
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText("PDF wurde in RIS gespeichert.")).toBeInTheDocument();
   });
 });
