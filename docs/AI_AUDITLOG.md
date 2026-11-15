@@ -6360,3 +6360,21 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Screenshots: `docs/reports/assets/JM-CV-BUILDER-PDF-RIS-STORAGE-05/`.
 - Formal Privacy/Legal confirmation and live synthetic identity/preview
   authorization remain missing; no production/main/RIS/AWS change.
+
+## 2026-11-15 — JM-CV-BUILDER-PDF-RIS-STORAGE-06
+
+**Status:** `MAIN PUSH BLOCKED / PRODUCTION DEPLOYMENT GATE`
+
+- Feature `17eaf4b` is 0 behind / 10 ahead of main `a5640d1`; clean and
+  fast-forward capable. `vercel.json` has `git.deploymentEnabled.main=true`,
+  so a main push would automatically trigger Production; no explicit
+  Production-release approval was present. No main merge/push.
+- Feature tests: `npm ci`, build, serial full `1882 PASS / 11 skipped`, and
+  visible mock-BFF browser E2E PASS (save/reload/list/download/delete).
+  A parallel full run showed unrelated pre-existing flaky tests; serial final
+  run passed.
+- Vercel preview checks for `17eaf4b` succeeded; Production remains `a5640d1`
+  and does not contain “In RIS speichern”. No CodeQL check was returned.
+- Real RIS live E2E remains blocked pending formal v1 scope confirmation and
+  synthetic identity/preview authorization. No real data/RIS/AWS change.
+- Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-06-MAIN-E2E-REPORT.md`.
