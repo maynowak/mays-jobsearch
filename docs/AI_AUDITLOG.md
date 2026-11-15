@@ -6335,3 +6335,16 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   production deployment, main merge and product/RIS/AWS changes were not
   executed.
 - Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-04-OPTION-A-DECISION.md`.
+
+## 2026-11-15 — JM-CV-BUILDER-PDF-RIS-STORAGE-05
+
+**Status:** `PILOT E2E BLOCKED / APPROVAL PENDING`
+
+- Live pilot E2E not started: no new formal Privacy/Legal confirmation of the
+  existing `cv-storage-consent-2026-11-08-v1` scope for generated PDFs/Art. 9
+  and no explicit synthetic test-identity/preview approval were found.
+- Existing v1 text/hash/notice and limited pilot remain unchanged; v2 is not
+  active. Local implementation/mock-BFF evidence remains from prior review.
+- Prepared gate checklist and exact E2E sequence; no identity, token, endpoint,
+  real data, RIS/AWS/Terraform operation, main merge or production deployment.
+- Report: `docs/reports/JM-CV-BUILDER-PDF-RIS-STORAGE-05-PILOT-E2E-GATE.md`.
