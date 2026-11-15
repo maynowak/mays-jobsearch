@@ -119,6 +119,70 @@ describe("ATS Matching", () => {
   });
 });
 
+describe("JM-ATS-MATCHING-QUALITY-01: full job description quality", () => {
+  const description = [
+    "Build MCP servers with OAuth authentication and scoped access.",
+    "Operate autonomous LLM agents with IAM, OIDC, SAML and SCIM.",
+    "Apply least privilege, audit logging and security guardrails.",
+    "Create evaluation frameworks, regression suites and observability.",
+    "Use OpenTelemetry, Python, TypeScript, Go, cloud infrastructure and CI/CD.",
+    "Integrate Anthropic, OpenAI and OpenRouter.",
+  ].join(" ");
+
+  it("extracts concrete requirements and does not let title-only terms score 100", () => {
+    const job = {
+      slug: "ai-platform-engineer",
+      title: "AI Platform Engineer",
+      company_name: "Jobgether",
+      tags: [],
+      descriptionPlain: description,
+    };
+    const result = analyzeJobForAts(job, {
+      skills: "platform, engineer",
+      targetRoles: ["AI Platform Engineer"],
+    });
+    const texts = result.requirements.map((r) => r.text);
+    for (const expected of ["MCP", "OAuth", "LLM", "IAM", "evaluation", "observability", "Python", "TypeScript", "Go", "cloud infrastructure", "CI/CD"]) {
+      expect(texts).toContain(expected);
+    }
+    expect(result.analysisStatus).toBe("complete");
+    expect(result.scores.roleMatch).toBe(100);
+    expect(result.basis.requirementCount).toBeGreaterThan(2);
+    expect(result.scores.overall).toBeLessThan(100);
+    expect(result.scores.requirementMatch).toBeLessThan(100);
+  });
+
+  it("marks a title-only analysis as limited instead of a complete result", () => {
+    const result = analyzeJobForAts(
+      { slug: "title-only", title: "AI Platform Engineer", tags: [] },
+      { skills: "platform, engineer", targetRoles: ["AI Platform Engineer"] }
+    );
+    expect(result.analysisStatus).toBe("insufficient");
+    expect(result.basis.requirementCount).toBe(0);
+    expect(result.scores.overall).toBe(0);
+    expect(result.scores.requirementMatch).toBe(0);
+  });
+
+  it("supports ATS criteria without changing the API shape", () => {
+    const result = analyzeJobForAts(
+      { slug: "criteria", title: "Engineer", tags: [], descriptionPlain: "Build systems." },
+      {
+        skills: "TypeScript",
+        targetRoles: ["Engineer"],
+        criteria: {
+          schemaVersion: 1,
+          requiredSkills: ["TypeScript"],
+          preferredSkills: ["Go"],
+          excludedTerms: [],
+        },
+      }
+    );
+    expect(result.requirements.some((r) => r.source === "criteria" && r.text === "TypeScript")).toBe(true);
+    expect(result.requirements.some((r) => r.source === "criteria" && r.text === "Go")).toBe(true);
+    expect(result.analysisStatus).toBe("complete");
+  });
+});
+
 describe("ATS Job Analysis", () => {
   it("analyzes job with various matches", () => {
     const job = {

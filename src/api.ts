@@ -331,12 +331,23 @@ export interface AtsAnalysisResponse {
   analysis: {
     score: number;
     keywordCoverage: { overall: number };
+    requirementCoverage?: number;
+    profileEvidenceCoverage?: number;
+    roleMatch?: number | null;
+    analysisStatus?: "complete" | "limited" | "insufficient";
+    basis?: {
+      requirementCount: number;
+      titleRequirementCount: number;
+      hasDescription: boolean;
+      roleMatchAvailable: boolean;
+    };
     criticalGaps: Array<{ id: string; text: string }>;
     requirements: Array<{
       id: string;
       text: string;
       category: string;
       importance: string;
+      source?: string;
     }>;
     matches: Array<{
       requirementId: string;
@@ -377,8 +388,29 @@ export interface AtsAnalysisResponse {
 }
 
 export async function analyzeATS(
-  job: { title?: string; tags?: string[]; slug?: string },
-  profile: { skills?: string; [key: string]: unknown },
+  job: {
+    title?: string;
+    tags?: string[];
+    slug?: string;
+    description?: string;
+    descriptionPlain?: string;
+    location?: string[];
+    remote?: boolean;
+    jobTypes?: string[];
+    contractType?: string;
+    language?: string;
+  },
+  profile: {
+    skills?: string;
+    targetRoles?: string[];
+    criteria?: {
+      schemaVersion?: number;
+      requiredSkills?: string[];
+      preferredSkills?: string[];
+      excludedTerms?: string[];
+    };
+    [key: string]: unknown;
+  },
   ai?: { enabled?: boolean; consent?: boolean; model?: string }
 ): Promise<AtsAnalysisResponse> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };

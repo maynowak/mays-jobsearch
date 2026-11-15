@@ -10,6 +10,126 @@ const SKILL_ALIASES = new Map([
   ["nodejs", "node.js"],
 ]);
 
+// Conservative technical vocabulary for full job descriptions. This is
+// deliberately an allowlist (with common aliases and multi-word terms), not a
+// blanket "every token is a skill" extractor.
+const TECHNICAL_TERMS = [
+  ["aws", "AWS"],
+  ["amazon web services", "AWS"],
+  ["kubernetes", "Kubernetes"],
+  ["k8s", "Kubernetes"],
+  ["terraform", "Terraform"],
+  ["react", "React"],
+  ["nodejs", "Node.js"],
+  ["node.js", "Node.js"],
+  ["docker", "Docker"],
+  ["devops", "DevOps"],
+  ["azure", "Azure"],
+  ["gcp", "GCP"],
+  ["java", "Java"],
+  ["c++", "C++"],
+  ["c#", "C#"],
+  [".net", ".NET"],
+  ["graphql", "GraphQL"],
+  ["sql", "SQL"],
+  ["rest", "REST"],
+  ["git", "Git"],
+  ["linux", "Linux"],
+  ["mcp", "MCP"],
+  ["model context protocol", "MCP"],
+  ["oauth", "OAuth"],
+  ["oidc", "OIDC"],
+  ["saml", "SAML"],
+  ["scim", "SCIM"],
+  ["okta", "Okta"],
+  ["llm", "LLM"],
+  ["llms", "LLM"],
+  ["llm-based", "LLM"],
+  ["anthropic", "Anthropic"],
+  ["openai", "OpenAI"],
+  ["openrouter", "OpenRouter"],
+  ["litellm", "LiteLLM"],
+  ["portkey", "Portkey"],
+  ["ai agents", "AI agents"],
+  ["autonomous agents", "autonomous agents"],
+  ["multi-step agents", "multi-step agents"],
+  ["agent identities", "agent identities"],
+  ["agent runtimes", "agent runtimes"],
+  ["agent memory", "agent memory"],
+  ["tool integrations", "tool integrations"],
+  ["claude agent sdk", "Claude Agent SDK"],
+  ["claude code", "Claude Code"],
+  ["codex", "Codex"],
+  ["iam", "IAM"],
+  ["least privilege", "least privilege"],
+  ["least-privilege", "least privilege"],
+  ["audit logging", "audit logging"],
+  ["audit logs", "audit logging"],
+  ["access control", "access control"],
+  ["security", "security"],
+  ["security guardrails", "security guardrails"],
+  ["evaluation", "evaluation"],
+  ["evaluation frameworks", "evaluation frameworks"],
+  ["regression testing", "regression testing"],
+  ["regression suites", "regression testing"],
+  ["observability", "observability"],
+  ["opentelemetry", "OpenTelemetry"],
+  ["grafana", "Grafana"],
+  ["datadog", "Datadog"],
+  ["langfuse", "Langfuse"],
+  ["langsmith", "LangSmith"],
+  ["braintrust", "Braintrust"],
+  ["python", "Python"],
+  ["typescript", "TypeScript"],
+  ["javascript", "JavaScript"],
+  ["go", "Go"],
+  ["golang", "Go"],
+  ["ci/cd", "CI/CD"],
+  ["ci cd", "CI/CD"],
+  ["cloud infrastructure", "cloud infrastructure"],
+  ["cloud engineering", "cloud engineering"],
+  ["vector stores", "vector stores"],
+  ["retrieval", "retrieval"],
+  ["fine-tuning", "fine-tuning"],
+  ["model routing", "model routing"],
+  ["github apps", "GitHub Apps"],
+  ["service accounts", "service accounts"],
+  ["api keys", "API keys"],
+  ["secrets management", "secrets management"],
+  ["1password", "1Password"],
+  ["slack", "Slack"],
+  ["github", "GitHub"],
+  ["jira", "Jira"],
+  ["hubspot", "HubSpot"],
+  ["policy-as-code", "policy-as-code"],
+  ["open-source", "open source"],
+];
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function technicalTermsFromText(text, source = "description") {
+  const original = String(text ?? "");
+  const lower = original.toLowerCase();
+  const found = [];
+  const seen = new Set();
+
+  for (const [phrase, label] of TECHNICAL_TERMS) {
+    const pattern = new RegExp(
+      `(^|[^a-z0-9])${escapeRegExp(phrase)}(?=$|[^a-z0-9])`,
+      "i"
+    );
+    if (!pattern.test(lower)) continue;
+    const normalized = normalizeSkill(label);
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    found.push({ text: label, normalized, source });
+  }
+
+  return found;
+}
+
 const REQUIRED_KEYWORDS = [
   "required",
   "must have",
@@ -87,32 +207,10 @@ function isTechnicalSkill(text) {
 }
 
 function extractSkillsFromText(text, source = "description") {
-  const skills = [];
-  const tokens = tokenize(text);
-
-  for (const token of tokens) {
-    if (token.length > 2) {
-      // New: Filter out non-technical metadata tokens
-      if (!isTechnicalSkill(token)) continue;
-
-      const normalized = normalizeSkill(token);
-      if (normalized !== token || REQUIRED_KEYWORDS.includes(token)) {
-        skills.push({
-          text: token,
-          normalized,
-          source,
-        });
-      }
-    }
-  }
-
-  // Deduplicate by normalized form, preserve first occurrence
-  const seen = new Set();
-  return skills.filter(s => {
-    if (seen.has(s.normalized)) return false;
-    seen.add(s.normalized);
-    return true;
-  });
+  // Use the conservative technical vocabulary only. Taking arbitrary
+  // description tokens as skills creates generic words and punctuation
+  // artifacts ("slas.", "governance:") and makes the score meaningless.
+  return technicalTermsFromText(text, source);
 }
 
 function extractExperience(text) {
@@ -221,7 +319,58 @@ function createRequirement(id, text, category, source) {
   };
 }
 
-export function extractRequirementsFromJob(job) {
+function addCriteriaRequirements(requirements, criteria) {
+  if (!criteria || typeof criteria !== "object") return;
+  const groups = [
+    ["requiredSkills", "high"],
+    ["preferredSkills", "medium"],
+  ];
+  for (const [field, importance] of groups) {
+    const values = Array.isArray(criteria[field]) ? criteria[field] : [];
+    for (const value of values) {
+      const text = String(value ?? "").trim();
+      if (!text) continue;
+      requirements.push({
+        id: `criteria_${field}_${requirements.length}`,
+        text,
+        category: "skill",
+        importance,
+        source: "criteria",
+        explicitness: "explicit",
+        normalized: normalizeSkill(text),
+      });
+    }
+  }
+}
+
+function excludedRequirement(req, excludedTerms) {
+  if (!excludedTerms || excludedTerms.length === 0) return false;
+  const text = normalizeSkill(req.text);
+  return excludedTerms.some((term) => {
+    const normalized = normalizeSkill(term);
+    return normalized.length > 2 && (text.includes(normalized) || normalized.includes(text));
+  });
+}
+
+function calculateRoleMatch(jobTitle, targetRoles) {
+  const roles = (Array.isArray(targetRoles) ? targetRoles : [])
+    .map((role) => normalizeSkill(role))
+    .filter((role) => role.length > 2);
+  if (!roles.length) return null;
+
+  const title = normalizeSkill(jobTitle || "");
+  if (!title) return 0;
+  if (roles.some((role) => title.includes(role) || role.includes(title))) return 100;
+
+  const titleTokens = new Set(tokenize(jobTitle));
+  const roleTokens = [...new Set(roles.flatMap((role) => tokenize(role)))]
+    .filter((token) => token.length > 2);
+  if (!roleTokens.length) return null;
+  const hits = roleTokens.filter((token) => titleTokens.has(token)).length;
+  return Math.round((hits / roleTokens.length) * 100);
+}
+
+export function extractRequirementsFromJob(job, profile = {}) {
   const requirements = [];
 
   if (job.title) {
@@ -352,21 +501,38 @@ export function extractRequirementsFromJob(job) {
     });
   }
 
+  addCriteriaRequirements(requirements, profile?.criteria);
+
   // ATS-UI-DATA-01 (Root Cause B): quellenübergreifend deduplizieren.
   // Titel/Tags/Description lieferten je eigene Objekte mit identischem
   // `normalized` ("DevOps" vs. "devops") — die UI zeigte sie doppelt.
   // Schlüssel: case-insensitive + trim + whitespace-normalisiert;
   // erstes Vorkommen gewinnt (kein fachliches Zusammenwerfen).
-  const seenNormalized = new Set();
-  return requirements.filter((req) => {
+  const excludedTerms = Array.isArray(profile?.criteria?.excludedTerms)
+    ? profile.criteria.excludedTerms
+    : [];
+  const byKey = new Map();
+  const unique = [];
+  for (const req of requirements) {
+    if (excludedRequirement(req, excludedTerms)) continue;
     const key = String(req.normalized ?? req.text ?? "")
       .toLowerCase()
       .trim()
       .replace(/\s+/g, " ");
-    if (seenNormalized.has(key)) return false;
-    seenNormalized.add(key);
-    return true;
-  });
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, req);
+      unique.push(req);
+      continue;
+    }
+    // A title token repeated in tags/description is still a real job signal.
+    // Prefer the non-title source while keeping the first display text.
+    if (existing.source === "title" && req.source !== "title") {
+      existing.source = req.source;
+      existing.category = req.category;
+    }
+  }
+  return unique;
 }
 
 export function matchRequirement(req, cvSkills, cvData) {
@@ -417,7 +583,11 @@ export function analyzeJobForAts(job, profile) {
   const cvSkills = tokenize(profile?.skills);
   const cvSkillsLower = cvSkills.map((s) => s.toLowerCase());
 
-  const requirements = extractRequirementsFromJob(job);
+  const requirements = extractRequirementsFromJob(job, profile);
+  const titleRequirements = requirements.filter((req) => req.source === "title");
+  const jobRequirements = requirements.filter((req) => req.source !== "title");
+  const jobRequirementIds = new Set(jobRequirements.map((req) => req.id));
+  const roleMatch = calculateRoleMatch(job.title, profile?.targetRoles);
 
   // LOSS: No GAP status exists in matchRequirement, so we track unmatched requirements
   // as potential candidates for gap detection based on requirement importance
@@ -504,8 +674,9 @@ export function analyzeJobForAts(job, profile) {
         });
       }
     } else if (hasContradiction) {
-      // GAP: contradictory evidence exists
-      if (importanceWeight[req.importance] >= importanceWeight.high) {
+      // GAP: contradictory evidence exists. Title words are role signals, not
+      // standalone job requirements, so they never become critical gaps.
+      if (req.source !== "title" && importanceWeight[req.importance] >= importanceWeight.high) {
         criticalGaps.push(req);
       }
       recommendations.push({
@@ -546,18 +717,19 @@ export function analyzeJobForAts(job, profile) {
     });
   }
 
+  const jobMatches = matches.filter((m) => jobRequirementIds.has(m.requirementId));
   const matched = matches.filter((m) => m.status === "MATCHED").length;
   const partial = matches.filter((m) => m.status === "PARTIAL").length;
   const gap = criticalGaps.length;
   const unknown = unmatchedRequirements.length;
 
-  const total = matches.length;
-
-  // RESULT: Importance-weighted scoring
+  // RESULT: Importance-weighted scoring over actual job requirements only.
+  // Title tokens are reported separately via roleMatch; they must never make a
+  // two-word title look like a complete ATS evaluation.
   let matchedWeight = 0;
   let totalWeight = 0;
 
-  for (const req of requirements) {
+  for (const req of jobRequirements) {
     const weight = importanceWeight[req.importance] || 2;
     totalWeight += weight;
     if (matchedRequirements.some((r) => r.id === req.id)) {
@@ -567,11 +739,14 @@ export function analyzeJobForAts(job, profile) {
     }
   }
 
-  // RESULT: Keyword coverage based on matched + partially matched
-  const coveredCount = matched + partial;
+  const jobMatched = jobMatches.filter((m) => m.status === "MATCHED").length;
+  const jobPartial = jobMatches.filter((m) => m.status === "PARTIAL").length;
+  const coveredCount = jobMatched + jobPartial;
+  const total = jobRequirements.length;
   const keywordCoverage = total > 0 ? Math.round((coveredCount / total) * 100) : 0;
-
   const score = totalWeight > 0 ? Math.round((matchedWeight / totalWeight) * 100) : 0;
+  const hasDescription = Boolean(job.descriptionPlain || job.description);
+  const analysisStatus = total === 0 ? "insufficient" : hasDescription ? "complete" : "limited";
 
   return {
     job: {
@@ -584,11 +759,21 @@ export function analyzeJobForAts(job, profile) {
     matches,
     scores: {
       keywordMatch: keywordCoverage,
+      requirementMatch: keywordCoverage,
+      profileEvidence: keywordCoverage,
       skillMatch: score,
+      roleMatch,
       locationMatch: job.location && job.location.length > 0 ? 100 : 0,
       workmodeMatch: job.remote !== undefined ? 100 : 0,
       employmentMatch: (job.jobTypes || job.contractType) ? 100 : 0,
       overall: score,
+    },
+    analysisStatus,
+    basis: {
+      requirementCount: total,
+      titleRequirementCount: titleRequirements.length,
+      hasDescription,
+      roleMatchAvailable: roleMatch !== null,
     },
     summary: {
       matched,
@@ -628,6 +813,8 @@ export function generateCVRecommendations(analysisResult, cvSkills = []) {
   };
 
   for (const req of requirements) {
+    // Title tokens are role signals, not standalone CV requirements.
+    if (req.source === "title") continue;
     const match = matchMap.get(req.id);
     if (!match) continue;
 
