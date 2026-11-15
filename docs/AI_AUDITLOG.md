@@ -6379,3 +6379,29 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   extraction, title-only insufficient state, criteria and deduplicated display.
 - No RIS, AWS, Terraform, Cognito, persistence-contract or production change.
 - Report: `docs/reports/JM-ATS-MATCHING-QUALITY-01.md`.
+
+## 2026-11-15 — JM-CV-UX-01 — CV BUILDER SAVE BLOCKER
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — LIVE RIS E2E NOT EXECUTED`
+
+- Root cause: `errorCount > 0` disabled RIS save/export, but the UI did not
+  identify the affected section/field. The blocker was pre-upload validation,
+  not the RIS backend.
+- Fix: validation summary names affected sections; new “Zum ersten Fehler”
+  opens the relevant `<details>` section, scrolls and focuses the invalid field
+  (including shared skills textarea and language-level select). Works in modal,
+  fullpage and after switching from mobile preview. Disabled actions now show
+  a visible reason and title. No validation bypass.
+- Success remains gated on a confirmed `onSavePdfToRis(...) === true`; failed
+  uploads still show no success. Auth/consent/capacity/identity checks and the
+  independent PDF download are unchanged.
+- Files: `CvBuilderEditor.tsx`, `CvBuilderEditorRisStorage.test.tsx`,
+  `i18n.tsx`, `styles.css`, report/audit. No `api/**`, RIS, AWS, Terraform,
+  Cognito, Auth, Consent or matching changes.
+- Tests: focused 14 files / **151 PASS**; full serial `--maxWorkers=2`
+  **1895 PASS / 11 skipped**; build PASS; `git diff --check` PASS.
+- No live RIS/S3 E2E: no separate live-test approval/synthetic environment;
+  mock/component tests are not reported as live evidence.
+- Branch `feature/jm-cv-ux-01-save-blocker`, implementation commit `2edd04e`,
+  pushed to origin; no main merge/deployment.
+- Report: `docs/reports/JM-CV-UX-01-REPORT.md`.
