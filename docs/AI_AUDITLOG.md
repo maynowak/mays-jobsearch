@@ -6429,3 +6429,26 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Commits: `27bae97`, `9ebe784`, `f4060a7`, `0155872` plus docs commit. Branch
   `feature/jm-ats-description-handoff-01`; no merge, no production deployment.
 - Report: `docs/reports/JM-ATS-DESCRIPTION-HANDOFF-01.md`.
+## 2026-11-16 — JM-JOB-TRANSLATION-01
+
+**Status:** `A — IMPLEMENTED / VERIFIED LOCAL + PREVIEW PROVIDER E2E — NO MERGE/DEPLOY`
+
+- Added an explicit `Original | Deutsch lesen` reading view for English job
+  descriptions. Original remains the default and can be restored immediately.
+- Extended the existing `/api/job-details` function with
+  `action: "translate"` instead of adding a new Vercel serverless function.
+- Reused the existing OpenRouter/EdenAI `chat()` router, provider budget and
+  `ipQuota` abuse controls. No new external service, API key or dependency.
+- Translation is display-only in `RemainingCard`; `job.description`,
+  `job.descriptionPlain`, ATS, matching, applications and RIS data are
+  unchanged. No ATS file was modified.
+- Provider input is limited to 20,000 plain-text characters; explicit consent
+  is required; no CV/application/profile data is sent; no server-side storage.
+- Provider errors keep the original visible and show a localized error.
+- Tests: API 8 PASS; RemainingCard 16 PASS; build PASS; serial full suite
+  **1908 PASS / 11 skipped**. Real provider translation verified on Vercel
+  Preview (HTTP 200; AWS, TypeScript and Kubernetes preserved).
+- Commits: `f6067c3`, `553d83d` plus docs commit. Branch
+  `feature/jm-job-translation-01`; draft PR #21. No main merge or production
+  deployment.
+- Report: `docs/reports/JM-JOB-TRANSLATION-01.md`.

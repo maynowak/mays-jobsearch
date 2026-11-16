@@ -263,6 +263,30 @@ export async function fetchJobDetails(
   );
 }
 
+export interface JobTranslationResponse {
+  translation: string;
+  sourceLanguage: "de" | "en";
+  targetLanguage: "de";
+  translated: boolean;
+}
+
+export async function translateJobDescription(
+  description: string,
+  sourceLanguage?: string
+): Promise<JobTranslationResponse> {
+  return apiFetch<JobTranslationResponse>("/api/job-details", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "translate",
+      description,
+      sourceLanguage: sourceLanguage || "auto",
+      targetLanguage: "de",
+      consent: true,
+    }),
+  });
+}
+
 export async function fetchModels(): Promise<ModelsResponse> {
   return apiFetch<ModelsResponse>("/api/models");
 }
