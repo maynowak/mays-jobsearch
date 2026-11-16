@@ -6650,3 +6650,14 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - AI-/Privacy-/Data-Flow: keine neuen externen Flows, Speicherorte, Berechtigungen oder Credentials; keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Consent, ATS/Matching oder Übersetzungs-Pipeline.
 - Grenzen: authentifizierter CV-Editor-Modalpfad nicht separat live geprüft; RIS-/S3-Live-Speicherung nicht ausgeführt.
 - Report: `docs/reports/JM-CV-UX-06-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-06 — INTEGRATION & RELEASE GATE
+
+**Status:** `READY FOR OWNER APPROVAL`
+
+- PR [#25](https://github.com/maynowak/mays-jobsearch/pull/25) OPEN, not draft; branch `feature/jm-cv-ux-06-navigation-drafts`, product commit `b2d1e75`, base `origin/main` `154c698`; 1 ahead / 0 behind; `MERGEABLE` / `CLEAN`; owner review pending.
+- Scope vs `origin/main`: 15 files, CV-builder frontend/UI, DE/EN strings, tests/E2E and docs only. No `api/**`, `infra/**`, `.github/**`, RIS, AWS, Terraform, Cognito, consent, ATS/matching or translation-pipeline changes. Diff-check and secret scan clean.
+- Verification: full suite `npx vitest run --maxWorkers=2` **1934 PASS / 11 skipped**, 0 FAIL; build PASS (1,44 s); UX-06 browser E2E PASS and 03A full-page workspace E2E PASS at `b2d1e75`. Existing browser evidence reused; no unnecessary new tests.
+- Vercel: both PR previews READY at SHA `b2d1e75`, HTTP 200 — `mays-job-matcher` `dpl_CLmdCwvkMLhM66D9L1x7sZSxdm8s`, `mays-jobsearch` `dpl_6UVVBXDyVdauC2nVjqTACqoudZws`.
+- CodeQL Analysis (javascript-typescript, none): SUCCESS. Auxiliary `CodeQL` check NEUTRAL due two historical `main` configurations missing (`/language:javascript`, `/language:typescript`); same neutral existed on merged PR #22, actual analysis green, PR merge state CLEAN.
+- No main merge, no production deployment, no branch deletion. Report: `docs/reports/JM-CV-UX-06-RELEASE-GATE.md`.
