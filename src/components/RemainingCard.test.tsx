@@ -2,11 +2,14 @@ import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/re
 import { describe, expect, it, afterEach, vi } from "vitest";
 import type { ComponentProps } from "react";
 import RemainingCard from "./RemainingCard";
-import { fetchJobDetails } from "../api";
+import { fetchJobDetails, translateJobDescription } from "../api";
 import { LangProvider } from "../i18n";
 import "@testing-library/jest-dom";
 
-vi.mock("../api", () => ({ fetchJobDetails: vi.fn() }));
+vi.mock("../api", () => ({
+  fetchJobDetails: vi.fn(),
+  translateJobDescription: vi.fn(),
+}));
 
 const createTestJob = (overrides = {}) => ({
   slug: "test-job",
@@ -293,6 +296,87 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     resolveDetails({ jobs: {} });
     expect(await screen.findByText(/vollständigen Details konnten nicht geladen werden/i)).toBeInTheDocument();
     expect(fetchJobDetails).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers a German reading view only for English descriptions and caches it", async () => {
+    const job = createTestJob({
+      language: "en",
+      description: "<p>English job description with AWS and TypeScript.</p>",
+      descriptionPlain: "English job description with AWS and TypeScript. ".repeat(12),
+    });
+    vi.mocked(translateJobDescription).mockReset();
+    vi.mocked(translateJobDescription).mockResolvedValue({
+      translation: "Deutsche Übersetzung mit AWS und TypeScript.",
+      sourceLanguage: "en",
+      targetLanguage: "de",
+      translated: true,
+    });
+
+    renderWithProvider(job);
+
+    expect(screen.getByText(/English job description/i)).toBeInTheDocument();
+    expect(translateJobDescription).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Deutsch lesen" }));
+
+    expect(await screen.findByText("Deutsche Übersetzung mit AWS und TypeScript.")).toBeInTheDocument();
+    expect(screen.getByText(/Maßgeblich ist die Originalanzeige/i)).toBeInTheDocument();
+    expect(translateJobDescription).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Original anzeigen" }));
+    expect(screen.getByText(/English job description/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Deutsch lesen" }));
+
+    expect(screen.getByText("Deutsche Übersetzung mit AWS und TypeScript.")).toBeInTheDocument();
+    expect(translateJobDescription).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not offer translation for German descriptions", () => {
+    vi.mocked(translateJobDescription).mockReset();
+    renderWithProvider(createTestJob({ language: "de" }));
+
+    expect(screen.queryByRole("button", { name: "Deutsch lesen" })).not.toBeInTheDocument();
+    expect(translateJobDescription).not.toHaveBeenCalled();
+  });
+
+  it("keeps the original visible and reports a translation error", async () => {
+    const job = createTestJob({
+      language: "en",
+      description: "<p>English original description.</p>",
+      descriptionPlain: "English original description. ".repeat(12),
+    });
+    vi.mocked(translateJobDescription).mockReset();
+    vi.mocked(translateJobDescription).mockRejectedValueOnce(new Error("provider down"));
+
+    renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Deutsch lesen" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Übersetzung ist derzeit nicht verfügbar/i);
+    expect(screen.getByText(/English original description/i)).toBeInTheDocument();
+  });
+
+  it("passes the unchanged original job to ATS after translation", async () => {
+    const job = createTestJob({
+      language: "en",
+      description: "<p>English original for ATS.</p>",
+      descriptionPlain: "English original for ATS. ".repeat(12),
+    });
+    const onAtsEvaluate = vi.fn();
+    vi.mocked(translateJobDescription).mockReset();
+    vi.mocked(translateJobDescription).mockResolvedValue({
+      translation: "Deutsche Fassung.",
+      sourceLanguage: "en",
+      targetLanguage: "de",
+      translated: true,
+    });
+
+    renderWithProvider(job, "de", { onAtsEvaluate });
+    fireEvent.click(screen.getByRole("button", { name: "Deutsch lesen" }));
+    await screen.findByText("Deutsche Fassung.");
+
+    fireEvent.click(screen.getByText("Mit ATS bewerten"));
+    expect(onAtsEvaluate).toHaveBeenCalledWith(job);
+    expect(job.description).toBe("<p>English original for ATS.</p>");
+    expect(job.descriptionPlain).toBe("English original for ATS. ".repeat(12));
   });
 
   it("offers original posting, ATS and letter actions in one action bar", () => {

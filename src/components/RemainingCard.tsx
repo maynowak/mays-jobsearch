@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Job } from "../types";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
-import { fetchJobDetails } from "../api";
+import { fetchJobDetails, translateJobDescription } from "../api";
 import {
   formatJobDate,
   jobTypeLabelKey,
@@ -29,6 +29,12 @@ function renderHtmlContent(html: string, lang?: string) {
   return renderSanitizedHtml(html, lang);
 }
 
+type TranslationState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ready"; text: string }
+  | { status: "error" };
+
 interface Props {
   job: Job;
   onGenerateLetter?: (job: Job, prepare: string) => void;
@@ -41,6 +47,8 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   const [expanded, setExpanded] = useState(false);
   const [detailJob, setDetailJob] = useState<Job | null>(null);
   const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [translation, setTranslation] = useState<TranslationState>({ status: "idle" });
+  const [showTranslation, setShowTranslation] = useState(false);
 
   const isAA = (job.source ?? []).includes("arbeitsagentur");
 
@@ -103,14 +111,49 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   const description = displayJob.description ?? "";
   const descriptionPlain = displayJob.descriptionPlain ?? "";
   const descriptionLang = displayJob.language ?? job.language;
-  const hasDescription = description.trim().length > 0;
+  const translatedReady = translation.status === "ready";
+  const visibleDescription =
+    showTranslation && translatedReady ? translation.text : description;
+  const visibleDescriptionPlain =
+    showTranslation && translatedReady ? translation.text : descriptionPlain;
+  const visibleDescriptionLang = showTranslation ? "de" : descriptionLang;
+  const hasDescription = visibleDescription.trim().length > 0;
   const showDescriptionToggle =
-    descriptionPlain.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
+    visibleDescriptionPlain.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
 
   const previewText =
     !expanded && showDescriptionToggle
-      ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
-      : descriptionPlain;
+      ? visibleDescriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
+      : visibleDescriptionPlain;
+
+  const canTranslate =
+    descriptionLang === "en" && (descriptionPlain.trim() || description.trim()).length > 0;
+
+  useEffect(() => {
+    setTranslation({ status: "idle" });
+    setShowTranslation(false);
+  }, [displayJob.slug, descriptionLang, descriptionPlain, description]);
+
+  const requestTranslation = async () => {
+    if (translation.status === "loading") return;
+    if (translation.status === "ready") {
+      setShowTranslation(true);
+      return;
+    }
+    setTranslation({ status: "loading" });
+    try {
+      const result = await translateJobDescription(
+        descriptionPlain || description,
+        descriptionLang || "auto"
+      );
+      if (!result.translation.trim()) throw new Error("empty translation");
+      setTranslation({ status: "ready", text: result.translation });
+      setShowTranslation(true);
+    } catch {
+      setTranslation({ status: "error" });
+      setShowTranslation(false);
+    }
+  };
 
   // Reuse already-loaded detail data for the letter, but never trigger a new
   // detail request here. Preserve the original job's stable fields.
@@ -187,15 +230,59 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
         </div>
       )}
 
+      {canTranslate && (
+        <div className="job-translation">
+          <div
+            className="job-translation__switch"
+            role="group"
+            aria-label={t("results.translation.label")}
+          >
+            <button
+              type="button"
+              className={`job-translation__button${showTranslation ? "" : " is-active"}`}
+              aria-pressed={!showTranslation}
+              onClick={() => setShowTranslation(false)}
+            >
+              {showTranslation
+                ? t("results.translation.showOriginal")
+                : t("results.translation.original")}
+            </button>
+            <button
+              type="button"
+              className={`job-translation__button${showTranslation ? " is-active" : ""}`}
+              aria-pressed={showTranslation}
+              disabled={translation.status === "loading"}
+              onClick={() => void requestTranslation()}
+            >
+              {t("results.translation.readGerman")}
+            </button>
+          </div>
+          <p className="job-translation__consent">{t("results.translation.consent")}</p>
+          {translation.status === "loading" && (
+            <p className="job-translation__status" role="status">
+              {t("results.translation.loading")}
+            </p>
+          )}
+          {translation.status === "error" && (
+            <p className="job-translation__error" role="alert">
+              {t("results.translation.error")}
+            </p>
+          )}
+          {showTranslation && translatedReady && (
+            <p className="job-translation__notice">{t("results.translation.notice")}</p>
+          )}
+        </div>
+      )}
+
       {(!isAA || detailJob) && hasDescription && (
         <div className="remaining-description-wrap">
           {expanded || !showDescriptionToggle ? (
-            renderHtmlContent(description, descriptionLang)
+            renderHtmlContent(visibleDescription, visibleDescriptionLang)
           ) : (
             <p
               className="remaining-description"
-              lang={descriptionLang}
-              translate={descriptionLang === "en" ? "yes" : undefined}
+              lang={visibleDescriptionLang}
+              translate={visibleDescriptionLang === "en" ? "yes" : undefined}
             >
               {previewText}
             </p>
