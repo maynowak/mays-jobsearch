@@ -88,6 +88,8 @@ const TECHNICAL_TERMS = [
   ["ci cd", "CI/CD"],
   ["cloud infrastructure", "cloud infrastructure"],
   ["cloud engineering", "cloud engineering"],
+  ["cloud architecture", "Cloud Architecture"],
+  ["software architecture", "Software Architecture"],
   ["vector stores", "vector stores"],
   ["retrieval", "retrieval"],
   ["fine-tuning", "fine-tuning"],
@@ -178,31 +180,128 @@ function areSkillsEquivalent(s1, s2) {
   return clean(n1) === clean(n2);
 }
 
-// Metadata patterns to exclude from being treated as skills
-// NOTE: "engineer" and "developer" are kept as title tokens are expected to contain them.
-// DISABLING roles like "architect" from the filter since the test expects it from tags.
+// Metadata patterns to exclude from being treated as skills.
+// The role filter from c186619 is restored deliberately: role words alone are
+// not technical requirements. Multi-word technical terms such as
+// "Cloud Architecture" or "Software Architecture" remain allowed.
 const METADATA_PATTERNS = [
   /\(m\/w\/d\)/i,
   /\(w\/m\/d\)/i,
   /\b(full-time|part-time|vollzeit|teilzeit)\b/i,
   /\b(senior|junior|lead|principal|staff)\b/i,
-  /\bsoftware\b/i,
 ];
 
+const ROLE_WORDS = new Set([
+  "architect",
+  "engineer",
+  "developer",
+  "software",
+  "solutions",
+  "manager",
+  "consultant",
+  "analyst",
+  "designer",
+  "specialist",
+  "administrator",
+  "coordinator",
+  "director",
+  "scientist",
+]);
+
+const ROLE_PATTERN = /\b(architect|engineer|developer|manager|consultant|analyst|designer|specialist|administrator|coordinator|director|scientist)\b/i;
+
+const WORKMODE_TERMS = new Set([
+  "remote",
+  "onsite",
+  "on-site",
+  "hybrid",
+  "homeoffice",
+  "home office",
+  "vor ort",
+  "praesenz",
+  "präsenz",
+]);
+
+const LANGUAGE_CODES = new Set([
+  "de",
+  "en",
+  "de-de",
+  "de-at",
+  "de-ch",
+  "en-us",
+  "en-gb",
+]);
+
+const EMPLOYMENT_TERMS = new Set([
+  "full_time",
+  "part_time",
+  "full time",
+  "part time",
+  "fulltime",
+  "parttime",
+  "vollzeit",
+  "teilzeit",
+  "unbefristet",
+  "befristet",
+  "permanent",
+  "contract",
+  "freelance",
+  "internship",
+]);
+
+const NO_DATA_TERMS = new Set([
+  "KEINE_ANGABE",
+  "NONE",
+  "NO_INDICATION",
+  "NICHT_ANGEGEBEN",
+  "UNKNOWN",
+  "N/A",
+  "NA",
+  "TBD",
+  "-",
+  "IT-STELLEN",
+  "IT STELLEN",
+  "SONSTIGE/ALLGEMEINE STELLEN",
+]);
+
+const GENERIC_TAG_TERMS = new Set([
+  "engineering",
+  "sales",
+  "marketing",
+  "finance",
+  "operations",
+  "customer cluster environment",
+  "transportation & energy",
+]);
+
+function metadataKey(text) {
+  return String(text ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^[\(\[\{]+|[\)\]\}]+$/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/[.,;:!?]+$/g, "");
+}
+
+function isMetadataTerm(text) {
+  const key = metadataKey(text);
+  if (!key) return true;
+  const upper = key.toUpperCase();
+  if (NO_DATA_TERMS.has(upper)) return true;
+  if (LANGUAGE_CODES.has(key)) return true;
+  if (WORKMODE_TERMS.has(key)) return true;
+  if (EMPLOYMENT_TERMS.has(key)) return true;
+  if (ROLE_WORDS.has(key)) return true;
+  if (ROLE_PATTERN.test(key)) return true;
+  if (GENERIC_TAG_TERMS.has(key)) return true;
+  return false;
+}
+
 function isTechnicalSkill(text) {
-  const lower = text.toLowerCase().trim();
+  const lower = String(text ?? "").toLowerCase().trim();
+  if (isMetadataTerm(text)) return false;
   if (lower.length <= 2 && !["c", "r"].includes(lower)) return false;
-  
-  // Rule: Job metadata/gender markers are NOT skills
-  if (METADATA_PATTERNS.some(pattern => pattern.test(lower))) {
-    // Only exclude if it's JUST metadata or contains metadata
-    // But "Senior Java Developer" -> "Java" is a skill, "Senior" is a role.
-    // Since we tokenize, if the token is "senior", it's not a tech skill.
-    if (METADATA_PATTERNS.some(p => p.test(lower) && lower.length < 15)) {
-       // If it's a short token matching metadata, it's likely not a tech skill.
-       return false;
-    }
-  }
+  if (METADATA_PATTERNS.some((pattern) => pattern.test(lower))) return false;
   return true;
 }
 
@@ -215,11 +314,13 @@ function extractSkillsFromText(text, source = "description") {
 
 function extractExperience(text) {
   const matches = [];
-  const pattern = EXPERIENCE_PATTERN;
-  let match;
-
+  // Use a fresh global regex per call. A non-global regex in a while/exec
+  // loop never advances and previously caused an OOM for every description
+  // containing a year requirement.
+  const pattern = new RegExp(EXPERIENCE_PATTERN.source, "gi");
   const searchText = stripHtml(text).toLowerCase();
-  while ((match = pattern.exec(searchText)) !== null) {
+
+  for (const match of searchText.matchAll(pattern)) {
     const years = parseInt(match[1], 10);
     const isPlus = match[2] === "+";
     matches.push({ years, isPlus });
@@ -230,11 +331,10 @@ function extractExperience(text) {
 
 function extractAgeRequirements(text) {
   const requirements = [];
-
-  const agePattern = /(?:bachelor|master|phd|degree)\s*(?:in\s+)?([^\.,;]+)/i;
-  let match;
+  const agePattern = /(?:bachelor|master|phd|degree)\s*(?:in\s+)?([^\.,;]+)/gi;
   let idx = 0;
-  while ((match = agePattern.exec(text)) !== null) {
+
+  for (const match of String(text ?? "").matchAll(agePattern)) {
     requirements.push({
       id: `education_${idx}`,
       text: match[0],
@@ -373,25 +473,10 @@ function calculateRoleMatch(jobTitle, targetRoles) {
 export function extractRequirementsFromJob(job, profile = {}) {
   const requirements = [];
 
-  if (job.title) {
-    const tokens = tokenize(job.title);
-    for (const token of tokens) {
-      if (token.length > 2) {
-        // Filter out metadata/roles from the title to prevent them from becoming Gaps
-        if (!isTechnicalSkill(token)) continue;
-        requirements.push(createRequirement(
-          `title_${requirements.length}`,
-          token,
-          "keyword",
-          "title"
-        ));
-      }
-    }
-  }
-
   if (job.tags && job.tags.length > 0) {
     for (const tag of job.tags) {
-      // Only add tags as requirements if they are technical skills
+      // Only add tags as requirements if they are technical skills. Role,
+      // workmode, language, employment and placeholder values are metadata.
       if (!isTechnicalSkill(tag)) continue;
       requirements.push(createRequirement(
         `tag_${requirements.length}`,
@@ -407,6 +492,7 @@ export function extractRequirementsFromJob(job, profile = {}) {
 
     const skills = extractSkillsFromText(text, "description");
     for (const skill of skills) {
+      if (isMetadataTerm(skill.text)) continue;
       requirements.push(createRequirement(
         `skill_${requirements.length}`,
         skill.text,
@@ -434,18 +520,6 @@ export function extractRequirementsFromJob(job, profile = {}) {
     const certs = extractCertifications(text);
     requirements.push(...certs);
 
-    if (job.language) {
-      requirements.push({
-        id: `lang_${requirements.length}`,
-        text: job.language,
-        category: "language",
-        importance: "medium",
-        source: "description",
-        explicitness: "explicit",
-        normalized: job.language.toLowerCase(),
-      });
-    }
-
     if (isRequired(text) || isPreferred(text)) {
       const locationTokens = tokenize(job.location?.join(", ") || "");
       for (const loc of locationTokens) {
@@ -459,46 +533,6 @@ export function extractRequirementsFromJob(job, profile = {}) {
         }
       }
     }
-  }
-
-  if (job.remote !== undefined) {
-    requirements.push({
-      id: `workmode_${requirements.length}`,
-      text: job.remote ? "remote" : "onsite",
-      category: "workmode",
-      importance: "medium",
-      source: "remote",
-      explicitness: "explicit",
-      normalized: job.remote ? "remote" : "onsite",
-    });
-  }
-
-  if (job.jobTypes && job.jobTypes.length > 0) {
-    for (const jt of job.jobTypes) {
-      const normalizedJobType = jt.toLowerCase();
-      requirements.push({
-        id: `jobtype_${requirements.length}`,
-        text: jt,
-        category: "employment",
-        importance: "medium",
-        source: "jobTypes",
-        explicitness: "explicit",
-        normalized: normalizedJobType,
-      });
-    }
-  }
-
-  if (job.contractType && job.contractType.trim()) {
-    const normalizedType = job.contractType.toLowerCase().trim();
-    requirements.push({
-      id: `contract_${requirements.length}`,
-      text: job.contractType,
-      category: "employment",
-      importance: "high",
-      source: "contractType",
-      explicitness: "explicit",
-      normalized: normalizedType,
-    });
   }
 
   addCriteriaRequirements(requirements, profile?.criteria);
@@ -533,6 +567,24 @@ export function extractRequirementsFromJob(job, profile = {}) {
     }
   }
   return unique;
+}
+
+export function extractJobMetadata(job = {}) {
+  const titleTokens = job.title
+    ? tokenize(job.title).filter((token) => token.length > 2)
+    : [];
+  const contractType = String(job.contractType ?? "").trim();
+  const contractTypeNoData = !contractType || NO_DATA_TERMS.has(contractType.toUpperCase());
+
+  return {
+    title: job.title || null,
+    titleTokens,
+    language: job.language || null,
+    workMode: job.remote === true ? "remote" : job.remote === false ? "onsite" : null,
+    jobTypes: Array.isArray(job.jobTypes) ? [...job.jobTypes] : [],
+    contractType: contractTypeNoData ? null : contractType,
+    contractTypeNoData,
+  };
 }
 
 export function matchRequirement(req, cvSkills, cvData) {
@@ -583,9 +635,9 @@ export function analyzeJobForAts(job, profile) {
   const cvSkills = tokenize(profile?.skills);
   const cvSkillsLower = cvSkills.map((s) => s.toLowerCase());
 
+  const metadata = extractJobMetadata(job);
   const requirements = extractRequirementsFromJob(job, profile);
-  const titleRequirements = requirements.filter((req) => req.source === "title");
-  const jobRequirements = requirements.filter((req) => req.source !== "title");
+  const jobRequirements = requirements;
   const jobRequirementIds = new Set(jobRequirements.map((req) => req.id));
   const roleMatch = calculateRoleMatch(job.title, profile?.targetRoles);
 
@@ -769,9 +821,10 @@ export function analyzeJobForAts(job, profile) {
       overall: score,
     },
     analysisStatus,
+    metadata,
     basis: {
       requirementCount: total,
-      titleRequirementCount: titleRequirements.length,
+      titleRequirementCount: metadata.titleTokens.length,
       hasDescription,
       roleMatchAvailable: roleMatch !== null,
     },

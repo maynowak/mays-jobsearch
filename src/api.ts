@@ -341,6 +341,15 @@ export interface AtsAnalysisResponse {
       hasDescription: boolean;
       roleMatchAvailable: boolean;
     };
+    metadata?: {
+      title: string | null;
+      titleTokens: string[];
+      language: string | null;
+      workMode: string | null;
+      jobTypes: string[];
+      contractType: string | null;
+      contractTypeNoData: boolean;
+    };
     criticalGaps: Array<{ id: string; text: string }>;
     requirements: Array<{
       id: string;

@@ -2,6 +2,7 @@
 import { describe, expect, it, beforeAll } from "vitest";
 import {
   extractRequirementsFromJob,
+  extractJobMetadata,
   matchRequirement,
   extractCertifications,
   analyzeJobForAts,
@@ -47,20 +48,21 @@ describe("ATS Requirement Extraction", () => {
     expect(skillReqs.length).toBeGreaterThan(0);
   });
 
-  it("extracts keywords from title", () => {
+  it("does not extract title role words as requirements", () => {
     const reqs = extractRequirementsFromJob(mockJob);
-    const keywordReqs = reqs.filter((r) => r.category === "keyword");
-    expect(keywordReqs.length).toBeGreaterThan(0);
+    expect(reqs.some((r) => r.source === "title")).toBe(false);
+    expect(reqs.some((r) => r.text === "developer")).toBe(false);
+    expect(reqs.some((r) => r.text === "react" && r.source === "tags")).toBe(true);
   });
 
-  it("extracts workmode from remote flag", () => {
+  it("keeps workmode out of requirements and exposes it as metadata", () => {
     const reqs = extractRequirementsFromJob(mockJob);
-    const workmodeReqs = reqs.filter((r) => r.category === "workmode");
-    expect(workmodeReqs.length).toBeGreaterThan(0);
-    expect(workmodeReqs.some((r) => r.normalized === "remote")).toBe(true);
+    expect(reqs.some((r) => r.category === "workmode")).toBe(false);
+    const metadata = extractJobMetadata(mockJob);
+    expect(metadata.workMode).toBe("remote");
   });
 
-  it("returns empty array for minimal job with no description", () => {
+  it("returns no requirements for a title-only job", () => {
     const minimalJob = {
       slug: "minimal-1",
       title: "Developer",
@@ -69,8 +71,93 @@ describe("ATS Requirement Extraction", () => {
       remote: false,
     };
     const reqs = extractRequirementsFromJob(minimalJob);
-    expect(reqs).toBeDefined();
-    expect(reqs.length).toBeGreaterThan(0);
+    expect(reqs).toEqual([]);
+    expect(extractJobMetadata(minimalJob).workMode).toBe("onsite");
+  });
+});
+
+describe("JM-ATS-METADATA-RECOVERY-02: metadata separation", () => {
+  const job = {
+    slug: "metadata-recovery",
+    title: "Solutions Architect (Remote)",
+    tags: ["DevOps", "(remote)", "Cloud", "Unknown", "N/A"],
+    descriptionPlain: "We need DevOps, Terraform and Software Architecture for this role.",
+    location: ["Berlin"],
+    remote: false,
+    jobTypes: ["full_time"],
+    contractType: "KEINE_ANGABE",
+    language: "de",
+  };
+  const profile = {
+    skills: "DevOps, Cloud, Terraform, Software Architecture",
+    targetRoles: ["Solutions Architect"],
+  };
+
+  it("keeps roles, workmode, language and placeholders out of requirements", () => {
+    const reqs = extractRequirementsFromJob(job, profile);
+    const texts = reqs.map((req) => req.text);
+    expect(texts).toContain("DevOps");
+    expect(texts).toContain("Cloud");
+    expect(texts).toContain("Terraform");
+    expect(texts).toContain("Software Architecture");
+    for (const metadata of ["architect", "solutions", "(remote)", "remote", "onsite", "de", "full_time", "KEINE_ANGABE", "Unknown", "N/A"]) {
+      expect(texts).not.toContain(metadata);
+    }
+    expect(reqs.every((req) => req.source !== "title")).toBe(true);
+  });
+
+  it("exposes metadata separately and keeps role matching available", () => {
+    const metadata = extractJobMetadata(job);
+    expect(metadata.workMode).toBe("onsite");
+    expect(metadata.language).toBe("de");
+    expect(metadata.jobTypes).toEqual(["full_time"]);
+    expect(metadata.contractType).toBeNull();
+    expect(metadata.contractTypeNoData).toBe(true);
+    expect(metadata.titleTokens).toContain("architect");
+
+    const result = analyzeJobForAts(job, profile);
+    expect(result.scores.roleMatch).toBe(100);
+    expect(result.analysisStatus).toBe("complete");
+    expect(result.basis.requirementCount).toBe(result.requirements.length);
+    expect(result.requirements.every((req) => req.source !== "title")).toBe(true);
+    expect(result.metadata.workMode).toBe("onsite");
+  });
+});
+
+describe("JM-ATS-METADATA-RECOVERY-02: experience pattern termination", () => {
+  it("extracts 5+ years without hanging", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "5+ years experience with AWS.",
+    });
+    const experience = reqs.filter((req) => req.category === "experience");
+    expect(experience).toHaveLength(1);
+    expect(experience[0].text).toBe("5+ years");
+  });
+
+  it("extracts 3 years and multiple experience mentions", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "3 years experience with Docker. 5 years experience with AWS.",
+    });
+    const experience = reqs.filter((req) => req.category === "experience");
+    expect(experience.map((req) => req.text)).toEqual(["3+ years", "5+ years"]);
+  });
+
+  it("returns no experience requirements when no year is mentioned", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "Build reliable systems with AWS and Docker.",
+    });
+    expect(reqs.filter((req) => req.category === "experience")).toHaveLength(0);
+  });
+
+  it("does not hang on education text", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "Bachelor in Computer Science.",
+    });
+    expect(reqs.some((req) => req.category === "education")).toBe(true);
   });
 });
 
@@ -197,14 +284,16 @@ describe("ATS Job Analysis", () => {
     expect(result.summary.matched).toBeGreaterThanOrEqual(0);
   });
 
-  it("counts requirements correctly", () => {
+  it("does not count title-only words as requirements", () => {
     const job = {
       slug: "test-1",
       title: "React Developer",
     };
     const profile = {};
     const result = analyzeJobForAts(job, profile);
-    expect(result.requirements.length).toBeGreaterThan(0);
+    expect(result.requirements).toEqual([]);
+    expect(result.analysisStatus).toBe("insufficient");
+    expect(result.basis.titleRequirementCount).toBe(2);
   });
 
   it("calculates keyword match score", () => {
@@ -305,6 +394,7 @@ describe("STEP 37B - ATS Analysis Core", () => {
     const job = {
       slug: "test-1",
       title: "Senior Python Django Developer",
+      tags: ["Python", "Django"],
     };
     const profile = { skills: "JavaScript, React" };
     const result = analyzeJobForAts(job, profile);
@@ -332,6 +422,7 @@ describe("STEP 37B - ATS Analysis Core", () => {
     const job = {
       slug: "test-1",
       title: "Senior AWS Developer must have experience",
+      descriptionPlain: "AWS and Kubernetes are required.",
     };
     const profile = { skills: "Python, Django" };
     const result = analyzeJobForAts(job, profile);
@@ -400,6 +491,7 @@ describe("STEP 37B - ATS Analysis Core", () => {
       slug: "test-1",
       title: "React AWS Developer Python required",
       tags: ["react", "nodejs"],
+      descriptionPlain: "AWS and Python are required.",
       location: ["Berlin"],
       remote: true,
       jobTypes: ["full_time"],
@@ -743,13 +835,14 @@ describe("ATS-UI-DATA-01: Requirement Uniqueness (quellenübergreifend)", () => 
   it("TEST 7: unterschiedliche Begriffe bleiben erhalten", () => {
     const reqs = extractRequirementsFromJob(devopsJob());
     const normalized = reqs.map((r) => String(r.normalized).toLowerCase().replace(/\s+/g, " "));
-    // Tatsächliche Überlebende: devops (einmal, aus Titel), engineer,
-    // Kubernetes (Tag), onsite (remote-Flag) — docker fällt schon bei der
-    // Description-Extraktion raus (nur geänderte/REQUIRED-Tokens)
+    // Tatsächliche fachliche Überlebende: devops (Tag/Description),
+    // Kubernetes (Tag), Docker (Description). Titelrolle und Workmode sind
+    // Metadaten und dürfen nicht als Requirements erscheinen.
     expect(normalized).toContain("devops");
-    expect(normalized).toContain("engineer");
     expect(normalized).toContain("kubernetes");
-    expect(normalized).toContain("onsite");
+    expect(normalized).toContain("docker");
+    expect(normalized).not.toContain("engineer");
+    expect(normalized).not.toContain("onsite");
     // Eindeutigkeit insgesamt: keine doppelten Schlüssel
     expect(new Set(normalized).size).toBe(normalized.length);
   });
