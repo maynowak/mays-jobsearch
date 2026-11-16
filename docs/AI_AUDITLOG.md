@@ -6564,3 +6564,29 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Keine Änderung an RIS, AWS, Terraform, Cognito, Consent, Matching oder
   Speicher-APIs; kein Main-Merge/Production-Deployment.
 - Report: `docs/reports/JM-CV-UX-05-INTEGRATION-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-RELEASE-01 — FINAL RELEASE GATE
+
+**Status:** `READY FOR OWNER APPROVAL`
+
+- Reviewed product commit `22752d7`; branch
+  `feature/jm-cv-ux-05-integration-qa`, remote identical; `origin/main`
+  `fbe58e1` is merged into the branch.
+- PR #22: OPEN, DRAFT, `MERGEABLE`, merge-state **CLEAN**; CodeQL **SUCCESS**;
+  Vercel preview checks **SUCCESS**. No merge/deployment.
+- Cumulative diff vs `origin/main`: 29 files, UX scope only (CvBuilderEditor,
+  ImportReview, i18n, styles, tests, UX reports/screenshots, auditlog). No
+  `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent, ATS or storage-API
+  changes. `git diff --check` and secret scan clean.
+- Preview deployment `dpl_9vXmhPenYyWGj5Vur2jJNs5DwSwe`
+  (`mays-job-matcher-bzw53y6ik-maymilly.vercel.app`) at commit `22752d7`:
+  READY. Desktop 1440/Mobile 390: no overflow, 20 skills → 12 visible,
+  Digital Career Flow active, mobile footer sticky in edit mode, reduced
+  motion animations none, 0 console/page errors.
+- Full suite `--maxWorkers=2` **1910 PASS / 11 skipped**; build **PASS**
+  (975 ms). UX-01–05 reports/screenshots included.
+- Unverified: authenticated CV-editor modal (no test access) and live
+  RIS/S3 PDF storage E2E (no live-test approval). These remain documented
+  evidence boundaries, not functional UX blockers.
+- Recommendation: owner review/approval of PR #22; no automatic merge.
+- Report: `docs/reports/JM-CV-UX-RELEASE-01-RELEASE-GATE.md`.
