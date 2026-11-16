@@ -72,6 +72,50 @@ describe("CV-BUILDER-01A editor", () => {
     expect(screen.queryByRole("button", { name: "Lebenslauf speichern" })).toBeNull();
   });
 
+  it("marks affected sections and keeps them open while navigating", () => {
+    const draft = createEmptyCvBuilderDraft();
+    draft.personal = { email: "invalid" };
+    render(<Harness initial={draft} />);
+
+    expect(screen.getByText("1 Fehler")).toBeInTheDocument();
+    const personal = document.querySelector("#cv-builder-personal details");
+    expect(personal).toHaveProperty("open", false);
+    openSection("Persönliche Angaben");
+    expect(personal).toHaveProperty("open", true);
+
+    const nav = screen.getByRole("navigation", { name: "Lebenslauf-Abschnitte" });
+    fireEvent.click(within(nav).getByRole("link", { name: "Berufserfahrung" }));
+    expect(personal).toHaveProperty("open", true);
+  });
+
+  it("collapses, filters and removes large skill lists without changing other skills", () => {
+    const draft = createEmptyCvBuilderDraft();
+    draft.skills = Array.from({ length: 71 }, (_, index) => `Skill ${index + 1}`);
+    render(<Harness initial={draft} />);
+
+    const skillList = () =>
+      document.querySelector(".cv-builder-skills__list") as HTMLElement;
+    expect(screen.getByText("71 Fähigkeiten")).toBeInTheDocument();
+    expect(within(skillList()).getByText("Skill 12")).toBeInTheDocument();
+    expect(within(skillList()).queryByText("Skill 13")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle 71 anzeigen" }));
+    expect(within(skillList()).getByText("Skill 71")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Fähigkeiten filtern"), {
+      target: { value: "Skill 71" },
+    });
+    expect(within(skillList()).getByText("Skill 71")).toBeInTheDocument();
+    expect(within(skillList()).queryByText("Skill 1")).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Fähigkeiten filtern"), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Fähigkeit „Skill 1“ entfernen" }));
+    expect(within(skillList()).queryByText("Skill 1")).toBeNull();
+    expect(screen.getByText("70 Fähigkeiten")).toBeInTheDocument();
+  });
+
   it("edits personal data and reports invalid email without deleting it", async () => {
     render(<Harness />);
     openSection("Persönliche Angaben");

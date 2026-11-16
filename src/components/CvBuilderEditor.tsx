@@ -229,6 +229,8 @@ function MonthField({
   );
 }
 
+const SKILL_PREVIEW_LIMIT = 12;
+
 function LanguagesInput({
   value,
   onChange,
@@ -238,6 +240,27 @@ function LanguagesInput({
 }) {
   const { t } = useLang();
   const [text, setText] = useState(() => formatTargetRoles(value));
+  const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  const normalizedQuery = query.trim().toLocaleLowerCase("de");
+  const indexedSkills = value.map((skill, index) => ({ skill, index }));
+  const filteredSkills = normalizedQuery
+    ? indexedSkills.filter(({ skill }) =>
+        skill.toLocaleLowerCase("de").includes(normalizedQuery)
+      )
+    : indexedSkills;
+  const visibleSkills =
+    !normalizedQuery && !showAll
+      ? filteredSkills.slice(0, SKILL_PREVIEW_LIMIT)
+      : filteredSkills;
+  const hiddenCount = filteredSkills.length - visibleSkills.length;
+
+  const removeSkill = (index: number) => {
+    const next = value.filter((_, current) => current !== index);
+    onChange(next);
+    setText(formatTargetRoles(next));
+  };
+
   return (
     <div className="cv-builder-field">
       <label>
@@ -254,6 +277,60 @@ function LanguagesInput({
         />
       </label>
       <p className="cv-builder-hint">{t("cvBuilder.skillsHint")}</p>
+      {value.length > 0 && (
+        <div className="cv-builder-skills__tools">
+          <label className="cv-builder-skills__search">
+            <span>{t("cvBuilder.skillsFilter")}</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("cvBuilder.skillsFilterPlaceholder")}
+            />
+          </label>
+          <span className="cv-builder-skills__count" aria-live="polite">
+            {t("cvBuilder.skillsCount", { count: value.length })}
+          </span>
+        </div>
+      )}
+      {visibleSkills.length > 0 && (
+        <ul className="cv-builder-tags cv-builder-skills__list" aria-label={t("cvBuilder.skillsLabel")}>
+          {visibleSkills.map(({ skill, index }) => (
+            <li key={`${skill}-${index}`}>
+              <span>{skill}</span>
+              <button
+                type="button"
+                className="cv-builder-skill-remove"
+                aria-label={t("cvBuilder.skillRemove", { skill })}
+                onClick={() => removeSkill(index)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {value.length > 0 && filteredSkills.length === 0 && (
+        <p className="cv-builder-hint">{t("cvBuilder.skillsNoMatch")}</p>
+      )}
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          className="btn-ghost cv-builder-skills__toggle"
+          onClick={() => setShowAll(true)}
+        >
+          {t("cvBuilder.skillsShowAll", { count: filteredSkills.length })}
+        </button>
+      )}
+      {showAll && !normalizedQuery && value.length > SKILL_PREVIEW_LIMIT && (
+        <button
+          type="button"
+          className="btn-ghost cv-builder-skills__toggle"
+          onClick={() => setShowAll(false)}
+        >
+          {t("cvBuilder.skillsShowLess")}
+        </button>
+      )}
     </div>
   );
 }
@@ -381,15 +458,25 @@ function Section({
   title,
   children,
   summaryText,
+  errorCount = 0,
 }: {
   title: string;
   children: React.ReactNode;
   summaryText: string;
+  errorCount?: number;
 }) {
+  const { t } = useLang();
   return (
-    <details className="cv-builder-section">
+    <details className={`cv-builder-section${errorCount > 0 ? " has-errors" : ""}`}>
       <summary>
         <span>{title}</span>
+        {errorCount > 0 && (
+          <span className="cv-builder-section__error">
+            {errorCount === 1
+              ? t("cvBuilder.sectionErrorOne")
+              : t("cvBuilder.sectionErrors", { count: errorCount })}
+          </span>
+        )}
         <span className="cv-builder-section__meta">{summaryText}</span>
       </summary>
       <div className="cv-builder-section__body">{children}</div>
@@ -449,6 +536,8 @@ export default function CvBuilderEditor({
   const errorSectionsLabel = errorSectionKeys
     .map((section) => t(`cvBuilder.section.${section}`))
     .join(", ");
+  const sectionErrorCount = (section: string) =>
+    errors.filter((error) => sectionForErrorPath(error.path) === section).length;
   const entryCount =
     draft.experience.length +
     draft.education.length +
@@ -861,7 +950,7 @@ export default function CvBuilderEditor({
                 const details = section?.querySelector("details");
                 if (details) details.open = true;
                 setMobileView("edit");
-                section?.scrollIntoView({ block: "start", behavior: "smooth" });
+                section?.scrollIntoView?.({ block: "start", behavior: "smooth" });
               }}
             >
               {t(labelKey)}
@@ -882,6 +971,7 @@ export default function CvBuilderEditor({
             <Section
               title={t("cvBuilder.section.personal")}
               summaryText={draft.personal.fullName || t("cvBuilder.emptyEntry")}
+              errorCount={sectionErrorCount("personal")}
             >
               <div className="cv-builder-grid">
                 <TextField
@@ -930,6 +1020,7 @@ export default function CvBuilderEditor({
             <Section
               title={t("cvBuilder.section.profile")}
               summaryText={draft.profile.headline || t("cvBuilder.emptyEntry")}
+              errorCount={sectionErrorCount("profile")}
             >
               <div className="cv-builder-grid">
                 <TextField
@@ -958,6 +1049,7 @@ export default function CvBuilderEditor({
             <Section
               title={t("cvBuilder.section.experience")}
               summaryText={`${draft.experience.length}`}
+              errorCount={sectionErrorCount("experience")}
             >
               {draft.experience.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.experience.map((entry, index) => (
@@ -1082,7 +1174,11 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-education">
-            <Section title={t("cvBuilder.section.education")} summaryText={`${draft.education.length}`}>
+            <Section
+              title={t("cvBuilder.section.education")}
+              summaryText={`${draft.education.length}`}
+              errorCount={sectionErrorCount("education")}
+            >
               {draft.education.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.education.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
@@ -1190,18 +1286,21 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-skills">
-            <Section title={t("cvBuilder.section.skills")} summaryText={`${draft.skills.length}`}>
+            <Section
+              title={t("cvBuilder.section.skills")}
+              summaryText={`${draft.skills.length}`}
+              errorCount={sectionErrorCount("skills")}
+            >
               <LanguagesInput value={draft.skills} onChange={(skills) => onChange({ ...draft, skills })} />
-              {draft.skills.length > 0 && (
-                <ul className="cv-builder-tags">
-                  {draft.skills.map((skill) => <li key={skill}>{skill}</li>)}
-                </ul>
-              )}
             </Section>
           </section>
 
           <section id="cv-builder-projects">
-            <Section title={t("cvBuilder.section.projects")} summaryText={`${draft.projects.length}`}>
+            <Section
+              title={t("cvBuilder.section.projects")}
+              summaryText={`${draft.projects.length}`}
+              errorCount={sectionErrorCount("projects")}
+            >
               {draft.projects.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.projects.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
@@ -1277,7 +1376,11 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-certificates">
-            <Section title={t("cvBuilder.section.certificates")} summaryText={`${draft.certificates.length}`}>
+            <Section
+              title={t("cvBuilder.section.certificates")}
+              summaryText={`${draft.certificates.length}`}
+              errorCount={sectionErrorCount("certificates")}
+            >
               {draft.certificates.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.certificates.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
@@ -1353,7 +1456,11 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-languages">
-            <Section title={t("cvBuilder.section.languages")} summaryText={`${draft.languages.length + draft.links.length}`}>
+            <Section
+              title={t("cvBuilder.section.languages")}
+              summaryText={`${draft.languages.length + draft.links.length}`}
+              errorCount={sectionErrorCount("languages")}
+            >
               <h4>{t("cvBuilder.languagesTitle")}</h4>
               {draft.languages.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.languages.map((entry, index) => (
