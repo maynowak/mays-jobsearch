@@ -6470,3 +6470,35 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent,
   ATS-Matching oder Speicher-APIs.
 - Report: `docs/reports/JM-CV-UX-03-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-04 — DIGITAL CAREER FLOW BACKGROUND
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — MODAL SCREENSHOT NOT AVAILABLE`
+
+- Branch `feature/jm-cv-ux-04-digital-career-flow` von UX-03 `7096351`
+  (UX-03 noch nicht in main); Implementierungs-Commit `eb2ad4a`, Docs-Commit
+  folgt; Branch gepusht, kein Main-Merge/Deployment.
+- Design: dunkler Petrol-/Blau-Verlauf, cyan/türkise Radialglows, dünne
+  SVG-Netzwerklinien/Knoten, langsam wandernde Lichtpunkte, Tiefenwirkung.
+  Ausschließlich CSS + eingebettetes SVG; keine externe Grafikbibliothek,
+  kein WebGL, kein Video, keine JS-Daueranimation.
+- Integration: `.cv-workspace-page` und `.cv-builder-modal` erhalten den
+  Hintergrund; Header dunkel-transluzent; Startkarte, Fullpage-Editor,
+  Modal-Box und Import-Workspace bleiben opak weiß mit `color: var(--text)`.
+  Formulare, Preview, PDF-Ausgabe, Validierung, Import und Speicherung
+  unverändert.
+- Performance/A11y: Pseudo-Ebenen `pointer-events:none`, z-index hinter
+  Inhalten; `prefers-reduced-motion: reduce` deaktiviert beide Animationen;
+  keine Re-Renders, keine Scroll-/Layout-Effekte.
+- Browser-Evidence: Desktop 1440 und Mobile 390, Start + Editor, kein
+  horizontaler Overflow, 0 Console-/Page-Errors, weiße Flächen
+  `rgb(255,255,255)`, Reduced-Motion `animationName=none`. Screenshots unter
+  `docs/reports/assets/JM-CV-UX-04/`.
+- Modal-Screenshot nicht erstellt, da der CV-Editor-Modal im lokalen
+  Guest-Flow ohne authentifizierte Dashboard-Ansicht nicht erreichbar ist;
+  Modal-CSS ist implementiert, aber nicht separat visuell abgenommen.
+- Tests: Build PASS (1,27 s); Vollsuite `--maxWorkers=2` **1902 PASS /
+  11 skipped**; `git diff --check` PASS.
+- Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent,
+  ATS-Matching oder Speicher-APIs.
+- Report: `docs/reports/JM-CV-UX-04-REPORT.md`.
