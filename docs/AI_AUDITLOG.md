@@ -6655,4 +6655,5 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Commit `c3bdda0` plus docs commit; branch
   `feature/jm-translation-model-selection-01`; no main merge or production
   deployment.
+- Preview model E2E: selected `dots-studio/dots-3-note-preview:free` returned HTTP 200 with a German translation; no Production deployment.
 - Report: `docs/reports/JM-TRANSLATION-MODEL-SELECTION-01.md`.

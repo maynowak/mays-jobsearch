@@ -1,6 +1,6 @@
 # JM-TRANSLATION-MODEL-SELECTION-01
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL — NO MAIN MERGE / NO PRODUCTION DEPLOY`
+**Status:** `IMPLEMENTED / VERIFIED LOCAL + PREVIEW MODEL E2E — NO MAIN MERGE / NO PRODUCTION DEPLOY`
 
 **Date:** 2026-11-16
 **Baseline:** `origin/main` `154c698333682afd0b68454666738abc9713f194`
@@ -84,7 +84,31 @@ Abgedeckt:
 - keine zusätzlichen CV-/Bewerbungsdaten
 - ATS-Verhalten unverändert
 
-## 5. Einschränkungen
+## 5. Preview-Verifikation
+
+Vercel Preview: `https://mays-job-matcher-gd5kb5034-maymilly.vercel.app`
+Deployment: `dpl_BC617YoPTRYqY52VedVpdAz2ckwW` (`BC617YoPTRYqY52VedVpdAz2ckwW`).
+
+`/api/models` lieferte 15 freie Modelle; ausgewählt:
+
+```text
+dots-studio/dots-3-note-preview:free
+```
+
+Synthetischer Übersetzungsrequest mit `model`:
+
+```text
+HTTP 200
+translation: Wir suchen einen Softwareentwickler. Sie werden zuverlässige
+Systeme mit AWS und TypeScript aufbauen. Anforderungen: 3 Jahre Erfahrung.
+sourceLanguage: en
+targetLanguage: de
+```
+
+Damit wurde die Modellübergabe mit dem vorhandenen Provider auf Preview real
+verifiziert. Kein Production-Deployment.
+
+## 6. Einschränkungen
 
 - Der Provider kann weiterhin temporär `model_unavailable` liefern; dann bleibt
   der Originaltext sichtbar und die Auswahl wird angeboten.
