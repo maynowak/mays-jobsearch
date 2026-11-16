@@ -314,11 +314,13 @@ function extractSkillsFromText(text, source = "description") {
 
 function extractExperience(text) {
   const matches = [];
-  const pattern = EXPERIENCE_PATTERN;
-  let match;
-
+  // Use a fresh global regex per call. A non-global regex in a while/exec
+  // loop never advances and previously caused an OOM for every description
+  // containing a year requirement.
+  const pattern = new RegExp(EXPERIENCE_PATTERN.source, "gi");
   const searchText = stripHtml(text).toLowerCase();
-  while ((match = pattern.exec(searchText)) !== null) {
+
+  for (const match of searchText.matchAll(pattern)) {
     const years = parseInt(match[1], 10);
     const isPlus = match[2] === "+";
     matches.push({ years, isPlus });
@@ -329,11 +331,10 @@ function extractExperience(text) {
 
 function extractAgeRequirements(text) {
   const requirements = [];
-
-  const agePattern = /(?:bachelor|master|phd|degree)\s*(?:in\s+)?([^\.,;]+)/i;
-  let match;
+  const agePattern = /(?:bachelor|master|phd|degree)\s*(?:in\s+)?([^\.,;]+)/gi;
   let idx = 0;
-  while ((match = agePattern.exec(text)) !== null) {
+
+  for (const match of String(text ?? "").matchAll(agePattern)) {
     requirements.push({
       id: `education_${idx}`,
       text: match[0],

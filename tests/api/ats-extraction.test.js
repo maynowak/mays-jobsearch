@@ -124,6 +124,43 @@ describe("JM-ATS-METADATA-RECOVERY-02: metadata separation", () => {
   });
 });
 
+describe("JM-ATS-METADATA-RECOVERY-02: experience pattern termination", () => {
+  it("extracts 5+ years without hanging", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "5+ years experience with AWS.",
+    });
+    const experience = reqs.filter((req) => req.category === "experience");
+    expect(experience).toHaveLength(1);
+    expect(experience[0].text).toBe("5+ years");
+  });
+
+  it("extracts 3 years and multiple experience mentions", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "3 years experience with Docker. 5 years experience with AWS.",
+    });
+    const experience = reqs.filter((req) => req.category === "experience");
+    expect(experience.map((req) => req.text)).toEqual(["3+ years", "5+ years"]);
+  });
+
+  it("returns no experience requirements when no year is mentioned", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "Build reliable systems with AWS and Docker.",
+    });
+    expect(reqs.filter((req) => req.category === "experience")).toHaveLength(0);
+  });
+
+  it("does not hang on education text", () => {
+    const reqs = extractRequirementsFromJob({
+      title: "Engineer",
+      descriptionPlain: "Bachelor in Computer Science.",
+    });
+    expect(reqs.some((req) => req.category === "education")).toBe(true);
+  });
+});
+
 describe("ATS Matching", () => {
   it("matches skills present in CV", () => {
     const req = {
