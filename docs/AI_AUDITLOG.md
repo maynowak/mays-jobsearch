@@ -6379,3 +6379,31 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   extraction, title-only insufficient state, criteria and deduplicated display.
 - No RIS, AWS, Terraform, Cognito, persistence-contract or production change.
 - Report: `docs/reports/JM-ATS-MATCHING-QUALITY-01.md`.
+
+## 2026-11-16 — JM-ATS-METADATA-RECOVERY-02
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL / SERIAL FULL GREEN — PARALLEL TEST FLAKE OUTSIDE ATS — NO MERGE/DEPLOY`
+
+- Branch `feature/jm-ats-metadata-recovery-02` from `origin/main` `464783b`.
+- Historical cause: `4fb852b` removed `architect`, `engineer` and `developer`
+  from `METADATA_PATTERNS`. Restored role filtering from `c186619` and kept
+  the full-description extraction from `e9d47d2`.
+- `api/_lib/ats.mjs`: title tokens, workmode, language, employment and
+  placeholders are metadata, not requirements; technical description terms
+  remain. Added `extractJobMetadata()` and fixed the non-advancing
+  `EXPERIENCE_PATTERN`/education regex loops.
+- `api/ats-analysis.mjs`: requirement `source` and optional `metadata` are now
+  returned; existing response fields remain compatible.
+- `src/components/AtsOverlay.tsx`: one central requirement list, summaries
+  without repeated keyword lists, separate job-context section.
+- Acceptance fixture: `Solutions Architect (Remote)` + `DevOps`/`Cloud` +
+  `de`/`onsite`/`KEINE_ANGABE` yields only `DevOps`, `Cloud`, `Terraform` and
+  `Software Architecture` as requirements; role match and metadata stay
+  available.
+- Tests: focused ATS 88 PASS; build PASS; serial full 1896 PASS / 11 skipped.
+  Parallel `npx vitest run` showed two ATS-unrelated flakes
+  (`CvBuilderEditorRisStorage`, `ManualSearchProfiles`); both files passed in
+  isolation. No ATS test failure.
+- Commits: `711a823`, `ceefa6f`, `3d66f62`, `d6b2669` plus docs commit.
+- No RIS/AWS/Cognito/CV-parser/persistence change, no merge or deployment.
+- Report: `docs/reports/JM-ATS-METADATA-RECOVERY-02.md`.
