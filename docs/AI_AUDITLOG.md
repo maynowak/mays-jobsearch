@@ -6635,3 +6635,18 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   evidence boundaries, not functional UX blockers.
 - Recommendation: owner review/approval of PR #22; no automatic merge.
 - Report: `docs/reports/JM-CV-UX-RELEASE-01-RELEASE-GATE.md`.
+
+## 2026-11-16 — JM-CV-UX-06 — WORKSPACE NAVIGATION & DRAFT LIFECYCLE
+
+**Status:** `IMPLEMENTATION COMPLETE — LOCAL/BROWSER VERIFIED — NOT MERGED/DEPLOYED`
+
+- Branch `feature/jm-cv-ux-06-navigation-drafts` von `origin/main` `154c698`; kein Main-Merge, kein Production-Deployment, keine Branch-Löschung.
+- Separater Tab: X und Footer-Schließen nutzen im Workspace einen expliziten Schließfluss. Ungespeicherte Änderungen bieten „Zum Hauptfenster zurück“, „Verwerfen und schließen“ und „Weiter bearbeiten“. Bei direktem Workspace ohne Hauptfenster: Sitzungsspeicherung, bewusstes Verwerfen oder Weiterbearbeiten.
+- Rückgabe: bestehender `workspaceHandoff`-Vertrag wiederverwendet; nach bestätigter Übernahme wird das Hauptfenster fokussiert und der Tab nach Möglichkeit geschlossen. Verweigert der Browser `window.close()`, bleibt der Tab mit übertragenen Daten offen und zeigt eine klare manuelle Anleitung. Kein Datenverlust bei fehlendem Hauptfenster.
+- Entwurfsblockade: neuer `CvBuilderDraftPrompt` mit „weiter bearbeiten“, „in Sitzungsliste übernehmen“, „verwerfen und neu beginnen“ und „abbrechen“. App-Import/-Erstellung und direkter Workspace geprüft. Keine automatische Löschung, kein Überschreiben von Sitzungsprofilen, keine dauerhafte Structured-CV-Speicherung.
+- RIS-Speicherbutton: deaktiviertes Gate unverändert; mehrere Sperrgründe (Validierung, Login/Speicherfreigabe/Status, leerer Lebenslauf) werden als Liste angezeigt. Keine RIS-/Backend-API-Änderung.
+- Tests: fokussiert `CvBuilderWorkspacePage.test.tsx` 7/7 PASS, neue App-Dialogtests 2/2 PASS; Vollsuite `npx vitest run --maxWorkers=2` **1934 PASS / 11 skipped**, 180 Dateien bestanden, 0 FAIL; Build PASS (1,30 s); `git diff --check` PASS.
+- Browser-E2E `npm run test:e2e:cv-builder-ux-06` PASS: zwei echte Tabs, sauberes X, Dirty-Cancel, Rückgabe + Tab-Schließen, blockiertes `window.close()`, fehlendes Hauptfenster, direkter Workspace; 0 Page-/Console-Errors. Bestehender 03A-E2E PASS (nur veraltete UI-Label-Selektoren aktualisiert). Evidence: `docs/reports/assets/JM-CV-UX-06/`.
+- AI-/Privacy-/Data-Flow: keine neuen externen Flows, Speicherorte, Berechtigungen oder Credentials; keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Consent, ATS/Matching oder Übersetzungs-Pipeline.
+- Grenzen: authentifizierter CV-Editor-Modalpfad nicht separat live geprüft; RIS-/S3-Live-Speicherung nicht ausgeführt.
+- Report: `docs/reports/JM-CV-UX-06-REPORT.md`.

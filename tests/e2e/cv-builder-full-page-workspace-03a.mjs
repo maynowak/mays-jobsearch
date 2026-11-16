@@ -166,8 +166,8 @@ async function run() {
     if ((await nameField.inputValue()) !== beforeScreenshot) throw new Error("screenshot mode changed CV data");
     if ((await popup.locator(".cv-builder-section[open]").count()) !== beforeOpen) throw new Error("section state was not restored");
 
-    await popup.getByRole("button", { name: "Lebenslauf speichern" }).click();
-    await popup.getByText("In dieser Sitzung gespeichert", { exact: true }).waitFor();
+    await popup.getByRole("button", { name: "Entwurf übernehmen" }).click();
+    await popup.getByText("Dein Entwurf wurde für diese Sitzung übernommen.", { exact: true }).waitFor();
     await popup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
     await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
     if ((await page.getByLabel("Vollständiger Name").inputValue()) !== "Nora Beispiel 03A") {
@@ -184,8 +184,8 @@ async function run() {
       throw new Error("editor handoff did not copy the profile");
     }
     await editorPopup.getByLabel("Vollständiger Name").fill("Nora Beispiel 03A Tab");
-    await editorPopup.getByRole("button", { name: "Lebenslauf speichern" }).click();
-    await editorPopup.getByText("In dieser Sitzung gespeichert", { exact: true }).waitFor();
+    await editorPopup.getByRole("button", { name: "Entwurf übernehmen" }).click();
+    await editorPopup.getByText("Dein Entwurf wurde für diese Sitzung übernommen.", { exact: true }).waitFor();
     await editorPopup.getByRole("button", { name: "Zum Hauptfenster zurück" }).click();
     await page.waitForFunction(() => document.body.innerText.includes("Nora Beispiel 03A Tab"));
     await page.locator("#cv-builder-personal summary").click();

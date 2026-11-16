@@ -2843,6 +2843,100 @@ React, TypeScript`);
     );
   });
 
+  it("offers explicit choices when a new import starts while an unsaved draft exists", async () => {
+    window.history.pushState({}, "", "/search");
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`Max Mustermann
+E-Mail: max@example.com
+Ort: Berlin
+
+Profil
+Senior Frontend Engineer
+
+Berufserfahrung
+Acme GmbH
+Senior Frontend Engineer
+Jan 2020 – Present
+- React
+
+Fähigkeiten
+React, TypeScript`);
+
+    renderApp();
+    fireEvent.click(await screen.findByRole("tab", { name: "Lebenslauf hochladen" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Lebenslauf erstellen$/ }));
+    await screen.findByRole("heading", { name: "Vorhandenen Lebenslauf importieren" });
+    const file = new File(["synthetic"], "lebenslauf.pdf", { type: "application/pdf" });
+    const input = document.querySelector('.cv-import-modal input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+    fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    await screen.findByRole("heading", { name: "Deine Importauswahl" });
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
+    await screen.findByRole("heading", { name: "Strukturierter Lebenslauf-Editor" });
+    expect(screen.getByLabelText("Vollständiger Name")).toHaveValue("Max Mustermann");
+
+    // Starting another import must not silently replace the working draft.
+    fireEvent.click(screen.getByRole("button", { name: /^Lebenslauf erstellen$/ }));
+    const prompt = await screen.findByRole("alertdialog", { name: "Ungespeicherter Entwurf" });
+    expect(within(prompt).getByRole("button", { name: "Entwurf weiter bearbeiten" })).toBeInTheDocument();
+    expect(within(prompt).getByRole("button", { name: "Entwurf in Sitzungsliste übernehmen" })).toBeInTheDocument();
+    expect(within(prompt).getByRole("button", { name: "Entwurf verwerfen und neu beginnen" })).toBeInTheDocument();
+    expect(within(prompt).getByRole("button", { name: "Abbrechen" })).toBeInTheDocument();
+
+    fireEvent.click(within(prompt).getByRole("button", { name: "Abbrechen" }));
+    expect(screen.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Vollständiger Name")).toHaveValue("Max Mustermann");
+
+    fireEvent.click(screen.getByRole("button", { name: /^Lebenslauf erstellen$/ }));
+    const discardPrompt = await screen.findByRole("alertdialog", { name: "Ungespeicherter Entwurf" });
+    fireEvent.click(within(discardPrompt).getByRole("button", { name: "Entwurf verwerfen und neu beginnen" }));
+    expect(await screen.findByRole("heading", { name: "Vorhandenen Lebenslauf importieren" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).not.toBeInTheDocument();
+  });
+
+  it("adopts an unsaved draft before continuing with a new import", async () => {
+    window.history.pushState({}, "", "/search");
+    vi.mocked(extractPdfText).mockResolvedValueOnce(`Max Mustermann
+E-Mail: max@example.com
+Ort: Berlin
+
+Profil
+Senior Frontend Engineer
+
+Berufserfahrung
+Acme GmbH
+Senior Frontend Engineer
+Jan 2020 – Present
+- React
+
+Fähigkeiten
+React, TypeScript`);
+
+    renderApp();
+    fireEvent.click(await screen.findByRole("tab", { name: "Lebenslauf hochladen" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Lebenslauf erstellen$/ }));
+    await screen.findByRole("heading", { name: "Vorhandenen Lebenslauf importieren" });
+    const file = new File(["synthetic"], "lebenslauf.pdf", { type: "application/pdf" });
+    const input = document.querySelector('.cv-import-modal input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+    fireEvent.click(screen.getByRole("button", { name: "Angaben übernehmen" }));
+    await screen.findByRole("heading", { name: "Deine Importauswahl" });
+    fireEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
+    await screen.findByRole("heading", { name: "Strukturierter Lebenslauf-Editor" });
+
+    fireEvent.click(screen.getByRole("button", { name: /^Lebenslauf erstellen$/ }));
+    const prompt = await screen.findByRole("alertdialog", { name: "Ungespeicherter Entwurf" });
+    fireEvent.click(within(prompt).getByRole("button", { name: "Entwurf in Sitzungsliste übernehmen" }));
+    await screen.findByRole("heading", { name: "Vorhandenen Lebenslauf importieren" });
+    expect(screen.queryByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import abbrechen" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Lebenslauf erstellen$/ }));
+    await screen.findByRole("heading", { name: "Vorhandenen Lebenslauf importieren" });
+    expect(screen.queryByRole("alertdialog", { name: "Ungespeicherter Entwurf" })).not.toBeInTheDocument();
+  });
+
   it("cancels a local import without creating a builder profile", async () => {
     window.history.pushState({}, "", "/search");
     renderApp();
