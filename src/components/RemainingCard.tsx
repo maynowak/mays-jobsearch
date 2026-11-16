@@ -3,7 +3,7 @@ import type { Job } from "../types";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
 import { fetchJobDetails } from "../api";
-import { evaluateDescription } from "../lib/jobDescriptionReview";
+import { hasSufficientJobDescription } from "../lib/atsJobHandoff";
 import {
   formatJobDate,
   jobTypeLabelKey,
@@ -127,8 +127,7 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
       ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
       : descriptionPlain;
 
-  const descriptionIsSufficient =
-    evaluateDescription(descriptionPlain || description).completeness === "sufficient";
+  const descriptionIsSufficient = hasSufficientJobDescription(displayJob);
 
   const handleAtsEvaluate = async () => {
     if (!onAtsEvaluate || atsLoading) return;
