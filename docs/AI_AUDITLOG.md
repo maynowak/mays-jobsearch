@@ -6530,3 +6530,37 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent,
   ATS-Matching oder Speicher-APIs.
 - Report: `docs/reports/JM-CV-UX-04-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-05 — INTEGRATION QA / RELEASE READINESS
+
+**Status:** `INTEGRATION VERIFIED — READY FOR CONTROLLED MAIN MERGE (REVIEW PENDING)`
+
+- Branch `feature/jm-cv-ux-05-integration-qa` von UX-04 `0eaba37`; alle
+  UX-01–04-Commits enthalten. `origin/main` war auf `fbe58e1` (ATS
+  Metadata Recovery) weitergelaufen; Merge-Commit `cea79ec`, Konflikt nur in
+  `docs/AI_AUDITLOG.md`, beide Seiten vollständig erhalten. i18n/styles
+  automatisch gemergt. Kein Main-Merge, kein Deployment.
+- Kumulativer Diff gegen `origin/main`: 22 Dateien, ausschließlich UX-Scope
+  (CvBuilderEditor, ImportReview, styles, i18n, Tests, UX-Reports/Screenshots,
+  Auditlog). Keine `api/**`-, RIS-, AWS-, Terraform-, Cognito-, Auth-,
+  Consent-, ATS- oder Speicher-API-Änderung.
+- Integration/Browser: Desktop 1440 und Mobile 390 Vollansicht; ungültige
+  E-Mail → „1 Fehler“ → „Zum ersten Fehler“ fokussiert
+  `cv-builder-field-personal-email`; Korrektur gibt Speicherung frei;
+  20 Fähigkeiten → 12 sichtbar, Zähler/Suche/Entfernen; Importprüfung mit
+  synthetischem Fixture (Fortschritt + 3 Filter); Entwurf übernehmen,
+  PDF-Download (`Lebenslauf.pdf`); dauerhafte RIS-Speicherung ohne Login
+  disabled. 0 Overflow, 0 Console-/Page-Errors.
+- Unter QA behoben: mobiler sticky Footer verdeckte die Vorschau; Footer ist
+  jetzt nur im Bearbeiten-Modus sticky, im Vorschau-Modus statisch
+  (`929e5d3`).
+- Tests: Build PASS (975 ms); Vollsuite `--maxWorkers=2` **1910 PASS /
+  11 skipped**; `git diff --check` PASS. Reduced Motion `animationName=none`.
+- Modal nicht verifiziert: kein authentifizierter Testzugang im lokalen
+  Guest-Flow. RIS-/S3-Live-E2E nicht ausgeführt (keine Live-Test-Freigabe).
+- PR #22 (OPEN/DRAFT, MERGEABLE, UNSTABLE nur wegen laufendem CodeQL;
+  Vercel-Preview erfolgreich): https://github.com/maynowak/mays-jobsearch/pull/22
+- Offene Punkte sind Test-/Freigabegrenzen, keine funktionalen UX-Blocker.
+- Keine Änderung an RIS, AWS, Terraform, Cognito, Consent, Matching oder
+  Speicher-APIs; kein Main-Merge/Production-Deployment.
+- Report: `docs/reports/JM-CV-UX-05-INTEGRATION-REPORT.md`.
