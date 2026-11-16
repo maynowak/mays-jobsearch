@@ -69,3 +69,64 @@ alle ausdrücklich genannten Technologien.
 2. UI-Quelle/zwei Zähler sichtbar machen.
 3. Übersetzungsformatierung nur bei reproduziertem Fehler ändern.
 4. Fokussierte Tests, Build, Gesamtsuite; danach Bericht finalisieren.
+
+## ORCH-02 — Ergebnis
+
+Der bestätigte Engpass lag in `api/profile.mjs`:
+
+- `cleanStringList()` begrenzte die Modellantwort auf 20 Einträge.
+- Der Profil-Prompt forderte nur „key skills“.
+- Ein synthetischer CV mit 30 eindeutigen Technologien lieferte vor der
+  Korrektur exakt 20 Skills.
+
+Umgesetzt:
+
+- Skills-Cap von 20 auf 100 erhöht; Zielrollen bleiben auf 20 begrenzt.
+- Prompt fordert alle ausdrücklich genannten Technologien, Werkzeuge,
+  Plattformen, Sprachen, Frameworks, Datenbanken, Cloud-Services, Methoden
+  und Zertifizierungen; keine Erfindung.
+- `maxTokens` von 900 auf 1800 erhöht.
+- Skill-Auswahl zeigt jetzt die Anzahl „{selected} von {total} im CV
+  erkannten Skills ausgewählt“ und nennt die Herkunft der Vorschläge.
+- Keine Änderung an CV-Parser, Profilpersistenz, RIS-Daten oder ATS-Scoring.
+
+## ORCH-01 — Ergebnis
+
+Die Übersetzungs-API lieferte bei einem synthetischen langen Text mit
+Überschriften und Listen strukturierten Plaintext (575 Zeichen, 17
+Zeilenumbrüche, 9 Bullet-Zeilen). Die bestehende `plainTextToHtml`-Pipeline
+erzeugt daraus Absätze, Überschriften und Listen. Ein konkreter
+Client-Formatierungsfehler war mit diesem Fixture nicht reproduzierbar; es
+wurde daher keine spekulative Änderung an der Darstellung vorgenommen.
+Zusätzlicher Regressionstest für lange Übersetzungsstruktur ergänzt.
+
+## Tests
+
+```text
+npx vitest run tests/api/profile-skills.test.js \
+  src/lib/safeHtml.test.ts \
+  src/components/RemainingCard.test.tsx
+# 49 PASS
+
+npm run build
+# PASS
+
+npx vitest run --no-file-parallelism
+# 1931 PASS / 11 skipped
+```
+
+## Git
+
+- `c4acec5` — Baseline-/Ursachenbericht
+- `27bf766` — Profil-Skill-Cap-/Prompt-/UI-Korrektur
+- Dokumentations-Commit folgt separat.
+
+Branch gepusht: `feature/jm-translation-ats-orchestrator-01`.
+Kein Merge, kein Production-Deployment.
+
+## Status
+
+**B — PARTIAL / NEEDS DECISION:** B ist reproduzierbar bestätigt und lokal
+korrigiert; A ist mit dem synthetischen Langtext nicht bestätigt. Für eine
+weitere A-Korrektur wird die konkrete betroffene Anzeige bzw. der
+Übersetzungs-Response benötigt.
