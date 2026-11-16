@@ -2,10 +2,10 @@
 
 **Status:** `IMPLEMENTED / VERIFIED LOCAL / SERIAL FULL GREEN — PARALLEL TEST FLAKE OUTSIDE ATS — NO MERGE/DEPLOY`
 
-**Date:** 2026-11-16  
-**Repository:** `maynowak/mays-jobsearch`  
-**Branch:** `feature/jm-ats-metadata-recovery-02`  
-**Baseline:** `origin/main` `464783b936647b281df63d6dd8c18b15ad732aa3`  
+**Date:** 2026-11-16
+**Repository:** `maynowak/mays-jobsearch`
+**Branch:** `feature/jm-ats-metadata-recovery-02`
+**Baseline:** `origin/main` `464783b936647b281df63d6dd8c18b15ad732aa3`
 **Predecessors:** `JM-ATS-GIT-RECOVERY-01`, `JM-ATS-MATCHING-QUALITY-01`
 
 ## 1. Ziel
