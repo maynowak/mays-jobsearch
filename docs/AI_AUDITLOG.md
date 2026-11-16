@@ -6635,3 +6635,24 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   evidence boundaries, not functional UX blockers.
 - Recommendation: owner review/approval of PR #22; no automatic merge.
 - Report: `docs/reports/JM-CV-UX-RELEASE-01-RELEASE-GATE.md`.
+
+## 2026-11-16 — JM-TRANSLATION-ATS-ORCH-01 — ORCH-00 BASELINE
+
+**Status:** `INVESTIGATION IN PROGRESS — BEFUND B BESTÄTIGT`
+
+- Started from `origin/main` `154c698`; branch
+  `feature/jm-translation-ats-orchestrator-01`.
+- Translation data flow verified: explicit `/api/job-details` action,
+  plaintext provider output, `renderSanitizedHtml`/`plainTextToHtml`, original
+  job state preserved, ATS uses original.
+- Synthetic long translation fixture retained structure (575 chars, 17 line
+  breaks, 9 bullet lines); no client formatting defect reproduced yet.
+- CV/ATS data flow verified: `extractPdfText` → `/api/profile` model →
+  `suggestedProfile.skills` → skill selection → ATS profile.
+- Confirmed cap: `api/profile.mjs` `cleanStringList()` slices at 20; synthetic
+  30-technology CV returned exactly 20 skills. Prompt also asks for “key
+  skills”, not all named technologies. This is a profile snapshot/cap issue,
+  not a PDF parser proof.
+- No real CV data, provider prompt with real CV, repo fixture, RIS/AWS/Cognito,
+  persistence, consent or scoring change.
+- Report: `docs/reports/JM-TRANSLATION-ATS-ORCH-01.md`.
