@@ -278,6 +278,7 @@ export default function App() {
     context: LetterPreparationContext;
   } | null>(null);
   const [atsJob, setAtsJob] = useState<Job | null>(null);
+  const [atsDescriptionOrigin, setAtsDescriptionOrigin] = useState<"original" | "reloaded" | "manual">("original");
   // CV-PROFILE-LISTS-01: Profil-Overlay pro CV (benannte Such-/ATS-Profile)
   const [profilesDocId, setProfilesDocId] = useState<string | null>(null);
   // Name fuer den ATS-Profil-Eintrag (Skills-Step bei Ziel ATS)
@@ -4388,7 +4389,10 @@ export default function App() {
                       matches={matches}
                       foundJobs={foundJobs}
                       onGenerateLetter={(job, prepare) => setLetterJob({ job, prepare })}
-                      onAtsEvaluate={(job) => setAtsJob(job)}
+                      onAtsEvaluate={(job, descriptionOrigin) => {
+                        setAtsJob(job);
+                        setAtsDescriptionOrigin(descriptionOrigin ?? "original");
+                      }}
                       analyzingJobSlug={atsJob?.slug ?? null}
                       expandAllSignal={resultsExpandAllSignal}
                     />
@@ -4455,6 +4459,7 @@ export default function App() {
               activeAtsId={activeAtsEntryId}
               activeSearchId={selectedSavedSearchId}
               criteria={activeAtsEntry?.criteria}
+              descriptionOrigin={atsDescriptionOrigin}
               onSkillAdded={async (skill) => {
                 if (!listSourceDoc?.hash || !activeAtsEntryId || !selectedSavedSearchId || !activeAtsEntry) {
                   throw new Error(t("cv.errorProfileMissing"));

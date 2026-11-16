@@ -1,8 +1,11 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import MatchCard from "./MatchCard";
 import { LangProvider } from "../i18n";
+import { fetchJobDetails } from "../api";
 import type { Match, Job } from "../types";
+
+vi.mock("../api", () => ({ fetchJobDetails: vi.fn() }));
 
 const createTestJob = (overrides = {}): Job => ({
   slug: "test-job",
@@ -107,6 +110,35 @@ describe("MatchCard - ATS Evaluation Button", () => {
 
     expect(screen.getByText("Anschreiben erstellen")).toBeInTheDocument();
     expect(screen.getByText("Mit ATS bewerten")).toBeInTheDocument();
+  });
+
+  it("loads short Arbeitsagentur details before ATS", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    const match = createTestMatch({ job });
+    const enriched = {
+      ...job,
+      description: "<p>Vollständige Beschreibung</p>",
+      descriptionPlain:
+        "Vollständige Beschreibung mit AWS. Wir entwickeln Systeme und suchen Erfahrung mit Requirements.",
+    };
+    const onAtsEvaluate = vi.fn();
+    vi.mocked(fetchJobDetails).mockReset();
+    vi.mocked(fetchJobDetails).mockResolvedValue({ jobs: { [job.slug]: enriched } });
+
+    renderMatchCard({ match, index: 0, onGenerateLetter: () => {}, onAtsEvaluate });
+    fireEvent.click(screen.getByText("Mit ATS bewerten"));
+
+    await waitFor(() =>
+      expect(onAtsEvaluate).toHaveBeenCalledWith(
+        expect.objectContaining({ descriptionPlain: enriched.descriptionPlain }),
+        "reloaded"
+      )
+    );
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the original posting link in the shared action bar", () => {

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Job } from "../types";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
-import { fetchJobDetails } from "../api";
+import { fetchJobDetails, translateJobDescription } from "../api";
+import { hasSufficientJobDescription } from "../lib/atsJobHandoff";
 import {
   formatJobDate,
   jobTypeLabelKey,
@@ -29,10 +30,16 @@ function renderHtmlContent(html: string, lang?: string) {
   return renderSanitizedHtml(html, lang);
 }
 
+type TranslationState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ready"; text: string }
+  | { status: "error" };
+
 interface Props {
   job: Job;
   onGenerateLetter?: (job: Job, prepare: string) => void;
-  onAtsEvaluate?: (job: Job) => void;
+  onAtsEvaluate?: (job: Job, descriptionOrigin?: "original" | "reloaded") => void;
   analyzing?: boolean;
 }
 
@@ -41,29 +48,45 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   const [expanded, setExpanded] = useState(false);
   const [detailJob, setDetailJob] = useState<Job | null>(null);
   const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [atsLoading, setAtsLoading] = useState(false);
+  const detailPromiseRef = useRef<Promise<Job | null> | null>(null);
+  const [translation, setTranslation] = useState<TranslationState>({ status: "idle" });
+  const [showTranslation, setShowTranslation] = useState(false);
 
   const isAA = (job.source ?? []).includes("arbeitsagentur");
 
-  const loadDetails = async () => {
-    if (detailStatus === "loading") return;
+  const loadDetails = async (): Promise<Job | null> => {
     if (detailJob) {
       setExpanded(true);
-      return;
+      return detailJob;
     }
+    if (detailPromiseRef.current) return detailPromiseRef.current;
+
     setDetailStatus("loading");
     setExpanded(true);
-    try {
-      const res = await fetchJobDetails([job.slug]);
-      const enriched = res?.jobs?.[job.slug];
-      if (enriched && enriched.description) {
-        setDetailJob(enriched);
-        setDetailStatus("idle");
-        setExpanded(true);
-      } else {
+    const promise = (async () => {
+      try {
+        const res = await fetchJobDetails([job.slug]);
+        const enriched = res?.jobs?.[job.slug];
+        if (enriched && enriched.description) {
+          setDetailJob(enriched);
+          setDetailStatus("idle");
+          setExpanded(true);
+          return enriched;
+        }
         setDetailStatus("error");
+        return null;
+      } catch {
+        setDetailStatus("error");
+        return null;
       }
-    } catch {
-      setDetailStatus("error");
+    })();
+
+    detailPromiseRef.current = promise;
+    try {
+      return await promise;
+    } finally {
+      detailPromiseRef.current = null;
     }
   };
 
@@ -103,14 +126,74 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   const description = displayJob.description ?? "";
   const descriptionPlain = displayJob.descriptionPlain ?? "";
   const descriptionLang = displayJob.language ?? job.language;
-  const hasDescription = description.trim().length > 0;
+  const translatedReady = translation.status === "ready";
+  const visibleDescription =
+    showTranslation && translatedReady ? translation.text : description;
+  const visibleDescriptionPlain =
+    showTranslation && translatedReady ? translation.text : descriptionPlain;
+  const visibleDescriptionLang = showTranslation ? "de" : descriptionLang;
+  const hasDescription = visibleDescription.trim().length > 0;
   const showDescriptionToggle =
-    descriptionPlain.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
+    visibleDescriptionPlain.replace(/\s+/g, " ").trim().length > DESCRIPTION_PREVIEW_LENGTH;
 
   const previewText =
     !expanded && showDescriptionToggle
-      ? descriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
-      : descriptionPlain;
+      ? visibleDescriptionPlain.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
+      : visibleDescriptionPlain;
+
+  const canTranslate =
+    (!isAA || Boolean(detailJob)) &&
+    descriptionLang === "en" &&
+    (descriptionPlain.trim() || description.trim()).length > 0;
+
+  useEffect(() => {
+    setTranslation({ status: "idle" });
+    setShowTranslation(false);
+  }, [displayJob.slug, descriptionLang, descriptionPlain, description]);
+
+  const requestTranslation = async () => {
+    if (translation.status === "loading") return;
+    if (translation.status === "ready") {
+      setShowTranslation(true);
+      return;
+    }
+    setTranslation({ status: "loading" });
+    try {
+      const result = await translateJobDescription(
+        descriptionPlain || description,
+        descriptionLang || "auto"
+      );
+      if (!result.translation.trim()) throw new Error("empty translation");
+      setTranslation({ status: "ready", text: result.translation });
+      setShowTranslation(true);
+    } catch {
+      setTranslation({ status: "error" });
+      setShowTranslation(false);
+    }
+  };
+
+  const descriptionIsSufficient = hasSufficientJobDescription(displayJob);
+
+  const handleAtsEvaluate = async () => {
+    if (!onAtsEvaluate || atsLoading) return;
+
+    // Full descriptions go straight to ATS. A short/incomplete description
+    // reuses the existing job-details path where that source path exists.
+    if (descriptionIsSufficient || !isAA) {
+      onAtsEvaluate(displayJob);
+      return;
+    }
+
+    setAtsLoading(true);
+    const loaded = await loadDetails();
+    setAtsLoading(false);
+
+    if (loaded) {
+      onAtsEvaluate(loaded, "reloaded");
+    } else {
+      onAtsEvaluate(displayJob);
+    }
+  };
 
   // Reuse already-loaded detail data for the letter, but never trigger a new
   // detail request here. Preserve the original job's stable fields.
@@ -187,15 +270,59 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
         </div>
       )}
 
+      {canTranslate && (
+        <div className="job-translation">
+          <div
+            className="job-translation__switch"
+            role="group"
+            aria-label={t("results.translation.label")}
+          >
+            <button
+              type="button"
+              className={`job-translation__button${showTranslation ? "" : " is-active"}`}
+              aria-pressed={!showTranslation}
+              onClick={() => setShowTranslation(false)}
+            >
+              {showTranslation
+                ? t("results.translation.showOriginal")
+                : t("results.translation.original")}
+            </button>
+            <button
+              type="button"
+              className={`job-translation__button${showTranslation ? " is-active" : ""}`}
+              aria-pressed={showTranslation}
+              disabled={translation.status === "loading"}
+              onClick={() => void requestTranslation()}
+            >
+              {t("results.translation.readGerman")}
+            </button>
+          </div>
+          <p className="job-translation__consent">{t("results.translation.consent")}</p>
+          {translation.status === "loading" && (
+            <p className="job-translation__status" role="status">
+              {t("results.translation.loading")}
+            </p>
+          )}
+          {translation.status === "error" && (
+            <p className="job-translation__error" role="alert">
+              {t("results.translation.error")}
+            </p>
+          )}
+          {showTranslation && translatedReady && (
+            <p className="job-translation__notice">{t("results.translation.notice")}</p>
+          )}
+        </div>
+      )}
+
       {(!isAA || detailJob) && hasDescription && (
         <div className="remaining-description-wrap">
           {expanded || !showDescriptionToggle ? (
-            renderHtmlContent(description, descriptionLang)
+            renderHtmlContent(visibleDescription, visibleDescriptionLang)
           ) : (
             <p
               className="remaining-description"
-              lang={descriptionLang}
-              translate={descriptionLang === "en" ? "yes" : undefined}
+              lang={visibleDescriptionLang}
+              translate={visibleDescriptionLang === "en" ? "yes" : undefined}
             >
               {previewText}
             </p>
@@ -239,10 +366,12 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
           <button
             type="button"
             className="ats-evaluate-btn"
-            onClick={() => onAtsEvaluate(displayJob)}
-            aria-label={t("match.atsEvaluate")}
+            onClick={() => void handleAtsEvaluate()}
+            aria-label={atsLoading ? t("match.atsLoadingDescription") : t("match.atsEvaluate")}
+            aria-busy={atsLoading}
+            disabled={atsLoading}
           >
-            {t("match.atsEvaluate")}
+            {atsLoading ? t("match.atsLoadingDescription") : t("match.atsEvaluate")}
           </button>
         )}
       </div>

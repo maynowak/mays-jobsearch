@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Job, Profile } from "../types";
 import { LangProvider } from "../i18n";
 import { analyzeATS, type AtsAnalysisResponse } from "../api";
@@ -32,8 +32,10 @@ const baseJob: Job = {
   location: ["Berlin"],
   remote: true,
   url: "https://example.com/job",
-  description: "We need React and TypeScript experience.",
-  descriptionPlain: "We need React and TypeScript experience.",
+  description:
+    "We are looking for a Frontend Developer. You will build reliable React and TypeScript applications with AWS. Requirements: 3 years experience and strong communication.",
+  descriptionPlain:
+    "We are looking for a Frontend Developer. You will build reliable React and TypeScript applications with AWS. Requirements: 3 years experience and strong communication.",
   created_at: new Date().toISOString(),
 };
 
@@ -430,6 +432,55 @@ describe("ATS-TABLE-LAYOUT-01: Anforderungs-Tabellen trennen Text und Status", (
     expect(first?.querySelector(".ats-requirement-text")).not.toBeNull();
     expect(first?.querySelector(".ats-requirement-status")).not.toBeNull();
     cleanup();
+  });
+
+  it("bietet bei fehlender Beschreibung die manuelle ATS-Eingabe an", async () => {
+    const noDescriptionJob = {
+      ...baseJob,
+      description: "",
+      descriptionPlain: "",
+    };
+    const incompleteAnalysis = createMockAnalysis({
+      analysis: {
+        score: 0,
+        keywordCoverage: { overall: 0 },
+        requirementCoverage: 0,
+        analysisStatus: "insufficient",
+        criticalGaps: [],
+        requirements: [],
+        matches: [],
+      },
+    });
+    vi.mocked(analyzeATS).mockClear();
+    vi.mocked(analyzeATS).mockResolvedValue(incompleteAnalysis);
+
+    render(
+      <LangProvider>
+        <AtsOverlay job={noDescriptionJob} profile={baseProfile} onClose={vi.fn()} />
+      </LangProvider>
+    );
+    await screen.findByText("ATS-Bewertung");
+
+    fireEvent.click(screen.getByRole("button", { name: "Stellenbeschreibung manuell einfügen" }));
+    const textarea = screen.getByLabelText("Stellenbeschreibung");
+    fireEvent.change(textarea, {
+      target: {
+        value:
+          "We are looking for a Frontend Developer. You will build reliable React and TypeScript applications. Requirements: 3 years experience and strong communication.",
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Mit dieser Beschreibung bewerten" }));
+
+    await waitFor(() => expect(analyzeATS).toHaveBeenCalledTimes(2));
+    const lastJob = vi.mocked(analyzeATS).mock.calls.at(-1)?.[0];
+    expect(lastJob).toMatchObject({
+      description:
+        "We are looking for a Frontend Developer. You will build reliable React and TypeScript applications. Requirements: 3 years experience and strong communication.",
+      descriptionPlain:
+        "We are looking for a Frontend Developer. You will build reliable React and TypeScript applications. Requirements: 3 years experience and strong communication.",
+    });
+    expect(noDescriptionJob.description).toBe("");
+    expect(noDescriptionJob.descriptionPlain).toBe("");
   });
 
   it("rendert jede Anforderungszeile einmal mit der identischen Zeilen-Struktur", async () => {

@@ -6408,6 +6408,51 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No RIS/AWS/Cognito/CV-parser/persistence change, no merge or deployment.
 - Report: `docs/reports/JM-ATS-METADATA-RECOVERY-02.md`.
 
+## 2026-11-16 — JM-ATS-DESCRIPTION-HANDOFF-01
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — NO MERGE/DEPLOY`
+
+- ATS handoff now reuses the existing `fetchJobDetails` path when a short
+  Arbeitsagentur description is detected. `MatchCard` and `RemainingCard` share
+  `src/lib/atsJobHandoff.ts` and the existing `evaluateDescription()` quality
+  signal; no new API or fetch architecture.
+- `AtsOverlay` adds an explicit manual-description fallback with a 20,000-char
+  limit, validation and no persistence. Manual text is sent only through a
+  local `jobForAnalysis` clone; original job fields remain untouched.
+- Description origin is tracked as `original`, `reloaded` or `manual`.
+  Incomplete descriptions show “Beschreibung unvollständig” rather than a
+  misleading full score.
+- ATS, matching and translation remain isolated: no ATS file or translation
+  provider changed; no German translation is used as ATS input. PR #21 is not
+  part of this branch.
+- Tests: focused 40 PASS; build PASS; serial full **1901 PASS / 11 skipped**.
+- Commits: `27bae97`, `9ebe784`, `f4060a7`, `0155872` plus docs commit. Branch
+  `feature/jm-ats-description-handoff-01`; no merge, no production deployment.
+- Report: `docs/reports/JM-ATS-DESCRIPTION-HANDOFF-01.md`.
+## 2026-11-16 — JM-JOB-TRANSLATION-01
+
+**Status:** `A — IMPLEMENTED / VERIFIED LOCAL + PREVIEW PROVIDER E2E — NO MERGE/DEPLOY`
+
+- Added an explicit `Original | Deutsch lesen` reading view for English job
+  descriptions. Original remains the default and can be restored immediately.
+- Extended the existing `/api/job-details` function with
+  `action: "translate"` instead of adding a new Vercel serverless function.
+- Reused the existing OpenRouter/EdenAI `chat()` router, provider budget and
+  `ipQuota` abuse controls. No new external service, API key or dependency.
+- Translation is display-only in `RemainingCard`; `job.description`,
+  `job.descriptionPlain`, ATS, matching, applications and RIS data are
+  unchanged. No ATS file was modified.
+- Provider input is limited to 20,000 plain-text characters; explicit consent
+  is required; no CV/application/profile data is sent; no server-side storage.
+- Provider errors keep the original visible and show a localized error.
+- Tests: API 8 PASS; RemainingCard 16 PASS; build PASS; serial full suite
+  **1908 PASS / 11 skipped**. Real provider translation verified on Vercel
+  Preview (HTTP 200; AWS, TypeScript and Kubernetes preserved).
+- Commits: `f6067c3`, `553d83d` plus docs commit. Branch
+  `feature/jm-job-translation-01`; draft PR #21. No main merge or production
+  deployment.
+- Report: `docs/reports/JM-JOB-TRANSLATION-01.md`.
+
 ## 2026-11-15 — JM-CV-UX-01 — CV BUILDER SAVE BLOCKER
 
 **Status:** `COMPLETE — LOCAL/UNIT VERIFIED — LIVE RIS E2E NOT EXECUTED`
