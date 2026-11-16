@@ -6407,3 +6407,30 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Commits: `711a823`, `ceefa6f`, `3d66f62`, `d6b2669` plus docs commit.
 - No RIS/AWS/Cognito/CV-parser/persistence change, no merge or deployment.
 - Report: `docs/reports/JM-ATS-METADATA-RECOVERY-02.md`.
+
+## 2026-11-16 — JM-RELEASE-ATS-20-TRANSLATION-RECOVERY-01
+
+**Phase A Status:** `ATS-MERGE VERIFIED / PRODUCTION DEPLOYED`
+**Phase B Status:** `TRANSLATION FOUND / PARTIAL — LANGUAGE METADATA ONLY`
+
+- PR #20 `fix(ats): restore metadata separation and consolidate requirement view`
+  was marked ready and merged regularly into `main`.
+- Merge commit: `fbe58e1cb885a365ff82cef0f8a5357a96f8a8c7`; parent
+  `464783b936647b281df63d6dd8c18b15ad732aa3` + `c614738a747861d8d7d5cd3a62b3d1939727d6cd`.
+- `origin/main` after merge: `fbe58e1cb885a365ff82cef0f8a5357a96f8a8c7`.
+- Changed surface is limited to ATS extraction/API/UI/tests/docs; no RIS,
+  AWS, Cognito, CV-parser, persistence, or production configuration change.
+- CodeQL on merge commit: PASS. Vercel Production deployments for
+  `mays-job-matcher` and `mays-jobsearch`: PASS.
+- Live domains `www.mays-job-matcher.app` and `mays-jobsearch.vercel.app`
+  served bundle SHA `fbe58e1`; synthetic `POST /api/ats-analysis` returned
+  `DevOps`, `Cloud`, `Terraform`, `Software Architecture` as requirements with
+  separate metadata and role match 100. No manual production deployment.
+- Phase B read-only: `2038085c7` remains an ancestor of `main` and is the
+  historical language/browser-translation metadata commit. Current code still
+  has `detectLanguage`, `Job.language`, `renderSanitizedHtml(html, lang)` and
+  `lang`/`translate` attributes in `RemainingCard`; there is no in-app
+  translation engine, no Original/translation toggle and no translation API.
+  Browser-side translation remains browser behavior; no product change.
+- No additional main commit for this auditlog entry; this document lives on
+  `docs/jm-release-ats-20-translation-recovery-01` only.
