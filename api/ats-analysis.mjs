@@ -138,12 +138,14 @@ export default async function handler(req, res) {
         roleMatch: analysis.scores.roleMatch,
         analysisStatus: analysis.analysisStatus,
         basis: analysis.basis,
+        metadata: analysis.metadata,
         criticalGaps: analysis.criticalGaps,
         requirements: analysis.requirements.map(r => ({
           id: r.id,
           text: r.text,
           category: r.category,
           importance: r.importance,
+          source: r.source,
         })),
         matches: analysis.matches.map(m => ({
           requirementId: m.requirementId,
