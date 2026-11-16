@@ -451,3 +451,50 @@ describe("ATS-TABLE-LAYOUT-01: Anforderungs-Tabellen trennen Text und Status", (
     cleanup();
   });
 });
+
+describe("JM-ATS-METADATA-RECOVERY-02: non-redundant requirement view", () => {
+  it("zeigt Requirements einmal, Metadaten separat und keine Metadaten als Luecke", async () => {
+    const analysis = createMockAnalysis({
+      analysis: {
+        score: 40,
+        keywordCoverage: { overall: 40 },
+        requirementCoverage: 40,
+        criticalGaps: [],
+        metadata: {
+          title: "Solutions Architect (Remote)",
+          titleTokens: ["solutions", "architect", "(remote)"],
+          language: "de",
+          workMode: "onsite",
+          jobTypes: ["full_time"],
+          contractType: null,
+          contractTypeNoData: true,
+        },
+        requirements: [
+          { id: "req-devops", text: "DevOps", category: "skill", importance: "high", source: "tags" },
+          { id: "req-k8s", text: "Kubernetes", category: "skill", importance: "high", source: "description" },
+        ],
+        matches: [
+          { requirementId: "req-devops", status: "UNKNOWN", confidence: "LOW" },
+          { requirementId: "req-k8s", status: "UNKNOWN", confidence: "LOW" },
+        ],
+      },
+    });
+    vi.mocked(analyzeATS).mockResolvedValue(analysis);
+
+    const { container } = render(
+      <LangProvider>
+        <AtsOverlay job={baseJob} profile={baseProfile} onClose={vi.fn()} />
+      </LangProvider>
+    );
+    await screen.findByText("ATS-Bewertung");
+
+    expect(screen.getAllByText("DevOps")).toHaveLength(1);
+    expect(screen.getAllByText("Kubernetes")).toHaveLength(1);
+    expect(screen.getByText("Stellenkontext")).toBeInTheDocument();
+    expect(screen.getByText("Arbeitsmodell: onsite")).toBeInTheDocument();
+    expect(screen.getByText("Sprache: de")).toBeInTheDocument();
+    expect(screen.queryByText("KEINE_ANGABE")).not.toBeInTheDocument();
+    expect(container.querySelectorAll(".ats-gap-item")).toHaveLength(0);
+    expect(screen.getAllByText(/2 Anforderungen brauchen eine genauere Prüfung/i).length).toBeGreaterThan(0);
+  });
+});
