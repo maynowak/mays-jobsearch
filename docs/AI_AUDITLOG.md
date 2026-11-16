@@ -6408,6 +6408,27 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No RIS/AWS/Cognito/CV-parser/persistence change, no merge or deployment.
 - Report: `docs/reports/JM-ATS-METADATA-RECOVERY-02.md`.
 
+## 2026-11-16 — JM-ATS-DESCRIPTION-HANDOFF-01
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — NO MERGE/DEPLOY`
+
+- ATS handoff now reuses the existing `fetchJobDetails` path when a short
+  Arbeitsagentur description is detected. `MatchCard` and `RemainingCard` share
+  `src/lib/atsJobHandoff.ts` and the existing `evaluateDescription()` quality
+  signal; no new API or fetch architecture.
+- `AtsOverlay` adds an explicit manual-description fallback with a 20,000-char
+  limit, validation and no persistence. Manual text is sent only through a
+  local `jobForAnalysis` clone; original job fields remain untouched.
+- Description origin is tracked as `original`, `reloaded` or `manual`.
+  Incomplete descriptions show “Beschreibung unvollständig” rather than a
+  misleading full score.
+- ATS, matching and translation remain isolated: no ATS file or translation
+  provider changed; no German translation is used as ATS input. PR #21 is not
+  part of this branch.
+- Tests: focused 40 PASS; build PASS; serial full **1901 PASS / 11 skipped**.
+- Commits: `27bae97`, `9ebe784`, `f4060a7`, `0155872` plus docs commit. Branch
+  `feature/jm-ats-description-handoff-01`; no merge, no production deployment.
+- Report: `docs/reports/JM-ATS-DESCRIPTION-HANDOFF-01.md`.
 ## 2026-11-16 — JM-JOB-TRANSLATION-01
 
 **Status:** `A — IMPLEMENTED / VERIFIED LOCAL + PREVIEW PROVIDER E2E — NO MERGE/DEPLOY`

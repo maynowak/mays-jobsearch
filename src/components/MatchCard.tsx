@@ -1,15 +1,17 @@
+import { useRef, useState } from "react";
 import type { Job, Match } from "../types";
 import ScoreBadge from "./ScoreBadge";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
 import { formatGermanLocation } from "../lib/location";
 import { renderSanitizedHtml } from "../lib/safeHtml";
+import { hasSufficientJobDescription, loadJobDescriptionForAts } from "../lib/atsJobHandoff";
 
 interface Props {
   match: Match;
   index: number;
   onGenerateLetter: (job: Job, prepare: string) => void;
-  onAtsEvaluate?: (job: Job) => void;
+  onAtsEvaluate?: (job: Job, descriptionOrigin?: "original" | "reloaded") => void;
   analyzing?: boolean;
 }
 
@@ -19,8 +21,28 @@ function renderHtmlContent(html: string) {
 
 export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluate, analyzing }: Props) {
   const { t } = useLang();
+  const [atsLoading, setAtsLoading] = useState(false);
+  const atsLoadingRef = useRef(false);
   const job = match.job ?? ({} as Partial<Job>);
   const m = (job as Job) || {};
+
+  const handleAtsEvaluate = async () => {
+    if (!onAtsEvaluate || atsLoadingRef.current) return;
+    if (hasSufficientJobDescription(m as Job) || !(m.source ?? []).includes("arbeitsagentur")) {
+      onAtsEvaluate(m as Job);
+      return;
+    }
+    atsLoadingRef.current = true;
+    setAtsLoading(true);
+    const loaded = await loadJobDescriptionForAts(m as Job);
+    atsLoadingRef.current = false;
+    setAtsLoading(false);
+    if (loaded) {
+      onAtsEvaluate(loaded, "reloaded");
+    } else {
+      onAtsEvaluate(m as Job);
+    }
+  };
 
   const location =
     formatGermanLocation(m.location ?? []) || (m.remote ? t("match.remote") : t("match.locationNotStated"));
@@ -87,10 +109,12 @@ export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluat
             <button
               type="button"
               className="ats-evaluate-btn"
-              onClick={() => onAtsEvaluate(m as Job)}
-              aria-label={t("match.atsEvaluate")}
+              onClick={() => void handleAtsEvaluate()}
+              aria-label={atsLoading ? t("match.atsLoadingDescription") : t("match.atsEvaluate")}
+              aria-busy={atsLoading}
+              disabled={atsLoading}
             >
-              {t("match.atsEvaluate")}
+              {atsLoading ? t("match.atsLoadingDescription") : t("match.atsEvaluate")}
             </button>
           )}
         </div>

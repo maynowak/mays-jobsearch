@@ -11,7 +11,7 @@ interface Props {
   matches: Match[];
   foundJobs: Job[];
   onGenerateLetter: (job: Job, prepare: string) => void;
-  onAtsEvaluate?: (job: Job) => void;
+  onAtsEvaluate?: (job: Job, descriptionOrigin?: "original" | "reloaded") => void;
   analyzingJobSlug?: string | null; // Job currently being analyzed in ATS overlay
   expandAllSignal?: number;
 }

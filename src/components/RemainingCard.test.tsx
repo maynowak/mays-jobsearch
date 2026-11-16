@@ -298,6 +298,80 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(fetchJobDetails).toHaveBeenCalledTimes(1);
   });
 
+  it("loads a short Arbeitsagentur description before opening ATS", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+      language: "de",
+    });
+    const enriched = {
+      ...job,
+      description: "<p>Vollständige Beschreibung mit AWS und TypeScript.</p>",
+      descriptionPlain:
+        "Vollständige Beschreibung mit AWS und TypeScript. Wir entwickeln zuverlässige Systeme und suchen Erfahrung mit Requirements.",
+    };
+    const onAtsEvaluate = vi.fn();
+    vi.mocked(fetchJobDetails).mockReset();
+    vi.mocked(fetchJobDetails).mockResolvedValue({ jobs: { [job.slug]: enriched } });
+
+    renderWithProvider(job, "de", { onAtsEvaluate });
+    fireEvent.click(screen.getByRole("button", { name: "Mit ATS bewerten" }));
+
+    expect(await screen.findByRole("button", { name: /Vollständige Stellenbeschreibung wird geladen/i })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(onAtsEvaluate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: job.slug,
+          descriptionPlain: enriched.descriptionPlain,
+        }),
+        "reloaded"
+      )
+    );
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not fetch details again when ATS is clicked twice while loading", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    let resolveDetails: (value: { jobs: Record<string, never> }) => void = () => {};
+    const pending = new Promise<{ jobs: Record<string, never> }>((resolve) => {
+      resolveDetails = resolve;
+    });
+    vi.mocked(fetchJobDetails).mockReset();
+    vi.mocked(fetchJobDetails).mockImplementationOnce(() => pending);
+    const onAtsEvaluate = vi.fn();
+
+    renderWithProvider(job, "de", { onAtsEvaluate });
+    const atsButton = screen.getByRole("button", { name: "Mit ATS bewerten" });
+    fireEvent.click(atsButton);
+    fireEvent.click(atsButton);
+
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
+    resolveDetails({ jobs: {} });
+    await waitFor(() => expect(onAtsEvaluate).toHaveBeenCalledWith(job));
+  });
+
+  it("opens ATS with the short original when detail loading fails", async () => {
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      description: "",
+      descriptionPlain: "",
+    });
+    const onAtsEvaluate = vi.fn();
+    vi.mocked(fetchJobDetails).mockReset();
+    vi.mocked(fetchJobDetails).mockRejectedValueOnce(new Error("detail down"));
+
+    renderWithProvider(job, "de", { onAtsEvaluate });
+    fireEvent.click(screen.getByRole("button", { name: "Mit ATS bewerten" }));
+
+    await waitFor(() => expect(onAtsEvaluate).toHaveBeenCalledWith(job));
+    expect(fetchJobDetails).toHaveBeenCalledTimes(1);
+  });
+
   it("offers a German reading view only for English descriptions and caches it", async () => {
     const job = createTestJob({
       language: "en",

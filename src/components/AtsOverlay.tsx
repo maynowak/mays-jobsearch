@@ -3,6 +3,7 @@ import { analyzeATS, type AtsAnalysisResponse, fetchModels } from "../api";
 import type { Job, Profile, ModelOption } from "../types";
 import type { ATSCriteriaV1 } from "../lib/profiles/contractTypes";
 import { useLang } from "../i18n";
+import { evaluateDescription } from "../lib/jobDescriptionReview";
 import { ConsentGate } from "./ConsentGate";
 import { PrivacyNotice } from "./PrivacyNotice";
 
@@ -20,6 +21,7 @@ interface Props {
   activeAtsId?: string | null;
   activeSearchId?: string | null;
   criteria?: ATSCriteriaV1 | null;
+  descriptionOrigin?: "original" | "reloaded" | "manual";
   onSkillAdded?: (skill: string) => Promise<void>;
 }
 
@@ -53,7 +55,7 @@ function getUserFacingStatus(status: string): string {
   return key ? key : status;
 }
 
-export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, criteria, onSkillAdded }: Props) {
+export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, criteria, descriptionOrigin = "original", onSkillAdded }: Props) {
   const { t } = useLang();
   const [analysis, setAnalysis] = useState<AtsAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,6 +72,10 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
   const [addedSkillKeys, setAddedSkillKeys] = useState<Set<string>>(new Set());
   const [recError, setRecError] = useState("");
   const [recNotice, setRecNotice] = useState("");
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualDraft, setManualDraft] = useState("");
+  const [manualDescription, setManualDescription] = useState<string | null>(null);
+  const [manualError, setManualError] = useState("");
   // Effektive Skill-Liste für API-Aufrufe: beginnt mit dem Prop-Wert und wird
   // durch bestätigte Skills lokal erweitert (der Parent rendert erst beim
   // Schließen des Overlays neu — der Ref verhindert veraltete Payloads).
@@ -79,6 +85,28 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
   // des Profils ändert sich bei jedem Parent-Render — als Effect-Dependency
   // würde sie jedes Reconciliation-Badge löschen und Folgeanfragen auslösen.
   const skillsForAts = profile?.skills ?? "";
+  const jobForAnalysis = useMemo<Job>(() => {
+    if (!manualDescription) return job;
+    return {
+      ...job,
+      description: manualDescription,
+      descriptionPlain: manualDescription,
+      language: undefined,
+    };
+  }, [job, manualDescription]);
+  const descriptionQuality = useMemo(
+    () => evaluateDescription(manualDescription ?? job.descriptionPlain ?? job.description ?? ""),
+    [manualDescription, job.descriptionPlain, job.description]
+  );
+  const descriptionSufficient = descriptionQuality.completeness === "sufficient";
+  const effectiveDescriptionOrigin = manualDescription ? "manual" : descriptionOrigin;
+
+  useEffect(() => {
+    setManualOpen(false);
+    setManualDraft("");
+    setManualDescription(null);
+    setManualError("");
+  }, [job]);
 
   useEffect(() => {
     // Neuer Job-/Profil-Kontext: Reconciliation-State zurücksetzen.
@@ -99,7 +127,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
     setLoading(true);
     setError("");
     analyzeATS(
-      atsJobPayload(job),
+      atsJobPayload(jobForAnalysis),
       { skills: skillsForAts, targetRoles: profile?.targetRoles ?? [], criteria: criteria ?? undefined },
       { enabled: false }
     )
@@ -119,7 +147,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
     return () => {
       cancelled = true;
     };
-  }, [job, profile?.targetRoles, criteria, t, onAtsAnalyzed]);
+  }, [jobForAnalysis, profile?.targetRoles, criteria, t, onAtsAnalyzed]);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -150,7 +178,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
         criteria: criteria ?? undefined,
       };
       const refreshed = await analyzeATS(
-        atsJobPayload(job),
+        atsJobPayload(jobForAnalysis),
         profileForAts,
         { enabled: true, consent: true, ...(selectedModel ? { model: selectedModel } : {}) }
       );
@@ -208,7 +236,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
     setPreviousScore(analysis?.analysis?.score ?? null);
     try {
       const result = await analyzeATS(
-        atsJobPayload(job),
+        atsJobPayload(jobForAnalysis),
         {
           skills: mergedSkills,
           targetRoles: profile?.targetRoles ?? [],
@@ -347,6 +375,27 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
 
   const renderScore = () => {
     if (!analysis) return null;
+    const originNote = (
+      <p className="ats-description-origin">
+        {t("ats.description.origin")}: {t(`ats.description.origin.${effectiveDescriptionOrigin}`)}
+      </p>
+    );
+    if (!descriptionSufficient) {
+      return renderSection(
+        "ats.section.score.title",
+        "ats.section.score.annotation",
+        (
+          <div>
+            {originNote}
+            <div className="ats-score ats-score--limited">
+              <div className="ats-score-value">{t("ats.description.incompleteTitle")}</div>
+              <p className="ats-score-label">{t("ats.description.incompleteHint")}</p>
+            </div>
+          </div>
+        ),
+        true
+      );
+    }
     const result = analysis.analysis;
     const status = result?.analysisStatus ?? "complete";
     const currentScore = Math.round(result?.score ?? 0);
@@ -367,31 +416,34 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
           <p className="ats-score-label">{t("ats.score.insufficientHint")}</p>
         </div>
       ) : (
-        <div className="ats-score">
-          <div className="ats-score-value">
-            {currentScore}/100
-            {hasPrevious && (
-              <span style={{
-                fontSize: '0.75rem',
-                marginLeft: '8px',
-                color: delta >= 0 ? 'var(--green)' : 'var(--red)',
-                fontWeight: 'bold'
-              }}>
-                {delta >= 0 ? `+${delta}` : delta}
-              </span>
+        <div>
+          {originNote}
+          <div className="ats-score">
+            <div className="ats-score-value">
+              {currentScore}/100
+              {hasPrevious && (
+                <span style={{
+                  fontSize: '0.75rem',
+                  marginLeft: '8px',
+                  color: delta >= 0 ? 'var(--green)' : 'var(--red)',
+                  fontWeight: 'bold'
+                }}>
+                  {delta >= 0 ? `+${delta}` : delta}
+                </span>
+              )}
+            </div>
+            <div className="ats-score-label">
+              {t("ats.score.requirementCoverage")}: {coverage}%
+            </div>
+            {typeof roleMatch === "number" && (
+              <div className="ats-score-label">
+                {t("ats.score.roleMatch")}: {roleMatch}%
+              </div>
+            )}
+            {status === "limited" && (
+              <p className="ats-score-label">{t("ats.score.limitedHint")}</p>
             )}
           </div>
-          <div className="ats-score-label">
-            {t("ats.score.requirementCoverage")}: {coverage}%
-          </div>
-          {typeof roleMatch === "number" && (
-            <div className="ats-score-label">
-              {t("ats.score.roleMatch")}: {roleMatch}%
-            </div>
-          )}
-          {status === "limited" && (
-            <p className="ats-score-label">{t("ats.score.limitedHint")}</p>
-          )}
         </div>
       ),
       !!analysis
@@ -482,6 +534,93 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
             <li key={item}>{item}</li>
           ))}
         </ul>
+      ),
+      true
+    );
+  };
+
+  const submitManualDescription = () => {
+    const text = manualDraft.trim();
+    if (!text) {
+      setManualError(t("ats.description.manualRequired"));
+      return;
+    }
+    if (text.length > 20000) {
+      setManualError(t("ats.description.manualTooLong"));
+      return;
+    }
+    setManualError("");
+    setManualDescription(text);
+    setManualOpen(false);
+  };
+
+  const renderManualDescription = () => {
+    if (descriptionSufficient) return null;
+    return renderSection(
+      "ats.section.manual.title",
+      "ats.section.manual.annotation",
+      (
+        <div className="ats-manual-description">
+          {!manualOpen ? (
+            <button
+              type="button"
+              className="ats-manual-description__open"
+              onClick={() => {
+                setManualError("");
+                setManualOpen(true);
+              }}
+            >
+              {t("ats.description.manualOpen")}
+            </button>
+          ) : (
+            <>
+              <label className="ats-manual-description__label" htmlFor="ats-manual-description">
+                {t("ats.description.manualLabel")}
+              </label>
+              <textarea
+                id="ats-manual-description"
+                className="ats-manual-description__textarea"
+                value={manualDraft}
+                maxLength={20000}
+                rows={8}
+                onChange={(event) => {
+                  setManualDraft(event.currentTarget.value);
+                  setManualError("");
+                }}
+                aria-invalid={Boolean(manualError)}
+                aria-describedby={manualError ? "ats-manual-description-error" : undefined}
+              />
+              <div className="ats-manual-description__meta">
+                <span>{t("ats.description.manualHint")}</span>
+                <span>{manualDraft.length}/20000</span>
+              </div>
+              {manualError && (
+                <p id="ats-manual-description-error" className="ats-manual-description__error" role="alert">
+                  {manualError}
+                </p>
+              )}
+              <div className="ats-manual-description__actions">
+                <button
+                  type="button"
+                  className="ats-manual-description__submit"
+                  onClick={submitManualDescription}
+                >
+                  {t("ats.description.manualSubmit")}
+                </button>
+                <button
+                  type="button"
+                  className="ats-manual-description__cancel"
+                  onClick={() => {
+                    setManualOpen(false);
+                    setManualError("");
+                  }}
+                >
+                  {t("ats.description.manualCancel")}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       ),
       true
     );
@@ -757,6 +896,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
           <div className="ats-module">
             {renderDeterministicLabel()}
             {renderScore()}
+            {renderManualDescription()}
             {renderReconcileStatus()}
             {renderMetadata()}
             {renderRequirements()}

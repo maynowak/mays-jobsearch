@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Job } from "../types";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
 import { fetchJobDetails, translateJobDescription } from "../api";
+import { hasSufficientJobDescription } from "../lib/atsJobHandoff";
 import {
   formatJobDate,
   jobTypeLabelKey,
@@ -38,7 +39,7 @@ type TranslationState =
 interface Props {
   job: Job;
   onGenerateLetter?: (job: Job, prepare: string) => void;
-  onAtsEvaluate?: (job: Job) => void;
+  onAtsEvaluate?: (job: Job, descriptionOrigin?: "original" | "reloaded") => void;
   analyzing?: boolean;
 }
 
@@ -47,31 +48,45 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   const [expanded, setExpanded] = useState(false);
   const [detailJob, setDetailJob] = useState<Job | null>(null);
   const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [atsLoading, setAtsLoading] = useState(false);
+  const detailPromiseRef = useRef<Promise<Job | null> | null>(null);
   const [translation, setTranslation] = useState<TranslationState>({ status: "idle" });
   const [showTranslation, setShowTranslation] = useState(false);
 
   const isAA = (job.source ?? []).includes("arbeitsagentur");
 
-  const loadDetails = async () => {
-    if (detailStatus === "loading") return;
+  const loadDetails = async (): Promise<Job | null> => {
     if (detailJob) {
       setExpanded(true);
-      return;
+      return detailJob;
     }
+    if (detailPromiseRef.current) return detailPromiseRef.current;
+
     setDetailStatus("loading");
     setExpanded(true);
-    try {
-      const res = await fetchJobDetails([job.slug]);
-      const enriched = res?.jobs?.[job.slug];
-      if (enriched && enriched.description) {
-        setDetailJob(enriched);
-        setDetailStatus("idle");
-        setExpanded(true);
-      } else {
+    const promise = (async () => {
+      try {
+        const res = await fetchJobDetails([job.slug]);
+        const enriched = res?.jobs?.[job.slug];
+        if (enriched && enriched.description) {
+          setDetailJob(enriched);
+          setDetailStatus("idle");
+          setExpanded(true);
+          return enriched;
+        }
         setDetailStatus("error");
+        return null;
+      } catch {
+        setDetailStatus("error");
+        return null;
       }
-    } catch {
-      setDetailStatus("error");
+    })();
+
+    detailPromiseRef.current = promise;
+    try {
+      return await promise;
+    } finally {
+      detailPromiseRef.current = null;
     }
   };
 
@@ -152,6 +167,29 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
     } catch {
       setTranslation({ status: "error" });
       setShowTranslation(false);
+    }
+  };
+
+  const descriptionIsSufficient = hasSufficientJobDescription(displayJob);
+
+  const handleAtsEvaluate = async () => {
+    if (!onAtsEvaluate || atsLoading) return;
+
+    // Full descriptions go straight to ATS. A short/incomplete description
+    // reuses the existing job-details path where that source path exists.
+    if (descriptionIsSufficient || !isAA) {
+      onAtsEvaluate(displayJob);
+      return;
+    }
+
+    setAtsLoading(true);
+    const loaded = await loadDetails();
+    setAtsLoading(false);
+
+    if (loaded) {
+      onAtsEvaluate(loaded, "reloaded");
+    } else {
+      onAtsEvaluate(displayJob);
     }
   };
 
@@ -326,10 +364,12 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
           <button
             type="button"
             className="ats-evaluate-btn"
-            onClick={() => onAtsEvaluate(displayJob)}
-            aria-label={t("match.atsEvaluate")}
+            onClick={() => void handleAtsEvaluate()}
+            aria-label={atsLoading ? t("match.atsLoadingDescription") : t("match.atsEvaluate")}
+            aria-busy={atsLoading}
+            disabled={atsLoading}
           >
-            {t("match.atsEvaluate")}
+            {atsLoading ? t("match.atsLoadingDescription") : t("match.atsEvaluate")}
           </button>
         )}
       </div>
