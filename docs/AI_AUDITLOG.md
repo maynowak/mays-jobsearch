@@ -6635,3 +6635,24 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   evidence boundaries, not functional UX blockers.
 - Recommendation: owner review/approval of PR #22; no automatic merge.
 - Report: `docs/reports/JM-CV-UX-RELEASE-01-RELEASE-GATE.md`.
+
+## 2026-11-16 — JM-TRANSLATION-MODEL-SELECTION-01
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — NO MERGE/DEPLOY`
+
+- Existing model router verified: `/api/models` supplies free compatible
+  models; `chat()` validates selected IDs with `assertFreeModel()`.
+- `/api/job-details?action=translate` now accepts an optional validated model
+  and passes it to the existing `chat()` call. No provider/API key/new
+  dependency added.
+- Translation UI reuses `useAvailableModels()`/`ModelSelector` in a
+  `TranslationModelPicker` that mounts only on translation failure.
+  `model_unavailable`/`model_not_free`/`model_invalid` show a localized error
+  and model selection; retry uses the selected model.
+- Translation cache is bound to job + model; original text remains visible and
+  untouched. ATS and CV data flow unchanged; only public job text is sent.
+- Tests: focused 30 PASS; build PASS; serial full **1930 PASS / 11 skipped**.
+- Commit `c3bdda0` plus docs commit; branch
+  `feature/jm-translation-model-selection-01`; no main merge or production
+  deployment.
+- Report: `docs/reports/JM-TRANSLATION-MODEL-SELECTION-01.md`.
