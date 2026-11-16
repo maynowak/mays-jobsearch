@@ -259,6 +259,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
   const requirements = useMemo(() => analysis?.analysis?.requirements ?? [], [analysis]);
   const matches = useMemo(() => analysis?.analysis?.matches ?? [], [analysis]);
   const criticalGaps = useMemo(() => analysis?.analysis?.criticalGaps ?? [], [analysis]);
+  const metadata = analysis?.analysis?.metadata;
   const ai = analysis?.ai;
 
   // Group requirements by match status for thematic sections
@@ -300,24 +301,26 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
       });
     }
 
-    // Verify evidence: partial requirements
+    // Verify evidence: partial requirements. The individual terms are already
+    // shown in the central requirement list; keep this section as a count.
     if (partialRequirements.length > 0) {
       tipList.push({
         category: "verify",
         titleKey: "ats.tips.category.verify",
         descKey: "ats.tips.category.verify.desc",
-        items: partialRequirements.map((r) => r.text),
+        items: [t("ats.tips.partialCount", { count: partialRequirements.length })],
       });
     }
 
-    // Adapt CV: unknown + gap requirements (combined as "missing evidence")
-    const missingItems = [...unknownRequirements, ...gapRequirements].map((r) => r.text);
-    if (missingItems.length > 0) {
+    // Adapt CV: unknown + gap requirements (combined as "missing evidence").
+    // Do not repeat the complete keyword list here.
+    const missingCount = unknownRequirements.length + gapRequirements.length;
+    if (missingCount > 0) {
       tipList.push({
         category: "adapt",
         titleKey: "ats.tips.category.adapt",
         descKey: "ats.tips.category.adapt.desc",
-        items: missingItems,
+        items: [t("ats.tips.missingCount", { count: missingCount })],
       });
     }
 
@@ -453,6 +456,37 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
     );
   };
 
+  const renderMetadata = () => {
+    if (!metadata) return null;
+    const items: string[] = [];
+    if (metadata.workMode) {
+      items.push(`${t("ats.metadata.workMode")}: ${metadata.workMode}`);
+    }
+    if (metadata.language) {
+      items.push(`${t("ats.metadata.language")}: ${metadata.language}`);
+    }
+    if (metadata.jobTypes.length > 0) {
+      items.push(`${t("ats.metadata.employment")}: ${metadata.jobTypes.join(", ")}`);
+    }
+    if (metadata.contractType) {
+      items.push(`${t("ats.metadata.contractType")}: ${metadata.contractType}`);
+    }
+    if (!items.length) return null;
+
+    return renderSection(
+      "ats.section.metadata.title",
+      "ats.section.metadata.annotation",
+      (
+        <ul className="ats-metadata-list">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ),
+      true
+    );
+  };
+
   const renderRequirements = () => {
     if (!requirements.length) return null;
     return renderSection(
@@ -464,10 +498,12 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
             const match = matches.find((m: Match) => m.requirementId === req.id);
             const status = match?.status || "UNKNOWN";
             const userStatus = t(getUserFacingStatus(status));
+            const key = req.id || `requirement_${idx}`;
+            const showAction = status === "UNKNOWN" || status === "GAP";
 
             return (
               <div
-                key={req.id || idx}
+                key={key}
                 className={`ats-requirement ${status.toLowerCase()}`}
               >
                 <div className="ats-requirement-row">
@@ -476,6 +512,11 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
                     {userStatus}
                   </span>
                 </div>
+                {showAction && (
+                  <div className="ats-requirement-action">
+                    {renderGapAction(req, key, addedSkillKeys.has(key))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -503,41 +544,22 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
   };
 
   const renderGaps = () => {
-    const hasGaps = unknownRequirements.length > 0 || gapRequirements.length > 0;
-    if (!hasGaps) return null;
-
     const allGapItems = [
-      ...gapRequirements.map((req: Requirement) => ({ req, type: "gap" as const })),
-      ...unknownRequirements.map((req: Requirement) => ({ req, type: "unknown" as const })),
+      ...gapRequirements,
+      ...unknownRequirements,
     ];
+    if (!allGapItems.length) return null;
 
     return renderSection(
       "ats.section.gaps.title",
       "ats.section.gaps.annotation",
       (
-        <div className="ats-gaps-list">
-          {allGapItems.map(({ req, type }, idx: number) => {
-            // Use req.id exclusively for key to avoid duplicates when same text appears
-            const key = req.id || `gap_${idx}`;
-            const isAdded = addedSkillKeys.has(key);
-            return (
-              <div
-                key={key}
-                className={`ats-gap-item ${type === "gap" ? "is-gap" : "is-unknown"}`}
-              >
-                <div className="ats-gap-row">
-                  <span className="ats-gap-text">{req.text}</span>
-                  <span
-                    className={`ats-requirement-status ${type === "gap" ? "is-gap" : "is-unknown"}`}
-                  >
-                    {t(getUserFacingStatus(type === "gap" ? "GAP" : "UNKNOWN"))}
-                  </span>
-                </div>
-                <div className="ats-gap-action">{renderGapAction(req, key, isAdded)}</div>
-              </div>
-            );
-          })}
-        </div>
+        // The central requirement list above already contains every term and
+        // its action. Keep this section as a summary only; do not repeat the
+        // complete keyword list a second time.
+        <p className="ats-section-annotation">
+          {t("ats.gaps.summary", { count: allGapItems.length })}
+        </p>
       ),
       true
     );
@@ -736,6 +758,7 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
             {renderDeterministicLabel()}
             {renderScore()}
             {renderReconcileStatus()}
+            {renderMetadata()}
             {renderRequirements()}
             {renderMatches()}
             {renderGaps()}

@@ -122,6 +122,39 @@ describe("STEP 37E - ATS Analysis API", () => {
     expect(mockRes.data.analysis.roleMatch).toBe(100);
   });
 
+  it("J) exposes source and metadata without metadata requirements", async () => {
+    mockReq.body = {
+      job: {
+        slug: "metadata-recovery",
+        title: "Solutions Architect (Remote)",
+        tags: ["DevOps", "(remote)", "Cloud", "Unknown", "N/A"],
+        descriptionPlain: "We need DevOps, Terraform and Software Architecture.",
+        language: "de",
+        remote: false,
+        jobTypes: ["full_time"],
+        contractType: "KEINE_ANGABE",
+      },
+      profile: { skills: "DevOps, Cloud, Terraform, Software Architecture", targetRoles: ["Solutions Architect"] },
+    };
+    await handler(mockReq, mockRes);
+    expect(mockRes.statusCode).toBe(200);
+    const analysis = mockRes.data.analysis;
+    const texts = analysis.requirements.map((r) => r.text);
+    expect(analysis.requirements.every((r) => r.source)).toBe(true);
+    expect(analysis.requirements.some((r) => r.source === "title")).toBe(false);
+    expect(texts).toContain("DevOps");
+    expect(texts).toContain("Terraform");
+    expect(texts).not.toContain("architect");
+    expect(texts).not.toContain("(remote)");
+    expect(texts).not.toContain("de");
+    expect(texts).not.toContain("KEINE_ANGABE");
+    expect(analysis.metadata.workMode).toBe("onsite");
+    expect(analysis.metadata.language).toBe("de");
+    expect(analysis.metadata.contractType).toBeNull();
+    expect(analysis.basis.requirementCount).toBe(analysis.requirements.length);
+    expect(analysis.roleMatch).toBe(100);
+  });
+
   it("H) API returns proper structure", async () => {
     mockReq.body = {
       job: { title: "React Developer", tags: ["react"] },
