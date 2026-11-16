@@ -6437,3 +6437,36 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Kein Live-RIS/S3-E2E; keine Live-Test-Freigabe. Hover-/Focus-/Loading-CSS
   per Komponenten-Tests und CSS abgesichert, nicht per Browser-Screenshot.
 - Report: `docs/reports/JM-CV-UX-02-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-03 — CV EDITOR UX CONSOLIDATION
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — LIVE RIS E2E NOT EXECUTED`
+
+- Branch `feature/jm-cv-ux-03-editor-consolidation` von UX-02 `7f78161`
+  (UX-02 noch nicht in main); Implementierungs-Commit `48f5450`, Docs-Commit
+  folgt; Branch gepusht, kein Main-Merge/Deployment.
+- Editor: Abschnitte bleiben einzeln auf-/zuklappbar und über die Navigation
+  erreichbar; fehlerhafte Abschnitte zeigen Badge („1 Fehler“/„N Fehler“),
+  roten Rahmen und werden beim Navigieren nicht automatisch geschlossen.
+  UX-01-„Zum ersten Fehler“ bleibt funktionsfähig.
+- Layout: Modal behält unabhängige Scrollbereiche; Vollansicht bekommt eine
+  sticky, unabhängig scrollbare Desktop-Vorschau; mobiler Footer mit
+  Speicheraktionen ist sticky. Kein horizontaler Overflow; PDF-Ausgabe
+  unverändert.
+- Fähigkeiten: Suche/Filter, standardmäßig 12 sichtbare Einträge, „Alle N
+  anzeigen“/„Weniger anzeigen“, einzelnes Entfernen und Zähler. Alle
+  Fähigkeiten bleiben im Datenmodell; keine KI-Gruppierung/Änderung.
+- Importprüfung: Gruppierung der manuellen Prüfliste nach Zielabschnitt,
+  Fortschrittsbalken + „X von Y geprüft“, Badge „Prüfen“ für unsichere
+  Angaben. Bestehende Filter und Einzelaktionen bleiben; Entscheidungen
+  bleiben bei Filter-/Gruppenwechseln erhalten; keine stillschweigende
+  Übernahme, keine Gruppen-Massenaktion.
+- Tests: finaler fokussierter Lauf **4 Dateien / 61 PASS**, breiterer
+  UX-02-/UX-03-Lauf **7 Dateien / 166 PASS**; Vollsuite `--maxWorkers=2`
+  **1902 PASS / 11 skipped**; Build PASS (1,08 s); `git diff --check` PASS.
+- Browser-Evidence: Desktop 1440 und Mobile 390 mit 20 Fähigkeiten, kein
+  Overflow, 0 Console-/Page-Errors; Screenshots unter
+  `docs/reports/assets/JM-CV-UX-03/`. Lokal, kein RIS-Live-E2E.
+- Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent,
+  ATS-Matching oder Speicher-APIs.
+- Report: `docs/reports/JM-CV-UX-03-REPORT.md`.
