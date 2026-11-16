@@ -14341,3 +14341,19 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   background: rgba(236, 254, 255, 0.94);
   color: #0f3b4a;
 }
+
+/* JM-CV-UX-05 — keep the mobile preview visible: the save footer is sticky in
+   edit mode, but returns to normal flow in preview mode. */
+@media (max-width: 900px) {
+  .cv-builder-fullpage .cv-builder-footer {
+    position: static;
+    box-shadow: none;
+  }
+
+  .cv-builder-fullpage .cv-builder-workspace[data-view="edit"] + .cv-builder-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.12);
+  }
+}
