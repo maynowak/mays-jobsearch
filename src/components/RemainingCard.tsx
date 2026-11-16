@@ -142,7 +142,9 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
       : visibleDescriptionPlain;
 
   const canTranslate =
-    descriptionLang === "en" && (descriptionPlain.trim() || description.trim()).length > 0;
+    (!isAA || Boolean(detailJob)) &&
+    descriptionLang === "en" &&
+    (descriptionPlain.trim() || description.trim()).length > 0;
 
   useEffect(() => {
     setTranslation({ status: "idle" });

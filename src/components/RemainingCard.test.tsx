@@ -412,6 +412,21 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(translateJobDescription).not.toHaveBeenCalled();
   });
 
+  it("does not offer translation before short Arbeitsagentur details are loaded", () => {
+    vi.mocked(translateJobDescription).mockReset();
+    const job = createTestJob({
+      source: ["arbeitsagentur"],
+      language: "en",
+      description: "<p>Short provider text.</p>",
+      descriptionPlain: "Short provider text.",
+    });
+
+    renderWithProvider(job);
+
+    expect(screen.queryByRole("button", { name: "Deutsch lesen" })).not.toBeInTheDocument();
+    expect(translateJobDescription).not.toHaveBeenCalled();
+  });
+
   it("keeps the original visible and reports a translation error", async () => {
     const job = createTestJob({
       language: "en",
