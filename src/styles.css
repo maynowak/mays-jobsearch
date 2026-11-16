@@ -14189,3 +14189,140 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.12);
   }
 }
+
+
+/* JM-CV-UX-04 — Digital Career Flow workspace background.
+   CSS/SVG only: slow network drift, light points and radial depth. No WebGL,
+   no external assets, no JS animation. Content surfaces stay opaque. */
+.cv-workspace-page,
+.cv-builder-modal {
+  --career-flow-network: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAwIiBoZWlnaHQ9IjkwMCIgdmlld0JveD0iMCAwIDE0MDAgOTAwIj4KPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjdlOGY5IiBzdHJva2Utb3BhY2l0eT0iMC4yMCIgc3Ryb2tlLXdpZHRoPSIxIj4KPHBhdGggZD0iTS00MCAxNzAgMTgwIDExMCAzNjAgMjUwIDU2MCAxNjAgNzYwIDI4MCA5NjAgMTkwIDExODAgMzAwIDE0NjAgMjIwIi8+CjxwYXRoIGQ9Ik0tNDAgNDIwIDIwMCAzNjAgNDIwIDQ3MCA2MjAgMzgwIDgyMCA1MDAgMTA0MCA0MDAgMTI2MCA1MTAgMTQ2MCA0MzAiLz4KPHBhdGggZD0iTS00MCA2OTAgMTgwIDYyMCAzODAgNzQwIDYwMCA2NTAgODIwIDc2MCAxMDIwIDY3MCAxMjQwIDc4MCAxNDYwIDcwMCIvPgo8cGF0aCBkPSJNMTgwIDExMCAyMDAgMzYwIDE4MCA2MjAiLz4KPHBhdGggZD0iTTU2MCAxNjAgNjIwIDM4MCA2MDAgNjUwIi8+CjxwYXRoIGQ9Ik05NjAgMTkwIDEwNDAgNDAwIDEwMjAgNjcwIi8+CjxwYXRoIGQ9Ik0zNjAgMjUwIDQyMCA0NzAgMzgwIDc0MCIvPgo8cGF0aCBkPSJNODIwIDUwMCA4MjAgNzYwIi8+CjwvZz4KPGcgZmlsbD0iIzY3ZThmOSIgZmlsbC1vcGFjaXR5PSIwLjU1Ij4KPGNpcmNsZSBjeD0iMTgwIiBjeT0iMTEwIiByPSIyIi8+PGNpcmNsZSBjeD0iMzYwIiBjeT0iMjUwIiByPSIxLjUiLz48Y2lyY2xlIGN4PSI1NjAiIGN5PSIxNjAiIHI9IjIiLz48Y2lyY2xlIGN4PSI3NjAiIGN5PSIyODAiIHI9IjEuNSIvPjxjaXJjbGUgY3g9Ijk2MCIgY3k9IjE5MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjExODAiIGN5PSIzMDAiIHI9IjEuNSIvPgo8Y2lyY2xlIGN4PSIyMDAiIGN5PSIzNjAiIHI9IjEuNSIvPjxjaXJjbGUgY3g9IjQyMCIgY3k9IjQ3MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjYyMCIgY3k9IjM4MCIgcj0iMS41Ii8+PGNpcmNsZSBjeD0iODIwIiBjeT0iNTAwIiByPSIyIi8+PGNpcmNsZSBjeD0iMTA0MCIgY3k9IjQwMCIgcj0iMS41Ii8+PGNpcmNsZSBjeD0iMTI2MCIgY3k9IjUxMCIgcj0iMiIvPgo8Y2lyY2xlIGN4PSIxODAiIGN5PSI2MjAiIHI9IjIiLz48Y2lyY2xlIGN4PSIzODAiIGN5PSI3NDAiIHI9IjEuNSIvPjxjaXJjbGUgY3g9IjYwMCIgY3k9IjY1MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjgyMCIgY3k9Ijc2MCIgcj0iMS41Ii8+PGNpcmNsZSBjeD0iMTAyMCIgY3k9IjY3MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjEyNDAiIGN5PSI3ODAiIHI9IjEuNSIvPgo8L2c+Cjwvc3ZnPg==");
+  background-color: #041a2b;
+  background-image:
+    radial-gradient(ellipse at 14% 8%, rgba(14, 165, 233, 0.3) 0%, transparent 44%),
+    radial-gradient(ellipse at 86% 16%, rgba(13, 148, 136, 0.25) 0%, transparent 46%),
+    radial-gradient(ellipse at 50% 108%, rgba(34, 211, 238, 0.14) 0%, transparent 58%),
+    linear-gradient(135deg, #03111e 0%, #06283b 48%, #041a2b 100%);
+  color: #eafcff;
+}
+
+.cv-workspace-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.cv-builder-modal {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.cv-workspace-page::before,
+.cv-builder-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--career-flow-network);
+  background-position: 0 0;
+  background-size: 1200px 800px;
+  opacity: 0.5;
+  animation: career-flow-drift 55s ease-in-out infinite alternate;
+}
+
+.cv-workspace-page::after,
+.cv-builder-modal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(103, 232, 249, 0.55) 0 1px, transparent 2px),
+    radial-gradient(circle at 70% 60%, rgba(34, 211, 238, 0.4) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 45% 80%, rgba(20, 184, 166, 0.35) 0 1px, transparent 2px);
+  background-position: 0 0, 0 0, 0 0;
+  background-size: 520px 430px, 680px 540px, 760px 600px;
+  opacity: 0.65;
+  animation: career-flow-points 48s linear infinite alternate;
+}
+
+.cv-workspace-page > .cv-workspace-header,
+.cv-workspace-page > .cv-workspace-main {
+  position: relative;
+  z-index: 1;
+}
+
+.cv-builder-modal__box {
+  position: relative;
+  z-index: 1;
+}
+
+.cv-workspace-header {
+  background: rgba(4, 27, 43, 0.72);
+  border-bottom-color: rgba(148, 233, 255, 0.18);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.cv-workspace-brand {
+  color: #f0fdff;
+}
+
+.cv-workspace-kicker {
+  color: rgba(230, 251, 255, 0.72);
+}
+
+.cv-workspace-lang button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(165, 243, 252, 0.35);
+  color: #eafcff;
+}
+
+.cv-workspace-lang button[aria-pressed="true"] {
+  background: rgba(34, 211, 238, 0.22);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cv-workspace-loading {
+  color: #eafcff;
+}
+
+.cv-workspace-local-note {
+  background: rgba(8, 47, 73, 0.6);
+  border-left-color: var(--accent);
+  color: #d8f7ff;
+}
+
+@keyframes career-flow-drift {
+  from { background-position: 0 0; }
+  to { background-position: -42px -24px; }
+}
+
+@keyframes career-flow-points {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 122px 42px, -84px 34px, 64px -52px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-workspace-page::before,
+  .cv-builder-modal::before,
+  .cv-workspace-page::after,
+  .cv-builder-modal::after {
+    animation: none;
+  }
+}
+
+/* JM-CV-UX-04 — keep white work surfaces on the dark background readable. */
+.cv-workspace-start,
+.cv-builder-fullpage,
+.cv-builder-modal__box,
+.cv-import-workspace__box {
+  color: var(--text);
+}
+
+.cv-workspace-local-note {
+  background: rgba(236, 254, 255, 0.94);
+  color: #0f3b4a;
+}
