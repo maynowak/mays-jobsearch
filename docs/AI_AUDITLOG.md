@@ -6452,3 +6452,31 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `feature/jm-job-translation-01`; draft PR #21. No main merge or production
   deployment.
 - Report: `docs/reports/JM-JOB-TRANSLATION-01.md`.
+
+## 2026-11-16 — JM-JOB-TRANSLATION-ATS-INTEGRATION-01
+
+**Status:** `A — MERGED / PRODUCTION E2E VERIFIED`
+
+- PR #21 merged as `8456910a9ae64f51ec4a33ea1e9e82068f82bfff`.
+- PR #23 merged as `ad3aff4a56d25b7a8231f0e791937a10281e09ee`.
+- PR #24 (integration fix: hide translation until AA details are visible)
+  merged as `17ffec8fd09231d67fd2567a8c0b8782659f8191`.
+- Final `origin/main`: `17ffec8fd09231d67fd2567a8c0b8782659f8191`.
+- Conflicts were limited to `RemainingCard.tsx`, its tests and the auditlog;
+  both feature sets were preserved, including all translation states and the
+  ATS reload/manual-fallback states. `i18n`/styles auto-merged.
+- Tests after integration: focused 114 PASS; build PASS; serial full 1913 PASS
+  / 11 skipped. After the follow-up fix: focused 20 PASS; build PASS; serial
+  full 1914 PASS / 11 skipped.
+- Production `www.mays-job-matcher.app` and `mays-jobsearch.vercel.app` serve
+  bundle `17ffec8`; Vercel Production status SUCCESS. No manual deployment.
+- Synthetic production E2E: real provider translation PASS (German result,
+  original restore, technical terms preserved); ATS reloaded original PASS
+  (`Beschreibungsquelle: Nachgeladenes Original`, 40/100, AWS/Terraform/
+  Kubernetes/TypeScript requirements, metadata filtered); manual ATS fallback
+  PASS (`Beschreibungsquelle: Manuelle Eingabe`). No console errors.
+- One transient provider 502 `model_unavailable` occurred before a successful
+  retry; the UI kept the original visible and reported the error.
+- No RIS/AWS/Cognito/CV-parser/persistence or ATS scoring change; no German
+  translation is used as ATS input.
+- Report: `docs/reports/JM-JOB-TRANSLATION-ATS-INTEGRATION-01.md`.
