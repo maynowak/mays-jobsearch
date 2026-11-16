@@ -2,14 +2,27 @@ import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/re
 import { describe, expect, it, afterEach, vi } from "vitest";
 import type { ComponentProps } from "react";
 import RemainingCard from "./RemainingCard";
-import { fetchJobDetails, translateJobDescription } from "../api";
+import { fetchJobDetails, fetchModels, translateJobDescription } from "../api";
 import { LangProvider } from "../i18n";
+import { __resetModelsCacheForTests } from "../hooks/useAvailableModels";
 import "@testing-library/jest-dom";
 
-vi.mock("../api", () => ({
-  fetchJobDetails: vi.fn(),
-  translateJobDescription: vi.fn(),
-}));
+vi.mock("../api", async () => {
+  const actual = await vi.importActual<typeof import("../api")>("../api");
+  return {
+    ...actual,
+    fetchJobDetails: vi.fn(),
+    translateJobDescription: vi.fn(),
+    fetchModels: vi.fn().mockResolvedValue({
+      models: [],
+      defaultModel: null,
+      fallbackModel: null,
+      recommendedModel: null,
+      fallbackMaxAttempts: 3,
+    }),
+    setFallbackMaxAttempts: vi.fn(),
+  };
+});
 
 const createTestJob = (overrides = {}) => ({
   slug: "test-job",
@@ -441,6 +454,51 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/Übersetzung ist derzeit nicht verfügbar/i);
     expect(screen.getByText(/English original description/i)).toBeInTheDocument();
+  });
+
+  it("allows selecting another supported model after model_unavailable", async () => {
+    __resetModelsCacheForTests();
+    vi.mocked(fetchModels).mockResolvedValue({
+      models: [
+        { id: "model-one", name: "Model One", provider: { id: "openrouter", name: "OpenRouter" } },
+        { id: "model-two", name: "Model Two", provider: { id: "openrouter", name: "OpenRouter" } },
+      ],
+      defaultModel: "model-one",
+      fallbackModel: "model-one",
+      recommendedModel: "model-one",
+      fallbackMaxAttempts: 3,
+    });
+    const job = createTestJob({
+      language: "en",
+      description: "<p>English original description.</p>",
+      descriptionPlain: "English original description. ".repeat(12),
+    });
+    vi.mocked(translateJobDescription).mockReset();
+    const modelError = Object.assign(new Error("model unavailable"), { code: "model_unavailable" });
+    vi.mocked(translateJobDescription)
+      .mockRejectedValueOnce(modelError)
+      .mockResolvedValueOnce({
+        translation: "Deutsche Fassung.",
+        sourceLanguage: "en",
+        targetLanguage: "de",
+        translated: true,
+      });
+
+    renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Deutsch lesen" }));
+
+    expect(await screen.findByText(/Dieses KI-Modell ist für die Übersetzung/i)).toBeInTheDocument();
+    expect(await screen.findByText("Übersetzungsmodell")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByRole("option", { name: /Model Two/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Übersetzung erneut versuchen" }));
+
+    expect(await screen.findByText("Deutsche Fassung.")).toBeInTheDocument();
+    expect(translateJobDescription).toHaveBeenLastCalledWith(
+      expect.any(String),
+      "en",
+      "model-two"
+    );
   });
 
   it("passes the unchanged original job to ATS after translation", async () => {
