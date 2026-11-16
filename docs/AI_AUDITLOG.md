@@ -6405,3 +6405,35 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Branch `feature/jm-cv-ux-01-save-blocker`, implementation commit `2edd04e`,
   pushed to origin; no main merge/deployment.
 - Report: `docs/reports/JM-CV-UX-01-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-02 — CV SAVE ACTIONS & UX
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — LIVE RIS E2E NOT EXECUTED`
+
+- Branch `feature/jm-cv-ux-02-save-actions` von UX-01 `ce84ee5` (UX-01 noch
+  nicht in `origin/main`); Implementierungs-Commit `54475ed`, Docs-Commit
+  folgt; Branch gepusht, kein Main-Merge/Deployment.
+- Labels getrennt: Sitzung „Entwurf übernehmen“ / „Use draft“, Download
+  „PDF herunterladen“ / „Download PDF“, dauerhaft „PDF dauerhaft speichern“ /
+  „Save PDF permanently“, Schließen unverändert.
+- Primäre Aktion: türkis-/petrolfarbener Button mit weißem Text, Speicher-SVG,
+  Hover-/Focus-/Active-/Disabled-/Loading-Zustand, Spinner + `aria-busy`,
+  mobil volle Breite. Download und Sitzungsübernahme sind sekundäre
+  `btn-ghost`-Aktionen.
+- Status: „Noch nicht dauerhaft gespeichert“, Speichern, Erfolg nur nach
+  bestätigtem Upload, sichere Fehlermeldung, Validierungsblock, Auth-/Consent-/
+  Kapazitätsmeldungen. Alte PDF-Erfolgsmeldung wird bei Entwurfsänderung
+  zurückgesetzt.
+- Banner vereinfacht: Entwurf nur in der Sitzung; Download lokal; dauerhafte
+  Speicherung im Benutzerkonto. „RIS“ aus sichtbaren CV-Builder-Speicher-/
+  Importtexten entfernt; interne APIs/Verträge unverändert.
+- UX-01-Fehlernavigation („Zum ersten Fehler“) und alle Sicherheits-/Consent-
+  Prüfungen bleiben erhalten. Modal/Vollansicht nutzen dieselbe Komponente.
+- Dateien: `CvBuilderEditor.tsx`, `i18n.tsx`, `styles.css`, zugehörige Tests,
+  Report/Audit. Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth,
+  Consent, Matching oder Speicher-APIs.
+- Tests: fokussiert 7 Dateien / **164 PASS**; Vollsuite `--maxWorkers=2`
+  **1900 PASS / 11 skipped**; Build PASS (1,15 s); `git diff --check` PASS.
+- Kein Live-RIS/S3-E2E; keine Live-Test-Freigabe. Hover-/Focus-/Loading-CSS
+  per Komponenten-Tests und CSS abgesichert, nicht per Browser-Screenshot.
+- Report: `docs/reports/JM-CV-UX-02-REPORT.md`.
