@@ -60,7 +60,7 @@ describe("CV-BUILDER-02B profile editor integration", () => {
     fireEvent.change(screen.getByLabelText("Vollständiger Name"), {
       target: { value: "Alex Beispiel" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Lebenslauf speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Entwurf übernehmen" }));
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
 
     fireEvent.click(screen.getByRole("button", { name: "Lebenslauf-Editor schließen" }));
@@ -79,7 +79,7 @@ describe("CV-BUILDER-02B profile editor integration", () => {
       target: { value: "Alex Beispiel" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Lebenslauf-Editor schließen" }));
-    fireEvent.click(screen.getByRole("button", { name: "Speichern und schließen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Übernehmen und schließen" }));
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
     expect(onClose).toHaveBeenCalledTimes(1);
   });

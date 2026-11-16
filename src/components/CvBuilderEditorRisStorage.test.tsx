@@ -7,6 +7,7 @@ import type { CvBuilderPdfRisStatus } from "../lib/useCvBuilderPdfRisStorage";
 import CvBuilderEditor from "./CvBuilderEditor";
 import {
   createEmptyCvBuilderDraft,
+  createExperienceEntry,
   type CvBuilderDraftV1,
 } from "../lib/cvBuilder/contractTypes";
 
@@ -60,7 +61,7 @@ function Harness({
 }
 
 function saveButton() {
-  return screen.getByRole("button", { name: "In RIS speichern" });
+  return screen.getByRole("button", { name: "PDF dauerhaft speichern" });
 }
 
 beforeEach(() => {
@@ -90,14 +91,14 @@ describe("CV builder PDF snapshot to existing RIS CV storage", () => {
     expect(file.type).toBe("application/pdf");
     expect(file.size).toBe(3);
     expect(pdfMocks.createCvBuilderPdf).toHaveBeenCalledTimes(1);
-    expect(await screen.findByText("PDF wurde in RIS gespeichert.")).toBeInTheDocument();
+    expect(await screen.findByText("PDF wurde dauerhaft gespeichert.")).toBeInTheDocument();
   });
 
   it("keeps the existing PDF download independent and unchanged", async () => {
     const onSave = vi.fn().mockResolvedValue(true);
     render(<Harness onSave={onSave} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Als PDF herunterladen" }));
+    fireEvent.click(screen.getByRole("button", { name: "PDF herunterladen" }));
 
     await waitFor(() =>
       expect(pdfMocks.downloadCvBuilderPdf).toHaveBeenCalledWith(
@@ -121,7 +122,7 @@ describe("CV builder PDF snapshot to existing RIS CV storage", () => {
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
     resolveSave(true);
-    await screen.findByText("PDF wurde in RIS gespeichert.");
+    await screen.findByText("PDF wurde dauerhaft gespeichert.");
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 
@@ -132,9 +133,9 @@ describe("CV builder PDF snapshot to existing RIS CV storage", () => {
     fireEvent.click(saveButton());
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Das PDF konnte nicht in RIS gespeichert werden."
+      "Das PDF konnte nicht dauerhaft gespeichert werden. Bitte versuche es erneut."
     );
-    expect(screen.queryByText("PDF wurde in RIS gespeichert.")).not.toBeInTheDocument();
+    expect(screen.queryByText("PDF wurde dauerhaft gespeichert.")).not.toBeInTheDocument();
   });
 
   it("blocks missing consent before calling the upload", () => {
@@ -206,11 +207,182 @@ describe("CV builder PDF snapshot to existing RIS CV storage", () => {
     fireEvent.click(saveButton());
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
-    expect(await screen.findByText("PDF wurde in RIS gespeichert.")).toBeInTheDocument();
+    expect(await screen.findByText("PDF wurde dauerhaft gespeichert.")).toBeInTheDocument();
   });
 
   it("does not offer the action when no storage callback is provided", () => {
     render(<Harness />);
-    expect(screen.queryByRole("button", { name: "In RIS speichern" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "PDF dauerhaft speichern" })).not.toBeInTheDocument();
+  });
+});
+
+describe("CV builder save blocker UX", () => {
+  it("keeps upload blocked for an invalid draft and explains the affected section", () => {
+    const draft = validDraft();
+    draft.personal.email = "invalid";
+    const onSave = vi.fn().mockResolvedValue(true);
+    render(<Harness initial={draft} onSave={onSave} />);
+
+    expect(saveButton()).toBeDisabled();
+    expect(saveButton()).toHaveAttribute(
+      "title",
+      "PDF dauerhaft speichern ist erst möglich, wenn die markierten Felder korrigiert sind."
+    );
+    expect(screen.getByText("Betroffene Abschnitte: Persönliche Angaben")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "PDF-Export und RIS-Speicherung sind erst nach Korrektur der markierten Felder möglich."
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(saveButton());
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it.each(["modal", "fullpage"] as const)(
+    "opens the first affected section and focuses its field in %s mode",
+    async (layoutMode) => {
+      const draft = validDraft();
+      draft.personal.email = "invalid";
+      render(<Harness initial={draft} layoutMode={layoutMode} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+      const email = screen.getByLabelText("E-Mail");
+      await waitFor(() => expect(email).toHaveFocus());
+      const details = document.querySelector("#cv-builder-personal details");
+      expect(details).toHaveProperty("open", true);
+      expect(email).toHaveAttribute("aria-invalid", "true");
+    }
+  );
+
+  it("switches back from preview to edit before focusing the first error", async () => {
+    const draft = validDraft();
+    draft.personal.email = "invalid";
+    render(<Harness initial={draft} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Vorschau" }));
+    expect(document.querySelector(".cv-builder-workspace")).toHaveAttribute("data-view", "preview");
+
+    fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+    expect(document.querySelector(".cv-builder-workspace")).toHaveAttribute("data-view", "edit");
+    await waitFor(() => expect(screen.getByLabelText("E-Mail")).toHaveFocus());
+  });
+
+  it("focuses the offending entry field instead of only the section", async () => {
+    const draft = validDraft();
+    draft.experience = [
+      {
+        ...createExperienceEntry(),
+        position: "Entwicklerin",
+        employer: "",
+      },
+    ];
+    render(<Harness initial={draft} />);
+
+    expect(screen.getByText("Betroffene Abschnitte: Berufserfahrung")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+    const employer = screen.getByLabelText("Arbeitgeber");
+    await waitFor(() => expect(employer).toHaveFocus());
+    expect(document.querySelector("#cv-builder-experience details")).toHaveProperty("open", true);
+  });
+
+  it("focuses the shared skills field for a duplicate-skill error", async () => {
+    const draft = validDraft();
+    draft.skills = ["React", "react"];
+    render(<Harness initial={draft} />);
+
+    expect(screen.getByText("Betroffene Abschnitte: Fähigkeiten")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+    const skills = document.getElementById("cv-builder-field-skills") as HTMLTextAreaElement;
+    await waitFor(() => expect(skills).toHaveFocus());
+    expect(document.querySelector("#cv-builder-skills details")).toHaveProperty("open", true);
+  });
+
+  it("re-enables saving after the invalid field is corrected", async () => {
+    const draft = validDraft();
+    draft.personal.email = "invalid";
+    const onSave = vi.fn().mockResolvedValue(true);
+    render(<Harness initial={draft} onSave={onSave} />);
+    expect(saveButton()).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("E-Mail"), {
+      target: { value: "alex@example.invalid" },
+    });
+
+    expect(saveButton()).toBeEnabled();
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText("PDF wurde dauerhaft gespeichert.")).toBeInTheDocument();
+  });
+});
+
+describe("JM-CV-UX-02 save action labels and states", () => {
+  it("uses distinct labels and a prominent primary storage action", () => {
+    render(<Harness onSave={vi.fn().mockResolvedValue(true)} />);
+
+    const storage = saveButton();
+    expect(storage).toHaveTextContent("PDF dauerhaft speichern");
+    expect(storage).toHaveClass("cv-builder-save-ris");
+    expect(storage.querySelector(".cv-builder-save-ris__icon")).toBeTruthy();
+
+    const download = screen.getByRole("button", { name: "PDF herunterladen" });
+    expect(download).not.toHaveClass("cv-builder-save-ris");
+    expect(download).toHaveTextContent("PDF herunterladen");
+    expect(screen.getByText("Noch nicht dauerhaft gespeichert.")).toBeInTheDocument();
+  });
+
+  it("shows a loading state and prevents a second save while PDF storage is in flight", async () => {
+    let resolveSave!: (value: boolean) => void;
+    const onSave = vi.fn(
+      () => new Promise<boolean>((resolve) => { resolveSave = resolve; })
+    );
+    render(<Harness onSave={onSave} />);
+
+    const button = document.querySelector(".cv-builder-save-ris") as HTMLButtonElement;
+    fireEvent.click(button);
+
+    expect(button).toHaveClass("is-loading");
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button.querySelector(".cv-builder-save-ris__spinner")).toBeTruthy();
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    fireEvent.click(button);
+    expect(onSave).toHaveBeenCalledTimes(1);
+
+    resolveSave(true);
+    await screen.findByText("PDF wurde dauerhaft gespeichert.");
+    expect(button).not.toHaveClass("is-loading");
+    expect(button).toHaveAttribute("aria-busy", "false");
+  });
+
+  it("shows the saved state only after confirmation and resets it after an edit", async () => {
+    const onSave = vi.fn().mockResolvedValue(true);
+    render(<Harness onSave={onSave} />);
+
+    expect(screen.getByText("Noch nicht dauerhaft gespeichert.")).toBeInTheDocument();
+    fireEvent.click(saveButton());
+
+    expect(await screen.findByText("PDF wurde dauerhaft gespeichert.")).toBeInTheDocument();
+    expect(screen.queryByText("Noch nicht dauerhaft gespeichert.")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("E-Mail"), {
+      target: { value: "neu@example.invalid" },
+    });
+
+    expect(await screen.findByText("Noch nicht dauerhaft gespeichert.")).toBeInTheDocument();
+  });
+
+  it("provides the English labels and banner consistently", () => {
+    localStorage.setItem("mj-lang", "en");
+    render(<Harness onSave={vi.fn().mockResolvedValue(true)} />);
+
+    expect(screen.getByRole("button", { name: "Save PDF permanently" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Download PDF" })).toBeInTheDocument();
+    expect(screen.getByText(/Your editable draft stays only in this session/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/“Download PDF” creates the file locally/)
+    ).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useLang } from "../i18n";
 import {
   CV_BUILDER_IMPORT_SECTIONS,
@@ -7,6 +7,17 @@ import {
   type CvBuilderImportResult,
   type CvBuilderImportSectionId,
 } from "../lib/cvBuilder/pdfImport";
+
+const REVIEW_TARGET_ORDER: CvBuilderImportManualTarget[] = [
+  "profile",
+  "experience",
+  "education",
+  "skills",
+  "projects",
+  "certificates",
+  "links",
+  "ignore",
+];
 
 export type ManualReviewStatus = "pending" | "accepted" | "ignored";
 
@@ -169,6 +180,9 @@ export default function CvBuilderImportReview({
     (sum, _line, index) => sum + (decisionsFor(index).status === "ignored" ? 1 : 0),
     0
   );
+  const reviewedCount = acceptedCount + ignoredCount;
+  const reviewTotal = pendingCount + reviewedCount;
+  const reviewProgress = reviewTotal === 0 ? 100 : Math.round((reviewedCount / reviewTotal) * 100);
 
   const targets = useMemo(
     () => [...new Set(result.unrecognizedDetails.map((detail) => detail.suggestedTarget))],
@@ -182,7 +196,13 @@ export default function CvBuilderImportReview({
     .map((line, index) => ({ line, index, detail: result.unrecognizedDetails[index], decision: decisionsFor(index) }))
     .filter((entry) => statusFilter === "all" || entry.decision.status === statusFilter)
     .filter((entry) => targetFilter === "all" || entry.detail?.suggestedTarget === targetFilter)
-    .filter((entry) => reasonFilter === "all" || entry.detail?.reason === reasonFilter), [result, decisions, statusFilter, targetFilter, reasonFilter]);
+    .filter((entry) => reasonFilter === "all" || entry.detail?.reason === reasonFilter)
+    .sort(
+      (a, b) =>
+        REVIEW_TARGET_ORDER.indexOf(a.decision.target) -
+          REVIEW_TARGET_ORDER.indexOf(b.decision.target) ||
+        a.index - b.index
+    ), [result, decisions, statusFilter, targetFilter, reasonFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pageCount - 1);
@@ -196,7 +216,7 @@ export default function CvBuilderImportReview({
     const element = document.getElementById(`cv-import-section-${section}`);
     const details = element?.querySelector("details");
     if (details) details.open = true;
-    element?.scrollIntoView({ block: "start", behavior: "smooth" });
+    element?.scrollIntoView?.({ block: "start", behavior: "smooth" });
   };
 
   const startEditing = (index: number) => {
@@ -342,6 +362,25 @@ export default function CvBuilderImportReview({
           <span>{t("cvBuilder.import.reviewAccepted", { count: acceptedCount })}</span>
           <span>{t("cvBuilder.import.reviewIgnored", { count: ignoredCount })}</span>
         </div>
+        <div
+          className="cv-import-review__progress"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={reviewProgress}
+          aria-valuetext={t("cvBuilder.import.reviewProgress", {
+            done: reviewedCount,
+            total: reviewTotal,
+          })}
+        >
+          <span style={{ width: `${reviewProgress}%` }} />
+        </div>
+        <p className="cv-import-review__progress-label">
+          {t("cvBuilder.import.reviewProgress", {
+            done: reviewedCount,
+            total: reviewTotal,
+          })}
+        </p>
         <div className="cv-import-review__filters" role="group" aria-label={t("cvBuilder.import.reviewFilters")}>
           <label>
             <span>{t("cvBuilder.import.reviewStatusFilter")}</span>
@@ -371,12 +410,30 @@ export default function CvBuilderImportReview({
           <p className="field-hint">{t("cvBuilder.import.reviewEmpty")}</p>
         ) : (
           <ul className="cv-import-review__list">
-            {visible.map(({ index, detail, decision }) => (
-              <li key={`review-${index}`} className={`cv-import-review__item is-${decision.status}`}>
-                <div className="cv-import-review__item-head">
-                  <strong>{t("cvBuilder.import.reviewSourcePage", { page: detail?.page ?? 0 })}</strong>
-                  <span className={`cv-import-review__status is-${decision.status}`}>{statusLabel(decision.status, t)}</span>
-                </div>
+            {visible.map(({ index, detail, decision }, visibleIndex) => {
+              const showGroup =
+                visibleIndex === 0 ||
+                visible[visibleIndex - 1].decision.target !== decision.target;
+              const uncertain =
+                detail?.reason === "ambiguous" ||
+                detail?.reason?.startsWith("incomplete-") === true;
+              return (
+                <Fragment key={`review-${index}`}>
+                  {showGroup && (
+                    <li className="cv-import-review__group" role="presentation">
+                      <strong>{manualTargetLabel(decision.target, t)}</strong>
+                    </li>
+                  )}
+                  <li className={`cv-import-review__item is-${decision.status}`}>
+                    <div className="cv-import-review__item-head">
+                      <strong>{t("cvBuilder.import.reviewSourcePage", { page: detail?.page ?? 0 })}</strong>
+                      <span className={`cv-import-review__status is-${decision.status}`}>{statusLabel(decision.status, t)}</span>
+                      {uncertain && (
+                        <span className="cv-import-review__uncertain">
+                          {t("cvBuilder.import.reviewUncertainBadge")}
+                        </span>
+                      )}
+                    </div>
                 {editing === index ? (
                   <p className="cv-import-review__original">{decision.original}</p>
                 ) : decision.edited ? (
@@ -462,9 +519,11 @@ export default function CvBuilderImportReview({
                       </button>
                     )}
                   </div>
-                </div>
-              </li>
-            ))}
+                    </div>
+                  </li>
+                </Fragment>
+              );
+            })}
           </ul>
         )}
         {pageCount > 1 && (

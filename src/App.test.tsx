@@ -2836,7 +2836,7 @@ React, TypeScript`);
     expect(screen.getByLabelText("Vollständiger Name")).toHaveValue("Max Mustermann");
     expect(screen.getByLabelText("Berufsbezeichnung")).toHaveValue("Senior Frontend Engineer");
 
-    fireEvent.click(screen.getByRole("button", { name: "Lebenslauf speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Entwurf übernehmen" }));
     fireEvent.click(screen.getByRole("button", { name: "Lebenslauf-Editor schließen" }));
     await waitFor(() =>
       expect(screen.queryByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).not.toBeInTheDocument()

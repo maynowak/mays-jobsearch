@@ -56,6 +56,37 @@ function errorId(path: string): string {
   return `cv-builder-error-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
+function fieldId(path: string): string {
+  // Skills are edited in one comma-separated textarea; per-index errors must
+  // still focus that single control.
+  if (path === "skills" || path.startsWith("skills.")) return "cv-builder-field-skills";
+  return `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+const ERROR_SECTION_BY_ROOT: Record<string, string> = {
+  personal: "personal",
+  profile: "profile",
+  experience: "experience",
+  education: "education",
+  skills: "skills",
+  projects: "projects",
+  certificates: "certificates",
+  languages: "languages",
+  links: "languages",
+};
+
+function sectionForErrorPath(path: string): string {
+  return ERROR_SECTION_BY_ROOT[path.split(".")[0]] ?? "personal";
+}
+
+function reducedMotionPreferred(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 function FieldError({ errors, path }: { errors: CvBuilderValidationError[]; path: string }) {
   const { t } = useLang();
   const matches = cvBuilderErrorsFor(errors, path);
@@ -64,6 +95,16 @@ function FieldError({ errors, path }: { errors: CvBuilderValidationError[]; path
     <p id={errorId(path)} className="cv-builder-field-error" role="alert">
       {t(`cvBuilder.error.${matches[0].code}`)}
     </p>
+  );
+}
+
+function SaveIcon(): React.ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+      <path d="M17 21v-8H7v8" />
+      <path d="M7 3v5h8" />
+    </svg>
   );
 }
 
@@ -89,7 +130,7 @@ function TextField({
   placeholder?: string;
 }) {
   const invalid = cvBuilderErrorsFor(errors, path).length > 0;
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -131,7 +172,7 @@ function TextAreaField({
   placeholder?: string;
 }) {
   const invalid = cvBuilderErrorsFor(errors, path).length > 0;
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -168,7 +209,7 @@ function MonthField({
   disabled?: boolean;
 }) {
   const invalid = cvBuilderErrorsFor(errors, path).length > 0;
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -188,6 +229,8 @@ function MonthField({
   );
 }
 
+const SKILL_PREVIEW_LIMIT = 12;
+
 function LanguagesInput({
   value,
   onChange,
@@ -197,11 +240,33 @@ function LanguagesInput({
 }) {
   const { t } = useLang();
   const [text, setText] = useState(() => formatTargetRoles(value));
+  const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  const normalizedQuery = query.trim().toLocaleLowerCase("de");
+  const indexedSkills = value.map((skill, index) => ({ skill, index }));
+  const filteredSkills = normalizedQuery
+    ? indexedSkills.filter(({ skill }) =>
+        skill.toLocaleLowerCase("de").includes(normalizedQuery)
+      )
+    : indexedSkills;
+  const visibleSkills =
+    !normalizedQuery && !showAll
+      ? filteredSkills.slice(0, SKILL_PREVIEW_LIMIT)
+      : filteredSkills;
+  const hiddenCount = filteredSkills.length - visibleSkills.length;
+
+  const removeSkill = (index: number) => {
+    const next = value.filter((_, current) => current !== index);
+    onChange(next);
+    setText(formatTargetRoles(next));
+  };
+
   return (
     <div className="cv-builder-field">
       <label>
         <span>{t("cvBuilder.skillsLabel")}</span>
         <textarea
+          id="cv-builder-field-skills"
           value={text}
           onChange={(event) => {
             setText(event.target.value);
@@ -212,6 +277,60 @@ function LanguagesInput({
         />
       </label>
       <p className="cv-builder-hint">{t("cvBuilder.skillsHint")}</p>
+      {value.length > 0 && (
+        <div className="cv-builder-skills__tools">
+          <label className="cv-builder-skills__search">
+            <span>{t("cvBuilder.skillsFilter")}</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("cvBuilder.skillsFilterPlaceholder")}
+            />
+          </label>
+          <span className="cv-builder-skills__count" aria-live="polite">
+            {t("cvBuilder.skillsCount", { count: value.length })}
+          </span>
+        </div>
+      )}
+      {visibleSkills.length > 0 && (
+        <ul className="cv-builder-tags cv-builder-skills__list" aria-label={t("cvBuilder.skillsLabel")}>
+          {visibleSkills.map(({ skill, index }) => (
+            <li key={`${skill}-${index}`}>
+              <span>{skill}</span>
+              <button
+                type="button"
+                className="cv-builder-skill-remove"
+                aria-label={t("cvBuilder.skillRemove", { skill })}
+                onClick={() => removeSkill(index)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {value.length > 0 && filteredSkills.length === 0 && (
+        <p className="cv-builder-hint">{t("cvBuilder.skillsNoMatch")}</p>
+      )}
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          className="btn-ghost cv-builder-skills__toggle"
+          onClick={() => setShowAll(true)}
+        >
+          {t("cvBuilder.skillsShowAll", { count: filteredSkills.length })}
+        </button>
+      )}
+      {showAll && !normalizedQuery && value.length > SKILL_PREVIEW_LIMIT && (
+        <button
+          type="button"
+          className="btn-ghost cv-builder-skills__toggle"
+          onClick={() => setShowAll(false)}
+        >
+          {t("cvBuilder.skillsShowLess")}
+        </button>
+      )}
     </div>
   );
 }
@@ -229,7 +348,7 @@ function TechnologiesInput({
 }) {
   const { t } = useLang();
   const [text, setText] = useState(() => formatTargetRoles(value));
-  const inputId = `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const inputId = fieldId(path);
   return (
     <div className="cv-builder-field-wrap">
       <label className="cv-builder-field" htmlFor={inputId}>
@@ -339,15 +458,25 @@ function Section({
   title,
   children,
   summaryText,
+  errorCount = 0,
 }: {
   title: string;
   children: React.ReactNode;
   summaryText: string;
+  errorCount?: number;
 }) {
+  const { t } = useLang();
   return (
-    <details className="cv-builder-section">
+    <details className={`cv-builder-section${errorCount > 0 ? " has-errors" : ""}`}>
       <summary>
         <span>{title}</span>
+        {errorCount > 0 && (
+          <span className="cv-builder-section__error">
+            {errorCount === 1
+              ? t("cvBuilder.sectionErrorOne")
+              : t("cvBuilder.sectionErrors", { count: errorCount })}
+          </span>
+        )}
         <span className="cv-builder-section__meta">{summaryText}</span>
       </summary>
       <div className="cv-builder-section__body">{children}</div>
@@ -397,9 +526,18 @@ export default function CvBuilderEditor({
   const [pdfRisError, setPdfRisError] = useState("");
   const [screenshotMode, setScreenshotMode] = useState(false);
   const screenshotOpenStatesRef = useRef<boolean[]>([]);
+  const [pendingErrorFocus, setPendingErrorFocus] = useState<string | null>(null);
   const fullpage = layoutMode === "fullpage";
   const errors = useMemo(() => validateCvBuilderDraft(draft), [draft]);
   const errorCount = errors.length;
+  const errorSectionKeys = Array.from(
+    new Set(errors.map((error) => sectionForErrorPath(error.path)))
+  );
+  const errorSectionsLabel = errorSectionKeys
+    .map((section) => t(`cvBuilder.section.${section}`))
+    .join(", ");
+  const sectionErrorCount = (section: string) =>
+    errors.filter((error) => sectionForErrorPath(error.path) === section).length;
   const entryCount =
     draft.experience.length +
     draft.education.length +
@@ -427,6 +565,47 @@ export default function CvBuilderEditor({
     addRefs.current[focusAfterRemove]?.focus();
     setFocusAfterRemove(null);
   }, [focusAfterRemove, draft]);
+
+  // A PDF storage message refers to the draft version that was saved. Any
+  // edit invalidates it, so the footer can show the "not saved" state again.
+  useEffect(() => {
+    setPdfRisMessage("");
+    setPdfRisError("");
+  }, [draft]);
+
+  useEffect(() => {
+    if (!pendingErrorFocus) return;
+    const path = pendingErrorFocus;
+    // Defer one tick: if the mobile view switches from preview to edit, the
+    // view-change effect would otherwise focus the editor pane afterwards and
+    // overwrite the field focus.
+    const timeout = window.setTimeout(() => {
+      const sectionKey = sectionForErrorPath(path);
+      const section = document.getElementById(`cv-builder-${sectionKey}`);
+      const details = section?.querySelector("details");
+      if (details instanceof HTMLDetailsElement) details.open = true;
+      const field = document.getElementById(fieldId(path));
+      const target = field ?? details?.querySelector("summary") ?? section;
+      if (target) {
+        target.scrollIntoView?.({
+          block: "center",
+          behavior: reducedMotionPreferred() ? "auto" : "smooth",
+        });
+        (target as HTMLElement).focus?.({ preventScroll: true });
+      }
+      setPendingErrorFocus(null);
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [pendingErrorFocus]);
+
+  const goToFirstError = () => {
+    const firstError = errors[0];
+    if (!firstError) return;
+    // On mobile the editor may currently show the preview pane; switch back
+    // before opening/focusing the affected section.
+    setMobileView("edit");
+    setPendingErrorFocus(firstError.path);
+  };
 
   useEffect(() => {
     if (!viewMountedRef.current) {
@@ -683,9 +862,17 @@ export default function CvBuilderEditor({
         </div>
 
         {errorCount > 0 && (
-          <p className="cv-builder-validation-summary" role="alert">
-            {t("cvBuilder.validationSummary")}
-          </p>
+          <div className="cv-builder-validation-summary">
+            <p role="alert">{t("cvBuilder.validationSummary")}</p>
+            <p>
+              {t("cvBuilder.validationAffectedSections", {
+                sections: errorSectionsLabel,
+              })}
+            </p>
+            <button type="button" className="btn-ghost" onClick={goToFirstError}>
+              {t("cvBuilder.goToFirstError")}
+            </button>
+          </div>
         )}
         {importReview && (
           <div className="cv-builder-import-quality" role="status">
@@ -763,7 +950,7 @@ export default function CvBuilderEditor({
                 const details = section?.querySelector("details");
                 if (details) details.open = true;
                 setMobileView("edit");
-                section?.scrollIntoView({ block: "start", behavior: "smooth" });
+                section?.scrollIntoView?.({ block: "start", behavior: "smooth" });
               }}
             >
               {t(labelKey)}
@@ -784,6 +971,7 @@ export default function CvBuilderEditor({
             <Section
               title={t("cvBuilder.section.personal")}
               summaryText={draft.personal.fullName || t("cvBuilder.emptyEntry")}
+              errorCount={sectionErrorCount("personal")}
             >
               <div className="cv-builder-grid">
                 <TextField
@@ -832,6 +1020,7 @@ export default function CvBuilderEditor({
             <Section
               title={t("cvBuilder.section.profile")}
               summaryText={draft.profile.headline || t("cvBuilder.emptyEntry")}
+              errorCount={sectionErrorCount("profile")}
             >
               <div className="cv-builder-grid">
                 <TextField
@@ -860,6 +1049,7 @@ export default function CvBuilderEditor({
             <Section
               title={t("cvBuilder.section.experience")}
               summaryText={`${draft.experience.length}`}
+              errorCount={sectionErrorCount("experience")}
             >
               {draft.experience.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.experience.map((entry, index) => (
@@ -984,7 +1174,11 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-education">
-            <Section title={t("cvBuilder.section.education")} summaryText={`${draft.education.length}`}>
+            <Section
+              title={t("cvBuilder.section.education")}
+              summaryText={`${draft.education.length}`}
+              errorCount={sectionErrorCount("education")}
+            >
               {draft.education.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.education.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
@@ -1092,18 +1286,21 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-skills">
-            <Section title={t("cvBuilder.section.skills")} summaryText={`${draft.skills.length}`}>
+            <Section
+              title={t("cvBuilder.section.skills")}
+              summaryText={`${draft.skills.length}`}
+              errorCount={sectionErrorCount("skills")}
+            >
               <LanguagesInput value={draft.skills} onChange={(skills) => onChange({ ...draft, skills })} />
-              {draft.skills.length > 0 && (
-                <ul className="cv-builder-tags">
-                  {draft.skills.map((skill) => <li key={skill}>{skill}</li>)}
-                </ul>
-              )}
             </Section>
           </section>
 
           <section id="cv-builder-projects">
-            <Section title={t("cvBuilder.section.projects")} summaryText={`${draft.projects.length}`}>
+            <Section
+              title={t("cvBuilder.section.projects")}
+              summaryText={`${draft.projects.length}`}
+              errorCount={sectionErrorCount("projects")}
+            >
               {draft.projects.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.projects.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
@@ -1179,7 +1376,11 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-certificates">
-            <Section title={t("cvBuilder.section.certificates")} summaryText={`${draft.certificates.length}`}>
+            <Section
+              title={t("cvBuilder.section.certificates")}
+              summaryText={`${draft.certificates.length}`}
+              errorCount={sectionErrorCount("certificates")}
+            >
               {draft.certificates.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.certificates.map((entry, index) => (
                 <fieldset className="cv-builder-entry" key={entry.id}>
@@ -1255,7 +1456,11 @@ export default function CvBuilderEditor({
           </section>
 
           <section id="cv-builder-languages">
-            <Section title={t("cvBuilder.section.languages")} summaryText={`${draft.languages.length + draft.links.length}`}>
+            <Section
+              title={t("cvBuilder.section.languages")}
+              summaryText={`${draft.languages.length + draft.links.length}`}
+              errorCount={sectionErrorCount("languages")}
+            >
               <h4>{t("cvBuilder.languagesTitle")}</h4>
               {draft.languages.length === 0 ? <p className="cv-builder-empty">{t("cvBuilder.noEntries")}</p> : null}
               {draft.languages.map((entry, index) => (
@@ -1281,6 +1486,7 @@ export default function CvBuilderEditor({
                     <label className="cv-builder-field">
                       <span>{t("cvBuilder.languageLevel")}</span>
                       <select
+                        id={fieldId(`languages.${index}.level`)}
                         value={entry.level}
                         onChange={(event) =>
                           onChange({
@@ -1291,6 +1497,12 @@ export default function CvBuilderEditor({
                                 : item
                             ),
                           })
+                        }
+                        aria-invalid={cvBuilderErrorsFor(errors, `languages.${index}.level`).length > 0}
+                        aria-describedby={
+                          cvBuilderErrorsFor(errors, `languages.${index}.level`).length
+                            ? errorId(`languages.${index}.level`)
+                            : undefined
                         }
                       >
                         {(["basic", "conversational", "professional", "fluent", "native"] as const).map((level) => (
@@ -1445,7 +1657,7 @@ export default function CvBuilderEditor({
                 </button>
                 <button
                   type="button"
-                  className="letter-btn"
+                  className="btn-ghost"
                   onClick={() => void handleExportPdf()}
                   disabled={exporting || errorCount > 0 || !hasCvBuilderContent(draft)}
                 >
@@ -1455,11 +1667,16 @@ export default function CvBuilderEditor({
             </div>
           )}
           <p className="cv-builder-hint">{t("cvBuilder.sectionHint")}</p>
+          {errorCount > 0 && (
+            <p className="cv-builder-hint cv-builder-validation-blocks" role="status">
+              {t("cvBuilder.validationBlocksSave")}
+            </p>
+          )}
           <div className="cv-builder-footer__actions">
             {onSave && (
               <button
                 type="button"
-                className="letter-btn"
+                className="btn-ghost"
                 onClick={() => void saveCurrent()}
                 disabled={saving}
                 aria-busy={saving}
@@ -1469,17 +1686,18 @@ export default function CvBuilderEditor({
             )}
             <button
               type="button"
-              className="letter-btn cv-builder-export"
+              className="btn-ghost cv-builder-export"
               onClick={() => void handleExportPdf()}
               disabled={exporting || savingPdfToRis || errorCount > 0 || !hasCvBuilderContent(draft)}
               aria-busy={exporting}
+              title={errorCount > 0 ? t("cvBuilder.validationBlocksSave") : undefined}
             >
               {exporting ? t("cvBuilder.exporting") : t("cvBuilder.exportPdf")}
             </button>
             {onSavePdfToRis && (
               <button
                 type="button"
-                className="btn-ghost cv-builder-save-ris"
+                className={`cv-builder-save-ris${savingPdfToRis ? " is-loading" : ""}`}
                 onClick={() => void handleSavePdfToRis()}
                 disabled={
                   savingPdfToRis ||
@@ -1489,9 +1707,26 @@ export default function CvBuilderEditor({
                   !hasCvBuilderContent(draft)
                 }
                 aria-busy={savingPdfToRis}
-                title={pdfRisStatus !== "available" ? pdfRisStatusMessage() : undefined}
+                title={
+                  errorCount > 0
+                    ? t("cvBuilder.risStorage.blockedByValidation")
+                    : pdfRisStatus !== "available"
+                      ? pdfRisStatusMessage()
+                      : undefined
+                }
               >
-                {savingPdfToRis ? t("cvBuilder.risStorage.saving") : t("cvBuilder.risStorage.save")}
+                <span className="cv-builder-save-ris__icon" aria-hidden="true">
+                  {savingPdfToRis ? (
+                    <span className="cv-builder-save-ris__spinner" />
+                  ) : (
+                    <SaveIcon />
+                  )}
+                </span>
+                <span>
+                  {savingPdfToRis
+                    ? t("cvBuilder.risStorage.saving")
+                    : t("cvBuilder.risStorage.save")}
+                </span>
               </button>
             )}
             {fullpage && onReturnToApp && (
@@ -1507,6 +1742,17 @@ export default function CvBuilderEditor({
           {onSavePdfToRis && pdfRisStatus !== "available" && (
             <p className="cv-builder-hint" role="status">{pdfRisStatusMessage()}</p>
           )}
+          {onSavePdfToRis &&
+            pdfRisStatus === "available" &&
+            !savingPdfToRis &&
+            !pdfRisMessage &&
+            !pdfRisError &&
+            errorCount === 0 &&
+            hasCvBuilderContent(draft) && (
+              <p className="cv-builder-hint cv-builder-ris-not-saved" role="status">
+                {t("cvBuilder.risStorage.notSaved")}
+              </p>
+            )}
           {exportMessage && <p className="letter-review-success" role="status">{exportMessage}</p>}
           {pdfRisMessage && <p className="letter-review-success" role="status">{pdfRisMessage}</p>}
           {exportError && <p className="letter-review-warning" role="alert">{exportError}</p>}

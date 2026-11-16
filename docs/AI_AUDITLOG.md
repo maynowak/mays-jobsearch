@@ -6452,3 +6452,186 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `feature/jm-job-translation-01`; draft PR #21. No main merge or production
   deployment.
 - Report: `docs/reports/JM-JOB-TRANSLATION-01.md`.
+
+## 2026-11-15 — JM-CV-UX-01 — CV BUILDER SAVE BLOCKER
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — LIVE RIS E2E NOT EXECUTED`
+
+- Root cause: `errorCount > 0` disabled RIS save/export, but the UI did not
+  identify the affected section/field. The blocker was pre-upload validation,
+  not the RIS backend.
+- Fix: validation summary names affected sections; new “Zum ersten Fehler”
+  opens the relevant `<details>` section, scrolls and focuses the invalid field
+  (including shared skills textarea and language-level select). Works in modal,
+  fullpage and after switching from mobile preview. Disabled actions now show
+  a visible reason and title. No validation bypass.
+- Success remains gated on a confirmed `onSavePdfToRis(...) === true`; failed
+  uploads still show no success. Auth/consent/capacity/identity checks and the
+  independent PDF download are unchanged.
+- Files: `CvBuilderEditor.tsx`, `CvBuilderEditorRisStorage.test.tsx`,
+  `i18n.tsx`, `styles.css`, report/audit. No `api/**`, RIS, AWS, Terraform,
+  Cognito, Auth, Consent or matching changes.
+- Tests: focused 14 files / **151 PASS**; full serial `--maxWorkers=2`
+  **1895 PASS / 11 skipped**; build PASS; `git diff --check` PASS.
+- No live RIS/S3 E2E: no separate live-test approval/synthetic environment;
+  mock/component tests are not reported as live evidence.
+- Branch `feature/jm-cv-ux-01-save-blocker`, implementation commit `2edd04e`,
+  pushed to origin; no main merge/deployment.
+- Report: `docs/reports/JM-CV-UX-01-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-02 — CV SAVE ACTIONS & UX
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — LIVE RIS E2E NOT EXECUTED`
+
+- Branch `feature/jm-cv-ux-02-save-actions` von UX-01 `ce84ee5` (UX-01 noch
+  nicht in `origin/main`); Implementierungs-Commit `54475ed`, Docs-Commit
+  folgt; Branch gepusht, kein Main-Merge/Deployment.
+- Labels getrennt: Sitzung „Entwurf übernehmen“ / „Use draft“, Download
+  „PDF herunterladen“ / „Download PDF“, dauerhaft „PDF dauerhaft speichern“ /
+  „Save PDF permanently“, Schließen unverändert.
+- Primäre Aktion: türkis-/petrolfarbener Button mit weißem Text, Speicher-SVG,
+  Hover-/Focus-/Active-/Disabled-/Loading-Zustand, Spinner + `aria-busy`,
+  mobil volle Breite. Download und Sitzungsübernahme sind sekundäre
+  `btn-ghost`-Aktionen.
+- Status: „Noch nicht dauerhaft gespeichert“, Speichern, Erfolg nur nach
+  bestätigtem Upload, sichere Fehlermeldung, Validierungsblock, Auth-/Consent-/
+  Kapazitätsmeldungen. Alte PDF-Erfolgsmeldung wird bei Entwurfsänderung
+  zurückgesetzt.
+- Banner vereinfacht: Entwurf nur in der Sitzung; Download lokal; dauerhafte
+  Speicherung im Benutzerkonto. „RIS“ aus sichtbaren CV-Builder-Speicher-/
+  Importtexten entfernt; interne APIs/Verträge unverändert.
+- UX-01-Fehlernavigation („Zum ersten Fehler“) und alle Sicherheits-/Consent-
+  Prüfungen bleiben erhalten. Modal/Vollansicht nutzen dieselbe Komponente.
+- Dateien: `CvBuilderEditor.tsx`, `i18n.tsx`, `styles.css`, zugehörige Tests,
+  Report/Audit. Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth,
+  Consent, Matching oder Speicher-APIs.
+- Tests: fokussiert 7 Dateien / **164 PASS**; Vollsuite `--maxWorkers=2`
+  **1900 PASS / 11 skipped**; Build PASS (1,15 s); `git diff --check` PASS.
+- Kein Live-RIS/S3-E2E; keine Live-Test-Freigabe. Hover-/Focus-/Loading-CSS
+  per Komponenten-Tests und CSS abgesichert, nicht per Browser-Screenshot.
+- Report: `docs/reports/JM-CV-UX-02-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-03 — CV EDITOR UX CONSOLIDATION
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — LIVE RIS E2E NOT EXECUTED`
+
+- Branch `feature/jm-cv-ux-03-editor-consolidation` von UX-02 `7f78161`
+  (UX-02 noch nicht in main); Implementierungs-Commit `48f5450`, Docs-Commit
+  folgt; Branch gepusht, kein Main-Merge/Deployment.
+- Editor: Abschnitte bleiben einzeln auf-/zuklappbar und über die Navigation
+  erreichbar; fehlerhafte Abschnitte zeigen Badge („1 Fehler“/„N Fehler“),
+  roten Rahmen und werden beim Navigieren nicht automatisch geschlossen.
+  UX-01-„Zum ersten Fehler“ bleibt funktionsfähig.
+- Layout: Modal behält unabhängige Scrollbereiche; Vollansicht bekommt eine
+  sticky, unabhängig scrollbare Desktop-Vorschau; mobiler Footer mit
+  Speicheraktionen ist sticky. Kein horizontaler Overflow; PDF-Ausgabe
+  unverändert.
+- Fähigkeiten: Suche/Filter, standardmäßig 12 sichtbare Einträge, „Alle N
+  anzeigen“/„Weniger anzeigen“, einzelnes Entfernen und Zähler. Alle
+  Fähigkeiten bleiben im Datenmodell; keine KI-Gruppierung/Änderung.
+- Importprüfung: Gruppierung der manuellen Prüfliste nach Zielabschnitt,
+  Fortschrittsbalken + „X von Y geprüft“, Badge „Prüfen“ für unsichere
+  Angaben. Bestehende Filter und Einzelaktionen bleiben; Entscheidungen
+  bleiben bei Filter-/Gruppenwechseln erhalten; keine stillschweigende
+  Übernahme, keine Gruppen-Massenaktion.
+- Tests: finaler fokussierter Lauf **4 Dateien / 61 PASS**, breiterer
+  UX-02-/UX-03-Lauf **7 Dateien / 166 PASS**; Vollsuite `--maxWorkers=2`
+  **1902 PASS / 11 skipped**; Build PASS (1,08 s); `git diff --check` PASS.
+- Browser-Evidence: Desktop 1440 und Mobile 390 mit 20 Fähigkeiten, kein
+  Overflow, 0 Console-/Page-Errors; Screenshots unter
+  `docs/reports/assets/JM-CV-UX-03/`. Lokal, kein RIS-Live-E2E.
+- Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent,
+  ATS-Matching oder Speicher-APIs.
+- Report: `docs/reports/JM-CV-UX-03-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-04 — DIGITAL CAREER FLOW BACKGROUND
+
+**Status:** `COMPLETE — LOCAL/UNIT VERIFIED — MODAL SCREENSHOT NOT AVAILABLE`
+
+- Branch `feature/jm-cv-ux-04-digital-career-flow` von UX-03 `7096351`
+  (UX-03 noch nicht in main); Implementierungs-Commit `eb2ad4a`, Docs-Commit
+  folgt; Branch gepusht, kein Main-Merge/Deployment.
+- Design: dunkler Petrol-/Blau-Verlauf, cyan/türkise Radialglows, dünne
+  SVG-Netzwerklinien/Knoten, langsam wandernde Lichtpunkte, Tiefenwirkung.
+  Ausschließlich CSS + eingebettetes SVG; keine externe Grafikbibliothek,
+  kein WebGL, kein Video, keine JS-Daueranimation.
+- Integration: `.cv-workspace-page` und `.cv-builder-modal` erhalten den
+  Hintergrund; Header dunkel-transluzent; Startkarte, Fullpage-Editor,
+  Modal-Box und Import-Workspace bleiben opak weiß mit `color: var(--text)`.
+  Formulare, Preview, PDF-Ausgabe, Validierung, Import und Speicherung
+  unverändert.
+- Performance/A11y: Pseudo-Ebenen `pointer-events:none`, z-index hinter
+  Inhalten; `prefers-reduced-motion: reduce` deaktiviert beide Animationen;
+  keine Re-Renders, keine Scroll-/Layout-Effekte.
+- Browser-Evidence: Desktop 1440 und Mobile 390, Start + Editor, kein
+  horizontaler Overflow, 0 Console-/Page-Errors, weiße Flächen
+  `rgb(255,255,255)`, Reduced-Motion `animationName=none`. Screenshots unter
+  `docs/reports/assets/JM-CV-UX-04/`.
+- Modal-Screenshot nicht erstellt, da der CV-Editor-Modal im lokalen
+  Guest-Flow ohne authentifizierte Dashboard-Ansicht nicht erreichbar ist;
+  Modal-CSS ist implementiert, aber nicht separat visuell abgenommen.
+- Tests: Build PASS (1,27 s); Vollsuite `--maxWorkers=2` **1902 PASS /
+  11 skipped**; `git diff --check` PASS.
+- Keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent,
+  ATS-Matching oder Speicher-APIs.
+- Report: `docs/reports/JM-CV-UX-04-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-05 — INTEGRATION QA / RELEASE READINESS
+
+**Status:** `INTEGRATION VERIFIED — READY FOR CONTROLLED MAIN MERGE (REVIEW PENDING)`
+
+- Branch `feature/jm-cv-ux-05-integration-qa` von UX-04 `0eaba37`; alle
+  UX-01–04-Commits enthalten. `origin/main` war auf `fbe58e1` (ATS
+  Metadata Recovery) weitergelaufen; Merge-Commit `cea79ec`, Konflikt nur in
+  `docs/AI_AUDITLOG.md`, beide Seiten vollständig erhalten. i18n/styles
+  automatisch gemergt. Kein Main-Merge, kein Deployment.
+- Kumulativer Diff gegen `origin/main`: 22 Dateien, ausschließlich UX-Scope
+  (CvBuilderEditor, ImportReview, styles, i18n, Tests, UX-Reports/Screenshots,
+  Auditlog). Keine `api/**`-, RIS-, AWS-, Terraform-, Cognito-, Auth-,
+  Consent-, ATS- oder Speicher-API-Änderung.
+- Integration/Browser: Desktop 1440 und Mobile 390 Vollansicht; ungültige
+  E-Mail → „1 Fehler“ → „Zum ersten Fehler“ fokussiert
+  `cv-builder-field-personal-email`; Korrektur gibt Speicherung frei;
+  20 Fähigkeiten → 12 sichtbar, Zähler/Suche/Entfernen; Importprüfung mit
+  synthetischem Fixture (Fortschritt + 3 Filter); Entwurf übernehmen,
+  PDF-Download (`Lebenslauf.pdf`); dauerhafte RIS-Speicherung ohne Login
+  disabled. 0 Overflow, 0 Console-/Page-Errors.
+- Unter QA behoben: mobiler sticky Footer verdeckte die Vorschau; Footer ist
+  jetzt nur im Bearbeiten-Modus sticky, im Vorschau-Modus statisch
+  (`929e5d3`).
+- Tests: Build PASS (975 ms); Vollsuite `--maxWorkers=2` **1910 PASS /
+  11 skipped**; `git diff --check` PASS. Reduced Motion `animationName=none`.
+- Modal nicht verifiziert: kein authentifizierter Testzugang im lokalen
+  Guest-Flow. RIS-/S3-Live-E2E nicht ausgeführt (keine Live-Test-Freigabe).
+- PR #22 (OPEN/DRAFT, MERGEABLE, UNSTABLE nur wegen laufendem CodeQL;
+  Vercel-Preview erfolgreich): https://github.com/maynowak/mays-jobsearch/pull/22
+- Offene Punkte sind Test-/Freigabegrenzen, keine funktionalen UX-Blocker.
+- Keine Änderung an RIS, AWS, Terraform, Cognito, Consent, Matching oder
+  Speicher-APIs; kein Main-Merge/Production-Deployment.
+- Report: `docs/reports/JM-CV-UX-05-INTEGRATION-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-RELEASE-01 — FINAL RELEASE GATE
+
+**Status:** `READY FOR OWNER APPROVAL`
+
+- Reviewed product commit `22752d7`; branch
+  `feature/jm-cv-ux-05-integration-qa`, remote identical; `origin/main`
+  `fbe58e1` is merged into the branch.
+- PR #22: OPEN, DRAFT, `MERGEABLE`, merge-state **CLEAN**; CodeQL **SUCCESS**;
+  Vercel preview checks **SUCCESS**. No merge/deployment.
+- Cumulative diff vs `origin/main`: 29 files, UX scope only (CvBuilderEditor,
+  ImportReview, i18n, styles, tests, UX reports/screenshots, auditlog). No
+  `api/**`, RIS, AWS, Terraform, Cognito, Auth, Consent, ATS or storage-API
+  changes. `git diff --check` and secret scan clean.
+- Preview deployment `dpl_9vXmhPenYyWGj5Vur2jJNs5DwSwe`
+  (`mays-job-matcher-bzw53y6ik-maymilly.vercel.app`) at commit `22752d7`:
+  READY. Desktop 1440/Mobile 390: no overflow, 20 skills → 12 visible,
+  Digital Career Flow active, mobile footer sticky in edit mode, reduced
+  motion animations none, 0 console/page errors.
+- Full suite `--maxWorkers=2` **1910 PASS / 11 skipped**; build **PASS**
+  (975 ms). UX-01–05 reports/screenshots included.
+- Unverified: authenticated CV-editor modal (no test access) and live
+  RIS/S3 PDF storage E2E (no live-test approval). These remain documented
+  evidence boundaries, not functional UX blockers.
+- Recommendation: owner review/approval of PR #22; no automatic merge.
+- Report: `docs/reports/JM-CV-UX-RELEASE-01-RELEASE-GATE.md`.
