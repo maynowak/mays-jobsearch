@@ -10840,8 +10840,28 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 .cv-builder-validation-summary {
   margin: 12px 20px 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--red) 7%, var(--surface));
   color: #991b1b;
   font-weight: 700;
+}
+
+.cv-builder-validation-summary p {
+  margin: 0 0 6px;
+}
+
+.cv-builder-validation-summary .btn-ghost {
+  min-height: 40px;
+  margin-top: 2px;
+  color: #7f1d1d;
+  border-color: color-mix(in srgb, var(--red) 35%, var(--border));
+}
+
+.cv-builder-validation-blocks {
+  color: #991b1b;
+  font-weight: 600;
 }
 
 .cv-builder-counts {
@@ -10891,6 +10911,23 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
+}
+
+.cv-builder-section.has-errors {
+  border-color: color-mix(in srgb, var(--red) 48%, var(--border));
+}
+
+.cv-builder-section__error {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--red) 9%, var(--surface));
+  color: #991b1b;
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.cv-builder-section > summary > span:first-child {
+  flex: 1 1 auto;
 }
 
 .cv-builder-section > summary {
@@ -11080,6 +11117,81 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   overflow-wrap: anywhere;
 }
 
+.cv-builder-skills__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+
+.cv-builder-skills__search {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 220px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.cv-builder-skills__search input {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.cv-builder-skills__count {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.cv-builder-skills__list {
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+
+.cv-builder-skills__list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cv-builder-skill-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cv-builder-skill-remove:hover {
+  background: color-mix(in srgb, var(--red) 9%, var(--surface));
+  color: #991b1b;
+}
+
+.cv-builder-skill-remove:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cv-builder-skills__toggle {
+  align-self: flex-start;
+  min-height: 40px;
+}
+
 .cv-builder-footer {
   display: flex;
   flex-wrap: wrap;
@@ -11101,6 +11213,119 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+.cv-builder-footer__actions .btn-ghost {
+  min-height: 44px;
+}
+
+/* JM-CV-UX-02 — primary PDF storage action. */
+.cv-builder-save-ris {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #0f766e;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    0 4px 14px rgba(13, 148, 136, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.cv-builder-save-ris__icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.cv-builder-save-ris__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cv-builder-save-ris__spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.38);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cv-builder-save-spin 0.7s linear infinite;
+}
+
+@keyframes cv-builder-save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cv-builder-save-ris:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 8px 22px rgba(13, 148, 136, 0.36),
+    0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.cv-builder-save-ris:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+
+.cv-builder-save-ris:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cv-builder-save-ris:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+  box-shadow: none;
+  transform: none;
+}
+
+.cv-builder-save-ris.is-loading {
+  cursor: progress;
+}
+
+.cv-builder-ris-not-saved {
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-builder-save-ris {
+    transition: none;
+  }
+
+  .cv-builder-save-ris:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .cv-builder-save-ris__spinner {
+    animation: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .cv-builder-save-ris {
+    flex: 1 1 100%;
+    width: 100%;
+  }
 }
 
 .cv-builder-footer > .letter-review-success,
@@ -13478,6 +13703,52 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
 }
 
+.cv-import-review__progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 70%, var(--surface));
+}
+
+.cv-import-review__progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand) 0%, var(--accent) 100%);
+  transition: width 0.2s ease;
+}
+
+.cv-import-review__progress-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-import-review__progress > span {
+    transition: none;
+  }
+}
+
+.cv-import-review__group {
+  padding: 8px 2px 0;
+  color: var(--brand-dark);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cv-import-review__uncertain {
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--border));
+  border-radius: 999px;
+  background: var(--amber-bg);
+  color: #8a5a00;
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
 .cv-import-review__filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -14076,5 +14347,179 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   .cv-builder-fullpage__box,
   .cv-import-workspace__box {
     width: 100%;
+  }
+}
+
+/* JM-CV-UX-03 — keep the full-page preview visible without shrinking the form. */
+@media (min-width: 901px) {
+  .cv-builder-fullpage .cv-builder-preview-pane {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+}
+
+/* JM-CV-UX-03 — keep save actions reachable while scrolling the mobile editor/preview. */
+@media (max-width: 900px) {
+  .cv-builder-fullpage .cv-builder-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.12);
+  }
+}
+
+
+/* JM-CV-UX-04 — Digital Career Flow workspace background.
+   CSS/SVG only: slow network drift, light points and radial depth. No WebGL,
+   no external assets, no JS animation. Content surfaces stay opaque. */
+.cv-workspace-page,
+.cv-builder-modal {
+  --career-flow-network: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNDAwIiBoZWlnaHQ9IjkwMCIgdmlld0JveD0iMCAwIDE0MDAgOTAwIj4KPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjdlOGY5IiBzdHJva2Utb3BhY2l0eT0iMC4yMCIgc3Ryb2tlLXdpZHRoPSIxIj4KPHBhdGggZD0iTS00MCAxNzAgMTgwIDExMCAzNjAgMjUwIDU2MCAxNjAgNzYwIDI4MCA5NjAgMTkwIDExODAgMzAwIDE0NjAgMjIwIi8+CjxwYXRoIGQ9Ik0tNDAgNDIwIDIwMCAzNjAgNDIwIDQ3MCA2MjAgMzgwIDgyMCA1MDAgMTA0MCA0MDAgMTI2MCA1MTAgMTQ2MCA0MzAiLz4KPHBhdGggZD0iTS00MCA2OTAgMTgwIDYyMCAzODAgNzQwIDYwMCA2NTAgODIwIDc2MCAxMDIwIDY3MCAxMjQwIDc4MCAxNDYwIDcwMCIvPgo8cGF0aCBkPSJNMTgwIDExMCAyMDAgMzYwIDE4MCA2MjAiLz4KPHBhdGggZD0iTTU2MCAxNjAgNjIwIDM4MCA2MDAgNjUwIi8+CjxwYXRoIGQ9Ik05NjAgMTkwIDEwNDAgNDAwIDEwMjAgNjcwIi8+CjxwYXRoIGQ9Ik0zNjAgMjUwIDQyMCA0NzAgMzgwIDc0MCIvPgo8cGF0aCBkPSJNODIwIDUwMCA4MjAgNzYwIi8+CjwvZz4KPGcgZmlsbD0iIzY3ZThmOSIgZmlsbC1vcGFjaXR5PSIwLjU1Ij4KPGNpcmNsZSBjeD0iMTgwIiBjeT0iMTEwIiByPSIyIi8+PGNpcmNsZSBjeD0iMzYwIiBjeT0iMjUwIiByPSIxLjUiLz48Y2lyY2xlIGN4PSI1NjAiIGN5PSIxNjAiIHI9IjIiLz48Y2lyY2xlIGN4PSI3NjAiIGN5PSIyODAiIHI9IjEuNSIvPjxjaXJjbGUgY3g9Ijk2MCIgY3k9IjE5MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjExODAiIGN5PSIzMDAiIHI9IjEuNSIvPgo8Y2lyY2xlIGN4PSIyMDAiIGN5PSIzNjAiIHI9IjEuNSIvPjxjaXJjbGUgY3g9IjQyMCIgY3k9IjQ3MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjYyMCIgY3k9IjM4MCIgcj0iMS41Ii8+PGNpcmNsZSBjeD0iODIwIiBjeT0iNTAwIiByPSIyIi8+PGNpcmNsZSBjeD0iMTA0MCIgY3k9IjQwMCIgcj0iMS41Ii8+PGNpcmNsZSBjeD0iMTI2MCIgY3k9IjUxMCIgcj0iMiIvPgo8Y2lyY2xlIGN4PSIxODAiIGN5PSI2MjAiIHI9IjIiLz48Y2lyY2xlIGN4PSIzODAiIGN5PSI3NDAiIHI9IjEuNSIvPjxjaXJjbGUgY3g9IjYwMCIgY3k9IjY1MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjgyMCIgY3k9Ijc2MCIgcj0iMS41Ii8+PGNpcmNsZSBjeD0iMTAyMCIgY3k9IjY3MCIgcj0iMiIvPjxjaXJjbGUgY3g9IjEyNDAiIGN5PSI3ODAiIHI9IjEuNSIvPgo8L2c+Cjwvc3ZnPg==");
+  background-color: #041a2b;
+  background-image:
+    radial-gradient(ellipse at 14% 8%, rgba(14, 165, 233, 0.3) 0%, transparent 44%),
+    radial-gradient(ellipse at 86% 16%, rgba(13, 148, 136, 0.25) 0%, transparent 46%),
+    radial-gradient(ellipse at 50% 108%, rgba(34, 211, 238, 0.14) 0%, transparent 58%),
+    linear-gradient(135deg, #03111e 0%, #06283b 48%, #041a2b 100%);
+  color: #eafcff;
+}
+
+.cv-workspace-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.cv-builder-modal {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.cv-workspace-page::before,
+.cv-builder-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--career-flow-network);
+  background-position: 0 0;
+  background-size: 1200px 800px;
+  opacity: 0.5;
+  animation: career-flow-drift 55s ease-in-out infinite alternate;
+}
+
+.cv-workspace-page::after,
+.cv-builder-modal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(103, 232, 249, 0.55) 0 1px, transparent 2px),
+    radial-gradient(circle at 70% 60%, rgba(34, 211, 238, 0.4) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 45% 80%, rgba(20, 184, 166, 0.35) 0 1px, transparent 2px);
+  background-position: 0 0, 0 0, 0 0;
+  background-size: 520px 430px, 680px 540px, 760px 600px;
+  opacity: 0.65;
+  animation: career-flow-points 48s linear infinite alternate;
+}
+
+.cv-workspace-page > .cv-workspace-header,
+.cv-workspace-page > .cv-workspace-main {
+  position: relative;
+  z-index: 1;
+}
+
+.cv-builder-modal__box {
+  position: relative;
+  z-index: 1;
+}
+
+.cv-workspace-header {
+  background: rgba(4, 27, 43, 0.72);
+  border-bottom-color: rgba(148, 233, 255, 0.18);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.cv-workspace-brand {
+  color: #f0fdff;
+}
+
+.cv-workspace-kicker {
+  color: rgba(230, 251, 255, 0.72);
+}
+
+.cv-workspace-lang button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(165, 243, 252, 0.35);
+  color: #eafcff;
+}
+
+.cv-workspace-lang button[aria-pressed="true"] {
+  background: rgba(34, 211, 238, 0.22);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cv-workspace-loading {
+  color: #eafcff;
+}
+
+.cv-workspace-local-note {
+  background: rgba(8, 47, 73, 0.6);
+  border-left-color: var(--accent);
+  color: #d8f7ff;
+}
+
+@keyframes career-flow-drift {
+  from { background-position: 0 0; }
+  to { background-position: -42px -24px; }
+}
+
+@keyframes career-flow-points {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 122px 42px, -84px 34px, 64px -52px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-workspace-page::before,
+  .cv-builder-modal::before,
+  .cv-workspace-page::after,
+  .cv-builder-modal::after {
+    animation: none;
+  }
+}
+
+/* JM-CV-UX-04 — keep white work surfaces on the dark background readable. */
+.cv-workspace-start,
+.cv-builder-fullpage,
+.cv-builder-modal__box,
+.cv-import-workspace__box {
+  color: var(--text);
+}
+
+.cv-workspace-local-note {
+  background: rgba(236, 254, 255, 0.94);
+  color: #0f3b4a;
+}
+
+/* JM-CV-UX-05 — keep the mobile preview visible: the save footer is sticky in
+   edit mode, but returns to normal flow in preview mode. */
+@media (max-width: 900px) {
+  .cv-builder-fullpage .cv-builder-footer {
+    position: static;
+    box-shadow: none;
+  }
+
+  .cv-builder-fullpage .cv-builder-workspace[data-view="edit"] + .cv-builder-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.12);
   }
 }

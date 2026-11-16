@@ -61,7 +61,7 @@ describe("CV-BUILDER-01C editor export", () => {
     render(<Harness />);
 
     fireEvent.click(screen.getByRole("button", { name: "Modern" }));
-    fireEvent.click(screen.getByRole("button", { name: "Als PDF herunterladen" }));
+    fireEvent.click(screen.getByRole("button", { name: "PDF herunterladen" }));
 
     await waitFor(() => expect(pdfMocks.createCvBuilderPdf).toHaveBeenCalledTimes(1));
     expect(pdfMocks.createCvBuilderPdf.mock.calls[0][1]).toBe("modern");
@@ -72,26 +72,26 @@ describe("CV-BUILDER-01C editor export", () => {
         "Lebenslauf-Alex-Beispiel.pdf"
       )
     );
-    expect(await screen.findByText("PDF wurde erstellt.")).toBeInTheDocument();
+    expect(await screen.findByText("PDF wurde heruntergeladen.")).toBeInTheDocument();
   });
 
   it("disables export for an empty draft", () => {
     render(<Harness initial={createEmptyCvBuilderDraft()} />);
-    expect(screen.getByRole("button", { name: "Als PDF herunterladen" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "PDF herunterladen" })).toBeDisabled();
   });
 
   it("disables export while the draft has validation errors", () => {
     const draft = validDraft();
     draft.personal.email = "invalid";
     render(<Harness initial={draft} />);
-    expect(screen.getByRole("button", { name: "Als PDF herunterladen" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "PDF herunterladen" })).toBeDisabled();
   });
 
   it("shows a safe error message when PDF generation fails", async () => {
     pdfMocks.createCvBuilderPdf.mockRejectedValue(new Error("synthetic failure"));
     render(<Harness />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Als PDF herunterladen" }));
+    fireEvent.click(screen.getByRole("button", { name: "PDF herunterladen" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Das PDF konnte nicht erstellt werden."

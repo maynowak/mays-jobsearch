@@ -70,7 +70,7 @@ describe("CV-BUILDER-03A direct workspace identity isolation", () => {
     renderPage();
     await enterDraft("Workspace ohne Anmeldung");
 
-    const save = screen.getByRole("button", { name: "In RIS speichern" });
+    const save = screen.getByRole("button", { name: "PDF dauerhaft speichern" });
     expect(save).toBeDisabled();
     expect(screen.getByText("Bitte melde dich an, um das PDF dauerhaft zu speichern.")).toBeInTheDocument();
   });

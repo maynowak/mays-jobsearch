@@ -4,7 +4,7 @@
 
 **Date:** 2026-11-16
 **Repository:** `maynowak/mays-jobsearch`
-**Final `origin/main`:** `17ffec8fd09231d67fd2567a8c0b8782659f8191`
+**Final `origin/main`:** `154c698333682afd0b68454666738abc9713f194`
 
 ## 1. Merge-Ergebnis
 
@@ -90,7 +90,7 @@ npx vitest run --no-file-parallelism
 
 ## 4. Production-Deployment
 
-Beide Domains liefern Build `17ffec8`:
+Beide Domains liefern Build `154c698`:
 
 - https://www.mays-job-matcher.app
 - https://mays-jobsearch.vercel.app
@@ -101,7 +101,7 @@ Live-Bundle enthält:
 - „Stellenbeschreibung manuell einfügen“
 - „Vollständige Stellenbeschreibung wird geladen …“
 
-Vercel Production Status für Merge `17ffec8`: **SUCCESS**. Kein manuelles
+Vercel Production Status für Merge `154c698`: **SUCCESS**. Kein manuelles
 Production-Deployment.
 
 ## 5. Production-E2E
@@ -184,7 +184,15 @@ Screenshots:
 
 (lokal unter `/tmp/opencode/`, keine personenbezogenen Daten)
 
-## 6. Offene Einschränkungen
+## 6. Nachlaufender Main-Stand
+
+Nach dem Integrations-E2E wurde PR #22 (JM-CV-UX-05, CV-Editor) als
+`154c698` nach `main` gemerged. Der neue Stand enthält weiterhin alle
+Übersetzungs- und ATS-Handoff-Änderungen; der Production-E2E wurde auf
+`154c698` erneut erfolgreich ausgeführt. Der Docs-Branch wurde auf diesen
+Stand nachgezogen.
+
+## 7. Offene Einschränkungen
 
 - Der Free-Model-Provider kann temporär `model_unavailable` liefern. Die UI
   bewahrt dann den Originaltext und zeigt eine Fehlermeldung; ein erneuter
