@@ -6635,3 +6635,33 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   evidence boundaries, not functional UX blockers.
 - Recommendation: owner review/approval of PR #22; no automatic merge.
 - Report: `docs/reports/JM-CV-UX-RELEASE-01-RELEASE-GATE.md`.
+
+## 2026-11-16 — JM-CV-UX-RELEASE-02 — CONTROLLED PRODUCTION RELEASE
+
+**Status:** `PRODUCTION VERIFIED`
+
+- Reconciliation: `origin/main` `17ffec8` (Translation/ATS-Description-Handoff)
+  in den UX-Integration-Branch gemergt; Merge-Commit `d3856ae`. Konflikt nur
+  `docs/AI_AUDITLOG.md`, beide Seiten erhalten; i18n/styles automatisch
+  gemergt und getestet. Kein Force-Push/History-Rewrite.
+- PR #22 aus Draft genommen und nach CLEAN/CodeQL-SUCCESS/Vercel-SUCCESS per
+  Merge-Commit gemergt: Main-SHA `154c698333682afd0b68454666738abc9713f194`.
+  Keine Branch-Löschung.
+- Main-Tests: Build PASS (1,07 s); Vollsuite `--maxWorkers=2`
+  **1928 PASS / 11 skipped**; `git diff --check` PASS.
+- Production: `dpl_CLDVRVSYhqQpY4dSJwD7eHY5uT16`,
+  `mays-job-matcher-j13vl6ukw-maymilly.vercel.app`, Environment `production`,
+  READY, Source `main`, Commit `154c698`, Aliases inkl.
+  `www.mays-job-matcher.app`. Footer `Version 2.2.0 · production · main ·
+  154c698`; Deployment-Commit = Build Identity. Der PR-Merge löste genau ein
+  Production-Deployment aus; kein zusätzliches `vercel --prod`.
+- Production-Smoke Desktop 1440/Mobile 390: Landing + CV-Workspace, Digital
+  Career Flow, Validierung/„Zum ersten Fehler“, 20 Fähigkeiten → 12 sichtbar,
+  PDF-Download `Lebenslauf.pdf`, Speicherbutton im Gastkontext korrekt
+  deaktiviert, kein Overflow, 0 Console-/Page-Errors. Screenshots unter
+  `docs/reports/assets/JM-CV-UX-RELEASE-02/`.
+- Nicht verifiziert: authentifizierter CV-Modal- und RIS-S3-Live-Speicherpfad
+  (kein Testzugang/Live-Freigabe).
+- Report auf separatem Docs-Branch `docs/jm-cv-ux-release-02`, damit der
+  Production-Build `154c698` unverändert bleibt.
+- Report: `docs/reports/JM-CV-UX-RELEASE-02-REPORT.md`.
