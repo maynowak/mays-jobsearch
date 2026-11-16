@@ -98,6 +98,16 @@ function FieldError({ errors, path }: { errors: CvBuilderValidationError[]; path
   );
 }
 
+function SaveIcon(): React.ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+      <path d="M17 21v-8H7v8" />
+      <path d="M7 3v5h8" />
+    </svg>
+  );
+}
+
 function TextField({
   label,
   value,
@@ -466,6 +476,13 @@ export default function CvBuilderEditor({
     addRefs.current[focusAfterRemove]?.focus();
     setFocusAfterRemove(null);
   }, [focusAfterRemove, draft]);
+
+  // A PDF storage message refers to the draft version that was saved. Any
+  // edit invalidates it, so the footer can show the "not saved" state again.
+  useEffect(() => {
+    setPdfRisMessage("");
+    setPdfRisError("");
+  }, [draft]);
 
   useEffect(() => {
     if (!pendingErrorFocus) return;
@@ -1533,7 +1550,7 @@ export default function CvBuilderEditor({
                 </button>
                 <button
                   type="button"
-                  className="letter-btn"
+                  className="btn-ghost"
                   onClick={() => void handleExportPdf()}
                   disabled={exporting || errorCount > 0 || !hasCvBuilderContent(draft)}
                 >
@@ -1552,7 +1569,7 @@ export default function CvBuilderEditor({
             {onSave && (
               <button
                 type="button"
-                className="letter-btn"
+                className="btn-ghost"
                 onClick={() => void saveCurrent()}
                 disabled={saving}
                 aria-busy={saving}
@@ -1562,7 +1579,7 @@ export default function CvBuilderEditor({
             )}
             <button
               type="button"
-              className="letter-btn cv-builder-export"
+              className="btn-ghost cv-builder-export"
               onClick={() => void handleExportPdf()}
               disabled={exporting || savingPdfToRis || errorCount > 0 || !hasCvBuilderContent(draft)}
               aria-busy={exporting}
@@ -1573,7 +1590,7 @@ export default function CvBuilderEditor({
             {onSavePdfToRis && (
               <button
                 type="button"
-                className="btn-ghost cv-builder-save-ris"
+                className={`cv-builder-save-ris${savingPdfToRis ? " is-loading" : ""}`}
                 onClick={() => void handleSavePdfToRis()}
                 disabled={
                   savingPdfToRis ||
@@ -1591,7 +1608,18 @@ export default function CvBuilderEditor({
                       : undefined
                 }
               >
-                {savingPdfToRis ? t("cvBuilder.risStorage.saving") : t("cvBuilder.risStorage.save")}
+                <span className="cv-builder-save-ris__icon" aria-hidden="true">
+                  {savingPdfToRis ? (
+                    <span className="cv-builder-save-ris__spinner" />
+                  ) : (
+                    <SaveIcon />
+                  )}
+                </span>
+                <span>
+                  {savingPdfToRis
+                    ? t("cvBuilder.risStorage.saving")
+                    : t("cvBuilder.risStorage.save")}
+                </span>
               </button>
             )}
             {fullpage && onReturnToApp && (
@@ -1607,6 +1635,17 @@ export default function CvBuilderEditor({
           {onSavePdfToRis && pdfRisStatus !== "available" && (
             <p className="cv-builder-hint" role="status">{pdfRisStatusMessage()}</p>
           )}
+          {onSavePdfToRis &&
+            pdfRisStatus === "available" &&
+            !savingPdfToRis &&
+            !pdfRisMessage &&
+            !pdfRisError &&
+            errorCount === 0 &&
+            hasCvBuilderContent(draft) && (
+              <p className="cv-builder-hint cv-builder-ris-not-saved" role="status">
+                {t("cvBuilder.risStorage.notSaved")}
+              </p>
+            )}
           {exportMessage && <p className="letter-review-success" role="status">{exportMessage}</p>}
           {pdfRisMessage && <p className="letter-review-success" role="status">{pdfRisMessage}</p>}
           {exportError && <p className="letter-review-warning" role="alert">{exportError}</p>}

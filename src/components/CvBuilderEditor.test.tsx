@@ -61,9 +61,15 @@ describe("CV-BUILDER-01A editor", () => {
   it("shows the session-only and PDF-phase notices", () => {
     render(<Harness />);
     expect(screen.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" })).toBeInTheDocument();
-    expect(screen.getByText(/nur während der aktuellen Sitzung bearbeitet/)).toBeInTheDocument();
-    expect(screen.getByText(/PDF-Export erfolgt lokal im Browser/)).toBeInTheDocument();
+    expect(screen.getByText(/bleibt nur in dieser Sitzung/)).toBeInTheDocument();
+    expect(screen.getByText(/PDF herunterladen.*erstellt die Datei lokal/)).toBeInTheDocument();
     expect(screen.getByText("0 Einträge · 0 Validierungshinweise")).toBeInTheDocument();
+  });
+
+  it("labels the session action as draft adoption", () => {
+    render(<Harness onSave={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Entwurf übernehmen" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Lebenslauf speichern" })).toBeNull();
   });
 
   it("edits personal data and reports invalid email without deleting it", async () => {
@@ -220,23 +226,23 @@ function SaveHarness({ onClose = vi.fn() }: { onClose?: () => void }) {
 describe("CV-BUILDER-WORKFLOW-02A save status", () => {
   it("shows the correct session status for unsaved, saved and modified drafts", () => {
     const { rerender } = render(<Harness />);
-    expect(screen.getByText("Noch nicht gespeichert")).toBeInTheDocument();
+    expect(screen.getByText("Entwurf noch nicht übernommen")).toBeInTheDocument();
     rerender(<Harness saved />);
-    expect(screen.getByText("In dieser Sitzung gespeichert")).toBeInTheDocument();
+    expect(screen.getByText("Entwurf übernommen")).toBeInTheDocument();
     rerender(<Harness saved dirty />);
     expect(screen.getByText("Ungespeicherte Änderungen")).toBeInTheDocument();
     rerender(<Harness saved={false} dirty />);
-    expect(screen.getByText("Noch nicht gespeichert")).toBeInTheDocument();
+    expect(screen.getByText("Entwurf noch nicht übernommen")).toBeInTheDocument();
   });
 
   it("shows the success state with the close, continue and PDF actions", async () => {
     const onClose = vi.fn();
     render(<SaveHarness onClose={onClose} />);
-    fireEvent.click(screen.getByRole("button", { name: "Lebenslauf speichern" }));
-    expect((await screen.findAllByText("Dein Lebenslauf wurde in dieser Sitzung gespeichert.")).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Entwurf übernehmen" }));
+    expect((await screen.findAllByText("Dein Entwurf wurde für diese Sitzung übernommen.")).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Zur Lebenslaufübersicht" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Weiter bearbeiten" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Als PDF herunterladen" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "PDF herunterladen" }).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Zur Lebenslaufübersicht" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -244,7 +250,7 @@ describe("CV-BUILDER-WORKFLOW-02A save status", () => {
   it("keeps save errors visible and does not fake a success", () => {
     render(<Harness saveError="Speichern fehlgeschlagen" saved={false} />);
     expect(screen.getAllByText("Speichern fehlgeschlagen").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Dein Lebenslauf wurde in dieser Sitzung gespeichert.")).toBeNull();
+    expect(screen.queryByText("Dein Entwurf wurde für diese Sitzung übernommen.")).toBeNull();
   });
 });
 });
@@ -268,7 +274,7 @@ describe("CV-BUILDER-PDF-EXPORT-FIX-01 editor", () => {
     }];
     render(<Harness initial={draft} />);
     expect(screen.getByText("2 Einträge · 0 Validierungshinweise")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Als PDF herunterladen" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "PDF herunterladen" })).toBeEnabled();
   });
 });
 
