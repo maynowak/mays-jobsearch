@@ -1,0 +1,149 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../../api/_lib/ai.mjs", () => ({
+  chat: vi.fn(),
+}));
+
+import handler from "../../api/job-details.mjs";
+import { chat } from "../../api/_lib/ai.mjs";
+import { HttpError } from "../../api/_lib/filter.mjs";
+
+function makeReq(body) {
+  return { method: "POST", headers: {}, body };
+}
+
+function makeRes() {
+  const res = {
+    statusCode: 200,
+    data: null,
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(data) {
+      this.data = data;
+      return this;
+    },
+    setHeader() {},
+  };
+  return res;
+}
+
+async function call(body) {
+  const req = makeReq(body);
+  const res = makeRes();
+  await handler(req, res);
+  return res;
+}
+
+const englishJob = {
+  action: "translate",
+  description: "We are looking for a Software Engineer. You will build reliable systems with AWS and TypeScript.",
+  sourceLanguage: "en",
+  targetLanguage: "de",
+  consent: true,
+};
+
+describe("JM-JOB-TRANSLATION-01: job translation API", () => {
+  beforeEach(() => {
+    vi.mocked(chat).mockReset();
+    vi.mocked(chat).mockResolvedValue(JSON.stringify({
+      translation: "Wir suchen einen Software Engineer. Du baust zuverlässige Systeme mit AWS und TypeScript.",
+    }));
+  });
+
+  it("translates an English job description and sends no CV data", async () => {
+    const res = await call({
+      ...englishJob,
+      cv_text: "PRIVATE CV TEXT",
+      candidate: { email: "private@example.com" },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.data).toMatchObject({
+      sourceLanguage: "en",
+      targetLanguage: "de",
+      translated: true,
+    });
+    expect(res.data.translation).toContain("Wir suchen");
+    expect(chat).toHaveBeenCalledTimes(1);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).not.toContain("PRIVATE CV TEXT");
+    expect(prompt).not.toContain("private@example.com");
+    expect(prompt).toContain("Software Engineer");
+  });
+
+  it("does not call the provider for a German description", async () => {
+    const res = await call({
+      ...englishJob,
+      description: "Wir suchen einen Software Engineer mit AWS und TypeScript.",
+      sourceLanguage: "de",
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.data).toMatchObject({
+      sourceLanguage: "de",
+      targetLanguage: "de",
+      translated: false,
+    });
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("requires explicit consent", async () => {
+    const res = await call({ ...englishJob, consent: false });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.data.code).toBe("consent_required");
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized descriptions before calling the provider", async () => {
+    const res = await call({ ...englishJob, description: "A".repeat(20001) });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.data.code).toBe("description_too_long");
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("detects English when sourceLanguage is auto", async () => {
+    const res = await call({ ...englishJob, sourceLanguage: "auto" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.data.sourceLanguage).toBe("en");
+    expect(chat).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a provider error without an empty translation", async () => {
+    vi.mocked(chat).mockRejectedValueOnce(
+      new HttpError(504, "The translation provider timed out.", "timeout")
+    );
+
+    const res = await call(englishJob);
+
+    expect(res.statusCode).toBe(504);
+    expect(res.data).toMatchObject({
+      code: "timeout",
+      error: expect.stringMatching(/timed out/i),
+    });
+    expect(res.data.translation).toBeUndefined();
+  });
+
+  it("fails closed when the provider returns no usable translation", async () => {
+    vi.mocked(chat).mockResolvedValueOnce("");
+
+    const res = await call(englishJob);
+
+    expect(res.statusCode).toBe(502);
+    expect(res.data.code).toBe("bad_ai_response");
+    expect(res.data.translation).toBeUndefined();
+  });
+
+  it("does not accept an unsupported target language", async () => {
+    const res = await call({ ...englishJob, targetLanguage: "fr" });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.data.code).toBe("unsupported_language");
+    expect(chat).not.toHaveBeenCalled();
+  });
+});
