@@ -6766,3 +6766,26 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `feature/jm-cover-letter-quality-01`, draft PR #28; no main merge or
   production deployment.
 - Report: `docs/reports/JM-COVER-LETTER-QUALITY-01.md`.
+
+## 2026-11-17 — XREPO-RIS-CONSENT-RECOVERY-01 (Jobsearch side)
+
+**Status:** `CONSUMER CONTRACT VERIFIED / NO JOBSEARCH PRODUCT CHANGE`
+
+- Read-only review of `StorageConsentLive` → `risConsentApi` →
+  `/api/ris/consents` → RIS consent API. The BFF/UI correctly fail closed when
+  RIS publishes `application-storage/1.0` as `DRAFT`; no Jobsearch gate was
+  weakened.
+- Local production configuration has the approved v4 text/hash/state and the
+  consent UI enabled. Unauthenticated production `GET /api/ris/consents`
+  returns `401 unauthenticated`, not `503`; `mays-jobsearch.vercel.app` remains
+  a separate disabled environment.
+- Root cause is in the RIS main branch: the existing approved limited-beta
+  notice (`JM-APPLICATION-STORAGE-V4-PILOT-2026-11-08`) and v4 mapping were
+  absent from `origin/main`. RIS fix branch:
+  `feature/xrepo-ris-consent-recovery-01`.
+- Jobsearch focused consent tests: **63 PASS**. No Jobsearch product, RIS,
+  AWS, Terraform, Cognito or consent-text change in this repository. No real
+  user data or tokens logged.
+- Authenticated live E2E was not executed because no valid authorized test
+  identity/token was available; no production status is claimed. Report:
+  `docs/reports/XREPO-RIS-CONSENT-RECOVERY-01.md`.
