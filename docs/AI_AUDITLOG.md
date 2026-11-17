@@ -6766,3 +6766,38 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `feature/jm-cover-letter-quality-01`, draft PR #28; no main merge or
   production deployment.
 - Report: `docs/reports/JM-COVER-LETTER-QUALITY-01.md`.
+
+## 2026-11-17 — XREPO-RIS-CONSENT-RECOVERY-02 (Jobsearch side)
+
+**Status:** `CONSUMER VERIFIED / PRODUCTION BLOCKED BY RIS PLAN`
+
+- RIS PR #10 merged as `0eb3fe96a7e506e5c08e53816b7cc1c27b4e48f3`; current
+  RIS `main` contains the restored limited-beta approval.
+- Read-only live RIS lambda check found the old `DRAFT` code and missing
+  consent/CV/search enforcement flags/allowlist. No Jobsearch product change.
+- RIS deployment plan is destructive (`0 add / 6 change / 22 destroy`,
+  agent transport/order-result drift). No apply or deployment was performed.
+- Jobsearch consent tests: **63 PASS**. No tokens, real user data or consent
+  histories logged.
+- Authenticated live verification remains blocked by missing valid authorized
+  test identity/token; no production status claimed.
+- Report: `docs/reports/XREPO-RIS-CONSENT-RECOVERY-02.md`.
+- Follow-up 2026-11-17: RIS Unblock-03 (PR #12) reduced the plan to
+  `0 add / 9 change / 0 destroy / 0 replace`, but one existing Orders handler
+  env (`ORDER_DISPATCH_QUEUE_URL`) would be removed. Status is now
+  `D — contract/configuration mismatch`, with authenticated live E2E still
+  blocked. No Jobsearch product change, apply or deployment.
+
+## 2026-11-17 — RIS-CONSENT-RELEASE-05 (Jobsearch consumer)
+
+**Status:** `CONSUMER DOCUMENTED / RIS-DEV APPLIED / LIVE AUTH E2E BLOCKED`
+
+- RIS merged PR #12 as `00363977ede1417c4992933b2639ac442a70a4b0` and applied
+  the exact plan `512532f7…` to `ris-dev` (0 add / 8 change / 0 destroy).
+- Live RIS agent code now contains `application-storage/1.0 = APPROVED`;
+  Jobsearch BFF/UI contract remains unchanged and fail-closed.
+- Unauthenticated Jobsearch production BFF smoke remains `401`.
+- No Jobsearch product change, no RIS/AWS/Terraform/Cognito/CloudFront/DNS
+  change from this repository; no authenticated live E2E or general production
+  restoration claimed.
+- Full report: `docs/reports/RIS-CONSENT-RELEASE-05.md`.
