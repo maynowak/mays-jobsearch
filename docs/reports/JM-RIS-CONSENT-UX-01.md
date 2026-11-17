@@ -168,6 +168,7 @@ Abgedeckte Fälle:
 ## 6. Git / PR
 
 Feature-Branch: `feature/jm-ris-consent-ux-01`
+PR: #31
 
 Kein Main-Merge, kein Production-Deployment, keine RIS-/AWS-/Terraform-
 Änderung.
