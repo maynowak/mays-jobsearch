@@ -6696,6 +6696,29 @@ body {
   gap: 10px;
 }
 
+.letter-brief {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.letter-brief-more {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.letter-brief-more summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-link);
+}
+
+.letter-brief-more[open] summary {
+  margin-bottom: 10px;
+}
+
 .letter-generation-summary {
   display: flex;
   flex-direction: column;

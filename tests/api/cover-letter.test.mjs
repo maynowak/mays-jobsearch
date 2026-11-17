@@ -228,6 +228,95 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.body.code).toBe("bad_request");
   });
 
+  it("uses the structured CoverLetterBriefV1 in the prompt", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        brief: {
+          qualityClass: "executive",
+          writingStyle: "public_sector",
+          tone: "formal",
+          language: "de",
+          length: "standard",
+          format: "letter",
+          recipientName: "Frau Müller",
+          recipientRole: "Leitung IT",
+          motivation: "Ich möchte öffentliche IT verantwortungsvoll weiterentwickeln.",
+          keyAchievements: ["IAM-Konzept für 2.000 Nutzer eingeführt"],
+          availability: "01/2027",
+          relocation: "Umzug innerhalb Deutschlands möglich",
+          salaryExpectation: "70.000 EUR",
+          employmentPreference: "Vollzeit, hybrid",
+          additionalInstructions: "Fachliche Präzision vor Selbstlob.",
+        },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("Quality class (executive)");
+    expect(prompt).toContain("Writing style (public_sector)");
+    expect(prompt).toContain("Tone (formal)");
+    expect(prompt).toContain("Brief length (standard)");
+    expect(prompt).toContain("Frau Müller");
+    expect(prompt).toContain("Leitung IT");
+    expect(prompt).toContain("IAM-Konzept für 2.000 Nutzer eingeführt");
+    expect(prompt).toContain("Umzug innerhalb Deutschlands möglich");
+    expect(prompt).toContain("Do not mention ATS scores");
+    expect(prompt).not.toContain("ATS score:");
+    expect(res.body.meta.quality_class).toBe("executive");
+  });
+
+  it("rejects invalid briefing values", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        brief: { qualityClass: "ultra", writingStyle: "modern", tone: "balanced" },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe("bad_request");
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("does not invent optional briefing facts when they are absent", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        candidate: {
+          mode: "manual",
+          skills: [],
+          experience: "",
+          qualifications: "",
+          motivation: "",
+        },
+        brief: {
+          qualityClass: "standard",
+          writingStyle: "modern",
+          tone: "balanced",
+          language: "de",
+          length: "short",
+          format: "body_only",
+        },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("Recipient name: (not provided");
+    expect(prompt).toContain("Key achievements: (not provided");
+    expect(prompt).toContain("Availability: (not provided");
+    expect(prompt).toContain("Relocation: (not provided");
+    expect(prompt).toContain("Output format (body_only)");
+  });
+
   it("does not copy a prepareQuestion into the prompt", async () => {
     const res = makeRes();
     await handler(req({ ...validBody, prepareQuestion: "Secret interview question" }), res);
@@ -377,6 +466,16 @@ describe("/api/cover-letter typed generation", () => {
       "Sehr geehrte Damen und Herren,\n\nBewerbung\nReact\nTypeScript\n\nMit freundlichen Grüßen\nMax"
     );
     expect(res.body.letter).not.toContain("**");
+  });
+
+  it("removes bracketed placeholders from the returned letter", async () => {
+    vi.mocked(chat).mockResolvedValue("Sehr geehrte Damen und Herren,\n\nMit freundlichen Grüßen\n[Ihr Name]");
+    const res = makeRes();
+    await handler(req(validBody), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.letter).toBe("Sehr geehrte Damen und Herren,\n\nMit freundlichen Grüßen");
+    expect(res.body.letter).not.toContain("[Ihr Name]");
   });
 
   it("keeps unknown employer and fallback title neutral", async () => {

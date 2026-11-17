@@ -6,6 +6,35 @@ export type CoverLetterStyle = "professional" | "warm" | "concise" | "formal";
 export type CoverLetterLength = "short" | "one_page" | "detailed";
 export type CandidateMode = "cv" | "manual";
 
+export type CoverLetterQualityClass = "standard" | "professional" | "executive";
+export type CoverLetterWritingStyle = "modern" | "classic" | "technical" | "public_sector";
+export type CoverLetterTone = "confident" | "formal" | "balanced" | "warm";
+export type CoverLetterBriefLength = "short" | "standard";
+export type CoverLetterFormat = "letter" | "body_only";
+
+/**
+ * Structured briefing contract between the existing UI and the existing
+ * `/api/cover-letter` generation path. Optional facts stay empty when not
+ * explicitly supplied by the applicant.
+ */
+export interface CoverLetterBriefV1 {
+  qualityClass: CoverLetterQualityClass;
+  writingStyle: CoverLetterWritingStyle;
+  tone: CoverLetterTone;
+  language: "de" | "en";
+  length: CoverLetterBriefLength;
+  format: CoverLetterFormat;
+  recipientName?: string;
+  recipientRole?: string;
+  motivation?: string;
+  keyAchievements?: string[];
+  availability?: string;
+  relocation?: string;
+  salaryExpectation?: string;
+  employmentPreference?: string;
+  additionalInstructions?: string;
+}
+
 export const MAX_CV_TEXT_LENGTH = 30000;
 export const MAX_REVISION_DRAFT_LENGTH = 20000;
 export const MAX_REVISION_FEEDBACK_LENGTH = 2000;
@@ -53,6 +82,7 @@ export interface CoverLetterGenerationRequest {
   job: CoverLetterJobContext;
   candidate: CoverLetterCandidateContext;
   options: CoverLetterGenerationOptions;
+  brief?: CoverLetterBriefV1;
   operation?: CoverLetterOperation;
   revision?: CoverLetterRevisionContext;
 }
@@ -64,6 +94,9 @@ export interface CoverLetterGenerationResponse {
     job?: { title?: string; company_name?: string };
     language?: string;
     description_origin?: string;
+    quality_class?: string;
+    writing_style?: string;
+    tone?: string;
     candidate_mode?: string;
     cv_anonymized?: boolean;
     draft_anonymized?: boolean;
