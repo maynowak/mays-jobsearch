@@ -1383,6 +1383,15 @@ const en: Dict = {
   "cvStorage.failed": "Storage failed",
   "cvStorage.deleted": "Deleted",
   "cvStorage.unavailable": "CV storage is not available.",
+  "cvStorage.checkingConsent": "Checking CV storage consent…",
+  "cvStorage.unavailableReason.notApproved":
+    "RIS has not yet approved the CV consent text for new grants. Try again later or contact the operator.",
+  "cvStorage.unavailableReason.configuration":
+    "The CV consent configuration does not match the server yet. Reload the page or contact the operator.",
+  "cvStorage.unavailableReason.account":
+    "This account is not enabled for RIS CV storage. Contact the operator.",
+  "cvStorage.unavailableReason.default":
+    "The server status could not be checked. Reload the page and try again.",
   "cvStorage.process": "Process",
   "cvStorage.processing": "Loading PDF for the existing CV workflow…",
   "cvStorage.processSuccess": "Loaded into the existing CV workflow.",
@@ -3196,6 +3205,15 @@ const de: Dict = {
   "cvStorage.failed": "Speicherung fehlgeschlagen",
   "cvStorage.deleted": "Gelöscht",
   "cvStorage.unavailable": "CV-Speicherung ist nicht verfügbar.",
+  "cvStorage.checkingConsent": "CV-Speicherfreigabe wird geprüft …",
+  "cvStorage.unavailableReason.notApproved":
+    "RIS hat die CV-Einwilligungsfassung noch nicht für neue Zustimmungen freigegeben. Bitte später erneut versuchen oder den Betreiber informieren.",
+  "cvStorage.unavailableReason.configuration":
+    "Die CV-Einwilligungs-Konfiguration passt noch nicht zum Server. Bitte lade die Seite neu oder informiere den Betreiber.",
+  "cvStorage.unavailableReason.account":
+    "Dieses Konto ist für die RIS-CV-Speicherung nicht freigegeben. Bitte wende dich an den Betreiber.",
+  "cvStorage.unavailableReason.default":
+    "Der Serverstatus konnte nicht geprüft werden. Bitte lade die Seite neu und versuche es erneut.",
   "cvStorage.process": "Verarbeiten",
   "cvStorage.processing": "PDF wird für den bestehenden CV-Workflow geladen …",
   "cvStorage.processSuccess": "In den bestehenden CV-Workflow übernommen.",

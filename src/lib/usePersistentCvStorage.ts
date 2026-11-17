@@ -35,31 +35,41 @@ export interface PersistentCvStorageState {
 
 export function cvStorageErrorMessage(error: unknown): string {
   if (error instanceof CvStorageApiError) {
+    if (error.status === 401) {
+      return "Der Lebenslauf konnte nicht geladen werden, weil die Anmeldung abgelaufen ist. Bitte melde dich erneut an.";
+    }
+    if (error.code === "test_user_not_allowed" || error.status === 403) {
+      return "Der Lebenslauf konnte nicht geladen werden, weil dieses Konto für die CV-Speicherung nicht freigegeben ist. Bitte wende dich an den Betreiber.";
+    }
     if (error.code === "CV_STORAGE_CONSENT_REQUIRED") {
-      return "Für die dauerhafte Speicherung ist die CV-Speicherfreigabe erforderlich.";
+      return "Der Lebenslauf konnte nicht gespeichert werden, weil die separate CV-Speicherfreigabe fehlt. Bitte erteile sie zuerst in der CV- oder Einstellungsansicht.";
     }
     if (error.code === "upload_failed") {
-      return "Der Lebenslauf konnte nicht zu RIS hochgeladen werden.";
+      return "Der Lebenslauf konnte nicht zu RIS hochgeladen werden. Bitte prüfe die Verbindung und versuche es erneut.";
     }
     if (error.status === 404) {
-      return "Der gespeicherte Lebenslauf ist in RIS nicht mehr vorhanden. Die Liste wird aktualisiert; bitte den Lebenslauf erneut auswählen.";
+      return "Der gespeicherte Lebenslauf ist in RIS nicht mehr vorhanden. Die Liste wird aktualisiert; bitte wähle den Lebenslauf erneut aus oder lade ihn neu hoch.";
     }
-    if (error.status === 409) return "Der Lebenslauf wurde zwischenzeitlich geändert.";
-    if (error.status === 422) return "Die Lebenslauf-Daten sind ungültig.";
-    if (error.code === "test_user_not_allowed") {
-      return "Dieser Account ist für die dauerhafte CV-Speicherung nicht freigeschaltet.";
+    if (error.status === 409) {
+      return "Der Lebenslauf wurde zwischenzeitlich geändert. Bitte lade die Liste neu und versuche es erneut.";
+    }
+    if (error.status === 422) {
+      return "Die Lebenslauf-Daten sind ungültig. Bitte prüfe die Datei und versuche es erneut.";
+    }
+    if (error.code === "consent_disabled") {
+      return "Die CV-Speicherfreigabe ist derzeit nicht verfügbar. Bitte öffne die Einwilligungen in den Einstellungen und versuche es später erneut.";
     }
     if (error.code === "cv_storage_disabled") {
-      return "Die dauerhafte CV-Speicherung ist derzeit deaktiviert.";
+      return "Die dauerhafte CV-Speicherung ist derzeit deaktiviert. Bitte verwende die Sitzungsspeicherung oder versuche es später erneut.";
     }
     if (error.code === "missing_config") {
-      return "Die dauerhafte CV-Speicherung ist serverseitig nicht konfiguriert.";
+      return "Die dauerhafte CV-Speicherung ist serverseitig nicht vollständig konfiguriert. Bitte informiere den Betreiber.";
     }
     if (error.code === "unavailable" || error.status === 503) {
-      return "Der CV-Dienst antwortet derzeit nicht rechtzeitig. Bitte erneut versuchen.";
+      return "Der CV-Dienst antwortet derzeit nicht rechtzeitig. Bitte später erneut versuchen.";
     }
   }
-  return "Die CV-Speicherfunktion ist derzeit nicht verfügbar.";
+  return "Die CV-Speicherfunktion ist derzeit nicht verfügbar. Bitte prüfe die Verbindung und versuche es erneut; bleibt der Fehler bestehen, informiere den Betreiber.";
 }
 
 function isMissingCvDocument(error: unknown): boolean {

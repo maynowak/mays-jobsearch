@@ -157,6 +157,39 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
   const textBlocked = !grantAllowed || !textMappingMatches || !textServerApproved;
   const art9Missing = !specialCategoriesConsent;
   const canGrant = !textBlocked && !art9Missing && status !== "GRANTED";
+
+  const validateGrant = (): string | null => {
+    if (!token) {
+      return "Die Einwilligung kann nicht gespeichert werden, weil die Anmeldung fehlt. Bitte melde dich erneut an.";
+    }
+    if (status === "GRANTED") {
+      return "Die Einwilligung ist bereits erteilt. Ein erneuter Grant ist nicht erforderlich.";
+    }
+    if (!grantAllowed) {
+      return `Die Einwilligung kann derzeit nicht gespeichert werden, weil RIS die Freigabe noch nicht erteilt hat. ${reasonOf(noticeReason ?? "notice_not_active")} Bitte später erneut versuchen oder den Betreiber informieren.`;
+    }
+    if (!textMappingMatches || !textServerApproved) {
+      return "Die Einwilligung kann nicht gespeichert werden, weil die angezeigte Textfassung nicht der serverseitig freigegebenen Fassung entspricht. Bitte lade die Seite neu oder informiere den Betreiber.";
+    }
+    if (art9Missing) {
+      return "Die Einwilligung wurde nicht gespeichert, weil die ausdrückliche Art.-9-Bestätigung fehlt. Bitte setze die Checkbox und versuche es erneut.";
+    }
+    return null;
+  };
+
+  const handleGrant = () => {
+    const validation = validateGrant();
+    if (validation) {
+      setError(validation);
+      setSuccessMessage(null);
+      return;
+    }
+    void run(
+      () => grantRisConsent(token, specialCategoriesConsent),
+      "grant",
+      "Die Einwilligung zur dauerhaften Speicherung wurde gespeichert. Status: erteilt."
+    );
+  };
   const version = consent?.noticeVersion ?? noticeVersion;
   const shortHash = `${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(0, 12)}…${APPLICATION_STORAGE_CONSENT_TEXT_SHA256.slice(-8)}`;
   const proofVersion = consent?.externalTextVersion ?? null;
@@ -172,6 +205,11 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
         {version ? ` (Textversion ${version})` : ""}
       </p>
       {error && <p role="alert">{error}</p>}
+      {pendingAction === "grant" && (
+        <p className="field-hint" role="status" aria-live="polite">
+          Einwilligung wird geprüft …
+        </p>
+      )}
       {successMessage && (
         <p className="field-hint storage-consent__success" role="note" aria-live="polite">
           {successMessage}
@@ -252,15 +290,9 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
           className="btn-ghost"
           disabled={busy || !canGrant}
           aria-busy={pendingAction === "grant" || undefined}
-          onClick={() =>
-            run(
-              () => grantRisConsent(token, specialCategoriesConsent),
-              "grant",
-              "Die Einwilligung zur dauerhaften Speicherung wurde gespeichert. Status: erteilt."
-            )
-          }
+          onClick={handleGrant}
         >
-          {pendingAction === "grant" ? "Wird gespeichert …" : "Speicherung zustimmen"}
+          {pendingAction === "grant" ? "Einwilligung wird geprüft …" : "Speicherung zustimmen"}
         </button>
         <button
           type="button"
@@ -349,42 +381,46 @@ function textReasonOf(reason: string): string {
 
 function messageOf(err: unknown): string {
   if (err instanceof RisConsentApiError) {
+    if (err.status === 401 || err.code === "unauthenticated" || err.code === "invalid_token") {
+      return "Die Einwilligung wurde nicht gespeichert, weil die Anmeldung abgelaufen ist. Bitte melde dich erneut an und öffne die Einstellungen noch einmal.";
+    }
+    if (err.status === 403 || err.code === "test_user_not_allowed" || err.code === "forbidden") {
+      return "Die Einwilligung wurde nicht gespeichert, weil dieses Konto für die RIS-Speicherung nicht freigegeben ist. Bitte wende dich an den Betreiber.";
+    }
+    if (err.code === "special_categories_consent_required") {
+      return "Die Einwilligung wurde nicht gespeichert, weil die ausdrückliche Art.-9-Bestätigung fehlt. Bitte setze die Checkbox und versuche es erneut.";
+    }
+    if (err.code === "notice_not_active") {
+      return "Die Einwilligung wurde nicht gespeichert, weil RIS die Einwilligungs-Textversion noch nicht für neue Zustimmungen freigegeben hat. Bitte später erneut versuchen oder den Betreiber informieren.";
+    }
+    if (err.code === "notice_not_approved") {
+      return "Die Einwilligung wurde nicht gespeichert, weil die RIS-Textversion noch nicht rechtlich freigegeben ist. Bitte später erneut versuchen.";
+    }
+    if (err.code === "notice_not_accepted") {
+      return "Die Einwilligung wurde nicht gespeichert, weil RIS derzeit keine neuen Zustimmungen für diese Textversion annimmt. Bitte später erneut versuchen.";
+    }
+    if (err.code === "notice_version_unknown" || err.code === "notice_version_not_mapped") {
+      return "Die Einwilligung wurde nicht gespeichert, weil die App-Textversion und die RIS-Konfiguration nicht zusammenpassen. Bitte informiere den Betreiber.";
+    }
     if (
-      err.code === "notice_version_not_mapped" ||
-      err.code === "notice_version_unknown" ||
-      err.code === "notice_not_active" ||
-      err.code === "notice_not_approved" ||
-      err.code === "notice_not_accepted" ||
       err.code === "consent_text_not_configured" ||
       err.code === "consent_text_mismatch" ||
       err.code === "consent_text_not_approved"
     ) {
-      return "Die Einwilligungs-Textversion ist noch nicht freigegeben.";
-    }
-    if (err.code === "test_user_not_allowed") {
-      return "Dieses Konto ist für die RIS-Testspeicherung nicht freigegeben.";
-    }
-    if (err.code === "special_categories_consent_required") {
-      return "Die Art.-9-Einwilligung muss ausdrücklich bestätigt werden.";
-    }
-    if (err.code === "consent_disabled") {
-      return "Die RIS-Einwilligungsfunktion ist derzeit deaktiviert.";
-    }
-    if (err.code === "missing_config") {
-      return "Die RIS-Einwilligungsfunktion ist serverseitig nicht vollständig konfiguriert.";
+      return "Die Einwilligung wurde nicht gespeichert, weil die angezeigte Textfassung serverseitig nicht freigegeben ist. Bitte lade die Seite neu oder informiere den Betreiber.";
     }
     if (err.code === "notice_catalog_unavailable") {
-      return "Der Freigabestatus konnte bei RIS nicht geladen werden. Bitte später erneut versuchen.";
+      return "Die Einwilligung wurde nicht gespeichert, weil der RIS-Freigabestatus nicht geprüft werden konnte. Bitte später erneut versuchen.";
     }
-    if (err.code === "unauthenticated" || err.code === "invalid_token" || err.status === 401) {
-      return "Die Anmeldung ist abgelaufen. Bitte melde dich erneut an.";
+    if (err.code === "consent_disabled") {
+      return "Die Einwilligung wurde nicht gespeichert, weil die RIS-Einwilligungsfunktion derzeit deaktiviert ist. Bitte später erneut versuchen.";
     }
-    if (err.code === "forbidden" || err.status === 403) {
-      return "Dieses Konto ist für die RIS-Speicherung nicht freigegeben.";
+    if (err.code === "missing_config") {
+      return "Die Einwilligung wurde nicht gespeichert, weil die RIS-Einwilligungsfunktion serverseitig nicht vollständig konfiguriert ist. Bitte informiere den Betreiber.";
     }
     if (err.status === 503) {
-      return "Der Einwilligungsdienst ist derzeit nicht erreichbar. Bitte später erneut versuchen.";
+      return "Die Einwilligung wurde nicht gespeichert, weil der Einwilligungsdienst derzeit nicht erreichbar ist. Bitte später erneut versuchen.";
     }
   }
-  return "Die Einwilligung konnte nicht gespeichert werden. Bitte erneut versuchen.";
+  return "Die Einwilligung konnte nicht gespeichert werden. Bitte prüfe die Verbindung und versuche es erneut; bleibt der Fehler bestehen, informiere den Betreiber.";
 }

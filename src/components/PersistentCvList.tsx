@@ -211,12 +211,20 @@ export default function PersistentCvList({
               <span>{t("cvStorage.consentCheckbox")}</span>
             </label>
             {consent && consent.grantAllowed !== true && (
-              <p className="field-hint" role="note">{t("cvStorage.unavailable")}</p>
+              <p className="field-hint" role="note">
+                {t("cvStorage.unavailable")} {consentUnavailableReason(consent, t)}
+              </p>
+            )}
+            {consentLoading && !consentGranted && (
+              <p className="field-hint" role="status" aria-live="polite">
+                {t("cvStorage.checkingConsent")}
+              </p>
             )}
             <button
               type="button"
               className="btn-ghost"
               disabled={!art9 || busy || consentLoading || consent?.grantAllowed !== true}
+              aria-busy={consentLoading || undefined}
               onClick={() => { void onGrantConsent(); }}
             >
               {consentLoading ? t("cvStorage.granting") : t("cvStorage.grant")}
@@ -232,6 +240,7 @@ export default function PersistentCvList({
             type="button"
             className="btn-ghost"
             disabled={busy || consentLoading}
+            aria-busy={consentLoading || undefined}
             onClick={() => { void onWithdrawConsent(); }}
           >
             {consentLoading ? t("cvStorage.withdrawing") : t("cvStorage.withdraw")}
@@ -442,4 +451,27 @@ function statusLabelFromStatus(status: string, t: (key: string) => string): stri
   if (status === "GRANTED") return t("cvStorage.status.granted");
   if (status === "WITHDRAWN") return t("cvStorage.status.withdrawn");
   return t("cvStorage.status.notGranted");
+}
+
+function consentUnavailableReason(
+  consent: CvConsentState,
+  t: (key: string) => string
+): string {
+  const reason = consent.noticeReason ?? consent.textReason;
+  if (reason === "notice_not_active" || reason === "notice_not_approved") {
+    return t("cvStorage.unavailableReason.notApproved");
+  }
+  if (
+    reason === "notice_version_unknown" ||
+    reason === "notice_version_not_mapped" ||
+    reason === "consent_text_not_configured" ||
+    reason === "consent_text_mismatch" ||
+    reason === "consent_text_not_approved"
+  ) {
+    return t("cvStorage.unavailableReason.configuration");
+  }
+  if (reason === "test_user_not_allowed") {
+    return t("cvStorage.unavailableReason.account");
+  }
+  return t("cvStorage.unavailableReason.default");
 }
