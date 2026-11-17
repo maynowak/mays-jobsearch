@@ -1,12 +1,13 @@
 # JM-RIS-CONSENT-UX-03
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL / AUTHENTICATED LIVE E2E BLOCKED`  
-**Branch:** `feature/jm-ris-consent-ux-03`  
-**PR:** #33  
-**Basis:** `origin/main` `68aca2a1e6007974343ff6515675c4122d6f9420`
+**Status:** `RELEASED / PRODUCTION SMOKE VERIFIED / AUTH E2E BLOCKED`
+**Branch:** `feature/jm-ris-consent-ux-03`
+**PR:** #33
+**Base:** `68aca2a1e6007974343ff6515675c4122d6f9420`
+**Merge-SHA:** `92ca1fc690adcb1c6db3b392f710b3456c324e04`
 
-No Main merge, Production deployment, RIS change, AWS/Terraform mutation or
-real applicant data.
+Production deployed; authenticated grant E2E remains blocked. No RIS/AWS/
+Terraform mutation or real applicant data.
 
 ## 1. Ausgangslage
 
@@ -109,3 +110,54 @@ Abgedeckt:
 - `docs/AI_AUDITLOG.md`
 - Feature-Branch: `feature/jm-ris-consent-ux-03`
 - Kein Main-Merge, kein Deployment, keine RIS-/AWS-/Terraform-Änderung.
+
+
+## 6. Production Release
+
+```text
+PR:        #33
+Merge-SHA: 92ca1fc690adcb1c6db3b392f710b3456c324e04
+Build-SHA: 92ca1fc
+```
+
+Automatic Vercel Production deployments:
+
+```text
+mays-job-matcher  dpl_F9wqvv56CutqLxQpQcbMFYFLNVze  READY
+mays-jobsearch    dpl_GARYDrYPdJJP1AFPg7UnG22ujTk6  READY
+```
+
+Public smoke on both domains:
+
+```text
+/                    200
+/profil              200
+/profil?tab=settings 200
+/profil?tab=cv       200
+/datenschutz         200
+/impressum           200
+```
+
+Live bundle contains:
+
+- `Einwilligung wird geprüft`
+- `Anmeldung abgelaufen`
+- `Bitte setze die Checkbox`
+- `CV-Speicherfreigabe wird geprüft`
+- `nicht mehr vorhanden`
+- Build-SHA `92ca1fc`
+
+Chromium public smoke: no console/page errors on either domain.
+
+API smoke without token:
+
+```text
+www.mays-job-matcher.app/api/ris/consents -> 401
+mays-jobsearch.vercel.app/api/ris/consents  -> 503 consent_disabled
+```
+
+No unexpected 5xx.
+
+Authenticated grant E2E remains **BLOCKED** without a valid authorized
+limited-beta test identity/token. No successful live grant or Production
+consent restoration is claimed.
