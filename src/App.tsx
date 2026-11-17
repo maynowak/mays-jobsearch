@@ -75,9 +75,9 @@ import { beginNewApplicationSession, createSessionApplicationRepository } from "
 import { createRemoteApplicationRepository } from "./lib/applications/remoteSessionRepository";
 import { createApplicationMigration } from "./lib/applications/applicationMigration";
 import { createRisApplicationRepository, isRisRemoteStorageEnabled } from "./lib/applications/risRemoteRepository";
-import { downloadCvFile, isRisCvStorageEnabled, type PersistentCv } from "./lib/cvStorageApi";
+import { CvStorageApiError, downloadCvFile, isRisCvStorageEnabled, type PersistentCv } from "./lib/cvStorageApi";
 import { persistentCvProcessBlocker } from "./lib/cvProcessingHandoff";
-import { usePersistentCvStorage } from "./lib/usePersistentCvStorage";
+import { cvStorageErrorMessage, usePersistentCvStorage } from "./lib/usePersistentCvStorage";
 import { useCvBuilderPdfRisStorage } from "./lib/useCvBuilderPdfRisStorage";
 import { isRisSearchProfileStorageEnabled } from "./lib/searchProfilesApi";
 import { usePersistentSearchProfiles } from "./lib/usePersistentSearchProfiles";
@@ -969,7 +969,18 @@ export default function App() {
       throw new Error(t(messageKey));
     }
 
-    const file = await downloadCvFile(cvStorageAccessToken, cv.cvId, cv.filename);
+    let file: File;
+    try {
+      file = await downloadCvFile(cvStorageAccessToken, cv.cvId, cv.filename);
+    } catch (err) {
+      // A stale RIS metadata row can remain visible after its PDF document was
+      // removed or after an account switch. Reconcile the list without
+      // deleting/migrating data and surface a concrete reason.
+      if (err instanceof CvStorageApiError && err.status === 404) {
+        await persistentCvStorage.refresh();
+      }
+      throw new Error(cvStorageErrorMessage(err));
+    }
     // A logout/identity switch invalidates the in-flight download. Do not
     // carry the old account's CV into the next session.
     if (sessionEpochRef.current !== requestEpoch) {

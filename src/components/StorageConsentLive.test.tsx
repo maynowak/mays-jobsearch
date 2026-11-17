@@ -209,6 +209,23 @@ describe("StorageConsentLive", () => {
     ).toBeNull();
   });
 
+  it("zeigt eine bereits erteilte Art.-9-Einwilligung nach Reload als bestätigt", async () => {
+    mockState(
+      consentState({
+        consent: { ...consent("GRANTED"), specialCategoriesConsent: true },
+      })
+    );
+
+    render(<StorageConsentLive />);
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: erteilt/));
+    const checkbox = screen.getByRole("checkbox", {
+      name: /Art\. 9 Abs\. 2 lit\. a DSGVO/,
+    });
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toBeDisabled();
+  });
+
   it("meldet den serverseitigen Status an die übergeordnete Ansicht", async () => {
     const onStateChange = vi.fn();
     mockState(consentState({ consent: { ...consent("GRANTED") } }));
@@ -251,6 +268,9 @@ describe("StorageConsentLive", () => {
     button.click();
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: erteilt/));
+    expect(
+      screen.getByText(/Die Einwilligung zur dauerhaften Speicherung wurde gespeichert/)
+    ).toBeInTheDocument();
     const grantCall = fetchMock.mock.calls.find(
       ([url, init]) =>
         String(init?.method ?? "").toUpperCase() === "POST" &&
@@ -328,5 +348,60 @@ describe("StorageConsentLive", () => {
     checkbox.click();
     await waitFor(() => expect(checkbox).toBeChecked());
     await waitFor(() => expect(grantButton).toBeEnabled());
+  });
+
+  it("zeigt während des Speicherns einen Ladezustand und erst nach API-Erfolg eine Bestätigung", async () => {
+    const granted = {
+      ...consent("GRANTED"),
+      specialCategoriesConsent: true,
+      externalTextVersion: APPLICATION_STORAGE_CONSENT_TEXT_VERSION,
+      externalTextSha256: APPLICATION_STORAGE_CONSENT_TEXT_SHA256,
+    };
+    let finishGrant: (() => void) | undefined;
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (String(init?.method ?? "").toUpperCase() === "POST" && !String(url).includes("action=")) {
+        return new Promise<Response>((resolve) => {
+          finishGrant = () => resolve(consentResponse({ consent: granted }));
+        });
+      }
+      if (String(init?.method ?? "").toUpperCase() === "GET") {
+        return consentResponse(consentState());
+      }
+      return consentResponse(consentState());
+    });
+
+    render(<StorageConsentLive />);
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
+    screen.getByRole("checkbox", { name: /Art\. 9 Abs\. 2 lit\. a DSGVO/ }).click();
+    const button = screen.getByRole("button", { name: "Speicherung zustimmen" });
+    await waitFor(() => expect(button).toBeEnabled());
+    button.click();
+
+    expect(await screen.findByRole("button", { name: "Wird gespeichert …" })).toBeDisabled();
+    expect(screen.queryByText(/wurde gespeichert/)).toBeNull();
+    finishGrant?.();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: erteilt/));
+    expect(screen.getByText(/wurde gespeichert/)).toBeInTheDocument();
+  });
+
+  it("zeigt bei einem RIS-Fehler eine konkrete Ursache statt einer generischen Meldung", async () => {
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (String(init?.method ?? "").toUpperCase() === "POST" && !String(url).includes("action=")) {
+        return {
+          ok: false,
+          status: 409,
+          json: async () => ({ error: "notice not active", code: "notice_not_active" }),
+        } as unknown as Response;
+      }
+      return consentResponse(consentState());
+    });
+
+    render(<StorageConsentLive />);
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
+    screen.getByRole("checkbox", { name: /Art\. 9 Abs\. 2 lit\. a DSGVO/ }).click();
+    screen.getByRole("button", { name: "Speicherung zustimmen" }).click();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/noch nicht freigegeben/);
+    expect(screen.queryByText(/wurde gespeichert/)).toBeNull();
   });
 });

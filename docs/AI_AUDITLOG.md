@@ -6801,3 +6801,26 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   change from this repository; no authenticated live E2E or general production
   restoration claimed.
 - Full report: `docs/reports/RIS-CONSENT-RELEASE-05.md`.
+
+## 2026-11-17 — JM-RIS-CONSENT-UX-01
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL / AUTHENTICATED LIVE E2E BLOCKED`
+
+- Reproduced the consent UX in code/mocks: `specialCategoriesConsent=true` is
+  sent, BFF/RIS remain authoritative, and no success is shown before a
+  confirmed API result.
+- Improved `StorageConsentLive`: pending/loading labels for grant, withdraw and
+  history; explicit success messages; concrete error reasons; server-granted
+  Art. 9 state rendered as checked after reload; withdrawal still requires a
+  fresh explicit check.
+- Improved the persistent CV area: separate ApplicationV1/CV consent notice,
+  direct link `/profil?tab=settings`, grant/withdraw loading labels.
+- Confirmed the CV message comes from persistent PDF metadata/list drift, not
+  the structured CV builder. A 404 now refreshes the list without deleting or
+  migrating data and explains that the PDF is no longer available.
+- Tests: focused 28 PASS; RIS consent API 40 PASS; build PASS; serial full
+  **1949 PASS / 11 skipped**.
+- No real CV/user data, tokens or consent histories logged. No Main merge,
+  deployment, RIS/AWS/Terraform, Cognito, CloudFront or DNS change.
+- Authenticated live E2E remains blocked by missing authorized test identity.
+- Report: `docs/reports/JM-RIS-CONSENT-UX-01.md`.
