@@ -11,6 +11,14 @@
 - **Mergeability:** `MERGEABLE` / `CLEAN`
 - **Review:** owner approval pending
 
+## Reconciliation — 2026-11-17
+
+- `origin/main` `08d74b9` in den UX-06-Branch integriert; Merge-Commit `a69325b`.
+- Einziger Konflikt: `docs/AI_AUDITLOG.md`; UX-06- und Translation-/ATS-Einträge vollständig erhalten.
+- Translation-/ATS-/Skill-Änderungen aus main vollständig übernommen: `api/profile.mjs` Skill-Cap/Prompt, Skill-Zähler in `App.tsx`/`i18n.tsx`/`styles.css`, Translation-Regressionstest und `tests/api/profile-skills.test.js`.
+- UX-06-Navigation, Entwurfsdialoge und RIS-Sperrgründe vollständig erhalten.
+- Verifikation nach Merge: Vollsuite **1937 PASS / 11 skipped**, Build **PASS** (1,43 s), fokussierte ATS-/Translation-/Skill-Tests **37/37 PASS**, UX-06- und 03A-Browser-E2E **PASS**, Diff-/Secret-Audit clean.
+
 ## Scope
 
 Feature diff vs `origin/main`: **15 files**, CV-builder frontend, DE/EN UI strings, tests, E2E and documentation.
