@@ -543,6 +543,14 @@ describe("CL-01 LetterModal: explicit start, no automatic AI call", () => {
       target_roles: profile.targetRoles,
       model: "model-x",
     });
+    expect(request.brief).toMatchObject({
+      qualityClass: "professional",
+      writingStyle: "modern",
+      tone: "balanced",
+      language: "de",
+      length: "standard",
+      format: "letter",
+    });
     expect(attempt).toBe(1);
   });
 

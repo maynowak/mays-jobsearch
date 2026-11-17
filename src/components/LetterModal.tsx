@@ -30,9 +30,14 @@ import {
   MAX_CV_TEXT_LENGTH,
   MAX_REVISION_DRAFT_LENGTH,
   MAX_REVISION_FEEDBACK_LENGTH,
+  type CoverLetterBriefV1,
+  type CoverLetterFormat,
   type CoverLetterLength,
   type CoverLetterOperation,
+  type CoverLetterQualityClass,
   type CoverLetterStyle,
+  type CoverLetterTone,
+  type CoverLetterWritingStyle,
 } from "../lib/coverLetterRequest";
 import { type DescriptionOrigin } from "../lib/jobDescriptionReview";
 import SourceBadge from "./SourceBadge";
@@ -60,6 +65,7 @@ export interface LetterPreparationContext {
   selectedBuilderCvId?: string | null;
   model?: string | null;
   candidateDraft?: LetterCandidateDraft;
+  brief?: CoverLetterBriefV1;
 }
 
 export type LetterApplicationAdoptionResult = "created" | "updated";
@@ -194,6 +200,30 @@ export default function LetterModal({
   const [length, setLength] = useState<CoverLetterLength>(
     initialContextForJob?.candidateDraft?.length ?? "one_page"
   );
+  const [qualityClass, setQualityClass] = useState<CoverLetterQualityClass>(
+    initialContextForJob?.brief?.qualityClass ?? "professional"
+  );
+  const [writingStyle, setWritingStyle] = useState<CoverLetterWritingStyle>(
+    initialContextForJob?.brief?.writingStyle ?? "modern"
+  );
+  const [tone, setTone] = useState<CoverLetterTone>(
+    initialContextForJob?.brief?.tone ?? "balanced"
+  );
+  const [format, setFormat] = useState<CoverLetterFormat>(
+    initialContextForJob?.brief?.format ?? "letter"
+  );
+  const [recipientName, setRecipientName] = useState(initialContextForJob?.brief?.recipientName ?? "");
+  const [recipientRole, setRecipientRole] = useState(initialContextForJob?.brief?.recipientRole ?? "");
+  const [keyAchievements, setKeyAchievements] = useState(
+    (initialContextForJob?.brief?.keyAchievements ?? []).join("\n")
+  );
+  const [relocation, setRelocation] = useState(initialContextForJob?.brief?.relocation ?? "");
+  const [employmentPreference, setEmploymentPreference] = useState(
+    initialContextForJob?.brief?.employmentPreference ?? ""
+  );
+  const [additionalInstructions, setAdditionalInstructions] = useState(
+    initialContextForJob?.brief?.additionalInstructions ?? ""
+  );
   const [generationError, setGenerationError] = useState("");
   const [generatedText, setGeneratedText] = useState("");
   const [edited, setEdited] = useState(false);
@@ -268,6 +298,16 @@ export default function LetterModal({
     setSalaryExpectation("");
     setStyle("professional");
     setLength("one_page");
+    setQualityClass("professional");
+    setWritingStyle("modern");
+    setTone("balanced");
+    setFormat("letter");
+    setRecipientName("");
+    setRecipientRole("");
+    setKeyAchievements("");
+    setRelocation("");
+    setEmploymentPreference("");
+    setAdditionalInstructions("");
     setGenerationError("");
     setGeneratedText("");
     setEdited(false);
@@ -317,6 +357,16 @@ export default function LetterModal({
     salaryExpectation,
     style,
     length,
+    qualityClass,
+    writingStyle,
+    tone,
+    format,
+    recipientName,
+    recipientRole,
+    keyAchievements,
+    relocation,
+    employmentPreference,
+    additionalInstructions,
   ]);
 
   useEffect(() => {
@@ -565,6 +615,7 @@ export default function LetterModal({
           length,
           target_roles: buildTargetRoles(profile),
         },
+        brief: buildBrief(),
         operation,
       };
       const revision =
@@ -647,6 +698,28 @@ export default function LetterModal({
     setReview(buildDescriptionReview({ job, enrichedInput: descriptionInput, confirmed: true }));
   };
 
+  const buildBrief = (): CoverLetterBriefV1 => ({
+    qualityClass,
+    writingStyle,
+    tone,
+    language: lang,
+    length: length === "short" ? "short" : "standard",
+    format,
+    ...(recipientName.trim() ? { recipientName: recipientName.trim() } : {}),
+    ...(recipientRole.trim() ? { recipientRole: recipientRole.trim() } : {}),
+    ...(manualMotivation.trim() ? { motivation: manualMotivation.trim() } : {}),
+    ...(splitManualList(keyAchievements).length ? { keyAchievements: splitManualList(keyAchievements) } : {}),
+    ...(startDate.trim() ? { availability: startDate.trim() } : {}),
+    ...(relocation.trim() ? { relocation: relocation.trim() } : {}),
+    ...(salaryExpectation.trim() ? { salaryExpectation: salaryExpectation.trim() } : {}),
+    ...(employmentPreference.trim()
+      ? { employmentPreference: employmentPreference.trim() }
+      : {}),
+    ...(additionalInstructions.trim()
+      ? { additionalInstructions: additionalInstructions.trim() }
+      : {}),
+  });
+
   const buildPreparationContext = (): LetterPreparationContext => ({
     jobSlug: job.slug,
     descriptionInput,
@@ -665,6 +738,7 @@ export default function LetterModal({
       style,
       length,
     },
+    brief: buildBrief(),
   });
 
   const handleNoCv = () => {
@@ -1211,24 +1285,112 @@ export default function LetterModal({
                 </label>
               </div>
 
-              <div className="letter-candidate-options">
-                <label className="letter-field">
-                  <span>{t("letter.style")}</span>
-                  <select value={style} onChange={(event) => setStyle(event.target.value as CoverLetterStyle)}>
-                    <option value="professional">{t("letter.style.professional")}</option>
-                    <option value="warm">{t("letter.style.warm")}</option>
-                    <option value="concise">{t("letter.style.concise")}</option>
-                    <option value="formal">{t("letter.style.formal")}</option>
-                  </select>
-                </label>
-                <label className="letter-field">
-                  <span>{t("letter.length")}</span>
-                  <select value={length} onChange={(event) => setLength(event.target.value as CoverLetterLength)}>
-                    <option value="short">{t("letter.length.short")}</option>
-                    <option value="one_page">{t("letter.length.one_page")}</option>
-                    <option value="detailed">{t("letter.length.detailed")}</option>
-                  </select>
-                </label>
+              <div className="letter-brief">
+                <h5>{t("letter.briefHeading")}</h5>
+                <div className="letter-candidate-options">
+                  <label className="letter-field">
+                    <span>{t("letter.qualityClass")}</span>
+                    <select
+                      value={qualityClass}
+                      onChange={(event) => setQualityClass(event.target.value as CoverLetterQualityClass)}
+                    >
+                      <option value="standard">{t("letter.qualityClass.standard")}</option>
+                      <option value="professional">{t("letter.qualityClass.professional")}</option>
+                      <option value="executive">{t("letter.qualityClass.executive")}</option>
+                    </select>
+                  </label>
+                  <label className="letter-field">
+                    <span>{t("letter.writingStyle")}</span>
+                    <select
+                      value={writingStyle}
+                      onChange={(event) => setWritingStyle(event.target.value as CoverLetterWritingStyle)}
+                    >
+                      <option value="modern">{t("letter.writingStyle.modern")}</option>
+                      <option value="classic">{t("letter.writingStyle.classic")}</option>
+                      <option value="technical">{t("letter.writingStyle.technical")}</option>
+                      <option value="public_sector">{t("letter.writingStyle.public_sector")}</option>
+                    </select>
+                  </label>
+                  <label className="letter-field">
+                    <span>{t("letter.tone")}</span>
+                    <select value={tone} onChange={(event) => setTone(event.target.value as CoverLetterTone)}>
+                      <option value="confident">{t("letter.tone.confident")}</option>
+                      <option value="formal">{t("letter.tone.formal")}</option>
+                      <option value="balanced">{t("letter.tone.balanced")}</option>
+                      <option value="warm">{t("letter.tone.warm")}</option>
+                    </select>
+                  </label>
+                  <label className="letter-field">
+                    <span>{t("letter.format")}</span>
+                    <select value={format} onChange={(event) => setFormat(event.target.value as CoverLetterFormat)}>
+                      <option value="letter">{t("letter.format.letter")}</option>
+                      <option value="body_only">{t("letter.format.body_only")}</option>
+                    </select>
+                  </label>
+                  <label className="letter-field">
+                    <span>{t("letter.length")}</span>
+                    <select value={length} onChange={(event) => setLength(event.target.value as CoverLetterLength)}>
+                      <option value="short">{t("letter.length.short")}</option>
+                      <option value="one_page">{t("letter.length.one_page")}</option>
+                      <option value="detailed">{t("letter.length.detailed")}</option>
+                    </select>
+                  </label>
+                </div>
+                <details className="letter-brief-more">
+                  <summary>{t("letter.briefMore")}</summary>
+                  <div className="letter-candidate-grid">
+                    <label className="letter-field">
+                      <span>{t("letter.recipientName")}</span>
+                      <input
+                        value={recipientName}
+                        onChange={(event) => setRecipientName(event.target.value)}
+                        placeholder={t("letter.recipientNamePh")}
+                      />
+                    </label>
+                    <label className="letter-field">
+                      <span>{t("letter.recipientRole")}</span>
+                      <input
+                        value={recipientRole}
+                        onChange={(event) => setRecipientRole(event.target.value)}
+                        placeholder={t("letter.recipientRolePh")}
+                      />
+                    </label>
+                    <label className="letter-field">
+                      <span>{t("letter.keyAchievements")}</span>
+                      <textarea
+                        rows={2}
+                        value={keyAchievements}
+                        onChange={(event) => setKeyAchievements(event.target.value)}
+                        placeholder={t("letter.keyAchievementsPh")}
+                      />
+                    </label>
+                    <label className="letter-field">
+                      <span>{t("letter.relocation")}</span>
+                      <input
+                        value={relocation}
+                        onChange={(event) => setRelocation(event.target.value)}
+                        placeholder={t("letter.relocationPh")}
+                      />
+                    </label>
+                    <label className="letter-field">
+                      <span>{t("letter.employmentPreference")}</span>
+                      <input
+                        value={employmentPreference}
+                        onChange={(event) => setEmploymentPreference(event.target.value)}
+                        placeholder={t("letter.employmentPreferencePh")}
+                      />
+                    </label>
+                    <label className="letter-field">
+                      <span>{t("letter.additionalInstructions")}</span>
+                      <textarea
+                        rows={2}
+                        value={additionalInstructions}
+                        onChange={(event) => setAdditionalInstructions(event.target.value)}
+                        placeholder={t("letter.additionalInstructionsPh")}
+                      />
+                    </label>
+                  </div>
+                </details>
               </div>
             </div>
 
