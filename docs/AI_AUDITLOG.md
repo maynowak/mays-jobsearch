@@ -6869,3 +6869,25 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `profile-ux-final` and `profile-storage-consent` E2E PASS; diff/secret scan
   PASS. No real data, Main merge or Production deployment.
 - Report: `docs/reports/JM-PROFILE-UX-01-COMMAND-CENTER-REPORT.md`.
+
+## 2026-11-17 — JM-PROFILE-UX-02 — PREVIEW ACCEPTANCE
+
+**Status:** `C — AUTHENTICATED PREVIEW VERIFICATION BLOCKED`
+
+- Verified feature branch `113fea0`, code commit `2843811`, origin/main
+  `92ca1fc`, clean worktree and `git diff --check`. Existing Vercel preview
+  `dpl_FBHhFVC6caZHh4hwWtSGyuEaPgZo` is READY, target `preview`, commit
+  `113fea0`; footer matches `preview · feature/jm-profile-ux-01-command-center
+  · 113fea0`. Background asset HTTP 200; no console errors or overflow in the
+  unauthenticated shell.
+- Authenticated preview is blocked: login redirects to
+  `auth.mays-job-matcher.app` with
+  `redirect_uri=https://www.mays-job-matcher.app/auth/callback`, so the
+  preview host receives no callback. No token copying or auth bypass used;
+  no authorized synthetic preview identity available.
+- Local QA remains valid but is not claimed as preview E2E: build PASS,
+  full **1956 PASS / 11 skipped**, profile-ux-final and
+  profile-storage-consent PASS.
+- No Main merge, Production deployment, design change, RIS/AWS/Cognito/
+  Terraform/consent/auth change. Report:
+  `docs/reports/JM-PROFILE-UX-02-PREVIEW-ACCEPTANCE-REPORT.md`.
