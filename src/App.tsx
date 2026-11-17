@@ -4296,7 +4296,7 @@ export default function App() {
         reloadLabel={t("error.boundaryReload")}
       >
           <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
-        <main className="container legal-main layout-dashboard">
+        <main className="container legal-main layout-dashboard layout-profile-command">
           <DashboardV2
             user={DEMO_USER}
             isDemo
@@ -4321,7 +4321,7 @@ export default function App() {
         reloadLabel={t("error.boundaryReload")}
       >
           <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
-        <main className="container legal-main layout-dashboard">
+        <main className="container legal-main layout-dashboard layout-profile-command">
           <DashboardV2AuthenticatedPreview
             cvSection={dashboardCvSection}
             applicationsSection={dashboardApplicationsSection}
@@ -4348,7 +4348,7 @@ export default function App() {
         reloadLabel={t("error.boundaryReload")}
       >
           <Navbar route={route} hideOnScroll onNavigate={navigateInApp} />
-        <main className="container legal-main layout-dashboard">
+        <main className="container legal-main layout-dashboard layout-profile-command">
           <DashboardV2AuthenticatedPreview
             cvSection={dashboardCvSection}
             applicationsSection={dashboardApplicationsSection}
