@@ -6751,3 +6751,14 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Production smoke desktop 1440/mobile 390: new CV, separate tab X, dirty cancel/return, direct workspace discard, no horizontal overflow, 0 page/console errors; only `GET /api/models`; no RIS, upload or auth mutation.
 - Limits: authenticated dashboard/editor not tested; RIS/S3 live storage not tested; no branches deleted.
 - Evidence/report: `docs/reports/JM-CV-UX-06-PRODUCTION-RELEASE.md`, `docs/reports/assets/JM-CV-UX-06-PRODUCTION/`.
+
+
+## 2026-11-17 — JM-CV-UX-06 — AUTHENTICATED SYNTHETIC E2E
+
+**Status:** `PASS — SYNTHETIC OIDC UI ONLY`
+
+- Additional local Playwright run on `docs/jm-cv-ux-06-release` with a synthetic OIDC session in `sessionStorage`; no real Cognito login, no real CV/RIS/AWS data.
+- Flow: authenticated `/profil?tab=cv` → empty CV → dirty close cancel → draft adopt/close → reopen retained → clean workspace tab X → dirty workspace return to main window.
+- Result: PASS; 0 page/console errors; only `GET /api/models` observed. Evidence: `docs/reports/assets/JM-CV-UX-06-PRODUCTION/authenticated-editor-1440.png`.
+- Documented `cv-builder.mjs` and `cv-builder-import-01a.mjs` were attempted; both stopped before their auth sections on stale UI selectors (test drift, not product failure). No product/test changes made for this run.
+- Real Cognito login, live RIS/S3 storage and authenticated backend mutations remain untested.

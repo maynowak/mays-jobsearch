@@ -79,6 +79,23 @@ Evidence:
 - `docs/reports/assets/JM-CV-UX-06-PRODUCTION/production-direct-1440.png`
 - `docs/reports/assets/JM-CV-UX-06-PRODUCTION/production-editor-390.png`
 
+## Authenticated Synthetic UI E2E — 2026-11-17
+
+Additional local browser run with a synthetic OIDC session (sessionStorage), no real Cognito login and no real API writes:
+
+- Authenticated dashboard loaded with the synthetic session.
+- Empty CV created from `/profil?tab=cv`.
+- Dirty close prompt: cancel preserved the editor data.
+- Draft adopted and closed; profile remained in the authenticated session list.
+- Reopened profile retained the entered name.
+- Separate workspace tab: clean X closed the tab.
+- Dirty workspace tab: return to the main window transferred the name and closed the tab.
+- Result: **PASS**, 0 page/console errors, only `GET /api/models` observed.
+
+Evidence: `docs/reports/assets/JM-CV-UX-06-PRODUCTION/authenticated-editor-1440.png`.
+
+The older documented scripts `cv-builder.mjs` and `cv-builder-import-01a.mjs` were also attempted but stopped before their authenticated sections on stale UI selectors; this was a test-selector drift, not a production defect. No product or test changes were made for this run.
+
 ## Limitations
 
 - Authenticated CV-editor/dashboard paths were not tested; no permitted test identity was used.
