@@ -6824,3 +6824,25 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   deployment, RIS/AWS/Terraform, Cognito, CloudFront or DNS change.
 - Authenticated live E2E remains blocked by missing authorized test identity.
 - Report: `docs/reports/JM-RIS-CONSENT-UX-01.md`.
+
+## 2026-11-17 — JM-RIS-CONSENT-UX-02
+
+**Status:** `B — PRODUCTION SMOKE VERIFIED / AUTH E2E BLOCKED`
+
+- PR #31 merged regularly as `68aca2a1e6007974343ff6515675c4122d6f9420`;
+  feature tree equals main tree. No force-push/history rewrite.
+- Automatic Vercel Production deployments READY at `68aca2a`:
+  `dpl_GS5AYuF8iifCq7jJZsGMxSLwVDap` (`mays-job-matcher`) and
+  `dpl_GMUkQDsS9dyWqFJ6edEDTsXk3kzN` (`mays-jobsearch`).
+- Public smoke on both domains: `/`, `/profil`, `/profil?tab=settings`,
+  `/profil?tab=cv`, `/datenschutz`, `/impressum` all 200; bundle contains the
+  new consent/CV messages and build SHA `68aca2a`; Chromium public smoke had
+  no console/page errors; matcher consent API returned 401 (not 5xx).
+- Authenticated ApplicationV1/CV consent E2E remains blocked: no valid
+  authorized limited-beta test identity/token. No real CV data, tokens or
+  consent histories used/logged.
+- Tests: focused 29 PASS; RIS consent API 40 PASS; serial full 1949 PASS /
+  11 skipped; build PASS.
+- No AWS/Terraform/RIS configuration change and no Production success claim
+  for authenticated consent.
+- Report: `docs/reports/JM-RIS-CONSENT-UX-02.md`.
