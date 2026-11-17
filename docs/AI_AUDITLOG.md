@@ -6700,3 +6700,23 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No real CV data, provider prompt with real CV, RIS/AWS/Cognito, persistence,
   consent or ATS scoring change.
 - Report: `docs/reports/JM-TRANSLATION-ATS-ORCH-01.md`.
+
+## 2026-11-17 — JM-TRANSLATION-MODEL-SELECTION-01 — INTEGRATION / PRODUCTION
+
+**Status:** `A — MERGED / PRODUCTION VERIFIED`
+
+- PR #26 merged as `08d74b967fc9120d31e1dec9e23f154e7ebe02b0`.
+- PR #27 merged as `7d5b4a7d1fac1d8f0406d76cad1bd6e03b5196f0`.
+- Final `origin/main`: `7d5b4a7d1fac1d8f0406d76cad1bd6e03b5196f0`.
+- PR #27 merged after PR #26; only `docs/AI_AUDITLOG.md` conflicted, both
+  entries preserved. i18n/styles auto-merged.
+- Tests: focused 59 PASS; build PASS; serial full **1933 PASS / 11 skipped**.
+- Production `www.mays-job-matcher.app` and `mays-jobsearch.vercel.app` serve
+  bundle `7d5b4a7`; Vercel Production status SUCCESS. No manual deployment.
+- Production synthetic E2E: `/api/profile` returned 30/30 named technologies
+  (previous cap 20 removed); `/api/job-details` translation with selected
+  `dots-studio/dots-3-note-preview:free` returned HTTP 200 with a German
+  translation. Live bundle contains the model-retry and recognized-skill-count
+  UI strings.
+- No RIS/AWS/Cognito/ATS scoring/persistence/consent change; no real CV data.
+- Report: `docs/reports/JM-TRANSLATION-MODEL-SELECTION-01-INTEGRATION-REPORT.md`.
