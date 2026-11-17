@@ -145,6 +145,20 @@ describe("safeHtml - renderSanitizedHtml", () => {
     expect(result).toContain("<p>Ihr Profil:<br>TypeScript und Node.js</p>");
   });
 
+  it("formats a long translated job text with headings, paragraphs and bullets", () => {
+    const result = plainTextToHtml(
+      "## Aufgaben\n\nWir entwickeln zuverlässige Systeme mit AWS und TypeScript.\n\n- Betrieb von Kubernetes\n- Aufbau von Observability\n\n## Anforderungen\n\nMehrjährige Erfahrung und klare Kommunikation."
+    );
+
+    expect(result).toContain("<h2>Aufgaben</h2>");
+    expect(result).toContain("<p>Wir entwickeln");
+    expect(result).toContain("<ul>");
+    expect(result).toContain("<li>Betrieb von Kubernetes</li>");
+    expect(result).toContain("<li>Aufbau von Observability</li>");
+    expect(result).toContain("<h2>Anforderungen</h2>");
+    expect(result).not.toContain("<script>");
+  });
+
   it("formats BA-style Markdown headings, links and inline bullet separators", () => {
     const input = "**Was wir dir bieten:**\n\nEin attraktives Vergütungspaket- Attraktive Altersvorsorge- Zugang zu Aktienplänen\n\n[hier](https://example.com/benefits) weitere Informationen.\n**So kannst du den Status Quo verändern:**- Entwicklung moderner Anwendungen- Code Reviews";
     const result = prepareHtmlForRender(input);

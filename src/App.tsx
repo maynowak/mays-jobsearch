@@ -3377,6 +3377,12 @@ export default function App() {
           <p className="cv-skill-selection__description">
             {cvState.processingGoal === "ats" ? t("cv.skillSelectDescriptionAts") : t("cv.skillSelectDescription")}
           </p>
+          <p className="cv-skill-selection__count" role="status">
+            {t("cv.skillSelectCount", {
+              selected: cvState.selectedSkills.length,
+              total: cvState.suggestedProfile.skills.length,
+            })}
+          </p>
           {/* CV-PROFILE-LISTS-01/05: Name fuer den ATS-Profil-Eintrag (Liste
               des CVs) — ganz oben in der Eingabereihenfolge des Steps */}
           {cvState.processingGoal === "ats" && (
