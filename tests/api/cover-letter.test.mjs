@@ -468,6 +468,16 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.body.letter).not.toContain("**");
   });
 
+  it("removes bracketed placeholders from the returned letter", async () => {
+    vi.mocked(chat).mockResolvedValue("Sehr geehrte Damen und Herren,\n\nMit freundlichen Grüßen\n[Ihr Name]");
+    const res = makeRes();
+    await handler(req(validBody), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.letter).toBe("Sehr geehrte Damen und Herren,\n\nMit freundlichen Grüßen");
+    expect(res.body.letter).not.toContain("[Ihr Name]");
+  });
+
   it("keeps unknown employer and fallback title neutral", async () => {
     const res = makeRes();
     await handler(

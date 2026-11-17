@@ -131,6 +131,11 @@ function sanitizeLetter(value) {
   text = text.replace(/\*\*(.*?)\*\*/g, "$1");
   text = text.replace(/^[ \t]*#{1,6}[ \t]+/gm, "");
   text = text.replace(/^[ \t]*[-*•][ \t]+/gm, "");
+  // Do not ship bracketed placeholders such as "[Ihr Name]" to the applicant.
+  text = text
+    .split("\n")
+    .filter((line) => !/^\s*\[[^\]]{1,80}\]\s*$/.test(line))
+    .join("\n");
   return text.trim();
 }
 
