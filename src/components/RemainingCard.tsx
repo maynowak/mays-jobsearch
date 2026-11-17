@@ -3,6 +3,7 @@ import type { Job } from "../types";
 import SourceBadge from "./SourceBadge";
 import { useLang } from "../i18n";
 import { fetchJobDetails, translateJobDescription } from "../api";
+import TranslationModelPicker from "./TranslationModelPicker";
 import { hasSufficientJobDescription } from "../lib/atsJobHandoff";
 import {
   formatJobDate,
@@ -33,8 +34,8 @@ function renderHtmlContent(html: string, lang?: string) {
 type TranslationState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "ready"; text: string }
-  | { status: "error" };
+  | { status: "ready"; text: string; model: string | null }
+  | { status: "error"; code?: string };
 
 interface Props {
   job: Job;
@@ -52,6 +53,7 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   const detailPromiseRef = useRef<Promise<Job | null> | null>(null);
   const [translation, setTranslation] = useState<TranslationState>({ status: "idle" });
   const [showTranslation, setShowTranslation] = useState(false);
+  const [translationModel, setTranslationModel] = useState<string | null>(null);
 
   const isAA = (job.source ?? []).includes("arbeitsagentur");
 
@@ -153,7 +155,7 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
 
   const requestTranslation = async () => {
     if (translation.status === "loading") return;
-    if (translation.status === "ready") {
+    if (translation.status === "ready" && translation.model === translationModel) {
       setShowTranslation(true);
       return;
     }
@@ -161,13 +163,18 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
     try {
       const result = await translateJobDescription(
         descriptionPlain || description,
-        descriptionLang || "auto"
+        descriptionLang || "auto",
+        translationModel
       );
       if (!result.translation.trim()) throw new Error("empty translation");
-      setTranslation({ status: "ready", text: result.translation });
+      setTranslation({ status: "ready", text: result.translation, model: translationModel });
       setShowTranslation(true);
-    } catch {
-      setTranslation({ status: "error" });
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code?: unknown }).code ?? "")
+          : undefined;
+      setTranslation({ status: "error", code: code || undefined });
       setShowTranslation(false);
     }
   };
@@ -294,7 +301,9 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
               disabled={translation.status === "loading"}
               onClick={() => void requestTranslation()}
             >
-              {t("results.translation.readGerman")}
+              {translation.status === "error"
+                ? t("results.translation.retry")
+                : t("results.translation.readGerman")}
             </button>
           </div>
           <p className="job-translation__consent">{t("results.translation.consent")}</p>
@@ -304,9 +313,19 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
             </p>
           )}
           {translation.status === "error" && (
-            <p className="job-translation__error" role="alert">
-              {t("results.translation.error")}
-            </p>
+            <>
+              <p className="job-translation__error" role="alert">
+                {translation.code === "model_unavailable" ||
+                translation.code === "model_not_free" ||
+                translation.code === "model_invalid"
+                  ? t("results.translation.modelUnavailable")
+                  : t("results.translation.error")}
+              </p>
+              <TranslationModelPicker
+                value={translationModel}
+                onChange={setTranslationModel}
+              />
+            </>
           )}
           {showTranslation && translatedReady && (
             <p className="job-translation__notice">{t("results.translation.notice")}</p>

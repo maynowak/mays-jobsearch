@@ -74,6 +74,17 @@ describe("JM-JOB-TRANSLATION-01: job translation API", () => {
     expect(prompt).toContain("Software Engineer");
   });
 
+  it("forwards an explicitly selected supported model", async () => {
+    const res = await call({
+      ...englishJob,
+      model: "vendor/translation-model:free",
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(chat).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(chat).mock.calls[0][0].model).toBe("vendor/translation-model:free");
+  });
+
   it("does not call the provider for a German description", async () => {
     const res = await call({
       ...englishJob,
