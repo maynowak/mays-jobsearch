@@ -7,6 +7,7 @@ import {
   grantRisConsent,
   withdrawRisConsent,
   type RisConsent,
+  type RisConsentState,
   type RisConsentStatus,
 } from "../lib/risConsentApi";
 import {
@@ -52,29 +53,43 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
   const [textApproved, setTextApproved] = useState(false);
   const [textReason, setTextReason] = useState<string | null>(null);
   const [specialCategoriesConsent, setSpecialCategoriesConsent] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"grant" | "withdraw" | "history" | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Array<Record<string, unknown>> | null>(null);
+  const busy = pendingAction !== null;
+
+  const applyConsentState = (state: RisConsentState) => {
+    setConsent(state.consent);
+    setGrantAllowed(state.grantAllowed);
+    setNoticeVersion(state.noticeVersion);
+    setNoticeState(state.noticeState);
+    setNoticeReason(state.noticeReason);
+    setTextVersion(state.textVersion);
+    setTextHash(state.textHash);
+    setTextState(state.textState);
+    setTextMapped(state.textMapped);
+    setTextApproved(state.textApproved);
+    setTextReason(state.textReason);
+    // Reflect an already granted Art. 9 declaration after a reload instead of
+    // presenting an unchecked checkbox as if the declaration were missing.
+    if (state.consent?.status === "GRANTED") {
+      setSpecialCategoriesConsent(state.consent.specialCategoriesConsent === true);
+    } else if (state.consent?.status === "WITHDRAWN") {
+      setSpecialCategoriesConsent(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
     if (!token) return;
     setLoaded(false);
     setError(null);
+    setSuccessMessage(null);
     fetchRisConsent(token)
       .then((state) => {
         if (!active) return;
-        setConsent(state.consent);
-        setGrantAllowed(state.grantAllowed);
-        setNoticeVersion(state.noticeVersion);
-        setNoticeState(state.noticeState);
-        setNoticeReason(state.noticeReason);
-        setTextVersion(state.textVersion);
-        setTextHash(state.textHash);
-        setTextState(state.textState);
-        setTextMapped(state.textMapped);
-        setTextApproved(state.textApproved);
-        setTextReason(state.textReason);
+        applyConsentState(state);
         setLoaded(true);
       })
       .catch((err) => {
@@ -83,6 +98,8 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
         setLoaded(true);
       });
     return () => { active = false; };
+    // applyConsentState is intentionally local to the current token render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   useEffect(() => {
@@ -107,15 +124,25 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
     if (consent?.status === "WITHDRAWN") setSpecialCategoriesConsent(false);
   }, [consent?.status]);
 
-  const run = async (action: () => Promise<RisConsent>) => {
-    setBusy(true);
+  const run = async (
+    action: () => Promise<RisConsent>,
+    pending: "grant" | "withdraw",
+    success: string
+  ) => {
+    setPendingAction(pending);
     setError(null);
+    setSuccessMessage(null);
     try {
-      setConsent(await action());
+      const result = await action();
+      // The POST response is the server-confirmed state. Do not issue a second
+      // read here: a transient GET must not turn a confirmed grant into a
+      // false error, and the next mount/reload performs the normal GET.
+      setConsent(result);
+      setSuccessMessage(success);
     } catch (err) {
       setError(messageOf(err));
     } finally {
-      setBusy(false);
+      setPendingAction(null);
     }
   };
 
@@ -142,6 +169,11 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
         {version ? ` (Textversion ${version})` : ""}
       </p>
       {error && <p role="alert">{error}</p>}
+      {successMessage && (
+        <p className="field-hint storage-consent__success" role="note" aria-live="polite">
+          {successMessage}
+        </p>
+      )}
       {status !== "GRANTED" && textBlocked && (
         <p className="field-hint" role="note">
           Die Einwilligungs-Textversion ist noch nicht freigegeben. Die Zustimmung ist gesperrt.
@@ -216,30 +248,47 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
           type="button"
           className="btn-ghost"
           disabled={busy || !canGrant}
-          onClick={() => run(() => grantRisConsent(token, specialCategoriesConsent))}
+          aria-busy={pendingAction === "grant" || undefined}
+          onClick={() =>
+            run(
+              () => grantRisConsent(token, specialCategoriesConsent),
+              "grant",
+              "Die Einwilligung zur dauerhaften Speicherung wurde gespeichert. Status: erteilt."
+            )
+          }
         >
-          Speicherung zustimmen
+          {pendingAction === "grant" ? "Wird gespeichert …" : "Speicherung zustimmen"}
         </button>
         <button
           type="button"
           className="btn-ghost"
           disabled={busy || status !== "GRANTED"}
-          onClick={() => run(() => withdrawRisConsent(token))}
+          aria-busy={pendingAction === "withdraw" || undefined}
+          onClick={() =>
+            run(
+              () => withdrawRisConsent(token),
+              "withdraw",
+              "Die Einwilligung wurde widerrufen. Neue Speicherungen sind gesperrt."
+            )
+          }
         >
-          Einwilligung widerrufen
+          {pendingAction === "withdraw" ? "Wird widerrufen …" : "Einwilligung widerrufen"}
         </button>
         <button
           type="button"
           className="btn-ghost"
           disabled={busy || !token}
+          aria-busy={pendingAction === "history" || undefined}
           onClick={async () => {
-            setBusy(true);
+            setPendingAction("history");
+            setError(null);
+            setSuccessMessage(null);
             try { setHistory(await fetchRisConsentHistory(token)); }
             catch (err) { setError(messageOf(err)); }
-            finally { setBusy(false); }
+            finally { setPendingAction(null); }
           }}
         >
-          Verlauf anzeigen
+          {pendingAction === "history" ? "Verlauf wird geladen …" : "Verlauf anzeigen"}
         </button>
       </div>
       {history && (
@@ -312,6 +361,27 @@ function messageOf(err: unknown): string {
     if (err.code === "test_user_not_allowed") {
       return "Dieses Konto ist für die RIS-Testspeicherung nicht freigegeben.";
     }
+    if (err.code === "special_categories_consent_required") {
+      return "Die Art.-9-Einwilligung muss ausdrücklich bestätigt werden.";
+    }
+    if (err.code === "consent_disabled") {
+      return "Die RIS-Einwilligungsfunktion ist derzeit deaktiviert.";
+    }
+    if (err.code === "missing_config") {
+      return "Die RIS-Einwilligungsfunktion ist serverseitig nicht vollständig konfiguriert.";
+    }
+    if (err.code === "notice_catalog_unavailable") {
+      return "Der Freigabestatus konnte bei RIS nicht geladen werden. Bitte später erneut versuchen.";
+    }
+    if (err.code === "unauthenticated" || err.code === "invalid_token" || err.status === 401) {
+      return "Die Anmeldung ist abgelaufen. Bitte melde dich erneut an.";
+    }
+    if (err.code === "forbidden" || err.status === 403) {
+      return "Dieses Konto ist für die RIS-Speicherung nicht freigegeben.";
+    }
+    if (err.status === 503) {
+      return "Der Einwilligungsdienst ist derzeit nicht erreichbar. Bitte später erneut versuchen.";
+    }
   }
-  return "Einwilligungsdienst ist derzeit nicht verfügbar.";
+  return "Die Einwilligung konnte nicht gespeichert werden. Bitte erneut versuchen.";
 }

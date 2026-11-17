@@ -33,7 +33,7 @@ export interface PersistentCvStorageState {
   withdrawConsent: () => Promise<boolean>;
 }
 
-function messageOf(error: unknown): string {
+export function cvStorageErrorMessage(error: unknown): string {
   if (error instanceof CvStorageApiError) {
     if (error.code === "CV_STORAGE_CONSENT_REQUIRED") {
       return "Für die dauerhafte Speicherung ist die CV-Speicherfreigabe erforderlich.";
@@ -41,7 +41,9 @@ function messageOf(error: unknown): string {
     if (error.code === "upload_failed") {
       return "Der Lebenslauf konnte nicht zu RIS hochgeladen werden.";
     }
-    if (error.status === 404) return "Der Lebenslauf wurde nicht gefunden.";
+    if (error.status === 404) {
+      return "Der gespeicherte Lebenslauf ist in RIS nicht mehr vorhanden. Die Liste wird aktualisiert; bitte den Lebenslauf erneut auswählen.";
+    }
     if (error.status === 409) return "Der Lebenslauf wurde zwischenzeitlich geändert.";
     if (error.status === 422) return "Die Lebenslauf-Daten sind ungültig.";
     if (error.code === "test_user_not_allowed") {
@@ -58,6 +60,14 @@ function messageOf(error: unknown): string {
     }
   }
   return "Die CV-Speicherfunktion ist derzeit nicht verfügbar.";
+}
+
+function isMissingCvDocument(error: unknown): boolean {
+  return error instanceof CvStorageApiError && error.status === 404;
+}
+
+function messageOf(error: unknown): string {
+  return cvStorageErrorMessage(error);
 }
 
 /**
@@ -177,11 +187,12 @@ export function usePersistentCvStorage(
       const url = await getCvDownloadUrl(token, cvId);
       window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
+      if (isMissingCvDocument(err)) await refresh();
       setError(messageOf(err));
     } finally {
       setBusy(false);
     }
-  }, [enabled, token]);
+  }, [enabled, refresh, token]);
 
   const remove = useCallback(async (cvId: string): Promise<boolean> => {
     if (!enabled || !token) return false;
@@ -193,6 +204,7 @@ export function usePersistentCvStorage(
       setNotice("Der gespeicherte Lebenslauf wurde gelöscht.");
       return true;
     } catch (err) {
+      if (isMissingCvDocument(err)) await refresh();
       setError(messageOf(err));
       return false;
     } finally {

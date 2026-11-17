@@ -219,8 +219,12 @@ export default function PersistentCvList({
               disabled={!art9 || busy || consentLoading || consent?.grantAllowed !== true}
               onClick={() => { void onGrantConsent(); }}
             >
-              {t("cvStorage.grant")}
+              {consentLoading ? t("cvStorage.granting") : t("cvStorage.grant")}
             </button>
+            <p className="field-hint">
+              {t("cvStorage.separateConsent")}{" "}
+              <a href="/profil?tab=settings">{t("cvStorage.openSettings")}</a>
+            </p>
           </>
         )}
         {consentGranted && (
@@ -230,7 +234,7 @@ export default function PersistentCvList({
             disabled={busy || consentLoading}
             onClick={() => { void onWithdrawConsent(); }}
           >
-            {t("cvStorage.withdraw")}
+            {consentLoading ? t("cvStorage.withdrawing") : t("cvStorage.withdraw")}
           </button>
         )}
       </section>

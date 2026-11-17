@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { usePersistentCvStorage } from "./usePersistentCvStorage";
+import { CvStorageApiError } from "./cvStorageApi";
+import { cvStorageErrorMessage, usePersistentCvStorage } from "./usePersistentCvStorage";
 
 function jsonResponse(status: number, body: unknown): Response {
   return { ok: status < 400, status, json: async () => body } as unknown as Response;
@@ -196,5 +197,39 @@ describe("usePersistentCvStorage", () => {
     const { result } = renderHook(() => usePersistentCvStorage("token", true));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toContain("nicht rechtzeitig");
+  });
+
+  it("erklärt ein fehlendes CV-PDF und aktualisiert die Liste statt Daten zu löschen", async () => {
+    let listCalls = 0;
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET").toUpperCase();
+      if (url.includes("/api/ris/cv-consents")) return jsonResponse(200, consentState());
+      if (url.includes("action=document")) {
+        return jsonResponse(404, { error: "CV document not found", code: "not_found" });
+      }
+      if (url.includes("/api/ris/cvs?") && method === "GET") {
+        listCalls += 1;
+        return jsonResponse(200, { items: [readyCv()], nextCursor: null });
+      }
+      throw new Error(`unexpected fetch ${method} ${url}`);
+    });
+
+    const { result } = renderHook(() => usePersistentCvStorage("token", true));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => { await result.current.download("cv-1"); });
+
+    expect(result.current.error).toContain("nicht mehr vorhanden");
+    expect(listCalls).toBeGreaterThanOrEqual(2);
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("method=DELETE"),
+      expect.anything()
+    );
+  });
+
+  it("formuliert den CV-404-Fehler verständlich", () => {
+    expect(
+      cvStorageErrorMessage(new CvStorageApiError("CV not found", 404, "not_found"))
+    ).toContain("nicht mehr vorhanden");
   });
 });
