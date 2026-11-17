@@ -6787,3 +6787,17 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   env (`ORDER_DISPATCH_QUEUE_URL`) would be removed. Status is now
   `D — contract/configuration mismatch`, with authenticated live E2E still
   blocked. No Jobsearch product change, apply or deployment.
+
+## 2026-11-17 — RIS-CONSENT-RELEASE-05 (Jobsearch consumer)
+
+**Status:** `CONSUMER DOCUMENTED / RIS-DEV APPLIED / LIVE AUTH E2E BLOCKED`
+
+- RIS merged PR #12 as `00363977ede1417c4992933b2639ac442a70a4b0` and applied
+  the exact plan `512532f7…` to `ris-dev` (0 add / 8 change / 0 destroy).
+- Live RIS agent code now contains `application-storage/1.0 = APPROVED`;
+  Jobsearch BFF/UI contract remains unchanged and fail-closed.
+- Unauthenticated Jobsearch production BFF smoke remains `401`.
+- No Jobsearch product change, no RIS/AWS/Terraform/Cognito/CloudFront/DNS
+  change from this repository; no authenticated live E2E or general production
+  restoration claimed.
+- Full report: `docs/reports/RIS-CONSENT-RELEASE-05.md`.
