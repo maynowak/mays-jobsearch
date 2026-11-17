@@ -138,6 +138,9 @@ export default function StorageConsentLive({ onStateChange }: Props = {}) {
       // read here: a transient GET must not turn a confirmed grant into a
       // false error, and the next mount/reload performs the normal GET.
       setConsent(result);
+      if (result.status === "GRANTED") {
+        setSpecialCategoriesConsent(result.specialCategoriesConsent === true);
+      }
       setSuccessMessage(success);
     } catch (err) {
       setError(messageOf(err));
