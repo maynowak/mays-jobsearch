@@ -13,11 +13,11 @@
 
 ## Reconciliation — 2026-11-17
 
-- `origin/main` `08d74b9` in den UX-06-Branch integriert; Merge-Commit `a69325b`.
-- Einziger Konflikt: `docs/AI_AUDITLOG.md`; UX-06- und Translation-/ATS-Einträge vollständig erhalten.
-- Translation-/ATS-/Skill-Änderungen aus main vollständig übernommen: `api/profile.mjs` Skill-Cap/Prompt, Skill-Zähler in `App.tsx`/`i18n.tsx`/`styles.css`, Translation-Regressionstest und `tests/api/profile-skills.test.js`.
+- `origin/main` `08d74b9` integriert; Merge-Commit `a69325b`. Während des Gates lief main auf `7d5b4a7` weiter; zweiter Merge `a77df49`.
+- Einziger Konflikt je Merge: `docs/AI_AUDITLOG.md`; UX-06-, Translation-, ATS- und Model-Selection-Einträge vollständig erhalten.
+- Main-Änderungen vollständig übernommen: Skill-Cap/Prompt in `api/profile.mjs`, Skill-Zähler in App/i18n/styles, Translation-/ATS-Regressionstests, Translation-Model-Picker und `tests/api/profile-skills.test.js`.
 - UX-06-Navigation, Entwurfsdialoge und RIS-Sperrgründe vollständig erhalten.
-- Verifikation nach Merge: Vollsuite **1937 PASS / 11 skipped**, Build **PASS** (1,43 s), fokussierte ATS-/Translation-/Skill-Tests **37/37 PASS**, UX-06- und 03A-Browser-E2E **PASS**, Diff-/Secret-Audit clean.
+- Verifikation nach finalem Merge: Vollsuite **1939 PASS / 11 skipped**, Build **PASS** (1,44 s), fokussierte ATS-/Translation-/Skill-Tests **59/59 PASS**, UX-06- und 03A-Browser-E2E **PASS**, Diff-/Secret-Audit clean.
 
 ## Scope
 

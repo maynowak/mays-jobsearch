@@ -6732,9 +6732,9 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 
 **Status:** `RECONCILED — LOCAL/BROWSER VERIFIED — PR CHECKS PENDING`
 
-- `origin/main` `08d74b9` in `feature/jm-cv-ux-06-navigation-drafts` integriert; Merge-Commit `a69325b`; kein Force-Push, kein History-Rewrite.
-- Einziger Konflikt `docs/AI_AUDITLOG.md`; beide Seiten vollständig erhalten. App/i18n/styles automatisch gemergt.
-- Main-Änderungen vollständig erhalten: `api/profile.mjs` Skill-Cap 100/Prompt/maxTokens, ATS-Skill-Zähler in App/i18n/styles, `src/lib/safeHtml.test.ts`, `tests/api/profile-skills.test.js`, Translation-/ATS-Report und Auditlog.
+- `origin/main` `08d74b9` integriert; Merge-Commit `a69325b`. Main lief während des Gates auf `7d5b4a7` weiter; zweiter Merge `a77df49`. Kein Force-Push, kein History-Rewrite.
+- Einziger Konflikt je Merge `docs/AI_AUDITLOG.md`; UX-06-, Translation-, ATS- und Model-Selection-Einträge vollständig erhalten. App/i18n/styles automatisch gemergt.
+- Main-Änderungen vollständig erhalten: `api/profile.mjs` Skill-Cap 100/Prompt/maxTokens, ATS-Skill-Zähler in App/i18n/styles, `src/lib/safeHtml.test.ts`, `tests/api/profile-skills.test.js`, Translation-Model-Picker, `api/job-details.mjs`, RemainingCard-Tests und Auditlog.
 - UX-06 vollständig erhalten: Tab-Schließen/-Rückgabe, Entwurfsdialog, RIS-Sperrgründe, Tests/E2E/Reports.
-- Verifikation: Vollsuite `npx vitest run --maxWorkers=2` **1937 PASS / 11 skipped**, 0 FAIL; Build PASS (1,43 s); fokussierte ATS-/Translation-/Skill-Tests 37/37 PASS; UX-06-Zwei-Tab-E2E PASS; 03A-E2E PASS; `git diff --check` und Secret-Scan clean.
+- Verifikation nach finalem Merge: Vollsuite `npx vitest run --maxWorkers=2` **1939 PASS / 11 skipped**, 0 FAIL; Build PASS (1,44 s); fokussierte ATS-/Translation-/Skill-Tests 59/59 PASS; UX-06-Zwei-Tab-E2E PASS; 03A-E2E PASS; `git diff --check` und Secret-Scan clean.
 - Keine Änderung an RIS, AWS, Terraform, Cognito, Consent oder fremden untracked Dateien. Kein Main-Merge/Production-Deployment in diesem Schritt.
