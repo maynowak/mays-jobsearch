@@ -6824,3 +6824,26 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   deployment, RIS/AWS/Terraform, Cognito, CloudFront or DNS change.
 - Authenticated live E2E remains blocked by missing authorized test identity.
 - Report: `docs/reports/JM-RIS-CONSENT-UX-01.md`.
+
+## 2026-11-17 — JM-RIS-CONSENT-UX-03
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL / AUTHENTICATED LIVE E2E BLOCKED`
+
+- Added local pre-validation and an explicit real-request state
+  “Einwilligung wird geprüft …” with disabled button/Art.-9 checkbox; no
+  simulated delay and no success before a confirmed POST.
+- Mapped BFF/RIS errors to action-oriented messages covering expired login,
+  missing permission, notice approval/serving, text mismatch, unavailable
+  service and disabled configuration.
+- Preserved checkbox state on failed grants; server-granted Art.-9 state is
+  restored after reload; withdrawal still requires fresh explicit consent.
+- Applied the same UX principles to the separate CV storage consent:
+  loading/checking state, concrete unavailable reasons, settings link, and
+  non-destructive 404 reconciliation.
+- Tests: focused 32 PASS; RIS consent API 40 PASS; build PASS; serial full
+  **1952 PASS / 11 skipped**.
+- Live grant diagnostics remain blocked by missing authorized limited-beta
+  test identity/token; no auth/consent bypass and no tokens or real data
+  logged.
+- No Main merge, deployment, RIS/AWS/Terraform, Cognito, CloudFront or DNS
+  change. Report: `docs/reports/JM-RIS-CONSENT-UX-03.md`.

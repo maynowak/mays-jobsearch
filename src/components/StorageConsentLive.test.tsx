@@ -377,7 +377,10 @@ describe("StorageConsentLive", () => {
     await waitFor(() => expect(button).toBeEnabled());
     button.click();
 
-    expect(await screen.findByRole("button", { name: "Wird gespeichert …" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Einwilligung wird geprüft …" })).toBeDisabled();
+    expect(
+      await screen.findByText("Einwilligung wird geprüft …", { selector: "p" })
+    ).toBeInTheDocument();
     expect(screen.queryByText(/wurde gespeichert/)).toBeNull();
     finishGrant?.();
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: erteilt/));
@@ -401,7 +404,35 @@ describe("StorageConsentLive", () => {
     screen.getByRole("checkbox", { name: /Art\. 9 Abs\. 2 lit\. a DSGVO/ }).click();
     screen.getByRole("button", { name: "Speicherung zustimmen" }).click();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/noch nicht freigegeben/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /noch nicht für neue Zustimmungen freigegeben/
+    );
+    expect(screen.queryByText(/wurde gespeichert/)).toBeNull();
+    expect(screen.getByRole("checkbox", { name: /Art\. 9 Abs\. 2 lit\. a DSGVO/ })).toBeChecked();
+  });
+
+  it.each([
+    [401, "unauthenticated", /Anmeldung abgelaufen/],
+    [403, "forbidden", /nicht freigegeben/],
+    [503, "unavailable", /nicht erreichbar/],
+  ])("erklärt Status %i mit einer Handlungsmöglichkeit", async (status, code, expected) => {
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (String(init?.method ?? "").toUpperCase() === "POST" && !String(url).includes("action=")) {
+        return {
+          ok: false,
+          status,
+          json: async () => ({ error: "consent failed", code }),
+        } as unknown as Response;
+      }
+      return consentResponse(consentState());
+    });
+
+    render(<StorageConsentLive />);
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/Status: nicht erteilt/));
+    screen.getByRole("checkbox", { name: /Art\. 9 Abs\. 2 lit\. a DSGVO/ }).click();
+    screen.getByRole("button", { name: "Speicherung zustimmen" }).click();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(expected);
     expect(screen.queryByText(/wurde gespeichert/)).toBeNull();
   });
 });
