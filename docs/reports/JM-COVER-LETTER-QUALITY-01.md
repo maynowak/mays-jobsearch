@@ -1,12 +1,14 @@
 # JM-COVER-LETTER-QUALITY-01
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL + PREVIEW QUALITY EXAMPLES — NO MAIN MERGE / NO PRODUCTION DEPLOY`
+**Status:** `MERGED / PRODUCTION DEPLOYED / SYNTHETIC PRODUCTION E2E VERIFIED`
 
 **Date:** 2026-11-17
 **Repository:** `maynowak/mays-jobsearch`
 **Baseline:** `origin/main` `da1ebbb8cff28637874b17d2ee068ab64419968e`
+**Final `origin/main`:** `fd50caffa3367ae6c83ee3718915f02488cfe67c`
+**Release PR:** #28 merged
 **Branch:** `feature/jm-cover-letter-quality-01`
-**PR:** #28 (Draft)
+**PR:** #28 (merged as `fd50caffa3367ae6c83ee3718915f02488cfe67c`)
 
 ## 1. Bisherige Prompt-Struktur
 
@@ -153,20 +155,56 @@ Abgedeckt:
 - Prompt-Injection-/Datenregeln
 - Platzhalter-Entfernung
 
-## 7. Bekannte Einschränkungen
+## 7. Release / Production
+
+- PR #28 regular merge: `fd50caffa3367ae6c83ee3718915f02488cfe67c`.
+- Final `origin/main`: `fd50caffa3367ae6c83ee3718915f02488cfe67c`.
+- Vercel Production: `mays-job-matcher` and `mays-jobsearch` SUCCESS; both
+  domains serve bundle `fd50caf`.
+- No manual deployment.
+- Post-merge gates: build PASS; focused cover-letter tests 88 PASS; serial
+  full suite 1943 PASS / 11 skipped.
+
+### Synthetische Production-E2E
+
+`POST /api/cover-letter` gegen `www.mays-job-matcher.app`, ausschließlich
+synthetische Daten.
+
+**Professional / Public Sector**
+
+- sichtbarer Prompt-Meta-Modus: `quality_class=professional`,
+  `writing_style=public_sector`, `tone=formal`
+- echtes Anschreiben mit korrekter Anrede („Sehr geehrte Frau Beispiel“)
+- 178–225 Wörter je nach Provider-Lauf
+- Active Directory, kommunale Erfahrung, 200-Arbeitsplätze-Migration belegt
+- keine Platzhalter, keine ATS-/Matching-Scores
+
+**Executive / Technical**
+
+- sichtbarer Prompt-Meta-Modus: `quality_class=executive`,
+  `writing_style=technical`, `tone=confident`
+- echtes Anschreiben, 191 Wörter
+- AWS, Terraform, Kubernetes und TypeScript konkret mit den Aufgaben verknüpft
+- Führungsbezug nur aus der ausdrücklich angegebenen technischen Leitung
+- keine Platzhalter, keine ATS-/Matching-Scores
+
+Verwendetes Modell: `nvidia/nemotron-3-ultra-550b-a55b:free` (Preview/Provider-
+Qualität variiert; einzelne Läufe liefern generische Konversation).
+
+## 8. Bekannte Einschränkungen
 
 - Die Ausgabequalität hängt weiterhin vom gewählten Free-Model ab. Einzelne
   Modelle liefern generische Konversation statt Anschreiben; die bestehende
   Modellwahl bleibt der Recovery-Pfad.
 - Es wurden keine echten CV-/Bewerberdaten verwendet.
-- Kein Main-Merge und kein Production-Deployment.
-- Keine neue Persistenz, kein neuer Provider und keine Änderung an
+- Kein neuer Provider und keine neue Persistenz, kein neuer Provider und keine Änderung an
   ATS-Scoring oder RIS.
 
-## 8. Git
+## 9. Git
 
 - `9c02907` — strukturiertes Cover-Letter-Briefing
 - `d6efcbe` — Platzhalter-Entfernung
-- Dokumentations-Commit folgt separat.
+- `c55c01f` — Feature-Dokumentation
+- Release-Dokumentation auf `docs/jm-cover-letter-quality-release-01`
 
-Branch gepusht: `feature/jm-cover-letter-quality-01`; PR #28 ist Draft.
+PR #28 ist gemerged; Feature-Branch retained. Kein Merge der Docs-Branch nach `main`.

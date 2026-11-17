@@ -6766,3 +6766,21 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `feature/jm-cover-letter-quality-01`, draft PR #28; no main merge or
   production deployment.
 - Report: `docs/reports/JM-COVER-LETTER-QUALITY-01.md`.
+## 2026-11-17 — JM-COVER-LETTER-QUALITY-01 — RELEASE
+
+**Status:** `MERGED / PRODUCTION DEPLOYED / SYNTHETIC PRODUCTION E2E VERIFIED`
+
+- PR #28 merged as `fd50caffa3367ae6c83ee3718915f02488cfe67c`.
+- Final `origin/main`: `fd50caffa3367ae6c83ee3718915f02488cfe67c`.
+- Pre-merge gates: build PASS; focused cover-letter tests 88 PASS; serial full
+  1943 PASS / 11 skipped. No conflicts.
+- Vercel Production for `mays-job-matcher` and `mays-jobsearch`: SUCCESS; both
+  domains serve bundle `fd50caf`; no manual deployment.
+- Production synthetic E2E: Professional/Public-Sector letter with correct
+  salutation, 178–225 words, verified Active Directory/migration evidence, no
+  placeholders/ATS; Executive/Technical letter 191 words with AWS/Terraform/
+  Kubernetes/TypeScript and no invented leadership beyond provided technical
+  lead scope. Provider output quality varies by free model.
+- No real CV/applicant data, RIS/AWS/Cognito, persistence or ATS scoring change.
+- Docs branch `docs/jm-cover-letter-quality-release-01`; report
+  `docs/reports/JM-COVER-LETTER-QUALITY-01.md`; no docs merge to main.
