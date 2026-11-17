@@ -6636,6 +6636,32 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Recommendation: owner review/approval of PR #22; no automatic merge.
 - Report: `docs/reports/JM-CV-UX-RELEASE-01-RELEASE-GATE.md`.
 
+## 2026-11-16 — JM-CV-UX-06 — WORKSPACE NAVIGATION & DRAFT LIFECYCLE
+
+**Status:** `IMPLEMENTATION COMPLETE — LOCAL/BROWSER VERIFIED — NOT MERGED/DEPLOYED`
+
+- Branch `feature/jm-cv-ux-06-navigation-drafts` von `origin/main` `154c698`; kein Main-Merge, kein Production-Deployment, keine Branch-Löschung.
+- Separater Tab: X und Footer-Schließen nutzen im Workspace einen expliziten Schließfluss. Ungespeicherte Änderungen bieten „Zum Hauptfenster zurück“, „Verwerfen und schließen“ und „Weiter bearbeiten“. Bei direktem Workspace ohne Hauptfenster: Sitzungsspeicherung, bewusstes Verwerfen oder Weiterbearbeiten.
+- Rückgabe: bestehender `workspaceHandoff`-Vertrag wiederverwendet; nach bestätigter Übernahme wird das Hauptfenster fokussiert und der Tab nach Möglichkeit geschlossen. Verweigert der Browser `window.close()`, bleibt der Tab mit übertragenen Daten offen und zeigt eine klare manuelle Anleitung. Kein Datenverlust bei fehlendem Hauptfenster.
+- Entwurfsblockade: neuer `CvBuilderDraftPrompt` mit „weiter bearbeiten“, „in Sitzungsliste übernehmen“, „verwerfen und neu beginnen“ und „abbrechen“. App-Import/-Erstellung und direkter Workspace geprüft. Keine automatische Löschung, kein Überschreiben von Sitzungsprofilen, keine dauerhafte Structured-CV-Speicherung.
+- RIS-Speicherbutton: deaktiviertes Gate unverändert; mehrere Sperrgründe (Validierung, Login/Speicherfreigabe/Status, leerer Lebenslauf) werden als Liste angezeigt. Keine RIS-/Backend-API-Änderung.
+- Tests: fokussiert `CvBuilderWorkspacePage.test.tsx` 7/7 PASS, neue App-Dialogtests 2/2 PASS; Vollsuite `npx vitest run --maxWorkers=2` **1934 PASS / 11 skipped**, 180 Dateien bestanden, 0 FAIL; Build PASS (1,30 s); `git diff --check` PASS.
+- Browser-E2E `npm run test:e2e:cv-builder-ux-06` PASS: zwei echte Tabs, sauberes X, Dirty-Cancel, Rückgabe + Tab-Schließen, blockiertes `window.close()`, fehlendes Hauptfenster, direkter Workspace; 0 Page-/Console-Errors. Bestehender 03A-E2E PASS (nur veraltete UI-Label-Selektoren aktualisiert). Evidence: `docs/reports/assets/JM-CV-UX-06/`.
+- AI-/Privacy-/Data-Flow: keine neuen externen Flows, Speicherorte, Berechtigungen oder Credentials; keine Änderung an `api/**`, RIS, AWS, Terraform, Cognito, Consent, ATS/Matching oder Übersetzungs-Pipeline.
+- Grenzen: authentifizierter CV-Editor-Modalpfad nicht separat live geprüft; RIS-/S3-Live-Speicherung nicht ausgeführt.
+- Report: `docs/reports/JM-CV-UX-06-REPORT.md`.
+
+## 2026-11-16 — JM-CV-UX-06 — INTEGRATION & RELEASE GATE
+
+**Status:** `READY FOR OWNER APPROVAL`
+
+- PR [#25](https://github.com/maynowak/mays-jobsearch/pull/25) OPEN, not draft; branch `feature/jm-cv-ux-06-navigation-drafts`, product commit `b2d1e75`, base `origin/main` `154c698`; 1 ahead / 0 behind; `MERGEABLE` / `CLEAN`; owner review pending.
+- Scope vs `origin/main`: 15 files, CV-builder frontend/UI, DE/EN strings, tests/E2E and docs only. No `api/**`, `infra/**`, `.github/**`, RIS, AWS, Terraform, Cognito, consent, ATS/matching or translation-pipeline changes. Diff-check and secret scan clean.
+- Verification: full suite `npx vitest run --maxWorkers=2` **1934 PASS / 11 skipped**, 0 FAIL; build PASS (1,44 s); UX-06 browser E2E PASS and 03A full-page workspace E2E PASS at `b2d1e75`. Existing browser evidence reused; no unnecessary new tests.
+- Vercel: both PR previews READY at product SHA `b2d1e75` and docs-head `a8f7c94`, HTTP 200 — `mays-job-matcher` `dpl_CLmdCwvkMLhM66D9L1x7sZSxdm8s` / `dpl_2MozcnZJ1RTLYxwL3qziX7N4QYTn`, `mays-jobsearch` `dpl_6UVVBXDyVdauC2nVjqTACqoudZws` / `dpl_6EVU152rBmSeerrGCvd19uLDVW2Q`.
+- CodeQL Analysis (javascript-typescript, none): SUCCESS at product commit `b2d1e75` (2m59s) and docs-head `a8f7c94` (4m29s). Auxiliary `CodeQL` check NEUTRAL due two historical `main` configurations missing (`/language:javascript`, `/language:typescript`); same neutral existed on merged PR #22, actual analysis green, PR merge state CLEAN.
+- No main merge, no production deployment, no branch deletion. Report: `docs/reports/JM-CV-UX-06-RELEASE-GATE.md`.
+
 ## 2026-11-16 — JM-TRANSLATION-MODEL-SELECTION-01
 
 **Status:** `IMPLEMENTED / VERIFIED LOCAL — NO MERGE/DEPLOY`
@@ -6700,3 +6726,15 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No real CV data, provider prompt with real CV, RIS/AWS/Cognito, persistence,
   consent or ATS scoring change.
 - Report: `docs/reports/JM-TRANSLATION-ATS-ORCH-01.md`.
+
+
+## 2026-11-17 — JM-CV-UX-06 — RECONCILIATION WITH TRANSLATION/ATS MAIN
+
+**Status:** `RECONCILED — LOCAL/BROWSER VERIFIED — PR CHECKS PENDING`
+
+- `origin/main` `08d74b9` integriert; Merge-Commit `a69325b`. Main lief während des Gates auf `7d5b4a7` weiter; zweiter Merge `a77df49`. Kein Force-Push, kein History-Rewrite.
+- Einziger Konflikt je Merge `docs/AI_AUDITLOG.md`; UX-06-, Translation-, ATS- und Model-Selection-Einträge vollständig erhalten. App/i18n/styles automatisch gemergt.
+- Main-Änderungen vollständig erhalten: `api/profile.mjs` Skill-Cap 100/Prompt/maxTokens, ATS-Skill-Zähler in App/i18n/styles, `src/lib/safeHtml.test.ts`, `tests/api/profile-skills.test.js`, Translation-Model-Picker, `api/job-details.mjs`, RemainingCard-Tests und Auditlog.
+- UX-06 vollständig erhalten: Tab-Schließen/-Rückgabe, Entwurfsdialog, RIS-Sperrgründe, Tests/E2E/Reports.
+- Verifikation nach finalem Merge: Vollsuite `npx vitest run --maxWorkers=2` **1939 PASS / 11 skipped**, 0 FAIL; Build PASS (1,44 s); fokussierte ATS-/Translation-/Skill-Tests 59/59 PASS; UX-06-Zwei-Tab-E2E PASS; 03A-E2E PASS; `git diff --check` und Secret-Scan clean.
+- Keine Änderung an RIS, AWS, Terraform, Cognito, Consent oder fremden untracked Dateien. Kein Main-Merge/Production-Deployment in diesem Schritt.

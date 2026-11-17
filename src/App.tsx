@@ -36,6 +36,7 @@ import ApplicationsSection from "./components/ApplicationsSection";
 import CvDocumentList from "./components/CvDocumentList";
 import CvBuilderEditor from "./components/CvBuilderEditor";
 import CvBuilderImportDialog from "./components/CvBuilderImportDialog";
+import CvBuilderDraftPrompt from "./components/CvBuilderDraftPrompt";
 import type { CvBuilderImportReviewSummary } from "./components/CvBuilderImportReview";
 import {
   applyWorkspaceEditorReturn,
@@ -255,6 +256,7 @@ export default function App() {
   const [cvBuilderTemplate, setCvBuilderTemplate] = useState<CvBuilderTemplate>("classic");
   const [cvBuilderOpen, setCvBuilderOpen] = useState(false);
   const [cvBuilderImportOpen, setCvBuilderImportOpen] = useState(false);
+  const [cvBuilderDraftPromptOpen, setCvBuilderDraftPromptOpen] = useState(false);
   const [cvBuilderPendingName, setCvBuilderPendingName] = useState("");
   const [cvBuilderDirty, setCvBuilderDirty] = useState(false);
   const [cvBuilderSaved, setCvBuilderSaved] = useState(false);
@@ -1429,9 +1431,34 @@ export default function App() {
 
   const handleOpenCvBuilderImport = () => {
     if (hasCvBuilderContent(cvBuilderDraft) && !cvBuilderProfileId) {
-      setStatus({ type: "error", message: t("cvBuilder.import.existingDraft") });
+      setCvBuilderDraftPromptOpen(true);
       return;
     }
+    setCvBuilderImportOpen(true);
+  };
+
+  const continueExistingCvDraft = () => {
+    setCvBuilderDraftPromptOpen(false);
+    setCvBuilderOpen(true);
+  };
+
+  const adoptExistingCvDraft = () => {
+    setCvBuilderDraftPromptOpen(false);
+    setCvBuilderOpen(false);
+    if (handleAdoptCvDraft({ openEditor: false })) setCvBuilderImportOpen(true);
+  };
+
+  const discardExistingCvDraft = () => {
+    setCvBuilderDraftPromptOpen(false);
+    setCvBuilderOpen(false);
+    setCvBuilderDraft(createEmptyCvBuilderDraft());
+    setCvBuilderTemplate("classic");
+    setCvBuilderProfileId(null);
+    setCvBuilderPendingName("");
+    setCvBuilderDirty(false);
+    setCvBuilderSaved(false);
+    setCvBuilderSaveError("");
+    setCvBuilderImportReview(null);
     setCvBuilderImportOpen(true);
   };
 
@@ -1441,7 +1468,7 @@ export default function App() {
     const name = t("cvBuilder.profiles.defaultName", { count: cvProfiles.length + 1 });
     try {
       const profile = cvProfileRepositoryRef.current?.create({ name });
-      if (!profile) return;
+      if (!profile) return false;
       refreshCvProfiles();
       setCvBuilderProfileId(profile.cvId);
       setCvBuilderDraft(createEmptyCvBuilderDraft());
@@ -1451,13 +1478,15 @@ export default function App() {
       setCvBuilderSaved(true);
       setCvBuilderSaveError("");
       setCvBuilderImportReview(null);
+      return true;
     } catch (err) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
+      return false;
     }
   };
 
-  const handleAdoptCvDraft = () => {
-    if (!hasCvBuilderContent(cvBuilderDraft)) return;
+  const handleAdoptCvDraft = (options?: { openEditor?: boolean }): boolean => {
+    if (!hasCvBuilderContent(cvBuilderDraft)) return false;
     const name = t("cvBuilder.profiles.defaultName", { count: cvProfiles.length + 1 });
     try {
       const profile = cvProfileRepositoryRef.current?.create({
@@ -1465,18 +1494,20 @@ export default function App() {
         cvData: cvBuilderDraft,
         template: cvBuilderTemplate,
       });
-      if (!profile) return;
+      if (!profile) return false;
       refreshCvProfiles();
       setCvBuilderProfileId(profile.cvId);
       setCvBuilderDraft(cloneCvBuilderDraft(profile.cvData));
       setCvBuilderTemplate(profile.template);
-      setCvBuilderOpen(true);
+      if (options?.openEditor !== false) setCvBuilderOpen(true);
       setCvBuilderDirty(false);
       setCvBuilderSaved(true);
       setCvBuilderSaveError("");
       setCvBuilderImportReview(null);
+      return true;
     } catch (err) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : t("cvBuilder.profiles.error") });
+      return false;
     }
   };
 
@@ -4028,6 +4059,27 @@ export default function App() {
     <>
       {cvBuilderNode}
       {cvBuilderImportNode}
+      <CvBuilderDraftPrompt
+        open={cvBuilderDraftPromptOpen}
+        title={t("cvBuilder.draftPrompt.title")}
+        text={t("cvBuilder.draftPrompt.text")}
+        cancelLabel={t("cvBuilder.draftPrompt.cancel")}
+        onCancel={() => setCvBuilderDraftPromptOpen(false)}
+        actions={[
+          {
+            label: t("cvBuilder.draftPrompt.continue"),
+            onClick: continueExistingCvDraft,
+          },
+          {
+            label: t("cvBuilder.draftPrompt.adopt"),
+            onClick: adoptExistingCvDraft,
+          },
+          {
+            label: t("cvBuilder.draftPrompt.discard"),
+            onClick: discardExistingCvDraft,
+          },
+        ]}
+      />
     </>
   );
 

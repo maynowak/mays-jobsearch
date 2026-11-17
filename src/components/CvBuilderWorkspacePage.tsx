@@ -11,6 +11,7 @@ import type { CvBuilderTemplate } from "../lib/cvBuilder/templates";
 import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 import CvBuilderImportDialog from "./CvBuilderImportDialog";
 import CvBuilderEditor from "./CvBuilderEditor";
+import CvBuilderDraftPrompt from "./CvBuilderDraftPrompt";
 import {
   WORKSPACE_PATH,
   acceptWorkspaceHandoff,
@@ -81,6 +82,9 @@ export default function CvBuilderWorkspacePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [workspaceMessage, setWorkspaceMessage] = useState("");
+  const [draftPromptOpen, setDraftPromptOpen] = useState(false);
+  const [draftPromptIntent, setDraftPromptIntent] = useState<"start" | "import">("start");
+  const [closePromptOpen, setClosePromptOpen] = useState(false);
   const repoRef = useRef<CvBuilderProfileRepository | null>(null);
   const requestedRef = useRef(false);
   const handoffCleanupRef = useRef<(() => void) | null>(null);
@@ -194,7 +198,7 @@ export default function CvBuilderWorkspacePage() {
     }
   }, [currentIdentity, handoffIdentity, t]);
 
-  const handleStartEmpty = () => {
+  const startEmptyNow = () => {
     setDraft(emptyDraft());
     setTemplate("classic");
     setProfileId(null);
@@ -208,6 +212,26 @@ export default function CvBuilderWorkspacePage() {
     setSaveError("");
     setWorkspaceMessage("");
     setMode("editor");
+  };
+
+  const handleStartEmpty = () => {
+    if (hasCvBuilderContent(draft) && !profileId) {
+      setDraftPromptIntent("start");
+      setDraftPromptOpen(true);
+      return;
+    }
+    startEmptyNow();
+  };
+
+  const handleOpenImport = () => {
+    if (hasCvBuilderContent(draft) && !profileId) {
+      setDraftPromptIntent("import");
+      setDraftPromptOpen(true);
+      return;
+    }
+    setInitialImportSession(null);
+    setSession(null);
+    setMode("import");
   };
 
   const handleImported = (
@@ -233,9 +257,9 @@ export default function CvBuilderWorkspacePage() {
     setMode("editor");
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     const repository = repoRef.current;
-    if (!repository) return;
+    if (!repository) return false;
     setSaving(true);
     setSaveError("");
     try {
@@ -261,8 +285,10 @@ export default function CvBuilderWorkspacePage() {
       setDirty(false);
       setSaved(true);
       setSaveError("");
+      return true;
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : t("cvBuilder.profiles.error"));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -282,7 +308,52 @@ export default function CvBuilderWorkspacePage() {
     setMode("start");
   };
 
-  const handleReturnToApp = async () => {
+  const closeWorkspaceTab = () => {
+    if (!hasWorkspaceOpener()) {
+      setWorkspaceMessage(t("cvBuilder.workspace.closeDirect"));
+      setMode("start");
+      return;
+    }
+    try {
+      window.opener?.focus?.();
+    } catch {
+      /* focus can be refused by the browser */
+    }
+    window.close();
+    window.setTimeout(() => {
+      if (!window.closed) setWorkspaceMessage(t("cvBuilder.workspace.closeBlocked"));
+    }, 150);
+  };
+
+  const handleWorkspaceCloseRequest = () => {
+    if (dirty) {
+      setClosePromptOpen(true);
+      return;
+    }
+    closeWorkspaceTab();
+  };
+
+  const discardAndCloseWorkspace = () => {
+    setClosePromptOpen(false);
+    setDraft(emptyDraft());
+    setTemplate("classic");
+    setProfileId(null);
+    setProfileName("");
+    setBaseVersion(null);
+    setImportReview(null);
+    setDirty(false);
+    setSaved(false);
+    closeWorkspaceTab();
+  };
+
+  const saveAndCloseWorkspace = async () => {
+    const savedOk = await handleSave();
+    if (!savedOk) return;
+    setClosePromptOpen(false);
+    closeWorkspaceTab();
+  };
+
+  const handleReturnToApp = async (options?: { closeAfter?: boolean }) => {
     const activeHandoffId = activeHandoffIdRef.current;
     if (!activeHandoffId) {
       setWorkspaceMessage(t("cvBuilder.workspace.returnUnavailable"));
@@ -308,6 +379,10 @@ export default function CvBuilderWorkspacePage() {
     const result = await sendWorkspaceReturn(activeHandoffId, payload);
     if (result === "applied") {
       setWorkspaceMessage(t("cvBuilder.workspace.returnSuccess"));
+      if (options?.closeAfter) {
+        setClosePromptOpen(false);
+        closeWorkspaceTab();
+      }
       return;
     }
     if (result === "conflict") {
@@ -333,6 +408,91 @@ export default function CvBuilderWorkspacePage() {
     setWorkspaceMessage(t("cvBuilder.workspace.returnError"));
   };
 
+  const prompts = (
+    <>
+      <CvBuilderDraftPrompt
+        open={draftPromptOpen}
+        title={t("cvBuilder.draftPrompt.title")}
+        text={t("cvBuilder.draftPrompt.text")}
+        cancelLabel={t("cvBuilder.draftPrompt.cancel")}
+        onCancel={() => setDraftPromptOpen(false)}
+        actions={[
+          {
+            label: t("cvBuilder.draftPrompt.continue"),
+            onClick: () => {
+              setDraftPromptOpen(false);
+              setMode("editor");
+            },
+          },
+          {
+            label: t("cvBuilder.draftPrompt.adopt"),
+            disabled: saving,
+            onClick: () => {
+              setDraftPromptOpen(false);
+              void handleSave();
+              setMode("editor");
+            },
+          },
+          {
+            label: t("cvBuilder.draftPrompt.discard"),
+            disabled: saving,
+            onClick: () => {
+              setDraftPromptOpen(false);
+              if (draftPromptIntent === "import") {
+                setInitialImportSession(null);
+                setSession(null);
+                setMode("import");
+                return;
+              }
+              startEmptyNow();
+            },
+          },
+        ]}
+      />
+      <CvBuilderDraftPrompt
+        open={closePromptOpen}
+        title={t("cvBuilder.workspace.closePromptTitle")}
+        text={t("cvBuilder.workspace.closePromptText")}
+        cancelLabel={t("cvBuilder.workspace.closeCancel")}
+        onCancel={() => setClosePromptOpen(false)}
+        actions={
+          hasWorkspaceOpener()
+            ? [
+                {
+                  label: t("cvBuilder.workspace.closeReturn"),
+                  variant: "primary",
+                  disabled: saving,
+                  onClick: () => {
+                    setClosePromptOpen(false);
+                    void handleReturnToApp({ closeAfter: true });
+                  },
+                },
+                {
+                  label: t("cvBuilder.workspace.closeDiscard"),
+                  disabled: saving,
+                  onClick: discardAndCloseWorkspace,
+                },
+              ]
+            : [
+                {
+                  label: t("cvBuilder.workspace.closeSession"),
+                  variant: "primary",
+                  disabled: saving,
+                  onClick: () => {
+                    void saveAndCloseWorkspace();
+                  },
+                },
+                {
+                  label: t("cvBuilder.workspace.closeDiscard"),
+                  disabled: saving,
+                  onClick: discardAndCloseWorkspace,
+                },
+              ]
+        }
+      />
+    </>
+  );
+
   const header = (
     <header className="cv-workspace-header">
       <a className="cv-workspace-brand" href="/search">May’s Job Matcher</a>
@@ -350,6 +510,7 @@ export default function CvBuilderWorkspacePage() {
     return (
       <div className="cv-workspace-page">
         {header}
+        {prompts}
         <main className="cv-workspace-main" aria-live="polite">
           <div className="cv-workspace-loading" role="status">
             <span className="spinner" aria-hidden="true" />
@@ -364,6 +525,7 @@ export default function CvBuilderWorkspacePage() {
     return (
       <div className="cv-workspace-page">
         {header}
+        {prompts}
         <main className="cv-workspace-main cv-workspace-main--import">
           <CvBuilderImportDialog
             open
@@ -393,16 +555,18 @@ export default function CvBuilderWorkspacePage() {
     return (
       <div className="cv-workspace-page">
         {header}
+        {prompts}
         <main className="cv-workspace-main cv-workspace-main--editor">
           {handoffId ? null : <p className="cv-workspace-local-note">{t("cvBuilder.workspace.localOnly")}</p>}
           <CvBuilderEditor
             draft={draft}
             onChange={(next) => { setDraft(next); setDirty(true); }}
             onClose={handleCloseEditor}
+            onRequestClose={handleWorkspaceCloseRequest}
             layoutMode="fullpage"
             initialTemplate={template}
             onTemplateChange={(next) => { setTemplate(next); setDirty(true); }}
-            onSave={handleSave}
+            onSave={async () => { await handleSave(); }}
             dirty={dirty}
             saved={saved}
             saving={saving}
@@ -422,6 +586,7 @@ export default function CvBuilderWorkspacePage() {
     return (
       <div className="cv-workspace-page">
         {header}
+        {prompts}
         <main className="cv-workspace-main">
           <section className="cv-workspace-start" aria-labelledby="cv-workspace-error-title">
             <h1 id="cv-workspace-error-title">{t("cvBuilder.workspace.title")}</h1>
@@ -437,13 +602,15 @@ export default function CvBuilderWorkspacePage() {
   return (
     <div className="cv-workspace-page">
       {header}
+      {prompts}
       <main className="cv-workspace-main">
         <section className="cv-workspace-start" aria-labelledby="cv-workspace-title">
           <h1 id="cv-workspace-title">{t("cvBuilder.workspace.startTitle")}</h1>
           <p>{t("cvBuilder.workspace.startText")}</p>
           <p className="cv-workspace-local-note">{t("cvBuilder.workspace.directNote")}</p>
+          {workspaceMessage && <p className="cv-workspace-local-note" role="status">{workspaceMessage}</p>}
           <div className="cv-workspace-start__actions">
-            <button type="button" className="letter-btn" onClick={() => { setInitialImportSession(null); setSession(null); setMode("import"); }}>
+            <button type="button" className="letter-btn" onClick={handleOpenImport}>
               {t("cvBuilder.workspace.import")}
             </button>
             <button type="button" className="btn-ghost" onClick={handleStartEmpty}>

@@ -34,6 +34,8 @@ interface Props {
   draft: CvBuilderDraftV1;
   onChange: (draft: CvBuilderDraftV1) => void;
   onClose: () => void;
+  /** Optional external close flow (e.g. closing the separate workspace tab). */
+  onRequestClose?: () => void;
   layoutMode?: "modal" | "fullpage";
   onOpenWorkspace?: () => void;
   onReturnToApp?: () => void;
@@ -488,6 +490,7 @@ export default function CvBuilderEditor({
   draft,
   onChange,
   onClose,
+  onRequestClose,
   layoutMode = "modal",
   onOpenWorkspace,
   onReturnToApp,
@@ -617,6 +620,10 @@ export default function CvBuilderEditor({
   }, [mobileView]);
 
   const requestClose = () => {
+    if (onRequestClose) {
+      onRequestClose();
+      return;
+    }
     if (dirty && onSave) {
       setCloseConfirm(true);
       return;
@@ -681,7 +688,7 @@ export default function CvBuilderEditor({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose, dirty, onSave, closeConfirm, saving, fullpage]);
+  }, [onClose, onRequestClose, dirty, onSave, closeConfirm, saving, fullpage]);
 
   useEffect(() => {
     if (dirty) setSuccessDismissed(false);
@@ -1739,9 +1746,21 @@ export default function CvBuilderEditor({
             </button>
           </div>
           {saveError && <p className="letter-review-warning" role="alert">{saveError}</p>}
-          {onSavePdfToRis && pdfRisStatus !== "available" && (
-            <p className="cv-builder-hint" role="status">{pdfRisStatusMessage()}</p>
-          )}
+          {onSavePdfToRis &&
+            (errorCount > 0 || pdfRisStatus !== "available" || !hasCvBuilderContent(draft)) && (
+              <div className="cv-builder-hint cv-builder-ris-blockers" role="status">
+                <strong>{t("cvBuilder.risStorage.blockedTitle")}</strong>
+                <ul>
+                  {errorCount > 0 && (
+                    <li>{t("cvBuilder.risStorage.blockedByValidation")}</li>
+                  )}
+                  {pdfRisStatus !== "available" && <li>{pdfRisStatusMessage()}</li>}
+                  {!hasCvBuilderContent(draft) && (
+                    <li>{t("cvBuilder.risStorage.blockedByEmpty")}</li>
+                  )}
+                </ul>
+              </div>
+            )}
           {onSavePdfToRis &&
             pdfRisStatus === "available" &&
             !savingPdfToRis &&
