@@ -40,7 +40,9 @@ PR checks before merge: Vercel previews **SUCCESS**, CodeQL Analysis **SUCCESS**
 
 ## Deployment
 
-The main merge triggered exactly one production deployment; no additional `vercel --prod` was run.
+The main merge auto-triggered production deployments for the two connected Vercel projects. The application production project `mays-job-matcher` was used for the smoke test; no additional `vercel --prod` was run.
+
+### Application production
 
 - Deployment `dpl_CXBBRTcThngJ4EyMikqJaN4eenJP`
 - Target: `production`
@@ -48,6 +50,14 @@ The main merge triggered exactly one production deployment; no additional `verce
 - Deployment metadata SHA: `da1ebbb`
 - Aliases: `www.mays-job-matcher.app`, `mays-job-matcher.app`, `mays-job-matcher.vercel.app`
 - HTTP checks: `/` 200, `/search` 200, `/cv-builder/workspace` 200
+
+### Secondary connected project
+
+- Deployment `dpl_Hb1Q8g9htYE7sxnun4qYKK1wfwT6`
+- Project: `mays-jobsearch`
+- Target: `production`, status `READY`, metadata SHA `da1ebbb`
+- Aliases: `mays-jobsearch.vercel.app`, `mays-jobsearch-maymilly.vercel.app`
+- Not used for the application smoke test.
 
 ## Production Smoke
 

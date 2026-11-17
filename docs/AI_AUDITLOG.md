@@ -6746,7 +6746,7 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - PR #25 MERGED by `maynowak` at 2026-11-17T10:02:52Z; main merge SHA `da1ebbb8cff28637874b17d2ee068ab64419968e`; pre-merge feature head `d0bd291`.
 - Reconciliation: `origin/main` `08d74b9` → merge `a69325b`; main advanced to `7d5b4a7` → merge `a77df49`. Only `docs/AI_AUDITLOG.md` conflicted; UX-06, translation, ATS and model-selection entries preserved. No force-push/history rewrite.
 - Verification: full suite **1939 PASS / 11 skipped**, build PASS (1.44 s), focused ATS/translation/skill tests 59/59, UX-06 two-tab E2E PASS, 03A E2E PASS, diff/secret audit clean.
-- Main merge auto-triggered production deployment `dpl_CXBBRTcThngJ4EyMikqJaN4eenJP`; target `production`, status READY, metadata SHA `da1ebbb`; no additional `vercel --prod`.
+- Main merge auto-triggered production deployments for both connected Vercel projects; application deployment `dpl_CXBBRTcThngJ4EyMikqJaN4eenJP` (`mays-job-matcher`) target `production`, status READY, metadata SHA `da1ebbb`; secondary `dpl_Hb1Q8g9htYE7sxnun4qYKK1wfwT6` (`mays-jobsearch`) also READY. No additional `vercel --prod`.
 - Production URL `https://www.mays-job-matcher.app`; footer `Version 2.2.0 · production · main · da1ebbb`; `/`, `/search`, `/cv-builder/workspace` HTTP 200.
 - Production smoke desktop 1440/mobile 390: new CV, separate tab X, dirty cancel/return, direct workspace discard, no horizontal overflow, 0 page/console errors; only `GET /api/models`; no RIS, upload or auth mutation.
 - Limits: authenticated dashboard/editor not tested; RIS/S3 live storage not tested; no branches deleted.
