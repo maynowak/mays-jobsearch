@@ -6782,3 +6782,8 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Authenticated live verification remains blocked by missing valid authorized
   test identity/token; no production status claimed.
 - Report: `docs/reports/XREPO-RIS-CONSENT-RECOVERY-02.md`.
+- Follow-up 2026-11-17: RIS Unblock-03 (PR #12) reduced the plan to
+  `0 add / 9 change / 0 destroy / 0 replace`, but one existing Orders handler
+  env (`ORDER_DISPATCH_QUEUE_URL`) would be removed. Status is now
+  `D — contract/configuration mismatch`, with authenticated live E2E still
+  blocked. No Jobsearch product change, apply or deployment.
