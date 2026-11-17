@@ -2,6 +2,8 @@ import { HttpError } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
 
 const MAX_TEXT_LENGTH = 30000;
+const MAX_PROFILE_SKILLS = 100;
+const MAX_PROFILE_ROLES = 20;
 
 // JM-SEARCH-PARAMETERS-PRIORITY-03: CV profile caching in Redis is retired as
 // a product function. Every profile request is processed by the AI; a client
@@ -22,12 +24,12 @@ function readBody(req) {
   });
 }
 
-function cleanStringList(value) {
+function cleanStringList(value, maxItems = MAX_PROFILE_ROLES) {
   if (!Array.isArray(value)) return [];
   return value
     .map((item) => String(item).trim())
     .filter((item) => item.length > 0)
-    .slice(0, 20);
+    .slice(0, maxItems);
 }
 
 function cleanSingleString(value) {
@@ -53,9 +55,12 @@ function parseProfile(content) {
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
 
   const profile = {
-    skills: cleanStringList(parsed.skills),
+    skills: cleanStringList(parsed.skills, MAX_PROFILE_SKILLS),
     experienceLevel: cleanSingleString(parsed.experienceLevel ?? parsed.experience ?? parsed.level),
-    targetRoles: cleanStringList(parsed.targetRoles ?? parsed.roles ?? parsed.target_role),
+    targetRoles: cleanStringList(
+      parsed.targetRoles ?? parsed.roles ?? parsed.target_role,
+      MAX_PROFILE_ROLES
+    ),
     location: cleanSingleString(parsed.location ?? parsed.preferredLocation ?? parsed.city),
   };
 
@@ -94,7 +99,7 @@ export default async function handler(req, res) {
 
     const prompt = `Extract a structured search profile from the CV text below.
 
-- "skills": the key skills explicitly named in the CV (array of strings).
+- "skills": every technical skill, tool, platform, language, framework, database, cloud service, method and certification explicitly named in the CV. List each named technology separately; do not omit a named technology merely because there are many. Do not invent skills.
 - "experienceLevel": a short level label like "Junior", "Mid" or "Senior" based on the CV, or "" if unclear.
 - "targetRoles": 1-3 realistic target job titles, using roles and skills from the CV.
 - "location": the city the candidate mentions as preferred or current location, or "" if none is mentioned.
@@ -110,7 +115,7 @@ ${text}`;
       prompt,
       json: true,
       temperature: 0.2,
-      maxTokens: 900,
+      maxTokens: 1800,
       attempt,
       model: typeof body.model === "string" && body.model.trim() ? body.model.trim() : undefined,
     });

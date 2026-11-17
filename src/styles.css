@@ -8739,6 +8739,13 @@ body {
 }
 
 /* --- 4) ATS Skill Chips ------------------------------------------------ */
+.cv-skill-selection__count {
+  margin: 6px 0 12px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .cv-skill-selection__list {
   display: flex;
   flex-wrap: wrap;
