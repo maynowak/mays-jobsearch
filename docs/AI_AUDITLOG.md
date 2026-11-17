@@ -6738,3 +6738,31 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - UX-06 vollständig erhalten: Tab-Schließen/-Rückgabe, Entwurfsdialog, RIS-Sperrgründe, Tests/E2E/Reports.
 - Verifikation nach finalem Merge: Vollsuite `npx vitest run --maxWorkers=2` **1939 PASS / 11 skipped**, 0 FAIL; Build PASS (1,44 s); fokussierte ATS-/Translation-/Skill-Tests 59/59 PASS; UX-06-Zwei-Tab-E2E PASS; 03A-E2E PASS; `git diff --check` und Secret-Scan clean.
 - Keine Änderung an RIS, AWS, Terraform, Cognito, Consent oder fremden untracked Dateien. Kein Main-Merge/Production-Deployment in diesem Schritt.
+
+## 2026-11-17 — JM-COVER-LETTER-QUALITY-01
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL + PREVIEW QUALITY EXAMPLES — NO MERGE/DEPLOY`
+
+- Added `CoverLetterBriefV1` (quality class, writing style, tone, language,
+  brief length, format, optional recipient/achievements/relocation/
+  employment/instructions). Existing candidate motivation/start/salary fields
+  remain compatible; `professional` is the default quality class.
+- `/api/cover-letter` now adds structured briefing data and stronger
+  professional/executive/public-sector rules to the existing `chat()` prompt:
+  specific evidence-backed opening, job link, concrete achievements,
+  professional close, no generic filler, no invented leadership/certificates/
+  achievements/dates, no ATS scores, target 250–350 words for standard.
+- UI “Anschreiben gestalten” uses compact quality/style/tone/format/length
+  controls plus optional details. Existing model router, consent,
+  anonymization and versioning remain unchanged.
+- `sanitizeLetter()` removes bracketed placeholders such as `[Ihr Name]`.
+- Tests: API/LetterModal 88 PASS; build PASS; serial full **1943 PASS / 11
+  skipped**.
+- Synthetic preview examples: public-sector IT admin (191 words), senior
+  software architect (205 words), cloud engineer (111 words); no ATS scores,
+  no invented optional facts. One weak model returned generic conversation;
+  model choice remains the documented quality limitation.
+- Commits `9c02907`, `d6efcbe` plus docs commit. Branch
+  `feature/jm-cover-letter-quality-01`, draft PR #28; no main merge or
+  production deployment.
+- Report: `docs/reports/JM-COVER-LETTER-QUALITY-01.md`.
