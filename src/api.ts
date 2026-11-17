@@ -272,7 +272,8 @@ export interface JobTranslationResponse {
 
 export async function translateJobDescription(
   description: string,
-  sourceLanguage?: string
+  sourceLanguage?: string,
+  model?: string | null
 ): Promise<JobTranslationResponse> {
   return apiFetch<JobTranslationResponse>("/api/job-details", {
     method: "POST",
@@ -283,6 +284,7 @@ export async function translateJobDescription(
       sourceLanguage: sourceLanguage || "auto",
       targetLanguage: "de",
       consent: true,
+      ...(model ? { model } : {}),
     }),
   });
 }

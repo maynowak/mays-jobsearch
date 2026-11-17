@@ -5691,6 +5691,19 @@ body {
   color: var(--red);
 }
 
+.job-translation__model {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.job-translation__model-label,
+.job-translation__model-status {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
 @media (max-width: 480px) {
   .job-translation__button {
     min-height: 40px;

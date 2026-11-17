@@ -134,6 +134,11 @@ async function handleTranslation(req, res, body) {
     });
   }
 
+  const requestedModel =
+    typeof body.model === "string" && body.model.trim()
+      ? body.model.trim().slice(0, 200)
+      : undefined;
+
   try {
     const content = await chat({
       system:
@@ -145,6 +150,7 @@ ${description}`,
       json: true,
       temperature: 0.2,
       maxTokens: 2500,
+      model: requestedModel,
     });
 
     const translation = parseTranslation(content);
