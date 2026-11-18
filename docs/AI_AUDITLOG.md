@@ -6992,3 +6992,23 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Screenshots: `docs/reports/assets/JM-CV-DESIGN-01/workspace-{start,editor}-{1440,390}.png`.
   Report: `docs/reports/JM-CV-DESIGN-01-REPORT.md`.
 - No Main merge, production deploy, RIS/AWS/Terraform/consent/storage change.
+
+## 2026-11-18 — JM-CV-DESIGN-02 — ORIGINAL ASSETS & VISUAL POLISH
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — READY FOR VISUAL REVIEW`
+
+- Replaced the DESIGN-01 placeholder SVG with the two provided original JPGs.
+  Originals retained as reference under
+  `docs/reports/assets/JM-CV-DESIGN-02/originals/`.
+- Added optimized WebP derivatives to `src/assets/images/` (city 205 KB,
+  human 176 KB; originals 965/773 KB; ~78 % smaller) and pointed
+  `--cv-design-city` / `--cv-design-human` to them.
+- Added subtle brightness/saturation and cyan/dark overlays; glass surfaces
+  unchanged. No animations, no CV data/function, RIS, ATS, consent or storage
+  changes.
+- Build PASS; full suite **1965 PASS / 11 skipped**; design E2E PASS at
+  1440/390 plus 320/768/1024/1920; full-page CV workspace 03A E2E PASS; no
+  horizontal overflow.
+- Screenshots and report: `docs/reports/JM-CV-DESIGN-02-REPORT.md`,
+  `docs/reports/assets/JM-CV-DESIGN-02/`.
+- No Main merge, production deploy, AWS/Terraform or product-code change.
