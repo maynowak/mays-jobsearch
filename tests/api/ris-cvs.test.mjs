@@ -241,6 +241,7 @@ describe("/api/ris/cvs", () => {
   it("kennzeichnet einen Child-Profile-Konflikt getrennt vom Versionskonflikt", async () => {
     risResponse = response(409, {
       error: "CV has child search profiles; delete refused",
+      code: "conflict",
       cvId: "cv-1",
       s3Touched: false,
     });
@@ -248,6 +249,14 @@ describe("/api/ris/cvs", () => {
     await handler(request("DELETE", { query: { id: "cv-1" } }), res);
     expect(res.statusCode).toBe(409);
     expect(res.body.code).toBe("CV_HAS_CHILD_PROFILES");
+  });
+
+  it("lässt einen echten Versionskonflikt als conflict bestehen", async () => {
+    risResponse = response(409, { error: "Version conflict", code: "conflict" });
+    const res = makeRes();
+    await handler(request("DELETE", { query: { id: "cv-1" } }), res);
+    expect(res.statusCode).toBe(409);
+    expect(res.body.code).toBe("conflict");
   });
 
   it("blockt Path-Traversal und fremde Aktionen", async () => {
