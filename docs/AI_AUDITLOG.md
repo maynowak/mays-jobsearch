@@ -6973,3 +6973,19 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - All synthetic CVs/profiles cleaned up; no real CV/application data touched.
   No further merge/deployment without explicit approval. No RIS/AWS/Terraform/
   Cognito/Consent change.
+
+## 2026-11-18 — JM-CV-UX-08 — PRODUCTION VERIFIED
+
+**Status:** `PRODUCTION VERIFIED`
+
+- Explicit follow-up approval received; PR #38 merged as `720f290`.
+  Automatic Production deployments: **SUCCESS**. Production footer
+  `Version 2.2.0 · production · main · 720f290`.
+- Authenticated synthetic Production E2E **PASS**: X hide with 0 DELETE
+  requests; reload restores; filename confirmation + cancel; confirmed delete
+  removes card/list entry; child-profile conflict shows correct message and
+  keeps card/list entry.
+- Cleanup complete: child profile 204, synthetic CV 200, already-deleted
+  synthetic CV 404; both synthetic CVs absent; list back to 3. No existing CV
+  or real applicant data touched.
+- No RIS/AWS/Terraform/Cognito/Consent change.
