@@ -14938,3 +14938,124 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     transition: none;
   }
 }
+
+/* JM-CV-DESIGN-01 — Future Career Workspace.
+   Static atmosphere only: city on the left, digital human on the right,
+   with a light glass surface for the existing CV builder. No new data flow. */
+.cv-workspace-page {
+  --cv-design-city: url("assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png");
+  --cv-design-human: url("assets/images/cv-workspace-digital-human.svg");
+  overflow-x: clip;
+  background-color: #031424;
+  background-image:
+    radial-gradient(ellipse at 50% 12%, rgba(14, 165, 233, 0.18), transparent 48%),
+    linear-gradient(135deg, #031424 0%, #06283b 52%, #041a2b 100%);
+}
+
+.cv-workspace-page::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  width: min(31vw, 560px);
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(3, 20, 36, 0.12) 0%, rgba(3, 20, 36, 0.36) 60%, rgba(3, 20, 36, 0.98) 100%),
+    radial-gradient(circle at 24% 21%, rgba(165, 243, 252, 0.72) 0 2px, transparent 3px),
+    radial-gradient(circle at 68% 16%, rgba(103, 232, 249, 0.55) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 42% 37%, rgba(34, 211, 238, 0.42) 0 1px, transparent 2px),
+    var(--cv-design-city);
+  background-size: cover, auto, auto, auto, cover;
+  background-position: center, center, center, center, left center;
+  background-repeat: no-repeat;
+  opacity: 0.78;
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 54%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 54%, transparent 100%);
+  animation: none !important;
+}
+
+.cv-workspace-page::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 0;
+  width: min(29vw, 520px);
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(3, 20, 36, 0.98) 0%, rgba(3, 20, 36, 0.42) 46%, rgba(3, 20, 36, 0.02) 100%),
+    radial-gradient(ellipse at 58% 42%, rgba(34, 211, 238, 0.2), transparent 61%),
+    var(--cv-design-human);
+  background-size: cover, cover, contain;
+  background-position: center, center, right center;
+  background-repeat: no-repeat;
+  opacity: 0.9;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 100%);
+  animation: none !important;
+}
+
+.cv-workspace-page > .cv-workspace-header,
+.cv-workspace-page > .cv-workspace-main {
+  position: relative;
+  z-index: 1;
+}
+
+.cv-workspace-main {
+  width: min(100%, 1120px);
+}
+
+.cv-workspace-start,
+.cv-builder-fullpage__box,
+.cv-import-workspace__box {
+  border-color: rgba(255, 255, 255, 0.68);
+  background: rgba(247, 252, 255, 0.86);
+  box-shadow:
+    0 26px 72px rgba(0, 12, 28, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(20px) saturate(1.12);
+  backdrop-filter: blur(20px) saturate(1.12);
+}
+
+.cv-builder-fullpage .cv-builder-modal__head,
+.cv-builder-fullpage .cv-builder-footer {
+  background: rgba(247, 252, 255, 0.78);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.cv-workspace-page .cv-builder-fullpage__box,
+.cv-workspace-page .cv-import-workspace__box,
+.cv-workspace-page .cv-workspace-start {
+  overflow: hidden;
+}
+
+/* Keep the central form readable while the side artwork stays atmospheric. */
+.cv-workspace-page .cv-builder-fullpage__box :is(input, textarea, select),
+.cv-workspace-page .cv-import-workspace__box :is(input, textarea, select) {
+  color: #102a3a;
+  background-color: rgba(255, 255, 255, 0.92);
+}
+
+@media (max-width: 1200px) {
+  .cv-workspace-page::before,
+  .cv-workspace-page::after {
+    display: none;
+  }
+
+  .cv-workspace-main {
+    width: min(100%, 1000px);
+  }
+}
+
+@media (max-width: 700px) {
+  .cv-workspace-main {
+    width: 100%;
+  }
+
+  .cv-workspace-start,
+  .cv-builder-fullpage__box,
+  .cv-import-workspace__box {
+    background: rgba(247, 252, 255, 0.95);
+    box-shadow: 0 18px 48px rgba(0, 12, 28, 0.25);
+  }
+}

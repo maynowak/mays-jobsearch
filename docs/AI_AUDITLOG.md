@@ -6973,3 +6973,22 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - All synthetic CVs/profiles cleaned up; no real CV/application data touched.
   No further merge/deployment without explicit approval. No RIS/AWS/Terraform/
   Cognito/Consent change.
+
+## 2026-11-18 — JM-CV-DESIGN-01 — FUTURE CAREER WORKSPACE
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — ASSET SUBSTITUTION NOTE`
+
+- CV-Workspace only: left city atmosphere, right local digital-human SVG,
+  light translucent glass surfaces, no new animations, side artwork hidden
+  below 1200 px. Existing CV data model, import/editor, RIS, ATS, consent and
+  storage paths unchanged.
+- The two chat attachments were not materialized as files in the workspace;
+  the implementation uses the existing local city asset and a new local SVG
+  human. CSS variables allow replacement with the original files without
+  layout changes. No external URLs.
+- Build PASS; full suite **1965 PASS / 11 skipped**; new design E2E PASS
+  (1440 desktop, 390 mobile, 320/390/768/1024/1440/1920 no overflow); existing
+  full-page CV workspace E2E PASS.
+- Screenshots: `docs/reports/assets/JM-CV-DESIGN-01/workspace-{start,editor}-{1440,390}.png`.
+  Report: `docs/reports/JM-CV-DESIGN-01-REPORT.md`.
+- No Main merge, production deploy, RIS/AWS/Terraform/consent/storage change.
