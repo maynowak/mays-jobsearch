@@ -1,8 +1,8 @@
 # RIS-CV-DELETE-IAM-02 — CONTROLLED APPLY & PILOT VERIFICATION
 
-**Status:** `PILOT LIVE VERIFIED — CV CREATE / DOWNLOAD / DELETE`  
-**Target:** `ris-dev` limited pilot  
-**Frontend dependency:** Jobsearch `feature/jm-cv-ux-07-persistence-delete-editor-return` (`0d1a17f`)  
+**Status:** `PILOT LIVE VERIFIED — CV CREATE / DOWNLOAD / DELETE`
+**Target:** `ris-dev` limited pilot
+**Frontend dependency:** Jobsearch `feature/jm-cv-ux-07-persistence-delete-editor-return` (`0d1a17f`)
 **No extra Infrastructure apply, no Main merge, no Jobsearch product change.**
 
 ## 1. Apply

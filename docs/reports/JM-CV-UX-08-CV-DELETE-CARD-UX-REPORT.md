@@ -1,9 +1,9 @@
 # JM-CV-UX-08 — CV DELETE FIX & CARD UX
 
-**Status:** `A — IMPLEMENTED & VERIFIED — READY FOR CONTROLLED INTEGRATION`  
-**Jobsearch branch:** `feature/jm-cv-ux-08-cv-delete-ux`  
-**Base:** previous CV fix branch `feature/jm-cv-ux-07-persistence-delete-editor-return` (`04ef910`)  
-**Code:** `bce210c`  
+**Status:** `A — IMPLEMENTED & VERIFIED — READY FOR CONTROLLED INTEGRATION`
+**Jobsearch branch:** `feature/jm-cv-ux-08-cv-delete-ux`
+**Base:** previous CV fix branch `feature/jm-cv-ux-07-persistence-delete-editor-return` (`04ef910`)
+**Code:** `bce210c`
 **No Main merge, no Production deployment, no RIS/AWS/Cognito/Terraform/Consent change.**
 
 ## 1. Delete-Verhalten

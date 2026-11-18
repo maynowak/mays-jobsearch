@@ -1,9 +1,9 @@
 # JM-CV-UX-07 — CV PERSISTENCE, DELETE & EDITOR RETURN
 
-**Status:** `C — BLOCKED — BACKEND DELETE PERMISSION MISSING`  
-**Frontend branch:** `feature/jm-cv-ux-07-persistence-delete-editor-return`  
-**Base:** `origin/main` `6fc40d2`  
-**Implementation:** `0d1a17f`  
+**Status:** `C — BLOCKED — BACKEND DELETE PERMISSION MISSING`
+**Frontend branch:** `feature/jm-cv-ux-07-persistence-delete-editor-return`
+**Base:** `origin/main` `6fc40d2`
+**Implementation:** `0d1a17f`
 **No deployment, Main merge, RIS/AWS/Cognito/Terraform change or real CV deletion.**
 
 ## 1. Datenfluss
