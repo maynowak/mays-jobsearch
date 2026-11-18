@@ -96,6 +96,17 @@ describe("PersistentCvList", () => {
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith("cv-1"));
   });
 
+  it("hides a card from the current view without deleting it", () => {
+    const onDelete = vi.fn(async () => true);
+    renderList({ onDelete });
+
+    fireEvent.click(screen.getByRole("button", { name: "Aus aktueller Ansicht entfernen" }));
+
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(screen.queryByText("Lebenslauf.pdf")).toBeNull();
+    expect(screen.getByText(/Alle gespeicherten Lebensläufe sind aus dieser Ansicht entfernt/)).toBeInTheDocument();
+  });
+
   it("cancels a delete without calling the API and keeps the card", async () => {
     const onDelete = vi.fn(async () => true);
     renderList({ onDelete });

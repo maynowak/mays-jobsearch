@@ -238,6 +238,18 @@ describe("/api/ris/cvs", () => {
     expect(risCalls()[0][1].method).toBe("DELETE");
   });
 
+  it("kennzeichnet einen Child-Profile-Konflikt getrennt vom Versionskonflikt", async () => {
+    risResponse = response(409, {
+      error: "CV has child search profiles; delete refused",
+      cvId: "cv-1",
+      s3Touched: false,
+    });
+    const res = makeRes();
+    await handler(request("DELETE", { query: { id: "cv-1" } }), res);
+    expect(res.statusCode).toBe(409);
+    expect(res.body.code).toBe("CV_HAS_CHILD_PROFILES");
+  });
+
   it("blockt Path-Traversal und fremde Aktionen", async () => {
     const res = makeRes();
     await handler(request("GET", { query: { id: "../../other", action: "document" } }), res);
