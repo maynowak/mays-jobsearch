@@ -91,8 +91,34 @@ describe("PersistentCvList", () => {
     await waitFor(() => expect(onDownload).toHaveBeenCalledWith("cv-1"));
 
     fireEvent.click(screen.getByRole("button", { name: "Löschen" }));
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("Lebenslauf.pdf");
     fireEvent.click(screen.getByRole("button", { name: "Dauerhaft löschen" }));
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith("cv-1"));
+  });
+
+  it("cancels a delete without calling the API and keeps the card", async () => {
+    const onDelete = vi.fn(async () => true);
+    renderList({ onDelete });
+
+    fireEvent.click(screen.getByRole("button", { name: "Löschen" }));
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("Lebenslauf.pdf");
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(screen.getByText("Lebenslauf.pdf")).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("keeps the delete confirmation and error when the API rejects deletion", async () => {
+    const onDelete = vi.fn(async () => false);
+    renderList({ onDelete, error: "Löschen fehlgeschlagen" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Löschen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dauerhaft löschen" }));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith("cv-1"));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Löschen fehlgeschlagen");
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 
   it("requires the explicit consent checkbox before granting", () => {

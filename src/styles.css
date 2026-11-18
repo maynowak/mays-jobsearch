@@ -12774,6 +12774,37 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   margin-left: auto;
 }
 
+.cv-storage-card__delete-button {
+  min-height: 44px;
+  border-color: color-mix(in srgb, var(--red) 30%, var(--border));
+  color: var(--red);
+}
+
+.cv-storage-card__delete-confirm {
+  flex: 1 0 100%;
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--red) 35%, var(--border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--red-bg) 82%, var(--surface));
+}
+
+.cv-storage-card__delete-confirm p {
+  margin: 0 0 var(--space-3);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.cv-storage-card__delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cv-storage-card__delete-actions button {
+  min-height: 44px;
+}
+
 .profile-manager__section {
   display: grid;
   gap: var(--space-3);
