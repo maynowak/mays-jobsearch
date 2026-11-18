@@ -14943,8 +14943,8 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
    Static atmosphere only: city on the left, digital human on the right,
    with a light glass surface for the existing CV builder. No new data flow. */
 .cv-workspace-page {
-  --cv-design-city: url("assets/images/Futuristische_Stadt_im_blauen_Abendlicht2.png");
-  --cv-design-human: url("assets/images/cv-workspace-digital-human.svg");
+  --cv-design-city: url("assets/images/jm-cv-city.webp");
+  --cv-design-human: url("assets/images/jm-cv-human.webp");
   overflow-x: clip;
   background-color: #031424;
   background-image:
@@ -14960,15 +14960,13 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   width: min(31vw, 560px);
   pointer-events: none;
   background-image:
-    linear-gradient(90deg, rgba(3, 20, 36, 0.12) 0%, rgba(3, 20, 36, 0.36) 60%, rgba(3, 20, 36, 0.98) 100%),
-    radial-gradient(circle at 24% 21%, rgba(165, 243, 252, 0.72) 0 2px, transparent 3px),
-    radial-gradient(circle at 68% 16%, rgba(103, 232, 249, 0.55) 0 1.5px, transparent 3px),
-    radial-gradient(circle at 42% 37%, rgba(34, 211, 238, 0.42) 0 1px, transparent 2px),
+    linear-gradient(90deg, rgba(198, 243, 255, 0.14) 0%, rgba(3, 20, 36, 0.22) 48%, rgba(3, 20, 36, 0.98) 100%),
     var(--cv-design-city);
-  background-size: cover, auto, auto, auto, cover;
-  background-position: center, center, center, center, left center;
+  background-size: cover, cover;
+  background-position: center, left center;
   background-repeat: no-repeat;
-  opacity: 0.78;
+  filter: brightness(1.08) saturate(1.04);
+  opacity: 0.84;
   -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 54%, transparent 100%);
   mask-image: linear-gradient(90deg, #000 0%, #000 54%, transparent 100%);
   animation: none !important;
@@ -14982,13 +14980,13 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   width: min(29vw, 520px);
   pointer-events: none;
   background-image:
-    linear-gradient(90deg, rgba(3, 20, 36, 0.98) 0%, rgba(3, 20, 36, 0.42) 46%, rgba(3, 20, 36, 0.02) 100%),
-    radial-gradient(ellipse at 58% 42%, rgba(34, 211, 238, 0.2), transparent 61%),
+    linear-gradient(90deg, rgba(3, 20, 36, 0.98) 0%, rgba(3, 20, 36, 0.26) 48%, rgba(165, 243, 252, 0.1) 100%),
     var(--cv-design-human);
-  background-size: cover, cover, contain;
-  background-position: center, center, right center;
+  background-size: cover, cover;
+  background-position: center, center;
   background-repeat: no-repeat;
-  opacity: 0.9;
+  filter: brightness(1.12) saturate(1.06);
+  opacity: 0.92;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 100%);
   mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 100%);
   animation: none !important;

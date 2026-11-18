@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const port = 5241;
 const base = `http://localhost:${port}`;
-const out = "docs/reports/assets/JM-CV-DESIGN-01";
+const out = "docs/reports/assets/JM-CV-DESIGN-02";
 const models = {
   models: [{ id: "mock-model", name: "Mock Model" }],
   defaultModel: "mock-model",
@@ -54,8 +54,8 @@ async function metrics(page) {
       overflow: document.documentElement.scrollWidth - innerWidth,
       beforeDisplay: before?.display ?? null,
       afterDisplay: after?.display ?? null,
-      beforeHasCity: (before?.backgroundImage ?? "").includes("Futuristische_Stadt"),
-      afterHasHuman: (after?.backgroundImage ?? "").includes("svg"),
+      beforeHasCity: (before?.backgroundImage ?? "").includes("jm-cv-city"),
+      afterHasHuman: (after?.backgroundImage ?? "").includes("jm-cv-human"),
       glass: getComputedStyle(document.querySelector(".cv-builder-fullpage__box") || document.querySelector(".cv-workspace-start")).backgroundColor,
       animated: `${before?.animationName ?? ""},${after?.animationName ?? ""}`,
     };
