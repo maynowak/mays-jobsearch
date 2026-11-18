@@ -1,9 +1,9 @@
 # JM-CV-DESIGN-02 — Original Assets & Visual Polish
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL — READY FOR VISUAL REVIEW`  
-**Branch:** `feature/jm-cv-design-01`  
-**Asset commit:** `9036b24`  
-**Base:** `origin/main` `720f290`  
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — READY FOR VISUAL REVIEW`
+**Branch:** `feature/jm-cv-design-01`
+**Asset commit:** `9036b24`
+**Base:** `origin/main` `720f290`
 **No Main merge, no production deployment, no RIS/ATS/consent/storage change.**
 
 ## 1. Original-Assets
@@ -18,7 +18,7 @@ Für die Web-Auslieferung wurden daraus optimierte WebP-Dateien erzeugt:
 - `src/assets/images/jm-cv-city.webp` — 1600 × 1199, 205 KB
 - `src/assets/images/jm-cv-human.webp` — 1600 × 1066, 176 KB
 
-Gesamtersparnis gegenüber den Originalen: ca. **78 %**.  
+Gesamtersparnis gegenüber den Originalen: ca. **78 %**.
 Die CSS-Variablen `--cv-design-city` und `--cv-design-human` referenzieren die
 optimierten Dateien. Die Originale bleiben als Referenz erhalten.
 

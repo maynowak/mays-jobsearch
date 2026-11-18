@@ -1,8 +1,8 @@
 # JM-CV-DESIGN-01 — Future Career Workspace
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL — ASSET SUBSTITUTION NOTE`  
-**Branch:** `feature/jm-cv-design-01`  
-**Base:** `origin/main` `720f290`  
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — ASSET SUBSTITUTION NOTE`
+**Branch:** `feature/jm-cv-design-01`
+**Base:** `origin/main` `720f290`
 **No Main merge, no production deployment, no RIS/ATS/consent/storage change.**
 
 ## 1. Implementierung
