@@ -6847,3 +6847,47 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   logged.
 - No Main merge, deployment, RIS/AWS/Terraform, Cognito, CloudFront or DNS
   change. Report: `docs/reports/JM-RIS-CONSENT-UX-03.md`.
+
+## 2026-11-17 — JM-PROFILE-UX-01 — PROFILE COMMAND CENTER
+
+**Status:** `A — IMPLEMENTED & VERIFIED — READY FOR PREVIEW REVIEW`
+
+- Audited the six existing profile views and added a shared
+  `layout-profile-command` shell with the existing search-page background
+  asset, a light cyan overlay and structural navbar spacing. No per-page
+  background, auth, consent, CV, RIS or data-flow change.
+- Glass navigation uses existing `DashboardNavigation` semantics, hover/focus
+  transitions, `aria-current` and the existing mobile section switcher.
+  Content cards use readable opaque fills; non-interactive cards do not lift.
+- Structural header fix: `.container.layout-dashboard` had removed the shell
+  padding; the profile shell now owns explicit top spacing. Header top is
+  93 px at 1440 (navbar bottom 61) and 77 px at 390.
+- Browser review: 30 synthetic demo views, six tabs, DE/EN, 320–1440 px; no
+  horizontal overflow, console errors, header overlap or scroll regression.
+  Evidence: `docs/evidence/jm-profile-ux-01/` (16 screenshots).
+- Tests: focused 20 PASS; full **1956 PASS / 11 skipped**; build PASS;
+  `profile-ux-final` and `profile-storage-consent` E2E PASS; diff/secret scan
+  PASS. No real data, Main merge or Production deployment.
+- Report: `docs/reports/JM-PROFILE-UX-01-COMMAND-CENTER-REPORT.md`.
+
+## 2026-11-17 — JM-PROFILE-UX-02 — PREVIEW ACCEPTANCE
+
+**Status:** `C — AUTHENTICATED PREVIEW VERIFICATION BLOCKED`
+
+- Verified feature branch `113fea0`, code commit `2843811`, origin/main
+  `92ca1fc`, clean worktree and `git diff --check`. Existing Vercel preview
+  `dpl_FBHhFVC6caZHh4hwWtSGyuEaPgZo` is READY, target `preview`, commit
+  `113fea0`; footer matches `preview · feature/jm-profile-ux-01-command-center
+  · 113fea0`. Background asset HTTP 200; no console errors or overflow in the
+  unauthenticated shell.
+- Authenticated preview is blocked: login redirects to
+  `auth.mays-job-matcher.app` with
+  `redirect_uri=https://www.mays-job-matcher.app/auth/callback`, so the
+  preview host receives no callback. No token copying or auth bypass used;
+  no authorized synthetic preview identity available.
+- Local QA remains valid but is not claimed as preview E2E: build PASS,
+  full **1956 PASS / 11 skipped**, profile-ux-final and
+  profile-storage-consent PASS.
+- No Main merge, Production deployment, design change, RIS/AWS/Cognito/
+  Terraform/consent/auth change. Report:
+  `docs/reports/JM-PROFILE-UX-02-PREVIEW-ACCEPTANCE-REPORT.md`.
