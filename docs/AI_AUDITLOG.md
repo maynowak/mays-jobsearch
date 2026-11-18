@@ -6973,3 +6973,42 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - All synthetic CVs/profiles cleaned up; no real CV/application data touched.
   No further merge/deployment without explicit approval. No RIS/AWS/Terraform/
   Cognito/Consent change.
+
+## 2026-11-18 — JM-CV-DESIGN-01 — FUTURE CAREER WORKSPACE
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — ASSET SUBSTITUTION NOTE`
+
+- CV-Workspace only: left city atmosphere, right local digital-human SVG,
+  light translucent glass surfaces, no new animations, side artwork hidden
+  below 1200 px. Existing CV data model, import/editor, RIS, ATS, consent and
+  storage paths unchanged.
+- The two chat attachments were not materialized as files in the workspace;
+  the implementation uses the existing local city asset and a new local SVG
+  human. CSS variables allow replacement with the original files without
+  layout changes. No external URLs.
+- Build PASS; full suite **1965 PASS / 11 skipped**; new design E2E PASS
+  (1440 desktop, 390 mobile, 320/390/768/1024/1440/1920 no overflow); existing
+  full-page CV workspace E2E PASS.
+- Screenshots: `docs/reports/assets/JM-CV-DESIGN-01/workspace-{start,editor}-{1440,390}.png`.
+  Report: `docs/reports/JM-CV-DESIGN-01-REPORT.md`.
+- No Main merge, production deploy, RIS/AWS/Terraform/consent/storage change.
+
+## 2026-11-18 — JM-CV-DESIGN-02 — ORIGINAL ASSETS & VISUAL POLISH
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — READY FOR VISUAL REVIEW`
+
+- Replaced the DESIGN-01 placeholder SVG with the two provided original JPGs.
+  Originals retained as reference under
+  `docs/reports/assets/JM-CV-DESIGN-02/originals/`.
+- Added optimized WebP derivatives to `src/assets/images/` (city 205 KB,
+  human 176 KB; originals 965/773 KB; ~78 % smaller) and pointed
+  `--cv-design-city` / `--cv-design-human` to them.
+- Added subtle brightness/saturation and cyan/dark overlays; glass surfaces
+  unchanged. No animations, no CV data/function, RIS, ATS, consent or storage
+  changes.
+- Build PASS; full suite **1965 PASS / 11 skipped**; design E2E PASS at
+  1440/390 plus 320/768/1024/1920; full-page CV workspace 03A E2E PASS; no
+  horizontal overflow.
+- Screenshots and report: `docs/reports/JM-CV-DESIGN-02-REPORT.md`,
+  `docs/reports/assets/JM-CV-DESIGN-02/`.
+- No Main merge, production deploy, AWS/Terraform or product-code change.
