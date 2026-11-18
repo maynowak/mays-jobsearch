@@ -6956,3 +6956,20 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   Production deployment. No merge/deploy performed; explicit release approval
   required for merge + Production + authenticated synthetic E2E.
 - No RIS/AWS/Cognito/Terraform/Consent change.
+
+## 2026-11-18 — JM-CV-UX-08 — CONTROLLED INTEGRATION RESULT
+
+**Status:** `PRODUCTION DEPLOYED — AUTHENTICATED E2E BLOCKED — LOGIN REQUIRED`
+
+- Explicit release approval received; PR #37 merged as `939d650` (feature
+  branch retained, no deletion). No force-push.
+- Automatic Production deployments for matcher/jobsearch and Maymilly
+  deployments: **SUCCESS**. Both domains HTTP 200; footer
+  `production · main · 939d650`. Production bundles contain the new X,
+  delete-confirmation, `CV_HAS_CHILD_PROFILES` and child-profile message.
+- Existing operator session was expired; Cognito refresh returned
+  `invalid_grant`. No token was exported, no auth bypass and no fabricated
+  session. Authenticated synthetic Production E2E is blocked pending human
+  login in the open Chromium window.
+- No real CV/application data, RIS/AWS/Terraform/Cognito/Consent change.
+- Report: `docs/reports/JM-CV-UX-08-CV-DELETE-CARD-UX-REPORT.md`.
