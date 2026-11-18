@@ -6891,3 +6891,26 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No Main merge, Production deployment, design change, RIS/AWS/Cognito/
   Terraform/consent/auth change. Report:
   `docs/reports/JM-PROFILE-UX-02-PREVIEW-ACCEPTANCE-REPORT.md`.
+
+## 2026-11-18 — JM-PROFILE-UX-03 — CONTROLLED INTEGRATION
+
+**Status:** `B — MERGED, PRODUCTION VERIFICATION PARTIAL`
+
+- Main before integration `92ca1fc`; feature HEAD `ebf2a1c`; code commit
+  `2843811`; 3 ahead / 0 behind; no other main changes or conflicts.
+- PR #36 CI: CodeQL PASS, Vercel Preview Comments PASS, both Vercel project
+  deployments PASS. PR merged regularly as
+  `6fc40d2d9f58e2ea38ac85115c40a69f14d26009`; no branch deletion.
+- Tests after integration: build PASS; full **1956 PASS / 11 skipped**;
+  profile-ux-final and profile-storage-consent E2E PASS (local synthetic).
+- Automatic Production deployments READY at `6fc40d2`: matcher
+  `dpl_Auc6sUQ3dzdwBDmM56x1oz4Ms3Vn` (`www.mays-job-matcher.app`), jobsearch
+  `dpl_2hnnLXt1S5BVnEEmAPziykpBe8r2`. Footer matches
+  `production · main · 6fc40d2`; background asset HTTP 200; public shell has
+  no overflow or console errors.
+- Six authenticated Production profile views remain BLOCKED because no
+  authorized synthetic Production login is available; no token copying or
+  auth bypass. No RIS merge required; separate RIS work untouched.
+- No RIS/AWS/Cognito/Terraform/consent change, no Main direct manipulation or
+  force-push. Report:
+  `docs/reports/JM-PROFILE-UX-03-CONTROLLED-INTEGRATION-RELEASE-REPORT.md`.
