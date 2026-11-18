@@ -6910,3 +6910,20 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   remains unapplied. No real CV delete or production write test.
 - No Main merge, deployment, RIS/AWS/Cognito/Terraform/consent/auth change.
   Report: `docs/reports/JM-CV-UX-07-PERSISTENCE-DELETE-EDITOR-RETURN-REPORT.md`.
+
+## 2026-11-18 — RIS-CV-DELETE-IAM-02 — APPLY & LIVE E2E
+
+**Status:** `PILOT LIVE VERIFIED — CV CREATE / DOWNLOAD / DELETE`
+
+- Applied exactly `754770b4…` in `ris-dev`: 0 add / 1 change / 0 destroy;
+  state serial 82 → 83, lineage unchanged. Policy now includes
+  `dynamodb:ConditionCheckItem`; IAM simulation is `allowed`; post-apply plan
+  is clean (`bd6640ad…`).
+- Synthetic Production E2E: prior synthetic CV deleted (200), new synthetic
+  CV created (201), uploaded/completed/list/downloaded (`%PDF`, 13,569 B),
+  deleted (200), list absent, detail/document 404. Delete response reports
+  `deleteMarker=true`, `physicalPurge=false`; no other CVs touched.
+- Focused IAM/consent/profile tests 46 PASS; full RIS 2829 PASS / 104 skipped
+  / 18 baseline failures; fmt/validate PASS. No additional infrastructure
+  apply, Main merge or Jobsearch product change.
+- Shared report: `docs/reports/RIS-CV-DELETE-IAM-02-PILOT-VERIFICATION.md`.
