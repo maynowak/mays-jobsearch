@@ -6891,3 +6891,22 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No Main merge, Production deployment, design change, RIS/AWS/Cognito/
   Terraform/consent/auth change. Report:
   `docs/reports/JM-PROFILE-UX-02-PREVIEW-ACCEPTANCE-REPORT.md`.
+
+## 2026-11-18 — JM-CV-UX-07 — CV PERSISTENCE, DELETE & EDITOR RETURN
+
+**Status:** `C — BLOCKED — BACKEND DELETE PERMISSION MISSING`
+
+- Persistent CV delete UI now has a visible delete action, a filename-specific
+  confirmation, cancel-without-API and retryable error behavior. The existing
+  BFF/remove path is reused; no cascade or second delete architecture.
+- P0-02 root cause: `handleProcessPersistentCv` switched the UI from
+  persistent to session mode after downloading a durable PDF, hiding the
+  unchanged durable list. The automatic switch was removed; a source
+  regression test guards it.
+- Focused CV tests **26 PASS**; full frontend **1959 PASS / 11 skipped**;
+  build PASS; local `profile-ux-final` E2E PASS.
+- Backend blocker remains: `dynamodb:ConditionCheckItem` on
+  `ris-dev-dev-partner-profiles` is `implicitDeny`; the prepared RIS IAM plan
+  remains unapplied. No real CV delete or production write test.
+- No Main merge, deployment, RIS/AWS/Cognito/Terraform/consent/auth change.
+  Report: `docs/reports/JM-CV-UX-07-PERSISTENCE-DELETE-EDITOR-RETURN-REPORT.md`.
