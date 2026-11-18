@@ -271,4 +271,35 @@ describe("usePersistentCvStorage", () => {
     expect(result.current.documents).toHaveLength(1);
     expect(listCalls).toBeGreaterThanOrEqual(2);
   });
+
+  it("behandelt einen echten Versionskonflikt ohne automatischen Delete-Retry", async () => {
+    let listCalls = 0;
+    let deleteCalls = 0;
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET").toUpperCase();
+      if (url.includes("/api/ris/cv-consents")) return jsonResponse(200, consentState());
+      if (url.includes("/api/ris/cvs?") && method === "GET") {
+        listCalls += 1;
+        return jsonResponse(200, { items: [readyCv()], nextCursor: null });
+      }
+      if (url.includes("/api/ris/cvs?id=cv-1") && method === "DELETE") {
+        deleteCalls += 1;
+        return jsonResponse(409, { error: "version conflict", code: "conflict" });
+      }
+      throw new Error(`unexpected fetch ${method} ${url}`);
+    });
+
+    const { result } = renderHook(() => usePersistentCvStorage("token", true));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let removed = true;
+    await act(async () => { removed = await result.current.remove("cv-1"); });
+
+    expect(removed).toBe(false);
+    expect(deleteCalls).toBe(1);
+    expect(result.current.error).toContain("zwischenzeitlich geändert");
+    expect(result.current.error).toContain("Liste wird aktualisiert");
+    expect(result.current.documents).toHaveLength(1);
+    expect(listCalls).toBeGreaterThanOrEqual(2);
+  });
 });

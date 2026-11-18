@@ -6938,7 +6938,7 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Delete 409s now distinguish child-profile conflicts (`CV_HAS_CHILD_PROFILES`)
   from true version conflicts; the list refreshes on 409 without automatic
   retry. Successful DELETE removes the card immediately and refreshes from RIS.
-- Tests: focused 35 PASS; full frontend **1963 PASS / 11 skipped**; build PASS;
+- Tests: focused 36 PASS; full frontend **1964 PASS / 11 skipped**; build PASS;
   local `profile-ux-final` E2E PASS including X hide/reload and confirmed
   delete. No RIS/AWS/Cognito/Terraform/Consent change, no Main merge/deploy.
 - Shared report: `docs/reports/JM-CV-UX-08-CV-DELETE-CARD-UX-REPORT.md`.
