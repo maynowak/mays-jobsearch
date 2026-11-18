@@ -70,9 +70,12 @@ function cvPath(cfg, cvId, suffix = "") {
 
 function upstreamFailure(res, result) {
   const status = result.status >= 400 && result.status < 600 ? result.status : 502;
-  const code = typeof result.data?.code === "string" ? result.data.code
-    : status === 409 && result.data?.s3Touched === false
-      ? "CV_HAS_CHILD_PROFILES"
+  // RIS already emits code:"conflict" for every 409. A delete rejected before
+  // S3 is touched is the child-profile guard, so that signal must take
+  // precedence over the generic upstream code.
+  const code = status === 409 && result.data?.s3Touched === false
+    ? "CV_HAS_CHILD_PROFILES"
+    : typeof result.data?.code === "string" ? result.data.code
     : status === 409 ? "conflict"
     : status === 403 ? "forbidden"
     : status === 401 ? "upstream_unauthenticated"

@@ -6956,3 +6956,20 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   Production deployment. No merge/deploy performed; explicit release approval
   required for merge + Production + authenticated synthetic E2E.
 - No RIS/AWS/Cognito/Terraform/Consent change.
+
+## 2026-11-18 — JM-CV-UX-08 — PRODUCTION CHILD-CONFLICT FINDING
+
+**Status:** `PRODUCTION DEPLOYED — CHILD-CONFLICT FIX READY — FOLLOW-UP APPROVAL PENDING`
+
+- Authenticated synthetic Production E2E: X hide without DELETE, reload,
+  filename confirmation/cancel and successful delete PASS; existing CV count
+  restored to 3. Child-profile conflict FAILED with generic version message.
+- Root cause: RIS 409 included `code:"conflict"` and `s3Touched:false`; the BFF
+  prioritized `result.data.code`, masking the child-specific signal.
+- Follow-up branch `feature/jm-cv-ux-08-child-conflict-fix`, code `306eb1c`,
+  Draft PR #38: 409 + `s3Touched:false` now maps to
+  `CV_HAS_CHILD_PROFILES`; true version conflict remains `conflict`. Focused
+  36 PASS; full **1965 PASS / 11 skipped**; build PASS.
+- All synthetic CVs/profiles cleaned up; no real CV/application data touched.
+  No further merge/deployment without explicit approval. No RIS/AWS/Terraform/
+  Cognito/Consent change.
