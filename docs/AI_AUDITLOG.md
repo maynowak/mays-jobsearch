@@ -6942,3 +6942,17 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   local `profile-ux-final` E2E PASS including X hide/reload and confirmed
   delete. No RIS/AWS/Cognito/Terraform/Consent change, no Main merge/deploy.
 - Shared report: `docs/reports/JM-CV-UX-08-CV-DELETE-CARD-UX-REPORT.md`.
+
+## 2026-11-18 — JM-CV-UX-08 — CONTROLLED INTEGRATION PREFLIGHT
+
+**Status:** `A — RELEASE APPROVAL PENDING — PR #37 CLEAN`
+
+- `origin/main` `6fc40d2`; merge-base identical; branch **0 behind / 7 ahead**;
+  no conflicts. PR #37 is a Draft, `MERGEABLE` / `CLEAN`.
+- GitHub checks PASS: CodeQL, Vercel matcher preview, Vercel jobsearch preview,
+  Vercel Deployments – Maymilly. Local build PASS; full frontend **1964 PASS /
+  11 skipped**; BFF `node --check` PASS; `git diff --check` PASS.
+- `vercel.json` has `deploymentEnabled.main=true`: merging starts automatic
+  Production deployment. No merge/deploy performed; explicit release approval
+  required for merge + Production + authenticated synthetic E2E.
+- No RIS/AWS/Cognito/Terraform/Consent change.
