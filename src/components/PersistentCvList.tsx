@@ -50,6 +50,9 @@ export default function PersistentCvList({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [art9, setArt9] = useState(false);
   const [removeId, setRemoveId] = useState<string | null>(null);
+  // X is intentionally view-only. The durable delete remains the separate
+  // confirmed action below; hiding a card never calls the RIS delete API.
+  const [hiddenCvIds, setHiddenCvIds] = useState<Set<string>>(() => new Set());
   const [localError, setLocalError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processedId, setProcessedId] = useState<string | null>(null);
@@ -61,9 +64,18 @@ export default function PersistentCvList({
   const profileCountsRequestIdsRef = useRef<Record<string, number>>({});
   const documentsRef = useRef(documents);
   documentsRef.current = documents;
+  const visibleDocuments = documents.filter((cv) => !hiddenCvIds.has(cv.cvId));
   const status = consent?.consent?.status ?? "NOT_GRANTED";
   const consentGranted = status === "GRANTED";
   const atCapacity = documents.length >= MAX_PERSISTENT_CVS;
+  const hideFromView = (cvId: string) => {
+    setHiddenCvIds((current) => {
+      const next = new Set(current);
+      next.add(cvId);
+      return next;
+    });
+    if (removeId === cvId) setRemoveId(null);
+  };
 
   useEffect(() => {
     if (status !== "GRANTED") setArt9(false);
@@ -284,12 +296,23 @@ export default function PersistentCvList({
 
       {loading ? (
         <p className="field-hint" role="status">{t("cvStorage.loading")}</p>
-      ) : documents.length === 0 ? (
-        <p className="cv-document-list__empty">{t("cvStorage.empty")}</p>
+      ) : visibleDocuments.length === 0 ? (
+        <p className="cv-document-list__empty">
+          {documents.length > 0 ? t("cvStorage.hiddenFromView") : t("cvStorage.empty")}
+        </p>
       ) : (
         <ul className="cv-document-list__list" role="list">
-          {documents.map((cv) => (
+          {visibleDocuments.map((cv) => (
             <li key={cv.cvId} className="cv-storage-card" role="listitem">
+              <button
+                type="button"
+                className="cv-storage-card__hide"
+                aria-label={t("cvStorage.hideFromView")}
+                title={t("cvStorage.hideFromView")}
+                onClick={() => hideFromView(cv.cvId)}
+              >
+                <span aria-hidden="true">×</span>
+              </button>
               <div className="cv-storage-card__head">
                 <div className="cv-storage-card__identity">
                   <span className="cv-storage-card__name" title={cv.filename}>{cv.filename}</span>
@@ -382,31 +405,46 @@ export default function PersistentCvList({
                   {t("cvStorage.download")}
                 </button>
                 {removeId === cv.cvId ? (
-                  <span className="cv-storage-card__secondary">
-                    <button
-                      type="button"
-                      className="cv-document-list__remove-data-confirm-btn"
-                      disabled={busy}
-                      onClick={async () => {
-                        if (await onDelete(cv.cvId)) setRemoveId(null);
-                      }}
-                    >
-                      {t("cvStorage.deleteYes")}
-                    </button>
-                    <button type="button" className="btn-ghost" onClick={() => setRemoveId(null)}>
-                      {t("cvStorage.cancel")}
-                    </button>
-                  </span>
+                  <div
+                    className="cv-storage-card__delete-confirm"
+                    role="alertdialog"
+                    aria-label={`${t("cvStorage.deleteConfirm")} ${cv.filename}`}
+                  >
+                    <p>
+                      {t("cvStorage.deleteConfirm")}{" "}
+                      <strong>{cv.filename}</strong>
+                    </p>
+                    <div className="cv-storage-card__delete-actions">
+                      <button
+                        type="button"
+                        className="cv-document-list__remove-data-confirm-btn"
+                        disabled={busy}
+                        onClick={async () => {
+                          if (await onDelete(cv.cvId)) setRemoveId(null);
+                        }}
+                      >
+                        {t("cvStorage.deleteYes")}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        disabled={busy}
+                        onClick={() => setRemoveId(null)}
+                      >
+                        {t("cvStorage.cancel")}
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <button
                     type="button"
-                    className="cv-document-list__remove cv-storage-card__secondary"
+                    className="btn-ghost cv-storage-card__secondary cv-storage-card__delete-button"
                     aria-label={t("cvStorage.delete")}
                     title={t("cvStorage.delete")}
                     disabled={busy}
                     onClick={() => setRemoveId(cv.cvId)}
                   >
-                    ×
+                    {t("cvStorage.delete")}
                   </button>
                 )}
               </div>
@@ -437,11 +475,6 @@ export default function PersistentCvList({
       )}
       {!consentGranted && documents.some((cv) => cv.processingStatus === "ready") && (
         <p className="field-hint">{t("cvStorage.processConsentRequired")}</p>
-      )}
-      {removeId && (
-        <p className="field-hint" role="alertdialog" aria-label={t("cvStorage.delete")}>
-          {t("cvStorage.deleteConfirm")}
-        </p>
       )}
     </div>
   );

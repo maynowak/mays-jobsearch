@@ -6891,3 +6891,68 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - No Main merge, Production deployment, design change, RIS/AWS/Cognito/
   Terraform/consent/auth change. Report:
   `docs/reports/JM-PROFILE-UX-02-PREVIEW-ACCEPTANCE-REPORT.md`.
+
+## 2026-11-18 — JM-CV-UX-07 — CV PERSISTENCE, DELETE & EDITOR RETURN
+
+**Status:** `C — BLOCKED — BACKEND DELETE PERMISSION MISSING`
+
+- Persistent CV delete UI now has a visible delete action, a filename-specific
+  confirmation, cancel-without-API and retryable error behavior. The existing
+  BFF/remove path is reused; no cascade or second delete architecture.
+- P0-02 root cause: `handleProcessPersistentCv` switched the UI from
+  persistent to session mode after downloading a durable PDF, hiding the
+  unchanged durable list. The automatic switch was removed; a source
+  regression test guards it.
+- Focused CV tests **26 PASS**; full frontend **1959 PASS / 11 skipped**;
+  build PASS; local `profile-ux-final` E2E PASS.
+- Backend blocker remains: `dynamodb:ConditionCheckItem` on
+  `ris-dev-dev-partner-profiles` is `implicitDeny`; the prepared RIS IAM plan
+  remains unapplied. No real CV delete or production write test.
+- No Main merge, deployment, RIS/AWS/Cognito/Terraform/consent/auth change.
+  Report: `docs/reports/JM-CV-UX-07-PERSISTENCE-DELETE-EDITOR-RETURN-REPORT.md`.
+
+## 2026-11-18 — RIS-CV-DELETE-IAM-02 — APPLY & LIVE E2E
+
+**Status:** `PILOT LIVE VERIFIED — CV CREATE / DOWNLOAD / DELETE`
+
+- Applied exactly `754770b4…` in `ris-dev`: 0 add / 1 change / 0 destroy;
+  state serial 82 → 83, lineage unchanged. Policy now includes
+  `dynamodb:ConditionCheckItem`; IAM simulation is `allowed`; post-apply plan
+  is clean (`bd6640ad…`).
+- Synthetic Production E2E: prior synthetic CV deleted (200), new synthetic
+  CV created (201), uploaded/completed/list/downloaded (`%PDF`, 13,569 B),
+  deleted (200), list absent, detail/document 404. Delete response reports
+  `deleteMarker=true`, `physicalPurge=false`; no other CVs touched.
+- Focused IAM/consent/profile tests 46 PASS; full RIS 2829 PASS / 104 skipped
+  / 18 baseline failures; fmt/validate PASS. No additional infrastructure
+  apply, Main merge or Jobsearch product change.
+- Shared report: `docs/reports/RIS-CV-DELETE-IAM-02-PILOT-VERIFICATION.md`.
+
+## 2026-11-18 — JM-CV-UX-08 — CV DELETE & CARD UX
+
+**Status:** `A — IMPLEMENTED & VERIFIED — READY FOR CONTROLLED INTEGRATION`
+
+- X is now a local view-hide action (40×40, 24-px icon, accessible label,
+  focus/hover) and never calls RIS. Durable deletion is a separate confirmed
+  action with filename, cancel-without-API and retryable errors.
+- Delete 409s now distinguish child-profile conflicts (`CV_HAS_CHILD_PROFILES`)
+  from true version conflicts; the list refreshes on 409 without automatic
+  retry. Successful DELETE removes the card immediately and refreshes from RIS.
+- Tests: focused 36 PASS; full frontend **1964 PASS / 11 skipped**; build PASS;
+  local `profile-ux-final` E2E PASS including X hide/reload and confirmed
+  delete. No RIS/AWS/Cognito/Terraform/Consent change, no Main merge/deploy.
+- Shared report: `docs/reports/JM-CV-UX-08-CV-DELETE-CARD-UX-REPORT.md`.
+
+## 2026-11-18 — JM-CV-UX-08 — CONTROLLED INTEGRATION PREFLIGHT
+
+**Status:** `A — RELEASE APPROVAL PENDING — PR #37 CLEAN`
+
+- `origin/main` `6fc40d2`; merge-base identical; branch **0 behind / 7 ahead**;
+  no conflicts. PR #37 is a Draft, `MERGEABLE` / `CLEAN`.
+- GitHub checks PASS: CodeQL, Vercel matcher preview, Vercel jobsearch preview,
+  Vercel Deployments – Maymilly. Local build PASS; full frontend **1964 PASS /
+  11 skipped**; BFF `node --check` PASS; `git diff --check` PASS.
+- `vercel.json` has `deploymentEnabled.main=true`: merging starts automatic
+  Production deployment. No merge/deploy performed; explicit release approval
+  required for merge + Production + authenticated synthetic E2E.
+- No RIS/AWS/Cognito/Terraform/Consent change.

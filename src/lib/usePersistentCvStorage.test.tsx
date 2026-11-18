@@ -232,4 +232,74 @@ describe("usePersistentCvStorage", () => {
       cvStorageErrorMessage(new CvStorageApiError("CV not found", 404, "not_found"))
     ).toContain("nicht mehr vorhanden");
   });
+
+  it("erklärt Kindprofile statt eines irreführenden Versionskonflikts", () => {
+    expect(
+      cvStorageErrorMessage(
+        new CvStorageApiError("CV has child profiles", 409, "CV_HAS_CHILD_PROFILES")
+      )
+    ).toContain("Such- oder ATS-Profilen");
+  });
+
+  it("aktualisiert die Liste bei einem Delete-Konflikt und behält den CV", async () => {
+    let listCalls = 0;
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET").toUpperCase();
+      if (url.includes("/api/ris/cv-consents")) return jsonResponse(200, consentState());
+      if (url.includes("/api/ris/cvs?") && method === "GET") {
+        listCalls += 1;
+        return jsonResponse(200, { items: [readyCv()], nextCursor: null });
+      }
+      if (url.includes("/api/ris/cvs?id=cv-1") && method === "DELETE") {
+        return jsonResponse(409, {
+          error: "CV has child search profiles; delete refused",
+          code: "CV_HAS_CHILD_PROFILES",
+          s3Touched: false,
+        });
+      }
+      throw new Error(`unexpected fetch ${method} ${url}`);
+    });
+
+    const { result } = renderHook(() => usePersistentCvStorage("token", true));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let removed = true;
+    await act(async () => { removed = await result.current.remove("cv-1"); });
+
+    expect(removed).toBe(false);
+    expect(result.current.error).toContain("Such- oder ATS-Profilen");
+    expect(result.current.documents).toHaveLength(1);
+    expect(listCalls).toBeGreaterThanOrEqual(2);
+  });
+
+  it("behandelt einen echten Versionskonflikt ohne automatischen Delete-Retry", async () => {
+    let listCalls = 0;
+    let deleteCalls = 0;
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET").toUpperCase();
+      if (url.includes("/api/ris/cv-consents")) return jsonResponse(200, consentState());
+      if (url.includes("/api/ris/cvs?") && method === "GET") {
+        listCalls += 1;
+        return jsonResponse(200, { items: [readyCv()], nextCursor: null });
+      }
+      if (url.includes("/api/ris/cvs?id=cv-1") && method === "DELETE") {
+        deleteCalls += 1;
+        return jsonResponse(409, { error: "version conflict", code: "conflict" });
+      }
+      throw new Error(`unexpected fetch ${method} ${url}`);
+    });
+
+    const { result } = renderHook(() => usePersistentCvStorage("token", true));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let removed = true;
+    await act(async () => { removed = await result.current.remove("cv-1"); });
+
+    expect(removed).toBe(false);
+    expect(deleteCalls).toBe(1);
+    expect(result.current.error).toContain("zwischenzeitlich geändert");
+    expect(result.current.error).toContain("Liste wird aktualisiert");
+    expect(result.current.documents).toHaveLength(1);
+    expect(listCalls).toBeGreaterThanOrEqual(2);
+  });
 });

@@ -50,8 +50,11 @@ export function cvStorageErrorMessage(error: unknown): string {
     if (error.status === 404) {
       return "Der gespeicherte Lebenslauf ist in RIS nicht mehr vorhanden. Die Liste wird aktualisiert; bitte wähle den Lebenslauf erneut aus oder lade ihn neu hoch.";
     }
+    if (error.code === "CV_HAS_CHILD_PROFILES") {
+      return "Der Lebenslauf wird noch von Such- oder ATS-Profilen verwendet. Bitte lösche zuerst diese Profile; der Lebenslauf bleibt erhalten.";
+    }
     if (error.status === 409) {
-      return "Der Lebenslauf wurde zwischenzeitlich geändert. Bitte lade die Liste neu und versuche es erneut.";
+      return "Der Lebenslauf wurde zwischenzeitlich geändert. Die Liste wird aktualisiert; bitte prüfe den Eintrag erneut.";
     }
     if (error.status === 422) {
       return "Die Lebenslauf-Daten sind ungültig. Bitte prüfe die Datei und versuche es erneut.";
@@ -210,11 +213,20 @@ export function usePersistentCvStorage(
     setError(null);
     try {
       await deleteCvDocument(token, cvId);
+      // Remove the confirmed card immediately; the following refresh remains
+      // the authoritative RIS synchronization and never re-adds it on success.
+      setDocuments((current) => current.filter((cv) => cv.cvId !== cvId));
       await refresh();
       setNotice("Der gespeicherte Lebenslauf wurde gelöscht.");
       return true;
     } catch (err) {
-      if (isMissingCvDocument(err)) await refresh();
+      // A 409 may mean that the server-side version or a child-profile
+      // relationship changed while the card was open. Re-read the list, but
+      // never retry the destructive request automatically.
+      if (isMissingCvDocument(err)
+          || (err instanceof CvStorageApiError && err.status === 409)) {
+        await refresh();
+      }
       setError(messageOf(err));
       return false;
     } finally {

@@ -71,6 +71,8 @@ function cvPath(cfg, cvId, suffix = "") {
 function upstreamFailure(res, result) {
   const status = result.status >= 400 && result.status < 600 ? result.status : 502;
   const code = typeof result.data?.code === "string" ? result.data.code
+    : status === 409 && result.data?.s3Touched === false
+      ? "CV_HAS_CHILD_PROFILES"
     : status === 409 ? "conflict"
     : status === 403 ? "forbidden"
     : status === 401 ? "upstream_unauthenticated"

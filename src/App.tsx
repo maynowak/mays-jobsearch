@@ -991,7 +991,9 @@ export default function App() {
     const documentId = handleCvUploadStart(file, { risCvId: cv.cvId });
     if (!documentId) throw new Error(t("cvStorage.processError"));
     setStatus({ type: "info", message: t("cvStorage.processSuccess") });
-    setCvStorageMode("session");
+    // Keep the durable list visible after handing the downloaded PDF to the
+    // existing session workflow. Switching modes here hid the original
+    // persistent CV and made it look as if it had disappeared.
   };
 
   const handleAddCvFromLetter = (file: File, context: LetterPreparationContext) => {
