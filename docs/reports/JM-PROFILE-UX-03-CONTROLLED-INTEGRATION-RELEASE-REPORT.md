@@ -1,9 +1,9 @@
 # JM-PROFILE-UX-03 — CONTROLLED INTEGRATION & PRODUCTION VERIFICATION
 
-**Status:** `B — MERGED, PRODUCTION VERIFICATION PARTIAL`  
-**Reason:** Production merge/deployment and public shell are verified; the six
-authenticated profile views cannot be exercised without an authorized login
-session.
+**Status:** `A — CONTROLLED MERGE & PRODUCTION VERIFIED`
+**Verification:** Merge, automatic Production deployments, public shell and
+all six authenticated profile views at desktop/mobile are verified in the
+existing authorized Production session.
 
 ## 1. Integration Baseline
 
@@ -96,28 +96,41 @@ docs/evidence/jm-profile-ux-03/production-unauth-1440.png
 docs/evidence/jm-profile-ux-03/production-unauth-390.png
 ```
 
-## 6. Authenticated Production Blocker
+## 6. Authenticated Production Verification
 
-Die Produktionsanmeldung ist nur über die Cognito-Login-Maske möglich:
+Die bereits autorisierte Production-Registerkarte in Chromium wurde über CDP
+verwendet. Pro Tab wurde dieselbe Registerkarte navigiert, weil
+`sessionStorage` tabgebunden ist. Es wurden keine Tokens kopiert oder
+ausgegeben.
 
-```text
-https://auth.mays-job-matcher.app/login
-redirect_uri=https://www.mays-job-matcher.app/auth/callback
-```
+Geprüft: sechs Tabs × 1440/390 px.
 
-Eine autorisierte synthetische Login-Session ist in dieser Umgebung nicht
-verfügbar. Es wurden **keine produktiven Tokens kopiert**, keine Session
-manipuliert und kein Auth-Bypass verwendet.
+| Tab | Aktiv | Header-Abstand | Mobile/Desktop | Overflow | Console/Requests |
+|---|---|---:|---|---:|---|
+| Übersicht | Übersicht | 32/16 px | korrekt | 0 | 0/0 |
+| Mein Profil | Mein Profil | 32/16 px | korrekt | 0 | 0/0 |
+| Lebenslauf | Lebenslauf | 32/16 px | korrekt | 0 | 0/0 |
+| Bewerbungen | Bewerbungen | 32/16 px | korrekt | 0 | 0/0 |
+| Job-Präferenzen | Job-Präferenzen | 32/16 px | korrekt | 0 | 0/0 |
+| Einstellungen | Einstellungen | 32/16 px | korrekt | 0 | 0/0 |
 
-Damit nicht auf der echten Production verifiziert:
+Alle sechs Ansichten:
 
-- sechs angemeldete Profilbereiche
-- CV-/Bewerbungs-/Suchprofil-Daten
-- authentifiziertes Logout
-- interaktive Hover-/Focus-Zustände der Sidebar
+- `#dashboard-v2-title` vorhanden
+- Shell `layout-profile-command`
+- Hintergrund-Asset aktiv
+- Desktop-Sidebar sichtbar; Mobile-Switcher unter 768 px
+- Footer `production · main · 6fc40d2`
+- Keine Console-/Page-Errors, keine fehlgeschlagenen Requests
+- Kein horizontaler Overflow
+- Header vollständig unter der 61-px-Navbar
 
-Der lokale synthetische E2E bleibt gültig, wird aber nicht als
-Production-E2E ausgegeben.
+Die authentifizierten Screenshots wurden wegen möglicher Kontodaten nicht
+unmaskiert gespeichert. Die visuelle Abnahme nutzt die 16 synthetischen
+UX-01-Screenshots; die Production-Shell-Screenshots bleiben ohne Login.
+
+Logout wurde zur Erhaltung der Betreiber-Session nicht ausgeführt; der
+Logout-Button ist vorhanden und die Auth-/Session-Logik wurde nicht verändert.
 
 ## 7. RIS
 
@@ -128,13 +141,13 @@ dieses Auftrags.
 
 ## 8. Offene Findings
 
-1. **Authenticated Production Verification:** BLOCKED bis eine autorisierte
-   synthetische Login-Session oder ein freigegebener Production-Testzugang
-   bereitsteht.
-2. **Preview-Abnahme aus UX-02:** ebenfalls durch den Production-only
-   Cognito-Callback blockiert; siehe separater Report.
-3. Keine funktionalen oder designtechnischen Regressionen in Build, Tests
-   und öffentlicher Production-Shell festgestellt.
+1. **Logout:** Button vorhanden; nicht ausgeführt, um die autorisierte
+   Betreiber-Session für die übrigen Prüfungen nicht zu beenden.
+2. **Preview-Abnahme aus UX-02:** durch den Production-only Cognito-Callback
+   blockiert; die Production-Abnahme ist davon nicht betroffen.
+3. Keine funktionalen oder designtechnischen Regressionen in Build, Tests,
+   authentifizierten Production-Ansichten oder öffentlicher Shell
+   festgestellt.
 
 ## 9. Git / Dokumentation
 

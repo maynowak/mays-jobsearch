@@ -6894,7 +6894,7 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 
 ## 2026-11-18 — JM-PROFILE-UX-03 — CONTROLLED INTEGRATION
 
-**Status:** `B — MERGED, PRODUCTION VERIFICATION PARTIAL`
+**Status:** `A — CONTROLLED MERGE & PRODUCTION VERIFIED`
 
 - Main before integration `92ca1fc`; feature HEAD `ebf2a1c`; code commit
   `2843811`; 3 ahead / 0 behind; no other main changes or conflicts.
@@ -6908,9 +6908,12 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   `dpl_2hnnLXt1S5BVnEEmAPziykpBe8r2`. Footer matches
   `production · main · 6fc40d2`; background asset HTTP 200; public shell has
   no overflow or console errors.
-- Six authenticated Production profile views remain BLOCKED because no
-  authorized synthetic Production login is available; no token copying or
-  auth bypass. No RIS merge required; separate RIS work untouched.
+- Six authenticated Production profile views at 1440/390 were verified in the
+  existing authorized Chromium tab: dashboard, active tab, shell, background,
+  desktop/mobile navigation, header gap (32/16 px), zero overflow/console/
+  request failures. No token copying or auth bypass; logout was not clicked
+  to preserve the operator session. No RIS merge required; separate RIS work
+  untouched.
 - No RIS/AWS/Cognito/Terraform/consent change, no Main direct manipulation or
   force-push. Report:
   `docs/reports/JM-PROFILE-UX-03-CONTROLLED-INTEGRATION-RELEASE-REPORT.md`.

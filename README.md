@@ -1,5 +1,9 @@
 # JOBMATCHER-COGNITO-BRANDING-IMPLEMENTATION-01
 
+> **Testing:** The canonical test and Chromium/CDP E2E playbook is
+> **[TESTING.md](TESTING.md)** — including authenticated-tab handling, PII-safe
+> screenshots and the profile responsive matrix.
+
 ## Overview
 Branding configuration for Cognito Managed Login v2 on the existing May's Job Matcher
 deployment. This implementation uses the Jobsearch existing design tokens and AWS

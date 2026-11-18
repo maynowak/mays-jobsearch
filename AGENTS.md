@@ -54,6 +54,8 @@ All keys server-side only. Key vars:
 - Reuse `api/_lib/` helpers. Do not duplicate logic. Follow naming in `src/types.ts`.
 
 ## Testing quirks
+- Full playbook: **[TESTING.md](TESTING.md)** — unit, E2E, Chromium/CDP,
+  authenticated-session handling, PII-safe screenshots and port pitfalls.
 - Vitest config excludes `api/**`. API tests are not run by `npm test`.
 - Setup `vitest.setup.ts` polyfills `DOMMatrix` for `pdfjs-dist`.
 - Run single test file: `npx vitest run src/components/Foo.test.tsx`
