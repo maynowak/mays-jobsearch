@@ -7048,3 +7048,20 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   the homepage, but is not treated as Google evidence.
 - No product, SEO-tag, auth, consent, CV/RIS/AWS/Terraform or deployment change.
   Report: `docs/reports/JM-MARKETING-01B-SEO-VERIFICATION.md`.
+
+## 2026-11-19 — JM-RELEASE-01 — PREFLIGHT STOPPED
+
+**Status:** `STOPPED — JM-MARKETING-01C NOT FULLY CLOSED`
+
+- Reused `worktrees/jobsearch-cv-ux-08-child-conflict-fix`; branch
+  `feature/jm-cv-design-01` is clean, 1 behind / 2 ahead of `origin/main`.
+  DESIGN-01..03 commits are present.
+- SEO implementation commits are in `origin/main`; however the 01C production
+  report on `origin/feature/jm-marketing-01a-seo-foundation` has status
+  `B — PRODUCTION SEO VERIFIED — SEARCH CONSOLE PENDING`: GSC ownership,
+  sitemap submission, URL inspection and actual Google indexing are open, and
+  the 01C docs commit `b89f026` is not in main.
+- Per the release gate, stopped before integration/PR/full release verification.
+  No product, RIS, AWS, Terraform, auth, consent, storage, Main merge or
+  deployment change.
+- Report: `docs/reports/JM-RELEASE-01-PREFLIGHT-REPORT.md`.
