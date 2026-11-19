@@ -1,3 +1,14 @@
+2026-11-19 · JM-VERCEL-ANALYTICS-01
+- Typ: Vercel Web Analytics React/Vite, Datenschutz-/Consent-Review, Default-off-Gate
+- Status: **IMPLEMENTED / LOCAL VERIFIED**; Privacy **VENDOR DOCUMENTATION REVIEWED — LEGAL/CONSENT DECISION OPEN**; Production **BLOCKED**
+- Branch: `feature/jm-vercel-analytics-01`; Basis `origin/main` `81db09a`.
+- Technik: `@vercel/analytics@2.0.1`; genau eine `<VercelAnalytics />`-Instanz in `src/main.tsx`; Komponente importiert ausschließlich `@vercel/analytics/react`; keine Next.js-Imports, keine Custom Events, keine CV-/Profil-/Consent-/Token-Payloads, kein Routing-Eingriff.
+- Aktivierung: `VITE_VERCEL_ANALYTICS_ENABLED` default false; ohne Flag wird die Komponente nicht gerendert und die App sendet keine Analytics-Anfrage. Zusätzlich wären Vercel-Dashboard-Aktivierung und Privacy-/Legal-Freigabe erforderlich; beides nicht erfolgt.
+- Privacy: Vercel-Doku (Analytics/Privacy, Stand 2026-08-11/2026-06-26) dokumentiert cookie-freie, hash-basierte, aggregierte Daten (u. a. URL, Referrer, Geo, OS/Browser/Device, Zeitstempel; Hash-Reset nach 24h). Cookie-frei ≠ einwilligungsfrei/DSGVO-konform; Rechtsgrundlage, DPA, Consent-Erfordernis, Retention und Datenschutzerklärung bleiben offen.
+- Tests: Analytics 5 PASS; Full-Suite **2005 PASS / 11 skipped** (erster Lauf mit 4 unabhängigen Timing-/UI-Flakes, isolierter Retry 135 PASS, kompletter Rerun 2005 PASS); Build PASS; keine Analytics-Netzwerkanfrage bei deaktiviertem Flag.
+- Keine Main-Merge, kein Production-Deployment, keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung; Datenschutzerklärung bewusst nicht pauschal geändert.
+- Bericht: `docs/reports/JM-VERCEL-ANALYTICS-01.md`.
+
 2026-11-19 · JM-ATS-PROFILE-SAVE-FIX-01 — CONTROLLED MAIN RELEASE
 - Typ: Controlled Merge, Production Smoke, Doku-/Subagent-Sync
 - Status: **MERGED TO MAIN / PRODUCTION DEPLOYED / LIVE SMOKE VERIFIED**

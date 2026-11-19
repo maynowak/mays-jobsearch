@@ -7,6 +7,7 @@ import { rootComponentFor } from "./rootRoute";
 import { AuthProvider } from "react-oidc-context";
 import { oidcConfig } from "./lib/oidcConfig";
 import { applyRouteSeoHead } from "./lib/seoHead";
+import { VercelAnalytics } from "./lib/vercelAnalytics";
 
 // LANDINGPAGE-SWAP: "/" rendert LandingPage2 (PRODUKTIONS-Landingpage,
 // OHNE App-Logik; Historie siehe LandingPage2.tsx Kopfkommentar), alles
@@ -31,6 +32,7 @@ createRoot(document.getElementById("root")!).render(
       ) : (
         <App />
       )}
+      <VercelAnalytics />
     </AuthProvider>
   </LangProvider>
 );

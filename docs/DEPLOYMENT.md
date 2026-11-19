@@ -101,6 +101,17 @@ Live URL: https://mays-job-matcher.vercel.app
 
 `.env.example` contains placeholders only. Real credentials are never committed to Git.
 
+### Vercel Web Analytics (client, default off)
+
+| Variable | Purpose | Where used | Required? | Secret? |
+|---|---|---|---|---|
+| `VITE_VERCEL_ANALYTICS_ENABLED` | Explicitly enables the `@vercel/analytics` React component. Absent/false means no Analytics component is rendered and no Analytics request is made by the app. | `src/lib/vercelAnalytics.tsx`, `src/main.tsx` | Optional, default false | No |
+
+Do not set this to `true` until the privacy review and any required consent
+decision are documented in `docs/reports/JM-VERCEL-ANALYTICS-01.md`. Vercel
+Analytics is cookie-free/anonymized per the vendor documentation, but that is
+not itself a legal approval. No custom events are configured.
+
 ### Setting `USAGE_DIAGNOSTICS_TOKEN` on Vercel (Production)
 
 The `/api/usage` diagnostics endpoint is **disabled (HTTP 403) until this token is set**. To enable it:
