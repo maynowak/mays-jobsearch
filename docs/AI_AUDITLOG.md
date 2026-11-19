@@ -1,3 +1,12 @@
+2026-11-19 · JM-API-PARSER-STANDARDIZATION-01
+- Typ: Parser-API-Standardisierung, Vertragstests, OpenAPI
+- Status: **PARSER APIS STANDARDIZED / CONTRACT TESTS VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-ris-cv-ats-api-01`; Code `1f9cb23`; Basis `d429cbb`.
+- Änderung: `/api/analysis/v1/cv/parse` und `/api/analysis/v1/ats/requirements` an die bestehenden API-02-Konventionen angeglichen. CV-`sectionConfidence` von Boolean-Map auf `confirmed|partial|uncertain` standardisiert; Gesamt-Confidence kann `partial` sein. ATS-`AtsRequirementV1` in OpenAPI formalisiert (id/text/category/importance/source, optional explicitness/normalized), Metadaten/Basis dokumentiert. Keine neue Engine, keine neue API-Version, keine zweite Parser-Implementierung.
+- Contract-Tests: CV-Parse → ATS-Requirements → ATS-Analyze mit identischen Requirement-IDs; Requirement-Shape für ATS/RIS; Confidence-Enum; bestehende Auth-/Consent-/Limit-Tests. Fokussiert 91 PASS; Vollsuite **1984 PASS / 11 skipped**; Build, API-Syntax, OpenAPI-Parse und Diff-Check PASS.
+- Keine RIS-/AWS-/Terraform-/Vercel-/Consent-Änderung; keine Produktionsaktivierung; bestehende Jobsearch-UI unverändert. Der bekannte API-03-Legacy-UI-Auth-/Consent-Gate bleibt offen und wird durch diese Parser-APIs nicht verdeckt.
+- Bericht: `docs/reports/JM-API-PARSER-STANDARDIZATION-01.md`.
+
 2026-11-19 · JM-CV-ATS-API-03 — UNIFIED API ARCHITECTURE
 - Typ: API-/Service-Konsolidierung, Integrations- und Sicherheitsprüfung
 - Status: **UNIFIED CORE + SERVICE LAYER / INTEGRATION VERIFIED LOCAL**; vollständige No-Bypass-/Legacy-Auth-Gate **BLOCKED**
