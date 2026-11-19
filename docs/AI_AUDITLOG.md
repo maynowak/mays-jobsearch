@@ -430,3 +430,13 @@ JOBMATCHER-PRODUCTION-CONNECTION-INCIDENT-01
 - Tests: targeted contract validation 7 passed; build PASS; API syntax PASS. Full Vitest: 825 passed, 5 skipped, 3 pre-existing env/build-identity failures.
 - RIS handoff: READY for size semantics; prior RIS DynamoDB Local gate remains separately BLOCKED with 39 skipped tests.
 - Report: docs/reports/JM-RIS-CONTRACT-01-EXECUTION_LOG.md
+
+2026-11-19 - RIS-JM-AGENT-STANDARDIZATION-01
+- Type: Shared parser library / RIS handoff
+- Status: COMPLETE (local); no deployment, no new endpoint, no new npm dependency.
+- Added api/_lib/parsers/ris.mjs (version 1.0.0) with parse.job and parse.cv, reusing api/_lib/ats.mjs; added scripts/ris-parser-cli.mjs (stdin/stdout JSON, exit 2/3) and tests/parsers/ris-parser.test.mjs.
+- Fixed a pre-existing hang: EXPERIENCE_PATTERN and the education regex in ats.mjs lacked the g flag inside while(exec()) loops; both now use g.
+- Contract: stable SHA-256 IDs, 100k input limit, no network/AI, no event emission; CV fields remain compatible (skills, experienceLevel, targetRoles, location).
+- Tests: node --test tests/parsers/ris-parser.test.mjs -> 6 passed; node --check on all api/**/*.mjs -> PASS.
+- Runtime: RIS agents need a Node adapter; Lambda Python runtime has no node -> PENDING (Node Lambda/container or runtime switch). No ris-dev2 enablement in this step.
+- Report: docs/RIS-PARSER-LIBRARY.md

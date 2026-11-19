@@ -25,7 +25,7 @@ const PREFERRED_KEYWORDS = [
   "optional",
 ];
 
-const EXPERIENCE_PATTERN = /(\d+)\s*(\+)?\s*years?\s*(experience)?/i;
+const EXPERIENCE_PATTERN = /(\d+)\s*(\+)?\s*years?\s*(experience)?/gi;
 
 function normalizeSkill(text) {
   if (!text) return "";
@@ -133,7 +133,7 @@ function extractExperience(text) {
 function extractAgeRequirements(text) {
   const requirements = [];
 
-  const agePattern = /(?:bachelor|master|phd|degree)\s*(?:in\s+)?([^\.,;]+)/i;
+  const agePattern = /(?:bachelor|master|phd|degree)\s*(?:in\s+)?([^\.,;]+)/gi;
   let match;
   let idx = 0;
   while ((match = agePattern.exec(text)) !== null) {
