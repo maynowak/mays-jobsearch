@@ -11,7 +11,7 @@ Compact, repo-specific guidance for OpenCode sessions. Only keep what changes be
 - Type-check + build: `npm run build` → `tsc -b && vite build`
 - Tests: `npm test` → `vitest run` (jsdom, excludes `api/**`)
 - API syntax check: `node --check api/**/*.mjs`
-- Production deploy: `vercel --prod --scope maymilly` (project uses explicit CLI deploy, no auto Git deploy)
+- Production deploy: automatic Git/Vercel main deployment is enabled (`vercel.json`); use manual `vercel --prod --scope maymilly` only after explicit approval and verify the deployed Build SHA.
 
 ## Repo structure & boundaries
 - Frontend: `src/` React + TypeScript + Vite, entry `src/main.tsx`, root state `src/App.tsx`, API client `src/api.ts`, types `src/types.ts`

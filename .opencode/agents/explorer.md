@@ -44,3 +44,7 @@ Read-only discovery for Mays-Jobsearch.
 
 ## Constraints
 Edit deny. Read-only. Respect AGENTS.md and AI_AUDITLOG.md.
+
+## Current Discovery Context (2026-11-19)
+- Check `docs/reports/` and recent AI_AUDITLOG entries before tracing parser/API or ATS profile paths.
+- Treat RIS as external: use only the documented BFF contracts and local tests/fixtures.

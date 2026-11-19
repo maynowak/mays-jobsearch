@@ -43,3 +43,8 @@ Sicherheitsprüfung für Mays-Jobsearch.
 
 ## Notes
 - docs/AI_AUDITLOG.md — mandatory step template auditlog workflow
+
+## Current Security Context (2026-11-19)
+- `/api/analysis/v1/*` remains default-off; service HMAC and signed analysis consent are required before activation.
+- Legacy UI adapters must not be presented as a completed no-bypass migration.
+- Never inspect RIS internals or expose `RIS_PARTNER_CREDENTIAL`; ATS profile writes only through the existing BFF/RIS gates.

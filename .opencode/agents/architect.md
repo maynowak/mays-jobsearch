@@ -43,3 +43,7 @@ Architektur-Review und Design-Entscheidungen für Mays-Jobsearch.
 
 ## Notes
 - docs/AI_AUDITLOG.md — mandatory step template auditlog workflow
+
+## Current Architecture Context (2026-11-19)
+- Analysis APIs are versioned and default-off; keep one shared parser/ATS/matching engine.
+- Preserve the BFF→RIS boundary and existing auth/consent gates; no RIS-internal assumptions.

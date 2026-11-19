@@ -47,16 +47,32 @@ describe("search-profiles BFF client", () => {
     expect(JSON.parse(String(init.body)).name).toBe("Cloud");
   });
 
-  it("links ATS profiles to the persistent search profile", async () => {
+  it("links ATS profiles to the persistent search profile and normalizes the payload", async () => {
     const fetchMock = vi.fn(async () => jsonResponse(201, { atsSearchProfileId: "ats-1" }));
     vi.stubGlobal("fetch", fetchMock);
     await createAtsProfile("token", "sp-1", {
+      name: "  ATS  ",
+      targetRoles: ["DevOps", " DevOps "],
+      skills: ["Terraform", " Terraform "],
+    });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toContain("/api/ris/search-profiles?type=ats&searchProfileId=sp-1");
+    expect(JSON.parse(String(init.body))).toEqual({
       name: "ATS",
       targetRoles: ["DevOps"],
       skills: ["Terraform"],
     });
-    const [url] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain("/api/ris/search-profiles?type=ats&searchProfileId=sp-1");
+  });
+
+  it("rejects an empty ATS name before sending a request", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(createAtsProfile("token", "sp-1", {
+      name: "   ",
+      targetRoles: ["DevOps"],
+      skills: ["Terraform"],
+    })).rejects.toThrow(/name/i);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("keeps a DRAFT consent non-grantable and exposes the text state", async () => {
