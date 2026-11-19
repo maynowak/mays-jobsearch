@@ -7114,3 +7114,27 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   service auth, tenant isolation and analysis consent remain explicit blockers.
   No endpoints, AWS/Terraform, auth, consent, storage or product changes.
 - Report: `docs/reports/JM-RIS-CV-ATS-API-01-CONTRACT-REVIEW.md`.
+
+## 2026-11-19 — JM-RIS-CV-ATS-API-02 — SECURE API FOUNDATION
+
+**Status:** `FOUNDATION IMPLEMENTED / SECURITY GATES VERIFIED LOCAL`
+
+- Added default-off `/api/analysis/v1/{cv/parse,ats/requirements,ats/analyze,match}`
+  with common `schemaVersion: 1`, request IDs, envelopes, stable errors and
+  central JSON/PDF/jobs/page/text limits.
+- Added server-only HMAC service assertions (`X-Analysis-Token`) with issuer,
+  audience, expiry, tenant/user, and per-endpoint scopes; body tenant/user
+  spoofing is rejected. Added signed analysis-consent assertions
+  (`X-Analysis-Consent`) bound to tenant, user and configured notice version.
+  Fail-closed when configuration is absent.
+- CV PDF extraction is server-side; mapping uses a generated artifact from the
+  existing CV builder parser, not a second parser. ATS endpoints wrap existing
+  `ats.mjs`; match wraps existing `matching.mjs`; `/api/ats-analysis` remains
+  unchanged.
+- Tests: **15 PASS**; full suite **1980 PASS / 11 skipped**; build PASS; API
+  syntax PASS; OpenAPI 4 paths parsed.
+- Live activation remains blocked: `ANALYSIS_API_ENABLED` disabled by default,
+  service/consent issuer and approved notice not operational, AI match provider
+  needs approval, no infrastructure rate limiter. No RIS/AWS/Terraform change,
+  no production endpoint activation, no raw CV/token logging.
+- Report: `docs/reports/JM-RIS-CV-ATS-API-02-SECURE-FOUNDATION.md`.
