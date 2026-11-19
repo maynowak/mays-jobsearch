@@ -1,3 +1,14 @@
+2026-11-19 · JM-CV-ATS-API-03 — UNIFIED API ARCHITECTURE
+- Typ: API-/Service-Konsolidierung, Integrations- und Sicherheitsprüfung
+- Status: **UNIFIED CORE + SERVICE LAYER / INTEGRATION VERIFIED LOCAL**; vollständige No-Bypass-/Legacy-Auth-Gate **BLOCKED**
+- Branch/Commit: `feature/jm-ris-cv-ats-api-01`; Code `ab1bc75` + `60a3f63`; Basis `e59d901`.
+- Änderung: neue Service-Schicht `api/_lib/analysis/service.mjs` für CV-Parsing, ATS-Extraktion/-Analyse und Matching; alle vier API-02-Endpunkte sowie die bestehenden UI-Adapter `/api/ats-analysis` und `/api/match` nutzen diese Schicht. Keine zweite Engine, keine zweite CV-Parser-Implementierung.
+- API-02-Sicherheit unverändert: default-off, HMAC-Service-Token, Scope-/Tenant-/User-Prüfung, signiertes Analysis-Consent. Keine Produktionsaktivierung.
+- Offener Sicherheitsblocker: `/api/ats-analysis` und `/api/match` bleiben bestehende unauthentifizierte Browser-Kompatibilitätsrouten ohne API-02-Consent/Service-Auth; damit ist die Forderung nach identischen fachlichen Auth-/Consent-Regeln für interne und externe Consumer noch nicht vollständig erfüllt. Keine schwache Same-Origin-/Alias-Lösung eingebaut.
+- Tests: fokussiert 17 PASS; Legacy-ATS/-Match fokussiert PASS; Vollsuite **1982 PASS / 11 skipped**; Build, API-Syntax und Diff-Check PASS. ATS-Legacy-vs-Versioned-Gleichheit und Service-Import-Assertion getestet.
+- Kein Merge, Deployment, RIS-/AWS-/Terraform-/Consent-/Vercel-Produktionszugriff. Keine echten CV- oder Produktionsdaten.
+- Bericht: `docs/reports/JM-CV-ATS-API-03-UNIFIED-ARCHITECTURE.md`.
+
 2026-11-07 · JM-RIS-PRIVACY-RG09-ALIGNMENT-01
 - Typ: Cross-Repo-Privacy-Konsolidierung/Anzeige/Review
 - Status: CROSS-REPO PRIVACY ALIGNMENT VERIFIED — JOBSEARCH PRIVACY DISPLAY READY — READY FOR CONTROLLED RELEASE (kein Push/Deploy)
