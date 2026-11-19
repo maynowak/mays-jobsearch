@@ -8,6 +8,11 @@ const SKILL_ALIASES = new Map([
   ["terraform", "terraform"],
   ["react", "react"],
   ["nodejs", "node.js"],
+  ["node.js", "node.js"],
+  ["amazon aws", "aws"],
+  ["google cloud", "gcp"],
+  ["postgres", "postgresql"],
+  ["ci cd", "ci/cd"],
 ]);
 
 // Conservative technical vocabulary for full job descriptions. This is
@@ -26,15 +31,39 @@ const TECHNICAL_TERMS = [
   ["devops", "DevOps"],
   ["azure", "Azure"],
   ["gcp", "GCP"],
+  ["google cloud", "GCP"],
+  ["amazon aws", "AWS"],
   ["java", "Java"],
   ["c++", "C++"],
   ["c#", "C#"],
   [".net", ".NET"],
   ["graphql", "GraphQL"],
+  ["grpc", "gRPC"],
   ["sql", "SQL"],
+  ["nosql", "NoSQL"],
+  ["postgres", "PostgreSQL"],
+  ["postgresql", "PostgreSQL"],
+  ["mysql", "MySQL"],
+  ["mongodb", "MongoDB"],
+  ["redis", "Redis"],
+  ["kafka", "Kafka"],
+  ["rabbitmq", "RabbitMQ"],
   ["rest", "REST"],
   ["git", "Git"],
   ["linux", "Linux"],
+  ["bash", "Bash"],
+  ["powershell", "PowerShell"],
+  ["jenkins", "Jenkins"],
+  ["gitlab ci", "GitLab CI"],
+  ["ansible", "Ansible"],
+  ["prometheus", "Prometheus"],
+  ["cloudwatch", "CloudWatch"],
+  ["cloudtrail", "CloudTrail"],
+  ["cloudfront", "CloudFront"],
+  ["dynamo", "Dynamo"],
+  ["sqs", "SQS"],
+  ["sns", "SNS"],
+  ["iam", "IAM"],
   ["mcp", "MCP"],
   ["model context protocol", "MCP"],
   ["oauth", "OAuth"],
@@ -60,7 +89,6 @@ const TECHNICAL_TERMS = [
   ["claude agent sdk", "Claude Agent SDK"],
   ["claude code", "Claude Code"],
   ["codex", "Codex"],
-  ["iam", "IAM"],
   ["least privilege", "least privilege"],
   ["least-privilege", "least privilege"],
   ["audit logging", "audit logging"],
@@ -111,25 +139,51 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function sentenceFor(text, index) {
+  const value = String(text ?? "");
+  if (!value) return "";
+  let start = index;
+  let end = index;
+  while (start > 0 && !/[.!?;\n]/.test(value[start - 1])) start--;
+  while (end < value.length && !/[.!?;\n]/.test(value[end])) end++;
+  return value.slice(start, Math.min(end + 1, start + 320)).trim();
+}
+
 function technicalTermsFromText(text, source = "description") {
   const original = String(text ?? "");
   const lower = original.toLowerCase();
-  const found = [];
-  const seen = new Set();
+  const byNormalized = new Map();
 
   for (const [phrase, label] of TECHNICAL_TERMS) {
     const pattern = new RegExp(
       `(^|[^a-z0-9])${escapeRegExp(phrase)}(?=$|[^a-z0-9])`,
-      "i"
+      "gi"
     );
-    if (!pattern.test(lower)) continue;
+    const matches = [...lower.matchAll(pattern)];
+    if (!matches.length) continue;
     const normalized = normalizeSkill(label);
-    if (seen.has(normalized)) continue;
-    seen.add(normalized);
-    found.push({ text: label, normalized, source });
+    let existing = byNormalized.get(normalized);
+    for (const match of matches) {
+      const context = sentenceFor(original, (match.index ?? 0) + match[0].indexOf(phrase));
+      if (!existing) {
+        existing = {
+          text: label,
+          normalized,
+          source,
+          context,
+        };
+        byNormalized.set(normalized, existing);
+        continue;
+      }
+      // Keep the strongest sentence context if a skill appears more than once
+      // (for example a plain mention before a later "AWS is required").
+      if (priorityWeight(context) > priorityWeight(existing.context)) {
+        existing.context = context;
+      }
+    }
   }
 
-  return found;
+  return [...byNormalized.values()];
 }
 
 const REQUIRED_KEYWORDS = [
@@ -138,6 +192,12 @@ const REQUIRED_KEYWORDS = [
   "mandatory",
   "essential",
   "must",
+  "erforderlich",
+  "zwingend",
+  "vorausgesetzt",
+  "notwendig",
+  "muss",
+  "müssen",
 ];
 
 const PREFERRED_KEYWORDS = [
@@ -145,9 +205,16 @@ const PREFERRED_KEYWORDS = [
   "nice to have",
   "plus",
   "optional",
+  "wünschenswert",
+  "wuenschenswert",
+  "von vorteil",
+  "idealerweise",
+  "gerne",
 ];
 
-const EXPERIENCE_PATTERN = /(\d+)\s*(\+)?\s*years?\s*(experience)?/i;
+const EXPERIENCE_PATTERN = /(\d+)\s*(\+)?\s*(?:jahre?|years?)\s*(?:berufserfahrung|erfahrung|experience)?/i;
+
+const NEGATED_PRIORITY_RE = /\b(?:not required|not mandatory|nicht erforderlich|nicht zwingend|nicht notwendig|keine? .*?erforderlich)\b/i;
 
 function normalizeSkill(text) {
   if (!text) return "";
@@ -331,16 +398,18 @@ function extractExperience(text) {
 
 function extractAgeRequirements(text) {
   const requirements = [];
-  const agePattern = /(?:bachelor|master|phd|degree)\s*(?:in\s+)?([^\.,;]+)/gi;
+  const agePattern = /(?:bachelor|master|phd|doctorate|degree|diplom|magister|staatsexamen|ausbildung|berufsausbildung|studium|hochschulabschluss|university degree|apprenticeship|vocational training)\s*(?:in|of|der|im)?\s*([^\.,;\n]+)/gi;
   let idx = 0;
 
   for (const match of String(text ?? "").matchAll(agePattern)) {
+    const context = sentenceFor(text, match.index ?? 0);
     requirements.push({
       id: `education_${idx}`,
-      text: match[0],
+      text: match[0].trim(),
       normalized: match[1].trim(),
       category: "education",
       importance: "high",
+      priority: priorityFromContext(context) === "required" ? "required" : "unspecified",
       source: "description",
       explicitness: "explicit",
     });
@@ -354,19 +423,22 @@ export function extractCertifications(text) {
   const certifications = [];
 
   const certPatterns = [
-    /aws\s+(?:certified\s+)?([^\.,;]+)/gi,
-    /(certified\s+[^\.,;]+)/gi,
+    /aws\s+certified\s+([^\.,;\n]+)/gi,
+    /(certified\s+[^\.,;\n]+)/gi,
+    /(?:zertifiziert(?:e[rn]?)?|zertifikat|zertifizierung|certification)\s*[:\-]?\s*([^\.,;\n]+)/gi,
   ];
 
   for (const pattern of certPatterns) {
     let match;
     while ((match = pattern.exec(text)) !== null) {
+      const context = sentenceFor(text, match.index ?? 0);
       certifications.push({
         id: `cert_${certifications.length}`,
-        text: match[0],
+        text: match[0].trim(),
         normalized: match[1].trim().toLowerCase(),
         category: "certification",
         importance: "medium",
+        priority: priorityFromContext(context),
         source: "description",
         explicitness: "explicit",
       });
@@ -377,13 +449,26 @@ export function extractCertifications(text) {
 }
 
 function isRequired(text) {
-  const lower = text.toLowerCase();
+  const lower = String(text ?? "").toLowerCase();
+  if (NEGATED_PRIORITY_RE.test(lower)) return false;
   return REQUIRED_KEYWORDS.some((k) => lower.includes(k));
 }
 
 function isPreferred(text) {
-  const lower = text.toLowerCase();
+  const lower = String(text ?? "").toLowerCase();
+  if (NEGATED_PRIORITY_RE.test(lower)) return false;
   return PREFERRED_KEYWORDS.some((k) => lower.includes(k));
+}
+
+function priorityFromContext(context) {
+  if (isRequired(context)) return "required";
+  if (isPreferred(context)) return "preferred";
+  return "unspecified";
+}
+
+function priorityWeight(context) {
+  const priority = priorityFromContext(context);
+  return priority === "required" ? 2 : priority === "preferred" ? 1 : 0;
 }
 
 function extractOptionsFromText(text) {
@@ -407,14 +492,16 @@ function extractOptionsFromText(text) {
   return options;
 }
 
-function createRequirement(id, text, category, source) {
+function createRequirement(id, text, category, source, context = text) {
+  const priority = priorityFromContext(context);
   return {
     id,
     text,
     category,
-    importance: isRequired(text) ? "high" : isPreferred(text) ? "medium" : "medium",
+    importance: priority === "required" ? "high" : "medium",
+    priority,
     source,
-    explicitness: isRequired(text) || isPreferred(text) ? "explicit" : "implicit",
+    explicitness: priority === "unspecified" ? "implicit" : "explicit",
     normalized: normalizeSkill(text),
   };
 }
@@ -435,6 +522,7 @@ function addCriteriaRequirements(requirements, criteria) {
         text,
         category: "skill",
         importance,
+        priority: importance === "high" ? "required" : "preferred",
         source: "criteria",
         explicitness: "explicit",
         normalized: normalizeSkill(text),
@@ -482,7 +570,8 @@ export function extractRequirementsFromJob(job, profile = {}) {
         `tag_${requirements.length}`,
         tag,
         "skill",
-        "tags"
+        "tags",
+        tag
       ));
     }
   }
@@ -497,7 +586,8 @@ export function extractRequirementsFromJob(job, profile = {}) {
         `skill_${requirements.length}`,
         skill.text,
         "skill",
-        "description"
+        "description",
+        skill.context
       ));
     }
 
@@ -508,6 +598,7 @@ export function extractRequirementsFromJob(job, profile = {}) {
         text: `${exp.years}+ years`,
         category: "experience",
         importance: exp.isPlus ? "high" : "medium",
+        priority: exp.isPlus ? "required" : "unspecified",
         source: "description",
         explicitness: "explicit",
         normalized: String(exp.years),
@@ -565,8 +656,38 @@ export function extractRequirementsFromJob(job, profile = {}) {
       existing.source = req.source;
       existing.category = req.category;
     }
+    // A tag/description duplicate must not lose a stronger requirement signal.
+    if (req.priority === "required" && existing.priority !== "required") {
+      existing.priority = "required";
+      existing.importance = "high";
+    } else if (req.priority === "preferred"
+      && existing.priority !== "required"
+      && existing.priority !== "preferred") {
+      existing.priority = "preferred";
+      existing.importance = "medium";
+    }
   }
   return unique;
+}
+
+const RESPONSIBILITY_VERB_RE = /\b(?:develop|build|design|implement|manage|lead|own|maintain|support|create|operate|deliver|ensure|coordinate|architect|automate|monitor|analyse|analyze|entwickel\w*|aufbau\w*|konzipier\w*|umsetz\w*|verantwort\w*|betreu\w*|erstell\w*|koordinier\w*|sicherstell\w*|automatisier\w*|überwach\w*|ueberwach\w*)\b/i;
+
+function extractResponsibilities(job) {
+  const description = stripHtml(job?.descriptionPlain || job?.description || "");
+  if (!description) return [];
+  const candidates = description.replace(/([.!?])\s+/g, "$1\n")
+    .split(/\n|•|·|(?:^|\s)[-–—]\s+/)
+    .map((line) => line.replace(/^[\s*+]+/, "").trim())
+    .filter((line) => line.length >= 15 && line.length <= 320)
+    .filter((line) => !/[.!?]$/.test(line) || RESPONSIBILITY_VERB_RE.test(line))
+    .filter((line) => RESPONSIBILITY_VERB_RE.test(line));
+  const seen = new Set();
+  return candidates.filter((line) => {
+    const key = line.toLowerCase().replace(/\s+/g, " ").trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 20);
 }
 
 export function extractJobMetadata(job = {}) {
@@ -579,6 +700,10 @@ export function extractJobMetadata(job = {}) {
   return {
     title: job.title || null,
     titleTokens,
+    companyName: job.company_name || job.companyName || null,
+    location: Array.isArray(job.location) ? [...job.location] : [],
+    remote: typeof job.remote === "boolean" ? job.remote : null,
+    responsibilities: extractResponsibilities(job),
     language: job.language || null,
     workMode: job.remote === true ? "remote" : job.remote === false ? "onsite" : null,
     jobTypes: Array.isArray(job.jobTypes) ? [...job.jobTypes] : [],

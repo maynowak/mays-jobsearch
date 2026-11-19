@@ -191,6 +191,30 @@ describe("analysis v1 service foundation", () => {
     expect(res.body.data.requirements.some((item) => item.text === "AWS")).toBe(true);
   });
 
+  it("returns the expanded job metadata and requirement priority through v1", async () => {
+    const res = response();
+    await atsRequirementsHandler(request({
+      schemaVersion: 1,
+      job: {
+        ...job,
+        company_name: "Example",
+        location: ["Darmstadt"],
+        remote: true,
+        descriptionPlain: "You will design secure AWS platforms. AWS is required. Kubernetes is preferred.",
+      },
+    }), res);
+    expectEnvelope(res, 200);
+    expect(res.body.data.metadata.companyName).toBe("Example");
+    expect(res.body.data.metadata.location).toEqual(["Darmstadt"]);
+    expect(res.body.data.metadata.remote).toBe(true);
+    expect(res.body.data.metadata.responsibilities).toContain("You will design secure AWS platforms.");
+    expect(res.body.data.metadata.requiredSkills).toContain("AWS");
+    expect(res.body.data.metadata.preferredSkills).toContain("Kubernetes");
+    const aws = res.body.data.requirements.find((item) => item.normalized === "aws");
+    expect(aws.priority).toBe("required");
+    expect(aws.importance).toBe("high");
+  });
+
   it("returns deterministic ATS analysis without AI", async () => {
     const res = response();
     await atsAnalyzeHandler(request({ schemaVersion: 1, job, profile: { skills: "AWS, Terraform" } }), res);

@@ -951,6 +951,45 @@ AWS, Terraform and Docker exercises.`);
   });
 });
 
+describe('JM-CV-JOB-PARSER-QUALITY-01 contact and skill quality', () => {
+  it('recognizes German contact labels and strips a profile label from the headline', () => {
+    const result = parseCvBuilderImportText([
+      'Max Mustermann',
+      'E-Mail-Adresse: max@example.com',
+      'Telefonnummer: +49 6151 123456',
+      'Wohnort: Darmstadt',
+      '',
+      'PROFIL',
+      'Profil: Cloud Engineer',
+      '',
+      'KENNTNISSE',
+      'Node.js, NodeJS, AWS, AWS, TypeScript',
+    ].join('\n'));
+
+    expect(result.draft.personal).toEqual({
+      fullName: 'Max Mustermann',
+      email: 'max@example.com',
+      phone: '+49 6151 123456',
+      location: 'Darmstadt',
+    });
+    expect(result.draft.profile.headline).toBe('Cloud Engineer');
+    expect(result.draft.skills).toEqual(['Node.js', 'AWS', 'TypeScript']);
+  });
+
+  it('parses slash-separated year/month periods without losing the range', () => {
+    const result = parseCvBuilderImportText([
+      'Max Mustermann',
+      'BERUFSERFAHRUNG',
+      '2020/01 - 2021/06 | Example GmbH | Cloud Engineer',
+      'AWS und Terraform betrieben.',
+    ].join('\n'));
+    expect(result.draft.experience).toHaveLength(1);
+    expect(result.draft.experience[0].startMonth).toBe('2020-01');
+    expect(result.draft.experience[0].endMonth).toBe('2021-06');
+    expect(result.draft.experience[0].current).toBe(false);
+  });
+});
+
 describe('CV-BUILDER-02F-CORRECTION-01 profile notes', () => {
   it('keeps publication/profile notes out of the professional summary', () => {
     const result = parseCvBuilderImportText(`Nora Beispiel

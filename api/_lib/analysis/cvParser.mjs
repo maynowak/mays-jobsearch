@@ -705,7 +705,7 @@ const MONTHS = {
 	december: "12",
 	dec: "12"
 };
-const DATE_POINT = `(?:(?:jan(?:uar)?|feb(?:ruar)?|mär(?:z)?|maerz|apr(?:il)?|mai|may|jun(?:i)?|jul(?:i)?|aug(?:ust)?|sep(?:t|tember)?|okt(?:ober)?|oct(?:ober)?|nov(?:ember)?|dez(?:ember)?|dec(?:ember)?)\\.?\\s+\\d{4}|\\d{1,2}[./]\\d{4}|\\d{4}-\\d{2}|\\d{4})`;
+const DATE_POINT = `(?:(?:jan(?:uar)?|feb(?:ruar)?|mär(?:z)?|maerz|apr(?:il)?|mai|may|jun(?:i)?|jul(?:i)?|aug(?:ust)?|sep(?:t|tember)?|okt(?:ober)?|oct(?:ober)?|nov(?:ember)?|dez(?:ember)?|dec(?:ember)?)\\.?\\s+\\d{4}|\\d{1,2}[./]\\d{4}|\\d{4}[-/]\\d{2}|\\d{4})`;
 const DATE_END = `(?:${DATE_POINT}|present|heute|current|now|ongoing|bis heute)`;
 const DATE_RANGE = new RegExp(`(${DATE_POINT})\\s*(?:-|–|—|bis|to)\\s*(${DATE_END})`, "i");
 const SINCE_DATE = new RegExp(`^(?:seit|since)\\s+(${DATE_POINT})`, "i");
@@ -840,6 +840,11 @@ function parseMonthToken(token) {
 	if (/^\d{4}$/.test(value)) return "";
 	const iso = value.match(MONTH_RE);
 	if (iso) return `${iso[1]}-${iso[2]}`;
+	const slashIso = value.match(/^(\d{4})\/(\d{2})$/);
+	if (slashIso) {
+		const month = Number(slashIso[2]);
+		return month >= 1 && month <= 12 ? `${slashIso[1]}-${String(month).padStart(2, "0")}` : "";
+	}
 	const numeric = value.match(/^(\d{1,2})[./](\d{4})$/);
 	if (numeric) {
 		const month = Number(numeric[1]);
@@ -911,7 +916,7 @@ function classifyExperiencePair(first, second) {
 	};
 }
 function degreeLike(value) {
-	return /\b(bachelor|master|b\.?sc|m\.?sc|b\.?a|m\.?a|diplom|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachwirt|mba|vocational qualification|berufsqualifikation|berufsausbildung)\b/i.test(value);
+	return /\b(bachelor|master|b\.?sc|m\.?sc|b\.?a|m\.?a|diplom|phd|doktor|doctor|staatsexamen|ausbildung|lehre|abitur|fachabitur|fachwirt|mba|vocational qualification|berufsqualifikation|berufsausbildung|high school diploma|secondary school|university degree|hochschulabschluss)\b/i.test(value);
 }
 const NON_EMPLOYMENT_RE = /\b(lab|labor|bootcamp|course|kurs|training|schulung|seminar|workshop|weiterbildung|fortbildung|certification|zertifizierung|universität|universitaet|university|hochschule|college|school|studium|education)\b/i;
 function parseExperience(lines, uncertain, unrecognized) {
@@ -1456,17 +1461,24 @@ function parsePersonal(lines) {
 		"full name": "fullName",
 		email: "email",
 		"e-mail": "email",
+		"e-mail-adresse": "email",
 		mail: "email",
 		telefon: "phone",
+		telefonnummer: "phone",
 		phone: "phone",
 		mobil: "phone",
+		mobiltelefon: "phone",
+		handynummer: "phone",
 		mobile: "phone",
 		tel: "phone",
 		ort: "location",
+		wohnort: "location",
 		stadt: "location",
 		location: "location",
 		adresse: "location",
-		address: "location"
+		address: "location",
+		plz: "location",
+		postal: "location"
 	};
 	for (const rawLine of lines) {
 		const line = cleanLine(rawLine);
@@ -1514,6 +1526,9 @@ function isSkillCandidate(value) {
 	if (/^\d+$/.test(item)) return false;
 	return /[a-zäöüß0-9]/i.test(item);
 }
+function skillDedupeKey(value) {
+	return value.toLocaleLowerCase("de").replace(/[\s._-]+/g, "").trim();
+}
 function parseSkills(lines, uncertain, unrecognized) {
 	const seen = /* @__PURE__ */ new Set();
 	const skills = [];
@@ -1546,7 +1561,7 @@ function parseSkills(lines, uncertain, unrecognized) {
 				uncertain.add("skills");
 				continue;
 			}
-			const key = candidate.toLocaleLowerCase("de");
+			const key = skillDedupeKey(candidate);
 			if (!seen.has(key)) {
 				seen.add(key);
 				skills.push(candidate);
@@ -1766,7 +1781,7 @@ function parseCvBuilderImportText(raw, source) {
 	draft.personal = personal.personal;
 	detected.personal = personal.detected;
 	if (personal.uncertain && personal.detected) uncertainSet.add("personal");
-	const profileLines = nonEmpty(sections.profile);
+	const profileLines = nonEmpty(sections.profile).map((line) => line.replace(/^(?:profil|profile|berufliches profil|professional profile|summary|zusammenfassung|über mich|ueber mich)\s*[:\-]\s*/i, "").trim()).filter(Boolean);
 	const summaryLines = nonEmpty(profileSummaryLines);
 	if (profileLines.length) {
 		draft.profile.headline = profileLines[0];
@@ -1893,4 +1908,4 @@ function selectCvBuilderImportDraft(result, selected, manualAssignments = {}, op
 	return next;
 }
 //#endregion
-export { buildPdfDocument, hasCvBuilderImportContent, parseCvBuilderImportText, selectCvBuilderImportDraft };
+export { CV_BUILDER_IMPORT_SECTIONS, buildPdfDocument, hasCvBuilderImportContent, parseCvBuilderImportText, selectCvBuilderImportDraft };

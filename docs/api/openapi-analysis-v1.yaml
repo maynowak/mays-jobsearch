@@ -196,7 +196,13 @@ components:
                   enum: [confirmed, partial, uncertain]
                 sectionConfidence:
                   type: object
-                  description: Per-section parser confidence. Sections without a reliable mapping are omitted.
+                  description: |
+                    Per-section parser confidence. Sections without a reliable
+                    mapping are omitted. The API-02 draft had an implementation
+                    mismatch (boolean flags); this v1 contract correction is
+                    published before endpoint activation and has no external
+                    production consumer. The value shape is now the documented
+                    enum, not a boolean map.
                   additionalProperties:
                     type: string
                     enum: [confirmed, partial, uncertain]
@@ -274,7 +280,7 @@ components:
           $ref: "#/components/schemas/AnalysisProfileV1"
     AtsRequirementV1:
       type: object
-      required: [id, text, category, importance, source]
+      required: [id, text, category, importance, priority, source]
       properties:
         id: { type: string }
         text: { type: string }
@@ -284,6 +290,10 @@ components:
         importance:
           type: string
           enum: [critical, high, medium, low]
+        priority:
+          type: string
+          enum: [required, preferred, unspecified]
+          description: Context-derived priority; importance remains the scoring-compatible weight.
         source:
           type: string
           enum: [title, tags, description, criteria]
@@ -306,6 +316,15 @@ components:
                     titleTokens:
                       type: array
                       items: { type: string }
+                    companyName: { type: string, nullable: true }
+                    location:
+                      type: array
+                      items: { type: string }
+                    remote: { type: boolean, nullable: true }
+                    responsibilities:
+                      type: array
+                      maxItems: 20
+                      items: { type: string }
                     language: { type: string, nullable: true }
                     workMode: { type: string, nullable: true, enum: [remote, onsite, null] }
                     jobTypes:
@@ -313,6 +332,12 @@ components:
                       items: { type: string }
                     contractType: { type: string, nullable: true }
                     contractTypeNoData: { type: boolean }
+                    requiredSkills:
+                      type: array
+                      items: { type: string }
+                    preferredSkills:
+                      type: array
+                      items: { type: string }
                 basis:
                   type: object
                   required: [requirementCount, titleRequirementCount, hasDescription]

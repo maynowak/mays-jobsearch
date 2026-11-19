@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "generate:cv-parser": "node scripts/generate-cv-parser.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e:guest-cv": "node tests/e2e/guest-cv-workflow.mjs",

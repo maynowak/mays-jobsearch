@@ -133,9 +133,15 @@ export function extractAtsRequirements(job, profile = {}) {
   const requirements = extractRequirementsFromJob(job, profile);
   const metadata = extractJobMetadata(job);
   const hasDescription = Boolean(job.descriptionPlain || job.description);
+  const requiredSkills = requirements
+    .filter((requirement) => requirement.category === "skill" && requirement.priority === "required")
+    .map((requirement) => requirement.text);
+  const preferredSkills = requirements
+    .filter((requirement) => requirement.category === "skill" && requirement.priority === "preferred")
+    .map((requirement) => requirement.text);
   return {
     analysisStatus: requirements.length === 0 ? "insufficient" : hasDescription ? "complete" : "limited",
-    metadata,
+    metadata: { ...metadata, requiredSkills, preferredSkills },
     basis: {
       requirementCount: requirements.length,
       titleRequirementCount: metadata.titleTokens.length,

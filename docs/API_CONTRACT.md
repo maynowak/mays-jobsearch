@@ -353,12 +353,34 @@ Deprecation.
 
 ---
 
-## 18. Open Decisions
+## 18a. Analysis Parser API v1 (implemented 2026-11-19)
+
+The versioned analysis surface is documented in
+`docs/api/openapi-analysis-v1.yaml` and is not a replacement for any legacy
+UI route:
+
+| Endpoint | Purpose | Shared implementation |
+|---|---|---|
+| `POST /api/analysis/v1/cv/parse` | PDF → structured `CvBuilderDraftV1`, confidence/provenance | generated server artifact from `src/lib/cvBuilder/pdfImport.ts` |
+| `POST /api/analysis/v1/ats/requirements` | Job → deterministic requirements + metadata | `api/_lib/ats.mjs` |
+| `POST /api/analysis/v1/ats/analyze` | Deterministic ATS analysis | `api/_lib/ats.mjs` |
+| `POST /api/analysis/v1/match` | Existing CV/job matching | `api/_lib/matching.mjs` |
+
+All four use `schemaVersion: 1`, the shared analysis envelope/error format,
+`X-Analysis-Token`, `X-Analysis-Consent` and the existing scope/tenant/user
+checks. The legacy UI endpoints remain compatibility adapters over the same
+service layer; their separate browser-auth boundary is documented in
+`docs/reports/JM-CV-ATS-API-03-UNIFIED-ARCHITECTURE.md` and is not changed by
+this parser work. No RIS contract migration is implied.
+
+---
+
+## 19. Open Decisions
 
 1. **Kanonische Production-URL** — Deployment-Entscheidung (EXTERNAL), nicht aus dem Repo ableitbar.
 2. **`CRON_SECRET`-Pflicht** für `/api/cron/digest` (aktuell offen ohne Secret) — erfordert Deployment-/Ops-Entscheidung; Empfehlung: Pflicht.
 3. **`GET /api/model`**: entfernt (Vercel-Hobby-Limit von 12 Serverless Functions). Ersatz ist `GET /api/models` mit `recommendedModel`; der Client nutzt diesen Wert als Fallback.
-4. **OpenAPI-Artefakt**: TARGET = Ja, eine generierte OpenAPI-Spezifikation soll im Contract-Cleanup-Step erzeugt werden (Maschinenlesbarkeit). **Noch nicht** gebaut; es existiert heute keine OpenAPI-Datei und kein `request_schema.json` im Repo — diese Tatsache bleibt im IST dokumentiert.
+4. **OpenAPI-Artefakt**: Für die versionierte Analysis-API existiert `docs/api/openapi-analysis-v1.yaml` (vier Pfade, v1). Eine breitere generierte OpenAPI-Spezifikation für alle übrigen Endpunkte bleibt ein separater Contract-Cleanup-Schritt; `request_schema.json` existiert weiterhin nicht.
 5. **Resend-/Digest-Beobachtbarkeit**: nicht Teil des API-Vertrags — nur notiert falls relevant beim Lifecycle-Schritt.
 
 ---
