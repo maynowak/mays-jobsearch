@@ -7012,3 +7012,22 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Screenshots and report: `docs/reports/JM-CV-DESIGN-02-REPORT.md`,
   `docs/reports/assets/JM-CV-DESIGN-02/`.
 - No Main merge, production deploy, AWS/Terraform or product-code change.
+
+## 2026-11-19 — JM-CV-DESIGN-03 — CV WORKSPACE UI POLISH
+
+**Status:** `IMPLEMENTED / VERIFIED LOCAL — READY FOR VISUAL REVIEW`
+
+- Added preview/footer breathing room: 22 px workspace bottom padding,
+  24 px preview scroll padding, footer top spacing, and safe-area-aware mobile
+  footer padding. Desktop preview/footer measured gap: **48 px**.
+- Screenshot toggle now has the visible German label **Ansicht wechseln**
+  (English: **Switch view**) and `aria-pressed`; screenshot-mode behavior is
+  unchanged.
+- Original background assets/positions, editor structure, CV data model, PDF,
+  RIS, ATS, consent and storage remain unchanged.
+- Build PASS; full suite **1965 PASS / 11 skipped**; design E2E PASS at
+  1440/390 plus 320/768/1024/1920 with 0 overflow; full-page CV workspace
+  03A E2E PASS.
+- Screenshots and report: `docs/reports/JM-CV-DESIGN-03-REPORT.md`,
+  `docs/reports/assets/JM-CV-DESIGN-03/`.
+- No Main merge, production deploy, AWS/Terraform or product-code change.

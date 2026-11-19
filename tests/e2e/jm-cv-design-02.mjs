@@ -1,4 +1,4 @@
-// JM-CV-DESIGN-01 — visual smoke for the Future Career workspace.
+// JM-CV-DESIGN-03 — visual smoke for preview/footer spacing and view switching.
 // Synthetic/demo UI only. No RIS, auth, upload or CV data is used.
 import { spawn } from "node:child_process";
 import { mkdir, stat } from "node:fs/promises";
@@ -6,7 +6,7 @@ import playwright from "playwright";
 
 const port = 5241;
 const base = `http://localhost:${port}`;
-const out = "docs/reports/assets/JM-CV-DESIGN-02";
+const out = process.env.CV_DESIGN_OUT || "docs/reports/assets/JM-CV-DESIGN-02";
 const models = {
   models: [{ id: "mock-model", name: "Mock Model" }],
   defaultModel: "mock-model",
@@ -101,6 +101,32 @@ async function run() {
     await page.getByRole("button", { name: "Leeren Lebenslauf erstellen" }).click();
     await page.getByRole("heading", { name: "Strukturierter Lebenslauf-Editor" }).waitFor();
     const editor1440 = await assertView(page, 1440, "editor");
+    const spacing1440 = await page.evaluate(() => {
+      const preview = document.querySelector(".cv-builder-preview-pane");
+      const footer = document.querySelector(".cv-builder-footer");
+      const workspace = document.querySelector(".cv-builder-workspace");
+      if (!preview || !footer || !workspace) return null;
+      return {
+        gap: footer.getBoundingClientRect().top - preview.getBoundingClientRect().bottom,
+        workspacePadBottom: getComputedStyle(workspace).paddingBottom,
+        previewPadBottom: getComputedStyle(preview).paddingBottom,
+        footerVisible: getComputedStyle(footer).display !== "none",
+      };
+    });
+    if (!spacing1440 || spacing1440.gap < 8) {
+      throw new Error(`preview/footer spacing missing: ${JSON.stringify(spacing1440)}`);
+    }
+    if (!spacing1440.footerVisible) throw new Error("action bar is not visible");
+    const viewSwitch = page.getByRole("button", { name: "Ansicht wechseln" });
+    if ((await viewSwitch.count()) !== 1) throw new Error("view switch label is missing");
+    await viewSwitch.click();
+    if ((await viewSwitch.getAttribute("aria-pressed")) !== "true") {
+      throw new Error("view switch did not expose pressed state");
+    }
+    await viewSwitch.click();
+    if ((await viewSwitch.getAttribute("aria-pressed")) !== "false") {
+      throw new Error("view switch did not restore unpressed state");
+    }
     await page.screenshot({ path: `${out}/workspace-editor-1440.png`, fullPage: true });
     const editor390 = await assertView(page, 390, "editor");
     await page.screenshot({ path: `${out}/workspace-editor-390.png`, fullPage: true });
@@ -118,6 +144,7 @@ async function run() {
       start390,
       editor1440,
       editor390,
+      spacing1440,
       widths,
       apiCalls: [...new Set(api)],
       screenshots: `${out}/*.png`,
