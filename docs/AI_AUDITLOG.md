@@ -1,3 +1,13 @@
+2026-11-19 · JM-ATS-PROFILE-SAVE-FIX-01 — CONTROLLED MAIN RELEASE
+- Typ: Controlled Merge, Production Smoke, Doku-/Subagent-Sync
+- Status: **MERGED TO MAIN / PRODUCTION DEPLOYED / LIVE SMOKE VERIFIED**
+- Release: PR #43 gegen `main` gemerged als `116b15d`; keine Branch-Löschung, kein Force-Push, kein manuelles `vercel --prod`.
+- Code: `5f8b570` Client-/BFF-Validierung und ATS-Save-Fix; `8c1c75d` Report/Audit; `2265bb6` AGENTS- und Subagent-Kontext. Create/Update, Auth-, Consent- und RIS-Grenzen unverändert.
+- Checks: Vercel-Previews PASS; CodeQL Analysis PASS (Duplikat-Check `skipping`); fokussierte ATS-Tests 25 PASS; Vollsuite **2000 PASS / 11 skipped**; Build/API-Syntax/Diff PASS.
+- Production: `www.mays-job-matcher.app` Deployment `dpl_79opuM7m2v98iGjsrouzJPA3rGJt` READY; `mays-jobsearch.vercel.app` Deployment `dpl_G3RgYGDP1QCczoRPzxJwravBoYQx` READY. `/` und `/datenschutz` 200; Legacy-`/api/ats-analysis` 200.
+- Keine authentifizierten Produktions-Schreibtests und keine echten Profildaten; RIS/AWS/Terraform/Consent unverändert.
+- Subagents: `.opencode/agents/*` und `AGENTS.md` um aktuellen Release-, API-, ATS-Save-, Security- und Testkontext ergänzt.
+
 2026-11-19 · JM-ATS-PROFILE-SAVE-FIX-01
 - Typ: ATS-Profil-Speicherpfad, Client-/BFF-Validierung, Regressionstests
 - Status: **ATS PROFILE SAVE FIXED / VERIFIED LOCAL**

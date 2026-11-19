@@ -1,9 +1,15 @@
 # JM-ATS-PROFILE-SAVE-FIX-01 — ATS Profile Save
 
 **Status:** `ATS PROFILE SAVE FIXED / VERIFIED LOCAL`  
-**Branch:** `feature/jm-ats-profile-save-fix-01`  
-**Code commit:** `5f8b570`  
-**No Main merge, no Production deployment, no RIS/AWS/Terraform change.**
+**Release status:** `MERGED TO MAIN / PRODUCTION DEPLOYED / LIVE SMOKE VERIFIED`
+
+**Branch:** `feature/jm-ats-profile-save-fix-01`
+
+**Code commits:** `5f8b570`, `8c1c75d`, `2265bb6`
+
+**Merge commit:** `116b15d` (PR #43)
+
+**No RIS/AWS/Terraform/consent change.**
 
 ## 1. Reproduced path
 
@@ -99,11 +105,15 @@ requests and exposes the remaining server error class clearly.
 No production write test was performed. No real CV, profile or personal data
 was used.
 
-## 5. Git
+## 5. Release and Production
 
-- `5f8b570` — ATS save validation/normalization fix
-- Branch: `feature/jm-ats-profile-save-fix-01` (pushed)
-- No Main merge, no Production deployment.
+- PR #43 merged as `116b15d`; branch retained.
+- Code: `5f8b570` ATS save fix, `8c1c75d` report/audit, `2265bb6` AGENTS/subagent context.
+- Automatic main deployments completed without manual `vercel --prod`:
+  - `www.mays-job-matcher.app` → `dpl_79opuM7m2v98iGjsrouzJPA3rGJt` READY
+  - `mays-jobsearch.vercel.app` → `dpl_G3RgYGDP1QCczoRPzxJwravBoYQx` READY
+- Live smoke: `/` 200 on both domains, `/datenschutz` 200, legacy `/api/ats-analysis` 200.
+- No authenticated production ATS write was performed; the new BFF validation is covered locally and remains behind the existing auth/consent gates.
 
 ## 6. Open Points
 
