@@ -14680,32 +14680,54 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   padding-left: 20px;
 }
 
-/* JM-PROFILE-UX-01 — FUTURISTIC PROFILE COMMAND CENTER
-   Shared shell for all six authenticated profile tabs. The image is the
-   existing search-world asset; the light overlay keeps forms and consent
-   copy readable and deliberately avoids a second landing-page composition. */
+/* JM-CV-UX-07 — profile background.
+   The image is mirrored only inside this pseudo-element so the face sits on
+   the left and looks toward the profile surface. UI content is never mirrored.
+   A separate gradient layer preserves contrast without hiding the artwork. */
 .container.layout-dashboard.layout-profile-command {
   position: relative;
   isolation: isolate;
-  min-height: calc(100vh - var(--navbar-height, 61px));
+  min-height: calc(100dvh - var(--navbar-height, 61px));
   padding-top: clamp(20px, 2.5vw, 32px);
   padding-bottom: clamp(36px, 6vw, 72px);
-  background-color: #eaf6fb;
-  background-image:
-    linear-gradient(
-      180deg,
-      rgba(248, 250, 252, 0.94) 0%,
-      rgba(239, 248, 253, 0.90) 38%,
-      rgba(226, 242, 251, 0.88) 68%,
-      rgba(220, 238, 250, 0.92) 100%
-    ),
-    image-set(
-      url("/job-matcher-next-step-searchpage.webp") type("image/webp"),
-      url("assets/images/job-matcher-next-step-searchpage.png") type("image/png")
-    );
-  background-position: center top;
+  overflow: clip;
+  background-color: #04111e;
+}
+
+.container.layout-dashboard.layout-profile-command::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("assets/images/jm-profile-ai-face.webp");
+  background-position: right center;
   background-size: cover;
   background-repeat: no-repeat;
+  transform: scaleX(-1);
+  transform-origin: center;
+  opacity: 0.96;
+}
+
+.container.layout-dashboard.layout-profile-command::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      100deg,
+      rgba(2, 10, 24, 0.16) 0%,
+      rgba(2, 10, 24, 0.34) 46%,
+      rgba(2, 10, 24, 0.72) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(2, 10, 24, 0.12) 0%,
+      rgba(2, 10, 24, 0.22) 48%,
+      rgba(2, 10, 24, 0.56) 100%
+    );
 }
 
 .layout-profile-command .dashboard-v2 {
@@ -14908,8 +14930,27 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   .container.layout-dashboard.layout-profile-command {
     padding-top: 16px;
     padding-inline: 12px;
-    background-position: center top;
-    background-size: auto 100%;
+  }
+
+  .container.layout-dashboard.layout-profile-command::before {
+    background-position: 60% center;
+    background-size: cover;
+    opacity: 0.9;
+  }
+
+  .container.layout-dashboard.layout-profile-command::after {
+    background:
+      linear-gradient(
+        100deg,
+        rgba(2, 10, 24, 0.32) 0%,
+        rgba(2, 10, 24, 0.52) 52%,
+        rgba(2, 10, 24, 0.78) 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(2, 10, 24, 0.18) 0%,
+        rgba(2, 10, 24, 0.40) 100%
+      );
   }
 
   .layout-profile-command .dashboard-v2 {
@@ -14950,11 +14991,13 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   background-image:
     radial-gradient(ellipse at 50% 12%, rgba(14, 165, 233, 0.18), transparent 48%),
     linear-gradient(135deg, #031424 0%, #06283b 52%, #041a2b 100%);
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 .cv-workspace-page::before {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0 auto 0 0;
   z-index: 0;
   width: min(31vw, 560px);
@@ -14974,7 +15017,7 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 .cv-workspace-page::after {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0 0 0 auto;
   z-index: 0;
   width: min(29vw, 520px);

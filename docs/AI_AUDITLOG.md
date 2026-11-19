@@ -1,3 +1,13 @@
+2026-11-19 · JM-CV-UX-07 — BACKGROUND & VIEW CONSISTENCY
+- Typ: CV-Workspace-View-Switch, Profil-Hintergrund, visuelle Verifikation
+- Status: **IMPLEMENTED / VERIFIED LOCAL**
+- Branch: `feature/jm-cv-ux-07-background-view-consistency`; Basis `origin/main` `81db09a`.
+- CV-Workspace: `Ansicht wechseln` ändert weiterhin nur Editorlayout/Screenshot-Modus. Side-Art-Pseudoelemente sind viewport-fixiert und der Workspace-Gradient nutzt `background-attachment: fixed`; Hintergrund bleibt vor/nach dem Wechsel identisch.
+- Profil: bereitgestelltes `Ki-Hintergrund-Profil.jpg` als WebP nach `src/assets/images/jm-profile-ai-face.webp` übernommen; separates `::before` mit `scaleX(-1)` (nur Bild, keine UI), separates Kontrast-Gradient-`::after`, links positioniertes Gesicht, responsive Desktop-/Mobile-Positionen.
+- Tests/Screenshots: fokussiert 21 PASS; Browser-E2E PASS; 5 Screenshots unter `docs/reports/assets/JM-CV-UX-07/`; Vollsuite **2000 PASS / 11 skipped**; Build und Diff-Check PASS.
+- Keine Änderung an CV-Persistenz, RIS, Consent, Auth, API-Writes oder Production; kein Main-Merge/Deployment.
+- Bericht: `docs/reports/JM-CV-UX-07.md`.
+
 2026-11-19 · JM-ATS-PROFILE-SAVE-FIX-01 — CONTROLLED MAIN RELEASE
 - Typ: Controlled Merge, Production Smoke, Doku-/Subagent-Sync
 - Status: **MERGED TO MAIN / PRODUCTION DEPLOYED / LIVE SMOKE VERIFIED**

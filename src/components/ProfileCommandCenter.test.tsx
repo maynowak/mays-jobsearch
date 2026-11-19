@@ -34,7 +34,8 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
   it('applies the shared command-center shell only to profile/dashboard routes', () => {
     expect(app.match(/layout-profile-command/g)).toHaveLength(3);
     expect(css).toContain('.container.layout-dashboard.layout-profile-command');
-    expect(css).toContain('job-matcher-next-step-searchpage.webp');
+    expect(css).toContain('jm-profile-ai-face.webp');
+    expect(css).toContain('transform: scaleX(-1)');
     expect(css).toContain('.layout-profile-command .dashboard-v2__navigation-card');
     expect(css).toContain('.layout-profile-command .aurora-sidebar-item.aurora-sidebar-active');
     expect(css).toContain('.layout-profile-command .storage-consent');
