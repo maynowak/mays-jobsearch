@@ -5,7 +5,7 @@
 **Branch:** `feature/jm-cv-design-01`
 **Integrated head:** `7c987b6`
 **Origin/main:** `ea610da`
-**PR:** pending
+**PR:** [#40](https://github.com/maynowak/mays-jobsearch/pull/40) — CI verification pending on final head
 **No Main merge, no production deployment, no product/API/RIS/AWS/Terraform change.**
 
 ## 1. Integration
