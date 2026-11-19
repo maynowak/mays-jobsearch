@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createSignedToken,
@@ -8,6 +9,7 @@ import atsRequirementsHandler from "../../api/analysis/v1/ats/requirements.mjs";
 import atsAnalyzeHandler from "../../api/analysis/v1/ats/analyze.mjs";
 import matchHandler from "../../api/analysis/v1/match.mjs";
 import cvParseHandler from "../../api/analysis/v1/cv/parse.mjs";
+import legacyAtsHandler from "../../api/ats-analysis.mjs";
 
 const serviceSecret = "test-analysis-service-secret";
 const consentSecret = "test-analysis-consent-secret";
@@ -234,6 +236,42 @@ describe("analysis v1 service foundation", () => {
     }, res);
     expectEnvelope(res, 413);
     expect(res.body.error.code).toBe("payload_too_large");
+  });
+
+  it("routes every HTTP adapter through the shared analysis service", () => {
+    for (const file of [
+      "api/ats-analysis.mjs",
+      "api/match.mjs",
+      "api/analysis/v1/cv/parse.mjs",
+      "api/analysis/v1/ats/requirements.mjs",
+      "api/analysis/v1/ats/analyze.mjs",
+      "api/analysis/v1/match.mjs",
+    ]) {
+      expect(readFileSync(file, "utf8")).toContain("analysis/service.mjs");
+    }
+  });
+
+  it("uses the same ATS service for the legacy UI adapter and the versioned endpoint", async () => {
+    const legacyRes = response();
+    await legacyAtsHandler({
+      method: "POST",
+      body: { job, profile: { skills: "AWS, Terraform" } },
+      headers: {},
+    }, legacyRes);
+    expect(legacyRes.statusCode).toBe(200);
+
+    const versionedRes = response();
+    await atsAnalyzeHandler(request({
+      schemaVersion: 1,
+      job,
+      profile: { skills: "AWS, Terraform" },
+    }), versionedRes);
+    expect(versionedRes.statusCode).toBe(200);
+
+    expect(versionedRes.body.data.analysis.score).toBe(legacyRes.body.analysis.score);
+    expect(versionedRes.body.data.analysis.requirements).toEqual(
+      legacyRes.body.analysis.requirements
+    );
   });
 
   it("parses the synthetic CV without returning the raw PDF/text or personal data by default", async () => {

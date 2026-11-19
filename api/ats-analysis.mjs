@@ -1,13 +1,12 @@
 import { HttpError } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
-import { 
-  analyzeJobForAts, 
-  generateCVRecommendations,
+import {
   formulateCVText,
   formulateAllRecommendations,
   validateRecommendationSafety,
   getPrivacyNotice,
 } from "./_lib/ats.mjs";
+import { analyzeAts } from "./_lib/analysis/service.mjs";
 import { getConfig } from "./_lib/config.mjs";
 
 function readBody(req) {
@@ -125,9 +124,9 @@ export default async function handler(req, res) {
     // Parse skills properly
     const cvSkills = parseSkills(profile?.skills);
     
-    // Step 1: Deterministic ATS Analysis (always executed)
-    const analysis = analyzeJobForAts(job, profile || {});
-    const recommendations = generateCVRecommendations(analysis, cvSkills);
+    // Step 1: Deterministic ATS Analysis (always executed) through the shared
+    // core service. The legacy response below remains unchanged for the UI.
+    const { analysis, recommendations } = analyzeAts(job, profile || {});
     
     const response = {
       analysis: {

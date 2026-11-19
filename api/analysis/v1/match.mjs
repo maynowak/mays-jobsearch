@@ -2,7 +2,7 @@ import {
   AnalysisError, authenticateService, requireScope, requireAnalysisConsent,
   requestIdFor, requireSchemaVersion, assertTenantAndUser, readJsonBody, ok, fail,
 } from "../../_lib/analysis/security.mjs";
-import { computeMatch } from "../../_lib/matching.mjs";
+import { matchJobs } from "../../_lib/analysis/service.mjs";
 import { validateJobs, validateProfile } from "../../_lib/analysis/validation.mjs";
 
 export default async function handler(req, res) {
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     assertTenantAndUser(body, identity);
     const profile = validateProfile(body.profile);
     const jobs = validateJobs(body.jobs);
-    const result = await computeMatch({ profile, jobs });
+    const result = await matchJobs(profile, jobs);
 
     return ok(res, requestId, {
       matches: result.matches,
