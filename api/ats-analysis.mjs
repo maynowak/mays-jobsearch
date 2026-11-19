@@ -2,9 +2,7 @@ import { HttpError } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
 import {
   formulateCVText,
-  formulateAllRecommendations,
   validateRecommendationSafety,
-  getPrivacyNotice,
 } from "./_lib/ats.mjs";
 import { analyzeAts } from "./_lib/analysis/service.mjs";
 import cvParseHandler from "./_lib/analysis/handlers/cvParse.mjs";

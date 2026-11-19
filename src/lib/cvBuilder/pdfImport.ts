@@ -460,7 +460,7 @@ function parseExperience(lines: string[], uncertain: Set<CvBuilderImportSectionI
     let date = parseDateRange(dateLine);
     let singlePrefix = "";
     if (!date) {
-      const single = dateLine.match(new RegExp(`^\s*(${DATE_POINT})\s*\|\s*`, "i"));
+      const single = dateLine.match(new RegExp(`^\\s*(${DATE_POINT})\\s*\\|\\s*`, "i"));
       if (!single) {
         unrecognized.push(...nonEmpty(block));
         continue;
