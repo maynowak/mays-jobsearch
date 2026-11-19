@@ -1,8 +1,8 @@
 # JM-MARKETING-01B — SEO PREVIEW & GOOGLE DISCOVERABILITY VERIFICATION
 
-**Status:** `SEO VERIFICATION COMPLETE — PASS WITH WARNINGS`  
-**Scope:** Production website `https://www.mays-job-matcher.app` (read-only)  
-**Actual Google index status:** `BLOCKED / UNVERIFIED`  
+**Status:** `SEO VERIFICATION COMPLETE — PASS WITH WARNINGS`
+**Scope:** Production website `https://www.mays-job-matcher.app` (read-only)
+**Actual Google index status:** `BLOCKED / UNVERIFIED`
 **No production, RIS, AWS, Terraform, auth, consent or storage change.**
 
 ## 1. Ergebnisübersicht

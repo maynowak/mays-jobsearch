@@ -1,8 +1,8 @@
 # JM-RELEASE-01 — CV Design & SEO Integration Preflight
 
-**Status:** `STOPPED — JM-MARKETING-01C NOT FULLY CLOSED`  
-**Branch:** `feature/jm-cv-design-01` (`eba2ac7`)  
-**Origin/main:** `ea610da`  
+**Status:** `STOPPED — JM-MARKETING-01C NOT FULLY CLOSED`
+**Branch:** `feature/jm-cv-design-01` (`eba2ac7`)
+**Origin/main:** `ea610da`
 **No Main merge, no PR merge, no production deployment, no product change.**
 
 ## 1. Preflight
@@ -85,3 +85,11 @@ Vor einem erneuten Release-Preflight muss entschieden/freigegeben werden:
 3. Danach `JM-RELEASE-01` erneut starten.
 
 **JM-RELEASE-01 — BLOCKED; keine Freigabe zur Main-Merge-Review.**
+
+## Follow-up — Integration continued
+
+The 01C code and tests were confirmed as present in `origin/main`. Search Console
+ownership remains an external operational item (`SEARCH CONSOLE PENDING`) and
+is treated as a release warning, not a code/test blocker. The release branch
+was therefore synchronized with `origin/main` and the technical integration
+verification continued in `docs/reports/JM-RELEASE-01-INTEGRATION-REPORT.md`.
