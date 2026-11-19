@@ -1,3 +1,15 @@
+2026-11-19 · JM-CV-JOB-PARSER-QUALITY-01
+- Typ: CV-/Job-Parser-Qualität, gemeinsame Parser-Core-Parität, v1-Contract-Update
+- Status: **CV & JOB PARSER IMPROVED / VERSIONED APIS VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-ris-cv-ats-api-01`; Code `e1c8974`; Basis `171679e`.
+- CV: Kontaktlabels (E-Mail-Adresse, Telefonnummer, Wohnort, PLZ), Profil-Label-Bereinigung, Skill-Deduplizierung (Node.js/NodeJS), `YYYY/MM`-Zeiträume, zusätzliche Bildungsbegriffe; API-Confidence bleibt `confirmed|partial|uncertain`.
+- Job: Metadaten um `companyName`, `location`, `remote`, `responsibilities`, `requiredSkills`, `preferredSkills` erweitert; Requirements um kontextbasierte `priority` (`required|preferred|unspecified`), deutsche/englische Pflicht-/Wunschbegriffe, Negationen, Synonyme und zusätzliche Fachbegriffe. Bestehende IDs, Kategorien, Importance- und Source-Struktur bleiben erhalten; Zertifikatserkennung enger gefasst.
+- Gemeinsamer Core: `src/lib/cvBuilder/pdfImport.ts` → generiertes `api/_lib/analysis/cvParser.mjs`; ATS/API und Legacy-UI über `api/_lib/analysis/service.mjs` → `api/_lib/ats.mjs`. Neuer Parity-Test Frontend/API.
+- API: OpenAPI v1 um Priority, Metadaten und Confidence erweitert; API-CONTRACT/CHANGELOG aktualisiert. `sectionConfidence`-Draft-Korrektur ausdrücklich als Pre-Activation-v1-Korrektur markiert; kein neuer API-Version.
+- Tests: CV-Parser 44 PASS; Parser-/Contract 28 PASS; ATS-Regression/Compatibility PASS; RIS-Boundary PASS; Vollsuite **1995 PASS / 11 skipped**; Build, Syntax, OpenAPI-Parse, Diff-Check PASS.
+- Keine RIS-/AWS-/Terraform-/Vercel-/Consent-Änderung; keine Produktionsaktivierung; kein Main-Merge/Deployment. Legacy-UI-Auth-/Consent-Gate aus API-03 bleibt offen.
+- Bericht: `docs/reports/JM-CV-JOB-PARSER-QUALITY-01.md`.
+
 2026-11-19 · JM-API-PARSER-STANDARDIZATION-01
 - Typ: Parser-API-Standardisierung, Vertragstests, OpenAPI
 - Status: **PARSER APIS STANDARDIZED / CONTRACT TESTS VERIFIED LOCAL**
