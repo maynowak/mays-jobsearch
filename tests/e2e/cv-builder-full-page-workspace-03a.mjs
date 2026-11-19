@@ -137,7 +137,7 @@ async function run() {
     await nameField.fill("Nora Beispiel 03A");
     const beforeScreenshot = await nameField.inputValue();
     const beforeOpen = await popup.locator(".cv-builder-section[open]").count();
-    await popup.getByRole("button", { name: /Screenshot-Ansicht/ }).click();
+    await popup.getByRole("button", { name: "Ansicht wechseln" }).click();
     const afterOpen = await popup.locator(".cv-builder-section[open]").count();
     if (afterOpen <= beforeOpen) throw new Error("screenshot mode did not expand all sections");
 
@@ -162,7 +162,7 @@ async function run() {
     await popup.screenshot({ path: `${evidenceDir}/workspace-1440-fullpage.png`, fullPage: true });
     const screenshotStat = await stat(`${evidenceDir}/workspace-1440-fullpage.png`);
     if (screenshotStat.size <= 0) throw new Error("full-page screenshot missing");
-    await popup.getByRole("button", { name: /Screenshot-Ansicht beenden/ }).click();
+    await popup.getByRole("button", { name: "Ansicht wechseln" }).click();
     if ((await nameField.inputValue()) !== beforeScreenshot) throw new Error("screenshot mode changed CV data");
     if ((await popup.locator(".cv-builder-section[open]").count()) !== beforeOpen) throw new Error("section state was not restored");
 

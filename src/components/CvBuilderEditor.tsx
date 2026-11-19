@@ -848,8 +848,14 @@ export default function CvBuilderEditor({
               </button>
             )}
             {fullpage && (
-              <button type="button" className="btn-ghost cv-builder-screenshot-toggle" onClick={toggleScreenshotMode}>
-                {screenshotMode ? t("cvBuilder.workspace.screenshotExit") : t("cvBuilder.workspace.screenshot")}
+              <button
+                type="button"
+                className="btn-ghost cv-builder-screenshot-toggle"
+                aria-pressed={screenshotMode}
+                title={screenshotMode ? t("cvBuilder.workspace.screenshotExit") : t("cvBuilder.workspace.screenshot")}
+                onClick={toggleScreenshotMode}
+              >
+                {t("cvBuilder.workspace.viewSwitch")}
               </button>
             )}
             <button

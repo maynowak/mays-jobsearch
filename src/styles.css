@@ -15057,3 +15057,38 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     box-shadow: 0 18px 48px rgba(0, 12, 28, 0.25);
   }
 }
+
+/* JM-CV-DESIGN-03 — give the live preview breathing room above the action bar.
+   The footer stays in its existing flow/sticky behavior; no editor structure
+   or CV data flow changes. */
+.cv-builder-fullpage .cv-builder-workspace {
+  padding-bottom: 22px;
+  scroll-padding-bottom: 22px;
+}
+
+.cv-builder-fullpage .cv-builder-preview-pane {
+  padding-bottom: 24px;
+  scroll-padding-bottom: 24px;
+  overscroll-behavior: contain;
+}
+
+.cv-builder-fullpage .cv-builder-preview-pane .cv-preview {
+  margin-bottom: 0;
+}
+
+.cv-builder-fullpage .cv-builder-footer {
+  padding-top: 16px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 900px) {
+  .cv-builder-fullpage .cv-builder-workspace {
+    padding-bottom: 18px;
+    scroll-padding-bottom: 18px;
+  }
+
+  .cv-builder-fullpage .cv-builder-preview-pane {
+    padding-bottom: 20px;
+    scroll-padding-bottom: 20px;
+  }
+}
