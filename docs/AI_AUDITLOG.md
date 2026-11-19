@@ -7031,3 +7031,20 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Screenshots and report: `docs/reports/JM-CV-DESIGN-03-REPORT.md`,
   `docs/reports/assets/JM-CV-DESIGN-03/`.
 - No Main merge, production deploy, AWS/Terraform or product-code change.
+
+## 2026-11-19 — JM-MARKETING-01B — SEO VERIFICATION
+
+**Status:** `SEO VERIFICATION COMPLETE — PASS WITH WARNINGS`
+
+- Read-only Production check of `https://www.mays-job-matcher.app`: home
+  HTTP 200, `index,follow`, canonical www, Googlebot 200; robots.txt/sitemap
+  valid; non-www/HTTP 308 to www; Vercel alias uses the www canonical.
+- Private/app routes (`/search`, `/profil`, `/cv-builder/workspace`,
+  auth/registration/email/legal) return `X-Robots-Tag: noindex, nofollow`.
+- Warnings: no JSON-LD structured data, WebP-only 3:2 OG image,
+  missing `twitter:image:alt`/`twitter:site`, and 172-char meta description.
+- Actual Google index status is **BLOCKED/UNVERIFIED**: no Search Console
+  verification and no Google-specific index proof. External web search found
+  the homepage, but is not treated as Google evidence.
+- No product, SEO-tag, auth, consent, CV/RIS/AWS/Terraform or deployment change.
+  Report: `docs/reports/JM-MARKETING-01B-SEO-VERIFICATION.md`.
