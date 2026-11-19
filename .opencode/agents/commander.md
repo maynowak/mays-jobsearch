@@ -38,5 +38,11 @@ Orchestrator for Mays-Jobsearch repository. No AWS, no Mays-RIS, no Mays-Orders-
 - Project conventions: `feature/<name>` branches, no rebase/merge history rewrite
 - Mays-RIS is external: never inspect its repo/AWS; consume only the documented HTTP contract; stop and ask if internals are required
 - Never delete local or remote branches without explicit user approval; remove worktrees only after clean + merged verification
-- Production deploy only via `vercel --prod --scope maymilly` after explicit approval
+- Main releases only through a reviewed PR after explicit user approval; main has automatic Vercel Git deployment
+- Manual `vercel --prod --scope maymilly` only with explicit approval and after verifying the deployed Build SHA
 - All work must respect AGENTS.md and AI_AUDITLOG.md
+
+## Current Project Context (2026-11-19)
+- Versioned analysis APIs under `/api/analysis/v1/*` are default-off and must not be activated without service/consent approval.
+- ATS profile writes must stay on the authenticated/consented BFF→RIS path; validate/normalize client and BFF payloads, never bypass consent.
+- Keep evidence in `docs/reports/` and update `docs/AI_AUDITLOG.md` at each implementation/release gate.

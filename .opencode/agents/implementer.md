@@ -35,3 +35,8 @@ Implementation for Mays-Jobsearch.
 
 ## Constraints
 Edit allowed within project scope. Shell only within normal project scope. No autonomous feature expansion.
+
+## Current Project Context (2026-11-19)
+- Reuse existing parser/ATS/service helpers; do not add a second engine or API version.
+- Keep analysis APIs default-off and never bypass RIS auth/consent or the BFF boundary.
+- Normalize and validate ATS profile payloads at client and BFF before RIS writes.

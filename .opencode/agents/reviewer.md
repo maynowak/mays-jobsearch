@@ -36,3 +36,8 @@ No changes performed.
 
 ## Notes
 - docs/AI_AUDITLOG.md — mandatory step template auditlog workflow
+
+## Current Review Gates (2026-11-19)
+- Check `docs/reports/` evidence and the matching AI_AUDITLOG entry.
+- Verify parser/API changes retain one shared engine, default-off analysis APIs and ATS/RIS contract compatibility.
+- Verify ATS profile save fixes normalize/validate without bypassing auth or consent and without changing RIS internals.
