@@ -7082,3 +7082,19 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   pending items; no Google index is claimed.
 - PR #40 created against `main`; final CI will be checked on the final PR head.
   No Main merge or Production deployment performed.
+
+## 2026-11-19 — JM-RELEASE-01 — PRODUCTION VERIFIED
+
+**Status:** `PRODUCTION VERIFIED — GOOGLE INDEX STILL UNVERIFIED`
+
+- PR #40 merged as `b5fe52b`; automatic Vercel Production deployments for
+  matcher/jobsearch succeeded. Footer: `Version 2.2.0 · production · main ·
+  b5fe52b`.
+- Production smoke: homepage 200, canonical/robots correct; CV workspace 200,
+  desktop side artwork visible, mobile hidden, 0 overflow, 48 px preview/footer
+  gap, action bar visible, “Ansicht wechseln” present; robots/sitemap 200;
+  non-www 308; private routes noindex/no-follow; no console/page errors.
+- JSON-LD remains absent (warning). Search Console ownership/sitemap/URL
+  indexing remain external pending; no Google index is claimed.
+- No RIS/AWS/Terraform/auth/consent/storage change; no rollback. Report:
+  `docs/reports/JM-RELEASE-01-INTEGRATION-REPORT.md`.

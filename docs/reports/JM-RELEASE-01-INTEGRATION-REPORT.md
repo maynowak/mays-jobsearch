@@ -1,11 +1,11 @@
 # JM-RELEASE-01 — CV Design & SEO Integration Report
 
-**Status:** `READY FOR MAIN MERGE REVIEW`
+**Status:** `PRODUCTION VERIFIED — GOOGLE INDEX STILL UNVERIFIED`
 **External warning:** `GOOGLE SEARCH CONSOLE PENDING / ACTUAL INDEX UNVERIFIED`
 **Branch:** `feature/jm-cv-design-01`
 **Integrated head:** `7c987b6`
 **Origin/main:** `ea610da`
-**PR:** [#40](https://github.com/maynowak/mays-jobsearch/pull/40) — CI verification pending on final head
+**PR:** [#40](https://github.com/maynowak/mays-jobsearch/pull/40) — merged as `b5fe52b`
 **No Main merge, no production deployment, no product/API/RIS/AWS/Terraform change.**
 
 ## 1. Integration
@@ -92,3 +92,47 @@ deployment.
 
 **Blockers:** none for code/CV/SEO technical integration.
 **External warning:** Google Search Console onboarding and actual index status.
+
+
+## 6. Controlled Production Release — Result
+
+**Status:** `PRODUCTION VERIFIED — GOOGLE INDEX STILL UNVERIFIED`
+
+- PR #40 merged into `main` as **`b5fe52b`** (feature branch retained).
+- Automatic Vercel Production deployments: **mays-job-matcher SUCCESS**,
+  **mays-jobsearch SUCCESS**.
+- Production footer: `Version 2.2.0 · production · main · b5fe52b`.
+- No manual deploy, no force-push, no branch deletion, no rollback.
+
+### Production smoke results
+
+| Check | Result |
+|---|---|
+| Homepage | HTTP 200 |
+| Canonical | `https://www.mays-job-matcher.app/` |
+| Home robots meta | `index,follow,max-image-preview:large` |
+| Home horizontal overflow 1440/390 | 0 px |
+| CV workspace | HTTP 200, heading present |
+| CV side artwork 1440 | visible |
+| CV side artwork 390 | hidden |
+| CV horizontal overflow | 0 px |
+| Preview/footer gap 1440 | 48 px |
+| Action bar visible | yes |
+| “Ansicht wechseln” / aria-pressed | present / false initial |
+| robots.txt | HTTP 200, expected content |
+| sitemap.xml | HTTP 200, expected homepage URL |
+| non-www redirect | 308 to `https://www.mays-job-matcher.app/` |
+| private route headers | `noindex, nofollow` on all checked routes |
+| Console/page errors | none |
+| JSON-LD | warning — 0 blocks |
+| Search Console / actual Google index | pending / not claimed |
+
+Private routes checked: `/search`, `/profil`, `/cv-builder/workspace`,
+`/auth/callback`, `/anmelden`, `/registrieren`, `/email-bestaetigen`,
+`/datenschutz`, `/impressum`.
+
+### Remaining external warning
+
+Google Search Console ownership, sitemap submission, URL inspection and actual
+Google indexing remain pending. This release does not claim completion of
+those external onboarding steps.
