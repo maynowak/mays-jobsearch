@@ -7098,3 +7098,19 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   indexing remain external pending; no Google index is claimed.
 - No RIS/AWS/Terraform/auth/consent/storage change; no rollback. Report:
   `docs/reports/JM-RELEASE-01-INTEGRATION-REPORT.md`.
+
+## 2026-11-19 — JM-RIS-CV-ATS-API-01 — CONTRACT REVIEW
+
+**Status:** `CONTRACT READY FOR IMPLEMENTATION — SECURITY/PRIVACY GATES OPEN`
+
+- Analyzed existing CV parser, ATS and matching modules plus both API surfaces.
+  Existing ATS logic (`api/_lib/ats.mjs`) and matching (`api/_lib/matching.mjs`)
+  are reusable; they must not be reimplemented.
+- CV PDF extraction is browser-bound (`src/lib/pdf.ts`); pure parser logic needs
+  extraction for serverless use. `/api/ats-analysis` and `/api/match` are
+  currently unauthenticated/CORS-open; RIS `ATSHttpClient` calls the ATS endpoint
+  without a credential. No parse/match API or RIS capability exists.
+- Proposed versioned, service-authenticated analysis endpoints and contracts;
+  service auth, tenant isolation and analysis consent remain explicit blockers.
+  No endpoints, AWS/Terraform, auth, consent, storage or product changes.
+- Report: `docs/reports/JM-RIS-CV-ATS-API-01-CONTRACT-REVIEW.md`.
