@@ -1,10 +1,17 @@
 # JM-CV-JOB-PARSER-QUALITY-01 — CV & Job Parser Quality
 
 **Status:** `CV & JOB PARSER IMPROVED / VERSIONED APIS VERIFIED LOCAL`  
-**Branch:** `feature/jm-ris-cv-ats-api-01`  
-**Code commit:** `e1c8974`  
-**No new endpoint, no new API version, no second parser engine.**  
-**No Main merge, Production deployment, RIS/AWS/Terraform change.**
+**Release status:** `MERGED TO MAIN / PRODUCTION DEPLOYED / LIVE SMOKE VERIFIED`
+
+**Branch:** `feature/jm-ris-cv-ats-api-01`
+
+**Code commits:** `e1c8974`, `89a6e9b`, `01e237b`
+
+**Merge commit:** `fd92230` (PR #41)
+
+**No new endpoint, no new API version, no second parser engine.**
+
+**No RIS/AWS/Terraform change.**
 
 ## 1. Result
 
@@ -129,7 +136,7 @@ No automatic RIS contract migration was performed.
 | Legacy/versioned ATS compatibility | PASS |
 | CV frontend/API parity | PASS |
 | RIS boundary static test | PASS |
-| Full frontend/API suite | **1995 PASS / 11 skipped** |
+| Full frontend/API suite | **1996 PASS / 11 skipped** |
 | `npm run build` | PASS |
 | API/script syntax checks | PASS |
 | OpenAPI parse / v1 schemas | PASS |
@@ -149,16 +156,39 @@ frontend/API parser parity.
   configuration; no production activation was performed.
 - New job metadata is available through the parser/API result and the existing
   legacy analysis response, but no new UI presentation was added.
-- No RIS repository change, no AWS/Terraform/Vercel production change, no
-  consent record change.
-- No Main merge or Production deployment.
+- No RIS repository change, no AWS/Terraform change, no consent record change.
+- The original parser-quality scope did not require a new UI presentation; new
+  metadata is available through the existing analysis response and the
+  versioned parser API.
 
-## 8. Git
+## 8. Git and Release
 
 - `e1c8974` — parser quality implementation, OpenAPI/docs/tests
-- Branch: `feature/jm-ris-cv-ats-api-01` (pushed)
-- Prior parser standardization: `1f9cb23`
-- No Main merge or Production deployment.
+- `89a6e9b` — Vercel function-limit consolidation: four public v1 paths now
+  route through the existing `api/ats-analysis` function; public URLs are
+  unchanged and the deployment remains at 12 functions.
+- `01e237b` — CodeQL fixes for the generated parser regex escaping and unused
+  imports.
+- `fd92230` — PR #41 merged to `origin/main`.
+- Prior parser standardization: `1f9cb23`.
+
+## 9. Production Verification
+
+Automatic main deployment completed without manual `vercel --prod`:
+
+- `www.mays-job-matcher.app` → production deployment
+  `dpl_95BJLfMmKm89Ybid6diP4gdJaDs2`, `READY`
+- `mays-jobsearch.vercel.app` → production deployment
+  `dpl_5T3NNuGFAFU99uap3ADWBuQ4c6ML`, `READY`
+
+Live smoke checks:
+
+- `/`, `/datenschutz`, `/impressum` return `200` on both domains.
+- `POST /api/analysis/v1/ats/requirements` returns `503 analysis_disabled`
+  (router is reachable; production activation remains intentionally off).
+- `POST /api/ats-analysis` remains compatible and returns `200` for a synthetic
+  title/tag request.
+- No real CV or personal data was submitted.
 
 **JM-CV-JOB-PARSER-QUALITY-01 — CV & JOB PARSER IMPROVED / VERSIONED APIS
-VERIFIED LOCAL.**
+VERIFIED LOCAL / MERGED TO MAIN / PRODUCTION SMOKE VERIFIED.**

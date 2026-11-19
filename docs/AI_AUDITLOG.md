@@ -1,3 +1,12 @@
+2026-11-19 · JM-CV-JOB-PARSER-QUALITY-01 — CONTROLLED MAIN RELEASE
+- Typ: Controlled Merge, Vercel-Function-Limit-Fix, Production Smoke
+- Status: **MERGED TO MAIN / PRODUCTION DEPLOYED / LIVE SMOKE VERIFIED**
+- Release: PR #41 against `main` merged as `fd92230`; no force-push, no branch deletion, no manual `vercel --prod`.
+- Code: `e1c8974` parser quality; `89a6e9b` Vercel consolidation; `01e237b` CodeQL fixes. Public v1 URLs `/api/analysis/v1/cv/parse`, `/api/analysis/v1/ats/requirements`, `/api/analysis/v1/ats/analyze`, `/api/analysis/v1/match` remain unchanged. The four handlers now live under `api/_lib/analysis/handlers/` and are dispatched by existing `api/ats-analysis.mjs` through four `vercel.json` rewrites; function count remains 12 (Hobby limit), avoiding `exceeded_serverless_functions_per_deployment`.
+- Checks: PR Vercel previews PASS; CodeQL Analysis PASS and the duplicate CodeQL status is `skipping`; CodeQL annotations from generated parser escaping and unused imports fixed. Full suite **1996 PASS / 11 skipped**; build and OpenAPI checks PASS.
+- Production: `www.mays-job-matcher.app` deployment `dpl_95BJLfMmKm89Ybid6diP4gdJaDs2` READY; `mays-jobsearch.vercel.app` deployment `dpl_5T3NNuGFAFU99uap3ADWBuQ4c6ML` READY. `/`, `/datenschutz`, `/impressum` 200; versioned ATS requirements returns intentional `503 analysis_disabled`; legacy `/api/ats-analysis` 200. No real CV/personal data.
+- Boundaries: no RIS/AWS/Terraform/consent change; analysis API remains default-off; legacy UI auth/consent gate from API-03 remains open.
+
 2026-11-19 · JM-CV-JOB-PARSER-QUALITY-01
 - Typ: CV-/Job-Parser-Qualität, gemeinsame Parser-Core-Parität, v1-Contract-Update
 - Status: **CV & JOB PARSER IMPROVED / VERSIONED APIS VERIFIED LOCAL**
