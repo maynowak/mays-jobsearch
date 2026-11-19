@@ -69,6 +69,44 @@ function idOf(value, name) {
   return value;
 }
 
+function phraseList(value, name) {
+  if (!Array.isArray(value)) {
+    throw new RisClientError("validation_error", 422, `${name} must be an array`);
+  }
+  const normalized = value.map((entry) => typeof entry === "string" ? entry.trim() : "");
+  if (normalized.some((entry) => !entry || entry.length > 200)) {
+    throw new RisClientError("validation_error", 422, `${name} contains an invalid phrase`);
+  }
+  return [...new Set(normalized)];
+}
+
+function normalizeAtsBody(body, partial = false) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new RisClientError("invalid_body", 422, "Request body is invalid");
+  }
+  const allowed = new Set(["name", "targetRoles", "skills", "criteria"]);
+  if (Object.keys(body).some((key) => !allowed.has(key))) {
+    throw new RisClientError("validation_error", 422, "ATS profile contains an unexpected field");
+  }
+  const normalized = { ...body };
+  if (!partial || body.name !== undefined) {
+    if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 200) {
+      throw new RisClientError("validation_error", 422, "name is invalid");
+    }
+    normalized.name = body.name.trim();
+  }
+  if (!partial || body.targetRoles !== undefined) {
+    normalized.targetRoles = phraseList(body.targetRoles, "targetRoles");
+  }
+  if (!partial || body.skills !== undefined) {
+    normalized.skills = phraseList(body.skills, "skills");
+  }
+  if (partial && Object.keys(normalized).length === 0) {
+    throw new RisClientError("validation_error", 422, "At least one field is required");
+  }
+  return normalized;
+}
+
 function basePath(type, cvId, searchProfileId) {
   if (type === "manual") return "/v1/partner/me/manual-search-profiles";
   if (type === "cv") {
@@ -149,7 +187,8 @@ export default async function handler(req, res) {
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return fail(res, 422, "invalid_body", "Request body is invalid");
       }
-      return ok(res, await risRequest({ ...cfg }, token, "POST", base, body), 201);
+      const normalizedBody = type === "ats" ? normalizeAtsBody(body) : body;
+      return ok(res, await risRequest({ ...cfg }, token, "POST", base, normalizedBody), 201);
     }
 
     if (req.method === "PUT") {
@@ -158,7 +197,8 @@ export default async function handler(req, res) {
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return fail(res, 422, "invalid_body", "Request body is invalid");
       }
-      return ok(res, await risRequest({ ...cfg }, token, "PUT", itemPath, body));
+      const normalizedBody = type === "ats" ? normalizeAtsBody(body, true) : body;
+      return ok(res, await risRequest({ ...cfg }, token, "PUT", itemPath, normalizedBody));
     }
 
     if (req.method === "DELETE") {

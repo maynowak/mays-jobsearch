@@ -134,6 +134,76 @@ describe("/api/ris/search-profiles", () => {
     );
   });
 
+  it("normalisiert ein gültiges ATS-Payload vor dem RIS-Aufruf", async () => {
+    risResponse = response(201, {
+      schemaVersion: 1,
+      atsSearchProfileId: "ats-1",
+      searchProfileId: "sp-1",
+      name: "Cloud ATS",
+      targetRoles: ["Cloud"],
+      skills: ["AWS"],
+      createdAt: "2026-11-19T10:00:00Z",
+      updatedAt: "2026-11-19T10:00:00Z",
+      version: 1,
+    });
+    const res = makeRes();
+    await handler(request("POST", {
+      query: { type: "ats", searchProfileId: "sp-1" },
+      body: {
+        name: "  Cloud ATS  ",
+        targetRoles: ["Cloud", "Cloud"],
+        skills: ["AWS", " AWS "],
+      },
+    }), res);
+    expect(res.statusCode).toBe(201);
+    expect(risCalls()[0][0]).toContain("/v1/partner/me/search-profiles/sp-1/ats-profiles");
+    expect(JSON.parse(risCalls()[0][1].body)).toEqual({
+      name: "Cloud ATS",
+      targetRoles: ["Cloud"],
+      skills: ["AWS"],
+    });
+  });
+
+  it("speichert ein ATS-Profil und lädt es anschließend wieder", async () => {
+    const created = {
+      schemaVersion: 1,
+      atsSearchProfileId: "ats-1",
+      searchProfileId: "sp-1",
+      name: "Cloud ATS",
+      targetRoles: ["Cloud"],
+      skills: ["AWS"],
+      createdAt: "2026-11-19T10:00:00Z",
+      updatedAt: "2026-11-19T10:00:00Z",
+      version: 1,
+    };
+    risResponse = response(201, created);
+    const saveRes = makeRes();
+    await handler(request("POST", {
+      query: { type: "ats", searchProfileId: "sp-1" },
+      body: { name: "Cloud ATS", targetRoles: ["Cloud"], skills: ["AWS"] },
+    }), saveRes);
+    expect(saveRes.statusCode).toBe(201);
+
+    risResponse = response(200, { items: [created], nextCursor: null });
+    const reloadRes = makeRes();
+    await handler(request("GET", {
+      query: { type: "ats", searchProfileId: "sp-1" },
+    }), reloadRes);
+    expect(reloadRes.statusCode).toBe(200);
+    expect(reloadRes.body.items).toEqual([created]);
+  });
+
+  it("weist ein ATS-Payload ohne Namen vor dem RIS-Aufruf ab", async () => {
+    const res = makeRes();
+    await handler(request("POST", {
+      query: { type: "ats", searchProfileId: "sp-1" },
+      body: { name: "   ", targetRoles: ["Cloud"], skills: ["AWS"] },
+    }), res);
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe("validation_error");
+    expect(risCalls()).toHaveLength(0);
+  });
+
   it("weist unbekannte Typen fail-closed ab", async () => {
     const res = makeRes();
     await handler(request("GET", { query: { type: "application" } }), res);

@@ -1,6 +1,7 @@
 import type {
   CreateATSProfileInputV1,
   CreateCVSearchProfileInputV1,
+  UpdateATSProfileInputV1,
   ATSCriteriaV1,
   CreateManualSearchProfileInputV1,
   MatchingPreferencesV1,
@@ -98,10 +99,47 @@ export function validateCreateCVSearchProfile(value: unknown): asserts value is 
 export function validateCreateATSProfile(value: unknown): asserts value is CreateATSProfileInputV1 {
   if (!isRecord(value)) throw new ProfileValidationError('ATS profile input must be an object');
   assertKeys(value, ['name', 'targetRoles', 'skills', 'criteria']);
-  readString(value.name, 'name');
+  readString(value.name, 'name', false, 200);
   validatePhraseList(value.targetRoles, 'targetRoles');
   validatePhraseList(value.skills, 'skills');
   if (value.criteria !== undefined) validateATSCriteria(value.criteria);
+}
+
+function normalizePhraseList(values: readonly string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+export function normalizeCreateATSProfileInput(
+  input: CreateATSProfileInputV1
+): CreateATSProfileInputV1 {
+  const normalized: CreateATSProfileInputV1 = {
+    ...input,
+    name: input.name.trim(),
+    targetRoles: normalizePhraseList(input.targetRoles),
+    skills: normalizePhraseList(input.skills),
+  };
+  validateCreateATSProfile(normalized);
+  return normalized;
+}
+
+export function normalizeUpdateATSProfileInput(
+  input: UpdateATSProfileInputV1
+): UpdateATSProfileInputV1 {
+  const normalized: UpdateATSProfileInputV1 = {
+    ...input,
+    ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+    ...(input.targetRoles !== undefined
+      ? { targetRoles: normalizePhraseList(input.targetRoles) }
+      : {}),
+    ...(input.skills !== undefined
+      ? { skills: normalizePhraseList(input.skills) }
+      : {}),
+  };
+  if (normalized.name !== undefined) readString(normalized.name, 'name', false, 200);
+  if (normalized.targetRoles !== undefined) validatePhraseList(normalized.targetRoles, 'targetRoles');
+  if (normalized.skills !== undefined) validatePhraseList(normalized.skills, 'skills');
+  if (normalized.criteria !== undefined) validateATSCriteria(normalized.criteria);
+  return normalized;
 }
 
 export function validateCreateManualSearchProfile(value: unknown): asserts value is CreateManualSearchProfileInputV1 {

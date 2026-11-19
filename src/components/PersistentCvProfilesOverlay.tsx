@@ -192,6 +192,10 @@ export default function PersistentCvProfilesOverlay({
 
   const saveAts = async () => {
     if (!atsParent || !atsName.trim()) return;
+    if (!editingAtsId && (atsByParent[atsParent]?.length ?? 0) >= 5) {
+      setError(t("cv.unassignedCapacity"));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {

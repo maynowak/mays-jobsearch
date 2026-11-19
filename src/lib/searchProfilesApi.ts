@@ -23,6 +23,10 @@ import type {
   UpdateCVSearchProfileInputV1,
   UpdateManualSearchProfileInputV1,
 } from "./profiles/contractTypes";
+import {
+  normalizeCreateATSProfileInput,
+  normalizeUpdateATSProfileInput,
+} from "./profiles/profileValidation";
 
 export type SearchProfileType = "manual" | "cv" | "ats";
 export type SearchProfileConsentStatus = "NOT_GRANTED" | "GRANTED" | "WITHDRAWN";
@@ -209,7 +213,7 @@ export async function createAtsProfile(
 ): Promise<ATSSearchProfileV1> {
   return request<ATSSearchProfileV1>(profilesQuery("ats", { searchProfileId }), token, {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify(normalizeCreateATSProfileInput(input)),
   });
 }
 
@@ -221,7 +225,7 @@ export async function updateAtsProfile(
 ): Promise<ATSSearchProfileV1> {
   return request<ATSSearchProfileV1>(profilesQuery("ats", { searchProfileId, id }), token, {
     method: "PUT",
-    body: JSON.stringify(input),
+    body: JSON.stringify(normalizeUpdateATSProfileInput(input)),
   });
 }
 

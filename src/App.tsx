@@ -79,7 +79,7 @@ import { CvStorageApiError, downloadCvFile, isRisCvStorageEnabled, type Persiste
 import { persistentCvProcessBlocker } from "./lib/cvProcessingHandoff";
 import { cvStorageErrorMessage, usePersistentCvStorage } from "./lib/usePersistentCvStorage";
 import { useCvBuilderPdfRisStorage } from "./lib/useCvBuilderPdfRisStorage";
-import { isRisSearchProfileStorageEnabled } from "./lib/searchProfilesApi";
+import { isRisSearchProfileStorageEnabled, SearchProfilesApiError } from "./lib/searchProfilesApi";
 import { usePersistentSearchProfiles } from "./lib/usePersistentSearchProfiles";
 import {
   checkRisRemoteApplicationAccess,
@@ -1974,7 +1974,9 @@ export default function App() {
     if (cvState.processingGoal === "ats") {
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
       const count = readCvProfileLists(doc?.hash ?? null).atsProfiles.length + 1;
-      const base = cvState.cvProfile?.targetRoles?.[0] || cvState.suggestedProfile?.targetRoles[0] || "ATS";
+      const base = String(
+        cvState.cvProfile?.targetRoles?.[0] || cvState.suggestedProfile?.targetRoles[0] || "ATS"
+      ).trim() || "ATS";
       setAtsProfileName(`${base} - ATS${count}`);
     }
     // isProcessing bleibt false: skill-selection benoetigt bedienbare
@@ -1993,8 +1995,25 @@ export default function App() {
     setCvState((prev) => ({ ...prev, selectedSkills: skills }));
   };
 
+  const atsProfileSaveMessage = (error: unknown): string => {
+    if (error instanceof SearchProfilesApiError) {
+      if (error.code === "capacity_exceeded" || error.status === 409) {
+        return t("cv.unassignedCapacity");
+      }
+      if (error.status === 403) return t("searchProfiles.searchConsentRequired");
+      if (error.status === 404) return t("cv.atsNoDurableParent");
+      if (error.status === 422) return t("cv.atsProfileValidation");
+    }
+    return t("cv.errorAtsProfileSave");
+  };
+
   const handleSkillSelectionConfirm = async () => {
     if (cvState.selectedSkills.length === 0) {
+      return;
+    }
+    const atsName = atsProfileName.trim();
+    if (cvState.processingGoal === "ats" && !atsName) {
+      setStatus({ type: "error", message: t("cv.atsProfileNameRequired") });
       return;
     }
     // CV-UPLOAD-UX-04/07: ATS-Ziel — die bestaetigten Skills werden als
@@ -2018,7 +2037,7 @@ export default function App() {
         setCvState((prev) => ({ ...prev, isProcessing: true }));
         try {
           const created = await persistentSearchProfiles.createAts(durableParentSearchProfileId, {
-            name: atsProfileName,
+            name: atsName,
             skills: cvState.selectedSkills,
             targetRoles: cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
           });
@@ -2036,10 +2055,10 @@ export default function App() {
             type: "info",
             message: t("cv.atsProfileSavedPersistent", { name: created.name }),
           });
-        } catch {
+        } catch (error) {
           if (sessionEpochRef.current === epoch) {
             setCvState((prev) => ({ ...prev, isProcessing: false }));
-            setStatus({ type: "error", message: t("cv.errorAtsProfileSave") });
+            setStatus({ type: "error", message: atsProfileSaveMessage(error) });
           }
         }
         return;
@@ -2069,7 +2088,7 @@ export default function App() {
         setCvState((prev) => ({ ...prev, isProcessing: true }));
         try {
           const created = await repositories.atsSearchProfiles.create(doc.hash, selectedSavedSearchId, {
-            name: atsProfileName,
+            name: atsName,
             skills: cvState.selectedSkills,
             targetRoles: cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
           });
@@ -2080,7 +2099,7 @@ export default function App() {
           if (error instanceof ProfileSessionEndedError) return;
           if (sessionEpochRef.current === epoch) {
             setCvState((prev) => ({ ...prev, isProcessing: false }));
-            setStatus({ type: "error", message: t("cv.errorAtsProfileSave") });
+            setStatus({ type: "error", message: atsProfileSaveMessage(error) });
           }
           return;
         }
@@ -3407,6 +3426,7 @@ export default function App() {
                 value={atsProfileName}
                 onChange={(e) => setAtsProfileName(e.target.value)}
                 disabled={cvState.isProcessing}
+                maxLength={200}
                 autoComplete="off"
                 placeholder={t("cv.atsProfileNamePlaceholder")}
                 // CV-PROFILE-LISTS-03: Klick markiert den ganzen Vorschlag
@@ -3539,6 +3559,7 @@ export default function App() {
               disabled={
                 cvState.isProcessing ||
                 cvState.selectedSkills.length === 0 ||
+                (cvState.processingGoal === "ats" && !atsProfileName.trim()) ||
                 (cvState.processingGoal === "ats" &&
                   profileStorageChoice === "persistent" &&
                   durableSearchProfilesLoading)
