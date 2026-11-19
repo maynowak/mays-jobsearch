@@ -196,7 +196,10 @@ components:
                   enum: [confirmed, partial, uncertain]
                 sectionConfidence:
                   type: object
-                  additionalProperties: { type: string }
+                  description: Per-section parser confidence. Sections without a reliable mapping are omitted.
+                  additionalProperties:
+                    type: string
+                    enum: [confirmed, partial, uncertain]
                 unrecognizedCount: { type: integer }
                 mapping: { type: object }
                 anonymizedProfile:
@@ -269,6 +272,23 @@ components:
             contractType: { type: string }
         profile:
           $ref: "#/components/schemas/AnalysisProfileV1"
+    AtsRequirementV1:
+      type: object
+      required: [id, text, category, importance, source]
+      properties:
+        id: { type: string }
+        text: { type: string }
+        category:
+          type: string
+          description: Existing ATS category; no new taxonomy is introduced here.
+        importance:
+          type: string
+          enum: [critical, high, medium, low]
+        source:
+          type: string
+          enum: [title, tags, description, criteria]
+        explicitness: { type: string }
+        normalized: { type: string }
     AtsRequirementsResponseV1:
       allOf:
         - $ref: "#/components/schemas/AnalysisEnvelope"
@@ -276,13 +296,34 @@ components:
           properties:
             data:
               type: object
+              required: [analysisStatus, metadata, basis, requirements]
               properties:
                 analysisStatus: { type: string, enum: [complete, limited, insufficient] }
-                metadata: { type: object }
-                basis: { type: object }
+                metadata:
+                  type: object
+                  properties:
+                    title: { type: string, nullable: true }
+                    titleTokens:
+                      type: array
+                      items: { type: string }
+                    language: { type: string, nullable: true }
+                    workMode: { type: string, nullable: true, enum: [remote, onsite, null] }
+                    jobTypes:
+                      type: array
+                      items: { type: string }
+                    contractType: { type: string, nullable: true }
+                    contractTypeNoData: { type: boolean }
+                basis:
+                  type: object
+                  required: [requirementCount, titleRequirementCount, hasDescription]
+                  properties:
+                    requirementCount: { type: integer }
+                    titleRequirementCount: { type: integer }
+                    hasDescription: { type: boolean }
                 requirements:
                   type: array
-                  items: { type: object, additionalProperties: true }
+                  items:
+                    $ref: "#/components/schemas/AtsRequirementV1"
     AtsAnalyzeRequestV1:
       allOf:
         - $ref: "#/components/schemas/AtsRequirementsRequestV1"

@@ -274,6 +274,54 @@ describe("analysis v1 service foundation", () => {
     );
   });
 
+  it("chains the CV parser result into ATS requirements and ATS analysis", async () => {
+    const buffer = await readFile("tests/fixtures/cv/synthetic-cv.pdf");
+    const parsedRes = response();
+    await cvParseHandler({
+      method: "POST",
+      headers: {
+        "content-type": "application/pdf",
+        "x-schema-version": "1",
+        "x-analysis-token": serviceToken({ scopes: ["cv:parse"] }),
+        "x-analysis-consent": consentToken(),
+      },
+      body: buffer,
+    }, parsedRes);
+    expectEnvelope(parsedRes, 200);
+    expect(Object.values(parsedRes.body.data.sectionConfidence).every(
+      (value) => ["confirmed", "partial", "uncertain"].includes(value)
+    )).toBe(true);
+
+    const profile = {
+      skills: parsedRes.body.data.draft.skills.join(", "),
+      targetRoles: [parsedRes.body.data.draft.profile.headline].filter(Boolean),
+    };
+    const requirementsRes = response();
+    await atsRequirementsHandler(request({ schemaVersion: 1, job, profile }), requirementsRes);
+    expectEnvelope(requirementsRes, 200);
+    expect(requirementsRes.body.data.requirements.length).toBeGreaterThan(0);
+
+    const analysisRes = response();
+    await atsAnalyzeHandler(request({ schemaVersion: 1, job, profile }), analysisRes);
+    expectEnvelope(analysisRes, 200);
+    expect(analysisRes.body.data.analysis.requirements.map((item) => item.id)).toEqual(
+      requirementsRes.body.data.requirements.map((item) => item.id)
+    );
+  });
+
+  it("returns ATS requirement objects with the RIS/ATS reusable contract fields", async () => {
+    const res = response();
+    await atsRequirementsHandler(request({ schemaVersion: 1, job, profile: { skills: "AWS" } }), res);
+    expectEnvelope(res, 200);
+    for (const requirement of res.body.data.requirements) {
+      expect(typeof requirement.id).toBe("string");
+      expect(typeof requirement.text).toBe("string");
+      expect(typeof requirement.category).toBe("string");
+      expect(["critical", "high", "medium", "low"]).toContain(requirement.importance);
+      expect(["title", "tags", "description", "criteria"]).toContain(requirement.source);
+    }
+  });
+
   it("parses the synthetic CV without returning the raw PDF/text or personal data by default", async () => {
     const buffer = await readFile("tests/fixtures/cv/synthetic-cv.pdf");
     const res = response();

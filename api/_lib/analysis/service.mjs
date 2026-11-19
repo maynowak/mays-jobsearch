@@ -23,10 +23,43 @@ export function parseSkills(value) {
   return String(value ?? "").split(",").map(unquote).filter(Boolean);
 }
 
-function confidenceOf(parsed) {
-  const values = Object.values(parsed.uncertain ?? {});
-  if (values.some(Boolean)) return "uncertain";
-  return Object.values(parsed.detected ?? {}).some(Boolean) ? "confirmed" : "uncertain";
+const CV_SECTION_IDS = [
+  "personal",
+  "profile",
+  "experience",
+  "education",
+  "skills",
+  "projects",
+  "certificates",
+  "languages",
+  "links",
+];
+
+function sectionConfidenceOf(parsed) {
+  const result = {};
+  for (const sectionId of CV_SECTION_IDS) {
+    const mapped = (parsed.mapping?.sections ?? []).filter(
+      (section) => section.category === sectionId || section.targets?.includes(sectionId)
+    );
+    const levels = mapped.map((section) => section.confidence);
+    let value = null;
+    if (parsed.uncertain?.[sectionId] || levels.includes("uncertain")) {
+      value = "uncertain";
+    } else if (levels.includes("partial")) {
+      value = "partial";
+    } else if (parsed.detected?.[sectionId]) {
+      value = "confirmed";
+    }
+    if (value) result[sectionId] = value;
+  }
+  return result;
+}
+
+function overallConfidenceOf(sections) {
+  const values = Object.values(sections);
+  if (values.includes("uncertain")) return "uncertain";
+  if (values.includes("partial")) return "partial";
+  return values.length ? "confirmed" : "uncertain";
 }
 
 function profileOf(draft) {
@@ -72,6 +105,7 @@ export async function parseCvBuffer(buffer, { includePersonal = false } = {}) {
     ...parsed.draft,
     personal: includePersonal ? { ...parsed.draft.personal } : {},
   };
+  const sectionConfidence = sectionConfidenceOf(parsed);
   return {
     data: {
       parserVersion: "cv-import-03b-server-1",
@@ -82,8 +116,8 @@ export async function parseCvBuffer(buffer, { includePersonal = false } = {}) {
         textLength: document.text.length,
       },
       draft,
-      confidence: confidenceOf(parsed),
-      sectionConfidence: parsed.uncertain,
+      confidence: overallConfidenceOf(sectionConfidence),
+      sectionConfidence,
       unrecognizedCount: parsed.unrecognized.length,
       mapping: parsed.mapping,
       anonymizedProfile: profileOf(draft),
