@@ -1,3 +1,13 @@
+2026-11-19 · JM-ATS-PROFILE-SAVE-FIX-01
+- Typ: ATS-Profil-Speicherpfad, Client-/BFF-Validierung, Regressionstests
+- Status: **ATS PROFILE SAVE FIXED / VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-ats-profile-save-fix-01`; Code `5f8b570`; Basis `4953da0`.
+- Reproduktion: Der persistente CV-/ATS-Pfad übergab `name`, `targetRoles` und `skills` ungeprüft an den BFF/RIS. Leere/whitespace-only Namen, nicht getrimmte oder doppelte Phrasen konnten die RIS-`Name`-/`PhraseList`-Constraints verletzen (typischerweise `422 validation_error`); die UI zeigte anschließend nur den generischen `cv.errorAtsProfileSave`-Text.
+- Fix: Client normalisiert ATS-Name und Phrasenlisten, blockiert leere Namen, dedupliziert exakte Phrasen; BFF normalisiert/validiert ATS-POST/PUT vor dem RIS-Aufruf und liefert `422 validation_error` ohne RIS-Write bei ungültigem Body. 5-ATS-Limit im Overlay vorab geprüft; App mappt 403/404/409/422 auf verständliche Meldungen. Create/Update, Auth- und Consent-Gates bleiben unverändert.
+- Tests: fokussiert 25 PASS; ATS save + anschließendes Reload PASS; Full-Suite **2000 PASS / 11 skipped**; Build, API-Syntax und Diff-Check PASS. Keine Produktions-Schreibtests, keine echten Profildaten.
+- Keine RIS-/AWS-/Terraform-/Consent-Änderung; kein Main-Merge, kein Production-Deployment.
+- Bericht: `docs/reports/JM-ATS-PROFILE-SAVE-FIX-01.md`.
+
 2026-11-19 · JM-CV-JOB-PARSER-QUALITY-01 — CONTROLLED MAIN RELEASE
 - Typ: Controlled Merge, Vercel-Function-Limit-Fix, Production Smoke
 - Status: **MERGED TO MAIN / PRODUCTION DEPLOYED / LIVE SMOKE VERIFIED**
