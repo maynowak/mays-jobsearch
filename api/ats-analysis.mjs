@@ -1,13 +1,14 @@
 import { HttpError } from "./_lib/filter.mjs";
 import { chat } from "./_lib/ai.mjs";
-import { 
-  analyzeJobForAts, 
-  generateCVRecommendations,
+import {
   formulateCVText,
-  formulateAllRecommendations,
   validateRecommendationSafety,
-  getPrivacyNotice,
 } from "./_lib/ats.mjs";
+import { analyzeAts } from "./_lib/analysis/service.mjs";
+import cvParseHandler from "./_lib/analysis/handlers/cvParse.mjs";
+import atsRequirementsHandler from "./_lib/analysis/handlers/atsRequirements.mjs";
+import atsAnalyzeHandler from "./_lib/analysis/handlers/atsAnalyze.mjs";
+import analysisMatchHandler from "./_lib/analysis/handlers/match.mjs";
 import { getConfig } from "./_lib/config.mjs";
 
 function readBody(req) {
@@ -93,7 +94,7 @@ function getModelInfo(provider) {
   return { model: null };
 }
 
-export default async function handler(req, res) {
+async function legacyAtsHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   
@@ -125,9 +126,9 @@ export default async function handler(req, res) {
     // Parse skills properly
     const cvSkills = parseSkills(profile?.skills);
     
-    // Step 1: Deterministic ATS Analysis (always executed)
-    const analysis = analyzeJobForAts(job, profile || {});
-    const recommendations = generateCVRecommendations(analysis, cvSkills);
+    // Step 1: Deterministic ATS Analysis (always executed) through the shared
+    // core service. The legacy response below remains unchanged for the UI.
+    const { analysis, recommendations } = analyzeAts(job, profile || {});
     
     const response = {
       analysis: {
@@ -265,4 +266,36 @@ export default async function handler(req, res) {
       code: "internal",
     });
   }
+}
+
+const ANALYSIS_ROUTES = {
+  "cv-parse": cvParseHandler,
+  "ats-requirements": atsRequirementsHandler,
+  "ats-analyze": atsAnalyzeHandler,
+  match: analysisMatchHandler,
+};
+
+function analysisRoute(req) {
+  const queryValue = req?.query?.__analysis;
+  const routed = Array.isArray(queryValue) ? queryValue[0] : queryValue;
+  if (routed && ANALYSIS_ROUTES[routed]) return routed;
+
+  // Defensive fallback for local integrations that call the rewritten URL
+  // directly without the Vercel query rewrite.
+  try {
+    const path = new URL(req?.url ?? "/", "http://localhost").pathname;
+    if (path === "/api/analysis/v1/cv/parse") return "cv-parse";
+    if (path === "/api/analysis/v1/ats/requirements") return "ats-requirements";
+    if (path === "/api/analysis/v1/ats/analyze") return "ats-analyze";
+    if (path === "/api/analysis/v1/match") return "match";
+  } catch {
+    // Keep the legacy route for malformed local URLs.
+  }
+  return null;
+}
+
+export default async function handler(req, res) {
+  const route = analysisRoute(req);
+  if (route) return ANALYSIS_ROUTES[route](req, res);
+  return legacyAtsHandler(req, res);
 }

@@ -1,0 +1,27 @@
+import {
+  AnalysisError, authenticateService, requireScope, requireAnalysisConsent,
+  requestIdFor, requireSchemaVersion, assertTenantAndUser, readJsonBody, ok, fail,
+} from "../security.mjs";
+import { extractAtsRequirements } from "../service.mjs";
+import { validateJob, validateProfile } from "../validation.mjs";
+
+export default async function handler(req, res) {
+  const requestId = requestIdFor(req);
+  try {
+    if (req.method !== "POST") {
+      throw new AnalysisError(405, "method_not_allowed", "This endpoint accepts POST requests only.");
+    }
+    const identity = authenticateService(req);
+    requireScope(identity, "ats:requirements");
+    requireAnalysisConsent(req, identity);
+
+    const body = await readJsonBody(req);
+    requireSchemaVersion(body.schemaVersion);
+    assertTenantAndUser(body, identity);
+    const job = validateJob(body.job);
+    const profile = validateProfile(body.profile);
+    return ok(res, requestId, extractAtsRequirements(job, profile));
+  } catch (error) {
+    return fail(res, requestId, error);
+  }
+}

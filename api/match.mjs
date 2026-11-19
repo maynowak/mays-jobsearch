@@ -1,5 +1,5 @@
 import { HttpError } from "./_lib/filter.mjs";
-import { computeMatch } from "./_lib/matching.mjs";
+import { matchJobs } from "./_lib/analysis/service.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 import { SESSION_COOKIE, clearSessionCookieHeader, readCookie } from "./_lib/identity.mjs";
 import { deriveIpScope, resolveTrustedClientIp } from "./_lib/ip.mjs";
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     }
     const jobs = body.jobs;
 
-    const result = await computeMatch({ profile, jobs, model: body.model, attempt });
+    const result = await matchJobs(profile, jobs, { model: body.model, attempt });
 
     // Model A exception: Arbeitsagentur detail enrichment remains available,
     // cookie-free. TheirStack/JobsPipe stay blocked in the source policy.

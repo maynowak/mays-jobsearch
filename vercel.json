@@ -78,6 +78,22 @@
   ],
   "rewrites": [
     {
+      "source": "/api/analysis/v1/cv/parse",
+      "destination": "/api/ats-analysis?__analysis=cv-parse"
+    },
+    {
+      "source": "/api/analysis/v1/ats/requirements",
+      "destination": "/api/ats-analysis?__analysis=ats-requirements"
+    },
+    {
+      "source": "/api/analysis/v1/ats/analyze",
+      "destination": "/api/ats-analysis?__analysis=ats-analyze"
+    },
+    {
+      "source": "/api/analysis/v1/match",
+      "destination": "/api/ats-analysis?__analysis=match"
+    },
+    {
       "source": "/api/ris/applications",
       "destination": "/api/ris/router?__ris_applications=1"
     },

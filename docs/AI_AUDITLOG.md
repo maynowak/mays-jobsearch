@@ -1,3 +1,35 @@
+2026-11-19 · JM-CV-JOB-PARSER-QUALITY-01
+- Typ: CV-/Job-Parser-Qualität, gemeinsame Parser-Core-Parität, v1-Contract-Update
+- Status: **CV & JOB PARSER IMPROVED / VERSIONED APIS VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-ris-cv-ats-api-01`; Code `e1c8974`; Basis `171679e`.
+- CV: Kontaktlabels (E-Mail-Adresse, Telefonnummer, Wohnort, PLZ), Profil-Label-Bereinigung, Skill-Deduplizierung (Node.js/NodeJS), `YYYY/MM`-Zeiträume, zusätzliche Bildungsbegriffe; API-Confidence bleibt `confirmed|partial|uncertain`.
+- Job: Metadaten um `companyName`, `location`, `remote`, `responsibilities`, `requiredSkills`, `preferredSkills` erweitert; Requirements um kontextbasierte `priority` (`required|preferred|unspecified`), deutsche/englische Pflicht-/Wunschbegriffe, Negationen, Synonyme und zusätzliche Fachbegriffe. Bestehende IDs, Kategorien, Importance- und Source-Struktur bleiben erhalten; Zertifikatserkennung enger gefasst.
+- Gemeinsamer Core: `src/lib/cvBuilder/pdfImport.ts` → generiertes `api/_lib/analysis/cvParser.mjs`; ATS/API und Legacy-UI über `api/_lib/analysis/service.mjs` → `api/_lib/ats.mjs`. Neuer Parity-Test Frontend/API.
+- API: OpenAPI v1 um Priority, Metadaten und Confidence erweitert; API-CONTRACT/CHANGELOG aktualisiert. `sectionConfidence`-Draft-Korrektur ausdrücklich als Pre-Activation-v1-Korrektur markiert; kein neuer API-Version.
+- Tests: CV-Parser 44 PASS; Parser-/Contract 28 PASS; ATS-Regression/Compatibility PASS; RIS-Boundary PASS; Vollsuite **1995 PASS / 11 skipped**; Build, Syntax, OpenAPI-Parse, Diff-Check PASS.
+- Keine RIS-/AWS-/Terraform-/Vercel-/Consent-Änderung; keine Produktionsaktivierung; kein Main-Merge/Deployment. Legacy-UI-Auth-/Consent-Gate aus API-03 bleibt offen.
+- Bericht: `docs/reports/JM-CV-JOB-PARSER-QUALITY-01.md`.
+
+2026-11-19 · JM-API-PARSER-STANDARDIZATION-01
+- Typ: Parser-API-Standardisierung, Vertragstests, OpenAPI
+- Status: **PARSER APIS STANDARDIZED / CONTRACT TESTS VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-ris-cv-ats-api-01`; Code `1f9cb23`; Basis `d429cbb`.
+- Änderung: `/api/analysis/v1/cv/parse` und `/api/analysis/v1/ats/requirements` an die bestehenden API-02-Konventionen angeglichen. CV-`sectionConfidence` von Boolean-Map auf `confirmed|partial|uncertain` standardisiert; Gesamt-Confidence kann `partial` sein. ATS-`AtsRequirementV1` in OpenAPI formalisiert (id/text/category/importance/source, optional explicitness/normalized), Metadaten/Basis dokumentiert. Keine neue Engine, keine neue API-Version, keine zweite Parser-Implementierung.
+- Contract-Tests: CV-Parse → ATS-Requirements → ATS-Analyze mit identischen Requirement-IDs; Requirement-Shape für ATS/RIS; Confidence-Enum; bestehende Auth-/Consent-/Limit-Tests. Fokussiert 91 PASS; Vollsuite **1984 PASS / 11 skipped**; Build, API-Syntax, OpenAPI-Parse und Diff-Check PASS.
+- Keine RIS-/AWS-/Terraform-/Vercel-/Consent-Änderung; keine Produktionsaktivierung; bestehende Jobsearch-UI unverändert. Der bekannte API-03-Legacy-UI-Auth-/Consent-Gate bleibt offen und wird durch diese Parser-APIs nicht verdeckt.
+- Bericht: `docs/reports/JM-API-PARSER-STANDARDIZATION-01.md`.
+
+2026-11-19 · JM-CV-ATS-API-03 — UNIFIED API ARCHITECTURE
+- Typ: API-/Service-Konsolidierung, Integrations- und Sicherheitsprüfung
+- Status: **UNIFIED CORE + SERVICE LAYER / INTEGRATION VERIFIED LOCAL**; vollständige No-Bypass-/Legacy-Auth-Gate **BLOCKED**
+- Branch/Commit: `feature/jm-ris-cv-ats-api-01`; Code `ab1bc75` + `60a3f63`; Basis `e59d901`.
+- Änderung: neue Service-Schicht `api/_lib/analysis/service.mjs` für CV-Parsing, ATS-Extraktion/-Analyse und Matching; alle vier API-02-Endpunkte sowie die bestehenden UI-Adapter `/api/ats-analysis` und `/api/match` nutzen diese Schicht. Keine zweite Engine, keine zweite CV-Parser-Implementierung.
+- API-02-Sicherheit unverändert: default-off, HMAC-Service-Token, Scope-/Tenant-/User-Prüfung, signiertes Analysis-Consent. Keine Produktionsaktivierung.
+- Offener Sicherheitsblocker: `/api/ats-analysis` und `/api/match` bleiben bestehende unauthentifizierte Browser-Kompatibilitätsrouten ohne API-02-Consent/Service-Auth; damit ist die Forderung nach identischen fachlichen Auth-/Consent-Regeln für interne und externe Consumer noch nicht vollständig erfüllt. Keine schwache Same-Origin-/Alias-Lösung eingebaut.
+- Tests: fokussiert 17 PASS; Legacy-ATS/-Match fokussiert PASS; Vollsuite **1982 PASS / 11 skipped**; Build, API-Syntax und Diff-Check PASS. ATS-Legacy-vs-Versioned-Gleichheit und Service-Import-Assertion getestet.
+- Kein Merge, Deployment, RIS-/AWS-/Terraform-/Consent-/Vercel-Produktionszugriff. Keine echten CV- oder Produktionsdaten.
+- Bericht: `docs/reports/JM-CV-ATS-API-03-UNIFIED-ARCHITECTURE.md`.
+
 2026-11-07 · JM-RIS-PRIVACY-RG09-ALIGNMENT-01
 - Typ: Cross-Repo-Privacy-Konsolidierung/Anzeige/Review
 - Status: CROSS-REPO PRIVACY ALIGNMENT VERIFIED — JOBSEARCH PRIVACY DISPLAY READY — READY FOR CONTROLLED RELEASE (kein Push/Deploy)
@@ -7098,3 +7130,43 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   indexing remain external pending; no Google index is claimed.
 - No RIS/AWS/Terraform/auth/consent/storage change; no rollback. Report:
   `docs/reports/JM-RELEASE-01-INTEGRATION-REPORT.md`.
+
+## 2026-11-19 — JM-RIS-CV-ATS-API-01 — CONTRACT REVIEW
+
+**Status:** `CONTRACT READY FOR IMPLEMENTATION — SECURITY/PRIVACY GATES OPEN`
+
+- Analyzed existing CV parser, ATS and matching modules plus both API surfaces.
+  Existing ATS logic (`api/_lib/ats.mjs`) and matching (`api/_lib/matching.mjs`)
+  are reusable; they must not be reimplemented.
+- CV PDF extraction is browser-bound (`src/lib/pdf.ts`); pure parser logic needs
+  extraction for serverless use. `/api/ats-analysis` and `/api/match` are
+  currently unauthenticated/CORS-open; RIS `ATSHttpClient` calls the ATS endpoint
+  without a credential. No parse/match API or RIS capability exists.
+- Proposed versioned, service-authenticated analysis endpoints and contracts;
+  service auth, tenant isolation and analysis consent remain explicit blockers.
+  No endpoints, AWS/Terraform, auth, consent, storage or product changes.
+- Report: `docs/reports/JM-RIS-CV-ATS-API-01-CONTRACT-REVIEW.md`.
+
+## 2026-11-19 — JM-RIS-CV-ATS-API-02 — SECURE API FOUNDATION
+
+**Status:** `FOUNDATION IMPLEMENTED / SECURITY GATES VERIFIED LOCAL`
+
+- Added default-off `/api/analysis/v1/{cv/parse,ats/requirements,ats/analyze,match}`
+  with common `schemaVersion: 1`, request IDs, envelopes, stable errors and
+  central JSON/PDF/jobs/page/text limits.
+- Added server-only HMAC service assertions (`X-Analysis-Token`) with issuer,
+  audience, expiry, tenant/user, and per-endpoint scopes; body tenant/user
+  spoofing is rejected. Added signed analysis-consent assertions
+  (`X-Analysis-Consent`) bound to tenant, user and configured notice version.
+  Fail-closed when configuration is absent.
+- CV PDF extraction is server-side; mapping uses a generated artifact from the
+  existing CV builder parser, not a second parser. ATS endpoints wrap existing
+  `ats.mjs`; match wraps existing `matching.mjs`; `/api/ats-analysis` remains
+  unchanged.
+- Tests: **15 PASS**; full suite **1980 PASS / 11 skipped**; build PASS; API
+  syntax PASS; OpenAPI 4 paths parsed.
+- Live activation remains blocked: `ANALYSIS_API_ENABLED` disabled by default,
+  service/consent issuer and approved notice not operational, AI match provider
+  needs approval, no infrastructure rate limiter. No RIS/AWS/Terraform change,
+  no production endpoint activation, no raw CV/token logging.
+- Report: `docs/reports/JM-RIS-CV-ATS-API-02-SECURE-FOUNDATION.md`.

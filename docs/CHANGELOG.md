@@ -1,5 +1,16 @@
 # Changelog
 
+Unreleased — 2026-11-19
+
+- Improved the shared CV and job parsers used by the versioned analysis APIs
+  and the existing Jobsearch UI paths. CV contact labels and skill
+  deduplication were hardened; the API parser confidence is now expressed as
+  `confirmed|partial|uncertain` per section. Job parsing now exposes employer,
+  location, work mode, responsibilities, required/preferred skill groups and a
+  context-derived `priority` while preserving existing ATS requirement IDs and
+  scoring fields. OpenAPI v1 documents the compatible additions. No RIS,
+  deployment or production activation change.
+
 Unreleased — 2026-11-06
 
 - Fixed the Vercel production deployment failure
