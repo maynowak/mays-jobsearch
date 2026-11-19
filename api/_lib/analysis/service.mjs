@@ -14,9 +14,13 @@ import { computeMatch } from "../matching.mjs";
  * layer; this module contains business operations only.
  */
 
+function unquote(value) {
+  return String(value ?? "").trim().replace(/^"(.*)"$/s, "$1").trim();
+}
+
 export function parseSkills(value) {
-  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
-  return String(value ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+  if (Array.isArray(value)) return value.map(unquote).filter(Boolean);
+  return String(value ?? "").split(",").map(unquote).filter(Boolean);
 }
 
 function confidenceOf(parsed) {
