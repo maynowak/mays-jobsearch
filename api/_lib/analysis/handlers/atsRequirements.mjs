@@ -1,9 +1,9 @@
 import {
   AnalysisError, authenticateService, requireScope, requireAnalysisConsent,
   requestIdFor, requireSchemaVersion, assertTenantAndUser, readJsonBody, ok, fail,
-} from "../../../_lib/analysis/security.mjs";
-import { extractAtsRequirements } from "../../../_lib/analysis/service.mjs";
-import { validateJob, validateProfile } from "../../../_lib/analysis/validation.mjs";
+} from "../security.mjs";
+import { extractAtsRequirements } from "../service.mjs";
+import { validateJob, validateProfile } from "../validation.mjs";
 
 export default async function handler(req, res) {
   const requestId = requestIdFor(req);

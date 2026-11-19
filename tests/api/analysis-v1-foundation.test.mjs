@@ -5,11 +5,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createSignedToken,
 } from "../../api/_lib/analysis/security.mjs";
-import atsRequirementsHandler from "../../api/analysis/v1/ats/requirements.mjs";
-import atsAnalyzeHandler from "../../api/analysis/v1/ats/analyze.mjs";
-import matchHandler from "../../api/analysis/v1/match.mjs";
-import cvParseHandler from "../../api/analysis/v1/cv/parse.mjs";
+import atsRequirementsHandler from "../../api/_lib/analysis/handlers/atsRequirements.mjs";
+import atsAnalyzeHandler from "../../api/_lib/analysis/handlers/atsAnalyze.mjs";
+import matchHandler from "../../api/_lib/analysis/handlers/match.mjs";
+import cvParseHandler from "../../api/_lib/analysis/handlers/cvParse.mjs";
 import legacyAtsHandler from "../../api/ats-analysis.mjs";
+import analysisRouter from "../../api/ats-analysis.mjs";
 
 const serviceSecret = "test-analysis-service-secret";
 const consentSecret = "test-analysis-consent-secret";
@@ -215,6 +216,16 @@ describe("analysis v1 service foundation", () => {
     expect(aws.importance).toBe("high");
   });
 
+  it("dispatches versioned endpoints through the single API function router", async () => {
+    const res = response();
+    await analysisRouter({
+      ...request({ schemaVersion: 1, job, profile: { skills: "AWS" } }),
+      query: { __analysis: "ats-requirements" },
+    }, res);
+    expectEnvelope(res, 200);
+    expect(res.body.data.requirements.length).toBeGreaterThan(0);
+  });
+
   it("returns deterministic ATS analysis without AI", async () => {
     const res = response();
     await atsAnalyzeHandler(request({ schemaVersion: 1, job, profile: { skills: "AWS, Terraform" } }), res);
@@ -266,12 +277,12 @@ describe("analysis v1 service foundation", () => {
     for (const file of [
       "api/ats-analysis.mjs",
       "api/match.mjs",
-      "api/analysis/v1/cv/parse.mjs",
-      "api/analysis/v1/ats/requirements.mjs",
-      "api/analysis/v1/ats/analyze.mjs",
-      "api/analysis/v1/match.mjs",
+      "api/_lib/analysis/handlers/cvParse.mjs",
+      "api/_lib/analysis/handlers/atsRequirements.mjs",
+      "api/_lib/analysis/handlers/atsAnalyze.mjs",
+      "api/_lib/analysis/handlers/match.mjs",
     ]) {
-      expect(readFileSync(file, "utf8")).toContain("analysis/service.mjs");
+      expect(readFileSync(file, "utf8")).toMatch(/service\.mjs/);
     }
   });
 

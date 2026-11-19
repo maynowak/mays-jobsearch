@@ -1,7 +1,7 @@
 import { AnalysisError, authenticateService, requireScope, requireAnalysisConsent,
   requestIdFor, requireSchemaVersion, requirePdfContentType, readRawBody,
-  getHeader, ok, fail } from "../../../_lib/analysis/security.mjs";
-import { parseCvBuffer } from "../../../_lib/analysis/service.mjs";
+  getHeader, ok, fail } from "../security.mjs";
+import { parseCvBuffer } from "../service.mjs";
 
 export default async function handler(req, res) {
   const requestId = requestIdFor(req);

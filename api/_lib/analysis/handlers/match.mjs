@@ -1,9 +1,9 @@
 import {
   AnalysisError, authenticateService, requireScope, requireAnalysisConsent,
   requestIdFor, requireSchemaVersion, assertTenantAndUser, readJsonBody, ok, fail,
-} from "../../../_lib/analysis/security.mjs";
-import { analyzeAts } from "../../../_lib/analysis/service.mjs";
-import { validateJob, validateProfile } from "../../../_lib/analysis/validation.mjs";
+} from "../security.mjs";
+import { matchJobs } from "../service.mjs";
+import { validateJobs, validateProfile } from "../validation.mjs";
 
 export default async function handler(req, res) {
   const requestId = requestIdFor(req);
@@ -12,16 +12,24 @@ export default async function handler(req, res) {
       throw new AnalysisError(405, "method_not_allowed", "This endpoint accepts POST requests only.");
     }
     const identity = authenticateService(req);
-    requireScope(identity, "ats:analyze");
+    requireScope(identity, "match:evaluate");
     requireAnalysisConsent(req, identity);
 
     const body = await readJsonBody(req);
     requireSchemaVersion(body.schemaVersion);
     assertTenantAndUser(body, identity);
-    const job = validateJob(body.job);
     const profile = validateProfile(body.profile);
-    return ok(res, requestId, analyzeAts(job, profile).data);
+    const jobs = validateJobs(body.jobs);
+    const result = await matchJobs(profile, jobs);
+
+    return ok(res, requestId, {
+      matches: result.matches,
+      meta: result.meta,
+    });
   } catch (error) {
+    if (error && Number.isInteger(error.status) && typeof error.code === "string") {
+      return fail(res, requestId, new AnalysisError(error.status, error.code, error.message));
+    }
     return fail(res, requestId, error);
   }
 }
