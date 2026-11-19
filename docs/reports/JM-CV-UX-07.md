@@ -87,7 +87,7 @@ changes, RIS calls, consent changes or CV persistence changes occurred.
 
 ## 5. Git
 
-- Implementation commit: pending at report creation
+- Implementation commit: `4a4944c`
 - Branch: `feature/jm-cv-ux-07-background-view-consistency`
 - No Main merge and no Production deployment.
 
