@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: May's Job Matcher Analysis API
+  version: "1.0.0"
+  description: |
+    Version 1 server-to-server analysis surface for CV parsing, deterministic
+    ATS extraction/analysis and existing CV-job matching.
+    All endpoints are fail-closed. They are not active unless
+    ANALYSIS_API_ENABLED=true and both service authentication and analysis
+    consent verification are configured. No endpoint stores the submitted CV.
+servers:
+  - url: https://www.mays-job-matcher.app
+    description: Production (only after explicit release approval)
+security:
+  - AnalysisServiceToken: []
+    AnalysisConsent: []
+paths:
+  /api/analysis/v1/cv/parse:
+    post:
+      summary: Parse a PDF CV into the existing CvBuilderDraftV1 contract
+      operationId: parseCvV1
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+        - $ref: "#/components/parameters/SchemaVersion"
+        - name: X-CV-Include-Personal
+          in: header
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Personal contact fields are omitted unless explicitly true and the analysis purpose is approved.
+      requestBody:
+        required: true
+        content:
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+              maxLength: 4194304
+      responses:
+        "200":
+          description: Parsed CV (no raw PDF or raw text)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CvParseResponseV1"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "415": { $ref: "#/components/responses/UnsupportedMedia" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/analysis/v1/ats/requirements:
+    post:
+      summary: Extract deterministic ATS requirements from a job
+      operationId: extractAtsRequirementsV1
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AtsRequirementsRequestV1"
+      responses:
+        "200":
+          description: Deterministic requirements without AI processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AtsRequirementsResponseV1"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/analysis/v1/ats/analyze:
+    post:
+      summary: Deterministic ATS analysis using the existing ATS module
+      operationId: analyzeAtsV1
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AtsAnalyzeRequestV1"
+      responses:
+        "200":
+          description: Deterministic ATS analysis and recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AtsAnalyzeResponseV1"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/analysis/v1/match:
+    post:
+      summary: Evaluate up to ten jobs with the existing matching module
+      operationId: matchJobsV1
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchRequestV1"
+      responses:
+        "200":
+          description: Ranked matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResponseV1"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/TooLarge" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+components:
+  securitySchemes:
+    AnalysisServiceToken:
+      type: apiKey
+      in: header
+      name: X-Analysis-Token
+      description: Server-only HMAC-signed service assertion. Never use a browser token or the RIS partner credential.
+    AnalysisConsent:
+      type: apiKey
+      in: header
+      name: X-Analysis-Consent
+      description: Server-only signed analysis-consent assertion scoped to the verified tenant and configured notice version.
+  parameters:
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      schema: { type: string, minLength: 8, maxLength: 128 }
+    SchemaVersion:
+      name: X-Schema-Version
+      in: header
+      required: true
+      schema: { type: integer, enum: [1] }
+  schemas:
+    AnalysisEnvelope:
+      type: object
+      required: [schemaVersion, requestId]
+      properties:
+        schemaVersion: { type: integer, enum: [1] }
+        requestId: { type: string }
+        warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              message: { type: string }
+    AnalysisError:
+      type: object
+      required: [schemaVersion, requestId, error]
+      properties:
+        schemaVersion: { type: integer, enum: [1] }
+        requestId: { type: string }
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+    CvParseResponseV1:
+      allOf:
+        - $ref: "#/components/schemas/AnalysisEnvelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [parserVersion, document, draft, confidence, anonymizedProfile]
+              properties:
+                parserVersion: { type: string }
+                document:
+                  type: object
+                  properties:
+                    sha256: { type: string }
+                    sizeBytes: { type: integer }
+                    pageCount: { type: integer }
+                    textLength: { type: integer }
+                draft:
+                  $ref: "#/components/schemas/CvBuilderDraftV1"
+                confidence:
+                  type: string
+                  enum: [confirmed, partial, uncertain]
+                sectionConfidence:
+                  type: object
+                  additionalProperties: { type: string }
+                unrecognizedCount: { type: integer }
+                mapping: { type: object }
+                anonymizedProfile:
+                  type: object
+                  properties:
+                    headline: { type: string, nullable: true }
+                    skills:
+                      type: array
+                      items: { type: string }
+                    targetRoles:
+                      type: array
+                      items: { type: string }
+                    experienceLevel: { type: string, nullable: true }
+    CvBuilderDraftV1:
+      type: object
+      required: [schemaVersion, personal, profile, experience, education, skills, projects, certificates, languages, links]
+      properties:
+        schemaVersion: { type: integer, enum: [1] }
+        personal:
+          type: object
+          properties:
+            fullName: { type: string }
+            email: { type: string }
+            phone: { type: string }
+            location: { type: string }
+        profile:
+          type: object
+          properties:
+            headline: { type: string }
+            summary: { type: string }
+        experience:
+          type: array
+          items: { type: object, additionalProperties: true }
+        education:
+          type: array
+          items: { type: object, additionalProperties: true }
+        skills:
+          type: array
+          items: { type: string }
+        projects:
+          type: array
+          items: { type: object, additionalProperties: true }
+        certificates:
+          type: array
+          items: { type: object, additionalProperties: true }
+        languages:
+          type: array
+          items: { type: object, additionalProperties: true }
+        links:
+          type: array
+          items: { type: object, additionalProperties: true }
+    AtsRequirementsRequestV1:
+      type: object
+      required: [schemaVersion, job]
+      properties:
+        schemaVersion: { type: integer, enum: [1] }
+        job:
+          type: object
+          required: [title]
+          properties:
+            slug: { type: string }
+            title: { type: string }
+            company_name: { type: string }
+            description: { type: string }
+            descriptionPlain: { type: string }
+            tags: { type: array, items: { type: string } }
+            location: { type: array, items: { type: string } }
+            remote: { type: boolean }
+            jobTypes: { type: array, items: { type: string } }
+            contractType: { type: string }
+        profile:
+          $ref: "#/components/schemas/AnalysisProfileV1"
+    AtsRequirementsResponseV1:
+      allOf:
+        - $ref: "#/components/schemas/AnalysisEnvelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                analysisStatus: { type: string, enum: [complete, limited, insufficient] }
+                metadata: { type: object }
+                basis: { type: object }
+                requirements:
+                  type: array
+                  items: { type: object, additionalProperties: true }
+    AtsAnalyzeRequestV1:
+      allOf:
+        - $ref: "#/components/schemas/AtsRequirementsRequestV1"
+    AtsAnalyzeResponseV1:
+      allOf:
+        - $ref: "#/components/schemas/AnalysisEnvelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                analysis: { type: object }
+                recommendations: { type: array, items: { type: object, additionalProperties: true } }
+                ai:
+                  type: object
+                  properties:
+                    requested: { type: boolean, enum: [false] }
+                    executed: { type: boolean, enum: [false] }
+    AnalysisProfileV1:
+      type: object
+      properties:
+        skills: { type: string }
+        targetRole: { type: string }
+        targetRoles: { type: array, items: { type: string } }
+        city: { type: string }
+        criteria: { type: object }
+    MatchRequestV1:
+      type: object
+      required: [schemaVersion, profile, jobs]
+      properties:
+        schemaVersion: { type: integer, enum: [1] }
+        profile: { $ref: "#/components/schemas/AnalysisProfileV1" }
+        jobs:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            type: object
+            required: [slug, title]
+            properties:
+              slug: { type: string }
+              title: { type: string }
+              company_name: { type: string }
+              tags: { type: array, items: { type: string } }
+              location: { type: array, items: { type: string } }
+              remote: { type: boolean }
+    MatchResponseV1:
+      allOf:
+        - $ref: "#/components/schemas/AnalysisEnvelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                matches:
+                  type: array
+                  items: { type: object, additionalProperties: true }
+                meta: { type: object }
+  responses:
+    Unauthenticated:
+      description: Missing or invalid service credential
+      content: { application/json: { schema: { $ref: "#/components/schemas/AnalysisError" } } }
+    Forbidden:
+      description: Scope, tenant, user or analysis consent mismatch
+      content: { application/json: { schema: { $ref: "#/components/schemas/AnalysisError" } } }
+    TooLarge:
+      description: Payload or document too large
+      content: { application/json: { schema: { $ref: "#/components/schemas/AnalysisError" } } }
+    UnsupportedMedia:
+      description: Unsupported content type
+      content: { application/json: { schema: { $ref: "#/components/schemas/AnalysisError" } } }
+    Unprocessable:
+      description: Schema, validation or PDF error
+      content: { application/json: { schema: { $ref: "#/components/schemas/AnalysisError" } } }
+    RateLimited:
+      description: Service rate limit
+      content: { application/json: { schema: { $ref: "#/components/schemas/AnalysisError" } } }
+    Unavailable:
+      description: Disabled, unconfigured or upstream unavailable
+      content: { application/json: { schema: { $ref: "#/components/schemas/AnalysisError" } } }
