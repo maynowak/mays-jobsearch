@@ -1,3 +1,14 @@
+2026-11-20 · JM-PROFILE-VISUAL-10B — NAVBAR DIAGNOSTIC
+- Typ: Navbar-Position, Scrollverhalten, Screenshot-Artefakt-Diagnose
+- Status: **NOT REPRODUCIBLE / SCREENSHOT ARTIFACT**; kein CSS-/Produkt-Fix
+- Branch: `feature/jm-profile-visual-10b-navbar-fix`; Basis `feature/jm-profile-visual-10` `24dfe19`.
+- Chromium 1920/1440/768/390: bei `scrollY=0` Navbar `sticky top=0`, Karten beginnen darunter; beim Abwärtsscrollen `.scrolled` mit `top=-61px` und Navbar nicht im Viewport; beim Hochscrollen wieder `top=0`. Kein horizontaler Overflow, keine Browserfehler.
+- Full-Page-Screenshot bei `scrollY=590`/720 zeigt die Sticky-Navbar an der aktuellen Scrollposition mitten im langen Capture, obwohl sie im normalen Viewport außerhalb liegt. Reproduzierbar als Playwright-/Full-Page-Artefakt; korrekte Erstellung: vor `fullPage` auf `scrollTo(0,0)` zurücksetzen oder Viewport-Screenshot verwenden.
+- Sidebar sticky bleibt bei 77 px Desktop/Tablet; Applications-Sonderregel (`position:relative`) unverändert; Mobile-Navigation unverändert.
+- Firefox: lokale Playwright-Firefox-Binary nicht installiert, daher **NOT VERIFIED**/nicht als PASS gewertet.
+- Tests: Diagnose 4 Breiten; Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS. Keine CSS-/Produktänderung, keine RIS-/AWS-/Cognito-/Consent-/Analytics-Änderung; kein Main-Merge/Deployment.
+- Bericht und Screenshots: `docs/reports/JM-PROFILE-VISUAL-10B.md`, `docs/reports/assets/JM-PROFILE-VISUAL-10B/`.
+
 2026-11-20 · JM-PROFILE-VISUAL-10
 - Typ: Profil-Partikel-Helligkeit/-Geschwindigkeit, Reduced-Motion/E2E
 - Status: **IMPLEMENTED / VERIFIED LOCAL**
