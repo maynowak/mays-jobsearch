@@ -1,7 +1,7 @@
 2026-11-20 · JM-PROFILE-VISUAL-10
 - Typ: Profil-Partikel-Helligkeit/-Geschwindigkeit, Reduced-Motion/E2E
 - Status: **IMPLEMENTED / VERIFIED LOCAL**
-- Branch: `feature/jm-profile-visual-10`; Basis `feature/jm-profile-visual-09` `338861b`.
+- Branch/Commit: `feature/jm-profile-visual-10`; Code `5a964a4`; Basis `feature/jm-profile-visual-09` `338861b`.
 - 16 deterministische Partikel beibehalten; Opacity **0.60–0.90**, Dauer **14–22 s**, Farben `#22D3EE`, `#67E8F9`, vereinzelt `#A5F3FC`; weiße Lichtkerne mit zweistufigem türkisfarbenem Glow. Flugbahnen beibehalten.
 - Header, Kartenstil, Dual-AI-Hintergrund, Proportionen, Masken, Mittelbereich und CV-Workspace unverändert. `translate3d`, `pointer-events:none`, `aria-hidden`, z-index hinter Karten/Navigation, mobil 8 Partikel und Reduced-Motion bleiben unverändert.
 - Tests: fokussiert 8 PASS; Browser-E2E 1920/1440/768/390 PASS, 0 px Overflow; Opacity-/Dauerbereich und Reduced-Motion PASS; Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS.

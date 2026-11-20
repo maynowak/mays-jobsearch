@@ -78,7 +78,7 @@ was performed.
 
 ## 4. Git
 
-- Implementation: pending at report creation
+- Implementation: `5a964a4`
 - Branch: `feature/jm-profile-visual-10`
 - No Main merge and no Production deployment.
 
