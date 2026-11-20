@@ -15,36 +15,31 @@ result = parser envelope, or { schemaVersion, error: { code, message } }
 The handler reuses `scripts/ris-parser-cli.mjs::runParser` — the same code path
 as the CLI and the Python adapter. No second parser.
 
-## Artifact build (deterministic file list)
+## Artifact build (deterministic)
 
-Package root = jobsearch repository root. Include:
-
-```
-lambda/ris_parser_handler.mjs
-scripts/ris-parser-cli.mjs
-api/_lib/analysis/*.mjs
-api/_lib/analysis/handlers/*.mjs
-api/_lib/ats.mjs
-api/_lib/filter.mjs
-api/_lib/matching.mjs
-api/_lib/ai.mjs
-api/_lib/config.mjs
-api/_lib/model.mjs
-api/_lib/models.mjs
-api/_lib/providers/*
-node_modules/pdfjs-dist/**        # CV PDF extraction
-```
-
-Build (Windows PowerShell, reproducible timestamp not enforced by the OS):
+The artifact is built by the RIS tooling from the pinned jobsearch commit, not
+by `Compress-Archive` (which embeds timestamps):
 
 ```powershell
-Compress-Archive -Path <files> -DestinationPath lambda/dist/analysis-parser.zip -Force
-Get-FileHash lambda/dist/analysis-parser.zip -Algorithm SHA256
+python tools/build_analysis_parser_artifact.py `
+  --jobsearch-root <jobsearch> --expected-commit c40bf78 `
+  --canvas-platform-dir "@napi-rs/canvas-linux-arm64-gnu=<extracted>" `
+  --out lambda/dist/analysis-parser.zip
 ```
 
-Record the SHA-256 in the RIS release manifest and pass it to Terraform as
-`analysis_parser_zip_sha256`. The artifact is not committed; it is rebuilt from
-the pinned jobsearch commit (`aaa260c` + this branch head).
+- Fixed entry timestamps and sorted names make the zip byte-reproducible.
+- Includes `lambda/ris_parser_handler.mjs`, `scripts/ris-parser-cli.mjs`,
+  `api/_lib/**` and `node_modules/pdfjs-dist/**` (no `web/`, no maps, no tests).
+- `pdfjs-dist` needs the native optional dependency `@napi-rs/canvas`. The
+  Lambda is `linux-arm64`, so `@napi-rs/canvas-linux-arm64-gnu@1.0.6` (the
+  version pinned in `package-lock.json`) is packaged. Local verification adds
+  the host package only to an extracted staging copy.
+- The manifest (sidecar `.manifest.json`) records SHA-256, size, file count and
+  source commit; Terraform pins the zip through `filebase64sha256`.
+
+Built reference: 412 files, 17 937 176 bytes, SHA-256
+`fb741fb25e7cd29232a43a63137a6e2a8ca0e948cc2efdf6764b8779119f301a`
+(jobsearch `c40bf78`).
 
 ## Limits and errors
 

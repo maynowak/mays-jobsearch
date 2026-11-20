@@ -75,6 +75,14 @@ test("Lambda handler reuses the parser and returns a JSON error", async () => {
   assert.equal(ok.capability, "parse.job");
   assert.match(ok.data.stableId, /^[a-f0-9]{64}$/);
 
+  const cv = await handler({
+    capability: "parse.cv",
+    input: { pdfBase64: readFileSync(PDF).toString("base64") },
+  });
+  assert.equal(cv.capability, "parse.cv");
+  assert.ok(cv.data.cvTags.length > 0);
+  assert.ok(cv.data.document.textLength > 0);
+
   const bad = await handler({
     capability: "parse.job", input: { job: {} },
   });
