@@ -180,9 +180,12 @@ function jobResult(input, capability) {
 
   if (capability === "parse.ats") {
     const data = analyzeAts(job, profile).data;
+    const analysis = data.analysis || {};
+    const requirements = data.requirements || analysis.requirements || [];
+    const criticalGaps = data.criticalGaps || analysis.criticalGaps || [];
     const atsTags = unique([
-      ...(data.requirements || []).map((item) => item.text),
-      ...(data.criticalGaps || []).map((item) => item.text),
+      ...requirements.map((item) => item.text),
+      ...criticalGaps.map((item) => item.text),
     ]);
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -191,11 +194,11 @@ function jobResult(input, capability) {
       data: {
         stableId,
         atsTags,
-        requirements: data.requirements || [],
-        matches: data.matches || [],
-        criticalGaps: data.criticalGaps || [],
-        score: data.analysis?.score ?? null,
-        analysisStatus: data.analysisStatus || data.analysis?.analysisStatus || "",
+        requirements,
+        matches: data.matches || analysis.matches || [],
+        criticalGaps,
+        score: analysis.score ?? data.score ?? null,
+        analysisStatus: data.analysisStatus || analysis.analysisStatus || "",
         provenance: { source: "mays-jobsearch", parser: "ats.mjs" },
       },
       confidence: { overall: "confirmed" },
