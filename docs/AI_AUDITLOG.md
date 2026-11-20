@@ -1,3 +1,12 @@
+2026-11-20 · JM-CV-UX-08 — CONTROLLED MAIN RELEASE
+- Typ: Controlled Merge, Production Deployments, Read-only Produktions-E2E
+- Status: **MERGED TO MAIN / PRODUCTION DEPLOYED / PRODUCTION E2E VERIFIED**
+- Release: PR #45 gegen `main` gemerged als `3545dc2`; keine Branch-Löschung, kein Force-Push, kein manuelles `vercel --prod`.
+- Code `ecddb45`, Docs/Audit `94a82bf`; Profil-Shell-only, kein CV-Workspace, RIS, AWS, Cognito, Consent oder Analytics.
+- Production: `www.mays-job-matcher.app` Deployment `dpl_cvKoc4JonauV48DU8Bz8DtjW1XVc` READY; `mays-jobsearch.vercel.app` Deployment `dpl_HZitg8q5ZgUMSSyrmJEwPUDv2rco` READY.
+- E2E read-only auf `/profil` bei 1920/1440/768/390: HTTP 200, linke/rechte WebP-Assets vorhanden, `background-size: cover`, keine Transform-Verzerrung, zentrale Gradienten vorhanden, **0 px horizontaler Overflow**, keine Page-/Console-Fehler. Keine Schreiboperationen/Anmeldung.
+- Bericht: `docs/reports/JM-CV-UX-08.md`.
+
 2026-11-20 · JM-CV-UX-08 — DUAL AI PROFILE BACKGROUND
 - Typ: Profil-Hintergrund, responsive Bildkomposition, visuelle Verifikation
 - Status: **IMPLEMENTED / VERIFIED LOCAL**
