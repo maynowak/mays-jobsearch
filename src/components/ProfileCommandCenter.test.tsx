@@ -37,6 +37,8 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
     expect(css).toContain('jm-profile-dual-left.webp');
     expect(css).toContain('jm-profile-dual-right.webp');
     expect(css).toContain('background-size: cover');
+    expect(css).toContain('profile-particle-drift');
+    expect(css).toContain('prefers-reduced-motion: reduce');
     expect(css).toContain('.layout-profile-command .dashboard-v2__navigation-card');
     expect(css).toContain('.layout-profile-command .aurora-sidebar-item.aurora-sidebar-active');
     expect(css).toContain('.layout-profile-command .storage-consent');

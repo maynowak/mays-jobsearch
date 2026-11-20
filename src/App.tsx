@@ -30,6 +30,7 @@ import EmailConfirmation from "./components/EmailConfirmation";
 import { DashboardDevPreview } from "./components/Dashboard";
 import UiComponentsPreview from "./components/UiComponentsPreview";
 import DashboardV2, { DEMO_USER } from "./components/DashboardV2";
+import ProfileParticles from "./components/ProfileParticles";
 import DashboardV2AuthenticatedPreview from "./components/DashboardV2AuthenticatedPreview";
 import DashboardV2CvSection from "./components/DashboardV2CvSection";
 import ApplicationsSection from "./components/ApplicationsSection";
@@ -4320,6 +4321,7 @@ export default function App() {
       >
           <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard layout-profile-command">
+          <ProfileParticles />
           <DashboardV2
             user={DEMO_USER}
             isDemo
@@ -4345,6 +4347,7 @@ export default function App() {
       >
           <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard layout-profile-command">
+          <ProfileParticles />
           <DashboardV2AuthenticatedPreview
             cvSection={dashboardCvSection}
             applicationsSection={dashboardApplicationsSection}
@@ -4372,6 +4375,7 @@ export default function App() {
       >
           <Navbar route={route} hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard layout-profile-command">
+          <ProfileParticles />
           <DashboardV2AuthenticatedPreview
             cvSection={dashboardCvSection}
             applicationsSection={dashboardApplicationsSection}

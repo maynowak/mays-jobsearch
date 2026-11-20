@@ -14739,13 +14739,13 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 .layout-profile-command .dashboard-v2 {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   padding-top: 0;
 }
 
 .layout-profile-command .dashboard-v2-state {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: min(1180px, 94vw);
   margin-inline: auto;
 }
@@ -14764,13 +14764,18 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   position: relative;
   overflow: hidden;
   margin-bottom: clamp(20px, 3vw, 32px);
-  border-color: color-mix(in srgb, var(--accent) 36%, rgba(255, 255, 255, 0.8));
+  border: 1px solid rgba(103, 232, 249, 0.34);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(236, 250, 255, 0.78)),
-    radial-gradient(circle at 92% 0%, rgba(34, 211, 238, 0.22), transparent 38%);
+    linear-gradient(135deg, rgba(3, 17, 31, 0.96), rgba(7, 38, 58, 0.86)),
+    radial-gradient(circle at 8% 0%, rgba(34, 211, 238, 0.20), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 46%);
   box-shadow:
-    0 18px 46px rgba(8, 47, 73, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    0 24px 54px rgba(0, 8, 18, 0.42),
+    0 0 30px rgba(34, 211, 238, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 0 1px rgba(34, 211, 238, 0.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  backdrop-filter: blur(18px) saturate(1.18);
 }
 
 .layout-profile-command .dashboard-v2__header::after {
@@ -14785,13 +14790,40 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 }
 
 .layout-profile-command .dashboard-v2__header h1 {
-  color: #083344;
+  color: #f0fdff;
   letter-spacing: -0.035em;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  text-shadow:
+    0 2px 18px rgba(34, 211, 238, 0.20),
+    0 1px 2px rgba(0, 6, 14, 0.65);
 }
 
 .layout-profile-command .dashboard-v2__header > div:first-child > p:last-child {
-  color: #315a6e;
+  color: #c5edf5;
+}
+
+.layout-profile-command .dashboard-v2__header .ui-badge {
+  border-color: rgba(103, 232, 249, 0.38);
+  background: rgba(8, 47, 73, 0.82);
+  color: #dffbff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.layout-profile-command .dashboard-v2__header .ui-badge-active {
+  border-color: rgba(74, 222, 128, 0.48);
+  background: rgba(20, 83, 45, 0.78);
+  color: #bbf7d0;
+}
+
+.layout-profile-command .dashboard-v2__header .ui-badge-soon {
+  border-color: rgba(251, 191, 36, 0.48);
+  background: rgba(120, 53, 15, 0.72);
+  color: #fde68a;
+}
+
+.layout-profile-command .dashboard-v2__header .dashboard-v2__demo-note {
+  border-color: rgba(103, 232, 249, 0.30);
+  background: rgba(2, 10, 24, 0.48);
+  color: #dffbff;
 }
 
 .layout-profile-command .dashboard-v2__layout {
@@ -14902,6 +14934,78 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   background: #f8fdff;
 }
 
+/* Subtle 3D glass edges; cards remain light and text stays high-contrast. */
+.layout-profile-command .dashboard-v2__main > .aurora-card,
+.layout-profile-command .applications-section,
+.layout-profile-command .dashboard-v2__cv-section,
+.layout-profile-command .storage-consent,
+.layout-profile-command .dashboard-v2__manual-profiles {
+  border: 1px solid rgba(103, 232, 249, 0.28);
+  background:
+    linear-gradient(145deg, rgba(253, 255, 255, 0.99), rgba(231, 249, 253, 0.96)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), transparent 48%);
+  box-shadow:
+    0 20px 42px rgba(0, 8, 18, 0.24),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.38) inset,
+    0 0 22px rgba(34, 211, 238, 0.06);
+}
+
+/* Hover affordances remain on the existing interactive controls only. */
+
+/* Decorative particles sit behind cards and above the profile artwork. */
+.profile-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+
+.profile-particles span {
+  position: absolute;
+  width: calc(var(--size) * 2.1);
+  height: calc(var(--size) * 2.1);
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 38%, #ffffff 0 14%, var(--color) 42%, transparent 72%);
+  opacity: var(--opacity);
+  filter: blur(var(--blur));
+  box-shadow:
+    0 0 10px 2px var(--color),
+    0 0 22px 5px color-mix(in srgb, var(--color) 52%, transparent);
+  will-change: transform, opacity;
+  animation: profile-particle-drift var(--duration) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes profile-particle-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.92);
+    opacity: calc(var(--opacity) * 0.82);
+  }
+  50% {
+    transform: translate3d(var(--dx), var(--dy), 0) scale(1.22);
+    opacity: var(--opacity);
+  }
+  100% {
+    transform: translate3d(calc(var(--dx) * -0.55), calc(var(--dy) * -0.35), 0) scale(0.86);
+    opacity: calc(var(--opacity) * 0.68);
+  }
+}
+
+@media (max-width: 767px) {
+  .profile-particles span:nth-child(n + 9) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-particles span {
+    animation: none;
+    transform: none;
+  }
+}
+
 .layout-profile-command .applications-cockpit {
   border-radius: var(--radius-lg);
   background: rgba(241, 251, 255, 0.72);
@@ -14952,6 +15056,11 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .layout-profile-command .dashboard-section-switcher select {
   border-color: rgba(14, 165, 233, 0.38);
   background: rgba(255, 255, 255, 0.92);
+}
+
+.layout-profile-command .dashboard-section-switcher__label {
+  color: #dffbff;
+  text-shadow: 0 1px 3px rgba(0, 6, 14, 0.7);
 }
 
 @media (max-width: 767px) {

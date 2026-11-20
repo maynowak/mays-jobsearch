@@ -1,3 +1,35 @@
+2026-11-20 · JM-PROFILE-VISUAL-10B — NAVBAR DIAGNOSTIC
+- Typ: Navbar-Position, Scrollverhalten, Screenshot-Artefakt-Diagnose
+- Status: **NOT REPRODUCIBLE / SCREENSHOT ARTIFACT**; kein CSS-/Produkt-Fix
+- Branch: `feature/jm-profile-visual-10b-navbar-fix`; Basis `feature/jm-profile-visual-10` `24dfe19`.
+- Chromium 1920/1440/768/390: bei `scrollY=0` Navbar `sticky top=0`, Karten beginnen darunter; beim Abwärtsscrollen `.scrolled` mit `top=-61px` und Navbar nicht im Viewport; beim Hochscrollen wieder `top=0`. Kein horizontaler Overflow, keine Browserfehler.
+- Full-Page-Screenshot bei `scrollY=590`/720 zeigt die Sticky-Navbar an der aktuellen Scrollposition mitten im langen Capture, obwohl sie im normalen Viewport außerhalb liegt. Reproduzierbar als Playwright-/Full-Page-Artefakt; korrekte Erstellung: vor `fullPage` auf `scrollTo(0,0)` zurücksetzen oder Viewport-Screenshot verwenden.
+- Sidebar sticky bleibt bei 77 px Desktop/Tablet; Applications-Sonderregel (`position:relative`) unverändert; Mobile-Navigation unverändert.
+- Firefox: lokale Playwright-Firefox-Binary nicht installiert, daher **NOT VERIFIED**/nicht als PASS gewertet.
+- Tests: Diagnose 4 Breiten; Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS. Keine CSS-/Produktänderung, keine RIS-/AWS-/Cognito-/Consent-/Analytics-Änderung; kein Main-Merge/Deployment.
+- Bericht und Screenshots: `docs/reports/JM-PROFILE-VISUAL-10B.md`, `docs/reports/assets/JM-PROFILE-VISUAL-10B/`.
+
+2026-11-20 · JM-PROFILE-VISUAL-10
+- Typ: Profil-Partikel-Helligkeit/-Geschwindigkeit, Reduced-Motion/E2E
+- Status: **IMPLEMENTED / VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-visual-10`; Code `5a964a4`; Basis `feature/jm-profile-visual-09` `338861b`.
+- 16 deterministische Partikel beibehalten; Opacity **0.60–0.90**, Dauer **14–22 s**, Farben `#22D3EE`, `#67E8F9`, vereinzelt `#A5F3FC`; weiße Lichtkerne mit zweistufigem türkisfarbenem Glow. Flugbahnen beibehalten.
+- Header, Kartenstil, Dual-AI-Hintergrund, Proportionen, Masken, Mittelbereich und CV-Workspace unverändert. `translate3d`, `pointer-events:none`, `aria-hidden`, z-index hinter Karten/Navigation, mobil 8 Partikel und Reduced-Motion bleiben unverändert.
+- Tests: fokussiert 8 PASS; Browser-E2E 1920/1440/768/390 PASS, 0 px Overflow; Opacity-/Dauerbereich und Reduced-Motion PASS; Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS.
+- Keine RIS-/AWS-/Cognito-/Consent-/Analytics-Änderung; kein Main-Merge/Deployment.
+- Bericht: `docs/reports/JM-PROFILE-VISUAL-10.md`.
+
+2026-11-20 · JM-PROFILE-VISUAL-09
+- Typ: Profil-Header, 3D-Kartenränder, dekorative CSS-Partikel
+- Status: **IMPLEMENTED / VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-visual-09`; Code `1397345`; Basis `origin/main` `5d7f3b3`.
+- Header: dunkles 3D-Glass mit türkisem Lichtsaum, inneren Highlights, Tiefenschatten und kontrastreichen Überschriften/Badges.
+- Karten: dezente gestufte Gradienten, transparente Lichtkanten, innere Highlights und weiche Schatten; keine neuen Hover-Effekte für nicht-interaktive Cards. Dual-AI-Bild, Proportionen, Masken und Mittelbereich unverändert.
+- Partikel: 16 deterministische CSS-Punkte (`#22D3EE`, `#06B6D4`, `#67E8F9`) mit unterschiedlichen `translate3d`-Flugbahnen, `pointer-events:none`, `aria-hidden`, z-index hinter Dashboard/Karten, mobil 8 sichtbar, Reduced-Motion deaktiviert Animation. Keine Canvas/WebGL/Animationsbibliothek.
+- Tests: fokussiert 7 PASS; Browser-E2E 1920/1440/768/390 PASS, 0 px Overflow; Reduced-Motion PASS; Vollsuite **2003 PASS / 11 skipped**; Build/Diff PASS.
+- Keine CV-Workspace-, RIS-, AWS-, Cognito-, Consent- oder Analytics-Änderung; kein Main-Merge/Deployment.
+- Bericht: `docs/reports/JM-PROFILE-VISUAL-09.md`.
+
 2026-11-20 · JM-CV-UX-08 — CONTROLLED MAIN RELEASE
 - Typ: Controlled Merge, Production Deployments, Read-only Produktions-E2E
 - Status: **MERGED TO MAIN / PRODUCTION DEPLOYED / PRODUCTION E2E VERIFIED**
