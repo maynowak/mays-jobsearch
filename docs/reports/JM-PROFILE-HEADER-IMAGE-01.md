@@ -88,7 +88,7 @@ was performed.
 
 ## 5. Git
 
-- Implementation: pending at report creation
+- Implementation: `a159ab9`
 - Branch: `feature/jm-profile-header-image-01`
 - No Main merge and no Production deployment.
 
