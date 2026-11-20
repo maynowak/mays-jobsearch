@@ -10,6 +10,7 @@
     "generate:cv-parser": "node scripts/generate-cv-parser.mjs",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:parsers": "node --test tests/parsers/ris-parser-cli.test.mjs",
     "test:e2e:guest-cv": "node tests/e2e/guest-cv-workflow.mjs",
     "test:e2e:cover-letter": "node tests/e2e/cover-letter-entry.mjs",
     "test:e2e:direct-cover-letter": "node tests/e2e/direct-cover-letter.mjs",

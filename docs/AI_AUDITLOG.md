@@ -7199,3 +7199,12 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   needs approval, no infrastructure rate limiter. No RIS/AWS/Terraform change,
   no production endpoint activation, no raw CV/token logging.
 - Report: `docs/reports/JM-RIS-CV-ATS-API-02-SECURE-FOUNDATION.md`.
+
+2026-11-20 - RIS-AGENT-ANALYSIS-ORCHESTRATION-04 (Jobsearch side)
+- Type: Node execution boundary for the RIS Agent Body; reuse of the existing parser implementation.
+- Status: LOCAL VERIFIED; no deployment, no new endpoint, no new parser.
+- Added scripts/ris-parser-cli.mjs wrapping parseCvBuffer (pdf.mjs + cvParser.mjs), extractAtsRequirements and analyzeAts from api/_lib/analysis/service.mjs; added tests/parsers/ris-parser-cli.test.mjs and npm run test:parsers.
+- parse.cv accepts PDF base64 (CV storage bridge), parse.job returns jobTags/required/preferred/experience/workMode/location, parse.ats returns atsTags/score/status; all include stableId and provenance.
+- Tests: node --test tests/parsers/ris-parser-cli.test.mjs -> 3 passed (job tags/stableId, CV PDF fixture, error codes). No network/AI call.
+- Runtime: Python Lambda has no node -> RIS enablement remains PENDING; adapter fails closed.
+- Doc: docs/RIS-ANALYSIS-PARSER-CLI.md
