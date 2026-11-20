@@ -1,3 +1,13 @@
+2026-11-20 · JM-PROFILE-HEADER-IMAGE-01
+- Typ: Profil-Header-Bild, responsive Bildmaskierung, visuelle Verifikation
+- Status: **IMPLEMENTED / VERIFIED LOCAL**
+- Branch: `feature/jm-profile-header-image-01`; Basis `origin/main` `5288856`.
+- Asset: bereitgestelltes `jaymzart-blue-3174605_1920.jpg` als `jm-profile-header-globe.webp` (1920×602, ~61 KB) optimiert und für die rechte Weltkugelposition horizontal gespiegelt.
+- CSS: separater Header-`::before`-Layer, `background-size: auto 100%` Desktop / `auto 76%` Mobile, rechts positioniert, horizontale/vertikale Masken, Gradient-Overlay für Textkontrast, kein `cover`, kein `100% 100%`. Bestehender 3D-Glass-Header, Dual-AI-Hintergrund, Partikel, Karten und Sidebar/Navbar unverändert.
+- Tests: Profil-Test 4 PASS; Header-E2E 1920/1440/768/390 plus Reduced-Motion PASS; Header-Copy-Overflow 0; horizontaler Overflow 0; keine Page-/Console-Fehler; Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS.
+- Keine RIS-/AWS-/Cognito-/Consent-/Analytics-Änderung; kein Main-Merge/Deployment.
+- Bericht: `docs/reports/JM-PROFILE-HEADER-IMAGE-01.md`.
+
 2026-11-20 · JM-PROFILE-VISUAL-10 — CONTROLLED RELEASE
 - Typ: Release VISUAL-09/10/10B, PR-Merge, Production Deployments, E2E
 - Status: **MERGED / PRODUCTION DEPLOYED / PRODUCTION E2E VERIFIED**

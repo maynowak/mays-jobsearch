@@ -36,6 +36,8 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
     expect(css).toContain('.container.layout-dashboard.layout-profile-command');
     expect(css).toContain('jm-profile-dual-left.webp');
     expect(css).toContain('jm-profile-dual-right.webp');
+    expect(css).toContain('jm-profile-header-globe.webp');
+    expect(css).toContain('background-size: auto 100%');
     expect(css).toContain('background-size: cover');
     expect(css).toContain('profile-particle-drift');
     expect(css).toContain('prefers-reduced-motion: reduce');
