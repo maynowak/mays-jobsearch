@@ -1,7 +1,7 @@
 2026-11-20 · JM-CV-UX-08 — DUAL AI PROFILE BACKGROUND
 - Typ: Profil-Hintergrund, responsive Bildkomposition, visuelle Verifikation
 - Status: **IMPLEMENTED / VERIFIED LOCAL**
-- Branch: `feature/jm-cv-ux-08-dual-ai-profile-background`; Basis `origin/main` `81db09a`.
+- Branch/Commit: `feature/jm-cv-ux-08-dual-ai-profile-background`; Code `ecddb45`; Basis `origin/main` `81db09a`.
 - Asset: bereitgestelltes `Ki-Hintergrund-Profil-duble.jpg` in proportionale WebP-Motive `jm-profile-dual-left.webp` und `jm-profile-dual-right.webp` überführt; keine `background-size: 100% 100%`-Verzerrung.
 - Profil-CSS: linkes türkisfarbenes Gesicht als `::before`, rechtes orange-blaues Gesicht als `::after`, flexibler Mittelbereich als Gradient, weiche Masken gegen harte Motivkanten, Farb-/Lichtverlauf nach unten, volle Profilhöhe. Nur `.container.layout-dashboard.layout-profile-command` betroffen; CV-Workspace unverändert. Profile-cards/navigation über z-index und opake Flächen lesbar.
 - Verifikation: Browser-E2E 1920/1440/768/390 PASS, keine horizontale Überlaufbreite; Screenshots unter `docs/reports/assets/JM-CV-UX-08/`; fokussierter Test 4 PASS; Vollsuite **2000 PASS / 11 skipped**; Build/Diff PASS.
