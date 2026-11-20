@@ -1,7 +1,7 @@
 2026-11-20 · JM-PROFILE-VISUAL-09
 - Typ: Profil-Header, 3D-Kartenränder, dekorative CSS-Partikel
 - Status: **IMPLEMENTED / VERIFIED LOCAL**
-- Branch: `feature/jm-profile-visual-09`; Basis `origin/main` `5d7f3b3`.
+- Branch/Commit: `feature/jm-profile-visual-09`; Code `1397345`; Basis `origin/main` `5d7f3b3`.
 - Header: dunkles 3D-Glass mit türkisem Lichtsaum, inneren Highlights, Tiefenschatten und kontrastreichen Überschriften/Badges.
 - Karten: dezente gestufte Gradienten, transparente Lichtkanten, innere Highlights und weiche Schatten; keine neuen Hover-Effekte für nicht-interaktive Cards. Dual-AI-Bild, Proportionen, Masken und Mittelbereich unverändert.
 - Partikel: 16 deterministische CSS-Punkte (`#22D3EE`, `#06B6D4`, `#67E8F9`) mit unterschiedlichen `translate3d`-Flugbahnen, `pointer-events:none`, `aria-hidden`, z-index hinter Dashboard/Karten, mobil 8 sichtbar, Reduced-Motion deaktiviert Animation. Keine Canvas/WebGL/Animationsbibliothek.

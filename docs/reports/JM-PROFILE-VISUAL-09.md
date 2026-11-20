@@ -95,7 +95,7 @@ was performed.
 
 ## 6. Git
 
-- Implementation: pending at report creation
+- Implementation: `1397345`
 - Branch: `feature/jm-profile-visual-09`
 - No Main merge and no Production deployment.
 
