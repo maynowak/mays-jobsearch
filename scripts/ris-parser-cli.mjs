@@ -14,6 +14,7 @@
  * Exit: 0 success, 2 invalid input/capability, 3 internal error.
  */
 import { createHash } from "node:crypto";
+import { pathToFileURL } from "node:url";
 import {
   parseCvBuffer,
   extractAtsRequirements,
@@ -236,13 +237,18 @@ function jobResult(input, capability) {
   };
 }
 
-async function main() {
-  const index = process.argv.indexOf("--capability");
-  const capability = index >= 0 ? process.argv[index + 1] : "";
+export async function runParser(capability, input) {
   if (!["parse.cv", "parse.job", "parse.ats"].includes(capability)) {
     throw new CliError("unsupported_capability",
       `unsupported capability: ${capability || "<missing>"}`);
   }
+  if (capability === "parse.cv") return parseCv(input);
+  return jobResult(input, capability);
+}
+
+async function main() {
+  const index = process.argv.indexOf("--capability");
+  const capability = index >= 0 ? process.argv[index + 1] : "";
   const raw = await readStdin();
   let parsed;
   try {
@@ -250,11 +256,10 @@ async function main() {
   } catch {
     throw new CliError("invalid_input", "stdin is not valid JSON");
   }
-  if (capability === "parse.cv") {
-    process.stdout.write(JSON.stringify(await parseCv(parsed.input)) + "\n");
-    return;
-  }
-  process.stdout.write(JSON.stringify(jobResult(parsed.input, capability)) + "\n");
+  process.stdout.write(JSON.stringify(await runParser(capability, parsed.input)) + "\n");
 }
 
-main().catch(fail);
+if (process.argv[1]
+    && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(fail);
+}

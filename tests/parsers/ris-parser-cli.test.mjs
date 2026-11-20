@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import test from "node:test";
+import { handler } from "../../lambda/ris_parser_handler.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "..", "..");
@@ -67,4 +68,15 @@ test("invalid capability and input fail with exit 2", () => {
   const noTitle = run("parse.job", { job: { descriptionPlain: "x" } });
   assert.equal(noTitle.status, 2);
   assert.equal(JSON.parse(noTitle.stdout).error.code, "invalid_input");
+});
+
+test("Lambda handler reuses the parser and returns a JSON error", async () => {
+  const ok = await handler({ capability: "parse.job", input: { job: JOB } });
+  assert.equal(ok.capability, "parse.job");
+  assert.match(ok.data.stableId, /^[a-f0-9]{64}$/);
+
+  const bad = await handler({
+    capability: "parse.job", input: { job: {} },
+  });
+  assert.equal(bad.error.code, "invalid_input");
 });
