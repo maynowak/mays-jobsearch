@@ -14680,38 +14680,82 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   padding-left: 20px;
 }
 
-/* JM-PROFILE-UX-01 — FUTURISTIC PROFILE COMMAND CENTER
-   Shared shell for all six authenticated profile tabs. The image is the
-   existing search-world asset; the light overlay keeps forms and consent
-   copy readable and deliberately avoids a second landing-page composition. */
+/* JM-CV-UX-08 — dual AI profile background.
+   The source image is split into proportional left/right face motifs. The
+   centre is a flexible gradient, so the dark middle can grow with the shell
+   without stretching either face. Soft masks remove the source panel seams. */
 .container.layout-dashboard.layout-profile-command {
   position: relative;
   isolation: isolate;
-  min-height: calc(100vh - var(--navbar-height, 61px));
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: calc(100dvh - var(--navbar-height, 61px));
   padding-top: clamp(20px, 2.5vw, 32px);
   padding-bottom: clamp(36px, 6vw, 72px);
-  background-color: #eaf6fb;
+  overflow: clip;
+  background-color: #03111f;
   background-image:
+    radial-gradient(ellipse at 18% 108%, rgba(34, 211, 238, 0.42), transparent 58%),
+    radial-gradient(ellipse at 82% 108%, rgba(249, 115, 22, 0.34), transparent 58%),
     linear-gradient(
-      180deg,
-      rgba(248, 250, 252, 0.94) 0%,
-      rgba(239, 248, 253, 0.90) 38%,
-      rgba(226, 242, 251, 0.88) 68%,
-      rgba(220, 238, 250, 0.92) 100%
-    ),
-    image-set(
-      url("/job-matcher-next-step-searchpage.webp") type("image/webp"),
-      url("assets/images/job-matcher-next-step-searchpage.png") type("image/png")
+      90deg,
+      #03111f 0%,
+      #061b2d 28%,
+      #04121f 50%,
+      #061b2d 72%,
+      #03111f 100%
     );
-  background-position: center top;
+}
+
+.container.layout-dashboard.layout-profile-command::before,
+.container.layout-dashboard.layout-profile-command::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  z-index: 0;
+  width: clamp(190px, 30vw, 620px);
+  pointer-events: none;
   background-size: cover;
   background-repeat: no-repeat;
+  opacity: 0.96;
+}
+
+.container.layout-dashboard.layout-profile-command::before {
+  left: 0;
+  background-image: url("assets/images/jm-profile-dual-left.webp");
+  background-position: left center;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 42%, transparent 72%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 42%, transparent 72%, transparent 100%);
+}
+
+.container.layout-dashboard.layout-profile-command::after {
+  right: 0;
+  background-image: url("assets/images/jm-profile-dual-right.webp");
+  background-position: right center;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 28%, #000 58%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, transparent 28%, #000 58%, #000 93%, transparent 100%);
 }
 
 .layout-profile-command .dashboard-v2 {
   position: relative;
   z-index: 1;
   padding-top: 0;
+}
+
+.layout-profile-command .dashboard-v2-state {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 94vw);
+  margin-inline: auto;
+}
+
+.layout-profile-command .dashboard-v2-state--guest > p {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(2, 10, 24, 0.68);
+  color: #eafcff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 /* The shell owns the top gap. This makes the profile header structurally
@@ -14846,10 +14890,16 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   padding: var(--space-5);
   border: 1px solid color-mix(in srgb, var(--accent) 34%, rgba(255, 255, 255, 0.72));
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.94);
+  background: #f8fdff;
   box-shadow:
     0 14px 34px rgba(8, 47, 73, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+/* Keep the busy AI side art from shining through profile copy on tablet/mobile. */
+.layout-profile-command .dashboard-v2-state__applications,
+.layout-profile-command .dashboard-v2__main > .aurora-card {
+  background: #f8fdff;
 }
 
 .layout-profile-command .applications-cockpit {
@@ -14908,8 +14958,12 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   .container.layout-dashboard.layout-profile-command {
     padding-top: 16px;
     padding-inline: 12px;
-    background-position: center top;
-    background-size: auto 100%;
+  }
+
+  .container.layout-dashboard.layout-profile-command::before,
+  .container.layout-dashboard.layout-profile-command::after {
+    width: 28vw;
+    opacity: 0.62;
   }
 
   .layout-profile-command .dashboard-v2 {
