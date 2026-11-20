@@ -1,3 +1,13 @@
+2026-11-20 · JM-PROFILE-HEADER-IMAGE-02R
+- Typ: Original-Header-Artwork, Globe-/Wellen-Komposition, visuelle Abnahme
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch: `feature/jm-profile-header-image-02r`; Basis `origin/main` `22d5bd9`.
+- Original `LeuchtendesProfilheaderHG.png` (2170×725) ausschließlich verwendet; `jm-profile-header-cyan-original.webp` plus proportionale Alpha-Crops für Globe und Wellen. Altes jaymzart-basiertes Header-Asset entfernt/nicht verwendet.
+- Header: Globe-Layer bei 38%, 22% Breite, `auto 100%`; Wellen-Layer horizontal erweitert; Alpha-Masken gegen harte Kanten; Bild-Opacity 1, kein Saturations-/Brightness-Filter; Overlay schützt nur linkes Textdrittel. Header, Karten, Partikel, Sidebar/Navbar und CV-Workspace unverändert.
+- Tests: Profil-Test 4 PASS; Header-E2E 1920/1440/768/390 plus Reduced-Motion PASS; Header-Text-Overflow 0; horizontaler Overflow 0; keine Page-/Console-Fehler; Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS.
+- Keine RIS-/AWS-/Cognito-/Consent-/Analytics-Änderung; kein Main-Merge/Deployment.
+- Bericht/Screenshots: `docs/reports/JM-PROFILE-HEADER-IMAGE-02R.md`, `docs/reports/assets/JM-PROFILE-HEADER-IMAGE-02R/`.
+
 2026-11-20 · JM-PROFILE-HEADER-IMAGE-01
 - Typ: Profil-Header-Bild, responsive Bildmaskierung, visuelle Verifikation
 - Status: **IMPLEMENTED / VERIFIED LOCAL**

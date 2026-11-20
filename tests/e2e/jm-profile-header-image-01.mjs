@@ -103,12 +103,16 @@ async function run() {
       if (state.ariaHidden !== "true") throw new Error(`${width}px: particles are not aria-hidden`);
       if (state.pointerEvents !== "none") throw new Error(`${width}px: particles can intercept pointers`);
       if (state.overflow > 0) throw new Error(`${width}px: horizontal overflow ${state.overflow}`);
+      if (!state.headerBackground?.includes("jm-profile-header-cyan-waves-wide-alpha.webp")) {
+        throw new Error(`${width}px: wave layer missing`);
+      }
       if (!state.headerBackground?.includes("linear-gradient")) throw new Error(`${width}px: header is not 3D glass`);
-      if (!state.headerArt?.includes("jm-profile-header-globe.webp")) throw new Error(`${width}px: globe art missing`);
-      const expectedArtSize = width <= 767 ? "auto 76%" : "auto 100%";
-      const expectedArtPosition = width <= 767 ? "112% 50%" : "100% 50%";
-      if (state.headerArtSize !== expectedArtSize || state.headerArtPosition !== expectedArtPosition) {
-        throw new Error(`${width}px: globe is not proportionally right-aligned: ${state.headerArtSize}/${state.headerArtPosition}`);
+      if (!state.headerArt?.includes("jm-profile-header-cyan-globe-alpha.webp")) throw new Error(`${width}px: globe art missing`);
+      if (state.headerArtSize !== "auto 100%" || state.headerArtPosition !== "0% 50%") {
+        throw new Error(`${width}px: globe is not proportionally left-aligned: ${state.headerArtSize}/${state.headerArtPosition}`);
+      }
+      if (width > 767 && state.headerArtOpacity !== "1") {
+        throw new Error(`${width}px: globe is artificially dimmed: ${state.headerArtOpacity}`);
       }
       if (state.headerCopyOverflow > 0) throw new Error(`${width}px: header copy overflows`);
       if (!state.cardBackground?.includes("linear-gradient")) throw new Error(`${width}px: card edges missing`);
