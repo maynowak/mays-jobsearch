@@ -30,6 +30,20 @@ describe("JM-PROFILE-VISUAL-09 particles", () => {
     expect(css).toContain("nth-child(n + 9)");
   });
 
+  it("keeps the brighter palette, opacity range and faster drift windows", () => {
+    const source = readFileSync(resolve(process.cwd(), "src/components/ProfileParticles.tsx"), "utf8");
+    const opacities = [...source.matchAll(/--opacity": ([0-9.]+)/g)].map((match) => Number(match[1]));
+    const durations = [...source.matchAll(/--duration": "([0-9]+)s"/g)].map((match) => Number(match[1]));
+    expect(opacities).toHaveLength(16);
+    expect(opacities.every((value) => value >= 0.6 && value <= 0.9)).toBe(true);
+    expect(durations).toHaveLength(16);
+    expect(durations.every((value) => value >= 14 && value <= 22)).toBe(true);
+    expect(source).toContain("#22D3EE");
+    expect(source).toContain("#67E8F9");
+    expect(source).toContain("#A5F3FC");
+    expect(css).toContain("radial-gradient(circle at 42% 38%");
+  });
+
   it("mounts the particle layer only in profile routes", () => {
     expect(app.match(/<ProfileParticles\s*\/>/g)).toHaveLength(3);
     expect(app).toContain('from "./components/ProfileParticles"');

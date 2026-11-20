@@ -14968,26 +14968,28 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   width: calc(var(--size) * 2.1);
   height: calc(var(--size) * 2.1);
   border-radius: 50%;
-  background: var(--color);
-  opacity: calc(var(--opacity) * 1.2);
+  background: radial-gradient(circle at 42% 38%, #ffffff 0 14%, var(--color) 42%, transparent 72%);
+  opacity: var(--opacity);
   filter: blur(var(--blur));
-  box-shadow: 0 0 14px 3px var(--color);
+  box-shadow:
+    0 0 10px 2px var(--color),
+    0 0 22px 5px color-mix(in srgb, var(--color) 52%, transparent);
   will-change: transform, opacity;
   animation: profile-particle-drift var(--duration) ease-in-out var(--delay) infinite alternate;
 }
 
 @keyframes profile-particle-drift {
   0% {
-    transform: translate3d(0, 0, 0) scale(0.9);
-    opacity: calc(var(--opacity) * 0.7);
+    transform: translate3d(0, 0, 0) scale(0.92);
+    opacity: calc(var(--opacity) * 0.82);
   }
   50% {
-    transform: translate3d(var(--dx), var(--dy), 0) scale(1.25);
+    transform: translate3d(var(--dx), var(--dy), 0) scale(1.22);
     opacity: var(--opacity);
   }
   100% {
-    transform: translate3d(calc(var(--dx) * -0.55), calc(var(--dy) * -0.35), 0) scale(0.82);
-    opacity: calc(var(--opacity) * 0.5);
+    transform: translate3d(calc(var(--dx) * -0.55), calc(var(--dy) * -0.35), 0) scale(0.86);
+    opacity: calc(var(--opacity) * 0.68);
   }
 }
 
