@@ -92,7 +92,7 @@ was performed.
 
 ## 6. Git
 
-- Implementation: pending at report creation
+- Implementation: `341b2e5`
 - Branch: `feature/jm-profile-header-image-02r`
 - No Main merge and no Production deployment.
 
