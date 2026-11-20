@@ -1,8 +1,13 @@
 # JM-CV-UX-08 — Dual AI Profile Background
 
-**Status:** `IMPLEMENTED / VERIFIED LOCAL`  
-**Branch:** `feature/jm-cv-ux-08-dual-ai-profile-background`  
-**Base:** `origin/main` `81db09a`  
+**Status:** `MERGED TO MAIN / PRODUCTION DEPLOYED / PRODUCTION E2E VERIFIED`
+
+**Branch:** `feature/jm-cv-ux-08-dual-ai-profile-background`
+
+**Merge commit:** `3545dc2` (PR #45)
+
+**Base:** `origin/main` `81db09a`
+
 **Scope:** profile background only. No CV-workspace, RIS, AWS, Cognito, consent or analytics changes.
 
 ## 1. Source and Asset Preparation
@@ -108,11 +113,21 @@ docs/reports/assets/JM-CV-UX-08/
 No production write, auth, RIS, consent, CV persistence or analytics operation
 was performed.
 
-## 6. Git
+## 6. Release and Production E2E
 
-- Implementation: `ecddb45`
-- Branch: `feature/jm-cv-ux-08-dual-ai-profile-background`
-- No Main merge and no Production deployment.
+- PR #45 merged to `origin/main` as `3545dc2`; branch retained.
+- Code: `ecddb45`; docs/audit: `94a82bf`.
+- Automatic Vercel main deployments:
+  - `www.mays-job-matcher.app` → `dpl_cvKoc4JonauV48DU8Bz8DtjW1XVc` READY
+  - `mays-jobsearch.vercel.app` → `dpl_HZitg8q5ZgUMSSyrmJEwPUDv2rco` READY
+- Read-only production browser E2E against `https://www.mays-job-matcher.app/profil`:
+  - 1920, 1440, 768 and 390 px: HTTP 200
+  - left/right WebP assets resolved from production
+  - `background-size: cover`, no transform distortion
+  - central gradient present
+  - **0 px horizontal overflow** at all widths
+  - no page/console errors
+- No production writes or authenticated account operations were performed.
 
 ## 7. Open Points
 
