@@ -152,7 +152,8 @@ async function parseCv(input) {
         parserVersion: data.parserVersion || "unknown",
       },
     },
-    confidence: data.confidence || "uncertain",
+    confidence: { overall: data.confidence || "uncertain",
+      sections: data.sectionConfidence || {} },
   };
 }
 
@@ -197,7 +198,7 @@ function jobResult(input, capability) {
         analysisStatus: data.analysisStatus || data.analysis?.analysisStatus || "",
         provenance: { source: "mays-jobsearch", parser: "ats.mjs" },
       },
-      confidence: "confirmed",
+      confidence: { overall: "confirmed" },
     };
   }
 
@@ -228,7 +229,7 @@ function jobResult(input, capability) {
       basis: data.basis,
       provenance: { source: "mays-jobsearch", parser: "ats.mjs" },
     },
-    confidence: requirements.length ? "confirmed" : "uncertain",
+    confidence: { overall: requirements.length ? "confirmed" : "uncertain" },
   };
 }
 
