@@ -14762,9 +14762,11 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
    below the sticky navbar instead of relying on a card margin coincidence. */
 .layout-profile-command .dashboard-v2__header {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   margin-bottom: clamp(20px, 3vw, 32px);
   border: 1px solid rgba(103, 232, 249, 0.34);
+  border-bottom-color: rgba(103, 232, 249, 0.62);
   background:
     linear-gradient(135deg, rgba(3, 17, 31, 0.96), rgba(7, 38, 58, 0.86)),
     radial-gradient(circle at 8% 0%, rgba(34, 211, 238, 0.20), transparent 42%),
@@ -14778,15 +14780,52 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   backdrop-filter: blur(18px) saturate(1.18);
 }
 
+.layout-profile-command .dashboard-v2__header > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The globe is a separate, proportionally scaled header layer. No cover,
+   no 100% × 100% image stretching; waves are allowed to fade into the left
+   gradient. The source asset is pre-mirrored so the globe sits on the right. */
+.layout-profile-command .dashboard-v2__header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("assets/images/jm-profile-header-globe.webp");
+  background-position: right center;
+  background-size: auto 100%;
+  background-repeat: no-repeat;
+  opacity: 0.62;
+  filter: saturate(0.82) brightness(0.86);
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, #000 32%, #000 92%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%);
+  mask-image:
+    linear-gradient(90deg, transparent 0%, #000 32%, #000 92%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 20%, #000 80%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
 .layout-profile-command .dashboard-v2__header::after {
   content: "";
   position: absolute;
-  right: -8%;
-  bottom: -1px;
-  width: 46%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.85), transparent);
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3, 17, 31, 0.99) 0%,
+      rgba(3, 17, 31, 0.96) 30%,
+      rgba(3, 17, 31, 0.74) 54%,
+      rgba(3, 17, 31, 0.42) 78%,
+      rgba(3, 17, 31, 0.38) 100%
+    ),
+    radial-gradient(ellipse at 78% 0%, rgba(34, 211, 238, 0.12), transparent 56%);
 }
 
 .layout-profile-command .dashboard-v2__header h1 {
@@ -15084,6 +15123,13 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     padding: var(--space-4);
     border-radius: 18px;
   }
+
+  .layout-profile-command .dashboard-v2__header::before {
+    background-size: auto 76%;
+    background-position: 112% center;
+    opacity: 0.4;
+  }
+
 
   .layout-profile-command .dashboard-v2__main > .aurora-card,
   .layout-profile-command .dashboard-v2__cv-section,
