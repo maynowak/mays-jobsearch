@@ -1,3 +1,14 @@
+2026-11-20 · JM-PROFILE-VISUAL-10 — CONTROLLED RELEASE
+- Typ: Release VISUAL-09/10/10B, PR-Merge, Production Deployments, E2E
+- Status: **MERGED / PRODUCTION DEPLOYED / PRODUCTION E2E VERIFIED**
+- Release: PR #47 gegen `main` gemerged als `9314b77`; Basis `5d7f3b3`; Branch `feature/jm-profile-visual-10b-navbar-fix` erhalten; kein Force-Push.
+- Checks: Vollsuite **2004 PASS / 11 skipped**, Build/Diff PASS, Vercel Previews PASS, CodeQL Analysis PASS (Duplikat skipped), PR `CLEAN`/`MERGEABLE`.
+- Production: `www.mays-job-matcher.app` `dpl_EnsLvH5BQBQcdsmMuUbubdbSxhTc` READY; `mays-jobsearch.vercel.app` `dpl_HDWnDr2Rg7TW1pSdCk219J98trXR` READY; Footer-SHA `9314b77`.
+- Read-only Production E2E auf beiden Domains 1920/1440/768/390: HTTP 200 für `/` und `/profil`; 16 Partikel (8 mobile), Farb-/Animations-/Dauerprüfung, Reduced-Motion `none`, Dual-AI-Assets, 0 px Overflow, keine Page-/Console-Fehler. Header/Karten/Navigation lokal geprüft; öffentliche Production-Profilseite ist Gast-Shell ohne Auth-Header/Sidebar. Keine authentifizierten Schreiboperationen.
+- Firefox: **NOT VERIFIED** (lokale Binary nicht installiert). Navbar-10B: Full-Page-Screenshot-Artefakt, kein CSS-Fix.
+- Keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Analytics-Änderung.
+- Release-Report: `docs/reports/JM-PROFILE-VISUAL-10-RELEASE.md`.
+
 2026-11-20 · JM-PROFILE-VISUAL-10B — NAVBAR DIAGNOSTIC
 - Typ: Navbar-Position, Scrollverhalten, Screenshot-Artefakt-Diagnose
 - Status: **NOT REPRODUCIBLE / SCREENSHOT ARTIFACT**; kein CSS-/Produkt-Fix
