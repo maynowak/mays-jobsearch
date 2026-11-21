@@ -1,3 +1,14 @@
+2026-11-21 · JM-CV-WORKSPACE-INITIAL-RENDER-01 — CV WORKSPACE SIDE ART
+- Typ: CV-Workspace-Hintergrund, Initial-Render-Diagnose, CSS-Viewport-Bindung, Regressionstest
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-workspace-initial-render-01`; Implementierung/Test `fe4a22c`; kein Main-Merge, kein Deployment.
+- Diagnose: Reproduktion über echten Popup-Handoff mit synthetischem PDF. Vor dem Fix wuchsen `.cv-workspace-page::before/::after` mit der Dokumenthöhe (1000 px → 2682,53 px im langen Import), während `background-size: cover,cover` und Positionen konstant blieben. Keine Änderung nach Fonts, Bild-Decode, zwei RAFs, 500 ms oder Resize; also kein Initial-/Reflow-Race, sondern dauerhafte Kopplung an die Importseitenhöhe.
+- Korrektur: Beide dekorativen City-/Human-Layer sind jetzt `position: fixed; height: 100dvh`; Bilder, Farben, Masken, Positions- und Cover-Werte bleiben erhalten. Keine Timer, Reloads, Handoff-/CV-Daten-Änderungen.
+- Regression: `tests/e2e/cv-workspace-initial-render-01.mjs` prüft sechs Stufen bei 1920×1080; Layer bleiben 1080 px bei 2682,53 px Dokumenthöhe, Background-Signaturen identisch, kein Overflow/Console-Fehler. Screenshots: `docs/reports/assets/JM-CV-WORKSPACE-INITIAL-RENDER-01/`.
+- Tests: neuer First-Tab-Open-E2E PASS; `jm-cv-design-02` PASS; serielle Vollsuite **2005 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an RIS/AWS/Cognito/Consent/Analytics, CV-Daten oder Handoff-Logik; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-CV-WORKSPACE-INITIAL-RENDER-01.md`.
+
 2026-11-21 · JM-PROFILE-HEADER-IMAGE-05 — PREMIUM LAYERED GLOBE & CYAN WAVES
 - Typ: Profil-Header-Artwork, zwei unabhängige Alpha-Layer, responsive CSS, visuelle Abnahme
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
