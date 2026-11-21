@@ -113,8 +113,8 @@ async function run() {
       if (state.headerBackgroundSize !== "cover") {
         throw new Error(`${width}px: header artwork is not cover-sized: ${state.headerBackgroundSize}`);
       }
-      if (width > 1023 && state.headerBackgroundPosition !== "50% 50%") {
-        throw new Error(`${width}px: desktop header composition is not centered: ${state.headerBackgroundPosition}`);
+      if (width > 1023 && state.headerBackgroundPosition !== "0% 50%") {
+        throw new Error(`${width}px: desktop header composition is not left-anchored: ${state.headerBackgroundPosition}`);
       }
       if (width <= 1023 && width > 767 && state.headerBackgroundPosition !== "0% 50%") {
         throw new Error(`${width}px: tablet crop position is wrong: ${state.headerBackgroundPosition}`);

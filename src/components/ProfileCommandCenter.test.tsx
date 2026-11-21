@@ -40,6 +40,7 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
     expect(css).toContain('background-size: cover');
     expect(css).toContain('min-height: 190px');
     expect(css).toContain('jm-profile-header-cyan-composed-mobile.webp');
+    expect(css).toContain('background-position: left center');
     expect(css).toContain('background-position: center');
     expect(css).toContain('profile-particle-drift');
     expect(css).toContain('prefers-reduced-motion: reduce');
