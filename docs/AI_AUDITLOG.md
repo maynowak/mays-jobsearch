@@ -1,3 +1,14 @@
+2026-11-21 · JM-PROFILE-HEADER-IMAGE-05 — PREMIUM LAYERED GLOBE & CYAN WAVES
+- Typ: Profil-Header-Artwork, zwei unabhängige Alpha-Layer, responsive CSS, visuelle Abnahme
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-header-image-05`; Implementierung `5bf44d3`; Baseline `afdf17b`; kein Main-Merge, kein Deployment.
+- Assets: bereitgestellte `Leuchtender Globus mit Amerika-Fokus.png` (1261×1247 RGBA) und `Neon-Türkis Wireframe-Wellen.png` (2170×725 RGBA) ohne KI-Neugenerierung optimiert zu `jm-profile-globe.webp` (720×712, 59 KB) und `jm-profile-waves.webp` (2170×725, 601 KB), Alpha und Originalfarben erhalten.
+- Architektur: Dark Premium Glass → `.dashboard-v2__header-waves` → `.dashboard-v2__header-globe` (eigenes `<img>`, `object-fit: contain`, `aria-hidden`, pointer-events none) → lokaler Text-Overlay → `.dashboard-v2__header-copy`. Keine zusammengesetzte Headergrafik mehr; Globe liegt über den Wellen.
+- Visual: Assets separat auf Checkerboard/Dark geprüft; Globe rund und freigestellt, Wellen ohne eingebetteten Globe, keine Rechteckhintergründe. Header 1920/1440/768/390 plus Reduced Motion geprüft: Globe links (175/150/126 px), Text darüber, Wellen bis zum Rand, keine harten Kanten/Overflow. Screenshots: `docs/reports/assets/JM-PROFILE-HEADER-IMAGE-05/`.
+- Tests: Profil-Tests 5 PASS; Header-E2E vier Breiten plus Reduced-Motion PASS; serielle Vollsuite **2005 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an Dual-AI-Hintergrund, Partikeln, Karten, Navigation, CV-Workspace, RIS/AWS/Cognito/Consent/Analytics; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-PROFILE-HEADER-IMAGE-05.md`.
+
 2026-11-21 · JM-PROFILE-HEADER-IMAGE-04 — ORIGINAL ARTWORK LAYOUT CORRECTION
 - Typ: Profil-Header-Artwork, Originalkomposition, responsive CSS, visuelle Abnahme
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
