@@ -15199,9 +15199,10 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 .cv-workspace-page::before {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0 auto 0 0;
   z-index: 0;
+  height: 100dvh;
   width: min(31vw, 560px);
   pointer-events: none;
   background-image:
@@ -15219,9 +15220,10 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 .cv-workspace-page::after {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0 0 0 auto;
   z-index: 0;
+  height: 100dvh;
   width: min(29vw, 520px);
   pointer-events: none;
   background-image:
