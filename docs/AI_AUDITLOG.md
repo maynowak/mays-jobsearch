@@ -1,3 +1,13 @@
+2026-11-21 · JM-PROFILE-HEADER-IMAGE-04 — ORIGINAL ARTWORK LAYOUT CORRECTION
+- Typ: Profil-Header-Artwork, Originalkomposition, responsive CSS, visuelle Abnahme
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-header-image-04`; Implementierung `25a2a49`; Baseline `feature/jm-profile-header-image-03` `42d690e`; kein Main-Merge, kein Deployment.
+- Umsetzung: Originalglobe wieder links; `DEV-MODUS`/`Aktiv`, `Profil` und `Willkommen` liegen über dem Globe. Durchgehendes, aus dem Original abgeleitetes Wellenfeld bis zum rechten Headerrand; Desktop-Composition 2480×400, eigene reduzierte Mobile-Composition 744×464 mit Globe links. Desktop `background-position: left center`, Opacity 1, kein Filter, keine Bildanimation; dezenter Text-Scrim und Text-Shadow nur für Lesbarkeit.
+- Visuelle Abnahme 1920/1440/768/390 plus Reduced Motion direkt gegen `LeuchtendesProfilheaderHG.png`: Globe links und rund, Labels darüber, Original-Cyan, Wellen durchgehend ohne sichtbare Naht/Kachel, kein horizontaler Overflow. Screenshots: `docs/reports/assets/JM-PROFILE-HEADER-IMAGE-04/`.
+- Tests: Profil-Test 4 PASS; Header-E2E vier Breiten plus Reduced-Motion PASS; serielle Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an Dual-AI-Hintergrund, Partikeln, Karten, Navigation, CV-Workspace, RIS/AWS/Cognito/Consent/Analytics; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-PROFILE-HEADER-IMAGE-04.md`.
+
 2026-11-21 · JM-PROFILE-HEADER-IMAGE-03 — TRUE ARTWORK COMPOSITION FIX
 - Typ: Profil-Header-Artwork, vorberechnete Desktop-/Mobile-Komposition, responsive CSS, visuelle Abnahme
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
