@@ -14519,6 +14519,93 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   }
 }
 
+/* JM-CV-IMPORT-UX-07B — fullpage screenshot view and header actions. */
+.cv-import-header-jump {
+  min-height: 44px;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  color: var(--brand-dark);
+  font-weight: 800;
+}
+
+.cv-import-screenshot-toggle {
+  min-height: 44px;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  font-weight: 800;
+}
+
+.cv-import-workspace--screenshot .cv-import-workspace__head-actions > :not(.cv-import-screenshot-toggle),
+.cv-import-workspace--screenshot .cv-import-modal__may,
+.cv-import-workspace--screenshot .cv-import-overview__nav,
+.cv-import-workspace--screenshot .cv-import-review__decision-nav,
+.cv-import-workspace--screenshot .cv-import-review__filters,
+.cv-import-workspace--screenshot .cv-import-review__item .cv-import-review__controls,
+.cv-import-workspace--screenshot .cv-import-review__item .cv-import-review__edit,
+.cv-import-workspace--screenshot .cv-import-decision-panel {
+  display: none;
+}
+
+/* The workspace action in the original modal is the clear secondary CTA:
+   it stays visually subordinate to the primary import action, but is easy to
+   find in the modal header. */
+.cv-import-modal .cv-import-workspace__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid rgba(34, 211, 238, 0.55);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(229, 252, 255, 0.96), rgba(194, 242, 248, 0.86));
+  color: #064c57;
+  font-weight: 850;
+  box-shadow:
+    0 2px 4px rgba(2, 20, 38, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.cv-import-modal .cv-import-workspace__open:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 14px rgba(2, 20, 38, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.cv-import-modal .cv-import-workspace__open:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cv-import-modal .modal-close {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.cv-import-modal .cv-import-modal__actions {
+  align-items: center;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.cv-import-modal .cv-import-modal__actions > button {
+  min-height: 44px;
+}
+
+.cv-import-modal .cv-import-modal__actions .letter-btn {
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .cv-import-header-jump,
+  .cv-import-screenshot-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 900px) {
   .cv-builder-fullpage .cv-builder-workspace,
   .cv-builder-modal--screenshot .cv-builder-workspace {

@@ -120,7 +120,30 @@ describe("CvBuilderImportDialog", () => {
     await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
     expect(screen.queryByText("DEINE IMPORTENTSCHEIDUNG")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Zu den Importaktionen/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Screenshot-Ansicht/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Angaben übernehmen" })).toBeInTheDocument();
+  });
+
+  it("toggles the fullpage screenshot view without changing review data", async () => {
+    const { container } = renderDialog({ layoutMode: "fullpage" });
+    await chooseLocal(container);
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+    const workspace = container.querySelector(".cv-import-workspace");
+    const details = container.querySelector(".cv-import-section__details");
+    expect(workspace).not.toHaveClass("cv-import-workspace--screenshot");
+    expect(screen.getByRole("button", { name: "↓ Direkt zur Importentscheidung" })).toBeInTheDocument();
+    if (details instanceof HTMLDetailsElement) details.open = false;
+
+    fireEvent.click(screen.getByRole("button", { name: "📸 Screenshot-Ansicht" }));
+    expect(workspace).toHaveClass("cv-import-workspace--screenshot");
+    expect(screen.getByRole("button", { name: "Screenshot-Ansicht beenden" })).toHaveAttribute("aria-pressed", "true");
+    expect(details).toHaveProperty("open", true);
+    expect(screen.getByText(/Angaben noch ungeprüft/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Screenshot-Ansicht beenden" }));
+    expect(workspace).not.toHaveClass("cv-import-workspace--screenshot");
+    expect(details).toHaveProperty("open", false);
+    expect(screen.getByRole("button", { name: "📸 Screenshot-Ansicht" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("can exclude a section before transfer", async () => {

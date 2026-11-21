@@ -120,6 +120,11 @@ async function run() {
     const source = await context.newPage();
     await mockApi(source);
     await importModal(source, pdf);
+    const modalOpenTab = source.getByRole("button", { name: /In neuem Tab öffnen/ });
+    if ((await modalOpenTab.count()) !== 1 || !(await modalOpenTab.isVisible())) {
+      throw new Error("modal workspace action is missing");
+    }
+    await source.screenshot({ path: `${evidenceDir}/00-import-modal-1920.png`, fullPage: false });
 
     const popup = await openWorkspace(context, source);
     const errors = [];
@@ -144,6 +149,53 @@ async function run() {
     if (panelPosition !== "static") throw new Error(`decision panel is not in normal flow: ${panelPosition}`);
 
     await popup.screenshot({ path: `${evidenceDir}/01-fullpage-import-1920.png`, fullPage: true });
+
+    const detailsBefore = await popup.locator(".cv-import-section__details").evaluateAll((nodes) =>
+      nodes.map((node) => node.open)
+    );
+    const reviewPagesBefore = await popup.locator(".cv-import-review__pagination").innerText();
+    const pendingBeforeScreenshot = await countPending(popup);
+    const screenshotToggle = popup.getByRole("button", { name: "📸 Screenshot-Ansicht" });
+    await screenshotToggle.click();
+    if ((await popup.locator(".cv-import-workspace").getAttribute("class"))?.includes("cv-import-workspace--screenshot") !== true) {
+      throw new Error("screenshot view class was not activated");
+    }
+    if ((await popup.getByRole("button", { name: "Screenshot-Ansicht beenden" }).count()) !== 1) {
+      throw new Error("screenshot view exit action is missing");
+    }
+    if (!(await popup.locator(".cv-import-header-jump").isHidden())) {
+      throw new Error("header decision jump is still visible in screenshot view");
+    }
+    if (!(await popup.locator(".cv-import-decision-panel").isHidden())) {
+      throw new Error("decision panel is still visible in screenshot view");
+    }
+    if (!(await popup.locator(".cv-import-review__filters").isHidden())) {
+      throw new Error("review controls are still visible in screenshot view");
+    }
+    const detailsDuringScreenshot = await popup.locator(".cv-import-section__details").evaluateAll((nodes) =>
+      nodes.map((node) => node.open)
+    );
+    if (!detailsDuringScreenshot.every(Boolean)) throw new Error("screenshot view did not open all section details");
+    await popup.screenshot({ path: `${evidenceDir}/05-screenshot-view-1920.png`, fullPage: true, timeout: 120000 });
+    if ((await countPending(popup)) !== pendingBeforeScreenshot) {
+      throw new Error("screenshot view changed the pending count");
+    }
+    if ((await popup.locator(".cv-import-review__pagination").innerText()) !== reviewPagesBefore) {
+      throw new Error("screenshot view changed the current review page");
+    }
+    await popup.getByRole("button", { name: "Screenshot-Ansicht beenden" }).click();
+    if ((await popup.locator(".cv-import-workspace").getAttribute("class"))?.includes("cv-import-workspace--screenshot") === true) {
+      throw new Error("screenshot view class was not removed");
+    }
+    const detailsAfterScreenshot = await popup.locator(".cv-import-section__details").evaluateAll((nodes) =>
+      nodes.map((node) => node.open)
+    );
+    if (JSON.stringify(detailsAfterScreenshot) !== JSON.stringify(detailsBefore)) {
+      throw new Error("screenshot view did not restore the original detail state");
+    }
+    if (!(await popup.locator(".cv-import-header-jump").isVisible())) {
+      throw new Error("header decision jump did not return after screenshot view");
+    }
 
     const responsivePanels = [];
     for (const width of [1440, 768, 390]) {
@@ -170,8 +222,9 @@ async function run() {
     await popup.waitForTimeout(120);
 
     const beforeJumpY = await popup.evaluate(() => window.scrollY);
-    const jump = popup.getByRole("button", { name: /Auswahl getroffen.*Zu den Importaktionen/ });
-    await jump.focus();
+    const topJump = popup.locator(".cv-import-header-jump");
+    if (!(await topJump.isVisible())) throw new Error("header decision jump is not immediately visible");
+    await topJump.focus();
     await popup.keyboard.press("Enter");
     await popup.waitForFunction(() => {
       const panel = document.getElementById("cv-import-decision-panel");
@@ -180,7 +233,7 @@ async function run() {
       return rect.top >= 0 && rect.bottom <= innerHeight;
     }, { timeout: 3000 });
     const afterJumpY = await popup.evaluate(() => window.scrollY);
-    if (afterJumpY <= beforeJumpY + 200) throw new Error(`decision jump did not reach the panel: ${beforeJumpY} -> ${afterJumpY}`);
+    if (afterJumpY <= beforeJumpY + 200) throw new Error(`header decision jump did not reach the panel: ${beforeJumpY} -> ${afterJumpY}`);
     if ((await popup.evaluate(() => document.activeElement?.id)) !== "cv-import-decision-panel") {
       throw new Error("decision panel did not receive focus");
     }
@@ -200,6 +253,9 @@ async function run() {
     }
     if ((await popup.getByRole("heading", { name: "Deine Importauswahl" }).count()) !== 0) {
       throw new Error("back-to-review unexpectedly opened the summary");
+    }
+    if ((await popup.getByRole("button", { name: /Auswahl getroffen.*Zu den Importaktionen/ }).count()) !== 1) {
+      throw new Error("existing in-review decision jump was not retained");
     }
 
     const firstPending = popup.locator(".cv-import-review__item.is-pending").first();
