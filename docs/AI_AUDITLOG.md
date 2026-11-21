@@ -1,3 +1,13 @@
+2026-11-21 · JM-CV-IMPORT-UX-07B — SCREENSHOT & NAVIGATION COMPLETION
+- Typ: CV-Import-UX, Fullpage-Screenshot-Ansicht, Header-Sprung, Modal-CTA-Polish
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-import-ux-07b`; Implementierung `4b26de4`; Baseline `74601a9`; kein Main-Merge, kein Deployment.
+- Umsetzung: Fullpage-Import erhält „📸 Screenshot-Ansicht“ / „Screenshot-Ansicht beenden“; beim Aktivieren werden alle vorhandenen Section-Details geöffnet, störende Filter-/Item-/Hilfe-/Entscheidungscontrols ausgeblendet, Daten/Pagination/Entscheidungen bleiben unverändert; beim Beenden werden Detailzustände restauriert. Zusätzlicher Header-Sprung „↓ Direkt zur Importentscheidung“ mit Panel-Fokus und Reduced-Motion; der bestehende Prüflisten-Sprung bleibt. Modal-CTA „↗ In neuem Tab öffnen“ sowie Close-/Action-Row visuell harmonisiert, Handler unverändert.
+- Keine sticky/fixed Actions, kein neuer innerer Scrollcontainer, kein Auto-Scroll beim Laden, keine Import-/PDF-/Mapping-/Handoff-/Storage-Änderung. Keine RIS/AWS/Cognito/Consent/Profile/Workspace-Hintergrund-Änderung.
+- E2E mit 40 pending/4 Seiten: Modal-CTA, Screenshot-View an/aus, Detailzustand, Pending-/Pagination-Erhalt, Top-Jump per Tastatur, Fokus, kein Import, Back-to-Review, Count 40→39, Pagination, Reduced Motion, Summary/Editor, 1920/1440/768/390 ohne Overflow. Screenshots: `docs/reports/assets/JM-CV-IMPORT-UX-07B/`.
+- Tests: fokussierte Importdialog-Tests 21 PASS; Fullpage-03A und Initial-Render-01 PASS; serielle Vollsuite **2008 PASS / 11 skipped**; Build/Diff PASS.
+- Bericht: `docs/reports/JM-CV-IMPORT-UX-07B.md`.
+
 2026-11-21 · JM-CV-IMPORT-UX-07 — PREMIUM FULLPAGE DECISION NAVIGATION
 - Typ: CV-Import-UX, Fullpage-only Navigation/Aktionskarte, responsiver Browser-E2E
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
