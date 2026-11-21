@@ -119,6 +119,11 @@ async function run() {
     });
     const page = await context.newPage();
     await mockApi(page);
+    const pageErrors = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error") pageErrors.push(message.text());
+    });
     const results = [];
     for (const width of widths) {
       await page.setViewportSize({ width, height: width <= 390 ? 844 : 1000 });
@@ -212,6 +217,9 @@ async function run() {
       if (info.size <= 0) throw new Error(`${width}px: screenshot missing`);
       results.push({ ...state, width, screenshot });
     }
+    if (pageErrors.length > 0) {
+      throw new Error(`page/console errors: ${pageErrors.slice(0, 3).join(" | ")}`);
+    }
 
     const reducedContext = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
@@ -222,6 +230,11 @@ async function run() {
       if (!localStorage.getItem("mj-lang")) localStorage.setItem("mj-lang", "de");
     });
     const reducedPage = await reducedContext.newPage();
+    const reducedErrors = [];
+    reducedPage.on("pageerror", (error) => reducedErrors.push(error.message));
+    reducedPage.on("console", (message) => {
+      if (message.type() === "error") reducedErrors.push(message.text());
+    });
     await mockApi(reducedPage);
     await reducedPage.goto(route, { waitUntil: "networkidle" });
     await reducedPage.locator(".dashboard-v2__header").waitFor();
@@ -230,9 +243,12 @@ async function run() {
     );
     if (reducedAnimation !== "none") throw new Error(`reduced motion still animates: ${reducedAnimation}`);
     await reducedPage.screenshot({ path: `${evidenceDir}/profile-reduced-motion-1440.png`, fullPage: true });
+    if (reducedErrors.length > 0) {
+      throw new Error(`reduced-motion page/console errors: ${reducedErrors.slice(0, 3).join(" | ")}`);
+    }
     await reducedContext.close();
 
-    console.log(JSON.stringify({ status: "PASS", results, reducedAnimation }, null, 2));
+    console.log(JSON.stringify({ status: "PASS", results, reducedAnimation, pageErrors }, null, 2));
   } finally {
     await browser?.close();
     if (vite.pid) {
