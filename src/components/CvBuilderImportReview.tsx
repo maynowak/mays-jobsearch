@@ -46,6 +46,7 @@ export interface CvBuilderImportReviewProps {
   onToggleSkill: (skill: string) => void;
   onSelectAllSkills: () => void;
   onClearSkills: () => void;
+  onGoToActions?: () => void;
 }
 
 function sectionSummary(
@@ -154,6 +155,7 @@ export default function CvBuilderImportReview({
   onToggleSkill,
   onSelectAllSkills,
   onClearSkills,
+  onGoToActions,
 }: CvBuilderImportReviewProps) {
   const { t } = useLang();
   const [statusFilter, setStatusFilter] = useState<"all" | ManualReviewStatus>("all");
@@ -355,7 +357,7 @@ export default function CvBuilderImportReview({
       )}
 
       <section className="cv-import-review" aria-labelledby="cv-import-review-title">
-        <h5 id="cv-import-review-title">{t("cvBuilder.import.reviewTitle")}</h5>
+        <h5 id="cv-import-review-title" tabIndex={-1}>{t("cvBuilder.import.reviewTitle")}</h5>
         <p>{t("cvBuilder.import.reviewHint")}</p>
         <div className="cv-import-review__summary" aria-live="polite">
           <span>{t("cvBuilder.import.reviewPending", { count: pendingCount })}</span>
@@ -381,6 +383,18 @@ export default function CvBuilderImportReview({
             total: reviewTotal,
           })}
         </p>
+        {onGoToActions && (
+          <div className="cv-import-review__decision-nav">
+            <button
+              type="button"
+              className="btn-ghost cv-import-review__decision-jump"
+              aria-controls="cv-import-decision-panel"
+              onClick={onGoToActions}
+            >
+              {t("cvBuilder.import.decisionJump")}
+            </button>
+          </div>
+        )}
         <div className="cv-import-review__filters" role="group" aria-label={t("cvBuilder.import.reviewFilters")}>
           <label>
             <span>{t("cvBuilder.import.reviewStatusFilter")}</span>

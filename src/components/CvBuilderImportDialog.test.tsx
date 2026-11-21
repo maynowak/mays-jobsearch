@@ -95,6 +95,34 @@ describe("CvBuilderImportDialog", () => {
     expect(onImported.mock.calls[0][1]).toBe("lebenslauf");
   });
 
+  it("shows the fullpage decision navigation and focus target without importing", async () => {
+    const onImported = vi.fn();
+    const { container } = renderDialog({ layoutMode: "fullpage", onImported });
+    await chooseLocal(container);
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+
+    const jump = screen.getByRole("button", { name: /Auswahl getroffen.*Zu den Importaktionen/ });
+    expect(screen.getByText("DEINE IMPORTENTSCHEIDUNG")).toBeInTheDocument();
+    expect(screen.getByText(/Angaben noch ungeprüft/)).toBeInTheDocument();
+    fireEvent.click(jump);
+
+    expect(document.activeElement).toHaveAttribute("id", "cv-import-decision-panel");
+    expect(screen.queryByRole("heading", { name: "Deine Importauswahl" })).not.toBeInTheDocument();
+    expect(onImported).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /Angaben übernehmen/ }));
+    expect(screen.getByRole("heading", { name: "Deine Importauswahl" })).toBeInTheDocument();
+  });
+
+  it("keeps the modal import action bar unchanged", async () => {
+    const { container } = renderDialog();
+    await chooseLocal(container);
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+    expect(screen.queryByText("DEINE IMPORTENTSCHEIDUNG")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Zu den Importaktionen/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Angaben übernehmen" })).toBeInTheDocument();
+  });
+
   it("can exclude a section before transfer", async () => {
     const onImported = vi.fn();
     const { container } = renderDialog({ onImported });

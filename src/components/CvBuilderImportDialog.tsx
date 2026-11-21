@@ -69,6 +69,7 @@ export default function CvBuilderImportDialog({
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const decisionPanelRef = useRef<HTMLElement | null>(null);
   const hydratedHandoffRef = useRef(false);
   const onSessionChangeRef = useRef(onSessionChange);
   onSessionChangeRef.current = onSessionChange;
@@ -307,6 +308,25 @@ export default function CvBuilderImportDialog({
     }));
   };
 
+  const pendingReviewCount = Object.values(manualDecisions)
+    .filter((decision) => decision.status === "pending").length;
+
+  const scrollTo = (target: HTMLElement | null) => {
+    if (!target) return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+    const top = window.scrollY + target.getBoundingClientRect().top - 16;
+    window.scrollTo?.({ top: Math.max(0, top), behavior: reduceMotion ? "auto" : "smooth" });
+    target.focus?.({ preventScroll: true });
+  };
+
+  const scrollToDecisionPanel = () => {
+    scrollTo(decisionPanelRef.current);
+  };
+
+  const scrollToReview = () => {
+    scrollTo(document.getElementById("cv-import-review-title"));
+  };
+
   if (!open) return null;
 
   return (
@@ -449,6 +469,7 @@ export default function CvBuilderImportDialog({
               onToggleSkill={toggleSkill}
               onSelectAllSkills={() => setSelectedSkills(new Set(result.draft.skills))}
               onClearSkills={() => setSelectedSkills(new Set())}
+              onGoToActions={fullpage ? scrollToDecisionPanel : undefined}
             />
           )}
 
@@ -477,7 +498,52 @@ export default function CvBuilderImportDialog({
           )}
         </div>
 
-        {step !== "summary" && (
+        {fullpage && step === "preview" ? (
+          <section
+            ref={decisionPanelRef}
+            id="cv-import-decision-panel"
+            className="cv-import-decision-panel"
+            aria-labelledby="cv-import-decision-title"
+            tabIndex={-1}
+          >
+            <p className="cv-import-decision-panel__eyebrow" id="cv-import-decision-title">
+              {t("cvBuilder.import.decisionTitle")}
+            </p>
+            <p className="cv-import-decision-panel__count">
+              {t("cvBuilder.import.decisionPending", { count: pendingReviewCount })}
+            </p>
+            <p className="cv-import-decision-panel__note">{t("cvBuilder.import.decisionNote")}</p>
+            <button
+              type="button"
+              className="btn-ghost cv-import-decision-panel__review-back"
+              onClick={scrollToReview}
+            >
+              {t("cvBuilder.import.decisionReviewBack")}
+            </button>
+            <div className="cv-import-decision-panel__actions">
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  setError(null);
+                  setStep("source");
+                }}
+              >
+                {t("cvBuilder.import.decisionBack")}
+              </button>
+              <button type="button" className="btn-ghost" onClick={onClose}>
+                {t("cvBuilder.import.cancel")}
+              </button>
+              <button
+                type="button"
+                className="letter-btn cv-import-decision-panel__primary"
+                onClick={openSummary}
+              >
+                {t("cvBuilder.import.decisionApply")}
+              </button>
+            </div>
+          </section>
+        ) : step !== "summary" && (
           <div className="modal-actions cv-import-modal__actions">
             {step === "preview" && (
               <button

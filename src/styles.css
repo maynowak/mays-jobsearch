@@ -14385,6 +14385,140 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   border-top: 1px solid var(--border);
 }
 
+/* JM-CV-IMPORT-UX-07 — fullpage-only premium decision navigation.
+   The card stays in normal document flow so the complete import page remains
+   screenshotable; no sticky or fixed actions. */
+.cv-import-review__decision-nav {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cv-import-review #cv-import-review-title {
+  scroll-margin-top: 20px;
+}
+
+.cv-import-review__decision-jump {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  color: var(--brand-dark);
+  font-weight: 800;
+  text-align: left;
+}
+
+.cv-import-decision-panel {
+  position: static;
+  display: grid;
+  gap: 10px;
+  margin-top: clamp(18px, 3vw, 28px);
+  padding: clamp(20px, 3.4vw, 34px);
+  border: 1px solid rgba(34, 211, 238, 0.52);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(226, 248, 252, 0.76) 100%);
+  box-shadow:
+    0 24px 56px rgba(2, 20, 38, 0.2),
+    0 2px 4px rgba(2, 20, 38, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(34, 211, 238, 0.12);
+  color: #102a3a;
+  scroll-margin-top: 20px;
+}
+
+.cv-import-decision-panel:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cv-import-decision-panel__eyebrow {
+  margin: 0;
+  color: #0f5b68;
+  font-size: var(--text-xs);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cv-import-decision-panel__count {
+  margin: 0;
+  color: #102a3a;
+  font-size: clamp(1.08rem, 2vw, 1.35rem);
+  font-weight: 850;
+  letter-spacing: -0.015em;
+}
+
+.cv-import-decision-panel__note {
+  margin: 0;
+  color: #466879;
+  font-size: var(--text-sm);
+}
+
+.cv-import-decision-panel__review-back {
+  justify-self: start;
+  min-height: 44px;
+  margin: 4px 0 6px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #0f5b68;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cv-import-decision-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(15, 91, 104, 0.16);
+}
+
+.cv-import-decision-panel__actions > button {
+  min-height: 46px;
+}
+
+.cv-import-decision-panel__primary {
+  margin-top: 0;
+  margin-left: auto;
+  padding: 11px 22px;
+  color: #03323a;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.cv-import-decision-panel__primary:hover {
+  filter: brightness(1.03) contrast(1.02);
+}
+
+.cv-import-review__decision-jump:focus-visible,
+.cv-import-decision-panel__review-back:focus-visible,
+.cv-import-decision-panel__actions > button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .cv-import-review__decision-jump,
+  .cv-import-decision-panel__review-back {
+    width: 100%;
+  }
+
+  .cv-import-decision-panel__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .cv-import-decision-panel__actions > button,
+  .cv-import-decision-panel__primary {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .cv-builder-fullpage .cv-builder-workspace,
   .cv-builder-modal--screenshot .cv-builder-workspace {
