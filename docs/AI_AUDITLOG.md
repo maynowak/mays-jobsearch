@@ -1,3 +1,11 @@
+2026-11-20 · JM-PROFILE-HEADER-IMAGE-02R — CONTROLLED MAIN RELEASE
+- Typ: Header-Artwork Release, Vercel Production, visuelle Nachprüfung
+- Status: **MERGED TO MAIN / PRODUCTION DEPLOYED**
+- Release: PR #50 gemerged als `ad9646a`; Branch `feature/jm-profile-header-image-02r` erhalten; kein Force-Push/manuelles `vercel --prod`.
+- Production: `www.mays-job-matcher.app` `dpl_447LbL3WvpKT23nByMojQ3cY7JCq` READY; `mays-jobsearch.vercel.app` `dpl_em3cNcpBS9CtHLMh4uGpSJyTcuiz` READY; Footer `ad9646a`; `/` und `/profil` 200.
+- Der authentifizierte Header/Karten-Bereich bleibt für die visuelle Cognito-Prüfung account-gated; öffentlich wurde nur der Gast-Profil-Shell geprüft. Keine authentifizierten Schreiboperationen.
+- Keine RIS-/AWS-/Cognito-/Consent-/Analytics-Änderung.
+
 2026-11-20 · JM-PROFILE-HEADER-IMAGE-02R
 - Typ: Original-Header-Artwork, Globe-/Wellen-Komposition, visuelle Abnahme
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
