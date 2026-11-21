@@ -1,8 +1,12 @@
 # JM-PROFILE-HEADER-IMAGE-02R — Original Cyan Globe Header
 
-**Status:** `IMPLEMENTED / VISUALLY VERIFIED LOCAL`  
-**Branch:** `feature/jm-profile-header-image-02r`  
-**Base:** `origin/main` (`22d5bd9`)  
+**Status:** `MERGED TO MAIN / PRODUCTION DEPLOYED`
+
+**Branch:** `feature/jm-profile-header-image-02r`
+
+**Merge commit:** `ad9646a` (PR #50)
+
+**Base:** `origin/main` (`22d5bd9`)
 **Scope:** profile header artwork only. Dual-AI background, particles, cards, navigation, navbar, CV workspace, RIS, AWS, Cognito, consent and analytics unchanged.
 
 ## 1. Original Artwork
@@ -90,11 +94,16 @@ Acceptance checks:
 No production write, auth, RIS, consent, CV persistence or analytics operation
 was performed.
 
-## 6. Git
+## 6. Git and Production
 
 - Implementation: `341b2e5`
-- Branch: `feature/jm-profile-header-image-02r`
-- No Main merge and no Production deployment.
+- Docs/audit: `26ea0fa`
+- PR #50 merged to `main` as `ad9646a`; branch retained.
+- Automatic Vercel Production deployments:
+  - `www.mays-job-matcher.app` → `dpl_447LbL3WvpKT23nByMojQ3cY7JCq` READY
+  - `mays-jobsearch.vercel.app` → `dpl_em3cNcpBS9CtHLMh4uGpSJyTcuiz` READY
+- Production footer SHA: `ad9646a`; `/` and `/profil` return HTTP 200.
+- No manual `vercel --prod`; authenticated visual review remains account-gated.
 
 ## 7. Open Points
 
