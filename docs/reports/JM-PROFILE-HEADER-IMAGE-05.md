@@ -118,6 +118,7 @@ Rendered geometry:
 | Header E2E 1920/1440/768/390 | **PASS** |
 | Header copy overflow | 0 |
 | Horizontal page overflow | 0 px |
+| Page/console errors | 0 |
 | Reduced-motion E2E | **PASS** |
 | Full Vitest suite, serial | **2005 PASS / 11 skipped** |
 | `npm run build` | PASS |
