@@ -1,3 +1,13 @@
+2026-11-21 · JM-CV-IMPORT-UX-07 — PREMIUM FULLPAGE DECISION NAVIGATION
+- Typ: CV-Import-UX, Fullpage-only Navigation/Aktionskarte, responsiver Browser-E2E
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-import-ux-07`; Implementierung `4e3f0dd`; kein Main-Merge, kein Deployment.
+- Umsetzung: Fullpage-Prüfliste erhält „✓ Auswahl getroffen? → Zu den Importaktionen“ mit `window.scrollTo`, Panel-Fokus und Reduced-Motion-Umschaltung; Abschlussleiste wird durch eine statische Frosted-Glass-Karte mit nicht fest kodiertem Pending-Count, „↑ Zurück zur Prüfung“, „← Zurück“, „Import abbrechen“ und „✓ Angaben übernehmen →“ ersetzt. Bestehende Summary-/Validierungslogik und Pagination bleiben unverändert; Modal-Import bleibt unverändert.
+- Keine sticky/fixed Actions, kein neuer innerer Scrollcontainer, kein Auto-Scroll beim Laden; die lange Seite bleibt vollständig screenshotfähig. Keine Änderung an PDF-Parsing, Mapping, Handoff, CV-Daten, RIS/AWS/Cognito/Consent/Storage oder Workspace-Hintergrund.
+- E2E `tests/e2e/cv-import-ux-07.mjs`: synthetische 44 Zeilen → 40 pending/4 Seiten; Tastatur-Jump ohne Import, Fokus, unveränderte Entscheidungen, Back-to-Review, eine Entscheidung akzeptiert (40→39), Pagination 1→2→1, Reduced Motion, bestehende Summary-/Editor-Logik, 1920/1440/768/390 ohne Overflow. Screenshots: `docs/reports/assets/JM-CV-IMPORT-UX-07/`.
+- Tests: fokussierte Importdialog-Tests 20 PASS; Fullpage-03A und Initial-Render-01 PASS; serielle Vollsuite **2007 PASS / 11 skipped**; Build/Diff PASS.
+- Bericht: `docs/reports/JM-CV-IMPORT-UX-07.md`.
+
 2026-11-21 · JM-CV-WORKSPACE-INITIAL-RENDER-01 — CV WORKSPACE SIDE ART
 - Typ: CV-Workspace-Hintergrund, Initial-Render-Diagnose, CSS-Viewport-Bindung, Regressionstest
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
