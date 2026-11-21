@@ -1,3 +1,14 @@
+2026-11-21 · JM-PROFILE-HEADER-IMAGE-03 — TRUE ARTWORK COMPOSITION FIX
+- Typ: Profil-Header-Artwork, vorberechnete Desktop-/Mobile-Komposition, responsive CSS, visuelle Abnahme
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-header-image-03`; Implementierung `c954658`; Basis `origin/main` `048563a`; kein Main-Merge, kein Deployment.
+- Ursache: vorheriger Wellen-Layer mit `auto 100%` war bei real ca. 164 px Headerhöhe zu schmal und endete sichtbar vor dem rechten Rand; Globe war dadurch nur ca. 130 px.
+- Umsetzung: ausschließlich Original `LeuchtendesProfilheaderHG.png` (2170×725). Vorberechnete Desktop-Komposition (2480×400) mit dunklem linkem Textdrittel, proportionalem Original-Globe (ca. 165–175 px bei 1180 px Headerbreite) und durchgehenden Wellen bis zum Rand; separate reduzierte Mobile-Komposition (744×464). Header `min-height: 190px`, Desktop `background-size: cover`, Tablet-Crop links, Mobile eigenes Asset; Bild-Opacity 1, kein Filter, keine Bildanimation, keine neue KI-Generierung.
+- Visuelle Abnahme 1920/1440/768/390 plus Reduced Motion: Globe rund und größer, Wellen bis zum rechten Headerrand, keine abrupte senkrechte Bildkante, Cyan-Helligkeit erhalten, Texte/Badges lesbar, kein horizontaler Overflow. Screenshots: `docs/reports/assets/JM-PROFILE-HEADER-IMAGE-03/`.
+- Tests: Profil-Test 4 PASS; Header-E2E vier Breiten plus Reduced-Motion PASS; serielle Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS. Paralleler Erstlauf hatte drei unabhängige Timeouts (`apify-client`, `CvBuilderEditorRisStorage`), isoliert 26/26 PASS; kein Header-Testfehler.
+- Keine Änderung an Dual-AI-Hintergrund, Partikeln, Karten, Navigation, CV-Workspace, RIS/AWS/Cognito/Consent/Analytics; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-PROFILE-HEADER-IMAGE-03.md`.
+
 2026-11-20 · JM-PROFILE-HEADER-IMAGE-02R — CONTROLLED MAIN RELEASE
 - Typ: Header-Artwork Release, Vercel Production, visuelle Nachprüfung
 - Status: **MERGED TO MAIN / PRODUCTION DEPLOYED**
