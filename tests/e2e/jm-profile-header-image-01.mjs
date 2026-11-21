@@ -66,10 +66,12 @@ async function inspect(page) {
       particleColor: particles[0] ? getComputedStyle(particles[0]).backgroundColor : null,
       headerColor: header ? getComputedStyle(header.querySelector("h1")).color : null,
       headerBackground: header ? getComputedStyle(header).backgroundImage : null,
-      headerArt: header ? getComputedStyle(header, "::before").backgroundImage : null,
-      headerArtSize: header ? getComputedStyle(header, "::before").backgroundSize : null,
-      headerArtPosition: header ? getComputedStyle(header, "::before").backgroundPosition : null,
-      headerArtOpacity: header ? getComputedStyle(header, "::before").opacity : null,
+      headerBackgroundSize: header ? getComputedStyle(header).backgroundSize : null,
+      headerBackgroundPosition: header ? getComputedStyle(header).backgroundPosition : null,
+      headerFilter: header ? getComputedStyle(header).filter : null,
+      headerOpacity: header ? getComputedStyle(header).opacity : null,
+      headerHeight: header ? Math.round(header.getBoundingClientRect().height) : null,
+      headerWidth: header ? Math.round(header.getBoundingClientRect().width) : null,
       headerCopyOverflow: header
         ? Math.max(header.scrollWidth - header.clientWidth, header.scrollHeight - header.clientHeight)
         : null,
@@ -103,16 +105,31 @@ async function run() {
       if (state.ariaHidden !== "true") throw new Error(`${width}px: particles are not aria-hidden`);
       if (state.pointerEvents !== "none") throw new Error(`${width}px: particles can intercept pointers`);
       if (state.overflow > 0) throw new Error(`${width}px: horizontal overflow ${state.overflow}`);
-      if (!state.headerBackground?.includes("jm-profile-header-cyan-waves-wide-alpha.webp")) {
-        throw new Error(`${width}px: wave layer missing`);
+      const expectedArtwork =
+        width <= 767 ? "jm-profile-header-cyan-composed-mobile.webp" : "jm-profile-header-cyan-composed.webp";
+      if (!state.headerBackground?.includes(expectedArtwork)) {
+        throw new Error(`${width}px: expected ${expectedArtwork} in ${state.headerBackground}`);
       }
-      if (!state.headerBackground?.includes("linear-gradient")) throw new Error(`${width}px: header is not 3D glass`);
-      if (!state.headerArt?.includes("jm-profile-header-cyan-globe-alpha.webp")) throw new Error(`${width}px: globe art missing`);
-      if (state.headerArtSize !== "auto 100%" || state.headerArtPosition !== "0% 50%") {
-        throw new Error(`${width}px: globe is not proportionally left-aligned: ${state.headerArtSize}/${state.headerArtPosition}`);
+      if (state.headerBackgroundSize !== "cover") {
+        throw new Error(`${width}px: header artwork is not cover-sized: ${state.headerBackgroundSize}`);
       }
-      if (width > 767 && state.headerArtOpacity !== "1") {
-        throw new Error(`${width}px: globe is artificially dimmed: ${state.headerArtOpacity}`);
+      if (width > 1023 && state.headerBackgroundPosition !== "50% 50%") {
+        throw new Error(`${width}px: desktop header composition is not centered: ${state.headerBackgroundPosition}`);
+      }
+      if (width <= 1023 && width > 767 && state.headerBackgroundPosition !== "0% 50%") {
+        throw new Error(`${width}px: tablet crop position is wrong: ${state.headerBackgroundPosition}`);
+      }
+      if (width <= 767 && state.headerBackgroundPosition !== "50% 50%") {
+        throw new Error(`${width}px: mobile composition is not centered: ${state.headerBackgroundPosition}`);
+      }
+      if (state.headerFilter !== "none" || state.headerOpacity !== "1") {
+        throw new Error(`${width}px: header artwork is dimmed: ${state.headerFilter}/${state.headerOpacity}`);
+      }
+      if (width > 767 && (state.headerHeight < 180 || state.headerHeight > 200)) {
+        throw new Error(`${width}px: desktop header height out of range: ${state.headerHeight}`);
+      }
+      if (width <= 767 && state.headerHeight < 180) {
+        throw new Error(`${width}px: mobile header is too short: ${state.headerHeight}`);
       }
       if (state.headerCopyOverflow > 0) throw new Error(`${width}px: header copy overflows`);
       if (!state.cardBackground?.includes("linear-gradient")) throw new Error(`${width}px: card edges missing`);

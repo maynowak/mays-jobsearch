@@ -36,10 +36,11 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
     expect(css).toContain('.container.layout-dashboard.layout-profile-command');
     expect(css).toContain('jm-profile-dual-left.webp');
     expect(css).toContain('jm-profile-dual-right.webp');
-    expect(css).toContain('jm-profile-header-cyan-globe-alpha.webp');
-    expect(css).toContain('jm-profile-header-cyan-waves-wide-alpha.webp');
-    expect(css).toContain('background-size: auto 100%');
+    expect(css).toContain('jm-profile-header-cyan-composed.webp');
     expect(css).toContain('background-size: cover');
+    expect(css).toContain('min-height: 190px');
+    expect(css).toContain('jm-profile-header-cyan-composed-mobile.webp');
+    expect(css).toContain('background-position: center');
     expect(css).toContain('profile-particle-drift');
     expect(css).toContain('prefers-reduced-motion: reduce');
     expect(css).toContain('.layout-profile-command .dashboard-v2__navigation-card');

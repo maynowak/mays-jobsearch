@@ -14764,23 +14764,14 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  min-height: 190px;
   margin-bottom: clamp(20px, 3vw, 32px);
   border: 1px solid rgba(103, 232, 249, 0.34);
   border-bottom-color: rgba(103, 232, 249, 0.62);
   background-color: #03111f;
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(3, 17, 31, 0.99) 0%,
-      rgba(3, 17, 31, 0.96) 24%,
-      rgba(3, 17, 31, 0.76) 33%,
-      rgba(3, 17, 31, 0.26) 44%,
-      transparent 54%,
-      transparent 100%
-    ),
-    url("assets/images/jm-profile-header-cyan-waves-wide-alpha.webp");
-  background-position: center, left center;
-  background-size: auto, auto 100%;
+  background-image: url("assets/images/jm-profile-header-cyan-composed.webp");
+  background-position: center;
+  background-size: cover;
   background-repeat: no-repeat;
   box-shadow:
     0 24px 54px rgba(0, 8, 18, 0.42),
@@ -14796,41 +14787,50 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   z-index: 1;
 }
 
-/* The globe is a separate, proportionally scaled header layer. No cover,
-   no 100% × 100% image stretching; waves are allowed to fade into the left
-   gradient. The source asset is pre-mirrored so the globe sits on the right. */
-.layout-profile-command .dashboard-v2__header::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 38%;
-  z-index: 0;
-  width: 22%;
-  pointer-events: none;
-  background-image: url("assets/images/jm-profile-header-cyan-globe-alpha.webp");
-  background-position: left center;
-  background-size: auto 100%;
-  background-repeat: no-repeat;
-  opacity: 1;
-  filter: none;
-}
-
+/* Precomposed header artwork: dark text third, original cyan globe, waves
+   reaching the right edge. The overlay only protects copy in the left third;
+   it never dims the globe or wave field. */
 .layout-profile-command .dashboard-v2__header::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    linear-gradient(
+  background: linear-gradient(
+    90deg,
+    rgba(3, 17, 31, 0.98) 0%,
+    rgba(3, 17, 31, 0.94) 22%,
+    rgba(3, 17, 31, 0.62) 30%,
+    rgba(3, 17, 31, 0.10) 34%,
+    transparent 39%,
+    transparent 100%
+  );
+}
+
+@media (max-width: 1023px) {
+  .layout-profile-command .dashboard-v2__header {
+    background-position: left center;
+  }
+}
+
+@media (max-width: 767px) {
+  .layout-profile-command .dashboard-v2__header {
+    min-height: 210px;
+    background-image: url("assets/images/jm-profile-header-cyan-composed-mobile.webp");
+    background-position: center;
+  }
+
+  .layout-profile-command .dashboard-v2__header::after {
+    background: linear-gradient(
       90deg,
-      rgba(3, 17, 31, 0.99) 0%,
-      rgba(3, 17, 31, 0.95) 23%,
-      rgba(3, 17, 31, 0.58) 31%,
-      rgba(3, 17, 31, 0.12) 39%,
-      transparent 47%,
+      rgba(3, 17, 31, 0.98) 0%,
+      rgba(3, 17, 31, 0.96) 30%,
+      rgba(3, 17, 31, 0.70) 44%,
+      rgba(3, 17, 31, 0.16) 58%,
+      transparent 68%,
       transparent 100%
-    ),
-    radial-gradient(ellipse at 78% 0%, rgba(34, 211, 238, 0.10), transparent 56%);
+    );
+  }
 }
 
 .layout-profile-command .dashboard-v2__header h1 {
@@ -15130,18 +15130,10 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   }
 
   .layout-profile-command .dashboard-v2__header {
-    background-position: center, left center;
-    background-size: auto, auto 82%;
+    background-image: url("assets/images/jm-profile-header-cyan-composed-mobile.webp");
+    background-position: center;
+    background-size: cover;
   }
-
-  .layout-profile-command .dashboard-v2__header::before {
-    left: 38%;
-    width: 40%;
-    background-size: auto 100%;
-    background-position: left center;
-    opacity: 0.7;
-  }
-
 
   .layout-profile-command .dashboard-v2__main > .aurora-card,
   .layout-profile-command .dashboard-v2__cv-section,
