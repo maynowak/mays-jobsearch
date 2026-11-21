@@ -7,6 +7,7 @@ import DashboardV2, { DEMO_USER } from './DashboardV2';
 
 const css = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
 const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+const dashboard = readFileSync(resolve(process.cwd(), 'src/components/DashboardV2.tsx'), 'utf8');
 
 const renderProfile = (lang = 'de') => {
   localStorage.setItem('mj-lang', lang);
@@ -36,12 +37,13 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
     expect(css).toContain('.container.layout-dashboard.layout-profile-command');
     expect(css).toContain('jm-profile-dual-left.webp');
     expect(css).toContain('jm-profile-dual-right.webp');
-    expect(css).toContain('jm-profile-header-cyan-composed.webp');
+    expect(css).toContain('jm-profile-waves.webp');
+    expect(dashboard).toContain('jm-profile-globe.webp');
+    expect(css).toContain('object-fit: contain');
     expect(css).toContain('background-size: cover');
     expect(css).toContain('min-height: 190px');
-    expect(css).toContain('jm-profile-header-cyan-composed-mobile.webp');
-    expect(css).toContain('background-position: left center');
-    expect(css).toContain('background-position: center');
+    expect(css).toContain('dashboard-v2__header-globe');
+    expect(css).toContain('dashboard-v2__header-waves');
     expect(css).toContain('profile-particle-drift');
     expect(css).toContain('prefers-reduced-motion: reduce');
     expect(css).toContain('.layout-profile-command .dashboard-v2__navigation-card');
@@ -49,6 +51,17 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
     expect(css).toContain('.layout-profile-command .storage-consent');
     expect(css).toContain('.layout-profile-command .applications-section');
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+  });
+
+  it('renders independent decorative wave and globe layers', () => {
+    const { container } = renderProfile();
+    const waves = container.querySelector('.dashboard-v2__header-waves');
+    const globe = container.querySelector('.dashboard-v2__header-globe');
+    expect(waves).toHaveAttribute('aria-hidden', 'true');
+    expect(globe).toHaveAttribute('aria-hidden', 'true');
+    expect(globe).toHaveAttribute('alt', '');
+    expect(globe?.getAttribute('src')).toContain('jm-profile-globe');
+    expect(container.querySelector('.dashboard-v2__header-copy')).toBeInTheDocument();
   });
 
   it('keeps the semantic active state while switching profile sections', () => {

@@ -8,7 +8,7 @@ import playwright from "playwright";
 const port = 5244;
 const base = `http://localhost:${port}`;
 const route = `${base}/dev/dashboard-v2`;
-const evidenceDir = "/tmp/opencode/profile-header-image-01";
+const evidenceDir = "/tmp/opencode/profile-header-image-05";
 const widths = [1920, 1440, 768, 390];
 const models = {
   models: [{ id: "mock-model", name: "Mock Model" }],
@@ -55,6 +55,17 @@ async function inspect(page) {
     const layer = document.querySelector(".profile-particles");
     const header = document.querySelector(".dashboard-v2__header");
     const card = document.querySelector(".dashboard-v2__profile-card");
+    const waves = header?.querySelector(".dashboard-v2__header-waves");
+    const globe = header?.querySelector(".dashboard-v2__header-globe");
+    const copy = header?.querySelector(".dashboard-v2__header-copy");
+    const title = header?.querySelector("h1");
+    const headerRect = header?.getBoundingClientRect();
+    const globeRect = globe?.getBoundingClientRect();
+    const titleRect = title?.getBoundingClientRect();
+    const rect = (node) => {
+      const r = node?.getBoundingClientRect();
+      return r ? { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), bottom: Math.round(r.bottom), width: Math.round(r.width), height: Math.round(r.height) } : null;
+    };
     return {
       particleCount: particles.length,
       visibleParticles: visible.length,
@@ -64,10 +75,8 @@ async function inspect(page) {
       particleDuration: particles[0] ? getComputedStyle(particles[0]).animationDuration : null,
       particleOpacity: particles[0] ? Number(particles[0].style.getPropertyValue("--opacity")) : null,
       particleColor: particles[0] ? getComputedStyle(particles[0]).backgroundColor : null,
-      headerColor: header ? getComputedStyle(header.querySelector("h1")).color : null,
+      headerColor: title ? getComputedStyle(title).color : null,
       headerBackground: header ? getComputedStyle(header).backgroundImage : null,
-      headerBackgroundSize: header ? getComputedStyle(header).backgroundSize : null,
-      headerBackgroundPosition: header ? getComputedStyle(header).backgroundPosition : null,
       headerFilter: header ? getComputedStyle(header).filter : null,
       headerOpacity: header ? getComputedStyle(header).opacity : null,
       headerHeight: header ? Math.round(header.getBoundingClientRect().height) : null,
@@ -75,6 +84,22 @@ async function inspect(page) {
       headerCopyOverflow: header
         ? Math.max(header.scrollWidth - header.clientWidth, header.scrollHeight - header.clientHeight)
         : null,
+      wavesBackground: waves ? getComputedStyle(waves).backgroundImage : null,
+      wavesSize: waves ? getComputedStyle(waves).backgroundSize : null,
+      wavesPosition: waves ? getComputedStyle(waves).backgroundPosition : null,
+      wavesPointerEvents: waves ? getComputedStyle(waves).pointerEvents : null,
+      wavesAriaHidden: waves?.getAttribute("aria-hidden"),
+      wavesZIndex: waves ? getComputedStyle(waves).zIndex : null,
+      wavesRect: rect(waves),
+      globeSrc: globe?.getAttribute("src"),
+      globeAlt: globe?.getAttribute("alt"),
+      globeAriaHidden: globe?.getAttribute("aria-hidden"),
+      globePointerEvents: globe ? getComputedStyle(globe).pointerEvents : null,
+      globeZIndex: globe ? getComputedStyle(globe).zIndex : null,
+      globeRect: globeRect ? rect(globe) : null,
+      copyZIndex: copy ? getComputedStyle(copy).zIndex : null,
+      titleRect: titleRect ? rect(title) : null,
+      headerRect: headerRect ? rect(header) : null,
       cardBackground: card ? getComputedStyle(card).backgroundImage : null,
       overflow: document.documentElement.scrollWidth - innerWidth,
     };
@@ -105,22 +130,30 @@ async function run() {
       if (state.ariaHidden !== "true") throw new Error(`${width}px: particles are not aria-hidden`);
       if (state.pointerEvents !== "none") throw new Error(`${width}px: particles can intercept pointers`);
       if (state.overflow > 0) throw new Error(`${width}px: horizontal overflow ${state.overflow}`);
-      const expectedArtwork =
-        width <= 767 ? "jm-profile-header-cyan-composed-mobile.webp" : "jm-profile-header-cyan-composed.webp";
-      if (!state.headerBackground?.includes(expectedArtwork)) {
-        throw new Error(`${width}px: expected ${expectedArtwork} in ${state.headerBackground}`);
+      if (state.headerBackground?.includes(".webp")) {
+        throw new Error(`${width}px: header still uses a composed image`);
       }
-      if (state.headerBackgroundSize !== "cover") {
-        throw new Error(`${width}px: header artwork is not cover-sized: ${state.headerBackgroundSize}`);
+      if (!state.headerBackground?.includes("linear-gradient")) {
+        throw new Error(`${width}px: dark glass header background missing`);
       }
-      if (width > 1023 && state.headerBackgroundPosition !== "0% 50%") {
-        throw new Error(`${width}px: desktop header composition is not left-anchored: ${state.headerBackgroundPosition}`);
+      if (!state.wavesBackground?.includes("jm-profile-waves.webp")) {
+        throw new Error(`${width}px: wave layer missing: ${state.wavesBackground}`);
       }
-      if (width <= 1023 && width > 767 && state.headerBackgroundPosition !== "0% 50%") {
-        throw new Error(`${width}px: tablet crop position is wrong: ${state.headerBackgroundPosition}`);
+      if (state.wavesSize !== "cover") {
+        throw new Error(`${width}px: wave layer is not cover-sized: ${state.wavesSize}`);
       }
-      if (width <= 767 && state.headerBackgroundPosition !== "50% 50%") {
-        throw new Error(`${width}px: mobile composition is not centered: ${state.headerBackgroundPosition}`);
+      if (state.wavesPointerEvents !== "none" || state.wavesAriaHidden !== "true") {
+        throw new Error(`${width}px: wave layer is not decorative`);
+      }
+      if (state.wavesZIndex !== "0") throw new Error(`${width}px: wave z-index is ${state.wavesZIndex}`);
+      if (!state.globeSrc?.includes("jm-profile-globe.webp")) {
+        throw new Error(`${width}px: globe layer missing: ${state.globeSrc}`);
+      }
+      if (state.globeAlt !== "" || state.globeAriaHidden !== "true" || state.globePointerEvents !== "none") {
+        throw new Error(`${width}px: globe layer is not decorative`);
+      }
+      if (state.globeZIndex !== "1" || state.copyZIndex !== "3") {
+        throw new Error(`${width}px: layer order is wrong: globe=${state.globeZIndex}, copy=${state.copyZIndex}`);
       }
       if (state.headerFilter !== "none" || state.headerOpacity !== "1") {
         throw new Error(`${width}px: header artwork is dimmed: ${state.headerFilter}/${state.headerOpacity}`);
@@ -132,6 +165,35 @@ async function run() {
         throw new Error(`${width}px: mobile header is too short: ${state.headerHeight}`);
       }
       if (state.headerCopyOverflow > 0) throw new Error(`${width}px: header copy overflows`);
+      const expectedGlobe = width <= 767 ? 126 : width <= 1023 ? 150 : 175;
+      if (!state.globeRect || Math.abs(state.globeRect.width - expectedGlobe) > 2) {
+        throw new Error(`${width}px: globe width ${state.globeRect?.width}, expected ${expectedGlobe}`);
+      }
+      if (Math.abs(state.globeRect.width - state.globeRect.height) > 4) {
+        throw new Error(`${width}px: globe is distorted ${state.globeRect.width}x${state.globeRect.height}`);
+      }
+      if (!state.headerRect || !state.globeRect) throw new Error(`${width}px: missing header/globe rect`);
+      if (
+        state.globeRect.left < state.headerRect.left ||
+        state.globeRect.top < state.headerRect.top ||
+        state.globeRect.right > state.headerRect.right ||
+        state.globeRect.bottom > state.headerRect.bottom
+      ) {
+        throw new Error(`${width}px: globe is clipped by the header`);
+      }
+      if (state.globeRect.left - state.headerRect.left > 44) {
+        throw new Error(`${width}px: globe is not left-positioned: ${state.globeRect.left - state.headerRect.left}`);
+      }
+      if (state.globeRect.right >= state.headerRect.left + state.headerRect.width / 2) {
+        throw new Error(`${width}px: globe is not in the left half`);
+      }
+      if (!state.titleRect || !state.globeRect) throw new Error(`${width}px: missing title/globe rect`);
+      const overlapsGlobe =
+        state.titleRect.left < state.globeRect.right &&
+        state.titleRect.right > state.globeRect.left &&
+        state.titleRect.top < state.globeRect.bottom &&
+        state.titleRect.bottom > state.globeRect.top;
+      if (!overlapsGlobe) throw new Error(`${width}px: profile title does not overlap the globe`);
       if (!state.cardBackground?.includes("linear-gradient")) throw new Error(`${width}px: card edges missing`);
       if (!(state.particleOpacity >= 0.6 && state.particleOpacity <= 0.9)) {
         throw new Error(`${width}px: particle opacity out of range: ${state.particleOpacity}`);

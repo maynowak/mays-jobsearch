@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import profileGlobeUrl from '../assets/images/jm-profile-globe.webp';
 import { useLang } from '../i18n';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
@@ -124,7 +125,15 @@ const DashboardV2 = ({
       aria-labelledby="dashboard-v2-title"
     >
       <header className="dashboard-v2__header">
-        <div>
+        <span className="dashboard-v2__header-waves" aria-hidden="true" />
+        <img
+          className="dashboard-v2__header-globe"
+          src={profileGlobeUrl}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+        <div className="dashboard-v2__header-copy">
           {isDemo ? <Badge tone="neutral">{t('dashboard.devBadge')}</Badge> : <Badge tone="active">{t('dashboard.active')}</Badge>}
           <h1 id="dashboard-v2-title">{t('profile.title')}</h1>
           <p>{t('dashboard.subtitle')}</p>

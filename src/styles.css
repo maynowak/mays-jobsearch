@@ -512,7 +512,7 @@ body {
   color: var(--text);
 }
 
-.dashboard-v2__header > div:first-child > p:last-child {
+.dashboard-v2__header-copy > p:last-child {
   margin-top: var(--space-2);
   color: var(--muted);
 }
@@ -14761,6 +14761,8 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 /* The shell owns the top gap. This makes the profile header structurally
    below the sticky navbar instead of relying on a card margin coincidence. */
 .layout-profile-command .dashboard-v2__header {
+  --jm-profile-globe-size: clamp(160px, 14vw, 175px);
+  --jm-profile-globe-left: clamp(18px, 2.4vw, 30px);
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -14768,11 +14770,9 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   margin-bottom: clamp(20px, 3vw, 32px);
   border: 1px solid rgba(103, 232, 249, 0.34);
   border-bottom-color: rgba(103, 232, 249, 0.62);
-  background-color: #03111f;
-  background-image: url("assets/images/jm-profile-header-cyan-composed.webp");
-  background-position: left center;
-  background-size: cover;
-  background-repeat: no-repeat;
+  background:
+    radial-gradient(ellipse at 14% 38%, rgba(8, 64, 80, 0.38), transparent 54%),
+    linear-gradient(125deg, #03111f 0%, #062b3b 55%, #04121f 100%);
   box-shadow:
     0 24px 54px rgba(0, 8, 18, 0.42),
     0 0 30px rgba(34, 211, 238, 0.10),
@@ -14782,51 +14782,87 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   backdrop-filter: blur(18px) saturate(1.18);
 }
 
-.layout-profile-command .dashboard-v2__header > * {
-  position: relative;
-  z-index: 1;
+/* Decorative layer 1: one continuous cyan wave field, behind the globe. */
+.layout-profile-command .dashboard-v2__header-waves {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  background-image: url("assets/images/jm-profile-waves.webp");
+  background-position: center 58%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 1;
+  filter: none;
 }
 
-/* Precomposed header artwork: dark text third, original cyan globe, waves
-   reaching the right edge. The overlay only protects copy in the left third;
-   it never dims the globe or wave field. */
+/* Decorative layer 2: independent, proportional globe above the waves. */
+.layout-profile-command .dashboard-v2__header-globe {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: var(--jm-profile-globe-left);
+  width: var(--jm-profile-globe-size);
+  height: auto;
+  max-height: calc(100% - 12px);
+  object-fit: contain;
+  transform: translateY(-50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Layer 3: local text contrast only; it does not apply a global dim. */
 .layout-profile-command .dashboard-v2__header::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 2;
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    rgba(3, 17, 31, 0.16) 0%,
-    rgba(3, 17, 31, 0.10) 18%,
-    rgba(3, 17, 31, 0.04) 30%,
-    transparent 40%,
+    rgba(3, 17, 31, 0.32) 0%,
+    rgba(3, 17, 31, 0.24) 18%,
+    rgba(3, 17, 31, 0.08) 34%,
+    rgba(3, 17, 31, 0.02) 46%,
+    transparent 58%,
     transparent 100%
   );
 }
 
+/* Layer 4: profile content stays above the local contrast overlay. */
+.layout-profile-command .dashboard-v2__header-copy,
+.layout-profile-command .dashboard-v2__header-actions {
+  position: relative;
+  z-index: 3;
+}
+
 @media (max-width: 1023px) {
   .layout-profile-command .dashboard-v2__header {
-    background-position: left center;
+    --jm-profile-globe-size: 150px;
+    --jm-profile-globe-left: 18px;
   }
 }
 
 @media (max-width: 767px) {
   .layout-profile-command .dashboard-v2__header {
+    --jm-profile-globe-size: 126px;
+    --jm-profile-globe-left: 12px;
     min-height: 210px;
-    background-image: url("assets/images/jm-profile-header-cyan-composed-mobile.webp");
-    background-position: center;
+  }
+
+  .layout-profile-command .dashboard-v2__header-waves {
+    background-position: center 56%;
   }
 
   .layout-profile-command .dashboard-v2__header::after {
     background: linear-gradient(
       90deg,
-      rgba(3, 17, 31, 0.42) 0%,
-      rgba(3, 17, 31, 0.34) 30%,
+      rgba(3, 17, 31, 0.52) 0%,
+      rgba(3, 17, 31, 0.42) 30%,
       rgba(3, 17, 31, 0.22) 60%,
-      rgba(3, 17, 31, 0.10) 80%,
-      transparent 95%,
+      rgba(3, 17, 31, 0.08) 82%,
+      transparent 96%,
       transparent 100%
     );
   }
@@ -14840,7 +14876,7 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     0 1px 2px rgba(0, 6, 14, 0.65);
 }
 
-.layout-profile-command .dashboard-v2__header > div:first-child > p:last-child {
+.layout-profile-command .dashboard-v2__header-copy > p:last-child {
   color: #c5edf5;
   text-shadow:
     0 1px 2px rgba(0, 6, 14, 0.86),
@@ -15129,12 +15165,6 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   .layout-profile-command .dashboard-v2__header {
     padding: var(--space-4);
     border-radius: 18px;
-  }
-
-  .layout-profile-command .dashboard-v2__header {
-    background-image: url("assets/images/jm-profile-header-cyan-composed-mobile.webp");
-    background-position: center;
-    background-size: cover;
   }
 
   .layout-profile-command .dashboard-v2__main > .aurora-card,
