@@ -1,3 +1,12 @@
+2026-11-22 · JM-CV-UPLOAD-PRIVACY-INFO-05 — COMPACT PRIVACY DISCLOSURE
+- Typ: CV-Upload-Datenschutzhinweis, natives Disclosure, Glass-UI, A11y/Visual E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-cv-upload-privacy-info-05`; Implementierung `afdb6b0`; Basis `origin/main` `91f92a4`; kein Main-Merge, kein Deployment.
+- Umsetzung: `<p className="cv-privacy">` durch natives `<details>/<summary>` ersetzt, standardmäßig geschlossen, 44px-Summary, Icon/Chevron `aria-hidden`, Klick/Enter/Space und Screenreader-Semantik über das native Element. Titel DE „Datenschutz & KI-Verarbeitung“ / EN „Privacy & AI processing“ via i18n; `cv.privacyNote` in beiden Sprachen unverändert. Glass-Design im normalen Fluss, keine Überdeckung des Uploadfeldes.
+- Tests: CvUpload-Komponententest **3 PASS**; fokussiert **103 PASS**; serielle Vollsuite **2032 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS. Visuelles Chromium-E2E 1440/390: geschlossen/offen, Summary 44px, 0 Overflow, keine Überdeckung, Enter öffnet.
+- Grenzen: keine Änderung an Datenschutztexten, Consent, CV-Verarbeitung, RIS/AWS/Cognito, ATS, Login-Hydration oder UX-08A; keine echten Daten.
+- Bericht: `docs/reports/JM-CV-UPLOAD-PRIVACY-INFO-05.md`.
+
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
 - Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
 - Status: **READY FOR CONTROLLED MERGE — SEARCH LOGIN AUTOHYDRATION VERIFIED**
