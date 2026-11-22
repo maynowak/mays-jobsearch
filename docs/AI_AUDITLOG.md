@@ -1,3 +1,13 @@
+2026-11-22 · JM-CV-BUILDER-UX-08A — WORKSPACE FOOTER & RELEASE PREPARATION
+- Typ: CV-Editor-UX, gemeinsamer Website-Footer, Release-Diff-Review, E2E
+- Status: **READY FOR CONTROLLED MERGE**
+- Branch/Commit: `feature/jm-cv-builder-ux-08a`; Implementierung `84ac3f0`; Baseline `630fa4f`; kein Main-Merge, kein Deployment.
+- Footer: `CvBuilderWorkspacePage` rendert den bestehenden `Footer` genau einmal in jedem Workspace-Modus nach dem Hauptinhalt. Vorhandene Links `/impressum`, `/datenschutz`, `/datenschutzprinzipien` und Build-/Versionsinformationen; keine neuen Rechtstexte, keine Duplikate, `position: relative` (nicht sticky/fixed). Nur dunkle Workspace-Farbanpassung. CV-Editor-Aktionsleiste unverändert.
+- UX-08 erneut verifiziert: Maximierung 1120→1920→1120, Turbo-Hände, Footerziel `.cv-builder-footer > .cv-builder-footer__actions` weiterhin separat; Stopp 3.453 px bei vollständig sichtbaren Footer-Aktionen, Up-Header, Mouseleave/Escape/Manual/kein Neustart, Tastatur, Reduced Motion, Screenshot-Schutz, 1920/1440/768/390 ohne Overflow/Überdeckung. Der Website-Footer liegt nach dem Editor und beeinflusst die Turbo-Zielberechnung nicht.
+- Release-Diff gegen `origin/main`: 72 Dateien, +2.920/−81, 17 Commits voraus/0 zurück; nur erwartete CV-/UX-/Profil-Artwork- und Report-/Screenshot-Dateien; keine RIS/AWS/Cognito/Consent/Storage-/Parser-/ATS-Änderung.
+- Tests: Workspace-Footer-Komponententest PASS; fokussierte Tests PASS; Browser-E2E PASS; serielle Vollsuite **2010 PASS / 11 skipped**; Build/Diff PASS. Screenshots: `docs/reports/assets/JM-CV-BUILDER-UX-08A/`.
+- Bericht: `docs/reports/JM-CV-BUILDER-UX-08A.md`.
+
 2026-11-22 · JM-CV-BUILDER-UX-08 — WIDE WORKSPACE & DUAL TURBO SCROLL
 - Typ: CV-Editor-UX, Fullpage-Breite, Hover-Scrollhände, Safety/Reduced-Motion, E2E
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
