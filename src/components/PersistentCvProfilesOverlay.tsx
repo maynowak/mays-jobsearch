@@ -17,6 +17,7 @@ interface Props {
   cvName: string;
   profiles: PersistentSearchProfiles;
   onClose: () => void;
+  onProfilesChanged?: () => void;
   onSearch?: (
     cvId: string,
     parent: CVSearchProfileV1,
@@ -35,6 +36,7 @@ export default function PersistentCvProfilesOverlay({
   cvName,
   profiles,
   onClose,
+  onProfilesChanged,
   onSearch,
 }: Props) {
   const { t } = useLang();
@@ -183,6 +185,7 @@ export default function PersistentCvProfilesOverlay({
       }
       resetCvForm();
       await load();
+      onProfilesChanged?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "search_profile_create_failed");
     } finally {
@@ -213,6 +216,7 @@ export default function PersistentCvProfilesOverlay({
       resetAtsForm();
       setExpandedAtsParent(parent);
       await load();
+      onProfilesChanged?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ats_profile_create_failed");
     } finally {
@@ -379,6 +383,7 @@ export default function PersistentCvProfilesOverlay({
                                 await profiles.deleteCv(cvId, profile.searchProfileId);
                                 if (editingCvId === profile.searchProfileId) resetCvForm();
                                 await load();
+                                onProfilesChanged?.();
                               } catch (err) {
                                 setError(err instanceof Error ? err.message : "search_profile_delete_failed");
                               } finally {
@@ -439,6 +444,7 @@ export default function PersistentCvProfilesOverlay({
                                           try {
                                             await profiles.deleteAts(profile.searchProfileId, ats.atsSearchProfileId);
                                             await load();
+                                            onProfilesChanged?.();
                                           } catch (err) {
                                             setError(err instanceof Error ? err.message : "ats_profile_delete_failed");
                                           } finally {

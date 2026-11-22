@@ -83,6 +83,8 @@ import { useCvBuilderPdfRisStorage } from "./lib/useCvBuilderPdfRisStorage";
 import { isRisSearchProfileStorageEnabled } from "./lib/searchProfilesApi";
 import { atsProfileSaveMessageKey } from "./lib/profiles/atsProfileSaveError";
 import { usePersistentSearchProfiles } from "./lib/usePersistentSearchProfiles";
+import { useCvProfileHydration } from "./lib/useCvProfileHydration";
+import { isPersistentProfileEntry, mergeCvProfileLists } from "./lib/cvProfileHydration";
 import {
   checkRisRemoteApplicationAccess,
   isRemoteCapabilityForProfile,
@@ -564,6 +566,20 @@ export default function App() {
     persistentSearchProfiles.active
   );
   const profileStorageAvailable = profileStorageReason === null;
+  // Hydration-01: preload durable CV/ATS profiles after login (consent-gated)
+  // so the existing CV dropdowns can show them without a second manager. This
+  // only performs list reads; it never creates profiles or starts a search.
+  const cvProfileHydration = useCvProfileHydration(
+    [
+      ...persistentCvStorage.documents
+        .filter((document) => document.processingStatus === "ready")
+        .map((document) => document.cvId),
+      ...(activeCvDocument?.risCvId ? [activeCvDocument.risCvId] : []),
+    ],
+    persistentSearchProfiles,
+    authProfileKey,
+    persistentProfilesVersion
+  );
 
   useEffect(() => {
     setProfileStorageChoice("session");
@@ -1752,8 +1768,7 @@ export default function App() {
   // CV-UPLOAD-UX-08/10: Jobsuche startet nur mit einem gewaehlten
   // gespeicherten Suchprofil (kein Start mit leerer Auswahl).
   const startSearchWithSavedProfile = () => {
-    const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]) ?? cvState.documents[0];
-    const lists = readCvProfileLists(doc?.hash ?? null);
+    const lists = listSourceLists;
     const searchEntry = findSavedSearchProfile(lists, selectedSavedSearchId);
     if (!searchEntry) {
       // Kein stiller Abbruch: der Klick muss immer eine sichtbare Reaktion haben
@@ -2015,8 +2030,16 @@ export default function App() {
     // dieser Stelle (ATS-Analyse laeuft pro Treffer-Job, s. AtsOverlay).
     if (cvState.processingGoal === "ats") {
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
-      if (profileStorageChoice === "persistent") {
-        if (durableSearchProfilesLoading) return;
+      const selectedParent = listSourceLists.searchProfiles.find(
+        (entry) => entry.id === selectedSavedSearchId
+      );
+      const selectedParentIsPersistent = isPersistentProfileEntry(selectedParent);
+      // Hydration-01: a durable parent cannot be written into the session
+      // repository. Its ATS child is therefore saved through the existing
+      // durable RIS path, even when the session choice was preselected.
+      const usePersistentAts = profileStorageChoice === "persistent" || selectedParentIsPersistent;
+      if (usePersistentAts) {
+        if (profileStorageChoice === "persistent" && durableSearchProfilesLoading) return;
         if (!doc?.risCvId) {
           setStatus({ type: "error", message: t("profileStorage.errorPersistent") });
           return;
@@ -2025,15 +2048,22 @@ export default function App() {
           setStatus({ type: "error", message: t("searchProfiles.searchConsentRequired") });
           return;
         }
-        const parentIds = durableSearchProfiles.map((profile) => profile.searchProfileId);
-        if (!isDurableAtsParentValid(durableParentSearchProfileId, parentIds)) {
+        const parentId = selectedParentIsPersistent
+          ? selectedSavedSearchId ?? ""
+          : durableParentSearchProfileId;
+        const parentIds = selectedParentIsPersistent
+          ? listSourceLists.searchProfiles
+              .filter((entry) => entry.origin === "persistent")
+              .map((entry) => entry.id)
+          : durableSearchProfiles.map((profile) => profile.searchProfileId);
+        if (!isDurableAtsParentValid(parentId, parentIds)) {
           setStatus({ type: "error", message: t("cv.atsNoDurableParent") });
           return;
         }
         const epoch = sessionEpochRef.current;
         setCvState((prev) => ({ ...prev, isProcessing: true }));
         try {
-          const created = await persistentSearchProfiles.createAts(durableParentSearchProfileId, {
+          const created = await persistentSearchProfiles.createAts(parentId, {
             name: atsName,
             skills: cvState.selectedSkills,
             targetRoles: cvState.cvProfile?.targetRoles ?? cvState.suggestedProfile?.targetRoles ?? [],
@@ -2732,7 +2762,14 @@ export default function App() {
     cvState.documents.find((document) => document.id === cvState.selectedDocumentIds[0]) ??
     cvState.documents[0] ??
     null;
-  const listSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
+  const sessionListSourceLists = readCvProfileLists(listSourceDoc?.hash ?? null);
+  const hydratedListSourceLists = listSourceDoc?.risCvId
+    ? cvProfileHydration.byCvId[listSourceDoc.risCvId] ?? null
+    : null;
+  const listSourceLists = mergeCvProfileLists(
+    sessionListSourceLists,
+    hydratedListSourceLists
+  );
   const visibleAtsProfiles = selectedSavedSearchId
     ? listSourceLists.atsProfiles.filter(
         (entry) => entry.searchProfileId === selectedSavedSearchId
@@ -2742,6 +2779,10 @@ export default function App() {
     listSourceLists.atsProfiles.find(
       (e) => e.id === activeAtsEntryId && e.searchProfileId === selectedSavedSearchId
     ) ?? null;
+  const selectedSavedSearchEntry =
+    listSourceLists.searchProfiles.find((entry) => entry.id === selectedSavedSearchId) ?? null;
+  const selectedSavedSearchIsPersistent = isPersistentProfileEntry(selectedSavedSearchEntry);
+  const selectedAtsIsPersistent = isPersistentProfileEntry(activeAtsEntry);
   const listSourceDocId = listSourceDoc?.id ?? null;
   // Keep selections only while they still belong to the active CV/hash. A
   // valid selection survives a store refresh (for example after saving an
@@ -2814,14 +2855,16 @@ export default function App() {
                       </option>
                     ))}
                   </select>
-                  <button
-                    type="button"
-                    className="btn-ghost cv-saved-profiles__edit"
-                    disabled={!selectedSavedSearchId || cvState.isProcessing}
-                    onClick={editSavedSearchProfile}
-                  >
-                    {t("cv.editShort")}
-                  </button>
+                  {!selectedSavedSearchIsPersistent && (
+                    <button
+                      type="button"
+                      className="btn-ghost cv-saved-profiles__edit"
+                      disabled={!selectedSavedSearchId || cvState.isProcessing}
+                      onClick={editSavedSearchProfile}
+                    >
+                      {t("cv.editShort")}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -2852,14 +2895,16 @@ export default function App() {
                           {entry.name}{!entry.searchProfileId ? ` ${t("cv.atsUnassigned")}` : ""}</option>
                       ))}
                   </select>
-                  <button
-                    type="button"
-                    className="btn-ghost cv-saved-profiles__edit"
-                    disabled={!activeAtsEntryId || cvState.isProcessing}
-                    onClick={editSavedAtsProfile}
-                  >
-                    {t("cv.editShort")}
-                  </button>
+                  {!selectedAtsIsPersistent && (
+                    <button
+                      type="button"
+                      className="btn-ghost cv-saved-profiles__edit"
+                      disabled={!activeAtsEntryId || cvState.isProcessing}
+                      onClick={editSavedAtsProfile}
+                    >
+                      {t("cv.editShort")}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -4125,6 +4170,7 @@ export default function App() {
       selectedDocumentId={cvState.selectedDocumentIds[0] ?? null}
       selectedSearchProfileId={selectedSavedSearchId}
       selectedAtsProfileId={activeAtsEntryId}
+      profileLists={listSourceLists}
       processing={cvState.isProcessing}
       searching={isSearching}
       message={status}
@@ -4163,6 +4209,7 @@ export default function App() {
       onPersistentProfilesFocusHandled={() => setPersistentProfilesFocusCvId(null)}
       onAssignUnassigned={handleAssignUnassignedAts}
       onSearchPersistentProfile={handleSearchPersistentProfile}
+      onPersistentProfilesChanged={() => setPersistentProfilesVersion((version) => version + 1)}
     />
   );
 

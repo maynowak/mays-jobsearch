@@ -7,6 +7,7 @@ import {
   saveCvSearchProfile,
 } from '../lib/cvProfileStore';
 import type { CvDocument } from '../types';
+import type { CvProfileLists } from '../lib/cvProfileStore';
 import DashboardV2CvSection from './DashboardV2CvSection';
 
 const makeDocument = (id: string, name: string, hash: string, skills: string[]): CvDocument => ({
@@ -21,7 +22,9 @@ const makeDocument = (id: string, name: string, hash: string, skills: string[]):
 
 const renderSection = (
   documents: CvDocument[],
-  onAssignUnassigned = vi.fn(async () => undefined)
+  onAssignUnassigned = vi.fn(async () => undefined),
+  profileLists: CvProfileLists | null = null,
+  selectedSearchProfileId: string | null = null
 ) => {
   const onSelectDocument = vi.fn();
   const onSelectSearchProfile = vi.fn();
@@ -31,8 +34,9 @@ const renderSection = (
       <DashboardV2CvSection
         documents={documents}
         selectedDocumentId={documents[0]?.id ?? null}
-        selectedSearchProfileId={null}
+        selectedSearchProfileId={selectedSearchProfileId}
         selectedAtsProfileId={null}
+        profileLists={profileLists}
         processing={false}
         searching={false}
         onSelectDocument={onSelectDocument}
@@ -175,6 +179,47 @@ describe('MAYS-UI-S5.2-A: Dashboard CV section', () => {
     expect(screen.getByRole('option', { name: 'B Suche 1' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'B Suche 2' })).toBeTruthy();
     expect(screen.queryByRole('option', { name: 'A Suche 1' })).toBeNull();
+  });
+
+  it('shows hydrated durable CV and ATS profiles in the existing dropdowns', () => {
+    const cvA = makeDocument('cv-a', 'A', 'hash-a', ['TypeScript']);
+    const profileLists: CvProfileLists = {
+      searchProfiles: [
+        {
+          id: 'sp-durable',
+          name: 'Dauerhaft Cloud',
+          savedAt: 1,
+          profile: {
+            skills: 'AWS',
+            targetRoles: ['Cloud Engineer'],
+            city: 'Berlin',
+            radiusKm: null,
+            workModes: [],
+            employmentTypes: ['full_time'],
+          },
+          origin: 'persistent',
+        },
+      ],
+      atsProfiles: [
+        {
+          id: 'ats-durable',
+          name: 'Dauerhaft AWS',
+          savedAt: 1,
+          targetRoles: ['Cloud Engineer'],
+          skills: ['AWS'],
+          searchProfileId: 'sp-durable',
+          origin: 'persistent',
+        },
+      ],
+    };
+    const { onSelectSearchProfile, onSelectAtsProfile } = renderSection([cvA], undefined, profileLists, 'sp-durable');
+
+    expect(screen.getByRole('option', { name: 'Dauerhaft Cloud' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Dauerhaft AWS' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Suchprofil dieses Lebenslaufs'), { target: { value: 'sp-durable' } });
+    fireEvent.change(screen.getByLabelText('ATS-Profil dieses Lebenslaufs'), { target: { value: 'ats-durable' } });
+    expect(onSelectSearchProfile).toHaveBeenCalledWith('sp-durable');
+    expect(onSelectAtsProfile).toHaveBeenCalledWith('ats-durable');
   });
 
   it('passes the overlay assignment callback with the opened CV hash', async () => {

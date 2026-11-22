@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { CvDocument, StatusMessage } from '../types';
 import { useLang } from '../i18n';
-import { readCvProfileLists } from '../lib/cvProfileStore';
+import { readCvProfileLists, type CvProfileLists } from '../lib/cvProfileStore';
 import CvDocumentList from './CvDocumentList';
 import CvBuilderProfileList from './CvBuilderProfileList';
 import CvProfilesOverlay from './CvProfilesOverlay';
@@ -19,6 +19,9 @@ interface Props {
   selectedDocumentId: string | null;
   selectedSearchProfileId: string | null;
   selectedAtsProfileId: string | null;
+  // Hydration-01: combined session + durable profiles for the active CV.
+  // Omitted in session-only embeddings, where the store is read directly.
+  profileLists?: CvProfileLists | null;
   processing: boolean;
   searching: boolean;
   // CV-FILESIZE-DISPLAY-01: Upload-/Workflow-Rueckmeldungen (z. B. abgelehnte
@@ -65,6 +68,7 @@ interface Props {
     parent: CVSearchProfileV1,
     ats?: ATSSearchProfileV1
   ) => void | Promise<void>;
+  onPersistentProfilesChanged?: () => void;
 }
 
 const DashboardV2CvSection = ({
@@ -72,6 +76,7 @@ const DashboardV2CvSection = ({
   selectedDocumentId,
   selectedSearchProfileId,
   selectedAtsProfileId,
+  profileLists = null,
   processing,
   searching,
   message,
@@ -107,6 +112,7 @@ const DashboardV2CvSection = ({
   onPersistentProfilesFocusHandled,
   onAssignUnassigned,
   onSearchPersistentProfile,
+  onPersistentProfilesChanged,
 }: Props) => {
   const { t } = useLang();
   const [profilesDocumentId, setProfilesDocumentId] = useState<string | null>(null);
@@ -132,7 +138,7 @@ const DashboardV2CvSection = ({
     onPersistentProfilesFocusHandled?.();
   }, [focusPersistentCvId, focusPersistentProfilesEnabled, persistentSearchProfiles?.persistentView, onPersistentProfilesFocusHandled]);
   const activeDocument = documents.find((document) => document.id === selectedDocumentId) ?? documents[0] ?? null;
-  const lists = readCvProfileLists(activeDocument?.hash ?? null);
+  const lists = profileLists ?? readCvProfileLists(activeDocument?.hash ?? null);
   const selectedSearchProfile = lists.searchProfiles.find((entry) => entry.id === selectedSearchProfileId) ?? null;
   const visibleAtsProfiles = selectedSearchProfileId
     ? lists.atsProfiles.filter((entry) => entry.searchProfileId === selectedSearchProfileId)
@@ -354,6 +360,7 @@ const DashboardV2CvSection = ({
             cvName={cv?.filename ?? "CV"}
             profiles={persistentSearchProfiles}
             onClose={() => setPersistentProfilesCvId(null)}
+            onProfilesChanged={onPersistentProfilesChanged}
             onSearch={onSearchPersistentProfile}
           />
         );
