@@ -36,7 +36,8 @@ Implementation for Mays-Jobsearch.
 ## Constraints
 Edit allowed within project scope. Shell only within normal project scope. No autonomous feature expansion.
 
-## Current Project Context (2026-11-19)
+## Current Project Context (2026-11-22)
 - Reuse existing parser/ATS/service helpers; do not add a second engine or API version.
+- ATS profile saves must normalize name, exact-duplicate skills and target roles before validation on session create/update as well as the RIS path; preserve casing variants and existing capacity/consent gates.
+- Do not change UX-08A, login-hydration or prior feature scope while fixing ATS regressions. Add focused tests that reproduce the actual failing path.
 - Keep analysis APIs default-off and never bypass RIS auth/consent or the BFF boundary.
-- Normalize and validate ATS profile payloads at client and BFF before RIS writes.

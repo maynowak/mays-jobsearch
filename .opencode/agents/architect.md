@@ -44,6 +44,8 @@ Architektur-Review und Design-Entscheidungen für Mays-Jobsearch.
 ## Notes
 - docs/AI_AUDITLOG.md — mandatory step template auditlog workflow
 
-## Current Architecture Context (2026-11-19)
-- Analysis APIs are versioned and default-off; keep one shared parser/ATS/matching engine.
-- Preserve the BFF→RIS boundary and existing auth/consent gates; no RIS-internal assumptions.
+## Current Architecture Context (2026-11-22)
+- Main `c1cb1f8` includes the released CV workspace/import/profile-artwork stack. ATS profile writes stay on one normalized client/session contract and the authenticated/consented BFF→RIS path.
+- ATS create/update must normalize name, exact-duplicate skills and target roles before validation in both session and RIS paths; casing variants remain distinct.
+- Versioned analysis APIs remain default-off; preserve one shared parser/ATS/matching engine and the RIS boundary.
+- Keep release evidence in `docs/reports/` and record each gate in `docs/AI_AUDITLOG.md`.

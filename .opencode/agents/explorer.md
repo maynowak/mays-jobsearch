@@ -45,6 +45,7 @@ Read-only discovery for Mays-Jobsearch.
 ## Constraints
 Edit deny. Read-only. Respect AGENTS.md and AI_AUDITLOG.md.
 
-## Current Discovery Context (2026-11-19)
-- Check `docs/reports/` and recent AI_AUDITLOG entries before tracing parser/API or ATS profile paths.
-- Treat RIS as external: use only the documented BFF contracts and local tests/fixtures.
+## Current Discovery Context (2026-11-22)
+- Main `c1cb1f8` is the current released baseline. Check `docs/reports/` and recent `docs/AI_AUDITLOG.md` before tracing parser/API, ATS profile or workspace paths.
+- ATS save root-cause work should distinguish session repository persistence from the RIS/BFF client; reuse the existing normalization and test fixtures.
+- Treat RIS as external: use only the documented BFF contracts and local tests/fixtures; never inspect RIS internals.
