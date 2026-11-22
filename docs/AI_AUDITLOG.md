@@ -1,3 +1,13 @@
+2026-11-22 · JM-ATS-PROFILE-SAVE-FIX-02 — ATS SAVE REGRESSION HOTFIX
+- Typ: ATS-Profil-Speicherung, Session-Normalisierung, Fehler-Mapping, Regressionstests
+- Status: **FIXED / VERIFIED LOCAL**
+- Branch/Commit: `fix/jm-ats-profile-save-02`; Implementierung `40ff657`; Basis `origin/main` `c1cb1f8`; kein Main-Merge, kein Deployment.
+- Ursache: Session-`create`/`update` validierten die rohen, mehrfach ausgewählten Skills; `validateCreateATSProfile` lehnte Duplikate ab. RIS war bereits normalisiert. Fix: gemeinsame ATS-Normalisierung vor der Session-Validierung (Name trimmen, exakte Duplikate entfernen, Reihenfolge und Schreibweisen erhalten); Session-Capacity meldet `capacity_exceeded`.
+- Fehler: `ProfileValidationError`/`SearchProfilesApiError` werden auf konkrete Meldungen für Validierung, Parent, Kapazität, Consent und generische RIS-/Netzwerkfehler abgebildet; keine Profildaten/Tokens geloggt.
+- Tests: fokussierte Session/Validation/Error/API-Tests **29 PASS**; RIS-API **11 PASS**; serielle Vollsuite **2018 PASS / 11 skipped**; Build/Diff PASS. Neue Tests prüfen Create und Update, Reload, exakte Duplikate, Schreibweisen, Parent, Kapazität und getrennte Session-/RIS-Fehlerpfade.
+- Keine Änderung an CV-/Search-Profil-Zuordnung, UX-08A, Login-Hydration, RIS/AWS/Cognito/Consent/Storage oder Production; keine echten Schreibvorgänge.
+- Bericht: `docs/reports/JM-ATS-PROFILE-SAVE-FIX-02.md`.
+
 2026-11-22 · JM-CV-BUILDER-UX-08A — WORKSPACE FOOTER & RELEASE PREPARATION
 - Typ: CV-Editor-UX, gemeinsamer Website-Footer, Release-Diff-Review, E2E
 - Status: **READY FOR CONTROLLED MERGE**
