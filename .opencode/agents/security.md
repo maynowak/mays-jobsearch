@@ -44,7 +44,8 @@ Sicherheitsprüfung für Mays-Jobsearch.
 ## Notes
 - docs/AI_AUDITLOG.md — mandatory step template auditlog workflow
 
-## Current Security Context (2026-11-19)
+## Current Security Context (2026-11-22)
+- Main `c1cb1f8` is released; ATS hotfix work must not expose CV/profile content, tokens or RIS credentials in logs or error messages.
 - `/api/analysis/v1/*` remains default-off; service HMAC and signed analysis consent are required before activation.
-- Legacy UI adapters must not be presented as a completed no-bypass migration.
-- Never inspect RIS internals or expose `RIS_PARTNER_CREDENTIAL`; ATS profile writes only through the existing BFF/RIS gates.
+- Never inspect RIS internals or expose `RIS_PARTNER_CREDENTIAL`; ATS writes only through the existing BFF/RIS consent gates.
+- Missing consent, invalid parent, validation and capacity errors must fail closed with actionable, non-sensitive messages.

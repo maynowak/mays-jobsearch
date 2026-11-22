@@ -1,3 +1,9 @@
+2026-11-22 · JM-CV-BUILDER-UX-08A — MAIN RELEASE & SUBAGENT DOC SYNC
+- Status: **MERGED TO MAIN / PRODUCTION DEPLOYED**
+- Release: PR #52 merged as `c1cb1f8`; branch retained. Automatic Vercel Production `www.mays-job-matcher.app` `dpl_9jx8YiyG8hoT2TpPCraHErj5jqEb` and `mays-jobsearch.vercel.app` `dpl_3JyYit1CjYkwfRwfZULgmHXyu68f` READY at `c1cb1f8`; workspace footer and legal links live-checked.
+- Docs sync: `.opencode/agents/*.md`, `docs/AI_AGENT_PLAYBOOK.md`, `docs/AGENTS.md`, UX-08/08A reports and this audit entry updated to reflect the released CV workspace/footer/scroll stack and current subagent/release rules. ATS hotfix remains on `fix/jm-ats-profile-save-02`, not merged.
+- No product code change in this docs release; no RIS/AWS/Cognito/Consent/Storage mutation; no manual deploy.
+
 2026-11-22 · JM-CV-BUILDER-UX-08A — WORKSPACE FOOTER & RELEASE PREPARATION
 - Typ: CV-Editor-UX, gemeinsamer Website-Footer, Release-Diff-Review, E2E
 - Status: **READY FOR CONTROLLED MERGE**

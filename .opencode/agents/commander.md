@@ -42,7 +42,8 @@ Orchestrator for Mays-Jobsearch repository. No AWS, no Mays-RIS, no Mays-Orders-
 - Manual `vercel --prod --scope maymilly` only with explicit approval and after verifying the deployed Build SHA
 - All work must respect AGENTS.md and AI_AUDITLOG.md
 
-## Current Project Context (2026-11-19)
-- Versioned analysis APIs under `/api/analysis/v1/*` are default-off and must not be activated without service/consent approval.
-- ATS profile writes must stay on the authenticated/consented BFF→RIS path; validate/normalize client and BFF payloads, never bypass consent.
-- Keep evidence in `docs/reports/` and update `docs/AI_AUDITLOG.md` at each implementation/release gate.
+## Current Project Context (2026-11-22)
+- Main release `c1cb1f8` contains CV workspace footer, wide CV editor + dual scroll hands, fullpage import decision navigation/screenshot view, initial workspace background fix and profile-header artwork; production is auto-deployed from main.
+- ATS save regression hotfix is prepared on `fix/jm-ats-profile-save-02` (normalized session create/update + reliable tests); it is not merged without explicit approval.
+- Main releases only through reviewed PR after explicit user approval. Automatic Vercel Git deployment applies; never run manual `vercel --prod` without approval and Build-SHA verification.
+- Preserve UX-08A, login-hydration work and all prior reports; update `docs/reports/` and `docs/AI_AUDITLOG.md` at each implementation/release gate.
