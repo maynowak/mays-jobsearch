@@ -12,6 +12,7 @@ import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 import CvBuilderImportDialog from "./CvBuilderImportDialog";
 import CvBuilderEditor from "./CvBuilderEditor";
 import CvBuilderDraftPrompt from "./CvBuilderDraftPrompt";
+import Footer from "./Footer";
 import {
   WORKSPACE_PATH,
   acceptWorkspaceHandoff,
@@ -506,6 +507,8 @@ export default function CvBuilderWorkspacePage() {
     </header>
   );
 
+  const footer = <Footer />;
+
   if (mode === "loading") {
     return (
       <div className="cv-workspace-page">
@@ -517,6 +520,7 @@ export default function CvBuilderWorkspacePage() {
             <p>{t("cvBuilder.workspace.loading")}</p>
           </div>
         </main>
+        {footer}
       </div>
     );
   }
@@ -547,6 +551,7 @@ export default function CvBuilderWorkspacePage() {
           />
           {session && <p className="visually-hidden" aria-live="polite">{t("cvBuilder.import.subtitle")}</p>}
         </main>
+        {footer}
       </div>
     );
   }
@@ -578,6 +583,7 @@ export default function CvBuilderWorkspacePage() {
           />
           {workspaceMessage && <p className="cv-workspace-local-note" role="status">{workspaceMessage}</p>}
         </main>
+        {footer}
       </div>
     );
   }
@@ -595,6 +601,7 @@ export default function CvBuilderWorkspacePage() {
             <button type="button" className="btn-ghost" onClick={handleStartEmpty}>{t("cvBuilder.workspace.empty")}</button>
           </section>
         </main>
+        {footer}
       </div>
     );
   }
@@ -624,6 +631,7 @@ export default function CvBuilderWorkspacePage() {
           </div>
         </section>
       </main>
+      {footer}
     </div>
   );
 }

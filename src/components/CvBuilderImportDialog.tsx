@@ -69,7 +69,10 @@ export default function CvBuilderImportDialog({
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const decisionPanelRef = useRef<HTMLElement | null>(null);
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
   const hydratedHandoffRef = useRef(false);
+  const screenshotDetailsRef = useRef<boolean[]>([]);
   const onSessionChangeRef = useRef(onSessionChange);
   onSessionChangeRef.current = onSessionChange;
   const fullpage = layoutMode === "fullpage";
@@ -85,6 +88,7 @@ export default function CvBuilderImportDialog({
   const [selectedRisId, setSelectedRisId] = useState("");
   const [busyRisId, setBusyRisId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [screenshotMode, setScreenshotMode] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -104,6 +108,8 @@ export default function CvBuilderImportDialog({
       setPendingAcknowledged(initialSession.pendingAcknowledged);
       setBusy(false);
       setBusyRisId(null);
+      setScreenshotMode(false);
+      screenshotDetailsRef.current = [];
       setSelectedRisId(persistentCvs[0]?.cvId ?? "");
       window.setTimeout(() => headingRef.current?.focus(), 0);
       return;
@@ -119,6 +125,8 @@ export default function CvBuilderImportDialog({
     setSummaryDraft(null);
     setPendingAcknowledged(false);
     setBusyRisId(null);
+    setScreenshotMode(false);
+    screenshotDetailsRef.current = [];
     setSelectedRisId(persistentCvs[0]?.cvId ?? "");
     window.setTimeout(() => headingRef.current?.focus(), 0);
     // Reset only when the dialog opens; document updates must not discard a
@@ -132,6 +140,11 @@ export default function CvBuilderImportDialog({
       window.setTimeout(() => document.getElementById("cv-import-summary-title")?.focus(), 0);
     }
   }, [open, step]);
+
+  useEffect(() => {
+    if (step === "preview" || !screenshotMode) return;
+    setScreenshotMode(false);
+  }, [step, screenshotMode]);
 
   useEffect(() => {
     if (!open) return;
@@ -307,16 +320,52 @@ export default function CvBuilderImportDialog({
     }));
   };
 
+  const pendingReviewCount = Object.values(manualDecisions)
+    .filter((decision) => decision.status === "pending").length;
+
+  const scrollTo = (target: HTMLElement | null) => {
+    if (!target) return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+    const top = window.scrollY + target.getBoundingClientRect().top - 16;
+    window.scrollTo?.({ top: Math.max(0, top), behavior: reduceMotion ? "auto" : "smooth" });
+    target.focus?.({ preventScroll: true });
+  };
+
+  const scrollToDecisionPanel = () => {
+    scrollTo(decisionPanelRef.current);
+  };
+
+  const scrollToReview = () => {
+    scrollTo(document.getElementById("cv-import-review-title"));
+  };
+
+  const toggleScreenshotMode = () => {
+    const details = Array.from(
+      workspaceRef.current?.querySelectorAll<HTMLDetailsElement>(".cv-import-section__details") ?? []
+    );
+    if (!screenshotMode) {
+      screenshotDetailsRef.current = details.map((detail) => detail.open);
+      details.forEach((detail) => { detail.open = true; });
+      setScreenshotMode(true);
+      return;
+    }
+    details.forEach((detail, index) => {
+      detail.open = screenshotDetailsRef.current[index] ?? detail.open;
+    });
+    setScreenshotMode(false);
+  };
+
   if (!open) return null;
 
   return (
     <div
-      className={fullpage ? "cv-import-workspace" : "modal cv-import-modal"}
+      className={`${fullpage ? "cv-import-workspace" : "modal cv-import-modal"}${fullpage && step === "preview" && screenshotMode ? " cv-import-workspace--screenshot" : ""}`}
       onClick={fullpage ? undefined : (event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
+        ref={workspaceRef}
         className={fullpage ? "cv-import-workspace__box" : "modal-box cv-import-modal__box"}
         role={fullpage ? "region" : "dialog"}
         aria-modal={fullpage ? undefined : true}
@@ -338,6 +387,26 @@ export default function CvBuilderImportDialog({
                 onClick={() => onOpenWorkspace(currentSession())}
               >
                 {t("cvBuilder.workspace.openImport")}
+              </button>
+            )}
+            {fullpage && step === "preview" && (
+              <button
+                type="button"
+                className="btn-ghost cv-import-header-jump"
+                onClick={scrollToDecisionPanel}
+              >
+                {t("cvBuilder.import.decisionJumpTop")}
+              </button>
+            )}
+            {fullpage && step === "preview" && (
+              <button
+                type="button"
+                className="btn-ghost cv-import-screenshot-toggle"
+                aria-pressed={screenshotMode}
+                title={screenshotMode ? t("cvBuilder.workspace.screenshotExit") : t("cvBuilder.workspace.screenshot")}
+                onClick={toggleScreenshotMode}
+              >
+                {screenshotMode ? t("cvBuilder.workspace.screenshotExit") : t("cvBuilder.workspace.screenshot")}
               </button>
             )}
             <button type="button" className="modal-close" aria-label={t("cvBuilder.cancel")} onClick={onClose}>
@@ -449,6 +518,7 @@ export default function CvBuilderImportDialog({
               onToggleSkill={toggleSkill}
               onSelectAllSkills={() => setSelectedSkills(new Set(result.draft.skills))}
               onClearSkills={() => setSelectedSkills(new Set())}
+              onGoToActions={fullpage ? scrollToDecisionPanel : undefined}
             />
           )}
 
@@ -477,7 +547,52 @@ export default function CvBuilderImportDialog({
           )}
         </div>
 
-        {step !== "summary" && (
+        {fullpage && step === "preview" ? (
+          <section
+            ref={decisionPanelRef}
+            id="cv-import-decision-panel"
+            className="cv-import-decision-panel"
+            aria-labelledby="cv-import-decision-title"
+            tabIndex={-1}
+          >
+            <p className="cv-import-decision-panel__eyebrow" id="cv-import-decision-title">
+              {t("cvBuilder.import.decisionTitle")}
+            </p>
+            <p className="cv-import-decision-panel__count">
+              {t("cvBuilder.import.decisionPending", { count: pendingReviewCount })}
+            </p>
+            <p className="cv-import-decision-panel__note">{t("cvBuilder.import.decisionNote")}</p>
+            <button
+              type="button"
+              className="btn-ghost cv-import-decision-panel__review-back"
+              onClick={scrollToReview}
+            >
+              {t("cvBuilder.import.decisionReviewBack")}
+            </button>
+            <div className="cv-import-decision-panel__actions">
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  setError(null);
+                  setStep("source");
+                }}
+              >
+                {t("cvBuilder.import.decisionBack")}
+              </button>
+              <button type="button" className="btn-ghost" onClick={onClose}>
+                {t("cvBuilder.import.cancel")}
+              </button>
+              <button
+                type="button"
+                className="letter-btn cv-import-decision-panel__primary"
+                onClick={openSummary}
+              >
+                {t("cvBuilder.import.decisionApply")}
+              </button>
+            </div>
+          </section>
+        ) : step !== "summary" && (
           <div className="modal-actions cv-import-modal__actions">
             {step === "preview" && (
               <button

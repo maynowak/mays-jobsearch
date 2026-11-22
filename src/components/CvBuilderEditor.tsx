@@ -24,6 +24,7 @@ import { MAX_PERSISTENT_CVS } from "../lib/cvStorageApi";
 import { validateCvFile } from "../lib/cvFileValidation";
 import type { CvBuilderPdfRisStatus } from "../lib/useCvBuilderPdfRisStorage";
 import CvBuilderPreview from "./CvBuilderPreview";
+import CvBuilderScrollHands from "./CvBuilderScrollHands";
 import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 import {
   CV_BUILDER_TEMPLATES,
@@ -528,6 +529,7 @@ export default function CvBuilderEditor({
   const [pdfRisMessage, setPdfRisMessage] = useState("");
   const [pdfRisError, setPdfRisError] = useState("");
   const [screenshotMode, setScreenshotMode] = useState(false);
+  const [wideMode, setWideMode] = useState(false);
   const screenshotOpenStatesRef = useRef<boolean[]>([]);
   const [pendingErrorFocus, setPendingErrorFocus] = useState<string | null>(null);
   const fullpage = layoutMode === "fullpage";
@@ -821,7 +823,7 @@ export default function CvBuilderEditor({
 
   return (
     <div
-      className={`${fullpage ? "cv-builder-fullpage" : "modal cv-builder-modal"}${screenshotMode ? " cv-builder-modal--screenshot" : ""}`}
+      className={`${fullpage ? "cv-builder-fullpage" : "modal cv-builder-modal"}${fullpage && wideMode ? " cv-builder-fullpage--wide" : ""}${screenshotMode ? " cv-builder-modal--screenshot" : ""}`}
       data-layout={layoutMode}
       onClick={fullpage ? undefined : (event) => {
         if (event.target === event.currentTarget) requestClose();
@@ -845,6 +847,17 @@ export default function CvBuilderEditor({
             {!fullpage && onOpenWorkspace && (
               <button type="button" className="btn-ghost cv-builder-open-tab" onClick={onOpenWorkspace}>
                 {t("cvBuilder.workspace.openEditor")}
+              </button>
+            )}
+            {fullpage && !screenshotMode && (
+              <button
+                type="button"
+                className="btn-ghost cv-builder-wide-toggle"
+                aria-pressed={wideMode}
+                title={wideMode ? t("cvBuilder.workspace.normalWidth") : t("cvBuilder.workspace.maximizeWidth")}
+                onClick={() => setWideMode((current) => !current)}
+              >
+                {wideMode ? t("cvBuilder.workspace.normalWidth") : t("cvBuilder.workspace.maximizeWidth")}
               </button>
             )}
             {fullpage && (
@@ -1801,6 +1814,12 @@ export default function CvBuilderEditor({
           )}
         </div>
       </div>
+      {fullpage && !screenshotMode && (
+        <CvBuilderScrollHands
+          topTargetSelector="#cv-builder-title"
+          bottomTargetSelector=".cv-builder-footer > .cv-builder-footer__actions"
+        />
+      )}
     </div>
   );
 }

@@ -1,3 +1,87 @@
+2026-11-22 · JM-CV-BUILDER-UX-08A — WORKSPACE FOOTER & RELEASE PREPARATION
+- Typ: CV-Editor-UX, gemeinsamer Website-Footer, Release-Diff-Review, E2E
+- Status: **READY FOR CONTROLLED MERGE**
+- Branch/Commit: `feature/jm-cv-builder-ux-08a`; Implementierung `84ac3f0`; Baseline `630fa4f`; kein Main-Merge, kein Deployment.
+- Footer: `CvBuilderWorkspacePage` rendert den bestehenden `Footer` genau einmal in jedem Workspace-Modus nach dem Hauptinhalt. Vorhandene Links `/impressum`, `/datenschutz`, `/datenschutzprinzipien` und Build-/Versionsinformationen; keine neuen Rechtstexte, keine Duplikate, `position: relative` (nicht sticky/fixed). Nur dunkle Workspace-Farbanpassung. CV-Editor-Aktionsleiste unverändert.
+- UX-08 erneut verifiziert: Maximierung 1120→1920→1120, Turbo-Hände, Footerziel `.cv-builder-footer > .cv-builder-footer__actions` weiterhin separat; Stopp 3.453 px bei vollständig sichtbaren Footer-Aktionen, Up-Header, Mouseleave/Escape/Manual/kein Neustart, Tastatur, Reduced Motion, Screenshot-Schutz, 1920/1440/768/390 ohne Overflow/Überdeckung. Der Website-Footer liegt nach dem Editor und beeinflusst die Turbo-Zielberechnung nicht.
+- Release-Diff gegen `origin/main`: 81 Dateien, +3.055/−81, 18 Commits voraus/0 zurück; nur erwartete CV-/UX-/Profil-Artwork- und Report-/Screenshot-Dateien; keine RIS/AWS/Cognito/Consent/Storage-/Parser-/ATS-Änderung.
+- Tests: Workspace-Footer-Komponententest PASS; fokussierte Tests PASS; Browser-E2E PASS; serielle Vollsuite **2010 PASS / 11 skipped**; Build/Diff PASS. Screenshots: `docs/reports/assets/JM-CV-BUILDER-UX-08A/`.
+- Bericht: `docs/reports/JM-CV-BUILDER-UX-08A.md`.
+
+2026-11-22 · JM-CV-BUILDER-UX-08 — WIDE WORKSPACE & DUAL TURBO SCROLL
+- Typ: CV-Editor-UX, Fullpage-Breite, Hover-Scrollhände, Safety/Reduced-Motion, E2E
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-builder-ux-08`; Implementierung `0fe1673`; Baseline `ad5d70e`; kein Main-Merge, kein Deployment.
+- Umsetzung: Fullpage-Editor erhält „⛶ Breite maximieren“ / „↔ Normalbreite“; normale Breite bleibt Default, maximiert nutzt die volle Workspace-Breite; Editor und Preview bleiben proportional. Zwei feste Dark-Glass-Scrollhände (`☝️ ↑`, `👇 ↓`) mit 44px-Zielen: Down-Hover startet nach 400 ms, beschleunigt zeitbasiert per requestAnimationFrame auf max. 6000 px/s, bremst vor `.cv-builder-footer > .cv-builder-footer__actions` und stoppt vollständig sichtbar; Up läuft gleichmäßig mit 1200 px/s zum Editor-Header. Klick/Keyboard/Touch nutzen direkte Sprünge. Mouseleave, Escape, Wheel/Manual, Blur, Screenshot-Modus, Unmount und Zielerreichung stoppen; kein Neustart bei unverändertem Hover. Reduced Motion deaktiviert die Hover-Animation.
+- Schutz: Screenshot-Ansicht blendet Hände und Maximierungsbutton aus, stoppt Animationen, behält Dokumenthöhe und Fullpage-Screenshotfähigkeit. Schmale Layouts reservieren Platz, damit Hände keine Editoren überdecken. Keine neuen Scrollcontainer, Timer oder Bibliotheken.
+- E2E `tests/e2e/cv-builder-ux-08.mjs`: normal 1120→max 1920 (Box 1024→1766)→1120, Datenverlust 0; Turbo-Start/Beschleunigung/Footer-Stopp bei 5521; Up-Header; Mouseleave/Escape/Wheel/Manual, kein Neustart, Tastatur, Reduced Motion, Screenshot-Schutz, 1920/1440/768/390 ohne Overflow/Nicht-Überlappung. Screenshots: `docs/reports/assets/JM-CV-BUILDER-UX-08/`.
+- Tests: fokussierte Editor-Tests 18 PASS; Browser-E2E PASS; serielle Vollsuite **2009 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an Import UX-07/07B, PDF/ATS, CV-Datenmodell/Validierung, RIS/AWS/Cognito/Consent/Storage, Profil-Header oder Workspace-Hintergrund; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-CV-BUILDER-UX-08.md`.
+
+2026-11-21 · JM-CV-IMPORT-UX-07B — SCREENSHOT & NAVIGATION COMPLETION
+- Typ: CV-Import-UX, Fullpage-Screenshot-Ansicht, Header-Sprung, Modal-CTA-Polish
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-import-ux-07b`; Implementierung `4b26de4`; Baseline `74601a9`; kein Main-Merge, kein Deployment.
+- Umsetzung: Fullpage-Import erhält „📸 Screenshot-Ansicht“ / „Screenshot-Ansicht beenden“; beim Aktivieren werden alle vorhandenen Section-Details geöffnet, störende Filter-/Item-/Hilfe-/Entscheidungscontrols ausgeblendet, Daten/Pagination/Entscheidungen bleiben unverändert; beim Beenden werden Detailzustände restauriert. Zusätzlicher Header-Sprung „↓ Direkt zur Importentscheidung“ mit Panel-Fokus und Reduced-Motion; der bestehende Prüflisten-Sprung bleibt. Modal-CTA „↗ In neuem Tab öffnen“ sowie Close-/Action-Row visuell harmonisiert, Handler unverändert.
+- Keine sticky/fixed Actions, kein neuer innerer Scrollcontainer, kein Auto-Scroll beim Laden, keine Import-/PDF-/Mapping-/Handoff-/Storage-Änderung. Keine RIS/AWS/Cognito/Consent/Profile/Workspace-Hintergrund-Änderung.
+- E2E mit 40 pending/4 Seiten: Modal-CTA, Screenshot-View an/aus, Detailzustand, Pending-/Pagination-Erhalt, Top-Jump per Tastatur, Fokus, kein Import, Back-to-Review, Count 40→39, Pagination, Reduced Motion, Summary/Editor, 1920/1440/768/390 ohne Overflow. Screenshots: `docs/reports/assets/JM-CV-IMPORT-UX-07B/`.
+- Tests: fokussierte Importdialog-Tests 21 PASS; Fullpage-03A und Initial-Render-01 PASS; serielle Vollsuite **2008 PASS / 11 skipped**; Build/Diff PASS.
+- Bericht: `docs/reports/JM-CV-IMPORT-UX-07B.md`.
+
+2026-11-21 · JM-CV-IMPORT-UX-07 — PREMIUM FULLPAGE DECISION NAVIGATION
+- Typ: CV-Import-UX, Fullpage-only Navigation/Aktionskarte, responsiver Browser-E2E
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-import-ux-07`; Implementierung `4e3f0dd`; kein Main-Merge, kein Deployment.
+- Umsetzung: Fullpage-Prüfliste erhält „✓ Auswahl getroffen? → Zu den Importaktionen“ mit `window.scrollTo`, Panel-Fokus und Reduced-Motion-Umschaltung; Abschlussleiste wird durch eine statische Frosted-Glass-Karte mit nicht fest kodiertem Pending-Count, „↑ Zurück zur Prüfung“, „← Zurück“, „Import abbrechen“ und „✓ Angaben übernehmen →“ ersetzt. Bestehende Summary-/Validierungslogik und Pagination bleiben unverändert; Modal-Import bleibt unverändert.
+- Keine sticky/fixed Actions, kein neuer innerer Scrollcontainer, kein Auto-Scroll beim Laden; die lange Seite bleibt vollständig screenshotfähig. Keine Änderung an PDF-Parsing, Mapping, Handoff, CV-Daten, RIS/AWS/Cognito/Consent/Storage oder Workspace-Hintergrund.
+- E2E `tests/e2e/cv-import-ux-07.mjs`: synthetische 44 Zeilen → 40 pending/4 Seiten; Tastatur-Jump ohne Import, Fokus, unveränderte Entscheidungen, Back-to-Review, eine Entscheidung akzeptiert (40→39), Pagination 1→2→1, Reduced Motion, bestehende Summary-/Editor-Logik, 1920/1440/768/390 ohne Overflow. Screenshots: `docs/reports/assets/JM-CV-IMPORT-UX-07/`.
+- Tests: fokussierte Importdialog-Tests 20 PASS; Fullpage-03A und Initial-Render-01 PASS; serielle Vollsuite **2007 PASS / 11 skipped**; Build/Diff PASS.
+- Bericht: `docs/reports/JM-CV-IMPORT-UX-07.md`.
+
+2026-11-21 · JM-CV-WORKSPACE-INITIAL-RENDER-01 — CV WORKSPACE SIDE ART
+- Typ: CV-Workspace-Hintergrund, Initial-Render-Diagnose, CSS-Viewport-Bindung, Regressionstest
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-workspace-initial-render-01`; Implementierung/Test `fe4a22c`; kein Main-Merge, kein Deployment.
+- Diagnose: Reproduktion über echten Popup-Handoff mit synthetischem PDF. Vor dem Fix wuchsen `.cv-workspace-page::before/::after` mit der Dokumenthöhe (1000 px → 2682,53 px im langen Import), während `background-size: cover,cover` und Positionen konstant blieben. Keine Änderung nach Fonts, Bild-Decode, zwei RAFs, 500 ms oder Resize; also kein Initial-/Reflow-Race, sondern dauerhafte Kopplung an die Importseitenhöhe.
+- Korrektur: Beide dekorativen City-/Human-Layer sind jetzt `position: fixed; height: 100dvh`; Bilder, Farben, Masken, Positions- und Cover-Werte bleiben erhalten. Keine Timer, Reloads, Handoff-/CV-Daten-Änderungen.
+- Regression: `tests/e2e/cv-workspace-initial-render-01.mjs` prüft sechs Stufen bei 1920×1080; Layer bleiben 1080 px bei 2682,53 px Dokumenthöhe, Background-Signaturen identisch, kein Overflow/Console-Fehler. Screenshots: `docs/reports/assets/JM-CV-WORKSPACE-INITIAL-RENDER-01/`.
+- Tests: neuer First-Tab-Open-E2E PASS; `jm-cv-design-02` PASS; serielle Vollsuite **2005 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an RIS/AWS/Cognito/Consent/Analytics, CV-Daten oder Handoff-Logik; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-CV-WORKSPACE-INITIAL-RENDER-01.md`.
+
+2026-11-21 · JM-PROFILE-HEADER-IMAGE-05 — PREMIUM LAYERED GLOBE & CYAN WAVES
+- Typ: Profil-Header-Artwork, zwei unabhängige Alpha-Layer, responsive CSS, visuelle Abnahme
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-header-image-05`; Implementierung `5bf44d3`; Baseline `afdf17b`; kein Main-Merge, kein Deployment.
+- Assets: bereitgestellte `Leuchtender Globus mit Amerika-Fokus.png` (1261×1247 RGBA) und `Neon-Türkis Wireframe-Wellen.png` (2170×725 RGBA) ohne KI-Neugenerierung optimiert zu `jm-profile-globe.webp` (720×712, 59 KB) und `jm-profile-waves.webp` (2170×725, 601 KB), Alpha und Originalfarben erhalten.
+- Architektur: Dark Premium Glass → `.dashboard-v2__header-waves` → `.dashboard-v2__header-globe` (eigenes `<img>`, `object-fit: contain`, `aria-hidden`, pointer-events none) → lokaler Text-Overlay → `.dashboard-v2__header-copy`. Keine zusammengesetzte Headergrafik mehr; Globe liegt über den Wellen.
+- Visual: Assets separat auf Checkerboard/Dark geprüft; Globe rund und freigestellt, Wellen ohne eingebetteten Globe, keine Rechteckhintergründe. Header 1920/1440/768/390 plus Reduced Motion geprüft: Globe links (175/150/126 px), Text darüber, Wellen bis zum Rand, keine harten Kanten/Overflow, keine Page-/Console-Fehler. Screenshots: `docs/reports/assets/JM-PROFILE-HEADER-IMAGE-05/`.
+- Tests: Profil-Tests 5 PASS; Header-E2E vier Breiten plus Reduced-Motion PASS; serielle Vollsuite **2005 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an Dual-AI-Hintergrund, Partikeln, Karten, Navigation, CV-Workspace, RIS/AWS/Cognito/Consent/Analytics; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-PROFILE-HEADER-IMAGE-05.md`.
+
+2026-11-21 · JM-PROFILE-HEADER-IMAGE-04 — ORIGINAL ARTWORK LAYOUT CORRECTION
+- Typ: Profil-Header-Artwork, Originalkomposition, responsive CSS, visuelle Abnahme
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-header-image-04`; Implementierung `25a2a49`; Baseline `feature/jm-profile-header-image-03` `42d690e`; kein Main-Merge, kein Deployment.
+- Umsetzung: Originalglobe wieder links; `DEV-MODUS`/`Aktiv`, `Profil` und `Willkommen` liegen über dem Globe. Durchgehendes, aus dem Original abgeleitetes Wellenfeld bis zum rechten Headerrand; Desktop-Composition 2480×400, eigene reduzierte Mobile-Composition 744×464 mit Globe links. Desktop `background-position: left center`, Opacity 1, kein Filter, keine Bildanimation; dezenter Text-Scrim und Text-Shadow nur für Lesbarkeit.
+- Visuelle Abnahme 1920/1440/768/390 plus Reduced Motion direkt gegen `LeuchtendesProfilheaderHG.png`: Globe links und rund, Labels darüber, Original-Cyan, Wellen durchgehend ohne sichtbare Naht/Kachel, kein horizontaler Overflow. Screenshots: `docs/reports/assets/JM-PROFILE-HEADER-IMAGE-04/`.
+- Tests: Profil-Test 4 PASS; Header-E2E vier Breiten plus Reduced-Motion PASS; serielle Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an Dual-AI-Hintergrund, Partikeln, Karten, Navigation, CV-Workspace, RIS/AWS/Cognito/Consent/Analytics; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-PROFILE-HEADER-IMAGE-04.md`.
+
+2026-11-21 · JM-PROFILE-HEADER-IMAGE-03 — TRUE ARTWORK COMPOSITION FIX
+- Typ: Profil-Header-Artwork, vorberechnete Desktop-/Mobile-Komposition, responsive CSS, visuelle Abnahme
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-profile-header-image-03`; Implementierung `c954658`; Basis `origin/main` `048563a`; kein Main-Merge, kein Deployment.
+- Ursache: vorheriger Wellen-Layer mit `auto 100%` war bei real ca. 164 px Headerhöhe zu schmal und endete sichtbar vor dem rechten Rand; Globe war dadurch nur ca. 130 px.
+- Umsetzung: ausschließlich Original `LeuchtendesProfilheaderHG.png` (2170×725). Vorberechnete Desktop-Komposition (2480×400) mit dunklem linkem Textdrittel, proportionalem Original-Globe (ca. 165–175 px bei 1180 px Headerbreite) und durchgehenden Wellen bis zum Rand; separate reduzierte Mobile-Komposition (744×464). Header `min-height: 190px`, Desktop `background-size: cover`, Tablet-Crop links, Mobile eigenes Asset; Bild-Opacity 1, kein Filter, keine Bildanimation, keine neue KI-Generierung.
+- Visuelle Abnahme 1920/1440/768/390 plus Reduced Motion: Globe rund und größer, Wellen bis zum rechten Headerrand, keine abrupte senkrechte Bildkante, Cyan-Helligkeit erhalten, Texte/Badges lesbar, kein horizontaler Overflow. Screenshots: `docs/reports/assets/JM-PROFILE-HEADER-IMAGE-03/`.
+- Tests: Profil-Test 4 PASS; Header-E2E vier Breiten plus Reduced-Motion PASS; serielle Vollsuite **2004 PASS / 11 skipped**; Build/Diff PASS. Paralleler Erstlauf hatte drei unabhängige Timeouts (`apify-client`, `CvBuilderEditorRisStorage`), isoliert 26/26 PASS; kein Header-Testfehler.
+- Keine Änderung an Dual-AI-Hintergrund, Partikeln, Karten, Navigation, CV-Workspace, RIS/AWS/Cognito/Consent/Analytics; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-PROFILE-HEADER-IMAGE-03.md`.
+
 2026-11-20 · JM-PROFILE-HEADER-IMAGE-02R — CONTROLLED MAIN RELEASE
 - Typ: Header-Artwork Release, Vercel Production, visuelle Nachprüfung
 - Status: **MERGED TO MAIN / PRODUCTION DEPLOYED**

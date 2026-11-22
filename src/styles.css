@@ -512,7 +512,7 @@ body {
   color: var(--text);
 }
 
-.dashboard-v2__header > div:first-child > p:last-child {
+.dashboard-v2__header-copy > p:last-child {
   margin-top: var(--space-2);
   color: var(--muted);
 }
@@ -14352,6 +14352,112 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   min-height: 44px;
 }
 
+/* JM-CV-BUILDER-UX-08 — fullpage width and floating scroll hands. */
+.cv-builder-wide-toggle {
+  min-height: 44px;
+}
+
+.cv-builder-wide-toggle[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--brand-dark);
+}
+
+.cv-workspace-main:has(> .cv-builder-fullpage--wide) {
+  width: 100%;
+  max-width: none;
+  padding-right: calc(clamp(18px, 4vw, 48px) + 58px);
+}
+
+.cv-workspace-main:has(> .cv-builder-fullpage.cv-builder-modal--screenshot) {
+  padding-right: clamp(18px, 4vw, 48px);
+}
+
+.cv-builder-scroll-hands {
+  position: fixed;
+  top: 50%;
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 60;
+  display: grid;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid rgba(34, 211, 238, 0.42);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(5, 30, 46, 0.94), rgba(3, 17, 31, 0.88));
+  box-shadow:
+    0 12px 28px rgba(0, 8, 18, 0.42),
+    0 0 18px rgba(34, 211, 238, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transform: translateY(-50%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.cv-builder-scroll-hand {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid rgba(103, 232, 249, 0.3);
+  border-radius: 11px;
+  background:
+    radial-gradient(circle at 30% 18%, rgba(103, 232, 249, 0.2), transparent 52%),
+    rgba(8, 47, 73, 0.8);
+  color: #e8fdff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow:
+    0 2px 4px rgba(0, 8, 18, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.cv-builder-scroll-hand:hover {
+  border-color: rgba(103, 232, 249, 0.72);
+  background: rgba(8, 71, 98, 0.92);
+  transform: translateY(-1px);
+}
+
+.cv-builder-scroll-hand:focus-visible,
+.cv-builder-wide-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cv-builder-modal--screenshot .cv-builder-scroll-hands,
+.cv-builder-modal--screenshot .cv-builder-wide-toggle {
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .cv-workspace-main:has(> .cv-builder-fullpage) {
+    padding-right: calc(clamp(18px, 4vw, 48px) + 58px);
+  }
+
+  .cv-workspace-main:has(> .cv-builder-fullpage.cv-builder-modal--screenshot) {
+    padding-right: clamp(18px, 4vw, 48px);
+  }
+}
+
+@media (max-width: 700px) {
+  .cv-builder-scroll-hands {
+    right: max(6px, env(safe-area-inset-right));
+  }
+
+  .cv-builder-scroll-hand {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .cv-builder-modal--screenshot .cv-builder-section > summary {
   cursor: default;
 }
@@ -14383,6 +14489,227 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .cv-import-workspace .cv-import-modal__actions {
   padding-inline: 0;
   border-top: 1px solid var(--border);
+}
+
+/* JM-CV-IMPORT-UX-07 — fullpage-only premium decision navigation.
+   The card stays in normal document flow so the complete import page remains
+   screenshotable; no sticky or fixed actions. */
+.cv-import-review__decision-nav {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cv-import-review #cv-import-review-title {
+  scroll-margin-top: 20px;
+}
+
+.cv-import-review__decision-jump {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  color: var(--brand-dark);
+  font-weight: 800;
+  text-align: left;
+}
+
+.cv-import-decision-panel {
+  position: static;
+  display: grid;
+  gap: 10px;
+  margin-top: clamp(18px, 3vw, 28px);
+  padding: clamp(20px, 3.4vw, 34px);
+  border: 1px solid rgba(34, 211, 238, 0.52);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(226, 248, 252, 0.76) 100%);
+  box-shadow:
+    0 24px 56px rgba(2, 20, 38, 0.2),
+    0 2px 4px rgba(2, 20, 38, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(34, 211, 238, 0.12);
+  color: #102a3a;
+  scroll-margin-top: 20px;
+}
+
+.cv-import-decision-panel:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cv-import-decision-panel__eyebrow {
+  margin: 0;
+  color: #0f5b68;
+  font-size: var(--text-xs);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cv-import-decision-panel__count {
+  margin: 0;
+  color: #102a3a;
+  font-size: clamp(1.08rem, 2vw, 1.35rem);
+  font-weight: 850;
+  letter-spacing: -0.015em;
+}
+
+.cv-import-decision-panel__note {
+  margin: 0;
+  color: #466879;
+  font-size: var(--text-sm);
+}
+
+.cv-import-decision-panel__review-back {
+  justify-self: start;
+  min-height: 44px;
+  margin: 4px 0 6px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #0f5b68;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cv-import-decision-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(15, 91, 104, 0.16);
+}
+
+.cv-import-decision-panel__actions > button {
+  min-height: 46px;
+}
+
+.cv-import-decision-panel__primary {
+  margin-top: 0;
+  margin-left: auto;
+  padding: 11px 22px;
+  color: #03323a;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.cv-import-decision-panel__primary:hover {
+  filter: brightness(1.03) contrast(1.02);
+}
+
+.cv-import-review__decision-jump:focus-visible,
+.cv-import-decision-panel__review-back:focus-visible,
+.cv-import-decision-panel__actions > button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .cv-import-review__decision-jump,
+  .cv-import-decision-panel__review-back {
+    width: 100%;
+  }
+
+  .cv-import-decision-panel__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .cv-import-decision-panel__actions > button,
+  .cv-import-decision-panel__primary {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* JM-CV-IMPORT-UX-07B — fullpage screenshot view and header actions. */
+.cv-import-header-jump {
+  min-height: 44px;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  color: var(--brand-dark);
+  font-weight: 800;
+}
+
+.cv-import-screenshot-toggle {
+  min-height: 44px;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  font-weight: 800;
+}
+
+.cv-import-workspace--screenshot .cv-import-workspace__head-actions > :not(.cv-import-screenshot-toggle),
+.cv-import-workspace--screenshot .cv-import-modal__may,
+.cv-import-workspace--screenshot .cv-import-overview__nav,
+.cv-import-workspace--screenshot .cv-import-review__decision-nav,
+.cv-import-workspace--screenshot .cv-import-review__filters,
+.cv-import-workspace--screenshot .cv-import-review__item .cv-import-review__controls,
+.cv-import-workspace--screenshot .cv-import-review__item .cv-import-review__edit,
+.cv-import-workspace--screenshot .cv-import-decision-panel {
+  display: none;
+}
+
+/* The workspace action in the original modal is the clear secondary CTA:
+   it stays visually subordinate to the primary import action, but is easy to
+   find in the modal header. */
+.cv-import-modal .cv-import-workspace__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid rgba(34, 211, 238, 0.55);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(229, 252, 255, 0.96), rgba(194, 242, 248, 0.86));
+  color: #064c57;
+  font-weight: 850;
+  box-shadow:
+    0 2px 4px rgba(2, 20, 38, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.cv-import-modal .cv-import-workspace__open:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 14px rgba(2, 20, 38, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.cv-import-modal .cv-import-workspace__open:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cv-import-modal .modal-close {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.cv-import-modal .cv-import-modal__actions {
+  align-items: center;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.cv-import-modal .cv-import-modal__actions > button {
+  min-height: 44px;
+}
+
+.cv-import-modal .cv-import-modal__actions .letter-btn {
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .cv-import-header-jump,
+  .cv-import-screenshot-toggle {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 900px) {
@@ -14761,27 +15088,18 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 /* The shell owns the top gap. This makes the profile header structurally
    below the sticky navbar instead of relying on a card margin coincidence. */
 .layout-profile-command .dashboard-v2__header {
+  --jm-profile-globe-size: clamp(160px, 14vw, 175px);
+  --jm-profile-globe-left: clamp(18px, 2.4vw, 30px);
   position: relative;
   isolation: isolate;
   overflow: hidden;
+  min-height: 190px;
   margin-bottom: clamp(20px, 3vw, 32px);
   border: 1px solid rgba(103, 232, 249, 0.34);
   border-bottom-color: rgba(103, 232, 249, 0.62);
-  background-color: #03111f;
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(3, 17, 31, 0.99) 0%,
-      rgba(3, 17, 31, 0.96) 24%,
-      rgba(3, 17, 31, 0.76) 33%,
-      rgba(3, 17, 31, 0.26) 44%,
-      transparent 54%,
-      transparent 100%
-    ),
-    url("assets/images/jm-profile-header-cyan-waves-wide-alpha.webp");
-  background-position: center, left center;
-  background-size: auto, auto 100%;
-  background-repeat: no-repeat;
+  background:
+    radial-gradient(ellipse at 14% 38%, rgba(8, 64, 80, 0.38), transparent 54%),
+    linear-gradient(125deg, #03111f 0%, #062b3b 55%, #04121f 100%);
   box-shadow:
     0 24px 54px rgba(0, 8, 18, 0.42),
     0 0 30px rgba(34, 211, 238, 0.10),
@@ -14791,46 +15109,90 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   backdrop-filter: blur(18px) saturate(1.18);
 }
 
-.layout-profile-command .dashboard-v2__header > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* The globe is a separate, proportionally scaled header layer. No cover,
-   no 100% × 100% image stretching; waves are allowed to fade into the left
-   gradient. The source asset is pre-mirrored so the globe sits on the right. */
-.layout-profile-command .dashboard-v2__header::before {
-  content: "";
+/* Decorative layer 1: one continuous cyan wave field, behind the globe. */
+.layout-profile-command .dashboard-v2__header-waves {
   position: absolute;
-  inset: 0 auto 0 38%;
+  inset: 0;
   z-index: 0;
-  width: 22%;
+  display: block;
   pointer-events: none;
-  background-image: url("assets/images/jm-profile-header-cyan-globe-alpha.webp");
-  background-position: left center;
-  background-size: auto 100%;
+  background-image: url("assets/images/jm-profile-waves.webp");
+  background-position: center 58%;
+  background-size: cover;
   background-repeat: no-repeat;
   opacity: 1;
   filter: none;
 }
 
+/* Decorative layer 2: independent, proportional globe above the waves. */
+.layout-profile-command .dashboard-v2__header-globe {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: var(--jm-profile-globe-left);
+  width: var(--jm-profile-globe-size);
+  height: auto;
+  max-height: calc(100% - 12px);
+  object-fit: contain;
+  transform: translateY(-50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Layer 3: local text contrast only; it does not apply a global dim. */
 .layout-profile-command .dashboard-v2__header::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 2;
   pointer-events: none;
-  background:
-    linear-gradient(
+  background: linear-gradient(
+    90deg,
+    rgba(3, 17, 31, 0.32) 0%,
+    rgba(3, 17, 31, 0.24) 18%,
+    rgba(3, 17, 31, 0.08) 34%,
+    rgba(3, 17, 31, 0.02) 46%,
+    transparent 58%,
+    transparent 100%
+  );
+}
+
+/* Layer 4: profile content stays above the local contrast overlay. */
+.layout-profile-command .dashboard-v2__header-copy,
+.layout-profile-command .dashboard-v2__header-actions {
+  position: relative;
+  z-index: 3;
+}
+
+@media (max-width: 1023px) {
+  .layout-profile-command .dashboard-v2__header {
+    --jm-profile-globe-size: 150px;
+    --jm-profile-globe-left: 18px;
+  }
+}
+
+@media (max-width: 767px) {
+  .layout-profile-command .dashboard-v2__header {
+    --jm-profile-globe-size: 126px;
+    --jm-profile-globe-left: 12px;
+    min-height: 210px;
+  }
+
+  .layout-profile-command .dashboard-v2__header-waves {
+    background-position: center 56%;
+  }
+
+  .layout-profile-command .dashboard-v2__header::after {
+    background: linear-gradient(
       90deg,
-      rgba(3, 17, 31, 0.99) 0%,
-      rgba(3, 17, 31, 0.95) 23%,
-      rgba(3, 17, 31, 0.58) 31%,
-      rgba(3, 17, 31, 0.12) 39%,
-      transparent 47%,
+      rgba(3, 17, 31, 0.52) 0%,
+      rgba(3, 17, 31, 0.42) 30%,
+      rgba(3, 17, 31, 0.22) 60%,
+      rgba(3, 17, 31, 0.08) 82%,
+      transparent 96%,
       transparent 100%
-    ),
-    radial-gradient(ellipse at 78% 0%, rgba(34, 211, 238, 0.10), transparent 56%);
+    );
+  }
 }
 
 .layout-profile-command .dashboard-v2__header h1 {
@@ -14841,8 +15203,11 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     0 1px 2px rgba(0, 6, 14, 0.65);
 }
 
-.layout-profile-command .dashboard-v2__header > div:first-child > p:last-child {
+.layout-profile-command .dashboard-v2__header-copy > p:last-child {
   color: #c5edf5;
+  text-shadow:
+    0 1px 2px rgba(0, 6, 14, 0.86),
+    0 2px 14px rgba(0, 6, 14, 0.72);
 }
 
 .layout-profile-command .dashboard-v2__header .ui-badge {
@@ -15129,20 +15494,6 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     border-radius: 18px;
   }
 
-  .layout-profile-command .dashboard-v2__header {
-    background-position: center, left center;
-    background-size: auto, auto 82%;
-  }
-
-  .layout-profile-command .dashboard-v2__header::before {
-    left: 38%;
-    width: 40%;
-    background-size: auto 100%;
-    background-position: left center;
-    opacity: 0.7;
-  }
-
-
   .layout-profile-command .dashboard-v2__main > .aurora-card,
   .layout-profile-command .dashboard-v2__cv-section,
   .layout-profile-command .storage-consent,
@@ -15173,11 +15524,35 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     linear-gradient(135deg, #031424 0%, #06283b 52%, #041a2b 100%);
 }
 
+/* The legal footer is the same shared Footer component used by the main
+   website; only its color treatment is adapted to the workspace background. */
+.cv-workspace-page > .footer {
+  z-index: 1;
+  padding: 18px 16px 32px;
+  border-top: 1px solid rgba(148, 233, 255, 0.16);
+  color: rgba(216, 247, 255, 0.72);
+}
+
+.cv-workspace-page > .footer .footer-links a,
+.cv-workspace-page > .footer a {
+  color: #eafcff;
+}
+
+.cv-workspace-page > .footer .footer-links a:hover,
+.cv-workspace-page > .footer a:hover {
+  color: #67e8f9;
+}
+
+.cv-workspace-page > .footer .footer-version {
+  color: rgba(216, 247, 255, 0.62);
+}
+
 .cv-workspace-page::before {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0 auto 0 0;
   z-index: 0;
+  height: 100dvh;
   width: min(31vw, 560px);
   pointer-events: none;
   background-image:
@@ -15195,9 +15570,10 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 .cv-workspace-page::after {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0 0 0 auto;
   z-index: 0;
+  height: 100dvh;
   width: min(29vw, 520px);
   pointer-events: none;
   background-image:
