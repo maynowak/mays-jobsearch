@@ -1126,6 +1126,12 @@ export default function App() {
     }));
   };
 
+  const clearDurableCvSelection = () => {
+    setSelectedDurableCvId(null);
+    setSelectedSavedSearchId(null);
+    setActiveAtsEntryId(null);
+  };
+
   const handleSelectDurableCv = (cvId: string) => {
     if (!persistentSearchProfiles.active) return;
     if (selectedDurableCvId !== cvId) {
@@ -1138,11 +1144,7 @@ export default function App() {
 
   const handleCvStorageModeChange = (mode: "session" | "persistent") => {
     setCvStorageMode(mode);
-    if (mode === "session") {
-      setSelectedDurableCvId(null);
-      setSelectedSavedSearchId(null);
-      setActiveAtsEntryId(null);
-    }
+    if (mode === "session") clearDurableCvSelection();
   };
 
   const handleRemoveCvDocument = (id: string) => {
@@ -2831,6 +2833,18 @@ export default function App() {
   const listSourceLists = isDurableProfileContext
     ? durableListSourceLists ?? EMPTY_CV_PROFILE_LISTS
     : mergeCvProfileLists(sessionListSourceLists, hydratedListSourceLists);
+  const hasSessionProfileContext =
+    cvState.step === "document-selected" && Boolean(listSourceDoc?.hash);
+  const readyDurableCvs = persistentCvStorage.documents.filter(
+    (document) => document.processingStatus === "ready"
+  );
+  const showDurableSearchPicker =
+    isAuth &&
+    identityVerified &&
+    persistentCvStorage.enabled &&
+    persistentSearchProfiles.active &&
+    persistentCvStorage.consent?.consent?.status === "GRANTED" &&
+    (isDurableProfileContext || !hasSessionProfileContext);
   const visibleAtsProfiles = selectedSavedSearchId
     ? listSourceLists.atsProfiles.filter(
         (entry) => entry.searchProfileId === selectedSavedSearchId
@@ -2881,11 +2895,66 @@ export default function App() {
           CV-Upload-Bereich (Suchmaske): Suchprofil + ATS-Profil waehlen,
           jeweils per kleinem Button direkt zum vorbefuellten Bearbeitungs-
           Step springen; darunter der Job-Search-Startbutton. */}
-      {(isDurableProfileContext ||
+      {(showDurableSearchPicker ||
+        isDurableProfileContext ||
         (cvState.step === "document-selected" &&
           listSourceDoc?.hash &&
           (listSourceLists.searchProfiles.length > 0 || listSourceLists.atsProfiles.length > 0))) && (
           <div className="cv-saved-profiles" role="region" aria-label={t("cv.profilesRegionAria")}>
+            {showDurableSearchPicker && (
+              <>
+                <div className="field cv-saved-profiles__field">
+                  <label htmlFor="cv-saved-durable-cv">{t("cvStorage.selectDurableCv")}</label>
+                  <select
+                    id="cv-saved-durable-cv"
+                    value={selectedDurableCvId ?? ""}
+                    disabled={
+                      cvState.isProcessing ||
+                      persistentCvStorage.loading ||
+                      readyDurableCvs.length === 0
+                    }
+                    onChange={(event) => {
+                      const cvId = event.target.value;
+                      if (!cvId) {
+                        clearDurableCvSelection();
+                        return;
+                      }
+                      handleSelectDurableCv(cvId);
+                    }}
+                  >
+                    <option value="">{t("cvStorage.selectDurableCvPlaceholder")}</option>
+                    {readyDurableCvs.map((document) => (
+                      <option key={document.cvId} value={document.cvId}>
+                        {document.filename} · {document.cvId.slice(-8)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {persistentCvStorage.loading && (
+                  <p className="field-hint" role="status">{t("cvStorage.loading")}</p>
+                )}
+                {persistentCvStorage.error && (
+                  <div role="alert">
+                    <p className="field-error">{persistentCvStorage.error}</p>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={() => { void persistentCvStorage.refresh(); }}
+                    >
+                      {t("cvStorage.retry")}
+                    </button>
+                  </div>
+                )}
+                {!persistentCvStorage.loading &&
+                  !persistentCvStorage.error &&
+                  readyDurableCvs.length === 0 && (
+                    <p className="field-hint">{t("cvStorage.empty")}</p>
+                  )}
+                {!selectedDurableCvId && readyDurableCvs.length > 0 && (
+                  <p className="field-hint">{t("cvStorage.selectDurableHint")}</p>
+                )}
+              </>
+            )}
             {isDurableProfileContext && (
               <p className="field-hint">
                 {t("cvStorage.selectedProfilesTitle", {
