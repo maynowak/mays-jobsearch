@@ -14352,6 +14352,112 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   min-height: 44px;
 }
 
+/* JM-CV-BUILDER-UX-08 — fullpage width and floating scroll hands. */
+.cv-builder-wide-toggle {
+  min-height: 44px;
+}
+
+.cv-builder-wide-toggle[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--brand-dark);
+}
+
+.cv-workspace-main:has(> .cv-builder-fullpage--wide) {
+  width: 100%;
+  max-width: none;
+  padding-right: calc(clamp(18px, 4vw, 48px) + 58px);
+}
+
+.cv-workspace-main:has(> .cv-builder-fullpage.cv-builder-modal--screenshot) {
+  padding-right: clamp(18px, 4vw, 48px);
+}
+
+.cv-builder-scroll-hands {
+  position: fixed;
+  top: 50%;
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 60;
+  display: grid;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid rgba(34, 211, 238, 0.42);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(5, 30, 46, 0.94), rgba(3, 17, 31, 0.88));
+  box-shadow:
+    0 12px 28px rgba(0, 8, 18, 0.42),
+    0 0 18px rgba(34, 211, 238, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transform: translateY(-50%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.cv-builder-scroll-hand {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid rgba(103, 232, 249, 0.3);
+  border-radius: 11px;
+  background:
+    radial-gradient(circle at 30% 18%, rgba(103, 232, 249, 0.2), transparent 52%),
+    rgba(8, 47, 73, 0.8);
+  color: #e8fdff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow:
+    0 2px 4px rgba(0, 8, 18, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.cv-builder-scroll-hand:hover {
+  border-color: rgba(103, 232, 249, 0.72);
+  background: rgba(8, 71, 98, 0.92);
+  transform: translateY(-1px);
+}
+
+.cv-builder-scroll-hand:focus-visible,
+.cv-builder-wide-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cv-builder-modal--screenshot .cv-builder-scroll-hands,
+.cv-builder-modal--screenshot .cv-builder-wide-toggle {
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .cv-workspace-main:has(> .cv-builder-fullpage) {
+    padding-right: calc(clamp(18px, 4vw, 48px) + 58px);
+  }
+
+  .cv-workspace-main:has(> .cv-builder-fullpage.cv-builder-modal--screenshot) {
+    padding-right: clamp(18px, 4vw, 48px);
+  }
+}
+
+@media (max-width: 700px) {
+  .cv-builder-scroll-hands {
+    right: max(6px, env(safe-area-inset-right));
+  }
+
+  .cv-builder-scroll-hand {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .cv-builder-modal--screenshot .cv-builder-section > summary {
   cursor: default;
 }

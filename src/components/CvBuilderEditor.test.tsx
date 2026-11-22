@@ -15,6 +15,7 @@ function Harness({
   saving = false,
   saveError = "",
   importReview = null,
+  fullpage = false,
 }: {
   initial?: CvBuilderDraftV1;
   onClose?: () => void;
@@ -24,6 +25,7 @@ function Harness({
   saving?: boolean;
   saveError?: string;
   importReview?: CvBuilderImportReviewSummary | null;
+  fullpage?: boolean;
 }) {
   const [draft, setDraft] = useState(initial);
   return (
@@ -38,6 +40,7 @@ function Harness({
         saving={saving}
         saveError={saveError}
         importReview={importReview}
+        layoutMode={fullpage ? "fullpage" : "modal"}
       />
     </LangProvider>
   );
@@ -335,5 +338,28 @@ describe("CV-BUILDER-REAL-WORLD-QA-02E import quality", () => {
     expect(screen.getByText("Keine Feldfehler")).toBeInTheDocument();
     expect(screen.getByText("Importprüfung:")).toBeInTheDocument();
     expect(screen.getByText(/2 ungeprüft · 1 manuell übernommen · 1 bewusst ausgeschlossen/)).toBeInTheDocument();
+  });
+});
+
+describe("JM-CV-BUILDER-UX-08 wide workspace and scroll hands", () => {
+  it("toggles width and hides editing controls in screenshot view", () => {
+    const { container } = render(<Harness fullpage />);
+    const root = container.querySelector(".cv-builder-fullpage");
+    expect(root).not.toHaveClass("cv-builder-fullpage--wide");
+    expect(screen.getByRole("group", { name: "Scrollsteuerung des CV-Editors" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "☝️ Nach oben" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "👇 Turbo nach unten" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "⛶ Breite maximieren" }));
+    expect(root).toHaveClass("cv-builder-fullpage--wide");
+    expect(screen.getByRole("button", { name: "↔ Normalbreite" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "↔ Normalbreite" }));
+    expect(root).not.toHaveClass("cv-builder-fullpage--wide");
+
+    fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
+    expect(screen.queryByRole("group", { name: "Scrollsteuerung des CV-Editors" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "⛶ Breite maximieren" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
+    expect(screen.getByRole("group", { name: "Scrollsteuerung des CV-Editors" })).toBeInTheDocument();
   });
 });
