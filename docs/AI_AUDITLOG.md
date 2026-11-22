@@ -1,3 +1,37 @@
+2026-11-22 · JM-CV-SEARCH-PROFILE-DIRECT-SELECT-03 — DIRECT LOGIN SELECTION
+- Typ: Direkte RIS-CV-Auswahl, vorhandene CV-/ATS-Dropdowns, Login-Hydration, Browser-E2E
+- Status: **READY FOR CONTROLLED MERGE — DIRECT LOGIN SELECTION VERIFIED**
+- Branch/PR: `feature/jm-cv-search-profile-hydration-01`; PR [#56](https://github.com/maynowak/mays-jobsearch/pull/56); Implementierung `ac0779c`; Basis `origin/main` `8f26a69`.
+- Umsetzung: `PersistentCvList` erhält direkte Auswahl („Profile auswählen“) für bereite RIS-CVs; `selectedDurableCvId` bildet den aktiven cvId-Kontext ohne Session-Hash. Dashboard und bestehende Saved-Profile-Box nutzen `cvProfileHydration.byCvId[cvId]`; ATS ausschließlich über `cvId → searchProfileId → atsSearchProfileId`. Kein Upload, Parsing, AI-Call oder RIS-Write bei Auswahl; bestehende Such-/Dropdownlogik wird wiederverwendet.
+- Sicherheit: Auswahl nur bei aktiver Suchprofil-Einwilligung; Identitätswechsel, Consent-Entzug und Session-Modus löschen den durable Kontext; Parent-/CV-Wechsel setzen ungültige ATS-Kinder zurück; Ladezustand/Fehler/Retry und mobile Darstellung geprüft.
+- Browser-E2E `cv-search-profile-direct-select-03`: PASS 1440/390; genau **1** Suchaufruf, **0** `/api/profile`, **0** CV-Downloads/Parser, **0** RIS-Writes; Reload, Consent denied, Load-Error/Retry, Identitätsisolation, Parent-/CV-Wechsel.
+- Lokal: fokussiert **156 PASS**; serielle Vollsuite **2029 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; bestehende Hydration- und Release-Gate-E2E weiter PASS.
+- GitHub: PR `MERGEABLE`/`CLEAN`; CodeQL PASS; Vercel matcher/jobsearch, Deployments und Preview Comments PASS. Kein separates `ci.yml`; noch kein Main-Merge/Production-Deployment.
+- Privacy/AI: synthetische Daten, nur konsentierte GET-Listen; keine echten Daten, keine RIS/AWS/Terraform/Cognito/Consent-/Storage-Änderung.
+- Bericht: `docs/reports/JM-CV-SEARCH-PROFILE-DIRECT-SELECT-03.md`.
+
+2026-11-22 · JM-CV-SEARCH-PROFILE-HYDRATION-RELEASE-GATE-02 — FINAL QA & PR GATES
+- Typ: Release-Gate, Browser-E2E, Reload/Consent/Identitätsisolation, PR-Prüfung
+- Status: **READY FOR CONTROLLED MERGE**
+- Branch/PR: `feature/jm-cv-search-profile-hydration-01`; PR [#56](https://github.com/maynowak/mays-jobsearch/pull/56); verifizierter Implementierungs-Head `0649c5f`; Basis `origin/main` `8f26a69`.
+- Bestehende Implementierung unverändert übernommen; Release-Gate-Commit ergänzt nur Browser-E2E, npm-Skripte und diesen Report. Keine neue Produktlogik.
+- E2E `cv-search-profile-hydration-01`: Login-Hydration, gespeicherter RIS-CV im bestehenden Workflow, danach CV-/ATS-Dropdown-Nutzung ohne weitere CV-Verarbeitung (`/api/profile` bleibt 1), ATS-Parent-Zuordnung, 0 RIS-Writes, 0 unerwartete Calls, 0 Overflow.
+- E2E `cv-search-profile-hydration-release-gate-02`: Reload-Hydration PASS; ohne Suchprofil-Consent 0 CV-/ATS-Listenaufrufe; Identitätswechsel A→B nutzt den neuen Token und neue Profile; keine RIS-Writes.
+- Lokal: fokussiert **147 PASS**; serielle Vollsuite **2026 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS.
+- GitHub: PR mergebar `CLEAN`; CodeQL PASS; Vercel matcher/jobsearch, Deployments und Preview Comments PASS. Kein separates `ci.yml` im Repo; keine Main-Merge-/Production-Aktion.
+- Privacy/AI: nur konsentierte GET-Listen; kein KI-/Such-/Profilaufruf beim Login; keine echten Daten; keine RIS/AWS/Terraform/Cognito/Consent-/Storage-Änderung.
+- Bericht: `docs/reports/JM-CV-SEARCH-PROFILE-HYDRATION-RELEASE-GATE-02.md`.
+
+2026-11-22 · JM-CV-SEARCH-PROFILE-HYDRATION-01 — DURABLE PROFILES IN EXISTING DROPDOWNS
+- Typ: CV-Suchprofil-/ATS-Hydration nach Login, bestehende RIS-Listen und Dropdowns, read-only Merge
+- Status: **IMPLEMENTED / VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-search-profile-hydration-01`; Implementierung `3b58518`; Basis `origin/main` `8f26a69`; kein Main-Merge, kein Deployment.
+- Umsetzung: `useCvProfileHydration` lädt bei bestehender `search-profile-storage`-Einwilligung die vorhandenen RIS-CV- und ATS-Listen für bereite dauerhafte CVs sowie den aktiven `risCvId`. Mapping/Merge in die bestehenden Dropdown-Einträge; Session-Store bleibt unverändert, dauerhafte Einträge sind read-only markiert. Keine neue Profilverwaltung, keine Erstellung, keine Suche und kein KI-Call beim Login.
+- Integration: `App` und `DashboardV2CvSection` erhalten kombinierte Listen; Suche nutzt weiterhin `buildCvSearchProfile`. Dauerhafte Einträge werden im bestehenden `PersistentCvProfilesOverlay` verwaltet; Session-Edit ist für sie ausgeblendet. Ein ATS-Kind eines dauerhaften Parents wird über den bestehenden RIS-Pfad gespeichert. Overlay-Änderungen lösen die Hydration-Refresh-Kennung aus.
+- Tests: neue fokussierte Tests **14 PASS**; fokussierte App/Profil-Suite **115 PASS**; serielle Vollsuite **2026 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS. Neuer Browser-E2E `tests/e2e/cv-search-profile-hydration-01.mjs`: Login-Hydration, kein Profil-/Such-/KI-Call vor Verarbeitung, dauerhafte Auswahl und ATS-Suche PASS; 0 RIS-Writes, 0 unerwartete Calls, 0 Overflow.
+- Privacy/AI: nur konsentierte GET-Listen; keine neue Speicherung, keine Tokens/Profile/CV-Texte im Log, keine echten Daten, keine RIS/AWS/Terraform/Cognito/Consent-/Storage-Änderung. Live-RIS-E2E bleibt separat gated.
+- Bericht: `docs/reports/JM-CV-SEARCH-PROFILE-HYDRATION-01.md`.
+
 2026-11-22 · JM-ATS-PROFILE-SAVE-FIX-02 — CONTROLLED MAIN RELEASE
 - Status: **MERGED / PRODUCTION DEPLOYED / PRODUCTION E2E NOT VERIFIED**
 - Release: PR #54 merged as `502c9fa`; branch retained, no force-push/deletion. Auditlog conflict with PR #53 resolved by retaining both entries. CodeQL/Vercel checks PASS.

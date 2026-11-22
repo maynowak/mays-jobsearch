@@ -30,6 +30,9 @@ export interface CvSearchProfileEntry {
   savedAt: number;
   profile: Profile;
   description?: string;
+  // Hydration-01: entries loaded read-only from the durable RIS account are
+  // marked explicitly. Session entries keep the field undefined.
+  origin?: "session" | "persistent";
 }
 
 export interface CvAtsProfileEntry {
@@ -40,6 +43,7 @@ export interface CvAtsProfileEntry {
   skills: string[];
   searchProfileId?: string | null;
   criteria?: ATSCriteriaV1;
+  origin?: "session" | "persistent";
 }
 
 export interface CvProfileLists {

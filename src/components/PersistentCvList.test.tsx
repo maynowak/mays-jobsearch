@@ -172,6 +172,30 @@ describe("PersistentCvList", () => {
     expect(await screen.findByText("In den bestehenden CV-Workflow übernommen.")).toBeInTheDocument();
   });
 
+  it("selects a ready durable CV directly without processing it", async () => {
+    const onSelect = vi.fn();
+    const onProcess = vi.fn(async () => undefined);
+    renderList({ onSelect, onProcess, selectedCvId: null });
+
+    fireEvent.click(screen.getByRole("button", { name: "Profile auswählen" }));
+    expect(onSelect).toHaveBeenCalledWith(cv());
+    expect(onProcess).not.toHaveBeenCalled();
+  });
+
+  it("marks the selected durable CV and disables selection without search consent", () => {
+    const onSelect = vi.fn();
+    renderList({ onSelect, selectedCvId: "cv-1" });
+    expect(screen.getByRole("button", { name: "Ausgewählt" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    cleanup();
+    renderList({ onSelect, canSelect: false });
+    expect(screen.getByRole("button", { name: "Profile auswählen" })).toBeDisabled();
+    expect(screen.getByText("Die dauerhafte Suchprofil-Speicherung ist nicht aktiv.")).toBeInTheDocument();
+  });
+
   it("shows a retry action when loading the durable CV fails", async () => {
     const onProcess = vi.fn()
       .mockRejectedValueOnce(new Error("Download fehlgeschlagen"))

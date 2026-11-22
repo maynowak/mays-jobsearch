@@ -12699,6 +12699,11 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   background: color-mix(in srgb, var(--surface) 88%, var(--accent));
 }
 
+.cv-storage-card--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
 .cv-storage-card__head {
   padding-right: 48px;
 }

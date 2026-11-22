@@ -23,6 +23,9 @@ interface Props {
   onGrantConsent: () => Promise<boolean>;
   onWithdrawConsent: () => Promise<boolean>;
   onProcess?: (cv: PersistentCv) => Promise<void>;
+  selectedCvId?: string | null;
+  onSelect?: (cv: PersistentCv) => void;
+  canSelect?: boolean;
   onManageProfiles?: (cvId: string) => void;
   onLoadProfileCounts?: (cvId: string) => Promise<PersistentCvProfileCounts | null>;
   profileCountsRefreshToken?: number;
@@ -42,6 +45,9 @@ export default function PersistentCvList({
   onGrantConsent,
   onWithdrawConsent,
   onProcess,
+  selectedCvId = null,
+  onSelect,
+  canSelect = true,
   onManageProfiles,
   onLoadProfileCounts,
   profileCountsRefreshToken = 0,
@@ -303,7 +309,11 @@ export default function PersistentCvList({
       ) : (
         <ul className="cv-document-list__list" role="list">
           {visibleDocuments.map((cv) => (
-            <li key={cv.cvId} className="cv-storage-card" role="listitem">
+            <li
+              key={cv.cvId}
+              className={`cv-storage-card${selectedCvId === cv.cvId ? " cv-storage-card--selected" : ""}`}
+              role="listitem"
+            >
               <button
                 type="button"
                 className="cv-storage-card__hide"
@@ -373,7 +383,23 @@ export default function PersistentCvList({
                 )}
               </dl>
               <p className="cv-storage-card__note">{t("cvStorage.verificationNote")}</p>
+              {onSelect && !canSelect && (
+                <p className="field-hint">{t("searchProfiles.searchConsentRequired")}</p>
+              )}
               <div className="cv-storage-card__actions">
+                {onSelect && (
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    aria-pressed={selectedCvId === cv.cvId}
+                    disabled={busy || !canSelect || cv.processingStatus !== "ready"}
+                    onClick={() => onSelect(cv)}
+                  >
+                    {selectedCvId === cv.cvId
+                      ? t("cvStorage.selected")
+                      : t("cvStorage.select")}
+                  </button>
+                )}
                 {onProcess && (
                   <button
                     type="button"
