@@ -67,6 +67,7 @@ const en: Dict = {
   "cv.dropZone": "Drop your CV here",
   "cv.dropZoneAlt": "or choose a PDF",
   "cv.dropZoneOver": "Drop PDF here",
+  "cv.privacyDisclosureTitle": "Privacy & AI processing",
   "cv.privacyNote":
     "Private: Your PDF is read locally in your browser for this feature. The extracted text may be sent to an external AI provider to create your profile. Whether personal details are removed first depends on the anonymization option you choose; with “Not anonymized” they may be included. Complete anonymity cannot be guaranteed.",
   "cv.notPdf": "Please select a PDF file.",
@@ -1915,6 +1916,7 @@ const de: Dict = {
   "cv.dropZone": "Lebenslauf hier ablegen",
   "cv.dropZoneAlt": "oder PDF auswählen",
   "cv.dropZoneOver": "PDF hier ablegen",
+  "cv.privacyDisclosureTitle": "Datenschutz & KI-Verarbeitung",
   "cv.privacyNote":
     "Privat: Deine PDF wird für diese Funktion lokal in deinem Browser ausgelesen. Der ausgelesene Text kann zur Profilerstellung an einen externen KI-Anbieter übermittelt werden. Ob personenbezogene Angaben vorher entfernt werden, hängt von deiner gewählten Anonymisierungsoption ab; bei „Nicht anonymisiert“ können sie enthalten sein. Eine vollständige Anonymität kann nicht garantiert werden.",
   "cv.notPdf": "Bitte wähle eine PDF-Datei aus.",
