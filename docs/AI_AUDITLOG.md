@@ -1,3 +1,14 @@
+2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
+- Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
+- Status: **READY FOR CONTROLLED MERGE — SEARCH LOGIN AUTOHYDRATION VERIFIED**
+- Branch/Commit: `feature/jm-cv-search-login-autohydration-04`; Implementierung `9638ed8`; Basis `origin/main` `795b38d`; kein Main-Merge, kein Deployment.
+- Umsetzung: Die bestehende Saved-Profile-Region auf `/search` zeigt nach Login und Consent direkt einen Selektor für bereite RIS-CVs. Auswahl setzt den vorhandenen `selectedDurableCvId`-Kontext; CV-Suchprofile und ATS-Kinder kommen unverändert aus `cvProfileHydration.byCvId[cvId]`. Mehrere CVs sind über einen kurzen cvId-Suffix unterscheidbar. Keine neue Hydration, kein zweiter Profilmanager, keine neue Speicherstruktur.
+- Zustände: Loading, leer, CV-Storage-Fehler/Retry und Hydration-Fehler/Retry; Session-CV-/Hash-Kontext bleibt unverändert und hat weiterhin Vorrang. CV-/Parent-Wechsel setzen ungültige ATS-Auswahlen zurück.
+- Browser-E2E `cv-search-login-autohydration-04`: frische Sitzung, synthetischer Login, direkter `/search`-Aufruf ohne `/profil`; zwei CVs, CV-/ATS-Auswahl, gespeicherte Parameter, genau **1** Suchaufruf, **0** `/api/profile`, **0** CV-Downloads/Parser, **0** RIS-Writes; Reload, Consent denied, Fehler/Retry, Identitätswechsel, 1440/390 ohne Overflow.
+- Lokal: fokussiert **139 PASS**; serielle Vollsuite **2029 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; bestehende Hydration-/Release-Gate-/Direct-Select-E2E PASS.
+- Privacy/AI: synthetische OIDC-/RIS-Daten, nur konsentierte GET-Listen; keine echten Daten, keine RIS/AWS/Terraform/Cognito/Consent-/Storage-Änderung.
+- Bericht: `docs/reports/JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04.md`.
+
 2026-11-22 · JM-CV-SEARCH-PROFILE-DIRECT-SELECT-03 — DIRECT LOGIN SELECTION
 - Typ: Direkte RIS-CV-Auswahl, vorhandene CV-/ATS-Dropdowns, Login-Hydration, Browser-E2E
 - Status: **READY FOR CONTROLLED MERGE — DIRECT LOGIN SELECTION VERIFIED**
