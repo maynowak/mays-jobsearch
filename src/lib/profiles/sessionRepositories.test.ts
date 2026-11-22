@@ -40,6 +40,76 @@ describe('JM-PROFILE-SESSION-ADAPTER-03: session repositories', () => {
     expect(await repositories.atsSearchProfiles.get('cv-hash-a', search.sessionId, ats.sessionId)).toBeNull();
   });
 
+  it('normalizes duplicate and whitespace ATS skills and target roles on session create', async () => {
+    const repositories = createSessionProfileRepositories();
+    const search = await repositories.cvSearchProfiles.create('cv-normalize', { name: 'Cloud', searchConfig });
+
+    const ats = await repositories.atsSearchProfiles.create('cv-normalize', search.sessionId, {
+      name: '  ATS Cloud  ',
+      targetRoles: [' DevOps Engineer ', 'DevOps Engineer'],
+      skills: [' AWS ', 'AWS', 'Cloud Architecture', ' cloud architecture '],
+    });
+
+    expect(ats.name).toBe('ATS Cloud');
+    expect(ats.targetRoles).toEqual(['DevOps Engineer']);
+    expect(ats.skills).toEqual(['AWS', 'Cloud Architecture', 'cloud architecture']);
+
+    const reloaded = await repositories.atsSearchProfiles.get('cv-normalize', search.sessionId, ats.sessionId);
+    expect(reloaded).toMatchObject({
+      name: 'ATS Cloud',
+      targetRoles: ['DevOps Engineer'],
+      skills: ['AWS', 'Cloud Architecture', 'cloud architecture'],
+    });
+  });
+
+  it('normalizes duplicate skills and target roles on session update', async () => {
+    const repositories = createSessionProfileRepositories();
+    const search = await repositories.cvSearchProfiles.create('cv-normalize-update', { name: 'Cloud', searchConfig });
+    const ats = await repositories.atsSearchProfiles.create('cv-normalize-update', search.sessionId, {
+      name: 'ATS',
+      targetRoles: ['Cloud Engineer'],
+      skills: ['AWS'],
+    });
+
+    const updated = await repositories.atsSearchProfiles.update('cv-normalize-update', search.sessionId, ats.sessionId, {
+      name: '  ATS Updated  ',
+      targetRoles: [' Cloud Engineer ', 'Cloud Engineer'],
+      skills: [' Terraform ', 'Terraform', 'AWS'],
+    });
+
+    expect(updated.name).toBe('ATS Updated');
+    expect(updated.targetRoles).toEqual(['Cloud Engineer']);
+    expect(updated.skills).toEqual(['Terraform', 'AWS']);
+  });
+
+  it('rejects an ATS create with a missing session parent and with a full parent', async () => {
+    const repositories = createSessionProfileRepositories();
+    const search = await repositories.cvSearchProfiles.create('cv-parent-check', { name: 'Parent', searchConfig });
+
+    await expect(
+      repositories.atsSearchProfiles.create('cv-parent-check', 'missing-parent', {
+        name: 'Invalid',
+        targetRoles: ['Cloud Engineer'],
+        skills: ['AWS'],
+      })
+    ).rejects.toMatchObject({ code: 'invalid_parent' });
+
+    for (let index = 0; index < 5; index += 1) {
+      await repositories.atsSearchProfiles.create('cv-parent-check', search.sessionId, {
+        name: `ATS ${index}`,
+        targetRoles: ['Cloud Engineer'],
+        skills: ['AWS'],
+      });
+    }
+    await expect(
+      repositories.atsSearchProfiles.create('cv-parent-check', search.sessionId, {
+        name: 'ATS 6',
+        targetRoles: ['Cloud Engineer'],
+        skills: ['AWS'],
+      })
+    ).rejects.toMatchObject({ code: 'capacity_exceeded' });
+  });
+
   it('creates, updates and deletes manual profiles without a CV reference', async () => {
     const repositories = createSessionProfileRepositories({ manualRepository: createManualSearchProfileRepository() });
     const created = await repositories.manualSearchProfiles.create({

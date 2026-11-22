@@ -23,7 +23,13 @@ import type {
   CreateManualSearchProfileInputV1,
   UpdateManualSearchProfileInputV1,
 } from './contractTypes';
-import { validateATSCriteria, validateCreateATSProfile, validateCreateCVSearchProfile, validateCreateManualSearchProfile, validateSearchConfiguration, ProfileValidationError } from './profileValidation';
+import {
+  normalizeCreateATSProfileInput,
+  validateCreateCVSearchProfile,
+  validateCreateManualSearchProfile,
+  validateSearchConfiguration,
+  ProfileValidationError,
+} from './profileValidation';
 import type {
   SessionAtsSearchProfile,
   SessionCvSearchProfile,
@@ -199,10 +205,16 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
       },
       async create(cvHash, searchProfileId, input) {
         assertSessionCurrent(generation);
-        if (!readCvProfileLists(cvHash).searchProfiles.some((entry) => entry.id === searchProfileId)) return missing('ATS parent search profile was not found');
-        validateCreateATSProfile(input);
+        const lists = readCvProfileLists(cvHash);
+        if (!lists.searchProfiles.some((entry) => entry.id === searchProfileId)) return missing('ATS parent search profile was not found');
+        const normalized = normalizeCreateATSProfileInput(input);
+        const existing = lists.atsProfiles.find((entry) => entry.name === normalized.name);
+        const assignedCount = lists.atsProfiles.filter((entry) => entry.searchProfileId === searchProfileId).length;
+        if (!existing && assignedCount >= 5) {
+          throw new ProfileValidationError('Target search profile already has five ATS profiles', 'capacity_exceeded');
+        }
         assertSessionCurrent(generation);
-        const entry = saveCvAtsProfile(cvHash, input.name, input.skills, input.targetRoles, searchProfileId, input.criteria);
+        const entry = saveCvAtsProfile(cvHash, normalized.name, normalized.skills, normalized.targetRoles, searchProfileId, normalized.criteria);
         if (!entry) throw new ProfileValidationError('ATS profile could not be created in the session context', 'validation_error');
         return atsEntry(cvHash, searchProfileId, entry.id);
       },
@@ -211,10 +223,9 @@ export function createSessionProfileRepositories(options: SessionRepositoryOptio
         const current = await this.get(cvHash, searchProfileId, sessionId);
         if (!current) throw new ProfileValidationError('ATS search profile was not found', 'invalid_parent');
         const merged = { name: input.name ?? current.name, skills: input.skills ?? current.skills, targetRoles: input.targetRoles ?? current.targetRoles, ...(input.criteria ? { criteria: input.criteria } : current.criteria ? { criteria: current.criteria } : {}) };
-        validateCreateATSProfile(merged);
-        if (input.criteria) validateATSCriteria(input.criteria);
+        const normalized = normalizeCreateATSProfileInput(merged);
         assertSessionCurrent(generation);
-        const entry = updateCvAtsProfile(cvHash, sessionId, merged.name, merged.skills, merged.targetRoles, searchProfileId, merged.criteria);
+        const entry = updateCvAtsProfile(cvHash, sessionId, normalized.name, normalized.skills, normalized.targetRoles, searchProfileId, normalized.criteria);
         if (!entry) throw new ProfileValidationError('ATS search profile could not be updated', 'invalid_parent');
         return atsEntry(cvHash, searchProfileId, entry.id);
       },

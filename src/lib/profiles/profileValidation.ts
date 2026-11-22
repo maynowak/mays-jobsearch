@@ -48,7 +48,10 @@ export const validatePhraseList = (value: unknown, field: string): string[] => {
   }
   const values = [...value] as string[];
   if (values.some((item) => item.length > 200)) throw new ProfileValidationError(`Phrase is too long: ${field}`);
-  if (new Set(values.map((item) => item.toLowerCase())).size !== values.length) {
+  // Exact duplicates are rejected; casing variants are intentionally kept.
+  // The ATS normalizer removes exact duplicates after trimming, while RIS/BFF
+  // also preserves different spellings.
+  if (new Set(values).size !== values.length) {
     throw new ProfileValidationError(`Duplicate phrase: ${field}`);
   }
   return values;

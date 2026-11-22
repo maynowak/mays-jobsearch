@@ -80,7 +80,8 @@ import { CvStorageApiError, downloadCvFile, isRisCvStorageEnabled, type Persiste
 import { persistentCvProcessBlocker } from "./lib/cvProcessingHandoff";
 import { cvStorageErrorMessage, usePersistentCvStorage } from "./lib/usePersistentCvStorage";
 import { useCvBuilderPdfRisStorage } from "./lib/useCvBuilderPdfRisStorage";
-import { isRisSearchProfileStorageEnabled, SearchProfilesApiError } from "./lib/searchProfilesApi";
+import { isRisSearchProfileStorageEnabled } from "./lib/searchProfilesApi";
+import { atsProfileSaveMessageKey } from "./lib/profiles/atsProfileSaveError";
 import { usePersistentSearchProfiles } from "./lib/usePersistentSearchProfiles";
 import {
   checkRisRemoteApplicationAccess,
@@ -1996,17 +1997,8 @@ export default function App() {
     setCvState((prev) => ({ ...prev, selectedSkills: skills }));
   };
 
-  const atsProfileSaveMessage = (error: unknown): string => {
-    if (error instanceof SearchProfilesApiError) {
-      if (error.code === "capacity_exceeded" || error.status === 409) {
-        return t("cv.unassignedCapacity");
-      }
-      if (error.status === 403) return t("searchProfiles.searchConsentRequired");
-      if (error.status === 404) return t("cv.atsNoDurableParent");
-      if (error.status === 422) return t("cv.atsProfileValidation");
-    }
-    return t("cv.errorAtsProfileSave");
-  };
+  const atsProfileSaveMessage = (error: unknown): string =>
+    t(atsProfileSaveMessageKey(error));
 
   const handleSkillSelectionConfirm = async () => {
     if (cvState.selectedSkills.length === 0) {
@@ -2025,8 +2017,12 @@ export default function App() {
       const doc = cvState.documents.find((d) => d.id === cvState.selectedDocumentIds[0]);
       if (profileStorageChoice === "persistent") {
         if (durableSearchProfilesLoading) return;
-        if (!doc?.risCvId || !persistentSearchProfiles.active) {
+        if (!doc?.risCvId) {
           setStatus({ type: "error", message: t("profileStorage.errorPersistent") });
+          return;
+        }
+        if (!persistentSearchProfiles.active) {
+          setStatus({ type: "error", message: t("searchProfiles.searchConsentRequired") });
           return;
         }
         const parentIds = durableSearchProfiles.map((profile) => profile.searchProfileId);
