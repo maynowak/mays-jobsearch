@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ProfileValidationError, validateATSCriteria, validateCreateManualSearchProfile, validateSearchConfiguration } from './profileValidation';
+import { ProfileValidationError, normalizeCreateATSProfileInput, normalizeUpdateATSProfileInput, validateATSCriteria, validateCreateManualSearchProfile, validateSearchConfiguration } from './profileValidation';
 
 const searchConfig = {
   skills: 'AWS, "Cloud Architecture"',
@@ -33,6 +33,28 @@ describe('JM-PROFILE-CONTRACT-02: runtime validation', () => {
       searchConfig: { ...searchConfig, skills: '', targetRoles: [] },
       matchingPreferences: { requiredSkills: [], preferredSkills: [], excludedTerms: [] },
     })).toThrowError(/searchable/i);
+  });
+
+  it('normalizes ATS names, target roles and exact duplicate skills without merging casing', () => {
+    expect(normalizeCreateATSProfileInput({
+      name: '  ATS Cloud  ',
+      targetRoles: [' DevOps ', 'DevOps'],
+      skills: [' AWS ', 'AWS', 'Cloud Architecture', 'cloud architecture'],
+    })).toEqual({
+      name: 'ATS Cloud',
+      targetRoles: ['DevOps'],
+      skills: ['AWS', 'Cloud Architecture', 'cloud architecture'],
+    });
+
+    expect(normalizeUpdateATSProfileInput({
+      name: '  ATS Updated  ',
+      targetRoles: [' Cloud ', 'Cloud'],
+      skills: [' Terraform ', 'Terraform'],
+    })).toEqual({
+      name: 'ATS Updated',
+      targetRoles: ['Cloud'],
+      skills: ['Terraform'],
+    });
   });
 
   it('rejects ATS scores and model output in criteria', () => {

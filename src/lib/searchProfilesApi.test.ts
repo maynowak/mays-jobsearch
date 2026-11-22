@@ -3,6 +3,7 @@ import {
   createAtsProfile,
   createCvSearchProfile,
   createManualSearchProfile,
+  updateAtsProfile,
   fetchSearchProfileConsent,
   listManualSearchProfiles,
   SearchProfilesApiError,
@@ -61,6 +62,23 @@ describe("search-profiles BFF client", () => {
       name: "ATS",
       targetRoles: ["DevOps"],
       skills: ["Terraform"],
+    });
+  });
+
+  it("normalizes duplicate ATS payloads on update without merging casing", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, { atsSearchProfileId: "ats-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    await updateAtsProfile("token", "sp-1", "ats-1", {
+      name: "  ATS Cloud  ",
+      targetRoles: [" DevOps ", "DevOps"],
+      skills: [" Terraform ", "Terraform", "cloud architecture", "Cloud architecture"],
+    });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toContain("/api/ris/search-profiles?type=ats&id=ats-1&searchProfileId=sp-1");
+    expect(JSON.parse(String(init.body))).toEqual({
+      name: "ATS Cloud",
+      targetRoles: ["DevOps"],
+      skills: ["Terraform", "cloud architecture", "Cloud architecture"],
     });
   });
 

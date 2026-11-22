@@ -1,8 +1,19 @@
+2026-11-22 · JM-ATS-PROFILE-SAVE-FIX-02 — ATS SAVE REGRESSION HOTFIX
+- Typ: ATS-Profil-Speicherung, Session-Normalisierung, Fehler-Mapping, Regressionstests
+- Status: **FIXED / VERIFIED LOCAL**
+- Branch/Commit: `fix/jm-ats-profile-save-02`; Implementierung `40ff657`; Basis `origin/main` `c1cb1f8`; kein Main-Merge, kein Deployment.
+- Ursache: Session-`create`/`update` validierten die rohen, mehrfach ausgewählten Skills; `validateCreateATSProfile` lehnte Duplikate ab. RIS war bereits normalisiert. Fix: gemeinsame ATS-Normalisierung vor der Session-Validierung (Name trimmen, exakte Duplikate entfernen, Reihenfolge und Schreibweisen erhalten); Session-Capacity meldet `capacity_exceeded`.
+- Fehler: `ProfileValidationError`/`SearchProfilesApiError` werden auf konkrete Meldungen für Validierung, Parent, Kapazität, Consent und generische RIS-/Netzwerkfehler abgebildet; keine Profildaten/Tokens geloggt.
+- Tests: fokussierte Session/Validation/Error/API-Tests **29 PASS**; RIS-API **11 PASS**; serielle Vollsuite **2018 PASS / 11 skipped**; Build/Diff PASS. Neue Tests prüfen Create und Update, Reload, exakte Duplikate, Schreibweisen, Parent, Kapazität und getrennte Session-/RIS-Fehlerpfade.
+- Keine Änderung an CV-/Search-Profil-Zuordnung, UX-08A, Login-Hydration, RIS/AWS/Cognito/Consent/Storage oder Production; keine echten Schreibvorgänge.
+- Bericht: `docs/reports/JM-ATS-PROFILE-SAVE-FIX-02.md`.
+
 2026-11-22 · JM-CV-BUILDER-UX-08A — MAIN RELEASE & SUBAGENT DOC SYNC
 - Status: **MERGED TO MAIN / PRODUCTION DEPLOYED**
 - Release: PR #52 merged as `c1cb1f8`; branch retained. Automatic Vercel Production `www.mays-job-matcher.app` `dpl_9jx8YiyG8hoT2TpPCraHErj5jqEb` and `mays-jobsearch.vercel.app` `dpl_3JyYit1CjYkwfRwfZULgmHXyu68f` READY at `c1cb1f8`; workspace footer and legal links live-checked.
 - Docs sync: `.opencode/agents/*.md`, `docs/AI_AGENT_PLAYBOOK.md`, `docs/AGENTS.md`, UX-08/08A reports and this audit entry updated to reflect the released CV workspace/footer/scroll stack and current subagent/release rules. ATS hotfix remains on `fix/jm-ats-profile-save-02`, not merged.
 - No product code change in this docs release; no RIS/AWS/Cognito/Consent/Storage mutation; no manual deploy.
+
 
 2026-11-22 · JM-CV-BUILDER-UX-08A — WORKSPACE FOOTER & RELEASE PREPARATION
 - Typ: CV-Editor-UX, gemeinsamer Website-Footer, Release-Diff-Review, E2E
