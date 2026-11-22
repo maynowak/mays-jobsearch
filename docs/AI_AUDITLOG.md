@@ -1,3 +1,10 @@
+2026-11-22 · JM-ATS-PROFILE-SAVE-FIX-02 — CONTROLLED MAIN RELEASE
+- Status: **MERGED / PRODUCTION DEPLOYED / PRODUCTION E2E NOT VERIFIED**
+- Release: PR #54 merged as `502c9fa`; branch retained, no force-push/deletion. Auditlog conflict with PR #53 resolved by retaining both entries. CodeQL/Vercel checks PASS.
+- Production: matcher `dpl_HZ3UEqk6w2MobjBizWBFb4bfJozX`, jobsearch `dpl_BgMskTLD55TJAMLUsUUDL1whxur3`, both READY; `/profil` 200 on both domains, footer `502c9fa`, no console errors.
+- Verification: focused session/RIS tests 40 PASS; full serial suite **2018 PASS / 11 skipped**; Build/Diff PASS. No approved synthetic authenticated test identity was available; no Production ATS write, real applicant data or RIS mutation was performed.
+- No RIS/AWS/Terraform/Cognito/Consent/UX-08A change; next work package Hydration-01 remains separate.
+
 2026-11-22 · JM-ATS-PROFILE-SAVE-FIX-02 — ATS SAVE REGRESSION HOTFIX
 - Typ: ATS-Profil-Speicherung, Session-Normalisierung, Fehler-Mapping, Regressionstests
 - Status: **FIXED / VERIFIED LOCAL**
