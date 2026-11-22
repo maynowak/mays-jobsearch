@@ -1,3 +1,14 @@
+2026-11-22 · JM-CV-BUILDER-UX-08 — WIDE WORKSPACE & DUAL TURBO SCROLL
+- Typ: CV-Editor-UX, Fullpage-Breite, Hover-Scrollhände, Safety/Reduced-Motion, E2E
+- Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-builder-ux-08`; Implementierung `0fe1673`; Baseline `ad5d70e`; kein Main-Merge, kein Deployment.
+- Umsetzung: Fullpage-Editor erhält „⛶ Breite maximieren“ / „↔ Normalbreite“; normale Breite bleibt Default, maximiert nutzt die volle Workspace-Breite; Editor und Preview bleiben proportional. Zwei feste Dark-Glass-Scrollhände (`☝️ ↑`, `👇 ↓`) mit 44px-Zielen: Down-Hover startet nach 400 ms, beschleunigt zeitbasiert per requestAnimationFrame auf max. 6000 px/s, bremst vor `.cv-builder-footer > .cv-builder-footer__actions` und stoppt vollständig sichtbar; Up läuft gleichmäßig mit 1200 px/s zum Editor-Header. Klick/Keyboard/Touch nutzen direkte Sprünge. Mouseleave, Escape, Wheel/Manual, Blur, Screenshot-Modus, Unmount und Zielerreichung stoppen; kein Neustart bei unverändertem Hover. Reduced Motion deaktiviert die Hover-Animation.
+- Schutz: Screenshot-Ansicht blendet Hände und Maximierungsbutton aus, stoppt Animationen, behält Dokumenthöhe und Fullpage-Screenshotfähigkeit. Schmale Layouts reservieren Platz, damit Hände keine Editoren überdecken. Keine neuen Scrollcontainer, Timer oder Bibliotheken.
+- E2E `tests/e2e/cv-builder-ux-08.mjs`: normal 1120→max 1920 (Box 1024→1766)→1120, Datenverlust 0; Turbo-Start/Beschleunigung/Footer-Stopp bei 5521; Up-Header; Mouseleave/Escape/Wheel/Manual, kein Neustart, Tastatur, Reduced Motion, Screenshot-Schutz, 1920/1440/768/390 ohne Overflow/Nicht-Überlappung. Screenshots: `docs/reports/assets/JM-CV-BUILDER-UX-08/`.
+- Tests: fokussierte Editor-Tests 18 PASS; Browser-E2E PASS; serielle Vollsuite **2009 PASS / 11 skipped**; Build/Diff PASS.
+- Keine Änderung an Import UX-07/07B, PDF/ATS, CV-Datenmodell/Validierung, RIS/AWS/Cognito/Consent/Storage, Profil-Header oder Workspace-Hintergrund; keine personenbezogenen Daten, keine externen Schreiboperationen.
+- Bericht: `docs/reports/JM-CV-BUILDER-UX-08.md`.
+
 2026-11-21 · JM-CV-IMPORT-UX-07B — SCREENSHOT & NAVIGATION COMPLETION
 - Typ: CV-Import-UX, Fullpage-Screenshot-Ansicht, Header-Sprung, Modal-CTA-Polish
 - Status: **IMPLEMENTED / VISUALLY VERIFIED LOCAL**
