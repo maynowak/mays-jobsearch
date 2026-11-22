@@ -1,3 +1,13 @@
+2026-11-22 · JM-CV-SEARCH-PROFILE-HYDRATION-01 — DURABLE PROFILES IN EXISTING DROPDOWNS
+- Typ: CV-Suchprofil-/ATS-Hydration nach Login, bestehende RIS-Listen und Dropdowns, read-only Merge
+- Status: **IMPLEMENTED / VERIFIED LOCAL**
+- Branch/Commit: `feature/jm-cv-search-profile-hydration-01`; Implementierung `3b58518`; Basis `origin/main` `8f26a69`; kein Main-Merge, kein Deployment.
+- Umsetzung: `useCvProfileHydration` lädt bei bestehender `search-profile-storage`-Einwilligung die vorhandenen RIS-CV- und ATS-Listen für bereite dauerhafte CVs sowie den aktiven `risCvId`. Mapping/Merge in die bestehenden Dropdown-Einträge; Session-Store bleibt unverändert, dauerhafte Einträge sind read-only markiert. Keine neue Profilverwaltung, keine Erstellung, keine Suche und kein KI-Call beim Login.
+- Integration: `App` und `DashboardV2CvSection` erhalten kombinierte Listen; Suche nutzt weiterhin `buildCvSearchProfile`. Dauerhafte Einträge werden im bestehenden `PersistentCvProfilesOverlay` verwaltet; Session-Edit ist für sie ausgeblendet. Ein ATS-Kind eines dauerhaften Parents wird über den bestehenden RIS-Pfad gespeichert. Overlay-Änderungen lösen die Hydration-Refresh-Kennung aus.
+- Tests: neue fokussierte Tests **14 PASS**; fokussierte App/Profil-Suite **115 PASS**; serielle Vollsuite **2026 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS. Neuer Browser-E2E `tests/e2e/cv-search-profile-hydration-01.mjs`: Login-Hydration, kein Profil-/Such-/KI-Call vor Verarbeitung, dauerhafte Auswahl und ATS-Suche PASS; 0 RIS-Writes, 0 unerwartete Calls, 0 Overflow.
+- Privacy/AI: nur konsentierte GET-Listen; keine neue Speicherung, keine Tokens/Profile/CV-Texte im Log, keine echten Daten, keine RIS/AWS/Terraform/Cognito/Consent-/Storage-Änderung. Live-RIS-E2E bleibt separat gated.
+- Bericht: `docs/reports/JM-CV-SEARCH-PROFILE-HYDRATION-01.md`.
+
 2026-11-22 · JM-ATS-PROFILE-SAVE-FIX-02 — CONTROLLED MAIN RELEASE
 - Status: **MERGED / PRODUCTION DEPLOYED / PRODUCTION E2E NOT VERIFIED**
 - Release: PR #54 merged as `502c9fa`; branch retained, no force-push/deletion. Auditlog conflict with PR #53 resolved by retaining both entries. CodeQL/Vercel checks PASS.
