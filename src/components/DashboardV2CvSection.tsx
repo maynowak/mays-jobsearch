@@ -55,6 +55,13 @@ interface Props {
   persistentCvStorage?: PersistentCvStorageState | null;
   persistentSearchProfiles?: PersistentSearchProfiles | null;
   persistentProfilesVersion?: number;
+  // DIRECT-SELECT-03: durable CV context independent of a session hash.
+  selectedDurableCvId?: string | null;
+  durableProfileLists?: CvProfileLists | null;
+  durableProfilesLoading?: boolean;
+  durableProfilesError?: string | null;
+  onSelectDurableCv?: (cv: PersistentCv) => void;
+  onRetryDurableProfiles?: () => void;
   focusPersistentCvId?: string | null;
   focusPersistentProfilesEnabled?: boolean;
   onPersistentProfilesFocusHandled?: () => void;
@@ -107,6 +114,12 @@ const DashboardV2CvSection = ({
   persistentCvStorage = null,
   persistentSearchProfiles = null,
   persistentProfilesVersion = 0,
+  selectedDurableCvId = null,
+  durableProfileLists = null,
+  durableProfilesLoading = false,
+  durableProfilesError = null,
+  onSelectDurableCv,
+  onRetryDurableProfiles,
   focusPersistentCvId = null,
   focusPersistentProfilesEnabled = false,
   onPersistentProfilesFocusHandled,
@@ -144,6 +157,17 @@ const DashboardV2CvSection = ({
     ? lists.atsProfiles.filter((entry) => entry.searchProfileId === selectedSearchProfileId)
     : [];
   const selectedAtsProfile = visibleAtsProfiles.find((entry) => entry.id === selectedAtsProfileId) ?? null;
+  const durableLists = durableProfileLists ?? { searchProfiles: [], atsProfiles: [] };
+  const selectedDurableCv = persistentCvStorage?.documents.find(
+    (document) => document.cvId === selectedDurableCvId
+  ) ?? null;
+  const durableSelectedSearch =
+    durableLists.searchProfiles.find((entry) => entry.id === selectedSearchProfileId) ?? null;
+  const durableVisibleAts = selectedSearchProfileId
+    ? durableLists.atsProfiles.filter((entry) => entry.searchProfileId === selectedSearchProfileId)
+    : [];
+  const durableSelectedAts =
+    durableVisibleAts.find((entry) => entry.id === selectedAtsProfileId) ?? null;
 
   return (
     <section className="dashboard-v2__cv-section" aria-labelledby="dashboard-v2-cv-title">
@@ -337,6 +361,9 @@ const DashboardV2CvSection = ({
           onGrantConsent={persistentCvStorage.grantConsent}
           onWithdrawConsent={persistentCvStorage.withdrawConsent}
           onProcess={onProcessPersistentCv}
+          selectedCvId={selectedDurableCvId}
+          onSelect={onSelectDurableCv}
+          canSelect={Boolean(persistentSearchProfiles?.active)}
           onLoadProfileCounts={
             persistentSearchProfiles?.persistentView ? loadProfileCounts : undefined
           }
@@ -347,6 +374,107 @@ const DashboardV2CvSection = ({
               : undefined
           }
         />
+      )}
+
+      {cvStorageMode === "persistent" && selectedDurableCvId && (
+        <div className="dashboard-v2__cv-details dashboard-v2__durable-profiles">
+          <h3>
+            {t('cvStorage.selectedProfilesTitle', {
+              name: selectedDurableCv?.filename ?? 'CV',
+            })}
+          </h3>
+          {durableProfilesLoading && !durableProfileLists && (
+            <p className="field-hint" role="status">{t('searchProfiles.loading')}</p>
+          )}
+          {durableProfilesError && (
+            <div role="alert">
+              <p className="field-error">{t('cvStorage.profileCountsError')}</p>
+              {onRetryDurableProfiles && (
+                <button type="button" className="btn-ghost" onClick={onRetryDurableProfiles}>
+                  {t('cvStorage.retry')}
+                </button>
+              )}
+            </div>
+          )}
+          {durableProfileLists &&
+            durableLists.searchProfiles.length === 0 &&
+            durableLists.atsProfiles.length === 0 &&
+            !durableProfilesLoading &&
+            !durableProfilesError && (
+              <p className="field-hint">{t('cvStorage.profileCountsEmpty')}</p>
+            )}
+          {durableLists.searchProfiles.length > 0 && (
+            <>
+              <div className="dashboard-v2__cv-selectors">
+                <div className="field">
+                  <label htmlFor="dashboard-v2-durable-search-profile">
+                    {t('cv.chooseSearchProfile')}
+                  </label>
+                  <select
+                    id="dashboard-v2-durable-search-profile"
+                    key={`dashboard-durable-search-${selectedDurableCvId}`}
+                    value={durableSelectedSearch?.id ?? ''}
+                    disabled={processing}
+                    onChange={(event) => onSelectSearchProfile(event.target.value || null)}
+                  >
+                    <option value="">{t('cv.choosePlaceholder')}</option>
+                    {durableLists.searchProfiles.map((entry) => (
+                      <option key={entry.id} value={entry.id}>{entry.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="dashboard-v2-durable-ats-profile">
+                    {t('cv.chooseAtsProfile')}
+                  </label>
+                  <select
+                    id="dashboard-v2-durable-ats-profile"
+                    key={`dashboard-durable-ats-${selectedDurableCvId}-${selectedSearchProfileId ?? 'none'}`}
+                    value={durableSelectedAts?.id ?? ''}
+                    disabled={processing || durableVisibleAts.length === 0}
+                    onChange={(event) => onSelectAtsProfile(event.target.value || null)}
+                  >
+                    <option value="">
+                      {durableVisibleAts.length > 0
+                        ? t('cv.choosePlaceholder')
+                        : t('cv.noAtsProfiles')}
+                    </option>
+                    {durableVisibleAts.map((entry) => (
+                      <option key={entry.id} value={entry.id}>{entry.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {durableSelectedSearch && (
+                <div className="dashboard-v2__cv-profile-summary" aria-live="polite">
+                  <h4>{t('cv.detailTitleSearch', { name: durableSelectedSearch.name })}</h4>
+                  <p>{durableSelectedSearch.profile.skills || '—'}</p>
+                  <p>{durableSelectedSearch.profile.targetRoles.join(', ') || '—'}</p>
+                  <p>{durableSelectedSearch.profile.city || '—'}</p>
+                  <p>{durableSelectedSearch.profile.workModes.join(', ') || '—'}</p>
+                  <p>{durableSelectedSearch.profile.employmentTypes.join(', ') || '—'}</p>
+                </div>
+              )}
+              {durableSelectedAts && (
+                <div className="dashboard-v2__cv-profile-summary" aria-live="polite">
+                  <h4>{t('cv.detailTitleAts', { name: durableSelectedAts.name })}</h4>
+                  <p>{durableSelectedAts.skills.join(', ') || '—'}</p>
+                </div>
+              )}
+              <button
+                type="button"
+                className="cv-continue-btn cv-saved-profiles__start"
+                onClick={onSearch}
+                disabled={processing || searching || !selectedSearchProfileId}
+              >
+                <span className="btn-label">
+                  {searching ? t('search.searching') : t('cv.startSearch')}
+                </span>
+                {searching && <span className="spinner" />}
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       {persistentProfilesCvId && persistentSearchProfiles && (() => {

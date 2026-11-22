@@ -346,6 +346,146 @@ describe('JM-UX-NAV-HELP-01: durable CV processing handoff', () => {
   });
 });
 
+describe('JM-CV-SEARCH-PROFILE-DIRECT-SELECT-03: direct durable CV selection', () => {
+  beforeEach(() => {
+    localStorage.setItem('mj-lang', 'de');
+  });
+
+  afterEach(() => cleanup());
+
+  it('shows hydrated CV/ATS dropdowns for a selected durable CV and starts the existing search', () => {
+    const onSelectDurableCv = vi.fn();
+    const onSelectSearchProfile = vi.fn();
+    const onSelectAtsProfile = vi.fn();
+    const onSearch = vi.fn();
+    const persistentCvStorage = {
+      enabled: true,
+      loading: false,
+      consentLoading: false,
+      busy: false,
+      documents: [{
+        cvId: 'cv-1',
+        filename: 'Lebenslauf.pdf',
+        contentType: 'application/pdf',
+        processingStatus: 'ready',
+        sizeBytes: 2048,
+        createdAt: '2026-11-09T10:00:00Z',
+        updatedAt: '2026-11-09T10:00:00Z',
+        version: 1,
+      }],
+      consent: { consent: { status: 'GRANTED' } },
+      error: null,
+      notice: null,
+      refresh: vi.fn(async () => undefined),
+      upload: vi.fn(async () => true),
+      download: vi.fn(async () => undefined),
+      remove: vi.fn(async () => true),
+      grantConsent: vi.fn(async () => true),
+      withdrawConsent: vi.fn(async () => true),
+    } as unknown as import('../lib/usePersistentCvStorage').PersistentCvStorageState;
+    const persistentSearchProfiles = {
+      available: true,
+      active: true,
+      persistentView: true,
+    } as unknown as import('../lib/usePersistentSearchProfiles').PersistentSearchProfiles;
+    const durableProfileLists: CvProfileLists = {
+      searchProfiles: [
+        {
+          id: 'sp-1',
+          name: 'Dauerhaft Frontend',
+          savedAt: 1,
+          origin: 'persistent',
+          profile: {
+            skills: 'React',
+            targetRoles: ['Frontend'],
+            city: 'Berlin',
+            radiusKm: 25,
+            workModes: ['hybrid'],
+            employmentTypes: ['full_time'],
+          },
+        },
+        {
+          id: 'sp-2',
+          name: 'Dauerhaft Backend',
+          savedAt: 1,
+          origin: 'persistent',
+          profile: {
+            skills: 'Node.js',
+            targetRoles: ['Backend'],
+            city: 'Hamburg',
+            radiusKm: 50,
+            workModes: ['remote'],
+            employmentTypes: ['full_time'],
+          },
+        },
+      ],
+      atsProfiles: [
+        {
+          id: 'ats-1',
+          name: 'ATS Frontend',
+          savedAt: 1,
+          targetRoles: ['Frontend Engineer'],
+          skills: ['GraphQL'],
+          searchProfileId: 'sp-1',
+          origin: 'persistent',
+        },
+        {
+          id: 'ats-2',
+          name: 'ATS Backend',
+          savedAt: 1,
+          targetRoles: ['Backend Engineer'],
+          skills: ['Django'],
+          searchProfileId: 'sp-2',
+          origin: 'persistent',
+        },
+      ],
+    };
+
+    render(
+      <LangProvider>
+        <DashboardV2CvSection
+          documents={[]}
+          selectedDocumentId={null}
+          selectedSearchProfileId="sp-1"
+          selectedAtsProfileId={null}
+          processing={false}
+          searching={false}
+          onSelectDocument={vi.fn()}
+          onRemoveDocument={vi.fn()}
+          onAddFiles={vi.fn()}
+          onProcess={vi.fn()}
+          onSearch={onSearch}
+          onRemoveData={vi.fn()}
+          onSelectSearchProfile={onSelectSearchProfile}
+          onSelectAtsProfile={onSelectAtsProfile}
+          cvStorageEnabled
+          cvStorageMode="persistent"
+          onCvStorageModeChange={vi.fn()}
+          persistentCvStorage={persistentCvStorage}
+          persistentSearchProfiles={persistentSearchProfiles}
+          selectedDurableCvId="cv-1"
+          durableProfileLists={durableProfileLists}
+          onSelectDurableCv={onSelectDurableCv}
+        />
+      </LangProvider>
+    );
+
+    expect(screen.getByText('Gespeicherte Profile für Lebenslauf.pdf')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Dauerhaft Frontend' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Dauerhaft Backend' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'ATS Frontend' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'ATS Backend' })).toBeNull();
+    expect(screen.getByText('React')).toBeInTheDocument();
+    expect(screen.getByText('Frontend')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Jobs Finden' }));
+    expect(onSearch).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ausgewählt' }));
+    expect(onSelectDurableCv).toHaveBeenCalledWith(expect.objectContaining({ cvId: 'cv-1' }));
+  });
+});
+
 describe('JM-RIS-CV-DERIVED-PROFILE-STORAGE-01: stored CV profile reachability', () => {
   beforeEach(() => {
     localStorage.setItem('mj-lang', 'de');

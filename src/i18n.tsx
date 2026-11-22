@@ -1396,6 +1396,9 @@ const en: Dict = {
     "This account is not enabled for RIS CV storage. Contact the operator.",
   "cvStorage.unavailableReason.default":
     "The server status could not be checked. Reload the page and try again.",
+  "cvStorage.select": "Select profiles",
+  "cvStorage.selected": "Selected",
+  "cvStorage.selectedProfilesTitle": "Saved profiles for {name}",
   "cvStorage.process": "Process",
   "cvStorage.processing": "Loading PDF for the existing CV workflow…",
   "cvStorage.processSuccess": "Loaded into the existing CV workflow.",
@@ -3236,6 +3239,9 @@ const de: Dict = {
     "Dieses Konto ist für die RIS-CV-Speicherung nicht freigegeben. Bitte wende dich an den Betreiber.",
   "cvStorage.unavailableReason.default":
     "Der Serverstatus konnte nicht geprüft werden. Bitte lade die Seite neu und versuche es erneut.",
+  "cvStorage.select": "Profile auswählen",
+  "cvStorage.selected": "Ausgewählt",
+  "cvStorage.selectedProfilesTitle": "Gespeicherte Profile für {name}",
   "cvStorage.process": "Verarbeiten",
   "cvStorage.processing": "PDF wird für den bestehenden CV-Workflow geladen …",
   "cvStorage.processSuccess": "In den bestehenden CV-Workflow übernommen.",
