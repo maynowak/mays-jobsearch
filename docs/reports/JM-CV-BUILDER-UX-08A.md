@@ -1,10 +1,12 @@
 # JM-CV-BUILDER-UX-08A — Workspace Footer & Release Preparation
 
-**Status:** `READY FOR CONTROLLED MERGE`
+**Status:** `MERGED TO MAIN / PRODUCTION DEPLOYED`
 
 **Branch:** `feature/jm-cv-builder-ux-08a`
 
 **Implementation commit:** `84ac3f0`
+
+**Release:** PR #52 merged as `c1cb1f8`; automatic Vercel Production at `c1cb1f8`.
 
 **Baseline:** `feature/jm-cv-builder-ux-08` (`630fa4f`)
 
@@ -115,11 +117,15 @@ Against `origin/main`:
   backend contract files are changed;
 - no Main merge and no Production deployment.
 
-## 6. Git
+## 6. Git and Release
 
 - Branch: `feature/jm-cv-builder-ux-08a`
 - Implementation: `84ac3f0`
 - Baseline: `630fa4f`
-- No Main merge and no Production deployment.
+- PR #52 merged to `origin/main` as `c1cb1f8`; branch retained.
+- Automatic Vercel Production:
+  - `www.mays-job-matcher.app` → `dpl_9jx8YiyG8hoT2TpPCraHErj5jqEb` READY
+  - `mays-jobsearch.vercel.app` → `dpl_3JyYit1CjYkwfRwfZULgmHXyu68f` READY
+- Production footer SHA: `c1cb1f8`; `/` and `/profil` returned 200; workspace footer was live-checked at `/cv-builder/workspace`.
 
-**READY FOR CONTROLLED MERGE**
+**MERGED TO MAIN / PRODUCTION DEPLOYED**

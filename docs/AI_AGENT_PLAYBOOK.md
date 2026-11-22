@@ -243,3 +243,24 @@ git push
 - Keep serverless functions dependency-free.
 
 This file is the reusable AI engineering playbook for the repository.
+
+---
+
+## Subagent Handoff and Release Documentation (2026-11-22)
+
+The repository root `AGENTS.md` is the operational source of truth; this
+playbook defines the reusable workflow, and `.opencode/agents/*.md` defines the
+subagent roles and current context.
+
+- Commander delegates discovery, implementation, test and review work; each
+  subagent must stay inside the explicitly assigned scope.
+- Every implementation/release gate records evidence in `docs/reports/` and a
+  matching entry in `docs/AI_AUDITLOG.md`.
+- Never merge to `main` or deploy Production without explicit user approval.
+  Where main contains automatic Vercel Git deployment, merge is the deployment
+  trigger; verify the resulting Main/Build SHA.
+- Preserve existing feature branches and worktrees; never delete them for
+  cleanup without explicit approval.
+- For ATS profile saves, normalize name, exact-duplicate skills and target roles
+  in both session and RIS paths; preserve casing variants and capacity/consent
+  gates. Do not log CV/profile content or credentials.

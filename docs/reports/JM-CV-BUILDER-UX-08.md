@@ -1,10 +1,12 @@
 # JM-CV-BUILDER-UX-08 — Wide Workspace & Dual Turbo Scroll
 
-**Status:** `IMPLEMENTED / VISUALLY VERIFIED LOCAL`
+**Status:** `MERGED TO MAIN / PRODUCTION DEPLOYED`
 
 **Branch:** `feature/jm-cv-builder-ux-08`
 
 **Implementation commit:** `0fe1673`
+
+**Release:** included in PR #52, merged to `origin/main` as `c1cb1f8`; production deployment at `c1cb1f8`.
 
 **Baseline:** `feature/jm-cv-import-ux-07b` (`ad5d70e`)
 

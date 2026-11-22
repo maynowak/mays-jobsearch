@@ -2,6 +2,26 @@
 
 # My Job Matcher
 
+> **Current operational rules:** the repository root `AGENTS.md` is authoritative
+> (synced 2026-11-22). This document retains the broader product/architecture
+> overview and historical conventions.
+
+## Current State (2026-11-22)
+
+- Main release `c1cb1f8` includes the CV workspace legal footer, wide CV editor,
+  dual turbo scroll hands, fullpage import decision navigation, CV-workspace
+  background fixes and profile-header artwork.
+- Authentication uses OIDC; RIS remains an external service reached only through
+  the server-side BFF under `api/ris/`.
+- CV/ATS/search-profile flows have session and durable RIS storage paths. ATS
+  saves normalize exact duplicate/whitespace skills and target roles while
+  preserving casing variants, capacity and consent gates.
+- Run `npm test`, relevant `tests/api/*` separately, `npm run build` and
+  `git diff --check`. Release evidence belongs in `docs/reports/` and
+  `docs/AI_AUDITLOG.md`.
+- Never inspect, clone or modify RIS internals or AWS/Cognito resources; never
+  merge Main or deploy Production without explicit approval.
+
 ## Project Overview
 
 My Job Matcher is a job search assistant built as a static frontend with serverless backend functions.
