@@ -1,10 +1,12 @@
 # JM-ATS-PROFILE-SAVE-FIX-02 — ATS Save Regression Hotfix
 
-**Status:** `FIXED / VERIFIED LOCAL`
+**Status:** `MERGED / PRODUCTION DEPLOYED / PRODUCTION E2E NOT VERIFIED`
 
 **Branch:** `fix/jm-ats-profile-save-02`
 
 **Implementation commit:** `40ff657`
+
+**Release:** PR #54 merged as `502c9fa`
 
 **Baseline:** `origin/main` `c1cb1f8`
 
@@ -80,11 +82,17 @@ No production writes were performed.
 | Production build | PASS |
 | `git diff --check` | PASS |
 
-## 6. Git
+## 6. Release
 
-- Branch: `fix/jm-ats-profile-save-02`
+- Branch: `fix/jm-ats-profile-save-02` (retained)
 - Implementation: `40ff657`
-- No Main merge and no Production deployment.
+- PR #54 merged to Main as `502c9fa`
+- CodeQL and Vercel checks PASS
+- Automatic Vercel Production:
+  - `www.mays-job-matcher.app` → `dpl_HZ3UEqk6w2MobjBizWBFb4bfJozX` READY
+  - `mays-jobsearch.vercel.app` → `dpl_BgMskTLD55TJAMLUsUUDL1whxur3` READY
+- Both domains served `/profil` with HTTP 200, footer `production · main · 502c9fa`, no browser console errors.
+- No approved synthetic authenticated identity was available; no Production ATS write was performed.
 - No UX-08A, login-hydration or unrelated workspace changes.
 
-`FIXED / VERIFIED LOCAL`
+`MERGED / PRODUCTION DEPLOYED / PRODUCTION E2E NOT VERIFIED`
