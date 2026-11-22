@@ -57,7 +57,7 @@ async function openLongEditor(page) {
     const details = document.querySelector("#cv-builder-experience details");
     if (details) details.open = true;
   });
-  for (let index = 0; index < 10; index += 1) {
+  for (let index = 0; index < 6; index += 1) {
     await page.getByRole("button", { name: /Berufserfahrung hinzufügen/ }).click();
   }
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -117,15 +117,45 @@ async function run() {
   try {
     await waitForServer();
     await mkdir(evidenceDir, { recursive: true });
-    browser = await playwright.chromium.launch({ headless: true });
+    browser = await playwright.chromium.launch({ headless: true, args: ["--disable-gpu"] });
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, locale: "de-DE" });
-    await context.addInitScript(() => { if (!localStorage.getItem("mj-lang")) localStorage.setItem("mj-lang", "de"); });
+    await context.addInitScript(() => {
+      if (!localStorage.getItem("mj-lang")) localStorage.setItem("mj-lang", "de");
+    });
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
     await mockApi(page);
     await openLongEditor(page);
+
+    const workspaceFooter = page.locator("footer.footer");
+    if ((await workspaceFooter.count()) !== 1) throw new Error("shared workspace footer missing or duplicated");
+    if ((await workspaceFooter.locator('a[href="/impressum"]').count()) !== 1) {
+      throw new Error("workspace footer imprint link is wrong");
+    }
+    if ((await workspaceFooter.locator('a[href="/datenschutz"]').count()) !== 1) {
+      throw new Error("workspace footer privacy link is wrong");
+    }
+    if ((await workspaceFooter.locator('a[href="/datenschutzprinzipien"]').count()) !== 1) {
+      throw new Error("workspace footer principles link is wrong");
+    }
+    const footerStyle = await workspaceFooter.evaluate((node) => {
+      const style = getComputedStyle(node);
+      const footerRect = node.getBoundingClientRect();
+      const boxRect = document.querySelector(".cv-builder-fullpage__box")?.getBoundingClientRect();
+      return {
+        position: style.position,
+        top: footerRect.top,
+        boxBottom: boxRect?.bottom ?? null,
+      };
+    });
+    if (footerStyle.position === "fixed" || footerStyle.position === "sticky") {
+      throw new Error(`workspace footer must not be ${footerStyle.position}`);
+    }
+    if (footerStyle.boxBottom !== null && footerStyle.top < footerStyle.boxBottom - 1) {
+      throw new Error("workspace footer is not after the editor");
+    }
 
     const main = page.locator(".cv-workspace-main");
     const box = page.locator(".cv-builder-fullpage__box");
@@ -178,6 +208,11 @@ async function run() {
     const footerStop = await scrollY(page);
     await page.waitForTimeout(400);
     if (Math.abs((await scrollY(page)) - footerStop) > 2) throw new Error("turbo down did not stop at the footer");
+
+    await workspaceFooter.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(100);
+    if (!(await workspaceFooter.isVisible())) throw new Error("workspace legal footer is not visible at the document end");
+    await page.screenshot({ path: `${evidenceDir}/05-workspace-footer-1920.png` });
 
     await up.hover();
     await page.waitForFunction(() => {

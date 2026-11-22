@@ -15524,6 +15524,29 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     linear-gradient(135deg, #031424 0%, #06283b 52%, #041a2b 100%);
 }
 
+/* The legal footer is the same shared Footer component used by the main
+   website; only its color treatment is adapted to the workspace background. */
+.cv-workspace-page > .footer {
+  z-index: 1;
+  padding: 18px 16px 32px;
+  border-top: 1px solid rgba(148, 233, 255, 0.16);
+  color: rgba(216, 247, 255, 0.72);
+}
+
+.cv-workspace-page > .footer .footer-links a,
+.cv-workspace-page > .footer a {
+  color: #eafcff;
+}
+
+.cv-workspace-page > .footer .footer-links a:hover,
+.cv-workspace-page > .footer a:hover {
+  color: #67e8f9;
+}
+
+.cv-workspace-page > .footer .footer-version {
+  color: rgba(216, 247, 255, 0.62);
+}
+
 .cv-workspace-page::before {
   content: "";
   position: fixed;

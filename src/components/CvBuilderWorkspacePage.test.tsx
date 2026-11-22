@@ -44,6 +44,15 @@ afterEach(() => {
 });
 
 describe("CV-BUILDER-03A direct workspace identity isolation", () => {
+  it("uses the shared legal footer once in the workspace", () => {
+    const { container } = renderPage();
+    expect(container.querySelectorAll("footer.footer")).toHaveLength(1);
+    expect(screen.getByRole("navigation", { name: "Rechtliche Links" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Impressum" })).toHaveAttribute("href", "/impressum");
+    expect(screen.getByRole("link", { name: "Datenschutz" })).toHaveAttribute("href", "/datenschutz");
+    expect(screen.getByRole("link", { name: "Datenschutzprinzipien" })).toHaveAttribute("href", "/datenschutzprinzipien");
+  });
+
   it("clears direct-route CV data when the identity changes", async () => {
     const view = renderPage();
     await enterDraft("Direkter Workspace A");
