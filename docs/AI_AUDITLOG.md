@@ -1,3 +1,15 @@
+2026-11-22 · JM-CV-SEARCH-PROFILE-DIRECT-SELECT-03 — DIRECT LOGIN SELECTION
+- Typ: Direkte RIS-CV-Auswahl, vorhandene CV-/ATS-Dropdowns, Login-Hydration, Browser-E2E
+- Status: **READY FOR CONTROLLED MERGE — DIRECT LOGIN SELECTION VERIFIED**
+- Branch/PR: `feature/jm-cv-search-profile-hydration-01`; PR [#56](https://github.com/maynowak/mays-jobsearch/pull/56); Implementierung `ac0779c`; Basis `origin/main` `8f26a69`.
+- Umsetzung: `PersistentCvList` erhält direkte Auswahl („Profile auswählen“) für bereite RIS-CVs; `selectedDurableCvId` bildet den aktiven cvId-Kontext ohne Session-Hash. Dashboard und bestehende Saved-Profile-Box nutzen `cvProfileHydration.byCvId[cvId]`; ATS ausschließlich über `cvId → searchProfileId → atsSearchProfileId`. Kein Upload, Parsing, AI-Call oder RIS-Write bei Auswahl; bestehende Such-/Dropdownlogik wird wiederverwendet.
+- Sicherheit: Auswahl nur bei aktiver Suchprofil-Einwilligung; Identitätswechsel, Consent-Entzug und Session-Modus löschen den durable Kontext; Parent-/CV-Wechsel setzen ungültige ATS-Kinder zurück; Ladezustand/Fehler/Retry und mobile Darstellung geprüft.
+- Browser-E2E `cv-search-profile-direct-select-03`: PASS 1440/390; genau **1** Suchaufruf, **0** `/api/profile`, **0** CV-Downloads/Parser, **0** RIS-Writes; Reload, Consent denied, Load-Error/Retry, Identitätsisolation, Parent-/CV-Wechsel.
+- Lokal: fokussiert **156 PASS**; serielle Vollsuite **2029 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; bestehende Hydration- und Release-Gate-E2E weiter PASS.
+- GitHub: PR `MERGEABLE`/`CLEAN`; CodeQL PASS; Vercel matcher/jobsearch, Deployments und Preview Comments PASS. Kein separates `ci.yml`; noch kein Main-Merge/Production-Deployment.
+- Privacy/AI: synthetische Daten, nur konsentierte GET-Listen; keine echten Daten, keine RIS/AWS/Terraform/Cognito/Consent-/Storage-Änderung.
+- Bericht: `docs/reports/JM-CV-SEARCH-PROFILE-DIRECT-SELECT-03.md`.
+
 2026-11-22 · JM-CV-SEARCH-PROFILE-HYDRATION-RELEASE-GATE-02 — FINAL QA & PR GATES
 - Typ: Release-Gate, Browser-E2E, Reload/Consent/Identitätsisolation, PR-Prüfung
 - Status: **READY FOR CONTROLLED MERGE**
