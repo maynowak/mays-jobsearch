@@ -418,6 +418,9 @@ async function run() {
       throw new Error(`durable ATS target role not used: ${params.searchParams.getAll("targetRole")}`);
     }
 
+    if (profileRequests.length !== 1) {
+      throw new Error(`dropdown use reprocessed the CV (${profileRequests.length} profile calls)`);
+    }
     if (risWrites.length) throw new Error(`RIS writes occurred: ${risWrites.join(", ")}`);
     if (unexpected.length) throw new Error(`unexpected AI/ATS calls: ${unexpected.join(", ")}`);
 
