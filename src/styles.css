@@ -15023,7 +15023,10 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   max-width: none;
   margin: 0;
   min-height: calc(100dvh - var(--navbar-height, 61px));
-  padding-top: clamp(20px, 2.5vw, 32px);
+  /* JM-PROFILE-NAVBAR-GLASS-01: keep a visible breathing gap below the
+     floating glass pill on tablet/mobile, where the header starts directly
+     beneath the navbar. */
+  padding-top: clamp(28px, 2.5vw, 32px);
   padding-bottom: clamp(36px, 6vw, 72px);
   overflow: clip;
   background-color: #03111f;
@@ -15479,7 +15482,8 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 @media (max-width: 767px) {
   .container.layout-dashboard.layout-profile-command {
-    padding-top: 16px;
+    /* JM-PROFILE-NAVBAR-GLASS-01: breathing room below the glass pill. */
+    padding-top: 24px;
     padding-inline: 12px;
   }
 
