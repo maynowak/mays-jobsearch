@@ -107,8 +107,8 @@ docs/reports/assets/JM-CV-BUILDER-UX-08A/
 
 Against `origin/main`:
 
-- **72 files changed**, +2,920 / -81 lines;
-- **17 commits ahead**, 0 behind at review time;
+- **81 files changed**, +3,055 / -81 lines;
+- **18 commits ahead**, 0 behind at review time;
 - scope is the cumulative CV/UX and profile-artwork feature branches plus their
   reports/screenshots;
 - no RIS, AWS, Cognito, consent, storage API, PDF parser, ATS mapping or
