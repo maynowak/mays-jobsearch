@@ -1,3 +1,15 @@
+2026-11-22 · JM-CV-SEARCH-PROFILE-HYDRATION-RELEASE-GATE-02 — FINAL QA & PR GATES
+- Typ: Release-Gate, Browser-E2E, Reload/Consent/Identitätsisolation, PR-Prüfung
+- Status: **READY FOR CONTROLLED MERGE**
+- Branch/PR: `feature/jm-cv-search-profile-hydration-01`; PR [#56](https://github.com/maynowak/mays-jobsearch/pull/56); verifizierter Implementierungs-Head `0649c5f`; Basis `origin/main` `8f26a69`.
+- Bestehende Implementierung unverändert übernommen; Release-Gate-Commit ergänzt nur Browser-E2E, npm-Skripte und diesen Report. Keine neue Produktlogik.
+- E2E `cv-search-profile-hydration-01`: Login-Hydration, gespeicherter RIS-CV im bestehenden Workflow, danach CV-/ATS-Dropdown-Nutzung ohne weitere CV-Verarbeitung (`/api/profile` bleibt 1), ATS-Parent-Zuordnung, 0 RIS-Writes, 0 unerwartete Calls, 0 Overflow.
+- E2E `cv-search-profile-hydration-release-gate-02`: Reload-Hydration PASS; ohne Suchprofil-Consent 0 CV-/ATS-Listenaufrufe; Identitätswechsel A→B nutzt den neuen Token und neue Profile; keine RIS-Writes.
+- Lokal: fokussiert **147 PASS**; serielle Vollsuite **2026 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS.
+- GitHub: PR mergebar `CLEAN`; CodeQL PASS; Vercel matcher/jobsearch, Deployments und Preview Comments PASS. Kein separates `ci.yml` im Repo; keine Main-Merge-/Production-Aktion.
+- Privacy/AI: nur konsentierte GET-Listen; kein KI-/Such-/Profilaufruf beim Login; keine echten Daten; keine RIS/AWS/Terraform/Cognito/Consent-/Storage-Änderung.
+- Bericht: `docs/reports/JM-CV-SEARCH-PROFILE-HYDRATION-RELEASE-GATE-02.md`.
+
 2026-11-22 · JM-CV-SEARCH-PROFILE-HYDRATION-01 — DURABLE PROFILES IN EXISTING DROPDOWNS
 - Typ: CV-Suchprofil-/ATS-Hydration nach Login, bestehende RIS-Listen und Dropdowns, read-only Merge
 - Status: **IMPLEMENTED / VERIFIED LOCAL**
