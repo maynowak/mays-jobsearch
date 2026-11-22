@@ -1,8 +1,8 @@
 # JM-PROFILE-VISUAL-11 — Cyan Glow Cards · Brighter Profile · Silver Glass Header
 
-**Status:** `READY FOR VISUAL REVIEW`  
-**Branch:** `feature/jm-profile-visual-11`  
-**Base:** `origin/main` `91f92a4`  
+**Status:** `READY FOR VISUAL REVIEW`
+**Branch:** `feature/jm-profile-visual-11`
+**Base:** `origin/main` `91f92a4`
 **Scope:** profile surface only (`src/styles.css` scoped to `.layout-profile-command`), focused CSS test, visual E2E and documentation.
 
 ## 1. Changes
