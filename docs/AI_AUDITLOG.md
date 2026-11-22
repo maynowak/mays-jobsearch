@@ -7442,3 +7442,16 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   needs approval, no infrastructure rate limiter. No RIS/AWS/Terraform change,
   no production endpoint activation, no raw CV/token logging.
 - Report: `docs/reports/JM-RIS-CV-ATS-API-02-SECURE-FOUNDATION.md`.
+
+## 2026-11-22 — JM-PROFILE-VISUAL-11 — CYAN GLOW CARDS / BRIGHTER PROFILE / SILVER GLASS HEADER
+
+**Status:** `READY FOR VISUAL REVIEW`
+
+- Branch `feature/jm-profile-visual-11` von `origin/main` `91f92a4`; kein Main-Merge, kein Production-Deployment.
+- Scope: ausschließlich `.layout-profile-command` in `src/styles.css`, fokussierter CSS-Test, visueller E2E und Dokumentation. Keine RIS-, AWS-, Cognito-, Consent-, CV-, ATS-, Storage- oder Backend-Änderung.
+- Karten: äußere Profilkarten erhalten 2px Cyan-Rahmen, dezenten Cyan-Glow und Glas-Highlight; linke Navigation bleibt mit 1px dezenter. Keine neuen Rahmen um innere Eingabefelder; bestehende Fokusindikatoren unverändert.
+- Hintergrund: Marineblau bleibt, mittlerer Bereich wird über `#0a3a50` und Cyan-Reflexe sichtbar heller. Linke/rechte AI-Bildassets, Größe, Position, Maskierung und Animation unverändert.
+- Header: silbrig-metallischer Glass-Verlauf links, weicher Übergang zu dunklem Petrol rechts, subtiler Lichtreflex; Globus/Waves-Assets und Header-Geometrie unverändert.
+- Tests: `ProfileCommandCenter.test.tsx` 6/6 PASS; visueller E2E 1920/1440/768/390 plus Hilfe, Lebenslauf, Bewerbungen, Einstellungen PASS; Reduced Motion PASS; 0 horizontaler Overflow; Build PASS (1,44 s); Vollsuite **2030 PASS / 11 skipped**; `git diff --check` PASS.
+- AI-/Privacy-/Data-Flow: keine neuen Datenflüsse, Speicherorte, Berechtigungen oder Credentials; rein visuelle CSS-Änderung.
+- Evidence: `docs/reports/assets/JM-PROFILE-VISUAL-11/`; Report `docs/reports/JM-PROFILE-VISUAL-11.md`.

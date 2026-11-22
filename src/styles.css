@@ -15026,16 +15026,17 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   padding-top: clamp(20px, 2.5vw, 32px);
   padding-bottom: clamp(36px, 6vw, 72px);
   overflow: clip;
-  background-color: #03111f;
+  background-color: #041a2b;
   background-image:
-    radial-gradient(ellipse at 18% 108%, rgba(34, 211, 238, 0.42), transparent 58%),
-    radial-gradient(ellipse at 82% 108%, rgba(249, 115, 22, 0.34), transparent 58%),
+    radial-gradient(ellipse at 50% 28%, rgba(34, 211, 238, 0.20), transparent 52%),
+    radial-gradient(ellipse at 18% 108%, rgba(34, 211, 238, 0.44), transparent 58%),
+    radial-gradient(ellipse at 82% 108%, rgba(249, 115, 22, 0.30), transparent 58%),
     linear-gradient(
       90deg,
       #03111f 0%,
-      #061b2d 28%,
-      #04121f 50%,
-      #061b2d 72%,
+      #082c40 28%,
+      #0a3a50 50%,
+      #082c40 72%,
       #03111f 100%
     );
 }
@@ -15100,16 +15101,26 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   overflow: hidden;
   min-height: 190px;
   margin-bottom: clamp(20px, 3vw, 32px);
-  border: 1px solid rgba(103, 232, 249, 0.34);
-  border-bottom-color: rgba(103, 232, 249, 0.62);
+  border: 1px solid rgba(203, 213, 225, 0.58);
+  border-bottom-color: rgba(103, 232, 249, 0.66);
   background:
-    radial-gradient(ellipse at 14% 38%, rgba(8, 64, 80, 0.38), transparent 54%),
-    linear-gradient(125deg, #03111f 0%, #062b3b 55%, #04121f 100%);
+    radial-gradient(ellipse at 9% 28%, rgba(248, 252, 255, 0.96), transparent 32%),
+    radial-gradient(ellipse at 24% 70%, rgba(148, 163, 184, 0.58), transparent 44%),
+    linear-gradient(
+      105deg,
+      rgba(241, 245, 249, 0.97) 0%,
+      rgba(203, 213, 225, 0.88) 14%,
+      rgba(125, 146, 166, 0.62) 30%,
+      rgba(22, 64, 84, 0.64) 49%,
+      rgba(5, 30, 46, 0.92) 70%,
+      rgba(3, 17, 31, 0.98) 100%
+    ),
+    linear-gradient(122deg, rgba(255, 255, 255, 0.42) 0%, transparent 18%, transparent 78%, rgba(255, 255, 255, 0.08) 100%);
   box-shadow:
     0 24px 54px rgba(0, 8, 18, 0.42),
-    0 0 30px rgba(34, 211, 238, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 0 0 1px rgba(34, 211, 238, 0.05);
+    0 0 34px rgba(34, 211, 238, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    inset 0 -1px 0 rgba(34, 211, 238, 0.14);
   -webkit-backdrop-filter: blur(18px) saturate(1.18);
   backdrop-filter: blur(18px) saturate(1.18);
 }
@@ -15151,15 +15162,17 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    rgba(3, 17, 31, 0.32) 0%,
-    rgba(3, 17, 31, 0.24) 18%,
-    rgba(3, 17, 31, 0.08) 34%,
-    rgba(3, 17, 31, 0.02) 46%,
-    transparent 58%,
-    transparent 100%
-  );
+  background:
+    radial-gradient(ellipse at 10% 40%, rgba(255, 255, 255, 0.18), transparent 34%),
+    linear-gradient(
+      90deg,
+      rgba(15, 23, 42, 0.28) 0%,
+      rgba(15, 23, 42, 0.18) 18%,
+      rgba(3, 17, 31, 0.08) 34%,
+      rgba(3, 17, 31, 0.02) 48%,
+      transparent 60%,
+      transparent 100%
+    );
 }
 
 /* Layer 4: profile content stays above the local contrast overlay. */
@@ -15188,16 +15201,26 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   }
 
   .layout-profile-command .dashboard-v2__header::after {
-    background: linear-gradient(
-      90deg,
-      rgba(3, 17, 31, 0.52) 0%,
-      rgba(3, 17, 31, 0.42) 30%,
-      rgba(3, 17, 31, 0.22) 60%,
-      rgba(3, 17, 31, 0.08) 82%,
-      transparent 96%,
-      transparent 100%
-    );
+    background:
+      radial-gradient(ellipse at 12% 38%, rgba(255, 255, 255, 0.20), transparent 38%),
+      linear-gradient(
+        90deg,
+        rgba(15, 23, 42, 0.30) 0%,
+        rgba(15, 23, 42, 0.20) 28%,
+        rgba(15, 23, 42, 0.12) 54%,
+        rgba(3, 17, 31, 0.04) 78%,
+        transparent 96%,
+        transparent 100%
+      );
   }
+}
+
+.layout-profile-command .may-help {
+  border: 2px solid rgba(34, 211, 238, 0.58);
+  box-shadow:
+    0 12px 28px rgba(8, 47, 73, 0.12),
+    0 0 20px rgba(34, 211, 238, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90);
 }
 
 .layout-profile-command .dashboard-v2__header h1 {
@@ -15209,10 +15232,11 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 }
 
 .layout-profile-command .dashboard-v2__header-copy > p:last-child {
-  color: #c5edf5;
+  color: #f1fdff;
   text-shadow:
-    0 1px 2px rgba(0, 6, 14, 0.86),
-    0 2px 14px rgba(0, 6, 14, 0.72);
+    0 1px 2px rgba(0, 6, 14, 0.94),
+    0 2px 14px rgba(0, 6, 14, 0.82),
+    0 0 20px rgba(3, 17, 31, 0.38);
 }
 
 .layout-profile-command .dashboard-v2__header .ui-badge {
@@ -15248,13 +15272,15 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .layout-profile-command .dashboard-v2__navigation-card {
   position: sticky;
   top: calc(var(--navbar-height, 61px) + 16px);
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  border: 1px solid rgba(34, 211, 238, 0.38);
   background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(232, 249, 255, 0.72)),
-    radial-gradient(circle at 0% 0%, rgba(34, 211, 238, 0.18), transparent 46%);
+    linear-gradient(160deg, rgba(255, 255, 255, 0.90), rgba(232, 249, 255, 0.76)),
+    radial-gradient(circle at 0% 0%, rgba(34, 211, 238, 0.20), transparent 46%);
   box-shadow:
     0 16px 38px rgba(8, 47, 73, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    0 0 18px rgba(34, 211, 238, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -15354,15 +15380,18 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 .layout-profile-command .dashboard-v2__cv-section,
 .layout-profile-command .storage-consent,
 .layout-profile-command .dashboard-v2__manual-profiles {
-  border: 1px solid rgba(103, 232, 249, 0.28);
+  border: 2px solid rgba(34, 211, 238, 0.62);
+  border-top-color: rgba(165, 243, 252, 0.82);
   background:
-    linear-gradient(145deg, rgba(253, 255, 255, 0.99), rgba(231, 249, 253, 0.96)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.82), transparent 48%);
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.13), transparent 42%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(228, 249, 253, 0.97)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), transparent 48%);
   box-shadow:
     0 20px 42px rgba(0, 8, 18, 0.24),
-    0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.38) inset,
-    0 0 22px rgba(34, 211, 238, 0.06);
+    0 0 24px rgba(34, 211, 238, 0.13),
+    0 1px 0 rgba(255, 255, 255, 0.96) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.40) inset,
+    inset 0 -1px 0 rgba(34, 211, 238, 0.10);
 }
 
 /* Hover affordances remain on the existing interactive controls only. */
