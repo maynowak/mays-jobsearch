@@ -175,6 +175,24 @@ async function runDesktop(browser) {
         throw new Error("radar hover labels overlap");
       }
     }
+    const labelsA11y = await page.evaluate(() => {
+      const container = document.querySelector(".match-radar__labels");
+      const markers = Array.from(document.querySelectorAll("[data-radar-marker-id]"));
+      const marker = markers[0];
+      marker?.focus();
+      return {
+        hidden: container?.getAttribute("aria-hidden"),
+        focusableLabels: container?.querySelectorAll("button, a, input, select, textarea, [tabindex]").length ?? 0,
+        markerTag: marker?.tagName,
+        markerFocused: marker === document.activeElement,
+      };
+    });
+    if (labelsA11y.hidden !== "true" || labelsA11y.focusableLabels !== 0) {
+      throw new Error(`hover labels are not purely decorative: ${JSON.stringify(labelsA11y)}`);
+    }
+    if (labelsA11y.markerTag !== "BUTTON" || !labelsA11y.markerFocused) {
+      throw new Error(`radar marker is not keyboard accessible: ${JSON.stringify(labelsA11y)}`);
+    }
     await saveWebp(page, "radar-hover-1440");
 
     const target = snapshot.cards[9];
@@ -262,6 +280,15 @@ async function runMobile(browser, width) {
     const count = await page.locator(".match-radar__panel button").count();
     if (count !== 20) throw new Error(`${width}: panel has ${count} entries`);
     await saveWebp(page, `radar-panel-${width}`);
+    await page.keyboard.press("Escape");
+    await page.locator(".match-radar__panel").waitFor({ state: "detached" });
+    await page.waitForTimeout(80);
+    const focusReturned = await page.evaluate(() =>
+      document.activeElement?.classList.contains("match-radar__mobile-toggle") === true
+    );
+    if (!focusReturned) throw new Error(`${width}: Escape did not return focus to the toggle`);
+    await page.locator(".match-radar__mobile-toggle").click();
+    await page.locator(".match-radar__panel").waitFor();
     await page.locator(".match-radar__panel button").nth(10).click();
     await page.waitForTimeout(800);
     const scrollY = await page.evaluate(() => window.scrollY);

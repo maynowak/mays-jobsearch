@@ -1,3 +1,12 @@
+2026-11-23 · JM-SEARCH-MATCH-RADAR-01 — ACCESSIBILITY CORRECTION
+- Typ: A11y-Korrektur, Hover-Labels, mobiles Trefferpanel, Fokus-Rückkehr
+- Status: **READY FOR CONTROLLED MERGE REVIEW**
+- Branch: `feature/jm-search-match-radar-01`; Korrektur auf dem bestehenden Radar-Commit; kein Main-Merge, kein Deployment.
+- Problem/Korrektur: Die dekorativen, klickbaren Hover-Titel lagen als `<button>` in `aria-hidden="true"`. Sie sind jetzt nicht fokussierbare `<span>`-Elemente (Mausklick bleibt); die 20 Radar-Marker bleiben echte, per Tastatur und Screenreader bedienbare `<button>`-Elemente mit `aria-label`/`aria-current`. Keine automatische Fokussetzung.
+- Mobile: Escape schließt das Trefferpanel und setzt den Fokus auf den Auslöser zurück; Treffer-Klick schließt ebenfalls mit sinnvoller Fokus-Rückkehr. Neuer Komponententest und Browser-E2E für 390/768 px.
+- Tests: fokussiert **38 PASS**; serielle Vollsuite **2041 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS; Browser-E2E inkl. Label-/Marker-A11y und Escape-Fokus erneut PASS.
+- Grenzen: unverändertes Hover-/Radar-Design, keine Such-/KI-/ATS-Anfragen, keine RIS/AWS/Cognito/Consent/Storage-Änderung; keine echten Daten.
+
 2026-11-23 · JM-SEARCH-MATCH-RADAR-01 — FLOATING RESULT RADAR
 - Typ: Suchseiten-Navigation, Match-Radar, Hover-Labels, Wheel/Tastatur/Mobile, Browser-E2E
 - Status: **READY FOR VISUAL REVIEW**

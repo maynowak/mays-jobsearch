@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { layoutRadarLabels } from "./MatchRadar";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { LangProvider } from "../i18n";
+import MatchRadar, { layoutRadarLabels } from "./MatchRadar";
 
 describe("JM-SEARCH-MATCH-RADAR-01 label layout", () => {
   it("keeps nearby labels separated", () => {
@@ -19,5 +21,28 @@ describe("JM-SEARCH-MATCH-RADAR-01 label layout", () => {
 
   it("returns no labels when there are no results", () => {
     expect(layoutRadarLabels([], 300)).toEqual([]);
+  });
+});
+
+describe("JM-SEARCH-MATCH-RADAR-01 accessibility", () => {
+  beforeEach(() => localStorage.setItem("mj-lang", "de"));
+  afterEach(() => {
+    cleanup();
+    localStorage.removeItem("mj-lang");
+  });
+
+  it("keeps the mobile panel closable with Escape and restores focus", async () => {
+    render(
+      <LangProvider>
+        <MatchRadar radarKey="accessibility-test" onActivate={vi.fn()} />
+      </LangProvider>
+    );
+    const toggle = screen.getByRole("button", { name: "Trefferübersicht" });
+    toggle.focus();
+    fireEvent.click(toggle);
+    expect(screen.getByRole("dialog", { name: "Treffer-Navigation" })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Treffer-Navigation" })).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(toggle));
   });
 });

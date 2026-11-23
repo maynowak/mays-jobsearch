@@ -1,6 +1,6 @@
 # JM-SEARCH-MATCH-RADAR-01
 
-**Status:** `READY FOR VISUAL REVIEW`
+**Status:** `READY FOR CONTROLLED MERGE REVIEW`
 
 **Branch:** `feature/jm-search-match-radar-01`
 
@@ -100,17 +100,34 @@ docs/reports/assets/JM-SEARCH-MATCH-RADAR-01/
 └── radar-panel-390.webp
 ```
 
-## 4. Tests und Build
+## 4. Accessibility-Korrektur
+
+Nach dem Visual Review wurde die Kombination aus `aria-hidden="true"` und
+klickbaren `<button>`-Labels entfernt:
+
+- die fünf Hover-Titel sind jetzt rein dekorative, nicht fokussierbare
+  `<span>`-Elemente innerhalb der `aria-hidden`-Schicht;
+- Klick auf einen Titel bleibt für Mausnutzer erhalten;
+- alle 20 Radar-Markierungen bleiben echte `<button>`-Elemente mit
+  `aria-label` und sind vollständig per Tastatur und Screenreader bedienbar;
+- keine automatische Fokussetzung beim Öffnen/Hover;
+- mobiles Trefferpanel: Escape schließt es und setzt den Fokus auf den
+  Auslöser zurück; auch ein Treffer-Klick führt den Fokus sinnvoll zurück;
+- ein zusätzlicher Komponententest prüft Escape und Fokus-Rückkehr;
+- Browser-E2E prüft `aria-hidden` ohne fokussierbare Labels, fokussierbare
+  Marker und die Fokus-Rückkehr auf 390/768 px.
+
+## 5. Tests und Build
 
 | Prüfung | Ergebnis |
 |---|---|
-| MatchRadar-/MatchCard-/RemainingCard-/Results-Tests | **37 PASS** |
-| Volle Vitest-Suite, seriell | **2040 PASS / 5 skipped** |
+| MatchRadar-/MatchCard-/RemainingCard-/Results-Tests | **38 PASS** |
+| Volle Vitest-Suite, seriell | **2041 PASS / 5 skipped** |
 | Production build | PASS |
 | `git diff --check` | PASS |
 | Secret-Scan | PASS |
 
-## 5. Grenzen
+## 6. Grenzen
 
 - Keine neuen Suchanfragen, keine KI-Bewertung, keine ATS-Aufrufe.
 - Keine Änderung an Jobdaten, Matching, Cards, Modal-Logik oder nativen
@@ -118,4 +135,4 @@ docs/reports/assets/JM-SEARCH-MATCH-RADAR-01/
 - Keine RIS-/AWS-/Cognito-/Consent-/Storage-Änderung.
 - Kein Main-Merge und kein Production-Deployment.
 
-`READY FOR VISUAL REVIEW`
+`READY FOR CONTROLLED MERGE REVIEW`

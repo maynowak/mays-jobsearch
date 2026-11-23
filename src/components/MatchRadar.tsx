@@ -49,6 +49,7 @@ function prefersReducedMotion(): boolean {
 export default function MatchRadar({ radarKey, onActivate }: Props) {
   const { t } = useLang();
   const railRef = useRef<HTMLDivElement>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
   const [items, setItems] = useState<RadarItem[]>([]);
   const [railHeight, setRailHeight] = useState(360);
   const [pointerInside, setPointerInside] = useState(false);
@@ -146,6 +147,24 @@ export default function MatchRadar({ radarKey, onActivate }: Props) {
     });
   };
 
+  const closePanel = useCallback((restoreFocus: boolean) => {
+    setPanelOpen(false);
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => mobileToggleRef.current?.focus());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closePanel(true);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [panelOpen, closePanel]);
+
   const nearestItem = (clientY: number): RadarItem | null => {
     const rail = railRef.current;
     if (!rail || items.length === 0) return items[0] ?? null;
@@ -237,30 +256,32 @@ export default function MatchRadar({ radarKey, onActivate }: Props) {
       {labelsVisible && (
         <div className="match-radar__labels" aria-hidden="true">
           {labelItems.map((item, index) => (
-            <button
+            <span
               key={item.id}
-              type="button"
               className={`match-radar__label${activeId === item.id ? " is-active" : ""}`}
               style={{ top: `${labelTops[index]}px` }}
               onClick={() => scrollToItem(item)}
-              tabIndex={-1}
             >
               <span className="match-radar__label-dot" />
               <span className="match-radar__label-text">{item.title}</span>
-            </button>
+            </span>
           ))}
         </div>
       )}
 
       <button
+        ref={mobileToggleRef}
         type="button"
         className="match-radar__mobile-toggle"
         aria-expanded={panelOpen}
         aria-controls="match-radar-panel"
         onClick={() => {
-          const next = !panelOpen;
-          setPanelOpen(next);
-          if (next) activate();
+          if (panelOpen) {
+            closePanel(false);
+            return;
+          }
+          setPanelOpen(true);
+          activate();
         }}
       >
         {panelOpen ? t("matchRadar.close") : t("matchRadar.open")}
@@ -276,7 +297,7 @@ export default function MatchRadar({ radarKey, onActivate }: Props) {
                   type="button"
                   className={activeId === item.id ? "is-active" : undefined}
                   onClick={() => {
-                    setPanelOpen(false);
+                    closePanel(true);
                     scrollToItem(item);
                   }}
                 >
