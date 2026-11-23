@@ -377,6 +377,11 @@ const en: Dict = {
 
   "results.aria": "Matches",
   "results.foundJobs": "Found jobs",
+  "matchRadar.aria": "Result navigation",
+  "matchRadar.overview": "Result overview",
+  "matchRadar.open": "Result overview",
+  "matchRadar.close": "Close result overview",
+  "matchRadar.goTo": "Go to {title}",
   "results.yourTop": "Your top match",
   "results.yourTopN": "Your top {count} matches",
   "results.yourBest": "Your best matches",
@@ -2226,6 +2231,11 @@ const de: Dict = {
 
   "results.aria": "Treffer",
   "results.foundJobs": "Gefundene Stellen",
+  "matchRadar.aria": "Treffer-Navigation",
+  "matchRadar.overview": "Trefferübersicht",
+  "matchRadar.open": "Trefferübersicht",
+  "matchRadar.close": "Trefferübersicht schließen",
+  "matchRadar.goTo": "Zu {title} springen",
   "results.yourTop": "Dein bester Treffer",
   "results.yourTopN": "Deine {count} besten Treffer",
   "results.yourBest": "Deine besten Matches",

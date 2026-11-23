@@ -208,7 +208,11 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
   const originalUrl = safeExternalUrl(job.url);
 
   return (
-    <li className="remaining-card">
+    <li
+      className="remaining-card"
+      data-radar-job-id={job.slug}
+      data-radar-job-title={displayJob.title || t("match.unknownRole")}
+    >
       <h4>{displayJob.title || t("match.unknownRole")}</h4>
       {displayJob.company_name && <p className="remaining-company">{displayJob.company_name}</p>}
 

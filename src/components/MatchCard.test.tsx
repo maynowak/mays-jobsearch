@@ -173,3 +173,17 @@ describe("MatchCard - ATS Evaluation Button", () => {
     expect(onGenerateLetter).toHaveBeenCalledWith(match.job, match.prepare);
   });
 });
+describe("MatchCard - Match Radar identity", () => {
+  afterEach(() => cleanup());
+
+  it("exposes the stable job slug and title for the result radar", () => {
+    const { container } = renderMatchCard({
+      match: createTestMatch(),
+      index: 3,
+      onGenerateLetter: () => {},
+    });
+    const card = container.querySelector("[data-radar-job-id]");
+    expect(card).toHaveAttribute("data-radar-job-id", "test-job");
+    expect(card).toHaveAttribute("data-radar-job-title", "Software Engineer");
+  });
+});
