@@ -1,3 +1,14 @@
+2026-11-23 · JM-SEARCH-MATCH-RADAR-01 — FLOATING RESULT RADAR
+- Typ: Suchseiten-Navigation, Match-Radar, Hover-Labels, Wheel/Tastatur/Mobile, Browser-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-search-match-radar-01`; Implementierung `999ac04`; Basis `origin/main` `91f92a4`; kein Main-Merge, kein Deployment.
+- Umsetzung: `MatchRadar` als feste Cyan-Glass-Schiene rechts neben dem nativen Scrollbalken; Markierungen aus echten relativen Kartenpositionen im `#matches`-Bereich, nicht aus Index-Gleichverteilung. Hover zeigt max. 5 kollisionsfreie Titel mit Lichtpunkten/Linien; Klick/Wheel scrollen zur Karte mit Navbar-Abstand. Collapsed-Listen werden bei Radar-Aktivierung erweitert und neu gemessen; neue Suchergebnisse ersetzen die Einträge. Mobile ≤900px erhält eine per Button öffnende Trefferübersicht; Reduced Motion und Fokusindikatoren berücksichtigt.
+- Stabilisierung: `data-radar-job-id/title` an MatchCard und RemainingCard; Scroll-Sync markiert den aktuellen Treffer; normales Scrollen außerhalb der Schiene bleibt unverändert; mobile Radar-Schaltfläche oberhalb von „Nach oben“ positioniert.
+- Browser-E2E `jm-search-match-radar-01`: 20 Jobs, 20 Marker, Positions-/Reihenfolgeprüfung, Klick, Wheel vor/zurück, Hover 1–5 Labels ohne Überlappung, Collapse-Aktivierung, neue Suche, normales Scrollen; 0 AI/ATS/Profile-Aufrufe, 0 Overflow; 1920/1440/768/390 Screenshots.
+- Tests: fokussiert **37 PASS**; serielle Vollsuite **2040 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS.
+- Grenzen: keine neuen Such-/KI-/ATS-Anfragen, keine RIS/AWS/Cognito/Consent/Storage-Änderung; keine echten Daten.
+- Bericht: `docs/reports/JM-SEARCH-MATCH-RADAR-01.md`.
+
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
 - Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
 - Status: **READY FOR CONTROLLED MERGE — SEARCH LOGIN AUTOHYDRATION VERIFIED**
