@@ -39,6 +39,17 @@ function singleValue(value, field) {
   return only;
 }
 
+/**
+ * Manual ApplicationV1 drafts may intentionally have no location. RIS stores
+ * the job location as one string, so represent the absent optional value as
+ * the empty string instead of inventing a location. Multiple locations remain
+ * lossy and are rejected by singleValue().
+ */
+function optionalSingleValue(value, field) {
+  if (Array.isArray(value) && value.length === 0) return "";
+  return singleValue(value, field);
+}
+
 function httpUrl(value, field) {
   if (value === undefined || value === null || value === "") return undefined;
   try {
@@ -53,7 +64,9 @@ function httpUrl(value, field) {
 function toRisJob(job) {
   if (!job || typeof job !== "object") throw new RisMappingError("invalid_job", "job is required");
   const source = singleValue(job.source, "source");
-  const location = singleValue(job.location, "location");
+  const location = job.jobOrigin === "manual"
+    ? optionalSingleValue(job.location, "location")
+    : singleValue(job.location, "location");
   const url = httpUrl(job.originalUrl, "job.originalUrl");
   if (job.jobOrigin === "manual" && source !== "manual") {
     throw new RisMappingError("invalid_manual_source", "manual job must use source \"manual\"");

@@ -199,6 +199,112 @@ describe("/api/ris/applications", () => {
     expect(payload.idempotencyKey).toBe("idem-1");
   });
 
+  it("erstellt einen manuellen Entwurf ohne Standort und ohne erfundene Werte", async () => {
+    risResponse = response(201, {
+      application: risApplication({
+        job: {
+          jobId: "manual:test-1",
+          title: "Initiativbewerbung",
+          company: "Unternehmen nicht angegeben",
+          location: "",
+          source: "manual",
+        },
+        documents: { coverLetterDraft: "Entwurf", coverLetterVersions: [], documentStatus: "draft" },
+      }),
+    });
+    const res = makeRes();
+    await handler(
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token()}`, "idempotency-key": "idem-manual-1" },
+        query: {},
+        body: {
+          job: {
+            jobId: "manual:test-1",
+            title: "Initiativbewerbung",
+            companyName: "Unternehmen nicht angegeben",
+            location: [],
+            source: ["manual"],
+            jobOrigin: "manual",
+          },
+          documents: { coverLetterDraft: "Entwurf", documentStatus: "draft" },
+        },
+      },
+      res
+    );
+
+    expect(res.statusCode).toBe(201);
+    const [, options] = risCalls()[0];
+    const payload = JSON.parse(options.body);
+    expect(payload.job).toEqual({
+      jobId: "manual:test-1",
+      source: "manual",
+      title: "Initiativbewerbung",
+      company: "Unternehmen nicht angegeben",
+      location: "",
+    });
+    expect(payload.job).not.toHaveProperty("url");
+    expect(payload.documents.coverLetterDraft).toBe("Entwurf");
+    expect(payload.idempotencyKey).toBe("idem-manual-1");
+    expect(res.body.application.job.location).toEqual([]);
+    expect(res.body.application.job.jobOrigin).toBe("manual");
+  });
+
+  it("behält einen angegebenen manuellen Standort und eine optionale URL", async () => {
+    risResponse = response(201, { application: risApplication() });
+    const res = makeRes();
+    await handler(
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token()}` },
+        query: {},
+        body: {
+          job: {
+            jobId: "manual:test-2",
+            title: "Initiativbewerbung",
+            companyName: "Unternehmen nicht angegeben",
+            location: ["Berlin"],
+            source: ["manual"],
+            originalUrl: "https://example.invalid/job",
+            jobOrigin: "manual",
+          },
+        },
+      },
+      res
+    );
+
+    expect(res.statusCode).toBe(201);
+    const payload = JSON.parse(risCalls()[0][1].body);
+    expect(payload.job.location).toBe("Berlin");
+    expect(payload.job.url).toBe("https://example.invalid/job");
+    expect(payload.job).not.toHaveProperty("jobOrigin");
+  });
+
+  it("lehnt einen leeren Standort für Quelljobs weiterhin ab", async () => {
+    const res = makeRes();
+    await handler(
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token()}` },
+        query: {},
+        body: {
+          job: {
+            jobId: "job-empty-location",
+            title: "Source job",
+            companyName: "Synthetic",
+            location: [],
+            source: ["synthetic"],
+            originalUrl: "https://example.invalid/job",
+          },
+        },
+      },
+      res
+    );
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe("unsupported_location_empty");
+    expect(risCalls()).toHaveLength(0);
+  });
+
   it("lehnt mehrere Orte ab, statt still zu verlieren", async () => {
     const res = makeRes();
     await handler(

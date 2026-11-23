@@ -15,6 +15,8 @@ describe("manual job contract", () => {
     const result = buildManualJob({ description: validDescription }, "manual:test-1");
     expect(result.errors).toEqual({});
     expect(result.job?.url).toBe("");
+    expect(result.job?.location).toEqual([]);
+    expect(result.reference?.location).toEqual([]);
     expect(result.reference?.jobOrigin).toBe("manual");
     expect(result.reference?.source).toEqual(["manual"]);
     expect(result.reference?.originalUrl).toBeUndefined();
