@@ -1,3 +1,14 @@
+2026-11-23 · JM-APPLICATION-DRAFT-SAVE-RECOVERY-01 — MANUAL DRAFT SAVE
+- Typ: Bewerbungsentwurf, RIS-BFF-Mapping, Idempotenz, Fehler-/Retry-E2E
+- Status: **READY FOR CONTROLLED MERGE**
+- Branch/Commit: `fix/jm-application-draft-save-recovery-01`; Implementierung `c5f35ef`; Basis `origin/main` `91f92a4`; kein Main-Merge, kein Deployment.
+- Ursache: `ApplicationV1` erlaubt für manuelle Jobs `location: []`; der RIS-BFF `toRisJob()` verlangte über `singleValue()` genau einen Standort und lieferte vor dem RIS-Aufruf `unsupported_location_empty`.
+- Fix: Manuelle Jobs dürfen einen leeren Standort als leeren String an das RIS-Stringfeld übergeben; `fromRisJob()` stellt `[]` wieder her. Keine erfundenen Orte; mehrere Standorte bleiben 422, Quelljobs bleiben strikt. Optionale URL wird weiterhin nur bei Angabe gesendet. `coverLetterDraft` bleibt erhalten.
+- Retry: `ApplicationsSection` verwendet pro manuellem Entwurf einen stabilen `Idempotency-Key` (`manual-draft:<jobId>`); Formulartext bleibt bei Fehlern erhalten.
+- Tests: fokussiert **120 PASS**; serielle Vollsuite **2038 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS. Browser-E2E synthetisch: erster Create 503 → Text bleibt → Retry mit gleichem Key → Create/List/Reload; keine AI/ATS/Profile-Aufrufe.
+- Live-Grenze: Authentifizierter Live-RIS-Write nicht ausgeführt (keine freigegebene synthetische Identität); Mock-BFF-E2E plus BFF-/API-Tests. Falls RIS leeren String ablehnt, wäre eine separate RIS-Vertragsänderung erforderlich; keine RIS/AWS/Consent-Änderung vorgenommen.
+- Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RECOVERY-01.md`.
+
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
 - Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
 - Status: **READY FOR CONTROLLED MERGE — SEARCH LOGIN AUTOHYDRATION VERIFIED**
