@@ -1,3 +1,13 @@
+2026-11-23 · JM-PROFILE-CV-STUDIO-SPOTLIGHT-12 — PREMIUM CV STUDIO
+- Typ: Profil-Visual, Premium-CV-Studio-Karte, Empty/Filled State, responsive Browser-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-profile-cv-studio-spotlight-12`; Implementierung `7f03a8f`; Designbasis `feature/jm-profile-visual-11` `ed5c461`; kein Main-Merge, kein Deployment.
+- Umsetzung: `CvBuilderProfileList` mit Silber-Cyan-Glass-Fläche, 2px Cyan-Rahmen, Glow/Metallreflex, Studio-Badge, Dokument-Icon, Session-Kennzeichnung und Premium-CTA „✦ Neuen Lebenslauf gestalten →“. Empty State mit ruhigem Dokument-Symbol statt gestricheltem Standardrahmen; bestehende Aktionen/Handler und „Bestehenden Entwurf übernehmen“ unverändert. Styles nur unter `.layout-profile-command .cv-builder-profiles`; Reduced Motion deaktiviert Übergänge.
+- Visuell: Empty State 1920/1440/768/390, Filled State 1440/390; 2px Cyan-Rahmen + Glow, 48px-CTA, Badge/Session/Icon; 0 Overflow; Screenshots committed unter `docs/reports/assets/JM-PROFILE-CV-STUDIO-SPOTLIGHT-12/`.
+- Tests: CvBuilderProfileList **4/4 PASS**; serielle Vollsuite **2030 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; visuelles E2E PASS.
+- Grenzen: keine Änderung an CV-Parsing/PDF/RIS/ATS/Consent/Storage, Layout, Kartenpositionen oder „Dauerhaft gespeicherte Lebensläufe“; keine echten Daten.
+- Bericht: `docs/reports/JM-PROFILE-CV-STUDIO-SPOTLIGHT-12.md`.
+
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
 - Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
 - Status: **READY FOR CONTROLLED MERGE — SEARCH LOGIN AUTOHYDRATION VERIFIED**
