@@ -15506,6 +15506,297 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   text-shadow: 0 1px 3px rgba(0, 6, 14, 0.7);
 }
 
+/* JM-PROFILE-CV-STUDIO-SPOTLIGHT-12 — the CV studio is deliberately louder
+   than the regular information cards, while remaining a normal flow card. */
+.layout-profile-command .cv-builder-profiles {
+  position: relative;
+  isolation: isolate;
+  gap: clamp(14px, 2vw, 20px);
+  margin: 18px 0 0;
+  padding: clamp(18px, 2.5vw, 26px);
+  overflow: hidden;
+  border: 2px solid rgba(34, 211, 238, 0.76);
+  border-radius: 22px;
+  background:
+    linear-gradient(112deg, rgba(255, 255, 255, 0.34) 0%, transparent 24%),
+    radial-gradient(circle at 7% 0%, rgba(34, 211, 238, 0.20), transparent 43%),
+    linear-gradient(145deg, rgba(247, 253, 254, 0.98), rgba(205, 237, 245, 0.92) 52%, rgba(226, 248, 252, 0.96));
+  box-shadow:
+    0 22px 46px rgba(2, 20, 35, 0.30),
+    0 0 34px rgba(34, 211, 238, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -1px 0 rgba(34, 211, 238, 0.16);
+}
+
+.layout-profile-command .cv-builder-profiles::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(118deg, transparent 20%, rgba(255, 255, 255, 0.38) 38%, transparent 54%);
+}
+
+.layout-profile-command .cv-builder-profiles > * {
+  position: relative;
+  z-index: 1;
+}
+
+.layout-profile-command .cv-builder-profiles__studio-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.layout-profile-command .cv-builder-profiles__studio-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid rgba(34, 211, 238, 0.56);
+  border-radius: 999px;
+  background: linear-gradient(130deg, rgba(8, 47, 73, 0.94), rgba(14, 116, 144, 0.82));
+  color: #dffbff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  box-shadow:
+    0 4px 12px rgba(8, 47, 73, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.layout-profile-command .cv-builder-profiles__doc-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 46px;
+  height: 52px;
+  border: 1px solid rgba(34, 211, 238, 0.46);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(190, 231, 241, 0.82)),
+    rgba(255, 255, 255, 0.8);
+  color: #0e7490;
+  box-shadow:
+    0 8px 18px rgba(8, 47, 73, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 0 18px rgba(34, 211, 238, 0.12);
+}
+
+.layout-profile-command .cv-builder-profiles__head {
+  align-items: center;
+  gap: 18px;
+}
+
+.layout-profile-command .cv-builder-profiles__heading {
+  min-width: 0;
+}
+
+.layout-profile-command .cv-builder-profiles__head h3 {
+  color: #082f3d;
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+  letter-spacing: -0.02em;
+}
+
+.layout-profile-command .cv-builder-profiles__head p {
+  max-width: 68ch;
+  color: #285868;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.layout-profile-command .cv-builder-profiles__session {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 7px;
+  padding: 4px 9px;
+  border: 1px solid rgba(14, 165, 233, 0.26);
+  border-radius: 999px;
+  background: rgba(224, 249, 255, 0.72);
+  color: #075985;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.layout-profile-command .cv-builder-profiles__create-actions {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.layout-profile-command .cv-builder-profiles__create-actions .btn-ghost {
+  border-color: rgba(14, 165, 233, 0.24);
+  background: rgba(255, 255, 255, 0.56);
+  color: #164e63;
+}
+
+.layout-profile-command .cv-builder-profiles__create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid rgba(103, 232, 249, 0.82);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0e7490 0%, #0891b2 48%, #22d3ee 100%);
+  color: #031c26;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  box-shadow:
+    0 12px 26px rgba(8, 145, 178, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -1px 0 rgba(3, 28, 38, 0.18);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.layout-profile-command .cv-builder-profiles__create:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.06) brightness(1.03);
+  box-shadow:
+    0 16px 30px rgba(8, 145, 178, 0.34),
+    0 0 24px rgba(34, 211, 238, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.64);
+}
+
+.layout-profile-command .cv-builder-profiles__create:focus-visible {
+  outline: 3px solid #0891b2;
+  outline-offset: 3px;
+}
+
+.layout-profile-command .cv-builder-profiles__create-spark,
+.layout-profile-command .cv-builder-profiles__create-arrow {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.layout-profile-command .cv-builder-profiles__create-arrow {
+  transition: transform 180ms ease;
+}
+
+.layout-profile-command .cv-builder-profiles__create:hover .cv-builder-profiles__create-arrow {
+  transform: translateX(2px);
+}
+
+.layout-profile-command .cv-builder-profiles__empty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: clamp(18px, 2.5vw, 28px);
+  border: 1px solid rgba(34, 211, 238, 0.30);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.76), rgba(228, 249, 253, 0.78)),
+    rgba(255, 255, 255, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 8px 20px rgba(8, 47, 73, 0.07);
+}
+
+.layout-profile-command .cv-builder-profiles__empty-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 58px;
+  height: 66px;
+  border: 1px solid rgba(34, 211, 238, 0.38);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(203, 239, 247, 0.86));
+  color: #0e7490;
+  box-shadow:
+    0 8px 18px rgba(8, 47, 73, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.98);
+}
+
+.layout-profile-command .cv-builder-profiles__empty strong {
+  display: block;
+  color: #083344;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.layout-profile-command .cv-builder-profiles__empty p {
+  margin: 5px 0 0;
+  color: #285868;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.layout-profile-command .cv-builder-profiles__item {
+  border: 1px solid rgba(14, 165, 233, 0.24);
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(237, 251, 254, 0.88));
+  box-shadow: 0 6px 16px rgba(8, 47, 73, 0.06);
+}
+
+.layout-profile-command .cv-builder-profiles__item.active {
+  border-color: rgba(34, 211, 238, 0.72);
+  box-shadow:
+    0 0 0 2px rgba(34, 211, 238, 0.18),
+    0 8px 20px rgba(8, 47, 73, 0.10);
+}
+
+.layout-profile-command .cv-builder-profiles__list {
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .layout-profile-command .cv-builder-profiles {
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .layout-profile-command .cv-builder-profiles__head {
+    align-items: flex-start;
+  }
+
+  .layout-profile-command .cv-builder-profiles__create-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .layout-profile-command .cv-builder-profiles__create-actions .btn-ghost {
+    flex: 1 1 auto;
+  }
+
+  .layout-profile-command .cv-builder-profiles__create {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .layout-profile-command .cv-builder-profiles__doc-icon {
+    width: 40px;
+    height: 46px;
+  }
+
+  .layout-profile-command .cv-builder-profiles__empty {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .layout-profile-command .cv-builder-profiles__empty-icon {
+    width: 48px;
+    height: 56px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layout-profile-command .cv-builder-profiles__create,
+  .layout-profile-command .cv-builder-profiles__create-arrow,
+  .layout-profile-command .cv-builder-profiles__item {
+    transition: none;
+  }
+}
+
 @media (max-width: 767px) {
   .container.layout-dashboard.layout-profile-command {
     padding-top: 16px;
