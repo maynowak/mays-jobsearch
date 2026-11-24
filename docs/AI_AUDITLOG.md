@@ -1,3 +1,33 @@
+2026-11-24 · JM-UI-CONSOLIDATED-MAIN-RELEASE-01 — INTEGRATION READY
+- Typ: Multi-Feature-Integration, Konfliktauflösung, gemeinsame Regression
+- Status: **READY FOR CONTROLLED MERGE**
+- Branch: `integration/jm-ui-consolidated-release-01`; Basis `origin/main` `3579ade`; alle sechs Feature-Branches gemerged, Original-Branches unverändert.
+- Merges: 01 `4eba9cc`→`b64edea`; 02 `913b4f3`→`31dab67` (enthält Visual-11); 03 `076957e`→`f716cf7`; 04 `1006be1`→`eac38ef`; 05 `1abe3b9`→`f2af08e`; 06 `eb6cf6a`→`a1d2626`; Audit-Marker-Cleanup `d6bb7b6`.
+- Konflikte nur in `package.json` und `docs/AI_AUDITLOG.md`, manuell mit vollständiger Erhaltung aller E2E-Skripte und Audit-Einträge gelöst; kein pauschales ours/theirs. Responsive-Override bleibt nach der Sticky-Profilregel wirksam; Glass-Navbar, Silver/Cyan-Profil, CV Studio, Privacy-Disclosure, Hydration, Radar und Application-Fix gemeinsam vorhanden.
+- Tests/E2E: fokussiert **128 PASS**; volle Suite **2048 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS. Browser-E2E für Applications responsiv, CV Studio, Glass Navbar, Privacy, Match Radar inkl. Mobile/A11y, Login-Hydration, Application Draft und Visual-11 alle PASS; aktualisierte Screenshots committed.
+- Grenzen: keine neuen Implementierungen, keine RIS/AWS/Terraform/Cognito/Consent/Storage-Änderung, kein Force-Push/Branch-Löschung, kein Deployment in diesem Schritt.
+- Bericht: `docs/reports/JM-UI-CONSOLIDATED-MAIN-RELEASE-01.md`.
+
+2026-11-24 · JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01 — STACKED APPLICATIONS NAVIGATION
+- Typ: Profil-Responsive-Fix, CSS-Spezifitätskonflikt, Scroll-/Overlap-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `fix/jm-profile-applications-responsive-fix-01`; Implementierung `e4aa74e`; Basis `origin/main` `3579ade`; kein Main-Merge, kein Deployment.
+- Ursache: Die spätere `.layout-profile-command .dashboard-v2__navigation-card`-Regel setzte innerhalb der einspaltigen Applications-Ansicht bei ≤980px wieder `position: sticky` und konnte Inhalte überlagern.
+- Fix: Scoped Override `.layout-profile-command .dashboard-v2--applications .dashboard-v2__navigation-card { position: static; top: auto; }` bei `max-width:980px`; Desktop bleibt sticky/breit, andere Profilbereiche unverändert.
+- E2E: 1440/1024 sticky, 980/900/768 static, 390 mobile switcher/hidden; top/middle/bottom ohne Overlap, 0 Overflow, Filter/Aktionen erreichbar, Navigation zwischen Einstellungen/Bewerbungen PASS. 18 Screenshots committed.
+- Tests: fokussiert **56 PASS**; Build/Diff/Secret-Scan PASS. Keine Daten-/RIS-/Consent-/Bewerbungslogikänderung.
+- Bericht: `docs/reports/JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01.md`.
+
+2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-03 — CONTROLLED MAIN MERGE & PRODUCTION E2E
+- Typ: Release, PR-Merge, Vercel Production, authentifizierter RIS-E2E, Cleanup
+- Status: **PRODUCTION E2E VERIFIED**
+- Merge: PR [#58](https://github.com/maynowak/mays-jobsearch/pull/58) als `3579ade12a1b6712cd0a09e8e06acf8a4ddb2e58`; Feature-Head `b0ce857`; Basis `91f92a4`; kein Force-Push/Branch-Löschung.
+- Production: automatische Vercel-Deployments `mays-jobsearch` `dpl_4kSWT79fa48jST8DuXDQpkZ1C87M` und `mays-job-matcher` `dpl_8YJ8m2FoHvFWsBmNJFmcr8jGUAYD`, beide READY; Footer `production · main · 3579ade`; `/`, `/profil`, `/profil?tab=applications`, `/anmelden` 200; keine Console-Fehler/Overflow.
+- Live-E2E per bestehendem authentifiziertem CDP-Tab (keine Token-Kopie): Remote-RIS-Modus; manueller Entwurf mit leerem Standort/URL, Company `OpenCode Synthetic QA`; BFF-Create 2xx/201; `applicationId` `cb467798-dcf2-4ce0-88b6-fa6bcc0356c1`, Job-ID `manual:59d996d5-d008-4880-8754-afe3893aca0b`; Status `draft`, `location []`, keine URL; nach Reload derselbe RIS-Datensatz; kein Duplikat; 0 AI/ATS/Profile/Cover-Letter-Calls; UI-Delete 200; danach 0 Bewerbungen, synthetischer Datensatz entfernt.
+- RIS akzeptierte den leeren manuellen Standort ohne 422; keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-Mutation oder neue Credentials.
+- Doku: dieser Release-Report und Auditlog auf separatem Docs-Branch; kein zusätzlicher Main-Push.
+- Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RELEASE-03.md`.
+
 2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-GATE-02 — CONTROLLED PR READINESS
 - Typ: Release-Gate, PR #58, Scope-/Contract-/Idempotenz-Prüfung, Production-Grenze
 - Status: **READY FOR CONTROLLED MERGE**; Live: **PRODUCTION E2E NOT VERIFIED**
@@ -20,6 +50,56 @@
 - Tests: fokussiert **120 PASS**; serielle Vollsuite **2038 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS. Browser-E2E synthetisch: erster Create 503 → Text bleibt → Retry mit gleichem Key → Create/List/Reload; keine AI/ATS/Profile-Aufrufe.
 - Live-Grenze: Vorhandener authentifizierter Chromium-Tab per CDP geprüft (keine Token-Kopie, kein neuer Tab); Remote-RIS-Modus aktiv. Production-Footer zeigte Build `1abe3b9` (Radar-Branch) ohne Fix `c5f35ef`, daher kein Production-Write. Mock-BFF-E2E plus BFF-/API-Tests decken den Fixpfad; Live-Verifikation braucht einen Deployment-Build mit `c5f35ef` und freigegebene synthetische Identität. Falls RIS leeren String ablehnt, wäre eine separate RIS-Vertragsänderung erforderlich; keine RIS/AWS/Consent-Änderung vorgenommen.
 - Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RECOVERY-01.md`.
+
+2026-11-23 · JM-PROFILE-CV-STUDIO-SPOTLIGHT-12 — PREMIUM CV STUDIO
+- Typ: Profil-Visual, Premium-CV-Studio-Karte, Empty/Filled State, responsive Browser-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-profile-cv-studio-spotlight-12`; Implementierung `7f03a8f`; Designbasis `feature/jm-profile-visual-11` `ed5c461`; kein Main-Merge, kein Deployment.
+- Umsetzung: `CvBuilderProfileList` mit Silber-Cyan-Glass-Fläche, 2px Cyan-Rahmen, Glow/Metallreflex, Studio-Badge, Dokument-Icon, Session-Kennzeichnung und Premium-CTA „✦ Neuen Lebenslauf gestalten →“. Empty State mit ruhigem Dokument-Symbol statt gestricheltem Standardrahmen; bestehende Aktionen/Handler und „Bestehenden Entwurf übernehmen“ unverändert. Styles nur unter `.layout-profile-command .cv-builder-profiles`; Reduced Motion deaktiviert Übergänge.
+- Visuell: Empty State 1920/1440/768/390, Filled State 1440/390; 2px Cyan-Rahmen + Glow, 48px-CTA, Badge/Session/Icon; 0 Overflow; Screenshots committed unter `docs/reports/assets/JM-PROFILE-CV-STUDIO-SPOTLIGHT-12/`.
+- Tests: CvBuilderProfileList **4/4 PASS**; serielle Vollsuite **2030 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; visuelles E2E PASS.
+- Grenzen: keine Änderung an CV-Parsing/PDF/RIS/ATS/Consent/Storage, Layout, Kartenpositionen oder „Dauerhaft gespeicherte Lebensläufe“; keine echten Daten.
+- Bericht: `docs/reports/JM-PROFILE-CV-STUDIO-SPOTLIGHT-12.md`.
+
+2026-11-22 · JM-PROFILE-NAVBAR-GLASS-01 — PROFILE NAVBAR ALIGNED TO SEARCH
+- Typ: Profil-Navigation, bestehende Glass-Navbar, responsive Visual-/Scroll-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-profile-navbar-glass-01`; Implementierung `c68b919`; Basis `origin/main` `91f92a4`; kein Main-Merge, kein Deployment.
+- Umsetzung: `App.tsx` aktiviert den bestehenden `glass`-Prop auf allen Profil-Navbar-Instanzen; keine zweite Navbar und keine Änderung der Suchseiten-Navbar. Profil erhält mobil/tablet mehr Abstand unter der schwebenden Pille; Bewerbungsverwaltung behält `position: relative`.
+- Visuell: 1920/1440 Navbar 1180×62 px, 768 721,9×62 px, 390 366,6×62 px; Position/Breite/Radius/Transparenz/Blur/Innenabstände identisch zu `/search`; Header-Abstand 20/20/16/12 px; 0 Overflow. Navigation Profil↔Suche, aktive Links, Mobile-Menü/Escape, Scroll-Ausblenden und Applications-Scroll geprüft.
+- Tests: fokussiert **124 PASS**; serielle Vollsuite **2029 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; visuelles E2E PASS.
+- Grenzen: keine Änderung an Suchseiten-Design, Navigation, Logout, Mobile-Menü, RIS/AWS/Cognito/Consent/Storage; keine echten Daten.
+- Bericht: `docs/reports/JM-PROFILE-NAVBAR-GLASS-01.md`.
+
+2026-11-22 · JM-CV-UPLOAD-PRIVACY-INFO-05 — COMPACT PRIVACY DISCLOSURE
+- Typ: CV-Upload-Datenschutzhinweis, natives Disclosure, Glass-UI, A11y/Visual E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-cv-upload-privacy-info-05`; Implementierung `afdb6b0`; Basis `origin/main` `91f92a4`; kein Main-Merge, kein Deployment.
+- Umsetzung: `<p className="cv-privacy">` durch natives `<details>/<summary>` ersetzt, standardmäßig geschlossen, 44px-Summary, Icon/Chevron `aria-hidden`, Klick/Enter/Space und Screenreader-Semantik über das native Element. Titel DE „Datenschutz & KI-Verarbeitung“ / EN „Privacy & AI processing“ via i18n; `cv.privacyNote` in beiden Sprachen unverändert. Glass-Design im normalen Fluss, keine Überdeckung des Uploadfeldes.
+- Tests: CvUpload-Komponententest **3 PASS**; fokussiert **103 PASS**; serielle Vollsuite **2032 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS. Visuelles Chromium-E2E 1440/390: geschlossen/offen, Summary 44px, 0 Overflow, keine Überdeckung, Enter öffnet.
+- Grenzen: keine Änderung an Datenschutztexten, Consent, CV-Verarbeitung, RIS/AWS/Cognito, ATS, Login-Hydration oder UX-08A; keine echten Daten.
+- Bericht: `docs/reports/JM-CV-UPLOAD-PRIVACY-INFO-05.md`.
+
+2026-11-23 · JM-SEARCH-MATCH-RADAR-01 — ACCESSIBILITY CORRECTION
+- Typ: A11y-Korrektur, Hover-Labels, mobiles Trefferpanel, Fokus-Rückkehr
+- Status: **READY FOR CONTROLLED MERGE REVIEW**
+- Branch: `feature/jm-search-match-radar-01`; Korrektur auf dem bestehenden Radar-Commit; kein Main-Merge, kein Deployment.
+- Problem/Korrektur: Die dekorativen, klickbaren Hover-Titel lagen als `<button>` in `aria-hidden="true"`. Sie sind jetzt nicht fokussierbare `<span>`-Elemente (Mausklick bleibt); die 20 Radar-Marker bleiben echte, per Tastatur und Screenreader bedienbare `<button>`-Elemente mit `aria-label`/`aria-current`. Keine automatische Fokussetzung.
+- Mobile: Escape schließt das Trefferpanel und setzt den Fokus auf den Auslöser zurück; Treffer-Klick schließt ebenfalls mit sinnvoller Fokus-Rückkehr. Neuer Komponententest und Browser-E2E für 390/768 px.
+- Tests: fokussiert **38 PASS**; serielle Vollsuite **2041 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS; Browser-E2E inkl. Label-/Marker-A11y und Escape-Fokus erneut PASS.
+- Grenzen: unverändertes Hover-/Radar-Design, keine Such-/KI-/ATS-Anfragen, keine RIS/AWS/Cognito/Consent/Storage-Änderung; keine echten Daten.
+
+2026-11-23 · JM-SEARCH-MATCH-RADAR-01 — FLOATING RESULT RADAR
+- Typ: Suchseiten-Navigation, Match-Radar, Hover-Labels, Wheel/Tastatur/Mobile, Browser-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-search-match-radar-01`; Implementierung `999ac04`; Basis `origin/main` `91f92a4`; kein Main-Merge, kein Deployment.
+- Umsetzung: `MatchRadar` als feste Cyan-Glass-Schiene rechts neben dem nativen Scrollbalken; Markierungen aus echten relativen Kartenpositionen im `#matches`-Bereich, nicht aus Index-Gleichverteilung. Hover zeigt max. 5 kollisionsfreie Titel mit Lichtpunkten/Linien; Klick/Wheel scrollen zur Karte mit Navbar-Abstand. Collapsed-Listen werden bei Radar-Aktivierung erweitert und neu gemessen; neue Suchergebnisse ersetzen die Einträge. Mobile ≤900px erhält eine per Button öffnende Trefferübersicht; Reduced Motion und Fokusindikatoren berücksichtigt.
+- Stabilisierung: `data-radar-job-id/title` an MatchCard und RemainingCard; Scroll-Sync markiert den aktuellen Treffer; normales Scrollen außerhalb der Schiene bleibt unverändert; mobile Radar-Schaltfläche oberhalb von „Nach oben“ positioniert.
+- Browser-E2E `jm-search-match-radar-01`: 20 Jobs, 20 Marker, Positions-/Reihenfolgeprüfung, Klick, Wheel vor/zurück, Hover 1–5 Labels ohne Überlappung, Collapse-Aktivierung, neue Suche, normales Scrollen; 0 AI/ATS/Profile-Aufrufe, 0 Overflow; 1920/1440/768/390 Screenshots.
+- Tests: fokussiert **37 PASS**; serielle Vollsuite **2040 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS.
+- Grenzen: keine neuen Such-/KI-/ATS-Anfragen, keine RIS/AWS/Cognito/Consent/Storage-Änderung; keine echten Daten.
+- Bericht: `docs/reports/JM-SEARCH-MATCH-RADAR-01.md`.
+
 
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
 - Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
@@ -7465,3 +7545,16 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   needs approval, no infrastructure rate limiter. No RIS/AWS/Terraform change,
   no production endpoint activation, no raw CV/token logging.
 - Report: `docs/reports/JM-RIS-CV-ATS-API-02-SECURE-FOUNDATION.md`.
+
+## 2026-11-22 — JM-PROFILE-VISUAL-11 — CYAN GLOW CARDS / BRIGHTER PROFILE / SILVER GLASS HEADER
+
+**Status:** `READY FOR VISUAL REVIEW`
+
+- Branch `feature/jm-profile-visual-11` von `origin/main` `91f92a4`; kein Main-Merge, kein Production-Deployment.
+- Scope: ausschließlich `.layout-profile-command` in `src/styles.css`, fokussierter CSS-Test, visueller E2E und Dokumentation. Keine RIS-, AWS-, Cognito-, Consent-, CV-, ATS-, Storage- oder Backend-Änderung.
+- Karten: äußere Profilkarten erhalten 2px Cyan-Rahmen, dezenten Cyan-Glow und Glas-Highlight; linke Navigation bleibt mit 1px dezenter. Keine neuen Rahmen um innere Eingabefelder; bestehende Fokusindikatoren unverändert.
+- Hintergrund: Marineblau bleibt, mittlerer Bereich wird über `#0a3a50` und Cyan-Reflexe sichtbar heller. Linke/rechte AI-Bildassets, Größe, Position, Maskierung und Animation unverändert.
+- Header: silbrig-metallischer Glass-Verlauf links, weicher Übergang zu dunklem Petrol rechts, subtiler Lichtreflex; Globus/Waves-Assets und Header-Geometrie unverändert.
+- Tests: `ProfileCommandCenter.test.tsx` 6/6 PASS; visueller E2E 1920/1440/768/390 plus Hilfe, Lebenslauf, Bewerbungen, Einstellungen PASS; Reduced Motion PASS; 0 horizontaler Overflow; Build PASS (1,44 s); Vollsuite **2030 PASS / 11 skipped**; `git diff --check` PASS.
+- AI-/Privacy-/Data-Flow: keine neuen Datenflüsse, Speicherorte, Berechtigungen oder Credentials; rein visuelle CSS-Änderung.
+- Evidence: `docs/reports/assets/JM-PROFILE-VISUAL-11/`; Report `docs/reports/JM-PROFILE-VISUAL-11.md`.

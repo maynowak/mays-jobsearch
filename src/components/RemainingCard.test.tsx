@@ -545,3 +545,13 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(onGenerateLetter).toHaveBeenCalledWith(job, "");
   });
 });
+describe("RemainingCard - Match Radar identity", () => {
+  afterEach(() => cleanup());
+
+  it("exposes the stable job slug and title for the result radar", () => {
+    const { container } = renderWithProvider(createTestJob());
+    const card = container.querySelector("[data-radar-job-id]");
+    expect(card).toHaveAttribute("data-radar-job-id", "test-job");
+    expect(card).toHaveAttribute("data-radar-job-title", "Software Engineer");
+  });
+});

@@ -3,6 +3,7 @@ import type { Job, Match } from "../types";
 import { computeRemainingJobs } from "../lib/jobPool";
 import MatchCard from "./MatchCard";
 import RemainingCard from "./RemainingCard";
+import MatchRadar from "./MatchRadar";
 import { useLang } from "../i18n";
 
 const INITIAL_MATCHES = 5;
@@ -37,6 +38,12 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
 
   const hasMore = matches.length > INITIAL_MATCHES;
   const visible = hasMore && !expanded ? matches.slice(0, INITIAL_MATCHES) : matches;
+  const radarKey = [
+    matches.map((match) => match.job?.slug ?? "").join("|"),
+    remainingJobs.map((job) => job.slug).join("|"),
+    expanded ? "expanded" : "collapsed",
+    moreOpen ? "more-open" : "more-closed",
+  ].join("::");
 
   const heading =
     matches.length > 0
@@ -95,6 +102,16 @@ export default function Results({ matches, foundJobs, onGenerateLetter, onAtsEva
             );
           })}
         </ol>
+      )}
+
+      {(matches.length > 0 || remainingJobs.length > 0) && (
+        <MatchRadar
+          radarKey={radarKey}
+          onActivate={() => {
+            setExpanded(true);
+            setMoreOpen(true);
+          }}
+        />
       )}
 
       {remainingJobs.length > 0 && (

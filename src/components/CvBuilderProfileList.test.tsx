@@ -95,13 +95,16 @@ describe("CvBuilderProfileList", () => {
       </LangProvider>
     );
     expect(screen.getByText("My CVs")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Create new CV/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Design a new CV/ })).toBeInTheDocument();
   });
 
   it("shows empty state and creates a new profile", () => {
     const callbacks = renderList({ profiles: [], canAdoptDraft: false });
+    expect(screen.getByText("CV Studio")).toBeInTheDocument();
+    expect(screen.getAllByText("Nur für diese Sitzung").length).toBeGreaterThan(0);
+    expect(screen.getByText("Dein erster Entwurf wartet")).toBeInTheDocument();
     expect(screen.getByText("In dieser Sitzung wurde noch kein Lebenslauf erstellt.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Neuen Lebenslauf erstellen/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Neuen Lebenslauf gestalten/ }));
     expect(callbacks.onCreate).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("button", { name: "Bestehenden Entwurf übernehmen" })).toBeNull();
   });
