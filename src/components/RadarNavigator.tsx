@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
 } from "react";
 import {
   activeNavigatorTargetId,
@@ -57,6 +56,7 @@ export default function RadarNavigator({
   panelId,
   enabled = true,
 }: RadarNavigatorProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
   const mobileToggleRef = useRef<HTMLButtonElement>(null);
   const targetsRef = useRef(targets);
@@ -74,6 +74,7 @@ export default function RadarNavigator({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const navigationOverrideRef = useRef<{ id: string; until: number } | null>(null);
+  const wheelHandlerRef = useRef<(event: WheelEvent) => void>(() => undefined);
 
   const targetSignature = useMemo(() => navigatorTargetSignature(targets), [targets]);
   const resolvedPanelId = panelId ?? `${classNamePrefix}-panel`;
@@ -234,7 +235,7 @@ export default function RadarNavigator({
     setActiveId(nearest.id);
   };
 
-  const onWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
+  wheelHandlerRef.current = (event: WheelEvent) => {
     if (!pointerInside || panelOpen || items.length === 0) return;
     event.preventDefault();
     const current = items.findIndex((item) => item.id === (hoveredId ?? activeId));
@@ -246,6 +247,16 @@ export default function RadarNavigator({
     setActiveId(next.id);
     void navigateTo(next);
   };
+
+  useEffect(() => {
+    if (!enabled || !rootRef.current) return;
+    const root = rootRef.current;
+    const onWheel = (event: WheelEvent) => wheelHandlerRef.current(event);
+    // React's delegated wheel listener is passive. The radar needs a native
+    // non-passive listener so wheeling over the rail does not scroll the page.
+    root.addEventListener("wheel", onWheel, { passive: false });
+    return () => root.removeEventListener("wheel", onWheel);
+  }, [enabled]);
 
   const labelBaseId = hoveredId ?? activeId;
   const baseIndex = items.findIndex((item) => item.id === labelBaseId);
@@ -260,6 +271,7 @@ export default function RadarNavigator({
 
   return (
     <div
+      ref={rootRef}
       className={classNamePrefix}
       onPointerEnter={activate}
       onPointerMove={onPointerMove}
@@ -267,7 +279,6 @@ export default function RadarNavigator({
         setPointerInside(false);
         setHoveredId(null);
       }}
-      onWheel={onWheel}
     >
       <div
         ref={railRef}
