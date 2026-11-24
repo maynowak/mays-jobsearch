@@ -24,7 +24,9 @@ import { MAX_PERSISTENT_CVS } from "../lib/cvStorageApi";
 import { validateCvFile } from "../lib/cvFileValidation";
 import type { CvBuilderPdfRisStatus } from "../lib/useCvBuilderPdfRisStorage";
 import CvBuilderPreview from "./CvBuilderPreview";
-import CvBuilderScrollHands from "./CvBuilderScrollHands";
+import CvBuilderScrollHands, { type CvBuilderScrollHandsHandle } from "./CvBuilderScrollHands";
+import RadarNavigator, { type RadarNavigatorLabels } from "./RadarNavigator";
+import type { NavigatorTarget } from "../lib/navigation/radarNavigator";
 import type { CvBuilderImportReviewSummary } from "./CvBuilderImportReview";
 import {
   CV_BUILDER_TEMPLATES,
@@ -65,6 +67,17 @@ function fieldId(path: string): string {
   if (path === "skills" || path.startsWith("skills.")) return "cv-builder-field-skills";
   return `cv-builder-field-${path.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
+
+const EDITOR_SECTION_KEYS = [
+  "personal",
+  "profile",
+  "experience",
+  "education",
+  "skills",
+  "projects",
+  "certificates",
+  "languages",
+] as const;
 
 const ERROR_SECTION_BY_ROOT: Record<string, string> = {
   personal: "personal",
@@ -516,6 +529,7 @@ export default function CvBuilderEditor({
   const exportingRef = useRef(false);
   const savingPdfToRisRef = useRef(false);
   const addRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const scrollHandsRef = useRef<CvBuilderScrollHandsHandle | null>(null);
   const [focusAfterRemove, setFocusAfterRemove] = useState<string | null>(null);
   const [successDismissed, setSuccessDismissed] = useState(false);
   const savingRef = useRef(false);
@@ -532,6 +546,7 @@ export default function CvBuilderEditor({
   const [wideMode, setWideMode] = useState(false);
   const screenshotOpenStatesRef = useRef<boolean[]>([]);
   const [pendingErrorFocus, setPendingErrorFocus] = useState<string | null>(null);
+  const [radarFocusPath, setRadarFocusPath] = useState<string | null>(null);
   const fullpage = layoutMode === "fullpage";
   const errors = useMemo(() => validateCvBuilderDraft(draft), [draft]);
   const errorCount = errors.length;
@@ -543,6 +558,15 @@ export default function CvBuilderEditor({
     .join(", ");
   const sectionErrorCount = (section: string) =>
     errors.filter((error) => sectionForErrorPath(error.path) === section).length;
+  const errorSignature = errors.map((error) => `${error.path}:${error.code}`).join("|");
+  const firstErrorPathBySection = useMemo(() => {
+    const bySection = new Map<string, string>();
+    for (const error of errors) {
+      const section = sectionForErrorPath(error.path);
+      if (!bySection.has(section)) bySection.set(section, error.path);
+    }
+    return bySection;
+  }, [errorSignature]);
   const entryCount =
     draft.experience.length +
     draft.education.length +
@@ -550,6 +574,83 @@ export default function CvBuilderEditor({
     draft.certificates.length +
     draft.languages.length +
     draft.links.length;
+
+  const navigatorTargets = useMemo<NavigatorTarget[]>(() => {
+    if (!fullpage) return [];
+    const targets: NavigatorTarget[] = [];
+    for (const key of EDITOR_SECTION_KEYS) {
+      const count = sectionErrorCount(key);
+      const firstPath = firstErrorPathBySection.get(key);
+      const status: NavigatorTarget["status"] = count > 0 ? "warning" : "normal";
+      targets.push({
+        id: `cv-builder-section-${key}`,
+        title: t(`cvBuilder.section.${key}`),
+        kind: count > 0 ? "error" : "section",
+        status,
+        statusLabel: count > 0
+          ? (count === 1
+            ? t("cvBuilder.editorRadar.errorOne")
+            : t("cvBuilder.editorRadar.errors", { count }))
+          : t("cvBuilder.editorRadar.section"),
+        getElement: () => {
+          const workspace = document.querySelector<HTMLElement>(".cv-builder-workspace");
+          if (workspace?.dataset.view !== "edit") return null;
+          const section = document.getElementById(`cv-builder-${key}`);
+          if (!section) return null;
+          const details = section.querySelector("details");
+          if (count > 0 && firstPath && details instanceof HTMLDetailsElement && details.open) {
+            return document.getElementById(fieldId(firstPath)) ?? section;
+          }
+          return section;
+        },
+        activate: () => {
+          const details = document.querySelector<HTMLDetailsElement>(
+            `#cv-builder-${key} details`
+          );
+          if (details) details.open = true;
+          setMobileView("edit");
+          const section = document.getElementById(`cv-builder-${key}`);
+          section?.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true });
+          if (firstPath) setRadarFocusPath(firstPath);
+        },
+      });
+    }
+    if (errors.length > 0) {
+      targets.push({
+        id: "cv-builder-validation",
+        title: t("cvBuilder.editorRadar.validationTarget"),
+        kind: "error",
+        status: "warning",
+        statusLabel: errors.length === 1
+          ? t("cvBuilder.editorRadar.errorOne")
+          : t("cvBuilder.editorRadar.errors", { count: errors.length }),
+        getElement: () => document.getElementById("cv-builder-validation-summary"),
+        activate: () => document.getElementById("cv-builder-validation-summary")?.focus({ preventScroll: true }),
+      });
+    }
+    const actionsStatus: NavigatorTarget["status"] = errors.length > 0 ? "warning" : "completed";
+    targets.push({
+      id: "cv-builder-actions",
+      title: t("cvBuilder.editorRadar.actions"),
+      kind: "action",
+      status: actionsStatus,
+      statusLabel: errors.length > 0
+        ? t("cvBuilder.editorRadar.actionsBlocked")
+        : t("cvBuilder.editorRadar.actionsReady"),
+      getElement: () => document.getElementById("cv-builder-actions"),
+      activate: () => document.querySelector<HTMLElement>("#cv-builder-actions button")?.focus({ preventScroll: true }),
+    });
+    return targets;
+  }, [fullpage, t, errorSignature]);
+
+  const navigatorLabels: RadarNavigatorLabels = {
+    aria: t("cvBuilder.editorRadar.aria"),
+    open: t("cvBuilder.editorRadar.open"),
+    close: t("cvBuilder.editorRadar.close"),
+    overview: t("cvBuilder.editorRadar.overview"),
+    goTo: (title) => t("cvBuilder.editorRadar.goTo", { title }),
+    status: (status) => t(`cvBuilder.editorRadar.status.${status}`),
+  };
 
   useEffect(() => {
     if (!fullpage) {
@@ -602,6 +703,22 @@ export default function CvBuilderEditor({
     }, 0);
     return () => window.clearTimeout(timeout);
   }, [pendingErrorFocus]);
+
+  useEffect(() => {
+    if (!radarFocusPath) return;
+    const field = document.getElementById(fieldId(radarFocusPath));
+    if (!field) return;
+    field.focus?.({ preventScroll: true });
+    field.classList.add("cv-builder-field--radar-highlight");
+    const timeout = window.setTimeout(() => {
+      field.classList.remove("cv-builder-field--radar-highlight");
+      setRadarFocusPath(null);
+    }, 1_800);
+    return () => {
+      window.clearTimeout(timeout);
+      field.classList.remove("cv-builder-field--radar-highlight");
+    };
+  }, [radarFocusPath]);
 
   const goToFirstError = () => {
     const firstError = errors[0];
@@ -829,8 +946,23 @@ export default function CvBuilderEditor({
         if (event.target === event.currentTarget) requestClose();
       }}
     >
+      {fullpage && !screenshotMode && (
+        <RadarNavigator
+          targets={navigatorTargets}
+          labels={navigatorLabels}
+          navigationKey="cv-editor"
+          regionSelector="#cv-builder-editor-region"
+          offset={() => 24}
+          classNamePrefix="match-radar"
+          className="cv-editor-radar"
+          panelId="cv-editor-radar-panel"
+          restoreFocusAfterPanelNavigation={false}
+          onBeforeNavigate={() => scrollHandsRef.current?.stop()}
+        />
+      )}
       <div
         ref={dialogRef}
+        id={fullpage ? "cv-builder-editor-region" : undefined}
         className={`${fullpage ? "cv-builder-fullpage__box" : "modal-box cv-builder-modal__box"}${screenshotMode ? " cv-builder-modal__box--screenshot" : ""}`}
         role={fullpage ? "region" : "dialog"}
         aria-modal={fullpage ? undefined : true}
@@ -888,7 +1020,7 @@ export default function CvBuilderEditor({
         </div>
 
         {errorCount > 0 && (
-          <div className="cv-builder-validation-summary">
+          <div id="cv-builder-validation-summary" className="cv-builder-validation-summary" tabIndex={-1}>
             <p role="alert">{t("cvBuilder.validationSummary")}</p>
             <p>
               {t("cvBuilder.validationAffectedSections", {
@@ -1655,7 +1787,7 @@ export default function CvBuilderEditor({
           </div>
         </div>
 
-        <div className="cv-builder-footer">
+        <div id="cv-builder-actions" className="cv-builder-footer">
           <div className={`cv-builder-save-status${saveError ? " is-error" : ""}`} role="status" aria-live="polite">
             <span>
               {saving
@@ -1816,6 +1948,7 @@ export default function CvBuilderEditor({
       </div>
       {fullpage && !screenshotMode && (
         <CvBuilderScrollHands
+          ref={scrollHandsRef}
           topTargetSelector="#cv-builder-title"
           bottomTargetSelector=".cv-builder-footer > .cv-builder-footer__actions"
         />

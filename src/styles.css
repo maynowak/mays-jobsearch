@@ -16516,3 +16516,129 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     margin: 8px 0 0;
   }
 }
+
+/* JM-CV-EDITOR-NAVIGATOR-03 — fullpage editor radar.
+   The left side keeps the rail clear of the turbo hands and the preview pane
+   on the right. Mobile uses an in-flow trigger above the editor card. */
+.cv-editor-radar {
+  left: max(2px, env(safe-area-inset-left, 0px));
+  right: auto;
+}
+
+.cv-editor-radar .match-radar__labels {
+  right: auto;
+  left: 41px;
+}
+
+.cv-editor-radar .match-radar__label {
+  right: auto;
+  left: 0;
+  text-align: left;
+}
+
+.cv-editor-radar .match-radar__label::after {
+  right: auto;
+  left: -17px;
+}
+
+.cv-editor-radar .match-radar__marker--pending,
+.cv-editor-radar .match-radar__marker--warning {
+  border-color: rgba(251, 191, 36, 0.94);
+  background: rgba(92, 49, 7, 0.94);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.46);
+}
+
+.cv-editor-radar .match-radar__marker--pending > span,
+.cv-editor-radar .match-radar__marker--warning > span {
+  background: #fbbf24;
+  box-shadow: 0 0 9px rgba(245, 158, 11, 0.86);
+}
+
+.cv-editor-radar .match-radar__marker--error {
+  border-color: rgba(248, 113, 113, 0.98);
+  background: rgba(92, 17, 17, 0.96);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.58);
+}
+
+.cv-editor-radar .match-radar__marker--error > span {
+  background: #f87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.9);
+}
+
+.cv-editor-radar .match-radar__marker--completed {
+  border-color: rgba(94, 234, 212, 0.94);
+  background: rgba(4, 66, 59, 0.94);
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.42);
+}
+
+.cv-editor-radar .match-radar__marker--completed > span {
+  background: #5eead4;
+  box-shadow: 0 0 9px rgba(45, 212, 191, 0.8);
+}
+
+.cv-editor-radar .match-radar__panel button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cv-editor-radar .match-radar__panel-status {
+  flex: 0 0 auto;
+  color: #a5f3fc;
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.cv-editor-radar .match-radar__panel button[data-navigator-status="warning"] .match-radar__panel-status,
+.cv-editor-radar .match-radar__panel button[data-navigator-kind="error"] .match-radar__panel-status {
+  color: #fca5a5;
+}
+
+.cv-editor-radar .match-radar__panel button[data-navigator-status="completed"] .match-radar__panel-status {
+  color: #5eead4;
+}
+
+.cv-builder-field--radar-highlight {
+  outline: 3px solid #dc2626;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.16);
+}
+
+#cv-builder-validation-summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cv-builder-modal--screenshot .cv-editor-radar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .cv-editor-radar {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+    height: auto;
+    margin: 0 0 10px;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .cv-editor-radar .match-radar__mobile-toggle {
+    width: auto;
+    max-width: min(280px, calc(100vw - 24px));
+  }
+
+  .cv-editor-radar .match-radar__panel {
+    position: static;
+    right: auto;
+    bottom: auto;
+    width: calc(100% - 60px);
+    max-height: min(55vh, 460px);
+    margin: 8px 60px 0 0;
+  }
+}

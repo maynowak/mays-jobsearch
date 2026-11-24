@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 import { useLang } from "../i18n";
 
 type Direction = "up" | "down";
@@ -6,6 +6,10 @@ type Direction = "up" | "down";
 interface Props {
   topTargetSelector: string;
   bottomTargetSelector: string;
+}
+
+export interface CvBuilderScrollHandsHandle {
+  stop: () => void;
 }
 
 const DOWN_DELAY_MS = 400;
@@ -39,7 +43,10 @@ function targetScroll(direction: Direction, selector: string): number | null {
   return Math.max(0, target);
 }
 
-export default function CvBuilderScrollHands({ topTargetSelector, bottomTargetSelector }: Props) {
+const CvBuilderScrollHands = forwardRef<CvBuilderScrollHandsHandle, Props>(function CvBuilderScrollHands({
+  topTargetSelector,
+  bottomTargetSelector,
+}, ref) {
   const { t } = useLang();
   const rafRef = useRef<number | null>(null);
   const delayRef = useRef<number | null>(null);
@@ -65,6 +72,10 @@ export default function CvBuilderScrollHands({ topTargetSelector, bottomTargetSe
     directionRef.current = null;
     if (suppress && wasActive) suppressedRef.current = true;
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    stop: () => stopAnimation(true),
+  }), [stopAnimation]);
 
   const jumpTo = useCallback((direction: Direction) => {
     const selector = direction === "up" ? topTargetSelector : bottomTargetSelector;
@@ -217,4 +228,6 @@ export default function CvBuilderScrollHands({ topTargetSelector, bottomTargetSe
       </button>
     </div>
   );
-}
+});
+
+export default CvBuilderScrollHands;

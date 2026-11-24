@@ -383,6 +383,7 @@ export default function RadarNavigator({
                       target.kind ? `${classNamePrefix}__panel-item--${target.kind}` : "",
                     ].filter(Boolean).join(" ") || undefined}
                     data-navigator-panel-id={target.id}
+                    data-navigator-kind={target.kind}
                     data-navigator-status={target.status}
                     aria-label={[target.title, statusText].filter(Boolean).join(", ")}
                     onClick={() => {
