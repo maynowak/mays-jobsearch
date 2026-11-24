@@ -1,3 +1,14 @@
+2026-11-24 · JM-CV-IMPORT-NAVIGATOR-02 — CV IMPORT RADAR
+- Typ: Fullpage-Import-Navigation, Wiederverwendung CORE-01, Status-/Pagination-/Filter-Adapter, Accessibility/E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch: `feature/jm-cv-import-navigator-02`; Basis `origin/main` `53c9926`; Implementierung `4c4a4d4`; Branch gepusht; kein Main-Merge, kein Deployment.
+- Umsetzung: `RadarNavigator` ausschließlich in der Fullpage-Importvorschau; Ziele für Übersicht, Abschnitte, Prüfgruppe, alle 35+ Kandidaten mit stabilen IDs und Importentscheidung. Statusfarben Cyan/Amber/Türkis/Rot plus Status in Hover-, Panel- und ARIA-Text. Native non-passive Wheel-Steuerung aus CORE bleibt erhalten.
+- Pagination/Filter: Review-Forward-Ref `revealCandidate(index)` öffnet bei Bedarf die richtige Prüfseite, setzt Filter nur bei verborgenen Zielen zurück, zeigt einen verständlichen Status-Hinweis, fokussiert und highlightet den tatsächlichen Kandidaten; Entscheidungen/Texte bleiben erhalten. Keine erfundenen Markerpositionen für nicht gerenderte Elemente; mobile Übersicht deckt diese ab.
+- Tests: fokussiert **55 PASS** (7 neue Import-Navigator-Tests, bestehende Import-/Radar-/Core-Tests); Browser-E2E `jm-cv-import-navigator-02` PASS (14 Marker, 10 sichtbare Kandidaten, 5 Labels, Tastatur, Statuswechsel, Filter-Reset, 36 mobile Kandidaten, Seite 2, Screenshot-Modus, 1920/1440/768/390, 0 Overflow/Errors); bestehende Match-Radar-E2E und `cv-import-ux-07` PASS; Build/Diff/Secret-Scan PASS; Vollsuite **2078 PASS / 5 skipped** (201 Dateien).
+- Screenshots: `docs/reports/assets/JM-CV-IMPORT-NAVIGATOR-02/`.
+- Grenzen: keine RIS-/AWS-/Cognito-/Consent-/Storage-/Parser-/Editor-Änderung; kein Main-Merge/Deployment.
+- Bericht: `docs/reports/JM-CV-IMPORT-NAVIGATOR-02.md`.
+
 2026-11-24 · JM-CV-NAVIGATOR-CORE-01 — SHARED RADAR NAVIGATOR CORE
 - Typ: Refactoring, gemeinsamer Navigationskern, Adapterverträge, Regressionstests
 - Status: **READY FOR INTEGRATION REVIEW**
