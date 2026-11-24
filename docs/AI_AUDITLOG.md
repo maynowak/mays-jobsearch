@@ -1,3 +1,14 @@
+2026-11-24 · JM-CV-IMPORT-NAVIGATOR-02 — VISUAL POLISH & MAIN RELEASE
+- Typ: Fullpage-CV-Import-Navigation, responsiver Visual-Fix, PR-Merge, Vercel Production, Browser-Smoke
+- Status: **PRODUCTION VERIFIED**
+- Release: PR [#62](https://github.com/maynowak/mays-jobsearch/pull/62) `cdfcb13` → `main` `fbefde3`; Implementierung `4c4a4d4`, Responsive-Fix `0c06450`, Geometrie-E2E `cdfcb13`. Kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Umsetzung: Radar in Fullpage-Importvorschau; Ziele für Übersicht, Abschnitte, Prüfgruppe, stabile Kandidaten-IDs und Importentscheidung; Statusfarben plus Status in Hover-/Panel-/ARIA-Text; Pagination-/Filter-Adapter mit sichtbarem Reset-Hinweis, Fokus/Highlight und erhaltenen Entscheidungen. Native non-passive Wheel-Steuerung aus CORE bleibt.
+- Responsive-Fix: Mobile Trigger bei ≤900 px im normalen Fluss oberhalb der Importkarte statt über Karteninhalt; Desktop-Radar unverändert. E2E prüft Trigger-/Karten-Geometrie bei 390 und 768 px.
+- Tests: fokussiert **55 PASS**; serielle Vollsuite **2078 PASS / 5 skipped** (201 Dateien); Build/Diff/Secret-Scan PASS; Import-Radar-E2E, bestehende Match-Radar-E2E und `cv-import-ux-07` PASS; PR-CodeQL und Vercel-Checks PASS.
+- Production: `mays-job-matcher` `dpl_GQRomYabfcZ4U59adhDUhdc6YaND`, `mays-jobsearch` `dpl_B5FsfhG3QztENvq3bMujuP4HzrVg`, beide Ready; beide Domains `/cv-builder/workspace` 200 und Bundle/Footer `fbefde3`. Synthetischer Smoke beider Domains: 14 Desktop-Marker, 10 sichtbare Kandidaten, 5 Labels, Tastatur, Statuswechsel, Entscheidungsfokus, Mobile 390 ohne Overlap, Kandidat 12 auf Seite 2, Filter-Reset, Screenshot-Modus, Tablet 768 ohne Overlap, 0 Console-/Page-Errors, 0 unerwartete API-Calls. Keine echten KI-/CV-/RIS-Daten.
+- Grenzen: keine CV-Editor-/RIS-/AWS-/Cognito-/Consent-/Storage-/Parser-Änderung; Release-Bericht/Audit nur auf Docs-Branch.
+- Bericht: `docs/reports/JM-CV-IMPORT-NAVIGATOR-02-RELEASE.md`; Screenshots unter `docs/reports/assets/JM-CV-IMPORT-NAVIGATOR-02-RELEASE/`.
+
 2026-11-24 · JM-CV-IMPORT-NAVIGATOR-02 — CV IMPORT RADAR
 - Typ: Fullpage-Import-Navigation, Wiederverwendung CORE-01, Status-/Pagination-/Filter-Adapter, Accessibility/E2E
 - Status: **READY FOR VISUAL REVIEW**
