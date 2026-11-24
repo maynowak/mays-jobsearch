@@ -11,6 +11,7 @@ export interface NavigatorTarget {
   title: string;
   kind?: NavigatorTargetKind;
   status?: NavigatorTargetStatus;
+  statusLabel?: string;
   element?: HTMLElement | null;
   getElement?: () => HTMLElement | null;
   activate?: () => void | Promise<void>;

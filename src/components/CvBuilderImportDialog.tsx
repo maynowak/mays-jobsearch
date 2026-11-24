@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type { PersistentCv } from "../lib/cvStorageApi";
 import { validateCvFile } from "../lib/cvFileValidation";
@@ -16,9 +16,12 @@ import {
 import MayHelp from "./MayHelp";
 import CvBuilderImportReview, {
   CvBuilderImportSummary,
+  type CvBuilderImportReviewHandle,
   type CvBuilderImportReviewSummary,
   type ManualReviewDecision,
 } from "./CvBuilderImportReview";
+import RadarNavigator, { type RadarNavigatorLabels } from "./RadarNavigator";
+import type { NavigatorTarget } from "../lib/navigation/radarNavigator";
 import type { CvBuilderImportSession } from "../lib/cvBuilder/workspaceHandoff";
 
 interface Props {
@@ -71,6 +74,7 @@ export default function CvBuilderImportDialog({
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const decisionPanelRef = useRef<HTMLElement | null>(null);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
+  const reviewRef = useRef<CvBuilderImportReviewHandle | null>(null);
   const hydratedHandoffRef = useRef(false);
   const screenshotDetailsRef = useRef<boolean[]>([]);
   const onSessionChangeRef = useRef(onSessionChange);
@@ -322,6 +326,99 @@ export default function CvBuilderImportDialog({
 
   const pendingReviewCount = Object.values(manualDecisions)
     .filter((decision) => decision.status === "pending").length;
+  const uncertainReviewCount = result
+    ? result.unrecognizedDetails.filter((detail) =>
+        detail.reason === "ambiguous" || detail.reason.startsWith("incomplete-")
+      ).length
+    : 0;
+
+  const navigatorTargets = useMemo<NavigatorTarget[]>(() => {
+    if (!fullpage || step !== "preview" || !result) return [];
+    const targets: NavigatorTarget[] = [{
+      id: "cv-import-overview",
+      title: t("cvBuilder.import.navigator.overviewTarget"),
+      kind: "section",
+      getElement: () => document.getElementById("cv-import-overview"),
+      activate: () => document.getElementById("cv-import-overview-title")?.focus({ preventScroll: true }),
+    }];
+    CV_BUILDER_IMPORT_SECTIONS
+      .filter((section) => hasCvBuilderImportContent(result, section))
+      .forEach((section) => {
+        const uncertain = result.uncertain[section];
+        targets.push({
+          id: `cv-import-section-${section}`,
+          title: t(`cvBuilder.import.section.${section}`),
+          kind: "section",
+          status: uncertain ? "warning" : "normal",
+          statusLabel: uncertain
+            ? t("cvBuilder.import.navigator.status.review")
+            : t("cvBuilder.import.navigator.status.detected"),
+          getElement: () => document.getElementById(`cv-import-section-${section}`),
+          activate: () => {
+            const details = document.querySelector<HTMLDetailsElement>(
+              `#cv-import-section-${section} details`
+            );
+            if (details) details.open = true;
+          },
+        });
+      });
+    const reviewStatus = pendingReviewCount > 0 || uncertainReviewCount > 0 ? "warning" : "completed";
+    targets.push({
+      id: "cv-import-review",
+      title: pendingReviewCount > 0
+        ? t("cvBuilder.import.navigator.reviewPending", { count: pendingReviewCount })
+        : uncertainReviewCount > 0
+          ? t("cvBuilder.import.navigator.reviewUncertain", { count: uncertainReviewCount })
+          : t("cvBuilder.import.navigator.review"),
+      kind: "review",
+      status: reviewStatus,
+      statusLabel: reviewStatus === "warning"
+        ? t("cvBuilder.import.navigator.status.review")
+        : t("cvBuilder.import.navigator.status.completed"),
+      getElement: () => document.getElementById("cv-import-review-title"),
+      activate: () => document.getElementById("cv-import-review-title")?.focus({ preventScroll: true }),
+    });
+    result.unrecognized.forEach((_line, index) => {
+      const decision = manualDecisions[index];
+      const detail = result.unrecognizedDetails[index];
+      const decided = decision?.status ?? "pending";
+      const uncertain = detail?.reason === "ambiguous" || detail?.reason?.startsWith("incomplete-") === true;
+      const status = decided === "pending" ? "pending" : "completed";
+      const statusLabel = decided === "accepted"
+        ? t("cvBuilder.import.navigator.status.accepted")
+        : decided === "ignored"
+          ? t("cvBuilder.import.navigator.status.ignored")
+          : uncertain
+            ? t("cvBuilder.import.navigator.status.review")
+            : t("cvBuilder.import.navigator.status.open");
+      targets.push({
+        id: `cv-import-candidate-${index}`,
+        title: t("cvBuilder.import.navigator.candidate", { index: index + 1 }),
+        kind: "review",
+        status,
+        statusLabel,
+        activate: () => reviewRef.current?.revealCandidate(index),
+        getElement: () => document.getElementById(`cv-import-review-item-${index}`),
+      });
+    });
+    targets.push({
+      id: "cv-import-decision",
+      title: t("cvBuilder.import.navigator.decision"),
+      kind: "action",
+      getElement: () => document.getElementById("cv-import-decision-panel"),
+      activate: () => document.getElementById("cv-import-decision-panel")?.focus({ preventScroll: true }),
+    });
+    return targets;
+  }, [fullpage, step, result, pendingReviewCount, uncertainReviewCount, manualDecisions, t]);
+
+  const navigatorLabels: RadarNavigatorLabels = {
+    aria: t("cvBuilder.import.navigator.aria"),
+    open: t("cvBuilder.import.navigator.open"),
+    close: t("cvBuilder.import.navigator.close"),
+    overview: t("cvBuilder.import.navigator.overview"),
+    goTo: (title) => t("cvBuilder.import.navigator.goTo", { title }),
+    status: (status) => t(`cvBuilder.import.navigator.status.${status}`),
+  };
 
   const scrollTo = (target: HTMLElement | null) => {
     if (!target) return;
@@ -366,6 +463,7 @@ export default function CvBuilderImportDialog({
     >
       <div
         ref={workspaceRef}
+        id={fullpage ? "cv-import-workspace" : undefined}
         className={fullpage ? "cv-import-workspace__box" : "modal-box cv-import-modal__box"}
         role={fullpage ? "region" : "dialog"}
         aria-modal={fullpage ? undefined : true}
@@ -509,6 +607,7 @@ export default function CvBuilderImportDialog({
 
           {step === "preview" && result && (
             <CvBuilderImportReview
+              ref={reviewRef}
               result={result}
               selected={selected}
               onToggleSection={toggleSection}
@@ -617,6 +716,19 @@ export default function CvBuilderImportDialog({
           </div>
         )}
       </div>
+      {fullpage && step === "preview" && !screenshotMode && (
+        <RadarNavigator
+          targets={navigatorTargets}
+          labels={navigatorLabels}
+          navigationKey={`cv-import-${sourceName}`}
+          regionSelector="#cv-import-workspace"
+          offset={() => 24}
+          classNamePrefix="match-radar"
+          className="cv-import-radar"
+          panelId="cv-import-radar-panel"
+          restoreFocusAfterPanelNavigation={false}
+        />
+      )}
     </div>
   );
 }

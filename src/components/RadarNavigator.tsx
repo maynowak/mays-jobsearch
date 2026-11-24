@@ -15,6 +15,7 @@ import {
   navigatorTargetSignature,
   type MeasuredNavigatorTarget,
   type NavigatorTarget,
+  type NavigatorTargetStatus,
 } from "../lib/navigation/radarNavigator";
 
 const MAX_LABELS = 5;
@@ -25,6 +26,7 @@ export interface RadarNavigatorLabels {
   close: string;
   overview: string;
   goTo: (title: string) => string;
+  status?: (status: NavigatorTargetStatus) => string;
 }
 
 export interface RadarNavigatorProps {
@@ -37,9 +39,11 @@ export interface RadarNavigatorProps {
   scrollContainer?: HTMLElement | null;
   offset?: () => number;
   classNamePrefix?: string;
+  className?: string;
   maxLabels?: number;
   panelId?: string;
   enabled?: boolean;
+  restoreFocusAfterPanelNavigation?: boolean;
 }
 
 export default function RadarNavigator({
@@ -52,9 +56,11 @@ export default function RadarNavigator({
   scrollContainer = null,
   offset = navigatorOffset,
   classNamePrefix = "radar-navigator",
+  className,
   maxLabels = MAX_LABELS,
   panelId,
   enabled = true,
+  restoreFocusAfterPanelNavigation = true,
 }: RadarNavigatorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
@@ -266,13 +272,15 @@ export default function RadarNavigator({
   const labelItems = items.slice(labelStart, labelStart + maxLabels);
   const labelTops = layoutRadarLabels(labelItems.map((item) => item.top), railHeight);
   const labelsVisible = pointerInside && labelItems.length > 0 && !panelOpen;
+  const statusTextFor = (target: NavigatorTarget): string =>
+    target.statusLabel ?? (target.status ? labels.status?.(target.status) ?? "" : "");
 
   if (!enabled) return null;
 
   return (
     <div
       ref={rootRef}
-      className={classNamePrefix}
+      className={[classNamePrefix, className].filter(Boolean).join(" ")}
       onPointerEnter={activate}
       onPointerMove={onPointerMove}
       onPointerLeave={() => {
@@ -287,37 +295,40 @@ export default function RadarNavigator({
         aria-label={labels.aria}
       >
         <span className={`${classNamePrefix}__rail-line`} aria-hidden="true" />
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={[
-              `${classNamePrefix}__marker`,
-              activeId === item.id ? "is-active" : "",
-              item.kind ? `${classNamePrefix}__marker--${item.kind}` : "",
-              item.status && item.status !== "normal" ? `${classNamePrefix}__marker--${item.status}` : "",
-            ].filter(Boolean).join(" ")}
-            style={{ top: `${item.top}px` }}
-            data-radar-marker-id={item.id}
-            data-navigator-marker-id={item.id}
-            data-navigator-kind={item.kind}
-            data-navigator-status={item.status}
-            aria-label={labels.goTo(item.title)}
-            aria-current={activeId === item.id ? "true" : undefined}
-            onClick={() => {
-              activate();
-              void navigateTo(item);
-            }}
-            onFocus={() => {
-              activate();
-              setHoveredId(item.id);
-              setActiveId(item.id);
-            }}
-            onBlur={() => setHoveredId(null)}
-          >
-            <span aria-hidden="true" />
-          </button>
-        ))}
+        {items.map((item) => {
+          const statusText = statusTextFor(item);
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={[
+                `${classNamePrefix}__marker`,
+                activeId === item.id ? "is-active" : "",
+                item.kind ? `${classNamePrefix}__marker--${item.kind}` : "",
+                item.status && item.status !== "normal" ? `${classNamePrefix}__marker--${item.status}` : "",
+              ].filter(Boolean).join(" ")}
+              style={{ top: `${item.top}px` }}
+              data-radar-marker-id={item.id}
+              data-navigator-marker-id={item.id}
+              data-navigator-kind={item.kind}
+              data-navigator-status={item.status}
+              aria-label={[labels.goTo(item.title), statusText].filter(Boolean).join(", ")}
+              aria-current={activeId === item.id ? "true" : undefined}
+              onClick={() => {
+                activate();
+                void navigateTo(item);
+              }}
+              onFocus={() => {
+                activate();
+                setHoveredId(item.id);
+                setActiveId(item.id);
+              }}
+              onBlur={() => setHoveredId(null)}
+            >
+              <span aria-hidden="true" />
+            </button>
+          );
+        })}
       </div>
 
       {labelsVisible && (
@@ -330,7 +341,10 @@ export default function RadarNavigator({
               onClick={() => void navigateTo(item)}
             >
               <span className={`${classNamePrefix}__label-dot`} />
-              <span className={`${classNamePrefix}__label-text`}>{item.title}</span>
+              <span className={`${classNamePrefix}__label-text`}>
+                {item.title}
+                {statusTextFor(item) ? ` · ${statusTextFor(item)}` : ""}
+              </span>
             </span>
           ))}
         </div>
@@ -341,7 +355,7 @@ export default function RadarNavigator({
         type="button"
         className={`${classNamePrefix}__mobile-toggle`}
         aria-expanded={panelOpen}
-        aria-controls={resolvedPanelId}
+        aria-controls={panelOpen ? resolvedPanelId : undefined}
         onClick={() => {
           if (panelOpen) {
             closePanel(false);
@@ -358,25 +372,32 @@ export default function RadarNavigator({
         <div id={resolvedPanelId} className={`${classNamePrefix}__panel`} role="dialog" aria-label={labels.aria}>
           <p className={`${classNamePrefix}__panel-title`}>{labels.overview}</p>
           <ol>
-            {targets.map((target) => (
-              <li key={target.id}>
-                <button
-                  type="button"
-                  className={[
-                    target.id === activeId ? "is-active" : "",
-                    target.kind ? `${classNamePrefix}__panel-item--${target.kind}` : "",
-                  ].filter(Boolean).join(" ") || undefined}
-                  data-navigator-panel-id={target.id}
-                  data-navigator-status={target.status}
-                  onClick={() => {
-                    closePanel(true);
-                    void navigateTo(target, true);
-                  }}
-                >
-                  {target.title}
-                </button>
-              </li>
-            ))}
+            {targets.map((target) => {
+              const statusText = statusTextFor(target);
+              return (
+                <li key={target.id}>
+                  <button
+                    type="button"
+                    className={[
+                      target.id === activeId ? "is-active" : "",
+                      target.kind ? `${classNamePrefix}__panel-item--${target.kind}` : "",
+                    ].filter(Boolean).join(" ") || undefined}
+                    data-navigator-panel-id={target.id}
+                    data-navigator-status={target.status}
+                    aria-label={[target.title, statusText].filter(Boolean).join(", ")}
+                    onClick={() => {
+                      closePanel(restoreFocusAfterPanelNavigation);
+                      void navigateTo(target, true);
+                    }}
+                  >
+                    <span>{target.title}</span>
+                    {statusText && (
+                      <span className={`${classNamePrefix}__panel-status`}>{statusText}</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ol>
         </div>
       )}

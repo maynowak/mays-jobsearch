@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import {
   CV_BUILDER_IMPORT_SECTIONS,
@@ -34,6 +34,10 @@ export interface ManualReviewDecision {
   text: string;
   original: string;
   edited: boolean;
+}
+
+export interface CvBuilderImportReviewHandle {
+  revealCandidate: (index: number) => void;
 }
 
 export interface CvBuilderImportReviewProps {
@@ -145,7 +149,7 @@ function fallbackDecision(
   };
 }
 
-export default function CvBuilderImportReview({
+const CvBuilderImportReview = forwardRef<CvBuilderImportReviewHandle, CvBuilderImportReviewProps>(function CvBuilderImportReview({
   result,
   selected,
   onToggleSection,
@@ -156,7 +160,7 @@ export default function CvBuilderImportReview({
   onSelectAllSkills,
   onClearSkills,
   onGoToActions,
-}: CvBuilderImportReviewProps) {
+}, ref) {
   const { t } = useLang();
   const [statusFilter, setStatusFilter] = useState<"all" | ManualReviewStatus>("all");
   const [targetFilter, setTargetFilter] = useState("all");
@@ -166,6 +170,10 @@ export default function CvBuilderImportReview({
   const [editing, setEditing] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const [editError, setEditError] = useState("");
+  const [navigationNotice, setNavigationNotice] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
+  const noticeTimerRef = useRef<number | null>(null);
+  const highlightTimerRef = useRef<number | null>(null);
   const pageSize = 10;
 
   const decisionsFor = (index: number) => decisions[index] ?? fallbackDecision(result, index);
@@ -194,21 +202,67 @@ export default function CvBuilderImportReview({
     () => [...new Set(result.unrecognizedDetails.map((detail) => detail.reason))],
     [result.unrecognizedDetails]
   );
-  const filtered = useMemo(() => result.unrecognized
+  const allEntries = useMemo(() => result.unrecognized
     .map((line, index) => ({ line, index, detail: result.unrecognizedDetails[index], decision: decisionsFor(index) }))
-    .filter((entry) => statusFilter === "all" || entry.decision.status === statusFilter)
-    .filter((entry) => targetFilter === "all" || entry.detail?.suggestedTarget === targetFilter)
-    .filter((entry) => reasonFilter === "all" || entry.detail?.reason === reasonFilter)
     .sort(
       (a, b) =>
         REVIEW_TARGET_ORDER.indexOf(a.decision.target) -
           REVIEW_TARGET_ORDER.indexOf(b.decision.target) ||
         a.index - b.index
-    ), [result, decisions, statusFilter, targetFilter, reasonFilter]);
+    ), [result, decisions]);
+  const filtered = useMemo(() => allEntries
+    .filter((entry) => statusFilter === "all" || entry.decision.status === statusFilter)
+    .filter((entry) => targetFilter === "all" || entry.detail?.suggestedTarget === targetFilter)
+    .filter((entry) => reasonFilter === "all" || entry.detail?.reason === reasonFilter),
+  [allEntries, statusFilter, targetFilter, reasonFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pageCount - 1);
   const visible = filtered.slice(safePage * pageSize, safePage * pageSize + pageSize);
+
+  const announceNavigation = useCallback((message: string) => {
+    setNavigationNotice(message);
+    if (noticeTimerRef.current !== null) window.clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = window.setTimeout(() => setNavigationNotice(""), 6_000);
+  }, []);
+
+  const revealCandidate = useCallback((index: number) => {
+    const filteredIndex = filtered.findIndex((entry) => entry.index === index);
+    if (filteredIndex >= 0) {
+      const targetPage = Math.floor(filteredIndex / pageSize);
+      setPage(targetPage);
+      if (targetPage !== safePage) {
+        announceNavigation(t("cvBuilder.import.navigator.pageChanged", { page: targetPage + 1 }));
+      }
+    } else {
+      setStatusFilter("all");
+      setTargetFilter("all");
+      setReasonFilter("all");
+      const allIndex = allEntries.findIndex((entry) => entry.index === index);
+      if (allIndex < 0) return;
+      setPage(Math.floor(allIndex / pageSize));
+      announceNavigation(t("cvBuilder.import.navigator.filterReset"));
+    }
+    setHighlightedIndex(index);
+  }, [allEntries, announceNavigation, filtered, pageSize, safePage, t]);
+
+  useImperativeHandle(ref, () => ({ revealCandidate }), [revealCandidate]);
+
+  useEffect(() => () => {
+    if (noticeTimerRef.current !== null) window.clearTimeout(noticeTimerRef.current);
+    if (highlightTimerRef.current !== null) window.clearTimeout(highlightTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (highlightedIndex === null) return;
+    const element = document.getElementById(`cv-import-review-item-${highlightedIndex}`);
+    element?.focus?.({ preventScroll: true });
+    if (highlightTimerRef.current !== null) window.clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = window.setTimeout(() => setHighlightedIndex(null), 1_800);
+    return () => {
+      if (highlightTimerRef.current !== null) window.clearTimeout(highlightTimerRef.current);
+    };
+  }, [highlightedIndex]);
   const skillQueryNormalized = skillQuery.trim().toLocaleLowerCase("de");
   const visibleSkills = result.draft.skills.filter((skill) =>
     !skillQueryNormalized || skill.toLocaleLowerCase("de").includes(skillQueryNormalized)
@@ -239,8 +293,8 @@ export default function CvBuilderImportReview({
 
   return (
     <div className="cv-import-preview">
-      <section className="cv-import-overview" aria-labelledby="cv-import-overview-title">
-        <h4 id="cv-import-overview-title">{t("cvBuilder.import.overviewTitle")}</h4>
+      <section id="cv-import-overview" className="cv-import-overview" aria-labelledby="cv-import-overview-title">
+        <h4 id="cv-import-overview-title" tabIndex={-1}>{t("cvBuilder.import.overviewTitle")}</h4>
         <p>{t("cvBuilder.import.previewTitle")}</p>
         <p>{t("cvBuilder.import.overviewHint")}</p>
         <div className="cv-import-overview__grid">
@@ -395,6 +449,9 @@ export default function CvBuilderImportReview({
             </button>
           </div>
         )}
+        {navigationNotice && (
+          <p className="cv-import-review__navigation-note" role="status">{navigationNotice}</p>
+        )}
         <div className="cv-import-review__filters" role="group" aria-label={t("cvBuilder.import.reviewFilters")}>
           <label>
             <span>{t("cvBuilder.import.reviewStatusFilter")}</span>
@@ -438,7 +495,12 @@ export default function CvBuilderImportReview({
                       <strong>{manualTargetLabel(decision.target, t)}</strong>
                     </li>
                   )}
-                  <li className={`cv-import-review__item is-${decision.status}`}>
+                  <li
+                    id={`cv-import-review-item-${index}`}
+                    tabIndex={-1}
+                    className={`cv-import-review__item is-${decision.status}${highlightedIndex === index ? " is-radar-highlight" : ""}`}
+                    data-cv-import-candidate-index={index}
+                  >
                     <div className="cv-import-review__item-head">
                       <strong>{t("cvBuilder.import.reviewSourcePage", { page: detail?.page ?? 0 })}</strong>
                       <span className={`cv-import-review__status is-${decision.status}`}>{statusLabel(decision.status, t)}</span>
@@ -554,7 +616,9 @@ export default function CvBuilderImportReview({
       </section>
     </div>
   );
-}
+});
+
+export default CvBuilderImportReview;
 
 export interface CvBuilderImportSummaryProps {
   draft: import("../lib/cvBuilder/contractTypes").CvBuilderDraftV1;

@@ -38,6 +38,7 @@ export type CvEditorNavigatorSection = typeof CV_EDITOR_NAVIGATOR_SECTIONS[numbe
 
 export interface CvNavigatorTargetOptions {
   status?: NavigatorTargetStatus;
+  statusLabel?: string;
   kind?: NavigatorTargetKind;
   element?: HTMLElement | null;
   getElement?: () => HTMLElement | null;
@@ -55,6 +56,7 @@ export function createCvSectionTarget(
     title,
     kind: options.kind ?? (section === "validation" ? "error" : section === "actions" ? "action" : "section"),
     status: options.status ?? "normal",
+    statusLabel: options.statusLabel,
     activate: options.activate,
     getElement: options.getElement,
     element: options.element ?? options.getElement?.() ?? null,
@@ -72,6 +74,7 @@ export function createCvImportTarget(
     title,
     kind: options.kind ?? kind,
     status: options.status ?? "normal",
+    statusLabel: options.statusLabel,
     activate: options.activate,
     getElement: options.getElement,
     element: options.element ?? options.getElement?.() ?? null,
