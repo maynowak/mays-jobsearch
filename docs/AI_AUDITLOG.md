@@ -1,3 +1,13 @@
+2026-11-24 · JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01 — STACKED APPLICATIONS NAVIGATION
+- Typ: Profil-Responsive-Fix, CSS-Spezifitätskonflikt, Scroll-/Overlap-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `fix/jm-profile-applications-responsive-fix-01`; Implementierung `e4aa74e`; Basis `origin/main` `3579ade`; kein Main-Merge, kein Deployment.
+- Ursache: Die spätere `.layout-profile-command .dashboard-v2__navigation-card`-Regel setzte innerhalb der einspaltigen Applications-Ansicht bei ≤980px wieder `position: sticky` und konnte Inhalte überlagern.
+- Fix: Scoped Override `.layout-profile-command .dashboard-v2--applications .dashboard-v2__navigation-card { position: static; top: auto; }` bei `max-width:980px`; Desktop bleibt sticky/breit, andere Profilbereiche unverändert.
+- E2E: 1440/1024 sticky, 980/900/768 static, 390 mobile switcher/hidden; top/middle/bottom ohne Overlap, 0 Overflow, Filter/Aktionen erreichbar, Navigation zwischen Einstellungen/Bewerbungen PASS. 18 Screenshots committed.
+- Tests: fokussiert **56 PASS**; Build/Diff/Secret-Scan PASS. Keine Daten-/RIS-/Consent-/Bewerbungslogikänderung.
+- Bericht: `docs/reports/JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01.md`.
+
 2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-GATE-02 — CONTROLLED PR READINESS
 - Typ: Release-Gate, PR #58, Scope-/Contract-/Idempotenz-Prüfung, Production-Grenze
 - Status: **READY FOR CONTROLLED MERGE**; Live: **PRODUCTION E2E NOT VERIFIED**
