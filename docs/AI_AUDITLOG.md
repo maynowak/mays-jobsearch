@@ -1,3 +1,13 @@
+2026-11-24 · JM-CV-NAVIGATOR-CORE-01 — SHARED RADAR NAVIGATOR CORE
+- Typ: Refactoring, gemeinsamer Navigationskern, Adapterverträge, Regressionstests
+- Status: **READY FOR INTEGRATION REVIEW**
+- Branch: `feature/jm-cv-navigator-core-01`; Basis `origin/main` `c8268ff`; Implementierung `06a7f72` + Härtung `3fe9663`; gepusht. Kein Main-Merge, kein Deployment.
+- Umsetzung: `src/lib/navigation/radarNavigator.ts` als datenquellenunabhängiger Kern (Targets, echte DOM-Messung, relative Schienenposition, aktive Auswahl, Fenster-/Container-Scroll, Wait-for-Render, Reduced Motion); `src/components/RadarNavigator.tsx` als generische Shell; `MatchRadar.tsx` nur noch dünner DOM-/i18n-Adapter. Bestehendes Match-Radar-CSS/Markup und `data-radar-marker-id` bleiben erhalten.
+- Dynamische Ziele: `activate()` + `getElement()` unterstützen spätere Filter/Pagination und eingeklappte Editorsektionen; `onBeforeNavigate` ist als Koordinationshaken für die Turbo-Hände vorbereitet, `enabled` für den späteren Screenshot-Modus. Keine produktive CV-Integration.
+- Tests: fokussiert **27 PASS** (Kern, Shell inkl. asynchronem Ziel, Adapter, bestehende Radar-A11y); bestehende Match-Radar-Browser-E2E vollständig PASS (20 Marker, Positionen, Hover, Klick, Wheel, Collapse, neue Suche, Mobile 390/768, 0 Overflow, 0 AI/ATS/Profile); Build/`tsc`/`git diff --check`/Secret-Scan PASS; serielle Vollsuite **2071 PASS / 5 skipped** (finaler Lauf).
+- Grenzen: keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-/Parser-/CV-Formularänderung; keine CV-Radar-Integration; keine Main-Integration/Production.
+- Bericht: `docs/reports/JM-CV-NAVIGATOR-CORE-01.md`.
+
 2026-11-24 · JM-UI-CONSOLIDATED-MAIN-RELEASE-01 — INTEGRATION READY
 - Typ: Multi-Feature-Integration, Konfliktauflösung, gemeinsame Regression
 - Status: **READY FOR CONTROLLED MERGE**
