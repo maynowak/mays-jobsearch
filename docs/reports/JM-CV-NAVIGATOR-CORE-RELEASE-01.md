@@ -151,8 +151,10 @@ Beide Domains liefern `/search` mit HTTP 200 und Build `53c9926`:
 - `https://www.mays-job-matcher.app`
 - `https://mays-jobsearch.vercel.app`
 
-Synthetischer Browser-Smoke auf `https://www.mays-job-matcher.app/search`
-(API-Routen im Browser gemockt, keine echten Stellen-/KI-/RIS-Daten):
+Synthetischer Browser-Smoke auf beiden Domains (API-Routen im Browser
+gemockt, keine echten Stellen-/KI-/RIS-Daten). Desktop und Mobile wurden auf
+`https://www.mays-job-matcher.app/search` und
+`https://mays-jobsearch.vercel.app/search` vollständig geprüft:
 
 | Prüfung | Ergebnis |
 |---|---|
