@@ -1,3 +1,13 @@
+2026-11-24 · JM-UI-CONSOLIDATED-MAIN-RELEASE-01 — INTEGRATION READY
+- Typ: Multi-Feature-Integration, Konfliktauflösung, gemeinsame Regression
+- Status: **READY FOR CONTROLLED MERGE**
+- Branch: `integration/jm-ui-consolidated-release-01`; Basis `origin/main` `3579ade`; alle sechs Feature-Branches gemerged, Original-Branches unverändert.
+- Merges: 01 `4eba9cc`→`b64edea`; 02 `913b4f3`→`31dab67` (enthält Visual-11); 03 `076957e`→`f716cf7`; 04 `1006be1`→`eac38ef`; 05 `1abe3b9`→`f2af08e`; 06 `eb6cf6a`→`a1d2626`; Audit-Marker-Cleanup `d6bb7b6`.
+- Konflikte nur in `package.json` und `docs/AI_AUDITLOG.md`, manuell mit vollständiger Erhaltung aller E2E-Skripte und Audit-Einträge gelöst; kein pauschales ours/theirs. Responsive-Override bleibt nach der Sticky-Profilregel wirksam; Glass-Navbar, Silver/Cyan-Profil, CV Studio, Privacy-Disclosure, Hydration, Radar und Application-Fix gemeinsam vorhanden.
+- Tests/E2E: fokussiert **128 PASS**; volle Suite **2048 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS. Browser-E2E für Applications responsiv, CV Studio, Glass Navbar, Privacy, Match Radar inkl. Mobile/A11y, Login-Hydration, Application Draft und Visual-11 alle PASS; aktualisierte Screenshots committed.
+- Grenzen: keine neuen Implementierungen, keine RIS/AWS/Terraform/Cognito/Consent/Storage-Änderung, kein Force-Push/Branch-Löschung, kein Deployment in diesem Schritt.
+- Bericht: `docs/reports/JM-UI-CONSOLIDATED-MAIN-RELEASE-01.md`.
+
 2026-11-24 · JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01 — STACKED APPLICATIONS NAVIGATION
 - Typ: Profil-Responsive-Fix, CSS-Spezifitätskonflikt, Scroll-/Overlap-E2E
 - Status: **READY FOR VISUAL REVIEW**
