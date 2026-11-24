@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 2026-11-24 · JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01 — STACKED APPLICATIONS NAVIGATION
 - Typ: Profil-Responsive-Fix, CSS-Spezifitätskonflikt, Scroll-/Overlap-E2E
 - Status: **READY FOR VISUAL REVIEW**
@@ -7,6 +8,17 @@
 - E2E: 1440/1024 sticky, 980/900/768 static, 390 mobile switcher/hidden; top/middle/bottom ohne Overlap, 0 Overflow, Filter/Aktionen erreichbar, Navigation zwischen Einstellungen/Bewerbungen PASS. 18 Screenshots committed.
 - Tests: fokussiert **56 PASS**; Build/Diff/Secret-Scan PASS. Keine Daten-/RIS-/Consent-/Bewerbungslogikänderung.
 - Bericht: `docs/reports/JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01.md`.
+=======
+2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-03 — CONTROLLED MAIN MERGE & PRODUCTION E2E
+- Typ: Release, PR-Merge, Vercel Production, authentifizierter RIS-E2E, Cleanup
+- Status: **PRODUCTION E2E VERIFIED**
+- Merge: PR [#58](https://github.com/maynowak/mays-jobsearch/pull/58) als `3579ade12a1b6712cd0a09e8e06acf8a4ddb2e58`; Feature-Head `b0ce857`; Basis `91f92a4`; kein Force-Push/Branch-Löschung.
+- Production: automatische Vercel-Deployments `mays-jobsearch` `dpl_4kSWT79fa48jST8DuXDQpkZ1C87M` und `mays-job-matcher` `dpl_8YJ8m2FoHvFWsBmNJFmcr8jGUAYD`, beide READY; Footer `production · main · 3579ade`; `/`, `/profil`, `/profil?tab=applications`, `/anmelden` 200; keine Console-Fehler/Overflow.
+- Live-E2E per bestehendem authentifiziertem CDP-Tab (keine Token-Kopie): Remote-RIS-Modus; manueller Entwurf mit leerem Standort/URL, Company `OpenCode Synthetic QA`; BFF-Create 2xx/201; `applicationId` `cb467798-dcf2-4ce0-88b6-fa6bcc0356c1`, Job-ID `manual:59d996d5-d008-4880-8754-afe3893aca0b`; Status `draft`, `location []`, keine URL; nach Reload derselbe RIS-Datensatz; kein Duplikat; 0 AI/ATS/Profile/Cover-Letter-Calls; UI-Delete 200; danach 0 Bewerbungen, synthetischer Datensatz entfernt.
+- RIS akzeptierte den leeren manuellen Standort ohne 422; keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-Mutation oder neue Credentials.
+- Doku: dieser Release-Report und Auditlog auf separatem Docs-Branch; kein zusätzlicher Main-Push.
+- Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RELEASE-03.md`.
+>>>>>>> origin/docs/jm-application-draft-save-release-03
 
 2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-GATE-02 — CONTROLLED PR READINESS
 - Typ: Release-Gate, PR #58, Scope-/Contract-/Idempotenz-Prüfung, Production-Grenze
