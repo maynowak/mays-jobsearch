@@ -16382,3 +16382,137 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     transition: none;
   }
 }
+
+/* JM-CV-IMPORT-NAVIGATOR-02 — fullpage import radar.
+   Reuses the Match Radar shell; only status colours and import highlights are
+   scoped here. Status is always also present as text/aria, never colour-only. */
+.cv-import-radar .match-radar__marker--pending,
+.cv-import-radar .match-radar__marker--warning {
+  border-color: rgba(251, 191, 36, 0.94);
+  background: rgba(92, 49, 7, 0.94);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.46);
+}
+
+.cv-import-radar .match-radar__marker--pending > span,
+.cv-import-radar .match-radar__marker--warning > span {
+  background: #fbbf24;
+  box-shadow: 0 0 9px rgba(245, 158, 11, 0.86);
+}
+
+.cv-import-radar .match-radar__marker--completed {
+  border-color: rgba(94, 234, 212, 0.94);
+  background: rgba(4, 66, 59, 0.94);
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.42);
+}
+
+.cv-import-radar .match-radar__marker--completed > span {
+  background: #5eead4;
+  box-shadow: 0 0 9px rgba(45, 212, 191, 0.8);
+}
+
+.cv-import-radar .match-radar__marker--error {
+  border-color: rgba(248, 113, 113, 0.96);
+  background: rgba(92, 17, 17, 0.96);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.5);
+}
+
+.cv-import-radar .match-radar__marker--error > span {
+  background: #f87171;
+  box-shadow: 0 0 9px rgba(239, 68, 68, 0.86);
+}
+
+.cv-import-radar .match-radar__panel button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cv-import-radar .match-radar__panel-status {
+  flex: 0 0 auto;
+  color: #a5f3fc;
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.cv-import-radar .match-radar__panel button[data-navigator-status="pending"] .match-radar__panel-status,
+.cv-import-radar .match-radar__panel button[data-navigator-status="warning"] .match-radar__panel-status {
+  color: #fbbf24;
+}
+
+.cv-import-radar .match-radar__panel button[data-navigator-status="completed"] .match-radar__panel-status {
+  color: #5eead4;
+}
+
+.cv-import-review__navigation-note {
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(34, 211, 238, 0.42);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.cv-import-review__item.is-radar-highlight {
+  outline: 3px solid #0e7490;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.14);
+}
+
+.cv-import-section,
+.cv-import-review__item,
+.cv-import-decision-panel,
+#cv-import-overview,
+#cv-import-review-title {
+  scroll-margin-top: 24px;
+}
+
+.cv-import-workspace--screenshot .cv-import-radar,
+.cv-import-workspace--screenshot .cv-import-review__navigation-note {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .cv-import-radar {
+    bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-import-review__item.is-radar-highlight {
+    transition: none;
+  }
+}
+
+/* JM-CV-IMPORT-NAVIGATOR-02 visual follow-up — on narrow viewports the
+   overview trigger moves into normal flow above the import card instead of
+   floating over card content. Desktop fixed rail is unchanged. */
+@media (max-width: 900px) {
+  .cv-import-radar {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: min(100%, 1200px);
+    height: auto;
+    margin: 0 auto 10px;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .cv-import-radar .match-radar__mobile-toggle {
+    width: auto;
+    max-width: min(280px, calc(100vw - 24px));
+  }
+
+  .cv-import-radar .match-radar__panel {
+    position: static;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    max-height: min(55vh, 460px);
+    margin: 8px 0 0;
+  }
+}

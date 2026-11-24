@@ -10,6 +10,7 @@ const labels: RadarNavigatorLabels = {
   close: "Close overview",
   overview: "All sections",
   goTo: (title) => `Go to ${title}`,
+  status: (status) => status === "pending" ? "Open" : "Ready",
 };
 
 function rect(top: number, height: number): DOMRect {
@@ -81,6 +82,7 @@ describe("shared RadarNavigator", () => {
     );
     await waitFor(() => expect(container.querySelectorAll("[data-navigator-marker-id]")).toHaveLength(3));
     expect(container.querySelectorAll("[data-navigator-marker-id]")[0].tagName).toBe("BUTTON");
+    expect(screen.getByRole("button", { name: "Go to Section 1, Open" })).toBeInTheDocument();
 
     fireEvent.pointerEnter(container.querySelector(".radar-navigator") as Element);
     await waitFor(() => expect(container.querySelector(".radar-navigator__labels")).not.toBeNull());
