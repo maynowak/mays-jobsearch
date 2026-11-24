@@ -1,3 +1,15 @@
+2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-GATE-02 — CONTROLLED PR READINESS
+- Typ: Release-Gate, PR #58, Scope-/Contract-/Idempotenz-Prüfung, Production-Grenze
+- Status: **READY FOR CONTROLLED MERGE**; Live: **PRODUCTION E2E NOT VERIFIED**
+- Branch/PR: `fix/jm-application-draft-save-recovery-01`; PR [#58](https://github.com/maynowak/mays-jobsearch/pull/58); verifizierter Head `88afe0d`; Basis `origin/main` `91f92a4`.
+- Scope: 8 Dateien, 535/1 Zeilen; ausschließlich Bewerbungsfix, Tests, Report/Audit. Keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-/unrelated Produktänderung.
+- Vertrag: manueller leerer Standort `[]` → RIS-String `""`; Rückmapping `[]`; mehrere Standorte und Quelljobs bleiben strikt; optionale URL/`coverLetterDraft` unverändert; keine erfundenen Werte.
+- Idempotenz/Fehler: stabiler `manual-draft:<jobId>`-Key; E2E erster 503, Formulartext bleibt, Retry gleicher Key, Create/List/Reload PASS; keine AI/ATS/Profile-Calls.
+- Verifikation: fokussiert **120 PASS**; serielle Vollsuite **2038 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS; Browser-E2E PASS. PR `MERGEABLE`/`CLEAN`; CodeQL PASS; Vercel matcher/jobsearch Preview und Deployments PASS.
+- Production-Grenze: authentifizierter CDP-Tab geprüft; Production lieferte `1abe3b9` ohne Fix; kein Production-Write, Preview ist kein authentifizierter RIS-Nachweis. Live-Status bleibt `PRODUCTION E2E NOT VERIFIED`.
+- Kein Main-Merge, kein Production-Deployment, keine Cognito-Callback-/Credential-/RIS-/AWS-/Terraform-Mutation.
+- Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RELEASE-GATE-02.md`.
+
 2026-11-23 · JM-APPLICATION-DRAFT-SAVE-RECOVERY-01 — MANUAL DRAFT SAVE
 - Typ: Bewerbungsentwurf, RIS-BFF-Mapping, Idempotenz, Fehler-/Retry-E2E
 - Status: **READY FOR CONTROLLED MERGE**
