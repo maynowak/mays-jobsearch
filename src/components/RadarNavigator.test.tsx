@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import RadarNavigator, { type RadarNavigatorLabels } from "./RadarNavigator";
@@ -156,6 +157,29 @@ describe("shared RadarNavigator", () => {
     const downActive = container.querySelector("[data-navigator-marker-id].is-active")?.getAttribute("data-navigator-marker-id");
     fireEvent.wheel(radar, { deltaY: -120 });
     await waitFor(() => expect(container.querySelector("[data-navigator-marker-id].is-active")?.getAttribute("data-navigator-marker-id")).not.toBe(downActive));
+  });
+
+  it("activates a target that is rendered only after the adapter callback", async () => {
+    function AsyncHarness() {
+      const [visible, setVisible] = useState(false);
+      const target: NavigatorTarget = {
+        id: "hidden-section",
+        title: "Hidden section",
+        getElement: () => document.getElementById("hidden-section"),
+        activate: () => setVisible(true),
+      };
+      return (
+        <>
+          <RadarNavigator targets={[target]} labels={labels} navigationKey="async" />
+          {visible && <section id="hidden-section" />}
+        </>
+      );
+    }
+    render(<AsyncHarness />);
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hidden section" }));
+    await waitFor(() => expect(window.scrollTo).toHaveBeenCalled());
+    expect(screen.queryByRole("dialog", { name: "Section navigation" })).toBeNull();
   });
 
   it("renders nothing and attaches no resize listener when disabled", () => {

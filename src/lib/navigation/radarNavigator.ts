@@ -108,7 +108,7 @@ function resolveOffset(offset?: number | (() => number)): number {
 
 export function navigatorTargetSignature(targets: NavigatorTarget[]): string {
   return targets.map((target) => {
-    const element = target.element ?? target.getElement?.() ?? null;
+    const element = target.getElement?.() ?? target.element ?? null;
     return [
       target.id,
       target.title,

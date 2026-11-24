@@ -198,6 +198,23 @@ export default function RadarNavigator({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [panelOpen, closePanel]);
 
+  useEffect(() => {
+    if (!enabled) return;
+    const clearNavigationOverride = () => {
+      navigationOverrideRef.current = null;
+    };
+    window.addEventListener("wheel", clearNavigationOverride, { passive: true, capture: true });
+    window.addEventListener("touchmove", clearNavigationOverride, { passive: true, capture: true });
+    window.addEventListener("pointerdown", clearNavigationOverride, true);
+    document.addEventListener("keydown", clearNavigationOverride, true);
+    return () => {
+      window.removeEventListener("wheel", clearNavigationOverride, true);
+      window.removeEventListener("touchmove", clearNavigationOverride, true);
+      window.removeEventListener("pointerdown", clearNavigationOverride, true);
+      document.removeEventListener("keydown", clearNavigationOverride, true);
+    };
+  }, [enabled]);
+
   const nearestItem = (clientY: number): MeasuredNavigatorTarget | null => {
     const rail = railRef.current;
     if (!rail || items.length === 0) return items[0] ?? null;
