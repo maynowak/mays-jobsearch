@@ -6,7 +6,7 @@
 
 **Basis:** `origin/main` `53c9926`
 
-**Implementation commit:** `4c4a4d4`
+**Implementation commits:** `4c4a4d4`, Responsive-Fix `0c06450`
 
 ## 1. Ziel und Abgrenzung
 
@@ -36,7 +36,9 @@ step === "preview"
 
 Der bestehende `RadarNavigator` wird mit `classNamePrefix="match-radar"`
 verwendet; eine zusätzliche Klasse `cv-import-radar` liefert die
-Import-spezifischen Statusfarben. Der native, non-passive Wheel-Listener aus
+Import-spezifischen Statusfarben. Auf Viewports ≤ 900 px sitzt der
+Übersichts-Trigger im normalen Fluss oberhalb der Importkarte (kein Überdecken
+von Karteninhalt); auf Desktop bleibt die feste Glass-Schiene unverändert. Der native, non-passive Wheel-Listener aus
 CORE-Release PR #61 bleibt erhalten.
 
 ### Navigationsziele
@@ -98,6 +100,8 @@ adressierbar; es werden keine erfundenen Markerpositionen erzeugt.
   Navigationstimer werden im Review beim Unmount bereinigt
 - initialer Aufruf löst keinen Scrollsprung aus
 - Ziel-Liste und gefilterte Review-Einträge werden per `useMemo` begrenzt
+- Mobile 768/390: Trigger oberhalb der Karte statt schwebend über Karteninhalt;
+  das mobile Panel bleibt im Fluss und erzeugt keinen Karten-Overlap
 
 ## 5. Tests
 
