@@ -117,10 +117,17 @@ No real RIS write was performed.
 
 ## 4. Live boundary
 
-Authenticated live RIS write verification requires an approved synthetic test
-identity and was not executed. The E2E uses a mocked BFF response; the BFF
-mapping itself is covered by unit tests. No live customer or real application
-data was used.
+An existing authenticated Chromium tab was checked through the CDP playbook
+without copying tokens or opening a second tab. Remote RIS application storage
+was active. However, the deployed Production footer identified build
+`1abe3b9` (`feature/jm-search-match-radar-01`), which does not contain the
+draft-fix commit `c5f35ef`. A Production create would therefore exercise the
+old BFF, not this fix. No Production write was performed.
+
+Authenticated live verification of the fixed BFF requires a deployment/build
+that contains `c5f35ef` plus an approved synthetic test identity. The local
+mock-BFF E2E and BFF/API tests cover the fixed path; no live customer or real
+application data was used.
 
 If the current RIS deployment rejects an empty string for `job.location`, a
 separate RIS contract change would be required. No such change was inferred or

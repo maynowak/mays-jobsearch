@@ -6,7 +6,7 @@
 - Fix: Manuelle Jobs dürfen einen leeren Standort als leeren String an das RIS-Stringfeld übergeben; `fromRisJob()` stellt `[]` wieder her. Keine erfundenen Orte; mehrere Standorte bleiben 422, Quelljobs bleiben strikt. Optionale URL wird weiterhin nur bei Angabe gesendet. `coverLetterDraft` bleibt erhalten.
 - Retry: `ApplicationsSection` verwendet pro manuellem Entwurf einen stabilen `Idempotency-Key` (`manual-draft:<jobId>`); Formulartext bleibt bei Fehlern erhalten.
 - Tests: fokussiert **120 PASS**; serielle Vollsuite **2038 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS. Browser-E2E synthetisch: erster Create 503 → Text bleibt → Retry mit gleichem Key → Create/List/Reload; keine AI/ATS/Profile-Aufrufe.
-- Live-Grenze: Authentifizierter Live-RIS-Write nicht ausgeführt (keine freigegebene synthetische Identität); Mock-BFF-E2E plus BFF-/API-Tests. Falls RIS leeren String ablehnt, wäre eine separate RIS-Vertragsänderung erforderlich; keine RIS/AWS/Consent-Änderung vorgenommen.
+- Live-Grenze: Vorhandener authentifizierter Chromium-Tab per CDP geprüft (keine Token-Kopie, kein neuer Tab); Remote-RIS-Modus aktiv. Production-Footer zeigte Build `1abe3b9` (Radar-Branch) ohne Fix `c5f35ef`, daher kein Production-Write. Mock-BFF-E2E plus BFF-/API-Tests decken den Fixpfad; Live-Verifikation braucht einen Deployment-Build mit `c5f35ef` und freigegebene synthetische Identität. Falls RIS leeren String ablehnt, wäre eine separate RIS-Vertragsänderung erforderlich; keine RIS/AWS/Consent-Änderung vorgenommen.
 - Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RECOVERY-01.md`.
 
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
