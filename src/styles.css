@@ -15264,6 +15264,17 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   letter-spacing: -0.01em;
 }
 
+/* JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01: the later profile sidebar rule
+   must not reactivate sticky positioning inside the stacked application
+   manager at <=980px. Keep the navigation in normal document flow there so
+   it cannot overlay the application content while scrolling. */
+@media (max-width: 980px) {
+  .layout-profile-command .dashboard-v2--applications .dashboard-v2__navigation-card {
+    position: static;
+    top: auto;
+  }
+}
+
 .layout-profile-command .aurora-sidebar-list {
   gap: 7px;
 }
