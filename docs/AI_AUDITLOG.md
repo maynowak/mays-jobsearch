@@ -31,6 +31,16 @@
 - Live-Grenze: Vorhandener authentifizierter Chromium-Tab per CDP geprüft (keine Token-Kopie, kein neuer Tab); Remote-RIS-Modus aktiv. Production-Footer zeigte Build `1abe3b9` (Radar-Branch) ohne Fix `c5f35ef`, daher kein Production-Write. Mock-BFF-E2E plus BFF-/API-Tests decken den Fixpfad; Live-Verifikation braucht einen Deployment-Build mit `c5f35ef` und freigegebene synthetische Identität. Falls RIS leeren String ablehnt, wäre eine separate RIS-Vertragsänderung erforderlich; keine RIS/AWS/Consent-Änderung vorgenommen.
 - Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RECOVERY-01.md`.
 
+2026-11-23 · JM-PROFILE-CV-STUDIO-SPOTLIGHT-12 — PREMIUM CV STUDIO
+- Typ: Profil-Visual, Premium-CV-Studio-Karte, Empty/Filled State, responsive Browser-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-profile-cv-studio-spotlight-12`; Implementierung `7f03a8f`; Designbasis `feature/jm-profile-visual-11` `ed5c461`; kein Main-Merge, kein Deployment.
+- Umsetzung: `CvBuilderProfileList` mit Silber-Cyan-Glass-Fläche, 2px Cyan-Rahmen, Glow/Metallreflex, Studio-Badge, Dokument-Icon, Session-Kennzeichnung und Premium-CTA „✦ Neuen Lebenslauf gestalten →“. Empty State mit ruhigem Dokument-Symbol statt gestricheltem Standardrahmen; bestehende Aktionen/Handler und „Bestehenden Entwurf übernehmen“ unverändert. Styles nur unter `.layout-profile-command .cv-builder-profiles`; Reduced Motion deaktiviert Übergänge.
+- Visuell: Empty State 1920/1440/768/390, Filled State 1440/390; 2px Cyan-Rahmen + Glow, 48px-CTA, Badge/Session/Icon; 0 Overflow; Screenshots committed unter `docs/reports/assets/JM-PROFILE-CV-STUDIO-SPOTLIGHT-12/`.
+- Tests: CvBuilderProfileList **4/4 PASS**; serielle Vollsuite **2030 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; visuelles E2E PASS.
+- Grenzen: keine Änderung an CV-Parsing/PDF/RIS/ATS/Consent/Storage, Layout, Kartenpositionen oder „Dauerhaft gespeicherte Lebensläufe“; keine echten Daten.
+- Bericht: `docs/reports/JM-PROFILE-CV-STUDIO-SPOTLIGHT-12.md`.
+
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
 - Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
 - Status: **READY FOR CONTROLLED MERGE — SEARCH LOGIN AUTOHYDRATION VERIFIED**
@@ -7475,3 +7485,16 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
   needs approval, no infrastructure rate limiter. No RIS/AWS/Terraform change,
   no production endpoint activation, no raw CV/token logging.
 - Report: `docs/reports/JM-RIS-CV-ATS-API-02-SECURE-FOUNDATION.md`.
+
+## 2026-11-22 — JM-PROFILE-VISUAL-11 — CYAN GLOW CARDS / BRIGHTER PROFILE / SILVER GLASS HEADER
+
+**Status:** `READY FOR VISUAL REVIEW`
+
+- Branch `feature/jm-profile-visual-11` von `origin/main` `91f92a4`; kein Main-Merge, kein Production-Deployment.
+- Scope: ausschließlich `.layout-profile-command` in `src/styles.css`, fokussierter CSS-Test, visueller E2E und Dokumentation. Keine RIS-, AWS-, Cognito-, Consent-, CV-, ATS-, Storage- oder Backend-Änderung.
+- Karten: äußere Profilkarten erhalten 2px Cyan-Rahmen, dezenten Cyan-Glow und Glas-Highlight; linke Navigation bleibt mit 1px dezenter. Keine neuen Rahmen um innere Eingabefelder; bestehende Fokusindikatoren unverändert.
+- Hintergrund: Marineblau bleibt, mittlerer Bereich wird über `#0a3a50` und Cyan-Reflexe sichtbar heller. Linke/rechte AI-Bildassets, Größe, Position, Maskierung und Animation unverändert.
+- Header: silbrig-metallischer Glass-Verlauf links, weicher Übergang zu dunklem Petrol rechts, subtiler Lichtreflex; Globus/Waves-Assets und Header-Geometrie unverändert.
+- Tests: `ProfileCommandCenter.test.tsx` 6/6 PASS; visueller E2E 1920/1440/768/390 plus Hilfe, Lebenslauf, Bewerbungen, Einstellungen PASS; Reduced Motion PASS; 0 horizontaler Overflow; Build PASS (1,44 s); Vollsuite **2030 PASS / 11 skipped**; `git diff --check` PASS.
+- AI-/Privacy-/Data-Flow: keine neuen Datenflüsse, Speicherorte, Berechtigungen oder Credentials; rein visuelle CSS-Änderung.
+- Evidence: `docs/reports/assets/JM-PROFILE-VISUAL-11/`; Report `docs/reports/JM-PROFILE-VISUAL-11.md`.

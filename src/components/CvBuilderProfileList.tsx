@@ -80,10 +80,28 @@ export default function CvBuilderProfileList({
 
   return (
     <section className="cv-builder-profiles" aria-labelledby="cv-builder-profiles-title">
+      <div className="cv-builder-profiles__studio-top">
+        <span className="cv-builder-profiles__studio-badge">
+          <span aria-hidden="true">✦</span> {t("cvBuilder.profiles.studioBadge")}
+        </span>
+        <span className="cv-builder-profiles__doc-icon" aria-hidden="true">
+          <svg width="26" height="30" viewBox="0 0 26 30" fill="none">
+            <path
+              d="M5 1.75h10l6 6V26.5a1.75 1.75 0 0 1-1.75 1.75H5A1.75 1.75 0 0 1 3.25 26.5V3.5A1.75 1.75 0 0 1 5 1.75Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path d="M15 2v6h6M7.5 14h11M7.5 18h11M7.5 22h7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </span>
+      </div>
       <div className="cv-builder-profiles__head">
-        <div>
+        <div className="cv-builder-profiles__heading">
           <h3 id="cv-builder-profiles-title">{t("cvBuilder.profiles.title")}</h3>
           <p>{t("cvBuilder.profiles.hint")}</p>
+          <span className="cv-builder-profiles__session">
+            {t("cvBuilder.profiles.sessionOnly")}
+          </span>
         </div>
         <div className="cv-builder-profiles__create-actions">
           {canAdoptDraft && onAdoptDraft && (
@@ -91,14 +109,34 @@ export default function CvBuilderProfileList({
               {t("cvBuilder.profiles.adoptDraft")}
             </button>
           )}
-          <button type="button" className="letter-btn" onClick={onCreate}>
-            + {t("cvBuilder.profiles.create")}
+          <button type="button" className="letter-btn cv-builder-profiles__create" onClick={onCreate}>
+            <span className="cv-builder-profiles__create-spark" aria-hidden="true">✦</span>
+            {t("cvBuilder.profiles.createCta")}
+            <span className="cv-builder-profiles__create-arrow" aria-hidden="true">→</span>
           </button>
         </div>
       </div>
 
       {profiles.length === 0 ? (
-        <p className="cv-builder-profiles__empty">{t("cvBuilder.profiles.empty")}</p>
+        <div className="cv-builder-profiles__empty">
+          <span className="cv-builder-profiles__empty-icon" aria-hidden="true">
+            <svg width="34" height="40" viewBox="0 0 34 40" fill="none">
+              <path
+                d="M7 2h13l8 8v27a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path d="M20 2v8h8M10 18h14M10 23h14M10 28h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </span>
+          <div>
+            <strong>{t("cvBuilder.profiles.emptyTitle")}</strong>
+            <p>{t("cvBuilder.profiles.empty")}</p>
+            <span className="cv-builder-profiles__session">
+              {t("cvBuilder.profiles.sessionOnly")}
+            </span>
+          </div>
+        </div>
       ) : (
         <ul className="cv-builder-profiles__list" aria-label={t("cvBuilder.profiles.listAria")}>
           {profiles.map((profile) => {

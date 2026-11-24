@@ -53,6 +53,15 @@ describe('JM-PROFILE-UX-01: Profile Command Center shell', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
   });
 
+  it('keeps the visual-11 cyan frames, brighter centre and silver header scoped to the profile', () => {
+    expect(css).toContain('.layout-profile-command .may-help');
+    expect(css).toContain('border: 2px solid rgba(34, 211, 238, 0.62)');
+    expect(css).toContain('border: 2px solid rgba(34, 211, 238, 0.58)');
+    expect(css).toContain('border: 1px solid rgba(34, 211, 238, 0.38)');
+    expect(css).toContain('#0a3a50');
+    expect(css).toContain('rgba(241, 245, 249, 0.97)');
+  });
+
   it('renders independent decorative wave and globe layers', () => {
     const { container } = renderProfile();
     const waves = container.querySelector('.dashboard-v2__header-waves');
