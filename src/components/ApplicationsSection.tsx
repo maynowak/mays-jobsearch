@@ -841,6 +841,9 @@ export default function ApplicationsSection({
       const application = await repository.create({
         job: reference,
         coverLetter: "",
+        // Stable for this manual draft context. An uncertain create response can
+        // be retried without creating a duplicate server application.
+        idempotencyKey: `manual-draft:${reference.jobId}`,
       });
       const page = await repository.list();
       notify(page.items);
