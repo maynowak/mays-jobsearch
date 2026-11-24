@@ -1,3 +1,14 @@
+2026-11-24 · JM-UI-CONSOLIDATED-MAIN-RELEASE-01 — PRODUCTION VERIFIED
+- Typ: Release, Multi-Feature-Merge, Vercel Production, authentifizierter Read-only-Check
+- Status: **JM-UI-CONSOLIDATED-MAIN-RELEASE-01 — PRODUCTION VERIFIED**
+- Merge: PR [#59](https://github.com/maynowak/mays-jobsearch/pull/59) als `c8268ffa2b14145202fdcbb7821fa60be55026f0`; Integration-Head `13c53dc`; Basis `3579ade`; kein Force-Push/Branch-Löschung.
+- Production: automatische Deployments `mays-jobsearch` `dpl_J2smHoDjsF9dX1a7fj9VFAF4oTYd` und `mays-job-matcher` `dpl_EEjFHWU7SN32V8RvjNkDoGrpnC1X`, beide READY; beide Domains Footer `production · main · c8268ff`; `/`, `/profil`, `/profil?tab=applications`, `/search`, `/anmelden` 200; keine Console-Fehler/Overflow.
+- Auth Read-only: 6 Profil-Tabs × 1440/390 PASS; Glass-Navbar, CV Studio, Applications-Navigation sticky 1440/1024, static 980/900/768, hidden/mobile 390, kein Overlap; keine Schreiboperation.
+- Tests/E2E: fokussiert **128 PASS**; volle Suite **2048 PASS / 5 skipped**; Build/Diff/Secret-Scan PASS; alle integrierten Browser-E2E (Applications responsiv, CV Studio, Glass Navbar, Privacy, Radar inkl. A11y, Hydration, Application Draft, Visual-11) PASS.
+- Integrierte Branches: responsive 01, CV Studio/Visual-11 02, Glass Navbar 03, Privacy 04, Radar 05, Release-Doku 06; Konflikte nur package.json/Auditlog manuell erhalten.
+- Grenzen: keine RIS/AWS/Terraform/Cognito/Consent/Storage-Änderung; Application-Write-E2E nicht erneut ausgeführt (unverändert bereits unter `3579ade` production-verified); kein zusätzlicher Main-Push; Feature-Branches unverändert.
+- Doku-Report: `docs/reports/JM-UI-CONSOLIDATED-MAIN-RELEASE-01-RELEASE.md` auf separatem Docs-Branch.
+
 2026-11-24 · JM-UI-CONSOLIDATED-MAIN-RELEASE-01 — INTEGRATION READY
 - Typ: Multi-Feature-Integration, Konfliktauflösung, gemeinsame Regression
 - Status: **READY FOR CONTROLLED MERGE**
