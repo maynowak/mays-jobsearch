@@ -46,9 +46,15 @@ export default function MatchCard({ match, index, onGenerateLetter, onAtsEvaluat
 
   const location =
     formatGermanLocation(m.location ?? []) || (m.remote ? t("match.remote") : t("match.locationNotStated"));
+  const radarId = m.slug ?? `match-${index}`;
+  const radarTitle = m.title ?? t("match.unknownRole");
 
   return (
-    <li className={`match-card${analyzing ? " match-card--analyzing" : ""}`}>
+    <li
+      className={`match-card${analyzing ? " match-card--analyzing" : ""}`}
+      data-radar-job-id={radarId}
+      data-radar-job-title={radarTitle}
+    >
       <span className="rank">#{index + 1}</span>
       {analyzing && <span className="match-analyzing-badge" title={t("match.analyzing")}>🔍</span>}
       <ScoreBadge score={match.score} />
