@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 2026-11-24 · JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01 — STACKED APPLICATIONS NAVIGATION
 - Typ: Profil-Responsive-Fix, CSS-Spezifitätskonflikt, Scroll-/Overlap-E2E
 - Status: **READY FOR VISUAL REVIEW**
@@ -8,7 +7,7 @@
 - E2E: 1440/1024 sticky, 980/900/768 static, 390 mobile switcher/hidden; top/middle/bottom ohne Overlap, 0 Overflow, Filter/Aktionen erreichbar, Navigation zwischen Einstellungen/Bewerbungen PASS. 18 Screenshots committed.
 - Tests: fokussiert **56 PASS**; Build/Diff/Secret-Scan PASS. Keine Daten-/RIS-/Consent-/Bewerbungslogikänderung.
 - Bericht: `docs/reports/JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01.md`.
-=======
+
 2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-03 — CONTROLLED MAIN MERGE & PRODUCTION E2E
 - Typ: Release, PR-Merge, Vercel Production, authentifizierter RIS-E2E, Cleanup
 - Status: **PRODUCTION E2E VERIFIED**
@@ -18,7 +17,6 @@
 - RIS akzeptierte den leeren manuellen Standort ohne 422; keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-Mutation oder neue Credentials.
 - Doku: dieser Release-Report und Auditlog auf separatem Docs-Branch; kein zusätzlicher Main-Push.
 - Bericht: `docs/reports/JM-APPLICATION-DRAFT-SAVE-RELEASE-03.md`.
->>>>>>> origin/docs/jm-application-draft-save-release-03
 
 2026-11-24 · JM-APPLICATION-DRAFT-SAVE-RELEASE-GATE-02 — CONTROLLED PR READINESS
 - Typ: Release-Gate, PR #58, Scope-/Contract-/Idempotenz-Prüfung, Production-Grenze
