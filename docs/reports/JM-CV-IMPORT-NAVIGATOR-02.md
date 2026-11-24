@@ -138,6 +138,8 @@ Abgedeckt:
 - Filter-Reset mit sichtbarem Hinweis und erhaltenen Entscheidungen
 - Screenshot-Modus entfernt den Radar; Beenden stellt ihn wieder her
 - Desktop 1920/1440, Tablet 768, Mobile 390 ohne Overflow
+- 768/390-Geometrie: Trigger-Unterkante liegt oberhalb der Importkarte
+  (kein Karten-Overlap)
 - 0 Console-/Page-Errors, keine AI-/RIS-/Storage-Writes
 - initialer `scrollY` = 0
 

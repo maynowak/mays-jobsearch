@@ -98,6 +98,18 @@ async function assertNoOverflow(page, label) {
   if (overflow > 0) throw new Error(`${label}: horizontal overflow ${overflow}px`);
 }
 
+async function assertTriggerClearOfCard(page, label) {
+  const geometry = await page.evaluate(() => {
+    const trigger = document.querySelector(".cv-import-radar .match-radar__mobile-toggle")?.getBoundingClientRect();
+    const card = document.getElementById("cv-import-workspace")?.getBoundingClientRect();
+    return trigger && card ? { triggerBottom: trigger.bottom, cardTop: card.top } : null;
+  });
+  if (!geometry) throw new Error(`${label}: radar trigger or card missing`);
+  if (geometry.triggerBottom > geometry.cardTop + 1) {
+    throw new Error(`${label}: radar trigger overlaps card (${geometry.triggerBottom} > ${geometry.cardTop})`);
+  }
+}
+
 async function radarSnapshot(page) {
   return page.evaluate(() => {
     const region = document.getElementById("cv-import-workspace");
@@ -243,6 +255,7 @@ async function run() {
     await page.evaluate(() => scrollTo(0, 0));
     await page.waitForTimeout(100);
     await assertNoOverflow(page, "mobile 390");
+    await assertTriggerClearOfCard(page, "mobile 390");
     await page.locator(".cv-import-radar .match-radar__mobile-toggle").click();
     await page.locator(".cv-import-radar .match-radar__panel").waitFor();
     const mobileEntries = await page.locator(".cv-import-radar .match-radar__panel button").count();
@@ -286,6 +299,7 @@ async function run() {
     await page.setViewportSize({ width: 768, height: 900 });
     await page.waitForTimeout(200);
     await assertNoOverflow(page, "tablet 768");
+    await assertTriggerClearOfCard(page, "tablet 768");
     await page.screenshot({ path: resolve(evidenceDir, "radar-768.png") });
 
     await page.emulateMedia({ reducedMotion: "reduce" });
