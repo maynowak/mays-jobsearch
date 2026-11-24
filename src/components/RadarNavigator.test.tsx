@@ -152,7 +152,9 @@ describe("shared RadarNavigator", () => {
     fireEvent.pointerEnter(radar);
     fireEvent.pointerMove(radar, { clientY: 14 });
     await waitFor(() => expect(container.querySelector(".radar-navigator__labels")).not.toBeNull());
-    fireEvent.wheel(radar, { deltaY: 120 });
+    const wheelDown = new WheelEvent("wheel", { deltaY: 120, bubbles: true, cancelable: true });
+    radar.dispatchEvent(wheelDown);
+    expect(wheelDown.defaultPrevented).toBe(true);
     await waitFor(() => expect(window.scrollTo).toHaveBeenCalled());
     const downActive = container.querySelector("[data-navigator-marker-id].is-active")?.getAttribute("data-navigator-marker-id");
     fireEvent.wheel(radar, { deltaY: -120 });
