@@ -1,3 +1,14 @@
+2026-11-24 · JM-CV-NAVIGATOR-CORE-RELEASE-01 — PRODUCTION VERIFIED
+- Typ: Kontrollierter Main-Release, PR-Merge, Vercel Production, Browser-Smoke, Production-Hotfix
+- Status: **PRODUCTION VERIFIED**
+- PRs: [#60](https://github.com/maynowak/mays-jobsearch/pull/60) `0ff75eb` → `d524911`; [#61](https://github.com/maynowak/mays-jobsearch/pull/61) `de94a46` → `53c9926`. Kein Force-Push, keine Branch-Löschung.
+- Scope: PR #60 nur 9 erwartete Dateien (Navigator-Kern, Shell, Match-Radar-Adapter, Adapterverträge, Tests, CORE-01-Report/Audit); PR #61 nur `RadarNavigator.tsx`/Test. Keine CV-Import-/Editor-Integration, keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-/Parser-Änderung.
+- Production-Fix: erster Smoke auf `d524911` fand den bereits vorhandenen passiven React-Wheel-Handler (`Unable to preventDefault inside passive event listener invocation`); PR #61 ersetzt ihn durch einen nativen non-passiven Listener auf dem Navigator-Root und sichert `defaultPrevented` im Unit-Test ab.
+- Tests: fokussiert **27 PASS**; serielle Vollsuite **2071 PASS / 5 skipped** (200 Dateien); Build/`git diff --check`/Secret-Scan PASS; bestehende Match-Radar-E2E PASS (20 Marker/Positionen, Hover, Klick, Wheel, Collapse, neue Suche, Mobile 390/768, 0 Overflow, 0 AI/ATS/Profile); PR-CodeQL und Vercel-Checks für #60/#61 PASS.
+- Production: `mays-job-matcher` `dpl_23oQSXWHsLnrPfk6yT1aFhimFAzk`, `mays-jobsearch` `dpl_Byn2Ts5yRwQttmASpY8cvN4tWrKH`, beide Ready; beide Domains `/search` 200 und Bundle/Footer `53c9926`. Synthetischer Browser-Smoke: Desktop 1440 (20 Marker/Karten, echte Positionen, 5 Labels, Tastatur Enter, Wheel, Collapse), Mobile 390 (20 Panel-Einträge, Escape/Fokus), 0 Overflow, 0 Console-/Page-Errors, 0 unerwartete API-Calls. Keine echten Daten; keine RIS-Writes.
+- Review-Follow-ups (nicht Release-blockierend): `aria-controls` bei geschlossenem Panel, Dialog-Fokus-Semantik, Hover-Ebene nach reinem Tastatur-Fokus, asynchrone Aktivierungsfehler/Wait-Cleanup für die späteren CV-Adapter.
+- Bericht: `docs/reports/JM-CV-NAVIGATOR-CORE-RELEASE-01.md`; Screenshots unter `docs/reports/assets/JM-CV-NAVIGATOR-CORE-RELEASE-01/`.
+
 2026-11-24 · JM-CV-NAVIGATOR-CORE-01 — SHARED RADAR NAVIGATOR CORE
 - Typ: Refactoring, gemeinsamer Navigationskern, Adapterverträge, Regressionstests
 - Status: **READY FOR INTEGRATION REVIEW**
