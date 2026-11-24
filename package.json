@@ -40,6 +40,7 @@
     "test:e2e:application-draft-save-recovery-01": "node tests/e2e/application-draft-save-recovery-01.mjs",
     "test:e2e:cv-studio-spotlight-12": "node tests/e2e/jm-profile-cv-studio-spotlight-12.mjs",
     "test:e2e:profile-navbar-glass-01": "node tests/e2e/profile-navbar-glass-01.mjs",
+    "test:e2e:cv-upload-privacy-info-05": "node tests/e2e/cv-upload-privacy-info-05.mjs",
     "test:e2e:cv-builder-import": "node tests/e2e/cv-builder-import-01a.mjs",
     "test:e2e:cv-builder-workflow-02a": "node tests/e2e/cv-builder-workflow-02a.mjs",
     "test:e2e:cv-builder-parser-02b": "node tests/e2e/cv-builder-parser-02b.mjs",

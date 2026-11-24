@@ -86,7 +86,14 @@ export default function CvUpload({ onManual, onOpenBuilder, onWorkflowStart }: P
 
   return (
     <div id="cv-panel" className="cv-panel" tabIndex={-1}>
-      <p className="cv-privacy">{t("cv.privacyNote")}</p>
+      <details className="cv-privacy-disclosure">
+        <summary className="cv-privacy-disclosure__summary">
+          <span className="cv-privacy-disclosure__icon" aria-hidden="true">ⓘ</span>
+          <span>{t("cv.privacyDisclosureTitle")}</span>
+          <span className="cv-privacy-disclosure__chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <p className="cv-privacy">{t("cv.privacyNote")}</p>
+      </details>
 
       <label
         className={`cv-dropzone${dragOver ? " cv-dropzone-over" : ""}`}
