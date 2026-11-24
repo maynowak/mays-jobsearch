@@ -4497,7 +4497,7 @@ export default function App() {
         {/* DASHBOARD-08: Navbar blendet beim Scrollen aus (hideOnScroll) und
             der vorhandene Seiten-Footer erscheint NACH dem Dashboard-Inhalt —
             identische Struktur wie der Default-Return weiter unten. */}
-          <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
+          <Navbar route="profil" glass hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard">
           <DashboardDevPreview />
         </main>
@@ -4529,7 +4529,7 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-          <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
+          <Navbar route="profil" glass hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard layout-profile-command">
           <ProfileParticles />
           <DashboardV2
@@ -4555,7 +4555,7 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-          <Navbar route="profil" hideOnScroll onNavigate={navigateInApp} />
+          <Navbar route="profil" glass hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard layout-profile-command">
           <ProfileParticles />
           <DashboardV2AuthenticatedPreview
@@ -4583,7 +4583,7 @@ export default function App() {
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-          <Navbar route={route} hideOnScroll onNavigate={navigateInApp} />
+          <Navbar route={route} glass hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard layout-profile-command">
           <ProfileParticles />
           <DashboardV2AuthenticatedPreview

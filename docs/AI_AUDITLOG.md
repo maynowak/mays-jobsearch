@@ -41,6 +41,17 @@
 - Grenzen: keine Änderung an CV-Parsing/PDF/RIS/ATS/Consent/Storage, Layout, Kartenpositionen oder „Dauerhaft gespeicherte Lebensläufe“; keine echten Daten.
 - Bericht: `docs/reports/JM-PROFILE-CV-STUDIO-SPOTLIGHT-12.md`.
 
+2026-11-22 · JM-PROFILE-NAVBAR-GLASS-01 — PROFILE NAVBAR ALIGNED TO SEARCH
+- Typ: Profil-Navigation, bestehende Glass-Navbar, responsive Visual-/Scroll-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch/Commit: `feature/jm-profile-navbar-glass-01`; Implementierung `c68b919`; Basis `origin/main` `91f92a4`; kein Main-Merge, kein Deployment.
+- Umsetzung: `App.tsx` aktiviert den bestehenden `glass`-Prop auf allen Profil-Navbar-Instanzen; keine zweite Navbar und keine Änderung der Suchseiten-Navbar. Profil erhält mobil/tablet mehr Abstand unter der schwebenden Pille; Bewerbungsverwaltung behält `position: relative`.
+- Visuell: 1920/1440 Navbar 1180×62 px, 768 721,9×62 px, 390 366,6×62 px; Position/Breite/Radius/Transparenz/Blur/Innenabstände identisch zu `/search`; Header-Abstand 20/20/16/12 px; 0 Overflow. Navigation Profil↔Suche, aktive Links, Mobile-Menü/Escape, Scroll-Ausblenden und Applications-Scroll geprüft.
+- Tests: fokussiert **124 PASS**; serielle Vollsuite **2029 PASS / 11 skipped**; Build/Diff/Secret-Scan PASS; visuelles E2E PASS.
+- Grenzen: keine Änderung an Suchseiten-Design, Navigation, Logout, Mobile-Menü, RIS/AWS/Cognito/Consent/Storage; keine echten Daten.
+- Bericht: `docs/reports/JM-PROFILE-NAVBAR-GLASS-01.md`.
+
+
 2026-11-22 · JM-CV-SEARCH-LOGIN-AUTOHYDRATION-04 — SEARCH LOGIN AUTOHYDRATION
 - Typ: Suchseiten-Einstieg für dauerhafte RIS-CVs, vorhandene Hydration/Dropdowns, Browser-E2E
 - Status: **READY FOR CONTROLLED MERGE — SEARCH LOGIN AUTOHYDRATION VERIFIED**
