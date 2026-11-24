@@ -461,6 +461,19 @@ export default function CvBuilderImportDialog({
         if (event.target === event.currentTarget) onClose();
       }}
     >
+      {fullpage && step === "preview" && !screenshotMode && (
+        <RadarNavigator
+          targets={navigatorTargets}
+          labels={navigatorLabels}
+          navigationKey={`cv-import-${sourceName}`}
+          regionSelector="#cv-import-workspace"
+          offset={() => 24}
+          classNamePrefix="match-radar"
+          className="cv-import-radar"
+          panelId="cv-import-radar-panel"
+          restoreFocusAfterPanelNavigation={false}
+        />
+      )}
       <div
         ref={workspaceRef}
         id={fullpage ? "cv-import-workspace" : undefined}
@@ -716,19 +729,6 @@ export default function CvBuilderImportDialog({
           </div>
         )}
       </div>
-      {fullpage && step === "preview" && !screenshotMode && (
-        <RadarNavigator
-          targets={navigatorTargets}
-          labels={navigatorLabels}
-          navigationKey={`cv-import-${sourceName}`}
-          regionSelector="#cv-import-workspace"
-          offset={() => 24}
-          classNamePrefix="match-radar"
-          className="cv-import-radar"
-          panelId="cv-import-radar-panel"
-          restoreFocusAfterPanelNavigation={false}
-        />
-      )}
     </div>
   );
 }
