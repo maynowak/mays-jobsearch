@@ -1,3 +1,13 @@
+2026-11-25 · JM-CV-EDITOR-NAVIGATOR-03 — CONTROLLED MAIN RELEASE
+- Typ: Fullpage-Editor-Navigation, Turbo-Hände-Koordination, PR-Merge, Vercel Production, Browser-Smoke
+- Status: **PRODUCTION VERIFIED**
+- Release: PR [#63](https://github.com/maynowak/mays-jobsearch/pull/63) `a349e1c` → `main` `431f938`; Feature-Implementierung `b6cf43d`; Docs `a349e1c`. Kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Scope: Editor-Radar links, acht Abschnitte, Validierungsübersicht/Aktionsziel, Fehleranzahl plus ARIA, tatsächlicher Feldfokus/-highlight, Mobile-Fluss oberhalb der Karte, Screenshot-Ausblendung. Turbo-Hände unverändert plus `stop()`-Handle über `onBeforeNavigate`; keine Validierungsregel-/Parser-/PDF-/RIS-Änderung.
+- Tests: fokussiert **108 PASS**; serielle Vollsuite **2086 PASS / 5 skipped** (202 Dateien); Build/Diff/Secret-Scan PASS; Editor-Radar-, Fullpage-Workspace-, UX-06-, Import-Radar- und Match-Radar-E2E PASS; PR-CodeQL und Vercel-Checks PASS. Der unveränderte `cv-builder-workflow-02a` erwartet weiterhin den vorbestehenden alten Button-Text und wurde nicht geändert.
+- Production: `mays-job-matcher` `dpl_HA9WH179eNFEQAFaxZmL7SzzBt8o`, `mays-jobsearch` `dpl_6igxwwzjZrQMkn7UqWPgDvy4ocxr`, beide Ready; beide Domains `/cv-builder/workspace` 200 und Bundle/Footer `431f938`. Synthetischer Smoke beider Domains: 9+ Marker, 5 Labels, Radar/Hände/Vorschau ohne Overlap, Turbo-`scrollBy`=0 bei Radar-Navigation, Fehlerstatus/-fokus/-highlight und Korrektur, Preview-Rückkehr, Wide/Screenshot, Mobile 390/768 ohne Überdeckung, 0 Console-/Page-Errors, 0 unerwartete API-Calls. Keine echten KI-/CV-/RIS-Daten.
+- Grenzen: keine RIS-/AWS-/Cognito-/Consent-/Storage-/Parser-/PDF-Export-Änderung; Release-Bericht/Audit nur auf Docs-Branch.
+- Bericht: `docs/reports/JM-CV-EDITOR-NAVIGATOR-03-RELEASE.md`; Screenshots unter `docs/reports/assets/JM-CV-EDITOR-NAVIGATOR-03-RELEASE/`.
+
 2026-11-24 · JM-CV-EDITOR-NAVIGATOR-03 — CV EDITOR RADAR
 - Typ: Fullpage-Editor-Navigation, Validierungsfokus, Turbo-Hände-Koordination, Accessibility/E2E
 - Status: **READY FOR VISUAL REVIEW**
