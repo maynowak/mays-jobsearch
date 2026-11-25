@@ -1,3 +1,14 @@
+2026-11-25 · JM-JOB-DETAILS-TRANSLATION-HOTFIX-01 — CONTROLLED MAIN MERGE & PRODUCTION VERIFICATION
+- Typ: Hotfix-Release, PR-Merge, automatische Vercel-Production-Deployments, Public/Synthetic-Production-Regression
+- Status: **PRODUCTION VERIFIED — LIVE PROVIDER CHECK PENDING**
+- PR [#70](https://github.com/maynowak/mays-jobsearch/pull/70); Feature-HEAD `4fa23b0`; vorherige Main-Basis `776112b` (PR #69 erhalten); Merge/Production-SHA `ee2ce6f`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Gates: Diff nur Translation-Hotfix; `tsc`/Build PASS; fokussiert **102 PASS**; serielle Vollsuite **2190 PASS / 5 skipped**; CodeQL PASS; Vercel-Previews/Deployments PASS; PR `CLEAN`/`MERGEABLE`; `git diff --check`/Secret-Scan PASS.
+- Production: `dpl_3eXKThhq6nLW7iLdGpwTFt9cizV4` (`mays-jobsearch`) und `dpl_2X99wovTzU4arSiW14qGVChK4xNv` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · ee2ce6f`; Public Smoke `/`, `/search`, `/profil`, `/datenschutz`, `/impressum`, `/anmelden`, `/cv-builder/workspace` bei 1440/390 je 200, 0 Overflow, 0 Console-/Page-Errors.
+- Production-Regression (synthetische Mock-APIs gegen das Production-Bundle): Jobdetails mit Entities/Aufzählungen/URL vollständig, keine Scripts/Styles/onerror, `window.__xss=0`; Translation-Wrapper → kontrollierter Fehler + Original, Clean-HTML → sanitisiert, keine Wrapper sichtbar, 0 unerwartete Calls/Errors.
+- Live-Provider-Check: eine harmlose synthetische Anfrage → HTTP 502 `model_unavailable`; kein unkontrollierter Retry, keine echten Nutzerdaten. Daher Status ausdrücklich **LIVE PROVIDER CHECK PENDING**.
+- Grenzen: Live-Provider-Übersetzung in diesem Fenster nicht bestätigt; Parser bleibt fail-closed für abgeschnittene Wrapper und >30k; keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung.
+- Dokumentation: `docs/reports/JM-JOB-DETAILS-TRANSLATION-HOTFIX-01-PRODUCTION.md`; Docs-Branch `docs/jm-job-details-translation-hotfix-01-release`.
+
 2026-11-25 · JM-JOB-DETAILS-TRANSLATION-HOTFIX-01 — TRANSLATION JSON RECOVERY & PRODUCTION-SAFE DISPLAY
 - Typ: Hotfix Jobdetails-Übersetzung, begrenzter JSON-Parser, Client-Guard, HTML-Security-Regression, synthetische E2E
 - Status: **READY FOR HOTFIX RELEASE APPROVAL**
