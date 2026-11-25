@@ -1,3 +1,13 @@
+2026-11-25 · JM-RELEASE-DOCS-CONSOLIDATION-02 — CONTROLLED DOCS RELEASE & PRODUCTION VERIFICATION
+- Typ: freigegebener Docs-PR-Merge, automatische Vercel-Production-Deployments, Public Smoke, GitHub-Dokumentationslink-Prüfung
+- Status: **DOCUMENTATION PRODUCTION VERIFIED**
+- PR [#71](https://github.com/maynowak/mays-jobsearch/pull/71); Docs-HEAD `f92f489`; Main-Basis `ee2ce6f`; Merge/Production-SHA `c63911f`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment, keine Produktcodeänderung.
+- Gates: Diff 16 Dateien/+1033 ausschließlich `docs/`; sechs Release-/Analysepakete vollständig; Auditblöcke je einmal; Link-/Screenshot-/Diff-/Secret-Prüfung PASS; Vercel-Previews/Deployments PASS; PR `CLEAN`/`MERGEABLE`; CodeQL für Docs-only per Path-Filter übersprungen.
+- Production: `dpl_Hu4myzKMzYRaHBfbZsCwJJAKeD2P` (`mays-jobsearch`) und `dpl_6etb7NF8dbQC4XbYNu6GHw7RrqzP` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · c63911f`.
+- Smoke: 14 Checks bei 1440/390 über `/`, `/search`, `/profil`, `/datenschutz`, `/impressum`, `/anmelden`, `/cv-builder/workspace`; je 200, 0 Overflow, 0 Console-/Page-Errors. GitHub README und zwei Report-Links je 200.
+- Dokumentation: `docs/reports/JM-RELEASE-DOCS-CONSOLIDATION-02-PRODUCTION.md`; Docs-Branch `docs/jm-release-docs-consolidation-02-release`; sechs Quell-Docs-Branches bleiben bestehen, keine Löschung.
+- Grenzen: Docs-only-Release, keine Produktverhaltensänderung; CodeQL path-filtered; keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung.
+
 2026-11-25 · JM-RELEASE-DOCS-CONSOLIDATION-02 — RELEASE DOCUMENTATION CONSOLIDATION
 - Typ: Docs-Integration, sechs offene Release-/Analysebranches, Auditlog-Zusammenführung, PR-Vorbereitung
 - Status: **READY FOR DOCUMENTATION MERGE REVIEW**
