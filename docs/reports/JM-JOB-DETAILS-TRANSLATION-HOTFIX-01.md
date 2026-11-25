@@ -5,7 +5,7 @@
 - Repository: `maynowak/mays-jobsearch`
 - Branch: `hotfix/jm-job-details-translation-01`
 - Base: `origin/main` `b4157e5`
-- PR: [#70](https://github.com/maynowak/mays-jobsearch/pull/70) (draft)
+- PR: [#70](https://github.com/maynowak/mays-jobsearch/pull/70) (draft), rebased/merged with main `776112b`
 - No main merge, no production deployment, no RIS/AWS/Terraform/Cognito/consent change.
 
 ## 1. Cause
@@ -61,7 +61,9 @@ Synthetic model outputs (no real AI call):
 
 ### Client — `src/components/RemainingCard.tsx`
 
-- Uses `normalizeTranslationForDisplay()` from `src/lib/translationText.ts`.
+- Uses the strict `normalizeTranslationForDisplay()` from the existing
+  `src/lib/translationEnvelope.ts` (merged from main PR #69). No duplicate
+  client parser was added.
 - Rejects empty or obviously unprocessed wrappers before setting the ready
   state; shows the existing translation error, keeps the original, and starts
   no second model request.
@@ -73,8 +75,8 @@ Synthetic model outputs (no real AI call):
 - `tests/api/job-translation.test.js`: parser variants, malformed quotes,
   newlines, truncation, double encoding, plain text, invalid object, oversized
   output, handler 200/502 behavior.
-- `src/lib/translationText.test.ts`: wrapper guard, empty, legitimate JSON-like
-  text later in a sentence.
+- `src/lib/translationEnvelope.test.ts`: wrapper guard, empty, legitimate JSON-like
+  text later in a sentence (extended from main PR #69).
 - `src/components/RemainingCard.test.tsx`: wrapper error keeps original,
   translated HTML is sanitized and cannot execute.
 - `tests/e2e/jm-job-details-translation-hotfix-01.mjs`: synthetic search with
@@ -88,7 +90,7 @@ Synthetic model outputs (no real AI call):
 | --- | --- |
 | `npx tsc -b` | PASS |
 | `npm run build` | PASS |
-| Focused translation/security suites | **94 PASS** (5 files) |
+| Focused translation/security suites | **102 PASS** (5 files) |
 | Browser translation hotfix E2E | PASS |
 | Existing job display/security E2E | PASS |
 | Full serial suite `npx vitest run --maxWorkers=1` | **2182 PASS / 5 skipped** (207 files) |
@@ -97,7 +99,7 @@ Synthetic model outputs (no real AI call):
 
 Focused suites:
 `tests/api/job-translation.test.js`, `tests/api/job-details.test.mjs`,
-`src/components/RemainingCard.test.tsx`, `src/lib/translationText.test.ts`,
+`src/components/RemainingCard.test.tsx`, `src/lib/translationEnvelope.test.ts`,
 `src/lib/safeHtml.test.ts`.
 
 The browser flow asserts:
@@ -137,17 +139,19 @@ sanitized German translation.
   cannot be unambiguously reconstructed, the API fails closed (502) instead of
   guessing.
 - Malformed inner quotes are recoverable when the closing quote/brace remains
-  recognizable; a severely corrupted string is rejected.
+  recognizable; a severely corrupted or truncated string is rejected. This is
+  intentionally stricter than PR #69, which returned partial truncated text.
 - The client guard recognises an obvious wrapper at the start of the string; it
   is a defense-in-depth layer, not a second full parser.
 - Translations larger than 30,000 characters now fail rather than being
   silently shortened.
 - No real provider call was made; all cases are synthetic.
-- Full suite passed on the hotfix branch: 2182 PASS / 5 skipped (207 files).
+- Full suite after the main merge: 2190 PASS / 5 skipped (207 files).
 
 ## 8. Git
 
 - Implementation commit: `21aa4bd`
+- Main merge (PR #69 + current main): `1e016e2`
 - Documentation/audit commit: this commit
 - Branch pushed: `hotfix/jm-job-details-translation-01`
 - Draft PR: #70; no merge, no deployment.
