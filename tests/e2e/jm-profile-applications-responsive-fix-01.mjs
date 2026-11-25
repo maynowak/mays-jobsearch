@@ -13,8 +13,18 @@ import sharp from "sharp";
 const port = 5258;
 const base = `http://localhost:${port}`;
 const route = `${base}/dev/dashboard-v2`;
-const evidenceDir = resolve("docs/reports/assets/JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01");
-const widths = [1440, 1024, 980, 900, 768, 390];
+// JM-PROFILE-LAYOUT-CONSISTENCY-13 extends this existing responsive check:
+// the shell, header and sidebar must stay identical across every profile tab.
+const evidenceDir = resolve("docs/reports/assets/JM-PROFILE-LAYOUT-CONSISTENCY-13");
+const widths = [320, 390, 768, 900, 980, 1024, 1440, 1920];
+const TAB_LABELS = [
+  ["overview", "Übersicht"],
+  ["profile", "Mein Profil"],
+  ["cv", "Lebenslauf"],
+  ["applications", "Bewerbungen"],
+  ["preferences", "Job-Präferenzen"],
+  ["settings", "Einstellungen"],
+];
 
 function startVite() {
   return spawn("npm", ["run", "dev", "--", "--port", String(port), "--strictPort"], {
@@ -100,14 +110,71 @@ async function assertState(page, width, phase) {
   if (state.navDisplay !== "none" && state.intersects) {
     throw new Error(`${width}/${phase}: navigation overlaps applications content`);
   }
-  if (width <= 980 && state.navDisplay !== "none" && state.navPosition !== "static") {
-    throw new Error(`${width}/${phase}: navigation is ${state.navPosition}, expected static`);
+  if (width <= 767 && state.navDisplay !== "none") {
+    throw new Error(`${width}/${phase}: navigation must use the mobile switcher below 768px`);
   }
-  if (width > 980 && state.navDisplay !== "none" && state.navPosition !== "sticky") {
-    throw new Error(`${width}/${phase}: desktop navigation is ${state.navPosition}, expected sticky`);
+  if (width > 767 && state.navDisplay !== "none" && state.navPosition !== "sticky") {
+    throw new Error(`${width}/${phase}: navigation is ${state.navPosition}, expected sticky`);
   }
   if (state.actionCount === 0) throw new Error(`${width}/${phase}: no application controls found`);
   return state;
+}
+
+async function openTab(page, tab, label) {
+  const sidebarButton = page.getByRole("button", { name: label, exact: true }).first();
+  if (await sidebarButton.isVisible().catch(() => false)) {
+    await sidebarButton.click();
+  } else {
+    await page.locator("#dashboard-section-select").selectOption(tab);
+  }
+  await page.waitForTimeout(500);
+}
+
+async function measureShell(page) {
+  return page.evaluate(() => {
+    const rect = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return {
+        left: Math.round(box.left),
+        top: Math.round(box.top),
+        width: Math.round(box.width),
+      };
+    };
+    const nav = document.querySelector(".dashboard-v2__navigation-card");
+    return {
+      header: rect(".dashboard-v2__header"),
+      shell: rect(".dashboard-v2"),
+      nav: rect(".dashboard-v2__navigation-card"),
+      navDisplay: nav ? getComputedStyle(nav).display : "none",
+      overflow: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  });
+}
+
+function sameRect(a, b) {
+  return Boolean(a && b && a.left === b.left && a.top === b.top && a.width === b.width);
+}
+
+async function assertShellConsistency(page, width) {
+  await page.goto(route, { waitUntil: "networkidle" });
+  const rows = [];
+  for (const [tab, label] of TAB_LABELS) {
+    await openTab(page, tab, label);
+    rows.push({ tab, ...(await measureShell(page)) });
+  }
+  const base = rows[0];
+  for (const row of rows) {
+    if (row.overflow > 0) throw new Error(`${width}/${row.tab}: horizontal overflow ${row.overflow}px`);
+    if (!sameRect(row.header, base.header)) {
+      throw new Error(`${width}/${row.tab}: profile header moved (${JSON.stringify(row.header)} vs ${JSON.stringify(base.header)})`);
+    }
+    if (width > 767 && (!sameRect(row.nav, base.nav) || row.navDisplay !== base.navDisplay)) {
+      throw new Error(`${width}/${row.tab}: sidebar moved or resized (${JSON.stringify(row.nav)} vs ${JSON.stringify(base.nav)})`);
+    }
+  }
+  return rows.map(({ tab, header, nav, navDisplay }) => ({ tab, header, nav, navDisplay }));
 }
 
 async function runWidth(browser, width) {
@@ -139,6 +206,7 @@ async function runWidth(browser, width) {
   });
 
   try {
+    const shell = await assertShellConsistency(page, width);
     await openApplications(page, width);
     const top = await assertState(page, width, "top");
     await saveWebp(page, `applications-${width}-top`);
@@ -160,6 +228,7 @@ async function runWidth(browser, width) {
       navPosition: top.navPosition,
       navDisplay: top.navDisplay,
       layoutColumns: top.layoutColumns,
+      shell,
       scrollHeight: top.scrollHeight,
       middleScrollY: middle.scrollY,
       bottomScrollY: bottom.scrollY,
@@ -186,6 +255,52 @@ async function runNavigation(browser) {
   }
 }
 
+async function runKeyboardAndMotion(browser) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "de-DE" });
+  await context.addInitScript(() => localStorage.setItem("mj-lang", "de"));
+  const page = await context.newPage();
+  const errors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(String(error)));
+  try {
+    await page.goto(route, { waitUntil: "networkidle" });
+    await page.waitForTimeout(500);
+    const before = await measureShell(page);
+    const applicationsButton = page.getByRole("button", { name: "Bewerbungen", exact: true }).first();
+    await applicationsButton.focus();
+    await page.keyboard.press("Enter");
+    await page.locator(".dashboard-v2--applications").waitFor();
+    await page.waitForTimeout(400);
+    const after = await measureShell(page);
+    if (!sameRect(before.header, after.header) || !sameRect(before.nav, after.nav)) {
+      throw new Error("keyboard tab switch moved the profile header or sidebar");
+    }
+    if ((await applicationsButton.getAttribute("aria-current")) !== "page") {
+      throw new Error("keyboard tab switch lost aria-current");
+    }
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    if (!(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches))) {
+      throw new Error("reduced-motion emulation is not active");
+    }
+    const settingsButton = page.getByRole("button", { name: "Einstellungen", exact: true }).first();
+    await settingsButton.focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("heading", { name: "Datenschutz & Datenspeicherung" }).waitFor();
+    await page.waitForTimeout(300);
+    const reduced = await measureShell(page);
+    if (!sameRect(before.header, reduced.header) || !sameRect(before.nav, reduced.nav)) {
+      throw new Error("reduced-motion tab switch moved the profile header or sidebar");
+    }
+    if (errors.length) throw new Error(`keyboard run console errors: ${errors.join(" | ")}`);
+    return { keyboardTabSwitch: "PASS", ariaCurrent: "PASS", reducedMotion: "PASS" };
+  } finally {
+    await context.close();
+  }
+}
+
 const vite = startVite();
 let browser;
 try {
@@ -195,7 +310,8 @@ try {
   const results = [];
   for (const width of widths) results.push(await runWidth(browser, width));
   const navigation = await runNavigation(browser);
-  console.log(JSON.stringify({ status: "PASS", results, navigation, evidenceDir }, null, 2));
+  const accessibility = await runKeyboardAndMotion(browser);
+  console.log(JSON.stringify({ status: "PASS", results, navigation, accessibility, evidenceDir }, null, 2));
 } finally {
   await browser?.close();
   if (vite.pid) {

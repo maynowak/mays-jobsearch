@@ -78,6 +78,97 @@ async function noOverflow(page, label) {
   if (overflow > 0) throw new Error(`${label}: overflow ${overflow}px`);
 }
 
+async function runEditLayout(browser) {
+  const widths = [320, 390, 768, 900, 1024, 1440, 1920];
+  const results = [];
+  for (const width of widths) {
+    const context = await browser.newContext({
+      viewport: { width, height: width <= 430 ? 844 : 1000 },
+      locale: "de-DE",
+    });
+    await context.addInitScript(({ userKey, future }) => {
+      localStorage.setItem("mj-lang", "de");
+      sessionStorage.setItem(userKey, JSON.stringify({
+        id_token: "synthetic-id-token",
+        session_state: null,
+        access_token: "synthetic-access-token",
+        refresh_token: null,
+        token_type: "Bearer",
+        scope: "openid email profile",
+        profile: {
+          iss: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O",
+          sub: "synthetic-editor-tab-user",
+          email: "editor-tab@example.invalid",
+          name: "Synthetic Editor Tab",
+        },
+        expires_at: future,
+      }));
+    }, { userKey: USER_KEY, future });
+    const page = await context.newPage();
+    const errors = [];
+    page.on("console", (message) => {
+      if (message.type() === "error" && !/status of 409/.test(message.text())) errors.push(message.text());
+    });
+    page.on("pageerror", (error) => errors.push(String(error)));
+    await page.route("**/api/**", async (route) => {
+      const request = route.request();
+      const path = new URL(request.url()).pathname;
+      if (path === "/api/models") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(models) });
+      if (path === "/api/ris/consents") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ consent: null }) });
+      if (path === "/api/ris/applications" && request.method() === "GET") {
+        return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [appFixture("synthetic-layout-form", "Synthetic Layout Form")], nextCursor: null }) });
+      }
+      return route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
+    });
+    try {
+      await page.goto(`${base}/profil?tab=applications`, { waitUntil: "networkidle" });
+      await page.getByRole("button", { name: /Synthetic Layout Form/ }).first().click();
+      await page.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }).click();
+      const form = page.getByRole("form", { name: "Bewerbungsdaten bearbeiten" });
+      await form.waitFor();
+      const formState = await page.evaluate(() => {
+        const box = (element) => {
+          if (!element) return null;
+          const rect = element.getBoundingClientRect();
+          return { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) };
+        };
+        const formElement = document.querySelector('form[aria-label="Bewerbungsdaten bearbeiten"]');
+        return {
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+          form: box(formElement),
+          firstField: box(formElement?.querySelector("input, select, textarea")),
+        };
+      });
+      if (formState.overflow > 0) throw new Error(`${width}: horizontal overflow ${formState.overflow}px in the edit form`);
+      if (!formState.form || formState.form.left < 0 || formState.form.right > width) {
+        throw new Error(`${width}: edit form is clipped (${JSON.stringify(formState.form)})`);
+      }
+      if (!formState.firstField || formState.firstField.width < 40) {
+        throw new Error(`${width}: edit field is not usable (${JSON.stringify(formState.firstField)})`);
+      }
+
+      await page.getByLabel("Persönliche Notizen").fill(`Layout ${width}`);
+      await page.getByRole("tab", { name: "Verlauf" }).click();
+      const dialog = page.getByRole("alertdialog", { name: "Ungespeicherte Änderungen" });
+      await dialog.waitFor();
+      const dialogState = await page.evaluate(() => {
+        const element = document.querySelector('[role="alertdialog"]');
+        const rect = element?.getBoundingClientRect();
+        return rect ? { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) } : null;
+      });
+      if (!dialogState || dialogState.left < 0 || dialogState.right > width) {
+        throw new Error(`${width}: unsaved-edit dialog is clipped (${JSON.stringify(dialogState)})`);
+      }
+      await dialog.getByRole("button", { name: "Weiter bearbeiten" }).click();
+      if (errors.length) throw new Error(`${width}: console errors ${errors.join(" | ")}`);
+      results.push({ width, form: formState.form, firstField: formState.firstField, dialog: dialogState, overflow: formState.overflow });
+    } finally {
+      await context.close();
+    }
+  }
+  return results;
+}
+
 async function run(browser) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "de-DE" });
   try {
@@ -266,8 +357,10 @@ async function run(browser) {
 
     if (aiCalls.length) throw new Error(`unexpected AI calls: ${JSON.stringify(aiCalls)}`);
     if (consoleErrors.length || pageErrors.length) throw new Error(`browser errors: ${JSON.stringify({ consoleErrors, pageErrors })}`);
+    const editLayout = await runEditLayout(browser);
     console.log(JSON.stringify({
       status: "PASS",
+      editLayout,
       applications: applications.map((application) => ({ id: application.applicationId, version: application.version, versionCount: application.documents.coverLetterVersions.length })),
       api: [...new Set(calls)],
       aiCalls: aiCalls.length,
