@@ -97,12 +97,6 @@ async function preparePage(browser, viewport, authenticated) {
   return { context, page, consoleErrors };
 }
 
-async function boxCenter(locator) {
-  const box = await locator.boundingBox();
-  if (!box) throw new Error("missing layout box");
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2, box };
-}
-
 async function runGuest(browser, width, height) {
   const { context, page, consoleErrors } = await preparePage(browser, { width, height }, false);
   const burger = page.locator(".burger");

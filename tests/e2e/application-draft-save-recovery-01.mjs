@@ -7,12 +7,8 @@
 // Run: npm run test:e2e:application-draft-save-recovery-01
 
 import { spawn } from "node:child_process";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import playwright from "playwright";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, "../..");
 const port = 5257;
 const base = `http://localhost:${port}`;
 const AUTHORITY = "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_ZURSMpD2O";

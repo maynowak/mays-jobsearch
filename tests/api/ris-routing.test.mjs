@@ -71,7 +71,7 @@ function makeReq(path, { method = "GET", headers = {}, body, query = {} } = {}) 
     "/api/ris/search-profiles": ["search-profiles", "__ris_search_profiles"],
     "/api/ris/erasure": ["erasure", "__ris_erasure"],
   };
-  const [exactRoute, flagKey] = routeMap[url.pathname] ?? ["", ""];
+  const flagKey = (routeMap[url.pathname] ?? ["", ""])[1];
   return {
     method,
     url: path,

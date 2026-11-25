@@ -72,7 +72,7 @@ describe.skipIf(!LIVE)("Live /api/jobs meta (opt-in, costs money/credits)", () =
       expect(meta.sources?.[id] ?? 0).toBe(0);
     }
     // Reasons are either null (ok) or a non-empty string code.
-    for (const [id, reason] of Object.entries(meta.sourceReasons ?? {})) {
+    for (const reason of Object.values(meta.sourceReasons ?? {})) {
       expect(reason === null || (typeof reason === "string" && reason.length > 0)).toBe(true);
     }
   });

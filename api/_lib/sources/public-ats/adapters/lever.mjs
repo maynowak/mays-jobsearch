@@ -29,7 +29,6 @@ function normalizeLeverJob(job, sourceId) {
   const descriptionPlain = stripHtml(descriptionHtml);
 
   const createdAt = job.createdAt ? Date.parse(job.createdAt) : NaN;
-  const updatedAt = job.updatedAt ? Date.parse(job.updatedAt) : NaN;
 
   const externalId = `lv-${job.id}`;
 

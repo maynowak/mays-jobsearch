@@ -26,7 +26,6 @@ function normalizeWorkableJob(job, sourceId) {
   const descriptionPlain = stripHtml(descriptionHtml);
 
   const createdAt = job.created_at ? Date.parse(job.created_at) : NaN;
-  const updatedAt = job.updated_at ? Date.parse(job.updated_at) : NaN;
 
   const externalId = `wk-${job.shortcode || job.id}`;
 

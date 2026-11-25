@@ -28,7 +28,6 @@ function normalizeAshbyJob(job, sourceId) {
   const descriptionPlain = stripHtml(descriptionHtml);
 
   const createdAt = job.publishedAt ? Date.parse(job.publishedAt) : NaN;
-  const updatedAt = job.updatedAt ? Date.parse(job.updatedAt) : NaN;
 
   const externalId = `ab-${job.id}`;
 

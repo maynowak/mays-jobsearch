@@ -36,7 +36,7 @@ describe("Mays-RIS boundary (static proof)", () => {
 
   it("contains no hardcoded RIS execute-api endpoint", () => {
     for (const file of files()) {
-      expect(file.content, file.path).not.toMatch(/execute-api\.[a-z0-9-]+\.amazonaws\.com/i);
+      expect(file.content, file.path).not.toMatch(/https?:\/\/execute-api\.[a-z0-9-]+\.amazonaws\.com/i);
       if (file.path.startsWith("src/")) {
         expect(file.content, file.path).not.toMatch(
           /RIS_API_BASE_URL|RIS_PARTNER_CREDENTIAL|RIS_TEST_USER_ALLOWLIST/

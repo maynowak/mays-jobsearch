@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { isHostname } from "../helpers/url.mjs";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock all external dependencies
 vi.mock("../../api/_lib/cache.mjs", () => ({
@@ -45,12 +45,10 @@ vi.mock("../../api/_lib/identity.mjs", () => ({
   sessionCookieHeader: () => "",
 }));
 
-const { chat } = await import("../../api/_lib/ai.mjs");
 const { cacheGet, cacheSet, cacheDel } = await import("../../api/_lib/cache.mjs");
 const { fetchAllJobs } = await import("../../api/_lib/sources/index.mjs");
 const { applySearchStrategyWithTargetRole } = await import("../../api/_lib/searchStrategy.mjs");
 const { normalizeSkills, scoreJobBySkills, calculateThreshold } = await import("../../api/_lib/searchStrategy.mjs");
-const { tokenize } = await import("../../api/_lib/filter.mjs");
 const { analyzeJobForAts } = await import("../../api/_lib/ats.mjs");
 
 const baseArbeitnowJob = {
@@ -115,13 +113,6 @@ function setupFetchMock(overrides = {}) {
   }
 }
 
-function setupAllDisabled() {
-  globalThis.fetch = vi.fn(() => {
-    throw new Error("should not be called");
-  });
-  vi.mocked(cacheGet).mockResolvedValue(null);
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(cacheGet).mockResolvedValue(null);
@@ -180,7 +171,6 @@ describe("E2E: CV to Jobs Flow", () => {
       expect(result.meta.targetRoleMatches).toBeGreaterThan(0);
 
       // Jobs matching targetRole should be included even with 0 skill overlap
-      const targetRoleJob = result.jobs.find(j => j.slug === "4");
       const cloudJob = result.jobs.find(j => j.title.includes("Cloud"));
       expect(cloudJob).toBeDefined();
     });
@@ -260,7 +250,6 @@ describe("E2E: CV to Jobs Flow", () => {
       expect(result.meta.targetRoleMatches).toBeGreaterThan(0);
 
       // Jobs matching targetRole should be included even with 0 skill overlap
-      const targetRoleJob = result.jobs.find(j => j.slug === "4");
       const cloudJob = result.jobs.find(j => j.title.includes("Cloud"));
       expect(cloudJob).toBeDefined();
     });

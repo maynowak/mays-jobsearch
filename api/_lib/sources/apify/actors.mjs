@@ -1,5 +1,5 @@
 import { getConfig } from "../../config.mjs";
-import { stripHtml, htmlToPlainText, detectLanguage } from "../../filter.mjs";
+import { htmlToPlainText, detectLanguage } from "../../filter.mjs";
 
 export const SOURCE_ID = "arbeitsagentur";
 

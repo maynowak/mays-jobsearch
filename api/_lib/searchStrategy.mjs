@@ -1,4 +1,4 @@
-import { tokenize, splitQuotedPhrases } from "./filter.mjs";
+import { splitQuotedPhrases } from "./filter.mjs";
 
 export const MAX_SKILLS = 20;
 export const DEFAULT_CANDIDATE_POOL_TARGET = 50;
@@ -84,7 +84,6 @@ export function progressiveSkillSearch(skills, source, { candidatePoolTarget = D
   }
 
   if (capabilities.supportsAND) {
-    const query = normalizedSkills.join(" ");
     return { skills: normalizedSkills, threshold, queries: [normalizedSkills], strategy: "and" };
   }
 
@@ -213,7 +212,6 @@ export function applySearchStrategy(skills, allJobs, source, options = {}) {
 }
 
 export function applySearchStrategyWithTargetRole(skills, targetRoles, allJobs, source, options = {}) {
-  const { targetRoleWeight = 1 } = options;
   const roles = Array.isArray(targetRoles) ? targetRoles : (targetRoles ? [targetRoles] : []);
   
   if (!skills.length && !roles.length) {

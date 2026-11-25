@@ -1,4 +1,4 @@
-import { tokenize, stripHtml, htmlToPlainText, detectLanguage } from "./filter.mjs";
+import { tokenize, stripHtml } from "./filter.mjs";
 
 const SKILL_ALIASES = new Map([
   ["aws", "aws"],
@@ -471,27 +471,6 @@ function priorityWeight(context) {
   return priority === "required" ? 2 : priority === "preferred" ? 1 : 0;
 }
 
-function extractOptionsFromText(text) {
-  const options = [];
-  const lower = text.toLowerCase();
-
-  if (lower.includes("and")) {
-    const parts = text.split(/\s+and\s+/i);
-    if (parts.length > 1) {
-      options.push({ type: "AND", values: parts });
-    }
-  }
-
-  if (lower.match(/\bor\b/)) {
-    const parts = text.split(/\s+or\s+/i);
-    if (parts.length > 1) {
-      options.push({ type: "OR", values: parts });
-    }
-  }
-
-  return options;
-}
-
 function createRequirement(id, text, category, source, context = text) {
   const priority = priorityFromContext(context);
   return {
@@ -818,11 +797,7 @@ export function analyzeJobForAts(job, profile) {
           ["vue", "react"],
         ];
         // Check for exact tech name matches to avoid substring false positives
-        return pairs.some(([a, b]) => {
-          const reqHasA = /\breact\b/i.test(normalizedReq) || /\bvue\b/i.test(normalizedReq);
-          const reqHasB = reqHasA ? false : false;
-          const skillHasA = /\breact\b/i.test(skill) || /\bvue\b/i.test(skill);
-          const skillHasB = skillHasA ? false : false;
+        return pairs.some(() => {
           // React vs Angular
           if ((/\breact\b/i.test(normalizedReq) && /\bangular\b/i.test(skill)) ||
               (/\bangular\b/i.test(normalizedReq) && /\breact\b/i.test(skill))) {
@@ -968,7 +943,7 @@ export function generateCVRecommendations(analysisResult, cvSkills = []) {
   const recommendations = [];
   const cvSkillsLower = (cvSkills || []).map((s) => s.toLowerCase());
 
-  const { requirements, matches, criticalGaps, recommendations: existingRecs } = analysisResult;
+  const { requirements, matches, criticalGaps } = analysisResult;
 
   // Create a map of requirement IDs to their match status
   const matchMap = new Map();
@@ -981,14 +956,6 @@ export function generateCVRecommendations(analysisResult, cvSkills = []) {
   for (const req of requirements) {
     reqMap.set(req.id, req);
   }
-
-  // Import the importanceWeight from analyzeJobForAts
-  const importanceWeight = {
-    critical: 4,
-    high: 3,
-    medium: 2,
-    low: 1,
-  };
 
   for (const req of requirements) {
     // Title tokens are role signals, not standalone CV requirements.
