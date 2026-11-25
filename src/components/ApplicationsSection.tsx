@@ -19,7 +19,7 @@ import type {
 } from "../lib/applications/contractTypes";
 import { ApplicationValidationError } from "../lib/applications/applicationValidation";
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
-import ApplicationEditForm from "./ApplicationEditForm";
+import ApplicationEditForm, { type ApplicationEditFormHandle } from "./ApplicationEditForm";
 import ApplicationCard from "./ApplicationCard";
 import ApplicationMigrationDialog from "./ApplicationMigrationDialog";
 import ApplicationLetterComparison from "./ApplicationLetterComparison";
@@ -56,6 +56,10 @@ interface Props {
 }
 
 type ApplicationTab = "overview" | "communication" | "documents" | "history";
+type PendingNavigation = {
+  target: { kind: "tab"; tab: ApplicationTab } | { kind: "application"; localId: string };
+  source: "edit";
+};
 type ApplicationFilter = "all" | ApplicationStatus | "followUpOpen" | "followUpOverdue";
 type ApplicationSort = "newest" | "oldest" | "followUp";
 
@@ -170,7 +174,9 @@ export default function ApplicationsSection({
     useState<SessionApplicationV1 | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [editDirty, setEditDirty] = useState(false);
   const [editError, setEditError] = useState("");
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
   const [activeTab, setActiveTab] = useState<ApplicationTab>("overview");
   const [followUpDue, setFollowUpDue] = useState("");
   const [followUpNote, setFollowUpNote] = useState("");
@@ -184,7 +190,6 @@ export default function ApplicationsSection({
   });
   const overviewHeadingRef = useRef<HTMLHeadingElement>(null);
   const applicationsListRef = useRef<HTMLUListElement>(null);
-  const draftDetailsRef = useRef<HTMLDetailsElement>(null);
   const mountedRef = useRef(true);
   const applicationsRef = useRef<SessionApplicationV1[]>([]);
   const repositoryRef = useRef(repository);
@@ -192,6 +197,10 @@ export default function ApplicationsSection({
   const operationsRef = useRef<Set<AbortController>>(new Set());
   const runningRef = useRef(false);
   const appliedNavigationRef = useRef<Props["navigationTarget"]>(null);
+  const editFormRef = useRef<ApplicationEditFormHandle | null>(null);
+  const draftDetailsRef = useRef<HTMLDetailsElement>(null);
+  const pendingNavigationRef = useRef<PendingNavigation | null>(null);
+  const pendingNavigationSaveRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     onChangedRef.current = onChanged;
@@ -244,7 +253,10 @@ export default function ApplicationsSection({
 
   useEffect(() => {
     setEditing(false);
+    setEditDirty(false);
     setEditError("");
+    pendingNavigationRef.current = null;
+    setPendingNavigation(null);
     setPendingSubmit(false);
     setDeleteConfirmId(null);
     setLetterDirty(false);
@@ -417,18 +429,93 @@ export default function ApplicationsSection({
   const tabId = (tab: ApplicationTab) => `${tabBaseId}-tab-${tab}`;
   const panelId = (tab: ApplicationTab) => `${tabBaseId}-panel-${tab}`;
 
-  const selectApplication = (id: string): boolean => {
-    if (editing) {
-      setError(t("applications.edit.finishFirst"));
-      return false;
+  const applyPendingNavigation = (target: PendingNavigation["target"]) => {
+    if (target.kind === "tab") {
+      setActiveTab(target.tab);
+      setError("");
+      requestAnimationFrame(() => tabRefs.current[target.tab]?.focus());
+      return;
     }
+    setSelectedId(target.localId);
+    setActiveTab("overview");
+    setEditing(false);
+    setEditDirty(false);
+    setEditError("");
+    setError("");
+    setPendingSubmit(false);
+    setDeleteConfirmId(null);
+    requestAnimationFrame(() => overviewHeadingRef.current?.focus({ preventScroll: true }));
+  };
+
+  const beginPendingNavigation = (target: PendingNavigation["target"]) => {
+    const pending: PendingNavigation = { target, source: "edit" };
+    pendingNavigationRef.current = pending;
+    setPendingNavigation(pending);
+    setError("");
+    requestAnimationFrame(() => pendingNavigationSaveRef.current?.focus());
+  };
+
+  const guardNavigation = (target: PendingNavigation["target"]): boolean => {
     if (letterDirty) {
       setError(t("applications.letterComparison.finishFirst"));
       return false;
     }
+    if (editing) {
+      if (editDirty) {
+        beginPendingNavigation(target);
+        return false;
+      }
+      setEditing(false);
+      setEditDirty(false);
+      setEditError("");
+    }
+    return true;
+  };
+
+  const continueEditing = () => {
+    pendingNavigationRef.current = null;
+    setPendingNavigation(null);
+    requestAnimationFrame(() => editFormRef.current?.focus());
+  };
+
+  const discardPendingEdit = () => {
+    const pending = pendingNavigationRef.current;
+    if (!pending || pending.source !== "edit") return;
+    pendingNavigationRef.current = null;
+    setPendingNavigation(null);
+    setEditing(false);
+    setEditDirty(false);
+    setEditError("");
+    applyPendingNavigation(pending.target);
+  };
+
+  const savePendingEdit = () => {
+    if (!pendingNavigationRef.current || pendingNavigationRef.current.source !== "edit") return;
+    editFormRef.current?.save();
+  };
+
+  useEffect(() => {
+    if (!pendingNavigation) return;
+    const frame = requestAnimationFrame(() => pendingNavigationSaveRef.current?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      continueEditing();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [pendingNavigation]);
+
+  const selectApplication = (id: string): boolean => {
+    if (id === selectedId) return true;
+    if (!guardNavigation({ kind: "application", localId: id })) return false;
     setSelectedId(id);
     setActiveTab("overview");
     setEditing(false);
+    setEditDirty(false);
     setEditError("");
     setPendingSubmit(false);
     setDeleteConfirmId(null);
@@ -438,14 +525,7 @@ export default function ApplicationsSection({
 
   const selectTab = (tab: ApplicationTab): boolean => {
     if (tab === activeTab) return true;
-    if (editing) {
-      setError(t("applications.edit.finishFirst"));
-      return false;
-    }
-    if (letterDirty) {
-      setError(t("applications.letterComparison.finishFirst"));
-      return false;
-    }
+    if (!guardNavigation({ kind: "tab", tab })) return false;
     setActiveTab(tab);
     setError("");
     return true;
@@ -739,6 +819,7 @@ export default function ApplicationsSection({
   const handleSaveEdits = (changes: SessionApplicationUpdateChanges) => {
     if (!selected) return;
     setEditError("");
+    const pending = pendingNavigationRef.current;
     void run(
       async (signal, current) => {
         const updated = await repository.update(selected.localId, {
@@ -749,11 +830,20 @@ export default function ApplicationsSection({
         if (!current()) return;
         replace(updated);
         setEditing(false);
+        setEditDirty(false);
+        if (pending?.source === "edit") {
+          pendingNavigationRef.current = null;
+          setPendingNavigation(null);
+          applyPendingNavigation(pending.target);
+        }
       },
       (message, err) => {
         setEditError(message);
         if (err instanceof ApplicationRepositoryError && err.code === "session_ended") {
           setEditing(false);
+          setEditDirty(false);
+          pendingNavigationRef.current = null;
+          setPendingNavigation(null);
         }
       }
     );
@@ -1144,6 +1234,35 @@ export default function ApplicationsSection({
                 ))}
               </div>
 
+              {pendingNavigation && (
+                <div
+                  className="applications-confirm applications-edit-navigation"
+                  role="alertdialog"
+                  aria-labelledby="applications-edit-unsaved-title"
+                  aria-describedby="applications-edit-unsaved-text"
+                >
+                  <h4 id="applications-edit-unsaved-title">{t("applications.edit.unsavedTitle")}</h4>
+                  <p id="applications-edit-unsaved-text">{t("applications.edit.unsavedText")}</p>
+                  <div className="applications-edit-navigation__actions">
+                    <button
+                      ref={pendingNavigationSaveRef}
+                      type="button"
+                      className="letter-btn"
+                      onClick={savePendingEdit}
+                      disabled={busy}
+                    >
+                      {t("applications.edit.saveAndSwitch")}
+                    </button>
+                    <button type="button" className="btn-ghost" onClick={discardPendingEdit} disabled={busy}>
+                      {t("applications.edit.discardChanges")}
+                    </button>
+                    <button type="button" className="btn-ghost" onClick={continueEditing}>
+                      {t("applications.edit.continueEditing")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {error && <p className="letter-review-warning" role="alert">{error}</p>}
 
               {activeTab === "overview" && (
@@ -1156,13 +1275,16 @@ export default function ApplicationsSection({
                 >
                   {editing ? (
                     <ApplicationEditForm
+                      ref={editFormRef}
                       key={`${selected.localId}-${selected.version}`}
                       application={selected}
                       busy={busy}
                       error={editError}
                       onSave={handleSaveEdits}
+                      onDirtyChange={setEditDirty}
                       onCancel={() => {
                         setEditing(false);
+                        setEditDirty(false);
                         setEditError("");
                       }}
                     />

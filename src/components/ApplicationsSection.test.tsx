@@ -554,25 +554,136 @@ describe("APP-02 ApplicationsSection", () => {
     expect(screen.getByRole("tabpanel", { name: "Dokumente" })).toBeInTheDocument();
   });
 
-  it("requires saving or cancelling before switching tabs or applications while editing", async () => {
-    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
-    renderSection([detailed(), { ...draft({ localId: "local-2", job: otherJob }) }]);
-    fireEvent.click(
-      await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ })
-    );
-    await screen.findByRole("heading", { name: "Senior Fullstack Developer", level: 3 });
-    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
-    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
-
+  it("switches tabs without a warning while the edit form is unchanged", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
     fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
-    expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("alert")).toHaveTextContent(/speichere oder brich/i);
-    expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+    expect(screen.getByRole("tab", { name: "Dokumente" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Dokumente" })).toBeInTheDocument();
+    expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("asks for a decision when switching tabs with real changes", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Geändert" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+
     expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByLabelText("Name")).toHaveValue("Anna Beispiel");
+    expect(screen.getByRole("alertdialog", { name: "Ungespeicherte Änderungen" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Speichern und wechseln" })).toHaveFocus());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter bearbeiten" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Geändert");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })));
+  });
+
+  it("removes dirty state when values are reverted", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    const notes = screen.getByLabelText("Persönliche Notizen");
+    fireEvent.change(notes, { target: { value: "Kurz geändert" } });
+    fireEvent.change(notes, { target: { value: "Bestehende persönliche Notiz" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+
+    expect(screen.getByRole("tab", { name: "Dokumente" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("discards changes before opening the requested tab", async () => {
+    const { onChanged } = renderSectionWithChanges([detailed()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Verwerfen" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Verlauf" }));
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen verwerfen" }));
+
+    expect(screen.getByRole("tab", { name: "Verlauf" })).toHaveAttribute("aria-selected", "true");
+    expect(onChanged).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("tab", { name: "Übersicht" }));
+    expect(screen.getByText("Bestehende persönliche Notiz")).toBeInTheDocument();
+  });
+
+  it("saves changes before opening the requested tab", async () => {
+    const { onChanged } = renderSectionWithChanges([detailed()]);
+    onChanged.mockClear();
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    await screen.findByRole("form", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Speichern und wechseln" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Speichern und wechseln" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Dokumente" })).toHaveAttribute("aria-selected", "true")
+    );
+    const updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.notes).toBe("Speichern und wechseln");
+    expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull();
+  });
+
+  it("keeps the edit form and values when saving from the switch dialog fails", async () => {
+    const base = createSessionApplicationRepository({ initial: [detailed()] });
+    const conflicted: ApplicationRepository = {
+      ...base,
+      update: async () => {
+        throw new ApplicationRepositoryError("conflict", "version_conflict");
+      },
+    };
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={conflicted} />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    await screen.findByRole("form", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Nicht verlieren" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Speichern und wechseln" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/zwischenzeitlich geändert/i);
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Nicht verlieren");
     expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  it("protects unsaved edits when selecting another application", async () => {
+    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
+    renderSection([detailed(), draft({ localId: "local-2", job: otherJob })]);
+    fireEvent.click(await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Nicht wechseln" } });
+    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Senior Fullstack Developer", level: 3 })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen verwerfen" }));
+    expect(screen.getByRole("heading", { name: "Cloud Engineer", level: 3 })).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("closes the edit switch dialog with Escape and keeps editing", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    await screen.findByRole("form", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Weiter" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Weiter");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })));
+  });
+
+  it("selects another application without a warning when the edit form is unchanged", async () => {
+    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
+    renderSection([detailed(), draft({ localId: "local-2", job: otherJob })]);
+    fireEvent.click(await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+    expect(screen.getByRole("heading", { name: "Cloud Engineer", level: 3 })).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 
   it("returns to overview and shows the newly selected application", async () => {

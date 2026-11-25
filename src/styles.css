@@ -16642,3 +16642,33 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     margin: 8px 60px 0 0;
   }
 }
+
+/* JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — tab/application switch decision. */
+.applications-edit-navigation {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.applications-edit-navigation h4,
+.applications-edit-navigation p {
+  margin: 0;
+}
+
+.applications-edit-navigation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.applications-edit-navigation button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .applications-edit-navigation__actions,
+  .applications-edit-navigation__actions > button {
+    width: 100%;
+  }
+}
