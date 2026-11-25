@@ -46,9 +46,33 @@ Report-/Doku-Commits ohne neues Deployment). Der Footer friert die Identität de
 Artefakts ein und wechselt nicht, wenn Git danach weiterverändert wird. Keine Secrets in
 Build-Informationen aufnehmen.
 
+## Current Production (2026-11-25)
+
+| Wert | Stand |
+| --- | --- |
+| `origin/main` / Production-SHA | `df1fe01983487b6badcc29653a3f8474f10a5938` |
+| Version | `2.2.0` |
+| `mays-jobsearch` Deployment | `dpl_GXVGsTs1u98y2952bCqGUVuCtBgE` — READY |
+| `mays-job-matcher` Deployment | `dpl_BrrdddUMvZ21YyUTWn8z6RidGVPr` — READY |
+| Domains | `www.mays-job-matcher.app`, `mays-jobsearch.vercel.app` |
+| Footer | `Version 2.2.0 · production · main · df1fe01` |
+
+Beide Deployments wurden durch die Git-/Vercel-Automatisierung nach dem Merge
+von PR #66 erzeugt. Kein manuelles `vercel --prod` war beteiligt.
+
 ## Deploy
 
-The project does **not** rely on automatic Vercel Git deployment — production is deployed explicitly.
+`vercel.json` aktiviert `git.deploymentEnabled.main: true`. Ein Merge nach
+`main` startet automatisch die Production-Deployments der verbundenen
+Projekte. Nach jedem Merge:
+
+1. Beide Projekte (`mays-jobsearch`, `mays-job-matcher`) auf READY prüfen.
+2. Deployment-IDs und Build-SHA dokumentieren.
+3. Beide Domains auf denselben Footer-SHA prüfen.
+4. Public Smoke und – falls verfügbar – authentifizierte Read-only-E2E
+   ausführen.
+
+Manuelles Deployment ist nur mit ausdrücklicher Freigabe zulässig:
 
 ```bash
 npm i -g vercel
@@ -57,13 +81,21 @@ vercel link
 vercel --prod --scope maymilly
 ```
 
-`--scope maymilly` is required because the local CLI token is associated with another Vercel account/team (`gregornowak-6756`), while the project lives in the `maymilly` team.
+`--scope maymilly` ist erforderlich, weil der lokale CLI-Token einem anderen
+Vercel-Konto/Team zugeordnet ist (`gregornowak-6756`), während die Projekte im
+`maymilly`-Team liegen.
 
 ## Project
 
-Vercel project: `maymilly/mays-job-matcher`
+Vercel-Projekte:
 
-Live URL: https://mays-job-matcher.vercel.app
+- `maymilly/mays-job-matcher` — Haupt-App
+- `maymilly/mays-jobsearch` — zweite Production-Domain
+
+Live-URLs:
+
+- https://www.mays-job-matcher.app/
+- https://mays-jobsearch.vercel.app/
 
 ## Environment variables (all server-side)
 

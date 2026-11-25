@@ -15,11 +15,9 @@ Manual CV      CV Upload (PDF)
   │                │
   │          PDF.js browser (pdfjs-dist)
   │                │
-  │          SHA-256 hash (crypto.subtle)
+  │          SHA-256 hash (crypto.subtle, browser session only)
   │                │
-  │        Profile Cache (server-side Redis)
-  │                │
-  │          /api/profile (only on cache miss → AI)
+  │          /api/profile (AI extraction; no server-side CV profile cache)
   │                │
   └────────┬───────┘
            │
@@ -70,6 +68,96 @@ Vercel Functions (api/*.mjs)
         ├── Upstash Redis REST               (caches + POST/DELETE/GET /api/alerts)
         └── Resend API                       (POST /api/cron/digest)
 ```
+
+## Current application architecture (2026-11-25)
+
+The repository contains the production application at `df1fe01`
+(`Version 2.2.0`). This section describes the current UI, BFF and persistence
+boundaries; the older deep-dive sections below remain valid for the matching
+and job-source pipeline.
+
+### Routes and shell
+
+- `/` and `/search` — public landing/search experience.
+- `/profil` — authenticated profile command center with six sections:
+  Übersicht, Mein Profil, Lebenslauf, Bewerbungen, Job-Präferenzen,
+  Einstellungen.
+- `/cv-builder/workspace` — full-page CV import/editor workspace
+  (`noindex`, session-first).
+- `/datenschutz`, `/datenschutzprinzipien`, `/impressum`, `/anmelden`,
+  `/registrieren`, `/auth/callback` — legal, auth and auth-callback routes.
+- `src/App.tsx` keeps routing and cross-section state; `DashboardV2` owns the
+  profile tab state and renders the shared header, sidebar, mobile switcher and
+  content column.
+
+The profile shell uses one shared frame width for header/sidebar/mobile
+navigation. The applications section alone extends the content column to the
+right on desktop; header and sidebar keep their position and width. See
+`docs/reports/JM-PROFILE-LAYOUT-CONSISTENCY-13.md`.
+
+### Applications
+
+- `src/components/ApplicationsSection.tsx` — list, detail, filters,
+  communication/history, edit form, own-letter editor, delete/export.
+- Session and RIS repositories implement the same `ApplicationRepository`
+  contract (`src/lib/applications/repositoryTypes.ts`).
+- The edit form compares real field values with the persisted application
+  (dirty state) and uses an imperative save/focus handle for the
+  tab/application switch dialog.
+- The own-letter editor writes `coverLetterDraft`/`documentStatus` through
+  `repository.update()` with `expectedVersion`; it does not create a version.
+- Remote mode is enabled only after the BFF capability probe succeeds for the
+  current verified `iss + sub`; otherwise the app stays in session mode and
+  never migrates session data automatically.
+
+### CV import and structured editor
+
+- `CvBuilderImportDialog` — browser-only PDF text extraction, import preview,
+  section selection, review candidates, filters, pagination, radar and
+  screenshot mode.
+- `CvBuilderEditor` — eight collapsible sections, live preview, templates,
+  validation summary, PDF export and optional RIS PDF storage.
+- `RadarNavigator` is shared by the match results, import preview and editor.
+  It measures real DOM targets through `ResizeObserver`/`MutationObserver` and
+  never uses synthetic marker positions.
+- `CvBuilderScrollHands` provides the turbo-scroll controls; radar navigation
+  stops a running hand animation through `onBeforeNavigate`.
+- Expand/collapse-all and screenshot mode are independent view features. They
+  change only `<details>`/presentation state; inputs, validation, import
+  decisions, versions and draft data stay untouched.
+
+### BFF, RIS and consent
+
+- The browser calls same-origin `api/*` functions only.
+- `api/ris/router.mjs` is the single server-side entry for the RIS BFF:
+  applications, consents, CVs, CV consent, search profiles, search-profile
+  consent and account erasure. `vercel.json` rewrites set exactly one internal
+  route flag; conflicting or mismatched flags fail closed.
+- RIS partner credentials, test allowlist and consent configuration are
+  server-side only. The browser never receives the partner credential.
+- Session versus durable storage is explicit for applications, CVs and search
+  profiles. Each durable path has its own consent purpose and fails closed if
+  the notice is not approved or consent is missing.
+- Account erasure uses the existing RIS privacy lifecycle; the UI does not
+  claim immediate physical purge when the RIS path only sets a delete marker.
+
+### AI, ATS and i18n
+
+- AI calls go through the provider router (OpenRouter primary, EdenAI
+  optional) with provider-level fallback on quota exhaustion and model-level
+  fallback for temporary unavailability.
+- ATS analysis, CV improvement and job-detail enrichment are explicit user
+  actions; view-only UI actions do not trigger them.
+- DE/EN strings live in `src/i18n.tsx`. UI labels quoted in the user guide and
+  reports come from that file.
+
+### Verification pointers
+
+- Unit/integration tests: `src/**/*.test.tsx`, `tests/api/**`.
+- Browser E2E: `tests/e2e/jm-profile-applications-responsive-fix-01.mjs`,
+  `jm-cv-import-navigator-02.mjs`, `jm-cv-editor-navigator-03.mjs`,
+  `jm-application-edit-tab-navigation-01.mjs`.
+- Release evidence: `docs/reports/JM-UX-CONSOLIDATED-RELEASE-01-PRODUCTION.md`.
 
 ## Frontend
 
@@ -338,15 +426,27 @@ Clearly distinguish:
 - **Apify dataset age** — application freshness check against `dataset.createdAt` (time-of-day window).
 - **Application refresh policy** — only `404`/`410` dataset reads trigger a new Actor run.
 
-## State model (`App.tsx`)
+## State model (`App.tsx` / `DashboardV2`)
 
-- `route`: `landing | matcher` (determined by path).
+`App.tsx` keeps route-level and cross-section state; `DashboardV2` owns the
+active profile section and the shared header/sidebar. The application and CV
+areas keep their own local UI state and repository instances.
+
+- `route`: `landing | matcher | profile | cv-workspace` (determined by path).
 - `phase`: `idle | searching | scoring` → drives the button label and spinner.
 - `status`: `StatusMessage | null` → rendered by `Status`.
 - `matches`: `Match[]` → rendered by `Results`.
 - `profile`: last submitted `Profile` → reused by alerts and cover letters.
 - `letterJob`: `{ job, prepare } | null` → modal open state.
 - `modelsState` / `models` / `defaultModel` / `fallbackModel` / `recommendedModel` / `selectedModel` → model selection.
+- `applicationRepository` + `applicationStorageMode` → session or RIS-backed
+  applications; the capability probe and auth identity decide the mode.
+- `DashboardV2.activeId` → profile section; the applications section widens
+  only the content column, not the shared shell.
+- `CvBuilderImportDialog` / `CvBuilderEditor` local state → import review,
+  decisions, filters, pagination, section open states, template and preview.
+- `persistentCvStorage` / `persistentSearchProfiles` → durable RIS-backed CV
+  and search-profile lists with their own consent/capability state.
 
 ## Serverless functions
 

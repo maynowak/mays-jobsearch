@@ -1,3 +1,8 @@
+> **Historical implementation note (moved from the root README).**
+> This document describes the prepared Cognito Managed Login v2 branding and
+> its approval gate. It is not the project entry point; see
+> [README.md](../README.md) and [docs/ARCHITECTURE.md](ARCHITECTURE.md).
+
 # JOBMATCHER-COGNITO-BRANDING-IMPLEMENTATION-01
 
 ## Overview

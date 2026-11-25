@@ -1,3 +1,12 @@
+2026-11-25 · JM-DOCUMENTATION-CONSOLIDATION-01 — COMPLETE DOCUMENTATION CONSOLIDATION
+- Typ: Dokumentationsinventar, README-Neuaufbau, Roadmap/Changelog-Konsolidierung, Architektur-/Entwickler-/Deployment-Aktualisierung, Benutzerhandbuch, Wiki-Vorbereitung
+- Status: **READY FOR DOCUMENTATION REVIEW**
+- Branch: `docs/jm-documentation-consolidation-01`; Basis `origin/main` `df1fe01`; keine Quellcode-, API-, RIS-, AWS-, Terraform-, Cognito-, Consent-, Storage- oder CI-CD-Änderung; kein Main-Merge, kein Deployment.
+- Befunde: Root-README enthielt die Cognito-Branding-Aufgabe; `DEPLOYMENT.md` widersprach der aktiven automatischen Vercel-Main-Deployment-Kette; das Architekturdiagramm zeigte noch den alten serverseitigen CV-Profile-Cache; Roadmap/Changelog endeten vor den November-Releases; Benutzerhandbuch und Wiki fehlten.
+- Umsetzung: Root-README als professioneller Projekteinstieg mit synthetischen Screenshots; Branding-Inhalt nach `docs/BRANDING.md` verschoben; `docs/ROADMAP.md` mit aktuellem Production-Stand und offenen Paketen ergänzt (Historie erhalten); `docs/CHANGELOG.md` um PR #66 und die UX-Releases ergänzt; `docs/ARCHITECTURE.md` um aktuelle Profil-Shell, Applications, CV-Workspaces, Radar/Turbo-Hände, BFF/RIS, Session/Consent und i18n erweitert und Cache-Diagramm korrigiert; `docs/DEVELOPMENT_WORKFLOW.md` und `docs/DEPLOYMENT.md` auf aktuelle Gates/Deployments aktualisiert; `docs/AI_CONTEXT.md`-Status ergänzt; `docs/USER_GUIDE.md` neu (14 Themen, echte UI-Labels); `docs/wiki/` mit 14 Seiten plus Sidebar vorbereitet; `docs/DOCUMENTATION_MATRIX.md` und `docs/DOCUMENTATION_CONSISTENCY_REPORT.md` neu.
+- Validierung: relative Linkprüfung für 25 Dokumente PASS; `git diff --check` PASS; Secret-Muster in geänderten Docs keine; Screenshot-Pfade vorhanden; keine Codeänderungen. Bekannte Altlast `cv-builder-workflow-02a` (alter Buttontext) bleibt dokumentiert und unverändert.
+- Bericht: `docs/DOCUMENTATION_CONSISTENCY_REPORT.md`; Inventar: `docs/DOCUMENTATION_MATRIX.md`; Wiki vorbereitet, nicht veröffentlicht.
+
 2026-11-25 · JM-UX-CONSOLIDATED-RELEASE-01 — CONTROLLED UX INTEGRATION & RELEASE VERIFICATION
 - Typ: Integrationsbranch, drei UX-Pakete, Konfliktauflösung, gemeinsame Regression, visuelle Abnahme
 - Status: **READY FOR RELEASE APPROVAL**
