@@ -35,27 +35,63 @@ function translationPlainText(value) {
     .trim();
 }
 
-function parseTranslation(content) {
-  let text = String(content ?? "").trim();
-  text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-  if (!text) return "";
+function decodeJsonEscapes(value) {
+  return String(value).replace(/\\(u[0-9a-fA-F]{4}|["\\/bfnrt])/g, (_match, escape) => {
+    switch (escape[0]) {
+      case "n": return "\n";
+      case "r": return "\r";
+      case "t": return "\t";
+      case "b": return "\b";
+      case "f": return "\f";
+      case "u": return String.fromCharCode(Number.parseInt(escape.slice(1), 16));
+      default: return escape;
+    }
+  });
+}
 
+function extractJsonTranslation(text, depth = 0) {
+  if (depth > 3) return null;
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
-  if (start !== -1 && end > start) {
-    try {
-      const parsed = JSON.parse(text.slice(start, end + 1));
-      if (typeof parsed.translation === "string" && parsed.translation.trim()) {
-        return parsed.translation.trim().slice(0, MAX_TRANSLATION_OUTPUT);
-      }
-    } catch {
-      // Fall through to the plain-text fallback below.
-    }
+  if (start === -1 || end <= start) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return null;
   }
+  if (typeof parsed?.translation !== "string" || !parsed.translation.trim()) return null;
+  const value = parsed.translation.trim();
+  // Some models double-encode the JSON envelope as a string.
+  return extractJsonTranslation(value, depth + 1) ?? value;
+}
 
-  // Some compatible models ignore the JSON instruction. The result is still
-  // used as plain text, but never rendered as unsanitized HTML.
-  return text.slice(0, MAX_TRANSLATION_OUTPUT);
+function unwrapTranslationEnvelope(text) {
+  let value = String(text ?? "").trim();
+  const match = value.match(/^\{\s*"translation"\s*:\s*"([\s\S]*)"\s*\}\s*$/);
+  if (match) return decodeJsonEscapes(match[1]).trim();
+  if (/^\{\s*"translation"\s*:/.test(value)) {
+    // Truncated or otherwise invalid envelope: remove the markers the model
+    // added so the user never sees raw JSON syntax.
+    value = value.replace(/^\{\s*"translation"\s*:\s*"?/, "");
+    value = value.replace(/"?\s*\}\s*$/, "");
+    if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+    return decodeJsonEscapes(value).trim();
+  }
+  return value;
+}
+
+function parseTranslation(content) {
+  const text = String(content ?? "")
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+  if (!text) return "";
+
+  // Strict JSON first; tolerate malformed/double-encoded output without ever
+  // returning the {"translation":"…"} wrapper to the client.
+  const parsed = extractJsonTranslation(text) ?? unwrapTranslationEnvelope(text);
+  return parsed.slice(0, MAX_TRANSLATION_OUTPUT).trim();
 }
 
 async function handleTranslation(req, res, body) {

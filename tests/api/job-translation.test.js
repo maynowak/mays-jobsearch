@@ -150,6 +150,45 @@ describe("JM-JOB-TRANSLATION-01: job translation API", () => {
     expect(res.data.translation).toBeUndefined();
   });
 
+  it("unwraps malformed model JSON instead of showing the envelope", async () => {
+    vi.mocked(chat).mockResolvedValueOnce('{"translation":"Er sagte "Hallo"\nWelt"}');
+
+    const res = await call(englishJob);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.data.translation).toContain("Er sagte");
+    expect(res.data.translation).toContain("Welt");
+    expect(res.data.translation).not.toContain('{"translation"');
+    expect(res.data.translation).not.toContain('"translation":');
+  });
+
+  it("unwraps truncated, fenced and double-encoded envelopes", async () => {
+    vi.mocked(chat).mockResolvedValueOnce('{"translation":"Abgeschnittener Text');
+    let res = await call(englishJob);
+    expect(res.statusCode).toBe(200);
+    expect(res.data.translation).toBe("Abgeschnittener Text");
+    expect(res.data.translation).not.toContain('{"translation"');
+
+    vi.mocked(chat).mockResolvedValueOnce('```json\n{"translation":"Fenced text"}\n```');
+    res = await call(englishJob);
+    expect(res.data.translation).toBe("Fenced text");
+
+    vi.mocked(chat).mockResolvedValueOnce(
+      JSON.stringify({ translation: JSON.stringify({ translation: "Innerer Text" }) })
+    );
+    res = await call(englishJob);
+    expect(res.data.translation).toBe("Innerer Text");
+  });
+
+  it("keeps a plain-text fallback that ignores the JSON instruction", async () => {
+    vi.mocked(chat).mockResolvedValueOnce("Nur Text ohne JSON");
+
+    const res = await call(englishJob);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.data.translation).toBe("Nur Text ohne JSON");
+  });
+
   it("does not accept an unsupported target language", async () => {
     const res = await call({ ...englishJob, targetLanguage: "fr" });
 
