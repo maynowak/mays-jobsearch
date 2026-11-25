@@ -387,6 +387,18 @@ export function htmlToText(value, options = {}) {
       continue;
     }
 
+    // A tag name must start with a letter (or "/" + letter). Checking this
+    // before scanning for ">" keeps failed candidates ("< 80k", "2<3") linear
+    // and prevents swallowing the ">" of a later, valid tag (e.g. "</p>").
+    const marker = input[index + 1];
+    const isTagStart =
+      marker === "/" ? /[A-Za-z]/.test(input[index + 2] ?? "") : /[A-Za-z]/.test(marker ?? "");
+    if (!isTagStart) {
+      output += "<";
+      index += 1;
+      continue;
+    }
+
     const tagEnd = findTagEnd(input, index + 1);
     if (tagEnd === -1) {
       output += input.slice(index);
@@ -394,10 +406,8 @@ export function htmlToText(value, options = {}) {
     }
     const tag = parseTag(input.slice(index + 1, tagEnd));
     if (!tag) {
-      // Not a tag (for example "2 < 3"): keep the whole slice as text and
-      // continue after it so a long "< < < … >" run is scanned only once.
-      output += input.slice(index, tagEnd + 1);
-      index = tagEnd + 1;
+      output += "<";
+      index += 1;
       continue;
     }
     index = tagEnd + 1;

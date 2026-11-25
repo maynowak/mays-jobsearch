@@ -67,7 +67,10 @@ export function contractTypeLabelKey(value: string | undefined): string | null {
 }
 
 function stripHtml(html: string): string {
-  return decodeHtmlEntities(htmlToText(html, { blockNewlines: false, brNewlines: false }))
+  // decode -> strip -> decode keeps double-encoded markup out of the preview.
+  return decodeHtmlEntities(
+    htmlToText(decodeHtmlEntities(html), { blockNewlines: false, brNewlines: false })
+  )
     .replace(/\s+/g, " ")
     .trim();
 }

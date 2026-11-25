@@ -161,6 +161,22 @@ describe("JM-COVER-LETTER-02: deterministic description review", () => {
     expect(normalizeDescriptionText("<p>2 < 3 und 4 > 1</p>")).toContain("2 < 3 und 4 > 1");
   });
 
+  it("strips double-encoded markup instead of exposing raw tags", () => {
+    const normalized = normalizeDescriptionText(
+      "&amp;lt;p&amp;gt;AWS &amp;amp; Terraform&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;Erfahrung mit Kubernetes&amp;lt;/p&amp;gt;"
+    );
+    expect(normalized).toBe("AWS & Terraform\n\nErfahrung mit Kubernetes");
+    expect(normalized).not.toContain("&lt;");
+    expect(normalized).not.toContain("<p>");
+  });
+
+  it("keeps comparison text without leaking closing tags", () => {
+    const normalized = normalizeDescriptionText("<p>Gehalt &lt; 80k.</p><p>Weiter &gt; 3.</p>");
+    expect(normalized).toContain("Gehalt < 80k.");
+    expect(normalized).toContain("Weiter > 3.");
+    expect(normalized).not.toContain("</p>");
+  });
+
   it("handles a multilingual description", () => {
     const result = checkPlausibility(
       job,

@@ -94,6 +94,12 @@ describe("htmlToText - tag scanner", () => {
     expect(text).toContain("b");
   });
 
+  it("keeps comparison text without swallowing the next closing tag", () => {
+    expect(htmlToText("<p>Gehalt < 80k.</p>")).toBe("\nGehalt < 80k.\n");
+    expect(htmlToText("a < b > c")).toBe("a < b > c");
+    expect(htmlToText("</ p>y")).toBe("</ p>y");
+  });
+
   it("keeps comparison text that only looks like markup", () => {
     expect(htmlToText("a < b > c")).toBe("a < b > c");
     expect(htmlToText("2<3 and 4>1")).toBe("2<3 and 4>1");

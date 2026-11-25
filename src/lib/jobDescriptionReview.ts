@@ -92,7 +92,11 @@ const GENERIC_ROLE_WORDS = new Set([
 
 function stripHtml(value: string): string {
   // Plain-text extraction only: the result is never rendered as HTML.
-  return decodeHtmlEntities(htmlToText(value, { blockNewlines: true, brNewlines: true }));
+  // Decode first so double-encoded markup becomes real tags and is stripped
+  // (documented order: decode -> strip -> decode).
+  return decodeHtmlEntities(
+    htmlToText(decodeHtmlEntities(value), { blockNewlines: true, brNewlines: true })
+  );
 }
 
 export function normalizeDescriptionText(value: string | null | undefined): string {
