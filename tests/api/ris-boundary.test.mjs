@@ -36,7 +36,9 @@ describe("Mays-RIS boundary (static proof)", () => {
 
   it("contains no hardcoded RIS execute-api endpoint", () => {
     for (const file of files()) {
-      expect(file.content, file.path).not.toMatch(/https?:\/\/execute-api\.[a-z0-9-]+\.amazonaws\.com/i);
+      // Plain substring check: catches scheme-less hostnames as well and
+      // avoids an unanchored host regex (CodeQL js/regex/missing-regexp-anchor).
+      expect(file.content, file.path).not.toContain("execute-api");
       if (file.path.startsWith("src/")) {
         expect(file.content, file.path).not.toMatch(
           /RIS_API_BASE_URL|RIS_PARTNER_CREDENTIAL|RIS_TEST_USER_ALLOWLIST/
