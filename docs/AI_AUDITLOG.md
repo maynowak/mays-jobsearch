@@ -1,3 +1,14 @@
+2026-11-25 · JM-CV-IMPORT-EXPANDED-VIEW-UX-01 — EXPANDED CV VIEW & SCREENSHOT MODE SEPARATION
+- Typ: CV-Importvorschau, Radar-Sichtbarkeit, `<details>`-Zustände, bestehende Browser-E2E erweitert
+- Status: **READY FOR VISUAL REVIEW**
+- Branch: `feature/jm-cv-import-expanded-view-ux-01`; Basis `origin/main` `e92d78b`; Implementierung `754ed1e`; Branch gepusht; kein Main-Merge/Deployment, kein Force-Push.
+- Ausgangsursache: `toggleScreenshotMode()` koppelte das Öffnen aller `.cv-import-section__details` an `screenshotMode`; der Radar wurde nur bei `!screenshotMode` gerendert. Eine vollständige CV-Ansicht mit Radar war nicht möglich, und der Screenshot-Modus war der einzige Weg zum Aufklappen.
+- Umsetzung: separater `allSectionsExpanded`-Zustand, synchronisiert über native `toggle`-Events der `<details>`; neuer Fullpage-Button „Alle Abschnitte aufklappen/einklappen“ mit `aria-pressed`, der ausschließlich die Abschnitte öffnet/schließt und den Screenshot-Modus nicht betritt. Radar bleibt in beiden Zuständen sichtbar. Screenshot-Modus speichert weiterhin den Ausgangszustand, öffnet für die Aufnahme alle Abschnitte, blendet Radar/Bedienelemente aus und stellt beim Verlassen exakt den vorherigen Aufklappzustand wieder her. Keine Änderung am RadarNavigator-Kern, keine Import-/Mapping-/Entscheidungslogik.
+- Tests: `tsc`/Build PASS; fokussierte Import-/Radar-Suiten **39 PASS** (3 Dateien); serielle Vollsuite siehe Ausführungslog; erweiterte E2E `jm-cv-import-navigator-02` PASS (14 Marker, 10 Kandidaten-Marker, Markerpositionen nach Expand/Collapse und nach Screenshot-Rückkehr innerhalb 2 px, Radar in Expand/Collapse sichtbar, Screenshot Radar 0, Entscheidung nach Screenshot unverändert, Mobile 390 Expand/Screenshot ohne Overflow, 0 API-Requests durch Ansichtswechsel, 0 Console-/Page-Errors); Regression `cv-import-ux-07` und `cv-builder-import-ux-02d` PASS.
+- Screenshots: `docs/reports/assets/JM-CV-IMPORT-EXPANDED-VIEW-UX-01/` (`before-normal-1440/390`, `before-screenshot-1440/390`, `expanded-1440/390`, `collapsed-1440`, `radar-1440-screenshot-mode`, `screenshot-mode-390`, Radar-Serien).
+- Grenzen: Screenshot-Modus klappt weiterhin für die Aufnahme alle Abschnitte auf und stellt danach den vorherigen Zustand wieder her; der Skills-Block besitzt keine `<details>`-Hülle und ist immer sichtbar; sichtbarer Summary-Text bleibt „Details anzeigen“.
+- Bericht: `docs/reports/JM-CV-IMPORT-EXPANDED-VIEW-UX-01.md`.
+
 2026-11-25 · JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — EDIT-SWITCH DECISION & OWN COVER LETTER
 - Typ: UI-Navigation, Dirty-State-Vergleich, Dialog/Accessibility, nicht-KI-Anschreibeneditor, Unit-/Browser-E2E
 - Status: **READY FOR VISUAL REVIEW**
