@@ -1,3 +1,13 @@
+2026-11-25 · JM-DOC-RELEASE-01 — CONTROLLED DOCUMENTATION RELEASE
+- Typ: freigegebener Docs-PR-Merge, automatische Vercel-Production-Deployments, Public Smoke
+- Status: **DOCUMENTATION PRODUCTION VERIFIED**
+- PR [#67](https://github.com/maynowak/mays-jobsearch/pull/67); Docs-HEAD `ccaaffd`; vorherige Main-Basis `df1fe01`; Merge-Commit/Production-SHA `aa57500`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Umfang: 27 Dateien, +1803/−199, ausschließlich Dokumentation; keine Code-/API-/RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-/CI-CD-Änderung. CodeQL ist per Path-Filter auf `src/**`, `api/**`, Paket-/Lock- und CodeQL-Config begrenzt und wird bei einem reinen Docs-Diff bewusst nicht gestartet.
+- Review: README, Roadmap, Architektur inkl. Jobsearch↔RIS-Grenze, User Guide, Development/Deployment, Wiki, Matrix und Konsistenzbericht geprüft; relative Linkprüfung 25 Dokumente PASS; `git diff --check` PASS; Secret-Scan sauber; Screenshot-Pfade vorhanden; keine unbestätigten Produktivfunktionen.
+- Deployments: `dpl_p4GBqFNoYENBgqjFN3iyN47mCTve` (`mays-jobsearch`) und `dpl_HgJoHfifWLqftxW58nHs7VxcLB8G` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · aa57500`; Smoke `/`, `/datenschutz`, `/impressum` bei 1440/390 je 200, 0 Overflow, 0 Console-/Page-Errors.
+- Dokumentation: `docs/reports/JM-DOC-RELEASE-01-PRODUCTION.md`; Docs-Branch `docs/jm-doc-release-01`.
+- Grenzen: keine Produktänderung, keine RIS-/AWS-/Terraform-Operation; RIS-Repository in Phase 1 nicht verändert.
+
 2026-11-25 · JM-DOCUMENTATION-CONSOLIDATION-01 — COMPLETE DOCUMENTATION CONSOLIDATION
 - Typ: Dokumentationsinventar, README-Neuaufbau, Roadmap/Changelog-Konsolidierung, Architektur-/Entwickler-/Deployment-Aktualisierung, Benutzerhandbuch, Wiki-Vorbereitung
 - Status: **READY FOR DOCUMENTATION REVIEW**
