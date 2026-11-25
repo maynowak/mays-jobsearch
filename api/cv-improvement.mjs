@@ -1,7 +1,6 @@
 import { HttpError } from "./_lib/filter.mjs";
 import {
   analyzeJobForAts,
-  generateCVRecommendations,
   generateImprovementPlan,
   getRecommendationSummary,
   applyRecommendations,
@@ -9,7 +8,6 @@ import {
   computeMatchImpact,
 } from "../src/lib/cv-improvement.js";
 import { computeMatchForJob } from "./_lib/matching.mjs";
-import { getConfig } from "./_lib/config.mjs";
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -54,34 +52,6 @@ function parseSkills(skills) {
     return skills.map(s => unquote(s)).filter(s => s);
   }
   return [];
-}
-
-function getProviderInfo() {
-  const cfg = getConfig();
-  const openRouterEnabled = cfg.openRouterEnabled;
-  const edenaiEnabled = cfg.edenaiEnabled;
-
-  if (openRouterEnabled) {
-    return {
-      provider: "OpenRouter",
-      privacyStatus: "VERIFIED",
-      privacyPolicy: "https://openrouter.ai/privacy (Last Updated: August 31, 2026)",
-    };
-  }
-
-  if (edenaiEnabled) {
-    return {
-      provider: "EdenAI",
-      privacyStatus: "UNKNOWN",
-      privacyPolicy: "Privacy policy to be investigated",
-    };
-  }
-
-  return {
-    provider: "unavailable",
-    privacyStatus: "NO_PROVIDER_CONFIGURED",
-    privacyPolicy: "No AI provider available"
-  };
 }
 
 export default async function handler(req, res) {
@@ -173,7 +143,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: validation.error, code: validation.code });
       }
 
-      const { profile, selectedRecommendationIds, allRecommendations } = body;
+      const { selectedRecommendationIds, allRecommendations } = body;
 
       if (!selectedRecommendationIds || !Array.isArray(selectedRecommendationIds) || selectedRecommendationIds.length === 0) {
         return res.status(400).json({ error: "No recommendations selected", code: "bad_request" });
@@ -186,8 +156,6 @@ export default async function handler(req, res) {
       if (!body.profile || typeof body.profile !== "object") {
         return res.status(400).json({ error: "Profile must be an object", code: "bad_request" });
       }
-
-      const cvSkills = parseSkills(body.profile?.skills);
 
       // Apply selected recommendations
       const result = applyRecommendations(body.profile, selectedRecommendationIds, body.allRecommendations);
@@ -206,11 +174,6 @@ export default async function handler(req, res) {
       });
     } else if (isReanalyzeEndpoint) {
       // Handle re-analysis endpoint
-      const validation = validateRequest(body);
-      if (!validation.valid) {
-        return res.status(400).json({ error: validation.error, code: validation.code });
-      }
-
       const { job, originalProfile, improvedProfile } = body;
 
       if (!job || typeof job !== "object") {
@@ -224,8 +187,6 @@ export default async function handler(req, res) {
       if (!improvedProfile || typeof improvedProfile !== "object") {
         return res.status(400).json({ error: "Improved profile must be an object", code: "bad_request" });
       }
-
-      const cvSkills = parseSkills(originalProfile?.skills);
 
       // Run ATS analysis on original profile
       const beforeAnalysis = analyzeJobForAts(job, { skills: originalProfile.skills });
@@ -261,8 +222,6 @@ export default async function handler(req, res) {
       }
 
       const { job, profile } = body2;
-      const cvSkills = parseSkills(profile?.skills);
-
       // Step 1: ATS Analysis (deterministic)
       const analysis = analyzeJobForAts(job, profile || {});
 

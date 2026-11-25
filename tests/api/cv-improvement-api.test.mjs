@@ -158,11 +158,48 @@ describe("CV Improvement API", () => {
     await handler(mockReq, mockRes);
     expect(mockRes.statusCode).toBe(200);
     
-    const plan = mockRes.data.improvement.plan;
     for (const rec of mockRes.data.improvement.plan) {
       expect(rec).toHaveProperty("safetyStatus");
       expect(rec).toHaveProperty("safetyStatusLabel");
       expect(rec.safetyStatus).toBeDefined();
     }
+  });
+
+  it("K) reanalyze endpoint returns a computed improvement delta", async () => {
+    mockReq.url = "/api/v1/cv-improvement/reanalyze";
+    mockReq.body = {
+      job: {
+        title: "React Developer",
+        description: "React and TypeScript experience required.",
+        tags: ["react", "typescript"],
+      },
+      originalProfile: { skills: "react" },
+      improvedProfile: { skills: "react, typescript" },
+    };
+
+    await handler(mockReq, mockRes);
+
+    expect(mockRes.statusCode).toBe(200);
+    expect(mockRes.data.data.before).toBeDefined();
+    expect(mockRes.data.data.after).toBeDefined();
+    expect(mockRes.data.data.delta).toEqual(
+      expect.objectContaining({
+        scoreDelta: expect.any(Number),
+        coverageDelta: expect.any(Number),
+        requirementDeltas: expect.any(Array),
+      })
+    );
+    expect(mockRes.data.data.delta.requirementDeltas.length).toBeGreaterThan(0);
+    expect(mockRes.data.data.delta.requirementsImproved).toBeGreaterThanOrEqual(0);
+  });
+
+  it("L) reanalyze endpoint rejects an invalid job before calling the delta helper", async () => {
+    mockReq.url = "/api/v1/cv-improvement/reanalyze";
+    mockReq.body = { originalProfile: { skills: "react" }, improvedProfile: { skills: "react" } };
+
+    await handler(mockReq, mockRes);
+
+    expect(mockRes.statusCode).toBe(400);
+    expect(mockRes.data.code).toBe("bad_request");
   });
 });

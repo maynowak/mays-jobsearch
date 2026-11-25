@@ -587,7 +587,7 @@ export default function ApplicationsSection({
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tab: ApplicationTab) => {
     const index = APPLICATION_TABS.indexOf(tab);
-    let nextIndex = index;
+    let nextIndex: number;
     if (event.key === "ArrowRight") nextIndex = (index + 1) % APPLICATION_TABS.length;
     else if (event.key === "ArrowLeft") nextIndex = (index - 1 + APPLICATION_TABS.length) % APPLICATION_TABS.length;
     else if (event.key === "Home") nextIndex = 0;
