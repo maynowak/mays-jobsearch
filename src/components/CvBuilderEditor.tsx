@@ -544,6 +544,7 @@ export default function CvBuilderEditor({
   const [pdfRisError, setPdfRisError] = useState("");
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [wideMode, setWideMode] = useState(false);
+  const [allSectionsExpanded, setAllSectionsExpanded] = useState(false);
   const screenshotOpenStatesRef = useRef<boolean[]>([]);
   const [pendingErrorFocus, setPendingErrorFocus] = useState<string | null>(null);
   const [radarFocusPath, setRadarFocusPath] = useState<string | null>(null);
@@ -919,6 +920,31 @@ export default function CvBuilderEditor({
     }
   };
 
+  useEffect(() => {
+    if (!fullpage) return;
+    const root = dialogRef.current;
+    if (!root) return;
+    const sections = Array.from(root.querySelectorAll<HTMLDetailsElement>(".cv-builder-section"));
+    if (sections.length === 0) {
+      setAllSectionsExpanded(false);
+      return;
+    }
+    const sync = () => setAllSectionsExpanded(sections.every((section) => section.open));
+    sync();
+    sections.forEach((section) => section.addEventListener("toggle", sync));
+    return () => sections.forEach((section) => section.removeEventListener("toggle", sync));
+  }, [fullpage]);
+
+  const toggleAllSections = () => {
+    const sections = Array.from(
+      dialogRef.current?.querySelectorAll<HTMLDetailsElement>(".cv-builder-section") ?? []
+    );
+    if (sections.length === 0) return;
+    const next = !sections.every((section) => section.open);
+    sections.forEach((section) => { section.open = next; });
+    setAllSectionsExpanded(next);
+  };
+
   const toggleScreenshotMode = () => {
     const sections = Array.from(
       dialogRef.current?.querySelectorAll<HTMLDetailsElement>(".cv-builder-section") ?? []
@@ -979,6 +1005,18 @@ export default function CvBuilderEditor({
             {!fullpage && onOpenWorkspace && (
               <button type="button" className="btn-ghost cv-builder-open-tab" onClick={onOpenWorkspace}>
                 {t("cvBuilder.workspace.openEditor")}
+              </button>
+            )}
+            {fullpage && !screenshotMode && (
+              <button
+                type="button"
+                className="btn-ghost cv-builder-expand-toggle"
+                aria-pressed={allSectionsExpanded}
+                onClick={toggleAllSections}
+              >
+                {allSectionsExpanded
+                  ? t("cvBuilder.workspace.collapseAll")
+                  : t("cvBuilder.workspace.expandAll")}
               </button>
             )}
             {fullpage && !screenshotMode && (

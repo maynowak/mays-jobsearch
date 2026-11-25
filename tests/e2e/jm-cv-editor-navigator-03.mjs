@@ -9,7 +9,9 @@ import playwright from "playwright";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-CV-EDITOR-NAVIGATOR-03");
+// JM-CV-EDITOR-EXPANDED-VIEW-UX-01 extends this existing radar E2E with the
+// independent expand/collapse view, marker re-measurement and state restore.
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-CV-EDITOR-EXPANDED-VIEW-UX-01");
 const port = 5263;
 const base = `http://localhost:${port}`;
 const models = {
@@ -47,6 +49,11 @@ async function prepare(browser, width, height) {
   const consoleErrors = [];
   const pageErrors = [];
   const unexpected = [];
+  const apiRequests = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith("/api/")) apiRequests.push(`${request.method()} ${path}`);
+  });
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
   page.on("pageerror", (error) => pageErrors.push(String(error)));
   await page.route("**/api/**", (route) => {
@@ -57,7 +64,7 @@ async function prepare(browser, width, height) {
     unexpected.push(`${route.request().method()} ${path}`);
     return route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
   });
-  return { context, page, consoleErrors, pageErrors, unexpected };
+  return { context, page, consoleErrors, pageErrors, unexpected, apiRequests };
 }
 
 async function openEditor(page) {
@@ -97,6 +104,53 @@ function marker(page, id) {
   return page.locator(`.cv-editor-radar [data-radar-marker-id="${id}"]`);
 }
 
+async function sectionStates(page) {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll(".cv-builder-section"))
+      .map((section) => (section instanceof HTMLDetailsElement ? section.open : false))
+  );
+}
+
+async function assertAllSections(page, expected, label) {
+  const states = await sectionStates(page);
+  if (states.length < 8) throw new Error(`${label}: only ${states.length} sections`);
+  if (!states.every((open) => open === expected)) {
+    throw new Error(`${label}: section states ${states.join(",")} != ${expected}`);
+  }
+}
+
+async function assertMarkerPositions(page, label) {
+  const markers = await page.evaluate(() => {
+    const region = document.getElementById("cv-builder-editor-region");
+    const rail = document.querySelector(".cv-editor-radar .match-radar__rail");
+    if (!region || !rail) return [];
+    const regionTop = region.getBoundingClientRect().top + scrollY;
+    const regionHeight = region.offsetHeight || 1;
+    const usable = rail.clientHeight - 28;
+    const targetFor = (id) => {
+      if (id.startsWith("cv-builder-section-")) {
+        return document.getElementById(`cv-builder-${id.replace("cv-builder-section-", "")}`);
+      }
+      if (id === "cv-builder-validation") return document.getElementById("cv-builder-validation-summary");
+      if (id === "cv-builder-actions") return document.getElementById("cv-builder-actions");
+      return null;
+    };
+    return Array.from(document.querySelectorAll(".cv-editor-radar [data-radar-marker-id]")).map((node) => {
+      const id = node.getAttribute("data-radar-marker-id");
+      const rect = targetFor(id)?.getBoundingClientRect();
+      const top = Number.parseFloat(node.style.top);
+      const expected = rect ? 14 + ((rect.top + scrollY - regionTop) / regionHeight) * usable : null;
+      return { id, top, expected };
+    });
+  });
+  if (markers.length < 9) throw new Error(`${label}: only ${markers.length} markers`);
+  for (const entry of markers) {
+    if (entry.expected === null || Math.abs(entry.top - entry.expected) > 2) {
+      throw new Error(`${label}: marker ${entry.id} ${entry.top} != ${entry.expected}`);
+    }
+  }
+}
+
 async function run() {
   const vite = startVite();
   let browser;
@@ -104,7 +158,7 @@ async function run() {
     await waitForServer();
     await mkdir(evidenceDir, { recursive: true });
     browser = await playwright.chromium.launch({ headless: true });
-    const { context, page, consoleErrors, pageErrors, unexpected } = await prepare(browser, 1440, 1000);
+    const { context, page, consoleErrors, pageErrors, unexpected, apiRequests } = await prepare(browser, 1440, 1000);
     try {
       await openEditor(page);
       if ((await page.evaluate(() => scrollY)) !== 0) throw new Error("editor auto-scrolled on load");
@@ -116,6 +170,44 @@ async function run() {
       const railRect = await page.locator(".cv-editor-radar .match-radar__rail").evaluate((node) => node.getBoundingClientRect().toJSON());
       const handsRect = await page.locator(".cv-builder-scroll-hands").evaluate((node) => node.getBoundingClientRect().toJSON());
       if (railRect.right > handsRect.left) throw new Error("radar overlaps turbo hands");
+
+      await assertAllSections(page, false, "initial 1440");
+      const requestsBeforeLayout = apiRequests.length;
+      await page.locator("#cv-builder-personal summary").click();
+      const fullName = page.getByLabel("Vollständiger Name");
+      await fullName.fill("Synthetic Expanded Editor");
+      await page.getByRole("button", { name: "Modern" }).click();
+      const previewBefore = await page.locator(".cv-builder-preview-pane").innerText();
+
+      await page.getByRole("button", { name: "Alle Abschnitte aufklappen" }).click();
+      await page.waitForTimeout(700);
+      await assertAllSections(page, true, "expanded 1440");
+      if ((await page.locator(".cv-editor-radar").count()) !== 1) throw new Error("expanded view removed the radar");
+      if ((await page.locator(".cv-builder-scroll-hands").count()) !== 1) throw new Error("expanded view removed the turbo hands");
+      if (await page.locator(".cv-builder-modal--screenshot").count()) throw new Error("expanding sections entered screenshot mode");
+      if ((await page.getByRole("button", { name: "Alle Abschnitte einklappen" }).getAttribute("aria-pressed")) !== "true") {
+        throw new Error("expand-all state missing");
+      }
+      if ((await page.getByRole("button", { name: "Modern" }).getAttribute("aria-pressed")) !== "true") {
+        throw new Error("expand-all changed the selected template");
+      }
+      if ((await fullName.inputValue()) !== "Synthetic Expanded Editor") throw new Error("expand-all lost a form value");
+      if ((await page.locator(".cv-builder-preview-pane").innerText()) !== previewBefore) {
+        throw new Error("expand-all changed the live preview");
+      }
+      await assertMarkerPositions(page, "expanded 1440");
+      await page.screenshot({ path: resolve(evidenceDir, "expanded-1440.png"), fullPage: true });
+
+      await page.getByRole("button", { name: "Alle Abschnitte einklappen" }).click();
+      await page.waitForTimeout(700);
+      await assertAllSections(page, false, "collapsed 1440");
+      if ((await page.locator(".cv-editor-radar").count()) !== 1) throw new Error("collapse removed the radar");
+      if ((await fullName.inputValue()) !== "Synthetic Expanded Editor") throw new Error("collapse lost a form value");
+      await assertMarkerPositions(page, "collapsed 1440");
+      await page.screenshot({ path: resolve(evidenceDir, "collapsed-1440.png") });
+      if (apiRequests.length !== requestsBeforeLayout) {
+        throw new Error(`view toggles issued API requests: ${apiRequests.slice(requestsBeforeLayout).join(",")}`);
+      }
 
       // Keyboard navigation must stop a running turbo-hand animation before
       // initiating the radar's own scroll. Scroll-hand ticks use scrollBy;
@@ -192,6 +284,18 @@ async function run() {
       }
       await page.screenshot({ path: resolve(evidenceDir, "radar-error-1440.png") });
 
+      await page.getByRole("button", { name: "Alle Abschnitte aufklappen" }).click();
+      await page.waitForTimeout(400);
+      await page.getByRole("button", { name: "Alle Abschnitte einklappen" }).click();
+      await page.waitForTimeout(400);
+      await page.getByRole("button", { name: "Zum ersten Fehler" }).click();
+      await page.waitForFunction(() =>
+        document.querySelector("#cv-builder-personal details")?.hasAttribute("open") === true
+      );
+      await page.waitForFunction(() =>
+        document.activeElement?.id === "cv-builder-field-personal-email"
+      );
+
       await personalMarker.click();
       await page.waitForTimeout(500);
       const focusedField = await page.evaluate(() => document.activeElement?.id);
@@ -210,12 +314,24 @@ async function run() {
         throw new Error("actions did not become ready");
       }
 
+      await page.getByRole("button", { name: "Alle Abschnitte aufklappen" }).click();
+      await page.waitForTimeout(400);
       await page.getByRole("button", { name: "Ansicht wechseln" }).click();
       if ((await page.locator(".cv-editor-radar").count()) !== 0) throw new Error("radar remains in screenshot mode");
       if ((await page.locator(".cv-builder-scroll-hands").count()) !== 0) throw new Error("hands remain in screenshot mode");
+      await assertAllSections(page, true, "screenshot expanded 1440");
       await page.screenshot({ path: resolve(evidenceDir, "radar-1440-screenshot-mode.png") });
       await page.getByRole("button", { name: "Ansicht wechseln" }).click();
       await page.locator(".cv-editor-radar").waitFor();
+      await assertAllSections(page, true, "after screenshot expanded 1440");
+
+      await page.getByRole("button", { name: "Alle Abschnitte einklappen" }).click();
+      await page.waitForTimeout(400);
+      await page.getByRole("button", { name: "Ansicht wechseln" }).click();
+      await assertAllSections(page, true, "screenshot collapsed 1440");
+      await page.getByRole("button", { name: "Ansicht wechseln" }).click();
+      await page.locator(".cv-editor-radar").waitFor();
+      await assertAllSections(page, false, "after screenshot collapsed 1440");
 
       await page.getByRole("button", { name: "⛶ Breite maximieren" }).click();
       await page.waitForTimeout(100);
@@ -268,6 +384,20 @@ async function run() {
       );
       if (!focusReturned) throw new Error("mobile Escape focus did not return");
 
+      await page.evaluate(() => scrollTo(0, 0));
+      await page.getByRole("button", { name: "Alle Abschnitte aufklappen" }).click();
+      await page.waitForTimeout(500);
+      await assertAllSections(page, true, "expanded 390");
+      await noOverflow(page, "expanded 390");
+      await page.screenshot({ path: resolve(evidenceDir, "expanded-390.png"), fullPage: true });
+      await page.getByRole("button", { name: "Ansicht wechseln" }).click();
+      if ((await page.locator(".cv-editor-radar").count()) !== 0) throw new Error("radar remains in mobile screenshot mode");
+      await assertAllSections(page, true, "screenshot 390");
+      await page.screenshot({ path: resolve(evidenceDir, "screenshot-mode-390.png") });
+      await page.getByRole("button", { name: "Ansicht wechseln" }).click();
+      await page.locator(".cv-editor-radar").waitFor();
+      await assertAllSections(page, true, "after screenshot 390");
+
       await page.emulateMedia({ reducedMotion: "reduce" });
       if (!(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches))) {
         throw new Error("reduced motion inactive");
@@ -277,7 +407,13 @@ async function run() {
         throw new Error(`browser errors ${JSON.stringify({ consoleErrors, pageErrors })}`);
       }
       if (unexpected.length) throw new Error(`unexpected API ${JSON.stringify(unexpected)}`);
-      console.log(JSON.stringify({ status: "PASS", labels, sectionEntries, evidenceDir }, null, 2));
+      console.log(JSON.stringify({
+        status: "PASS",
+        labels,
+        sectionEntries,
+        apiRequests: [...new Set(apiRequests)],
+        evidenceDir,
+      }, null, 2));
     } finally {
       await context.close();
     }

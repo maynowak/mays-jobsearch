@@ -326,6 +326,102 @@ describe("CV-BUILDER-PDF-EXPORT-FIX-01 editor", () => {
 });
 
 
+describe("JM-CV-EDITOR-EXPANDED-VIEW-UX-01 expand and collapse all", () => {
+  const sections = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll<HTMLDetailsElement>(".cv-builder-section"));
+
+  it("expands and collapses every section while the radar and hands stay visible", () => {
+    const { container } = render(<Harness fullpage />);
+    const root = container.querySelector(".cv-builder-fullpage");
+    const all = sections(container);
+    expect(all.length).toBeGreaterThanOrEqual(8);
+    all.forEach((section) => expect(section.open).toBe(false));
+    expect(container.querySelector(".cv-editor-radar")).not.toBeNull();
+    expect(container.querySelector(".cv-builder-scroll-hands")).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" }));
+    all.forEach((section) => expect(section.open).toBe(true));
+    expect(root).not.toHaveClass("cv-builder-modal--screenshot");
+    expect(container.querySelector(".cv-editor-radar")).not.toBeNull();
+    expect(container.querySelector(".cv-builder-scroll-hands")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Alle Abschnitte einklappen" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Ansicht wechseln" })).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte einklappen" }));
+    all.forEach((section) => expect(section.open).toBe(false));
+    expect(container.querySelector(".cv-editor-radar")).not.toBeNull();
+    expect(container.querySelector(".cv-builder-scroll-hands")).not.toBeNull();
+  });
+
+  it("accounts for an individually opened section and preserves input, validation, preview and template", async () => {
+    render(<Harness fullpage />);
+    openSection("Persönliche Angaben");
+    const name = screen.getByLabelText("Vollständiger Name");
+    const email = screen.getByLabelText("E-Mail");
+    fireEvent.change(name, { target: { value: "Zoë Beispiel" } });
+    fireEvent.change(email, { target: { value: "invalid" } });
+    fireEvent.click(screen.getByRole("button", { name: "Modern" }));
+    expect(screen.getByRole("button", { name: "Modern" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Bitte gib eine gültige E-Mail-Adresse ein.")).toBeInTheDocument();
+    const preview = document.querySelector(".cv-builder-preview-pane")?.textContent ?? "";
+    expect(preview).toContain("Zoë Beispiel");
+
+    // One section is open, so the shared action still offers expand-all.
+    expect(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte einklappen" }));
+
+    expect(name).toHaveValue("Zoë Beispiel");
+    expect(email).toHaveValue("invalid");
+    expect(screen.getByText("Bitte gib eine gültige E-Mail-Adresse ein.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Modern" })).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector(".cv-builder-preview-pane")?.textContent ?? "").toContain("Zoë Beispiel");
+  });
+
+  it("opens the affected section and focuses the field from the collapsed validation summary", async () => {
+    const draft = createEmptyCvBuilderDraft();
+    draft.personal = { email: "invalid" };
+    const { container } = render(<Harness initial={draft} fullpage />);
+    sections(container).forEach((section) => { section.open = false; });
+    fireEvent.click(screen.getByRole("button", { name: "Zum ersten Fehler" }));
+
+    await waitFor(() => {
+      const personal = container.querySelector("#cv-builder-personal details");
+      expect(personal).toHaveProperty("open", true);
+    });
+    await waitFor(() => expect(screen.getByLabelText("E-Mail")).toHaveFocus());
+    expect(screen.getByLabelText("E-Mail")).toHaveValue("invalid");
+  });
+
+  it("restores the expanded and collapsed state after screenshot mode", () => {
+    const { container } = render(<Harness fullpage />);
+    const all = sections(container);
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" }));
+    all.forEach((section) => expect(section.open).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
+    all.forEach((section) => expect(section.open).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
+    all.forEach((section) => expect(section.open).toBe(true));
+    expect(container.querySelector(".cv-editor-radar")).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte einklappen" }));
+    all.forEach((section) => expect(section.open).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
+    all.forEach((section) => expect(section.open).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
+    all.forEach((section) => expect(section.open).toBe(false));
+  });
+
+  it("uses English expand and collapse labels", () => {
+    localStorage.setItem("mj-lang", "en");
+    render(<Harness fullpage />);
+    expect(screen.getByRole("button", { name: "Expand all sections" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expand all sections" }));
+    expect(screen.getByRole("button", { name: "Collapse all sections" })).toBeInTheDocument();
+  });
+});
+
 describe("CV-BUILDER-REAL-WORLD-QA-02E import quality", () => {
   it("shows import review separately from field validation", () => {
     render(

@@ -9999,26 +9999,10 @@ body {
   }
 }
 
-/* UX-04B: keep the dashboard navigation outside the scrolling content while
-   the application manager is active, so sticky navigation can never cover
-   inputs or action buttons. */
-body:has(.dashboard-v2--applications) .navbar,
-body:has(.dashboard-v2--applications) .navbar.scrolled,
-body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
-  position: relative;
-  top: auto;
-}
-
-/* UX-04B: the application manager gets the available desktop width without
-   changing the default dashboard width for other sections. */
-.dashboard-v2--applications {
-  width: min(1600px, 98vw);
-}
-
-.dashboard-v2--applications .dashboard-v2__layout {
-  grid-template-columns: minmax(200px, 0.22fr) minmax(0, 1fr);
-}
-
+/* JM-PROFILE-LAYOUT-CONSISTENCY-13: the application manager gets a wider
+   workspace only to the right of the shared profile frame. Header, sidebar,
+   mobile switcher and the global navigation stay in the same position and
+   keep the same size as in every other profile section. */
 .dashboard-v2--applications .dashboard-v2__main {
   min-width: 0;
 }
@@ -10085,17 +10069,10 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   grid-column: 1 / -1;
 }
 
+/* JM-PROFILE-LAYOUT-CONSISTENCY-13: the applications shell keeps the same
+   two-column / stacked breakpoints as every other profile section. Only the
+   application workspace inside the main column becomes single-column early. */
 @media (max-width: 980px) {
-  .dashboard-v2--applications .dashboard-v2__layout {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-v2--applications .dashboard-v2__navigation-card {
-    position: static;
-  }
-}
-
-@media (max-width: 860px) {
   .dashboard-v2--applications .applications-layout {
     grid-template-columns: 1fr;
   }
@@ -14441,11 +14418,13 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 }
 
 /* JM-CV-BUILDER-UX-08 — fullpage width and floating scroll hands. */
-.cv-builder-wide-toggle {
+.cv-builder-wide-toggle,
+.cv-builder-expand-toggle {
   min-height: 44px;
 }
 
-.cv-builder-wide-toggle[aria-pressed="true"] {
+.cv-builder-wide-toggle[aria-pressed="true"],
+.cv-builder-expand-toggle[aria-pressed="true"] {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   color: var(--brand-dark);
@@ -14515,7 +14494,8 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 }
 
 .cv-builder-scroll-hand:focus-visible,
-.cv-builder-wide-toggle:focus-visible {
+.cv-builder-wide-toggle:focus-visible,
+.cv-builder-expand-toggle:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
@@ -14722,7 +14702,8 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   font-weight: 800;
 }
 
-.cv-import-screenshot-toggle {
+.cv-import-screenshot-toggle,
+.cv-import-expand-toggle {
   min-height: 44px;
   border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
   font-weight: 800;
@@ -14794,7 +14775,14 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
 @media (max-width: 700px) {
   .cv-import-header-jump,
-  .cv-import-screenshot-toggle {
+  .cv-import-screenshot-toggle,
+  .cv-import-expand-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cv-builder-expand-toggle,
+  .cv-builder-wide-toggle {
     width: 100%;
     justify-content: center;
   }
@@ -14862,7 +14850,9 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
   .cv-builder-open-tab,
   .cv-import-workspace__open,
-  .cv-builder-screenshot-toggle {
+  .cv-builder-screenshot-toggle,
+  .cv-builder-expand-toggle,
+  .cv-builder-wide-toggle {
     flex: 1 1 auto;
     justify-content: center;
   }
@@ -15354,6 +15344,37 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   gap: clamp(16px, 2.5vw, 30px);
 }
 
+/* JM-PROFILE-LAYOUT-CONSISTENCY-13: one stable frame for header, sidebar and
+   navigation. The sidebar width is derived from the shared shell width, so a
+   wider applications workspace cannot change it. */
+.container.layout-profile-command {
+  --jm-profile-shell-width: min(1180px, 94vw);
+  --jm-profile-layout-gap: clamp(16px, 2.5vw, 30px);
+  --jm-profile-sidebar-width: max(
+    210px,
+    calc((var(--jm-profile-shell-width) - var(--jm-profile-layout-gap)) * 0.32 / 1.32)
+  );
+}
+
+@media (min-width: 1024px) {
+  .layout-profile-command .dashboard-v2--applications {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    margin-left: calc((100% - var(--jm-profile-shell-width)) / 2);
+    margin-right: clamp(12px, 2vw, 24px);
+  }
+
+  .layout-profile-command .dashboard-v2--applications .dashboard-v2__header {
+    width: var(--jm-profile-shell-width);
+  }
+
+  .layout-profile-command .dashboard-v2--applications .dashboard-v2__layout {
+    grid-template-columns: var(--jm-profile-sidebar-width) minmax(0, 1fr);
+  }
+}
+
 /* Sidebar as a cyan display board; sticky within the profile shell. */
 .layout-profile-command .dashboard-v2__navigation-card {
   position: sticky;
@@ -15376,16 +15397,9 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
   letter-spacing: -0.01em;
 }
 
-/* JM-PROFILE-APPLICATIONS-RESPONSIVE-FIX-01: the later profile sidebar rule
-   must not reactivate sticky positioning inside the stacked application
-   manager at <=980px. Keep the navigation in normal document flow there so
-   it cannot overlay the application content while scrolling. */
-@media (max-width: 980px) {
-  .layout-profile-command .dashboard-v2--applications .dashboard-v2__navigation-card {
-    position: static;
-    top: auto;
-  }
-}
+/* JM-PROFILE-LAYOUT-CONSISTENCY-13: the applications sidebar keeps the same
+   sticky behaviour as every other profile section. Below 768px the shared
+   mobile switcher replaces it. */
 
 .layout-profile-command .aurora-sidebar-list {
   gap: 7px;
