@@ -1,3 +1,5 @@
+import { decodeHtmlEntities, htmlToText } from "../../api/_lib/htmlText.mjs";
+
 export function toEpochMs(value: number | string | undefined | null): number | null {
   if (value == null) return null;
   const n = Number(value);
@@ -65,17 +67,7 @@ export function contractTypeLabelKey(value: string | undefined): string | null {
 }
 
 function stripHtml(html: string): string {
-  return html
-    .replace(/<\/?[a-zA-Z][^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&/g, "&")
-    .replace(/"/g, '"')
-    .replace(/'/g, "'")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/'/g, "'")
-    .replace(/&#x2F;/g, "/")
-    .replace(/&#x24;/g, "$")
+  return decodeHtmlEntities(htmlToText(html, { blockNewlines: false, brNewlines: false }))
     .replace(/\s+/g, " ")
     .trim();
 }

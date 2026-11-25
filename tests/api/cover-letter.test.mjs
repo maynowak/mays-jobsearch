@@ -531,4 +531,28 @@ describe("/api/cover-letter typed generation", () => {
     expect(res.body.code).toBe("bad_request");
     expect(chat).not.toHaveBeenCalled();
   });
+
+  it("does not forward HTML/script payloads from the job description into the prompt", async () => {
+    const res = makeRes();
+    await handler(
+      req({
+        ...validBody,
+        job: {
+          ...validBody.job,
+          description:
+            "<p>Visible description</p><script>PROMPT_ALERT_1()</script >" +
+            "<script>PROMPT_ALERT_2()</SCRIPT\n><img src=x onerror=\"PROMPT_ALERT_3()\">",
+        },
+      }),
+      res
+    );
+
+    expect(res.statusCode).toBe(200);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("Visible description");
+    expect(prompt).not.toContain("PROMPT_ALERT_1");
+    expect(prompt).not.toContain("PROMPT_ALERT_2");
+    expect(prompt).not.toContain("PROMPT_ALERT_3");
+    expect(prompt).not.toContain("<script");
+  });
 });

@@ -157,4 +157,25 @@ describe("JM-JOB-TRANSLATION-01: job translation API", () => {
     expect(res.data.code).toBe("unsupported_language");
     expect(chat).not.toHaveBeenCalled();
   });
+
+  it("strips script payloads from the translation prompt, including end-tag variants", async () => {
+    const res = await call({
+      ...englishJob,
+      description:
+        "<p>Visible paragraph</p><script>ALERT_TOKEN_1()</script >" +
+        "<script>ALERT_TOKEN_2()</SCRIPT\n><style>.x{content:'ALERT_TOKEN_3'}</style>" +
+        "<img src=x onerror=\"ALERT_TOKEN_4()\"><noscript>ALERT_TOKEN_5</noscript>",
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(chat).toHaveBeenCalledTimes(1);
+    const prompt = vi.mocked(chat).mock.calls[0][0].prompt;
+    expect(prompt).toContain("Visible paragraph");
+    expect(prompt).not.toContain("ALERT_TOKEN_1");
+    expect(prompt).not.toContain("ALERT_TOKEN_2");
+    expect(prompt).not.toContain("ALERT_TOKEN_3");
+    expect(prompt).not.toContain("ALERT_TOKEN_4");
+    expect(prompt).not.toContain("ALERT_TOKEN_5");
+    expect(prompt).not.toContain("<script");
+  });
 });

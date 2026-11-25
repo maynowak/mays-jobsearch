@@ -217,4 +217,27 @@ describe("safeHtml - renderSanitizedHtml", () => {
     expect(result?.props.dangerouslySetInnerHTML?.__html).not.toContain("onerror");
     expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<p>Safe</p>");
   });
+
+  it("sanitizes entity-encoded script payloads before rendering", () => {
+    const input = "&lt;script&gt;alert(1)&lt;/script&gt;&lt;p&gt;Safe&lt;/p&gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("<script");
+    expect(result).not.toContain("alert(1)");
+    expect(result).toContain("<p>Safe</p>");
+  });
+
+  it("sanitizes double-encoded event handlers before rendering", () => {
+    const input = "&amp;lt;img src=x onerror=alert(1)&amp;gt;&lt;p&gt;Safe&lt;/p&gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("onerror");
+    expect(result).not.toContain("alert(1)");
+    expect(result).toContain("<p>Safe</p>");
+  });
+
+  it("keeps an unterminated script payload out of the rendered HTML", () => {
+    const input = "<p>Safe</p><script>alert('never closed')<p>hidden";
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("alert");
+    expect(result).toContain("<p>Safe</p>");
+  });
 });

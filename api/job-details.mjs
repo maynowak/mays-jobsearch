@@ -1,4 +1,5 @@
 import { HttpError, detectLanguage } from "./_lib/filter.mjs";
+import { htmlToText } from "./_lib/htmlText.mjs";
 import { chat } from "./_lib/ai.mjs";
 import { enrichArbeitsagenturDetails } from "./_lib/detailEnrich.mjs";
 import { SESSION_COOKIE, clearSessionCookieHeader, readCookie } from "./_lib/identity.mjs";
@@ -25,12 +26,7 @@ function readBody(req) {
 }
 
 function translationPlainText(value) {
-  return String(value ?? "")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(?:p|div|li|h[1-6])>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
+  return htmlToText(value, { blockNewlines: true, brNewlines: true })
     .replace(/\u0000/g, "")
     .replace(/\r\n?/g, "\n")
     .replace(/[ \t]+\n/g, "\n")

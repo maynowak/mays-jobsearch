@@ -146,6 +146,21 @@ describe("JM-COVER-LETTER-02: deterministic description review", () => {
     expect(normalized.length).toBeLessThanOrEqual(MAX_DESCRIPTION_INPUT_LENGTH);
   });
 
+  it("strips script payloads for all end-tag spellings and decodes entities", () => {
+    const normalized = normalizeDescriptionText(
+      "<p>A &amp; B</p><script>ALERT_1()</script ><script>ALERT_2()</SCRIPT\n>" +
+        "<style>.x{content:'ALERT_3'}</style><noscript>ALERT_4</noscript><iframe src=x>ALERT_5</iframe>"
+    );
+    expect(normalized).toContain("A & B");
+    for (const leaked of ["ALERT_1", "ALERT_2", "ALERT_3", "ALERT_4", "ALERT_5", "<script", "<style"]) {
+      expect(normalized).not.toContain(leaked);
+    }
+  });
+
+  it("keeps plain comparison text instead of dropping it as markup", () => {
+    expect(normalizeDescriptionText("<p>2 < 3 und 4 > 1</p>")).toContain("2 < 3 und 4 > 1");
+  });
+
   it("handles a multilingual description", () => {
     const result = checkPlausibility(
       job,

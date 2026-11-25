@@ -1,4 +1,5 @@
 import type { Job } from "../types";
+import { decodeHtmlEntities, htmlToText } from "../../api/_lib/htmlText.mjs";
 
 // JM-COVER-LETTER-02
 // Deterministic job-description review. No AI call, no network access and no
@@ -90,17 +91,8 @@ const GENERIC_ROLE_WORDS = new Set([
 ]);
 
 function stripHtml(value: string): string {
-  if (typeof DOMParser !== "undefined") {
-    const doc = new DOMParser().parseFromString(value, "text/html");
-    doc.querySelectorAll("script,style,noscript,iframe,object,embed,svg,math").forEach((node) => node.remove());
-    doc.querySelectorAll("br").forEach((node) => node.replaceWith("\n"));
-    doc.querySelectorAll("p,div,li,h1,h2,h3,h4,h5,h6,tr").forEach((node) => node.append("\n"));
-    return doc.body?.textContent ?? "";
-  }
-  return value
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ");
+  // Plain-text extraction only: the result is never rendered as HTML.
+  return decodeHtmlEntities(htmlToText(value, { blockNewlines: true, brNewlines: true }));
 }
 
 export function normalizeDescriptionText(value: string | null | undefined): string {
