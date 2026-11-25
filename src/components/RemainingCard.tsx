@@ -14,7 +14,7 @@ import {
 } from "../lib/jobMeta";
 import { formatGermanLocation } from "../lib/location";
 import { renderSanitizedHtml } from "../lib/safeHtml";
-import { normalizeTranslationForDisplay } from "../lib/translationText";
+import { normalizeTranslationForDisplay } from "../lib/translationEnvelope";
 
 const DESCRIPTION_PREVIEW_LENGTH = 260;
 
