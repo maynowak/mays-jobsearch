@@ -1,3 +1,15 @@
+2026-11-25 · JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — CONTROLLED MAIN RELEASE & PRODUCTION E2E
+- Typ: kontrollierter PR-Merge, automatische Vercel-Production-Deployments, Public Smoke, authentifizierter RIS-Browser-E2E, DE/EN/A11y, Docs-Branch
+- Status: **PRODUCTION VERIFIED**
+- PR [#65](https://github.com/maynowak/mays-jobsearch/pull/65), Feature-Head `9688978`, Basis `c058555`, Merge-Commit `e92d78b`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Gates: Diff 13 Dateien (+1312/−41) ausschließlich erwartet; `tsc`/Build PASS; fokussiert **69 PASS**; serielle Vollsuite **2105 PASS / 5 skipped**; Mock-Browser-E2E PASS; CodeQL PASS; beide Vercel-Previews, Vercel Deployments und Preview Comments PASS; PR `MERGEABLE`/`CLEAN`.
+- Production: automatische Deployments `dpl_G8GUCGNnEXTPcothF5UTRccLxL1J` (`mays-jobsearch`) und `dpl_6gTLYaUPr7qmwauyQoG8tBWutUmn` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · e92d78b`; Smoke `/`, `/profil`, `/profil?tab=applications`, `/datenschutz`, `/impressum`, `/anmelden`, `/cv-builder/workspace` je 200, 0 Overflow (320/390/1440), 0 Console-/Page-Errors, Guest-Hinweis vorhanden.
+- Authentifizierter RIS-E2E: bestehender Production-Chromium-Tab via CDP, keine Tokens/Cookies gelesen oder kopiert; Remote-Storage aktiv; ausschließlich synthetischer Datensatz (`OpenCode Synthetic QA`). Create → eigenes Anschreiben speichern (PATCH) → Reload mit identischem Text → Bearbeiten/Speichern → Tabwechsel nach bestätigtem Speichern → Dirty-Dialog-Speicherung → Reload bestätigt Text → Versionen unverändert 0, **kein `action=version`** → Delete → Reload ohne Datensatz. 0 AI-/Profile-/Match-/ATS-Calls, 0 5xx, keine echten Bewerbungen verändert. Insgesamt 1 Create, 3 Updates, 1 Delete.
+- DE/EN/A11y: zusätzlicher englischer Mock-BFF-Lauf bei 1440/390 PASS (Dialogtitel/Aktionen, Fokus auf Speichern, Escape erhält Werte, eigenes Anschreiben + Remote-Hinweis, Versionen unverändert, 0 Overflow, 0 AI-Calls).
+- Grenze: Remote-`addCoverLetterVersion` ist im bestehenden 01C-Adapter nicht implementiert; deshalb wurde im authentifizierten Lauf der unveränderte Bestand 0 und das Fehlen eines Versions-Writes geprüft; Erhalt einer bestehenden Version (1→1) ist durch Mock-E2E und Unit-Tests belegt.
+- Datenschutz/AI: keine neue Datenkategorie, kein neuer Consent-Zweck, keine neue Persistenz/API; keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-Vertragsänderung; keine echten Kontodaten in Bericht oder Commit.
+- Bericht: `docs/reports/JM-APPLICATION-EDIT-TAB-NAVIGATION-01-CONTROLLED-MAIN-RELEASE.md`.
+
 2026-11-25 · JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — EDIT-SWITCH DECISION & OWN COVER LETTER
 - Typ: UI-Navigation, Dirty-State-Vergleich, Dialog/Accessibility, nicht-KI-Anschreibeneditor, Unit-/Browser-E2E
 - Status: **READY FOR VISUAL REVIEW**
