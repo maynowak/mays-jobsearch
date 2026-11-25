@@ -14,6 +14,7 @@ import {
 } from "../lib/jobMeta";
 import { formatGermanLocation } from "../lib/location";
 import { renderSanitizedHtml } from "../lib/safeHtml";
+import { unwrapTranslationEnvelope } from "../lib/translationEnvelope";
 
 const DESCRIPTION_PREVIEW_LENGTH = 260;
 
@@ -166,8 +167,9 @@ export default function RemainingCard({ job, onGenerateLetter, onAtsEvaluate, an
         descriptionLang || "auto",
         translationModel
       );
-      if (!result.translation.trim()) throw new Error("empty translation");
-      setTranslation({ status: "ready", text: result.translation, model: translationModel });
+      const text = unwrapTranslationEnvelope(result.translation);
+      if (!text.trim()) throw new Error("empty translation");
+      setTranslation({ status: "ready", text, model: translationModel });
       setShowTranslation(true);
     } catch (err) {
       const code =
