@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { isHostname } from "../helpers/url.mjs";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 // Mock all external dependencies
@@ -87,7 +88,7 @@ function setupFetchMock(overrides = {}) {
 
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
-    if (u.includes("arbeitnow.com")) {
+    if (isHostname(u, "www.arbeitnow.com")) {
       return new Response(JSON.stringify({ data: arbeitnowJobs }), { status: 200 });
     }
     if (u.includes("/v2/acts/")) {

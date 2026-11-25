@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { isHostname } from "../helpers/url.mjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../api/_lib/config.mjs", () => ({
@@ -54,7 +55,7 @@ const sampleGreenhouseJobMinimal = {
 function createBoardMock(boardsConfig) {
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
-    if (u.includes("boards-api.greenhouse.io")) {
+    if (isHostname(u, "boards-api.greenhouse.io")) {
       const boardMatch = u.match(/\/boards\/([^/]+)\/jobs/);
       const board = boardMatch ? decodeURIComponent(boardMatch[1]) : "test-board";
       const config = boardsConfig[board] || { jobs: [], status: 200 };

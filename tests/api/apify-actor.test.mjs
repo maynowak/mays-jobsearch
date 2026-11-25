@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { isHostname } from "../helpers/url.mjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../api/_lib/cache.mjs", () => ({
@@ -57,7 +58,7 @@ function setupApifyFlow(overrides = {}) {
 
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
-    if (u.includes("arbeitnow.com")) {
+    if (isHostname(u, "www.arbeitnow.com")) {
       return new Response(JSON.stringify({ data: [] }), { status: 200 });
     }
     if (u.includes("/v2/acts/")) {
@@ -77,7 +78,7 @@ function setupApifyDisabled() {
   process.env.JOB_SOURCE_ARBEITSAGENTUR_ENABLED = "false";
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
-    if (u.includes("arbeitnow.com")) {
+    if (isHostname(u, "www.arbeitnow.com")) {
       return new Response(JSON.stringify({ data: [] }), { status: 200 });
     }
     throw new Error(`should not call apify: ${u}`);
@@ -299,7 +300,7 @@ describe("Apify Actor (arbeitsagentur)", () => {
     setupApifyFlow();
     globalThis.fetch = vi.fn(async (url) => {
       const u = String(url);
-      if (u.includes("arbeitnow.com")) return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      if (isHostname(u, "www.arbeitnow.com")) return new Response(JSON.stringify({ data: [] }), { status: 200 });
       if (u.includes("/v2/acts/")) return new Response("bad request", { status: 400 });
       throw new Error(`unexpected fetch: ${u}`);
     });
@@ -312,7 +313,7 @@ describe("Apify Actor (arbeitsagentur)", () => {
     setupApifyFlow();
     globalThis.fetch = vi.fn(async (url) => {
       const u = String(url);
-      if (u.includes("arbeitnow.com")) return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      if (isHostname(u, "www.arbeitnow.com")) return new Response(JSON.stringify({ data: [] }), { status: 200 });
       if (u.includes("/v2/acts/")) throw new Error("network down");
       throw new Error(`unexpected fetch: ${u}`);
     });
