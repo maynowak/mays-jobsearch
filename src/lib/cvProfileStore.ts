@@ -1,4 +1,5 @@
 import type { Profile } from "../types";
+import { secureRandomIdSuffix } from "./secureRandomId";
 import type { ATSCriteriaV1 } from "./profiles/contractTypes";
 
 // CV-PROFILE-LISTS-01 + CV-PROFILE-LISTS-02 (Privacy):
@@ -64,7 +65,7 @@ function emptyLists(): CvProfileLists {
 }
 
 function generateEntryId(): string {
-  return `entry-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `entry-${Date.now()}-${secureRandomIdSuffix()}`;
 }
 
 function getBucket(hash: string, now: number): CvListsBucket | null {
