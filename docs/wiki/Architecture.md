@@ -35,6 +35,20 @@ und Test-Allowlist bleiben serverseitig. Session- und Remote-Repositories
 teilen denselben Anwendungsvertrag; die Remote-Capability wird über die BFF
 geprüft.
 
+## Zwei-Repository-Grenze
+
+- **`maynowak/mays-jobsearch`** (dieses Repository): Frontend, Vercel-BFF,
+  Jobquellen, Matching, CV-Workspace und BFF-Adapter.
+- **`maynowak/Mays-Recruiting-Intelligence-System`** (RIS): separat betriebener
+  Dienst mit eigenem Code, API, Datenmodell, Consent-/Löschpfaden, AWS und
+  Deployments.
+
+Dieses Repository enthält keinen RIS-Code und greift nicht direkt auf
+RIS-Datenbanken, AWS, Cognito oder RIS-Deployments zu. Der einzige RIS-Egress
+ist die serverseitige BFF. RIS-bezogene Tests/Berichte hier belegen nur die
+Jobsearch-Seite; RIS-Interna gehören ins RIS-Repository und benötigen ein
+eigenes Mandat.
+
 ## Persistenz und Einwilligungen
 
 Anwendungen, CVs und Suchprofile haben getrennte Consent-Zwecke. DRAFT-Notices

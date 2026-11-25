@@ -31,6 +31,8 @@ Legende Handlungsbedarf: **aktualisiert**, **neu**, **geprüft/verlinkt**,
 | `docs/DESIGN_SYSTEM.md`, `docs/COMPONENT_GUIDE.md` | Design-/Komponentenleitfaden | **geprüft/verlinkt** | Code/Docs |
 | `docs/PROJECT_RULES.md`, `docs/CONTRIBUTING.md` | Arbeitsregeln | **geprüft/verlinkt** | Docs |
 | `docs/reports/**` | 593 Dateien mit Release-/Task-Nachweisen | **historisch belassen**; neue Screenshots nur verlinkt | Reports |
+| Zwei-Repository-Grenze Jobsearch ↔ RIS | In README/Architektur nur implizit | **neu explizit** in README, Architektur und Wiki | RIS-Vertrag/BFF |
+| RIS-Repository-Dokumentation | Separates Repository, nicht Teil dieses Checkouts | **nicht verändert**; RIS-Interna benötigen eigenes Mandat | RIS-Repo |
 | `docs/reports/assets/**` | Screenshots aus synthetischen Tests | **geprüft**; für README/User Guide ausgewählt | E2E |
 | GitHub Wiki | Kein Wiki-Repository im Checkout | **vorbereitet**, nicht veröffentlicht | `docs/wiki/` |
 

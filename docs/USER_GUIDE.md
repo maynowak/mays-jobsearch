@@ -244,6 +244,8 @@ Es ist eine reine Darstellungsansicht.
 | **In deinem Konto gespeichert** | Dauerhafte Speicherung über RIS, nur mit Login, Freigabe und Einwilligung. |
 
 - Session-Daten werden nicht automatisch ins Konto übertragen.
+- RIS ist ein separat betriebener Dienst; die App erreicht ihn ausschließlich
+  über die serverseitige BFF. RIS-Interna sind nicht Teil dieser Anwendung.
 - Der RIS-Modus wird über eine serverseitige Capability-Prüfung aktiviert,
   nicht nur über ein UI-Flag.
 - Fehlende Berechtigungen oder Einwilligungen halten die App im Session-Modus.

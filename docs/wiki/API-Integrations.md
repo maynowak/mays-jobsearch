@@ -22,7 +22,10 @@
 `/api/ris/search-profile-consents`, `/api/ris/erasure`.
 
 Alle RIS-Routen laufen über einen serverseitigen Router; der Browser erhält
-kein Partner-Credential. Details und Verträge stehen im Repository.
+kein Partner-Credential. Der RIS-Dienst selbst liegt im separaten Repository
+`maynowak/Mays-Recruiting-Intelligence-System`; hier dokumentiert ist nur die
+Jobsearch-Seite der BFF und ihre Verträge. Änderungen an RIS-API, Datenmodell,
+AWS/Terraform oder Consent benötigen ein separates Mandat.
 
 Kanonisch: [API-Vertrag](https://github.com/maynowak/mays-jobsearch/blob/main/docs/API_CONTRACT.md) ·
 [API-Inventar](https://github.com/maynowak/mays-jobsearch/blob/main/docs/API_INVENTORY.md) ·

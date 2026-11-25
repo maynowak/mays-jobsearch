@@ -226,6 +226,26 @@ Wichtige Grenzen:
 - Ansichtswechsel (Tabs, Expand/Collapse, Screenshot) lösen keine zusätzlichen
   API-, KI-, ATS- oder RIS-Aufrufe aus.
 
+### Zwei-Repository-Modell
+
+| Repository | Rolle |
+| --- | --- |
+| `maynowak/mays-jobsearch` (dieses Repository) | React-Frontend, Vercel-BFF, Jobquellen, Matching, CV-Workspace, Session-/Remote-Repositories und die dokumentierte RIS-Integration aus Sicht der Jobsearch-App. |
+| `maynowak/Mays-Recruiting-Intelligence-System` (RIS) | Separat betriebener externer Dienst mit eigenem Code, eigener API, eigenem Datenmodell, eigenen Consent-/Löschpfaden und eigenen Deployments. |
+
+Grenzen:
+
+- Dieses Repository enthält **keinen RIS-Code**, keine RIS-Datenbank- oder
+  AWS-Zugriffe und keine RIS-Credentials im Browser.
+- Der einzige RIS-Egress ist die serverseitige BFF unter `api/ris/`; der
+  Browser spricht nur mit dieser BFF.
+- RIS-bezogene Tests und Berichte hier belegen die **Jobsearch-Seite** der
+  Integration (BFF-Vertrag, Mocks, synthetische E2E). RIS-Interna werden hier
+  nicht dokumentiert oder verändert; dafür gilt das RIS-Repository mit eigenem
+  Mandat.
+- Änderungen an RIS-Verträgen, AWS/Terraform, Cognito, Consent oder Storage
+  sind nicht Teil dieses Repositories und benötigen eine separate Freigabe.
+
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
 [Architecture (Wiki)](docs/wiki/Architecture.md).
 

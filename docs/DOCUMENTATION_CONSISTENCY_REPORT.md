@@ -26,6 +26,7 @@ Das vollständige Inventar steht in
 | Kein Benutzerhandbuch und keine Wiki-Struktur | Nutzer mussten UI-Wissen aus Reports ziehen | `docs/USER_GUIDE.md` und `docs/wiki/` neu erstellt |
 | CV-Workspace-/Radar-/RIS-Funktionen in der Architektur unterrepräsentiert | Entwickler mussten Code lesen | Aktueller Architektur-Abschnitt mit Shell, Applications, CV, BFF/RIS, Session/Consent, Radar/Turbo-Händen |
 | Test-Gates im Workflow veraltet | Release-Prüfungen nicht eindeutig | Aktuelle Kommandos, E2E-Liste, Vollsuite, CodeQL/Vercel- und Docs-Gates ergänzt |
+| Zwei-Repository-Bezug Jobsearch ↔ RIS nur implizit | Unklare Zuständigkeit für API, Daten, Consent, AWS und RIS-Interna | Explizite Grenze in README, Architektur und Wiki; RIS-Repo bleibt unverändert |
 
 ## 3. README
 
@@ -154,6 +155,10 @@ Einheitlich verwendet:
 - API-Verträge werden nicht dupliziert; bei Änderungen bleiben
   `docs/API_CONTRACT.md` und `docs/API_INVENTORY.md` die Quelle.
 - Das Wiki ist vorbereitet, aber nicht veröffentlicht.
+- Das separate RIS-Repository (`maynowak/Mays-Recruiting-Intelligence-System`)
+  wurde in diesem Auftrag **nicht inspiziert oder verändert**. Seine Dokumentation
+  und RIS-Interna benötigen ein separates Mandat; hier dokumentiert ist die
+  Jobsearch-Seite der BFF-Grenze.
 - Authentifizierte Production-Screenshots wurden bewusst nicht committet
   (Kontodaten); die Release-Verifikation nutzt strukturelle Assertions und
   synthetische Screenshots.

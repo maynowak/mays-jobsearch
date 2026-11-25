@@ -141,6 +141,30 @@ right on desktop; header and sidebar keep their position and width. See
 - Account erasure uses the existing RIS privacy lifecycle; the UI does not
   claim immediate physical purge when the RIS path only sets a delete marker.
 
+### Two-repository boundary (Jobsearch ↔ RIS)
+
+This repository and the RIS repository are separate products with separate
+ownership:
+
+| Repository | Owns |
+| --- | --- |
+| `maynowak/mays-jobsearch` | React frontend, Vercel BFF, job sources, matching, CV workspace, session/remote repositories and the Jobsearch-side BFF adapters under `api/ris/`. |
+| `maynowak/Mays-Recruiting-Intelligence-System` | RIS service, partner API, RIS data model, consent/erasure lifecycle, AWS/Terraform and RIS deployments. |
+
+Rules:
+
+- No RIS source code is imported into this repository.
+- This repository never reads RIS databases, DynamoDB, Lambda, API Gateway,
+  Cognito or AWS resources directly. The only egress is the server-side BFF.
+- The BFF verifies the user token, the server-side test allowlist and the
+  consent configuration; the partner credential stays server-side.
+- RIS-related tests and reports in this repository are **Jobsearch-side
+  evidence**: contract adapters, mocks, synthetic E2E and the BFF boundary.
+  RIS-internal evidence belongs to the RIS repository and is not duplicated
+  here.
+- Changes to RIS contracts, AWS/Terraform, Cognito, consent or storage need a
+  separate mandate and are out of scope for Jobsearch documentation changes.
+
 ### AI, ATS and i18n
 
 - AI calls go through the provider router (OpenRouter primary, EdenAI
