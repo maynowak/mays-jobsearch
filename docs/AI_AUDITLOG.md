@@ -1,3 +1,15 @@
+2026-11-25 · JM-UX-CONSOLIDATED-RELEASE-01 — CONTROLLED MAIN MERGE & PRODUCTION VERIFICATION
+- Typ: freigegebener PR-Merge, automatische Vercel-Production-Deployments, Public Smoke, authentifizierte Read-only-Production-E2E
+- Status: **PRODUCTION VERIFIED**
+- PR [#66](https://github.com/maynowak/mays-jobsearch/pull/66); Integrations-HEAD `5ef5df8`; Main-Basis `e92d78b`; Merge-Commit `df1fe01`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Gates: PR `MERGEABLE`/`CLEAN`; erwarteter Diff 94 Dateien (+1643/−136); `tsc`/Build PASS; fokussiert Profile/Applications **85**, CV-Import **31**, CV-Editor **31**, Applications-Edit/Dialog/Own-Letter **71**; serielle Vollsuite **2113 PASS / 5 skipped** (202 Dateien); Integration-E2E Profile/Import/Editor/Applications und Regressionen `cv-import-ux-07`/`cv-builder-ux-08` PASS; CodeQL PASS; beide Vercel-Previews, Vercel Deployments und Preview Comments PASS; `git diff --check`/Secret-Scan PASS.
+- Production: automatische Deployments `dpl_GXVGsTs1u98y2952bCqGUVuCtBgE` (`mays-jobsearch`) und `dpl_BrrdddUMvZ21YyUTWn8z6RidGVPr` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · df1fe01`. Public Smoke: 42 Checks bei 320/390/768/1024/1440/1920 über `/`, `/profil`, `/profil?tab=applications`, `/datenschutz`, `/impressum`, `/anmelden`, `/cv-builder/workspace`, 0 Overflow, 0 Console-/Page-Errors; Import/Editor guest bei 1440/390 PASS.
+- Authentifizierte Production-E2E (bestehende Session, read-only, keine Tokens/Cookies gelesen): Profil-Header 123/1180/94 und Sidebar 123/279 in allen sechs Bereichen identisch, Applications-Main 970 vs. 871; Edit-Dialog/unchanged Tabwechsel und Eigenanschreiben erreichbar ohne Speichern; Import-, Editor-Expand/Collapse und Screenshot-Modus PASS; **0** Write-Requests, 0 Console-/Page-Errors. Keine authentifizierten Screenshots committet (Kontodaten), nur strukturelle Assertions.
+- Screenshots: `docs/reports/assets/JM-UX-CONSOLIDATED-RELEASE-01/` (integriert, synthetisch) und `docs/reports/assets/JM-UX-CONSOLIDATED-RELEASE-01-PRODUCTION/` (Production guest, CV-Import/Editor 1440/390).
+- Grenzen: `cv-builder-workflow-02a` bleibt vorbestehende Altlast (alter Buttontext, identisch auf `e92d78b`); Applications-Arbeitsfläche bewusst schmaler als die frühere 1600-px-Shell; erster Integrations-Vollauf mit unabhängigem Docker-`beforeAll`-Timeout, isoliert und im Wiederholungslauf grün.
+- Cleanup: keine synthetischen Serverdaten, 0 Writes im authentifizierten Lauf, Chrome-Session geschlossen, keine `mj-rest-redis-*`-Container, keine Tokens/Cookies in Bericht/Screenshots.
+- Dokumentation: `docs/reports/JM-UX-CONSOLIDATED-RELEASE-01-PRODUCTION.md`; Docs-Branch `docs/jm-ux-consolidated-release-01-production`; kein Ris-/AWS-/Terraform-/Cognito-/Consent-/Storage-/ATS-/KI-/Persistenz-/CI-CD-Eingriff.
+
 2026-11-25 · JM-UX-CONSOLIDATED-RELEASE-01 — CONTROLLED UX INTEGRATION & RELEASE VERIFICATION
 - Typ: Integrationsbranch, drei UX-Pakete, Konfliktauflösung, gemeinsame Regression, visuelle Abnahme
 - Status: **READY FOR RELEASE APPROVAL**
