@@ -38,7 +38,7 @@ describe("Mays-RIS boundary (static proof)", () => {
     for (const file of files()) {
       // Plain substring check: catches scheme-less hostnames as well and
       // avoids an unanchored host regex (CodeQL js/regex/missing-regexp-anchor).
-      expect(file.content, file.path).not.toContain("execute-api");
+      expect(file.content.toLowerCase(), file.path).not.toContain("execute-api");
       if (file.path.startsWith("src/")) {
         expect(file.content, file.path).not.toMatch(
           /RIS_API_BASE_URL|RIS_PARTNER_CREDENTIAL|RIS_TEST_USER_ALLOWLIST/

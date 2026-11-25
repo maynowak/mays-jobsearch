@@ -111,7 +111,7 @@ describe("safeHtml - prepareHtmlForRender", () => {
   });
 
   it("decodes entity-encoded HTML before sanitizing", () => {
-    const input = "<p><strong>Hello</strong></p>";
+    const input = "&lt;p&gt;&lt;strong&gt;Hello&lt;/strong&gt;&lt;/p&gt;";
     const result = prepareHtmlForRender(input);
     expect(result).toContain("<p>");
     expect(result).toContain("<strong>Hello</strong>");
@@ -119,16 +119,16 @@ describe("safeHtml - prepareHtmlForRender", () => {
   });
 
   it("decodes double-encoded HTML before sanitizing", () => {
-    const input = '<div class="content-intro"><h3><strong>Who We Are</strong></h3>';
+    const input = "&amp;lt;div&amp;gt;&amp;lt;h3&amp;gt;&amp;lt;strong&amp;gt;Who We Are&amp;lt;/strong&amp;gt;&amp;lt;/h3&amp;gt;";
     const result = prepareHtmlForRender(input);
-    expect(result).toContain('<div class="content-intro">');
+    expect(result).toContain("<div>");
     expect(result).toContain("<h3>");
     expect(result).toContain("<strong>Who We Are</strong>");
     expect(result).toContain("</h3>");
   });
 
   it("decodes nested double-encoded entities before sanitizing", () => {
-    const input = "<p>Hello</p>";
+    const input = "&amp;lt;p&amp;gt;Hello&amp;lt;/p&amp;gt;";
     const result = prepareHtmlForRender(input);
     expect(result).toContain("<p>Hello</p>");
   });
