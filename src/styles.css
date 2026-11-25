@@ -14441,11 +14441,13 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 }
 
 /* JM-CV-BUILDER-UX-08 — fullpage width and floating scroll hands. */
-.cv-builder-wide-toggle {
+.cv-builder-wide-toggle,
+.cv-builder-expand-toggle {
   min-height: 44px;
 }
 
-.cv-builder-wide-toggle[aria-pressed="true"] {
+.cv-builder-wide-toggle[aria-pressed="true"],
+.cv-builder-expand-toggle[aria-pressed="true"] {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   color: var(--brand-dark);
@@ -14515,7 +14517,8 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 }
 
 .cv-builder-scroll-hand:focus-visible,
-.cv-builder-wide-toggle:focus-visible {
+.cv-builder-wide-toggle:focus-visible,
+.cv-builder-expand-toggle:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
@@ -14798,6 +14801,12 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     width: 100%;
     justify-content: center;
   }
+
+  .cv-builder-expand-toggle,
+  .cv-builder-wide-toggle {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 900px) {
@@ -14862,7 +14871,9 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
 
   .cv-builder-open-tab,
   .cv-import-workspace__open,
-  .cv-builder-screenshot-toggle {
+  .cv-builder-screenshot-toggle,
+  .cv-builder-expand-toggle,
+  .cv-builder-wide-toggle {
     flex: 1 1 auto;
     justify-content: center;
   }
