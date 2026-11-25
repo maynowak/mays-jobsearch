@@ -6,7 +6,17 @@
 
 A job search assistant with AI-powered matching, cover-letter generation and daily digest alerts.
 
-## Current Project Status (Stand 2026-10-02)
+## Current Project Status (Production 2026-11-25: `df1fe01`)
+
+Aktuelle Production-Funktionen zusätzlich zu den untenstehenden Basis-Fähigkeiten:
+Profil-Shell mit sechs Bereichen, Bewerbungsverwaltung mit Dirty-State-Dialog und
+eigenem Anschreiben ohne KI, CV-Import/Editor mit Radar, Turbo-Händen,
+Expand/Collapse und unabhängigem Screenshot-Modus, Session-/RIS-Speicherung mit
+Capability- und Consent-Gates. Release-Nachweis:
+`docs/reports/JM-UX-CONSOLIDATED-RELEASE-01-PRODUCTION.md`; offene Pakete:
+`docs/ROADMAP.md`.
+
+### Historischer Stand (2026-10-02)
 
 - Core matching: completed (`/api/jobs` + `/api/match`)
 - Multi-city search: completed

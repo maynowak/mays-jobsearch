@@ -1,5 +1,57 @@
 # Changelog
 
+2026-11-25 — PR #66 Consolidated UX Release (Production `df1fe01`)
+
+- Integrierte drei production-verifizierte UX-Pakete:
+  - **Profile Layout Consistency**: gemeinsame Profil-Shell für Header,
+    Sidebar und Navigation; Applications-Arbeitsfläche erweitert nach rechts,
+    ohne Header/Sidebar zu verschieben; einheitliche Sticky-/Mobile-Breakpoints.
+  - **CV Import Expanded View**: „Alle Abschnitte aufklappen/einklappen“ mit
+    sichtbarem Radar; Screenshot-Modus unabhängig und mit
+    Zustandswiederherstellung.
+  - **CV Editor Expanded View**: acht Editorabschnitte gemeinsam auf-/zuklappen;
+    Radar und Turbo-Hände bleiben sichtbar; Validierungsfokus und Live-Vorschau
+    unverändert.
+- Merge `df1fe01`; automatische Vercel-Production-Deployments
+  `dpl_GXVGsTs1u98y2952bCqGUVuCtBgE` (`mays-jobsearch`) und
+  `dpl_BrrdddUMvZ21YyUTWn8z6RidGVPr` (`mays-job-matcher`) READY; beide
+  Domains Footer `df1fe01`.
+- Gates: 2.113 Vitest PASS / 5 skipped (202 Dateien); TypeScript/Build PASS;
+  CodeQL PASS; 42 Production-Smoke-Checks PASS; authentifizierte Read-only-
+  Production-E2E PASS (0 Writes, 0 Console-/Page-Errors).
+- Bekannte Altlast: `cv-builder-workflow-02a` erwartet den alten Buttontext
+  „Lebenslauf speichern“ statt „Entwurf übernehmen“ und schlägt bereits auf
+  `e92d78b` fehl; keine Produktregression.
+
+2026-11-25 — Application Edit + eigenes Anschreiben (PR #65, Merge `e92d78b`)
+
+- Tab-/Bewerbungswechsel bei unverändertem Formular ohne Warnung; bei echten
+  Wertänderungen Dialog **Speichern und wechseln / Änderungen verwerfen /
+  Weiter bearbeiten**.
+- Speicherfehler erhalten Dialog und alle Eingaben; Navigation erst nach
+  bestätigtem Speichern oder Verwerfen.
+- Eigenes Anschreiben im Tab **Dokumente**: explizit speichern, ohne KI, ohne
+  neue Version; Session- und RIS-Modus; bestehende Versionen bleiben
+  unverändert.
+- Tests: fokussiert 69 PASS; Vollsuite 2.105 PASS / 5 skipped; Browser-E2E für
+  Tabwechsel, 409-Retry, Reload, Version und Session-Modus PASS.
+
+2026-11-23 — Application Save UX (PR #58, Merge `3579ade`)
+
+- Speichermodusabhängige Erfolgsmeldung für manuelle Bewerbungsentwürfe:
+  Session- vs. Konto-Meldung erst nach bestätigtem Create/List.
+- Fehler und Duplikate zeigen keine falsche Erfolgsmeldung; Idempotency-Retry
+  bleibt erhalten.
+- Tests: 59 fokussiert PASS; Remote-Recovery-E2E und Session-DE/EN PASS;
+  Vollsuite 2.091 PASS / 5 skipped.
+
+2026-11-22 — CV timeout hotfix (PR #10, Merge `7c27ec7`)
+
+- BFF-Timeout für RIS-CV-Listen von 10 s auf 25 s erhöht; bessere
+  Fehlermeldungen bei kaltem RIS-Start.
+- Production-Deployment `dpl_CEmPaMv3CaySfShvac9kRJ2Mhsx7` READY; Live-Routen
+  und unauthentifizierte API-Antworten geprüft.
+
 Unreleased — 2026-11-19
 
 - Improved the shared CV and job parsers used by the versioned analysis APIs

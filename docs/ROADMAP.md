@@ -9,6 +9,41 @@ This document defines the project phases and the sprint backlog aligned with the
 
 ---
 
+## Current release status (2026-11-25)
+
+**Production-Basis:** `df1fe01983487b6badcc29653a3f8474f10a5938`
+(`Version 2.2.0 · production · main`)
+
+### Abgeschlossen und production-verifiziert
+
+| Paket | Nachweis |
+| --- | --- |
+| Application Save UX | Speichermodusabhängige Erfolgsmeldung, Recovery-E2E |
+| Application Edit + eigenes Anschreiben | Dirty-State-Dialog, Tab-/Bewerbungswechsel, eigener Text ohne KI, Versionen unverändert |
+| Profile Layout Consistency | Stabile Profil-Shell, breitere Applications-Arbeitsfläche, 8 Viewports |
+| CV Import Expanded View | Expand/Collapse mit Radar, unabhängiger Screenshot-Modus |
+| CV Editor Expanded View | Acht Abschnitte, Radar + Turbo-Hände, Validierungsfokus, Screenshot-Modus |
+| Consolidated UX Release | PR #66, Merge `df1fe01`; 2.113 Vitest PASS / 5 skipped; CodeQL/Build PASS; 42 Production-Smoke-Checks; beide Vercel-Projekte READY |
+
+### Offene Arbeitspakete
+
+1. **`JM-COVER-LETTER-MODEL-FAILURE-SESSION-UX-01`** — geplant; resiliente
+   Session-UX bei Modellfehlern in der Anschreibenerstellung. Noch keine
+   Implementierung in diesem Release.
+2. **`JM-JOB-APPLICATION-MATCHING-01`** — geplant; Bewerbungen und
+   Stellenangebote sinnvoll zusammenführen. Noch keine Implementierung.
+3. **`JM-APPLICATION-LOADING-STATE-01`** — geplant; Ladezustand in der
+   Bewerbungsverwaltung. Noch keine Implementierung.
+4. **CV-Builder Legacy E2E Maintenance** — `cv-builder-workflow-02a` erwartet
+   den alten Buttontext „Lebenslauf speichern“ statt „Entwurf übernehmen“ und
+   schlägt bereits auf der vorherigen Main-Basis fehl. Minimale
+   Testkorrektur; keine Produktänderung.
+
+> Die folgenden Abschnitte sind der historisch gewachsene Backlog. Sie bleiben
+> als Nachweis erhalten und werden nicht rückwirkend umgeschrieben.
+
+---
+
 ## Project Phases (Stand 2026-10-02)
 
 - **Version 1.0 — Core Matching**: live jobs, keyword/city filter, AI scoring, top-5 cards.

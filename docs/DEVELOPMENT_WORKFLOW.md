@@ -6,6 +6,53 @@ My Job Matcher Projekt. Der Ablauf ist in der Praxis verifiziert (siehe
 
 ---
 
+## 0. Current gates and commands (2026-11-25)
+
+**Production basis:** `df1fe01` · Version 2.2.0.
+
+```bash
+npm ci
+npm run build                 # tsc -b && vite build
+npm test                      # Vitest/Testing Library (jsdom, ohne api/**)
+npx vitest run --maxWorkers=1 # serielle Vollsuite
+node --check api/**/*.mjs      # API-Syntax (einzeln je Datei)
+git diff --check
+```
+
+Browser-E2E (synthetisch, gemockte APIs):
+
+```bash
+npm run test:e2e:profile-applications-responsive-fix-01
+npm run test:e2e:cv-import-navigator-02
+node tests/e2e/jm-cv-editor-navigator-03.mjs
+node tests/e2e/jm-application-edit-tab-navigation-01.mjs
+```
+
+Aktuelle Release-Gates:
+
+1. TypeScript + Production-Build.
+2. Fokussierte Tests für den geänderten Bereich.
+3. Serielle Vollsuite; Ergebnis und Abweichungen dokumentieren.
+4. Relevante Browser-E2E inkl. Responsive/Accessibility.
+5. CodeQL und Vercel-Preview/Deployment-Checks im PR.
+6. `git diff --check` und Secret-Scan.
+7. PR `MERGEABLE`/`CLEAN`; HEAD vor dem Merge abgleichen.
+8. Nach dem Merge: automatische Vercel-Production-Deployments beider Projekte
+   prüfen (READY, gleicher Footer-SHA), Production-Smoke.
+9. Docs-/Release-Bericht auf separatem Docs-Branch; kein zusätzlicher
+   Main-Push ohne Freigabe.
+
+Dokumentationsprüfung: relative Links, Bildpfade, Markdown-Struktur,
+Terminologie und Widerspruchsfreiheit prüfen. Die aktuelle Prüfung steht in
+`docs/DOCUMENTATION_CONSISTENCY_REPORT.md`.
+
+Bekannte Test-Altlast: `cv-builder-workflow-02a` erwartet den alten Buttontext
+„Lebenslauf speichern“ statt „Entwurf übernehmen“ und schlägt bereits auf der
+vorherigen Main-Basis fehl. Keine Produktregression; minimale Testkorrektur
+vorgemerkt.
+
+---
+
 ## 1. Verbindlicher Feature-Ablauf
 
 ### 01. Aktuellen main-Stand prüfen
