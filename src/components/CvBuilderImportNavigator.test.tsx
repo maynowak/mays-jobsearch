@@ -156,9 +156,18 @@ describe("JM-CV-IMPORT-NAVIGATOR-02", () => {
     const fullpage = renderFullpage();
     await chooseFile(fullpage.container);
     expect(fullpage.container.querySelector(".cv-import-radar")).not.toBeNull();
+    const details = fullpage.container.querySelector<HTMLDetailsElement>(".cv-import-section__details");
+    expect(details?.open).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" }));
+    expect(details?.open).toBe(true);
+    expect(fullpage.container.querySelector(".cv-import-radar")).not.toBeNull();
+
     fireEvent.click(screen.getByRole("button", { name: "📸 Screenshot-Ansicht" }));
     expect(fullpage.container.querySelector(".cv-import-radar")).toBeNull();
+    expect(details?.open).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Screenshot-Ansicht beenden" }));
     expect(fullpage.container.querySelector(".cv-import-radar")).not.toBeNull();
+    expect(details?.open).toBe(true);
   });
 });
