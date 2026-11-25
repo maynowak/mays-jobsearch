@@ -1,3 +1,16 @@
+2026-11-25 · JM-TRANSLATION-JSON-UNWRAP-01 — PRODUCTION HOTFIX
+- Typ: Hotfix, Übersetzungsanzeige, toleranter JSON-Parser, Client-Guard, Regressionstests
+- Status: **DEPLOYED & CLIENT-VERIFIED** (Live-Modellübersetzung wegen Provider-502 offen)
+- Branch/PR: `fix/jm-translation-json-unwrap-01`; Commit `54703a8`; PR #69; Merge mit `--match-head-commit` als `776112b`; kein Force-Push, keine Branch-Löschung.
+- Ursache: Modell lieferte ungültiges JSON (unescaped Quotes/Newlines) oder abgeschnittene/double-encoded Antworten; `parseTranslation` fiel auf Rohtext zurück und zeigte `{"translation":"…"}`. Vorbestehend, nicht durch das Security-Release verursacht.
+- Fix: strikte JSON-Extraktion, tolerantes Entpacken (fenced/double-encoded/truncated/malformed) mit JSON-Escape-Decoding, nie Wrapper an den Client; Client-Guard `unwrapTranslationEnvelope`. Keine neue Abhängigkeit, keine Vertragsänderung.
+- Tests: 6 neue API-Fälle + 5 Client-Guard-Fälle; CodeQL PR-Run 45688309791 PASS; Vollsuite **2166 PASS / 5 skipped** (204 Dateien); Build/tsc/Secret/Diff PASS.
+- Deployments: `dpl_93oR7aAqqAGHRk6hJNo77kLrZ2KB` (mays-jobsearch), `dpl_2iMsaug3vqaHe3ss2ba5B5SbnWdE` (mays-job-matcher), Production READY, Footer `production · main · 776112b`.
+- Production: 8 Routen × Desktop/Mobile weiterhin 200/0 Fehler/0 Overflow; Client-Guard auf der Live-Domain mit gemockter Wrapper-Antwort verifiziert (kein `{"translation"`, 0 Errors). Echte Modellübersetzung derzeit 502 `model_unavailable`; Server-Parser durch Tests abgedeckt, Live-Check offen.
+- CodeQL `main`: 0 offene Alerts in `/language:javascript-typescript` (Analyse 45689378465, 0 Ergebnisse). 21 Altsignale der retired Kategorie `/language:javascript` bleiben offen; keine Dismissals.
+- AI/Privacy: keine neue Datenkategorie, kein neuer Provider, keine zusätzlichen Modellaufrufe in Tests; Production-Test mit synthetischer Anzeige, keine echten Bewerbungen/CVs verändert.
+- Bericht: `docs/reports/JM-SECURITY-CODEQL-RELEASE-01-REPORT.md`.
+
 2026-11-25 · JM-SECURITY-CODEQL-RELEASE-01 — CONTROLLED MERGE & PRODUCTION VERIFICATION
 - Typ: Release, PR-Merge, automatische Vercel-Production-Deployments, Production-Smoke, Job-Display-Regression, Übersetzungsfehler
 - Status: **PRODUCTION VERIFICATION FAILED — HOTFIX REQUIRED** (nicht PRODUCTION VERIFIED)

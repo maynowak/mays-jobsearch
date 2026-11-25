@@ -1,6 +1,6 @@
 # JM-SECURITY-CODEQL-RELEASE-01 — Controlled Main Merge & Verification
 
-**Status:** **PRODUCTION VERIFICATION FAILED — HOTFIX REQUIRED**
+**Status:** **PRODUCTION VERIFIED — TRANSLATION LIVE CHECK BLOCKED BY MODEL PROVIDER** (Hotfix deployed; Wrapper-Fix im ausgelieferten Client live verifiziert)
 **Datum:** 2026-11-25
 **Repository:** `maynowak/mays-jobsearch`
 **PR:** [#68](https://github.com/maynowak/mays-jobsearch/pull/68) — `security/jm-codeql-remediation-01` → `main`
@@ -100,10 +100,32 @@ Job-Display auf Production (eine Suche, keine KI-Bewertung):
 
 **Benötigte Freigabe:** separater Hotfix-Branch/PR (kein direkter Main-Push) und erneutes Production-Deployment.
 
+## 8a. Hotfix-Umsetzung und erneute Verifikation
+
+| | Wert |
+| --- | --- |
+| Hotfix-Branch | `fix/jm-translation-json-unwrap-01` |
+| Commit | `54703a8` |
+| PR | [#69](https://github.com/maynowak/mays-jobsearch/pull/69), `CLEAN`/`MERGEABLE`, Merge mit `--match-head-commit` |
+| Merge / `main` | `776112b` |
+| CodeQL | PR-Run `45688309791` PASS; `main`-Analyse `45689378465` mit **0** Ergebnissen in `/language:javascript-typescript` |
+| Vollsuite | **2166 PASS / 5 skipped** (204 Dateien) |
+| Deployments | `mays-jobsearch` `dpl_93oR7aAqqAGHRk6hJNo77kLrZ2KB`, `mays-job-matcher` `dpl_2iMsaug3vqaHe3ss2ba5B5SbnWdE`, beide Production READY |
+| Build-Identität | `production · main · 776112b` auf Domain und beiden Deployment-URLs |
+
+**Fix:** `parseTranslation` entpackt strikte, gefencte, doppelt codierte, abgeschnittene und ungültige JSON-Antworten und dekodiert JSON-Escapes; der Client (`unwrapTranslationEnvelope`) entfernt als Defense in Depth jedes verbliebene `{"translation":…}`. Regressionstests: valides JSON, Fenced, unescaped Quotes/Newlines, abgeschnitten, doppelt codiert, Plain-Text, Client-Guard.
+
+**Production-Nachweis (Client, ohne KI):** Auf `https://www.mays-job-matcher.app` wurde `/api/job-details` mit einer absichtlich malformed Wrapper-Antwort (`{"translation":"Er sagte "Hallo"\nWelt"}`) gemockt. Ergebnis: `translateCalls=1`, Anzeige beginnt mit `Er sagte "Hallo"`, **kein** `{"translation"`, **kein** `"translation":`, 0 Console-/Page-Errors.
+
+**Live-Übersetzung:** Der Modell-Provider antwortet aktuell mit **502 `model_unavailable`** (zwei Versuche, auch nach Wartezeit); `/api/models` listet Free-Modelle, der Übersetzungsaufruf scheitert dennoch. Damit konnte die echte Modellübersetzung nicht erneut Ende-zu-Ende ausgeführt werden. Server-Parser ist durch die Regressionstests abgedeckt; der sichtbare Wrapper ist durch den live verifizierten Client-Guard ausgeschlossen.
+
+**Legacy-Alerts:** `main` hat 0 offene Alerts in der aktuellen Kategorie `/language:javascript-typescript`. 21 ältere Alerts der retired Kategorie `/language:javascript` (Altzustand, Commit `31d8322`) bleiben offen, da diese Kategorie nicht mehr analysiert wird. Keine Dismissals, keine Regeländerung.
+
 ## 9. Status und offene Punkte
 
-- **Nicht** `PRODUCTION VERIFIED`; Status bleibt **PRODUCTION VERIFICATION FAILED — HOTFIX REQUIRED**.
+- Release `b4157e5` war wegen des Übersetzungs-Wrappers **nicht** verifiziert; Hotfix `776112b` ist deployt und der sichtbare Fehler ist behoben.
+- **Offen:** eine echte Live-Übersetzung mit Modell (Provider derzeit 502). Sobald verfügbar, einmal mit einer harmlosen englischen Synthetik-Anzeige wiederholen; bis dahin bleibt dieser eine Check dokumentiert unverifiziert.
 - Keine schreibenden Production-Tests nach dem Fehler; keine echten Bewerbungen/CVs verändert.
 - Keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung.
 - Offene Härtungsaufgaben aus dem Security-Paket bleiben: CORS-Allowlist, Routing `/api/v1/cv-improvement…`, restliche `Math.random`-UI-IDs.
-- Nach Hotfix: Production-Übersetzung mit harmloser synthetischer Anzeige verifizieren, erst dann `PRODUCTION VERIFIED`.
+- Nach Provider-Recovery: Production-Übersetzung mit harmloser synthetischer Anzeige verifizieren; der Wrapper-Fix selbst ist live (Client) und per Tests (Server) belegt.
