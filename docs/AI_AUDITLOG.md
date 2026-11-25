@@ -1,3 +1,13 @@
+2026-11-25 · JM-APPLICATION-SAVE-UX-01 — CONTROLLED MAIN RELEASE
+- Typ: Storage-mode-abhängige Erfolgsmeldung, PR-Merge, Vercel Production, authentifizierter Remote-/Session-Smoke
+- Status: **PRODUCTION VERIFIED**
+- Release: PR [#64](https://github.com/maynowak/mays-jobsearch/pull/64) `f81a0bb` → `main` `c058555`; Implementierung `2029a4e`. Kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Umsetzung: Remote/RIS bestätigt → Konto-Meldung; Session → Sitzungsmeldung; alte Notices werden geleert; Erfolg erst nach Create/List; Fehler ohne Erfolgsmeldung. Duplikat-, Idempotenz-, Formular-/Datenverhalten unverändert.
+- Tests: fokussiert **59 PASS**; serielle Vollsuite **2091 PASS / 5 skipped** (202 Dateien); Build/Diff/Secret-Scan PASS; Remote-Recovery-E2E PASS (Fehler ohne Erfolg, Idempotency-Retry, Remote-Meldung, Reload, 0 KI-Calls); Session-E2E DE/EN PASS; PR-CodeQL/Vercel PASS.
+- Production: `mays-job-matcher` `dpl_4qtAfne1i19PMUXyXQngacX9em5i`, `mays-jobsearch` `dpl_DEWbBThWadUMtbJSNB9NcyPAXnZU`, beide Ready; beide Domains `/profil?tab=applications` 200 und Bundle/Footer `c058555`. Smoke mit bestehender authentifizierter Test-Tab-Sitzung, ohne Token-Kopie: synthetischer Remote-Entwurf erstellt, Konto-Meldung bestätigt, DELETE 2xx, nach Reload entfernt; interceptierter Remote-Fehler ohne Erfolg; Session-Modus zeigte Sitzungsmeldung und machte keinen RIS-Create; keine KI-/ATS-/Profil-/Cover-Letter-Calls; keine echten Bewerbungen verändert.
+- Grenzen: keine RIS-/AWS-/Cognito-/Consent-/Storage-Vertrags-/Datenänderung; keine Screenshots der authentifizierten Sitzung; Release-Bericht/Audit nur auf Docs-Branch.
+- Bericht: `docs/reports/JM-APPLICATION-SAVE-UX-01-RELEASE.md`.
+
 2026-11-25 · JM-APPLICATION-SAVE-UX-01 — STORAGE-MODE-AWARE DRAFT CONFIRMATION
 - Typ: UI-Erfolgsmeldung, Session-/Remote-Speichermodus, i18n, Unit-/Browser-E2E
 - Status: **READY FOR REVIEW**
