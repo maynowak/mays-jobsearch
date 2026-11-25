@@ -78,6 +78,102 @@ const NAMED_ENTITIES = Object.freeze({
   uacute: "\u00fa",
   ntilde: "\u00f1",
   ccedil: "\u00e7",
+  rarr: "\u2192",
+  larr: "\u2190",
+  uarr: "\u2191",
+  darr: "\u2193",
+  harr: "\u2194",
+  le: "\u2264",
+  ge: "\u2265",
+  ne: "\u2260",
+  asymp: "\u2248",
+  equiv: "\u2261",
+  infin: "\u221e",
+  sum: "\u2211",
+  prod: "\u220f",
+  radic: "\u221a",
+  minus: "\u2212",
+  lowast: "\u2217",
+  sim: "\u223c",
+  cong: "\u2245",
+  there4: "\u2234",
+  perp: "\u22a5",
+  ang: "\u2220",
+  cap: "\u2229",
+  cup: "\u222a",
+  int: "\u222b",
+  forall: "\u2200",
+  exist: "\u2203",
+  empty: "\u2205",
+  isin: "\u2208",
+  notin: "\u2209",
+  sub: "\u2282",
+  sup: "\u2283",
+  sube: "\u2286",
+  supe: "\u2287",
+  oplus: "\u2295",
+  otimes: "\u2297",
+  sdot: "\u22c5",
+  lceil: "\u2308",
+  rceil: "\u2309",
+  lfloor: "\u230a",
+  rfloor: "\u230b",
+  loz: "\u25ca",
+  spades: "\u2660",
+  clubs: "\u2663",
+  hearts: "\u2665",
+  diams: "\u2666",
+  prime: "\u2032",
+  Prime: "\u2033",
+  alpha: "\u03b1",
+  beta: "\u03b2",
+  gamma: "\u03b3",
+  delta: "\u03b4",
+  epsilon: "\u03b5",
+  zeta: "\u03b6",
+  eta: "\u03b7",
+  theta: "\u03b8",
+  iota: "\u03b9",
+  kappa: "\u03ba",
+  lambda: "\u03bb",
+  mu: "\u03bc",
+  nu: "\u03bd",
+  xi: "\u03be",
+  omicron: "\u03bf",
+  pi: "\u03c0",
+  rho: "\u03c1",
+  sigma: "\u03c3",
+  sigmaf: "\u03c2",
+  tau: "\u03c4",
+  upsilon: "\u03c5",
+  phi: "\u03c6",
+  chi: "\u03c7",
+  psi: "\u03c8",
+  omega: "\u03c9",
+  Alpha: "\u0391",
+  Beta: "\u0392",
+  Gamma: "\u0393",
+  Delta: "\u0394",
+  Epsilon: "\u0395",
+  Zeta: "\u0396",
+  Eta: "\u0397",
+  Theta: "\u0398",
+  Iota: "\u0399",
+  Kappa: "\u039a",
+  Lambda: "\u039b",
+  Mu: "\u039c",
+  Nu: "\u039d",
+  Xi: "\u039e",
+  Omicron: "\u039f",
+  Pi: "\u03a0",
+  Rho: "\u03a1",
+  Sigma: "\u03a3",
+  Tau: "\u03a4",
+  Upsilon: "\u03a5",
+  Phi: "\u03a6",
+  Chi: "\u03a7",
+  Psi: "\u03a8",
+  Omega: "\u03a9",
 });
 
 /** Elements whose entire content is not readable text. */
@@ -112,6 +208,9 @@ const VOID_ELEMENTS = new Set([
   "track",
   "wbr",
 ]);
+
+/** Foreign-content roots where a trailing "/" really closes the element. */
+const FOREIGN_ELEMENTS = new Set(["svg", "math"]);
 
 /** Elements that visually start a new block. */
 const BLOCK_ELEMENTS = new Set([
@@ -219,9 +318,11 @@ function parseTag(raw) {
   while (index < raw.length && /[A-Za-z0-9:-]/.test(raw[index])) index += 1;
   const name = raw.slice(nameStart, index).toLowerCase();
   if (!/^[a-z][a-z0-9:-]*$/.test(name)) return null;
-  // HTML parsers ignore a trailing "/" on non-void elements, so "<script/>"
-  // still opens a raw-text element. Only void elements are self-closing.
-  const selfClosing = VOID_ELEMENTS.has(name);
+  // HTML parsers ignore a trailing "/" on ordinary elements, so "<script/>"
+  // still opens a raw-text element. Void elements and foreign-content roots
+  // (svg/math) are genuinely self-closing.
+  const selfClosing =
+    VOID_ELEMENTS.has(name) || (/\/\s*$/.test(raw) && FOREIGN_ELEMENTS.has(name));
   return { name, closing, selfClosing };
 }
 
@@ -293,9 +394,10 @@ export function htmlToText(value, options = {}) {
     }
     const tag = parseTag(input.slice(index + 1, tagEnd));
     if (!tag) {
-      // Not a tag (for example "2 < 3"): keep the character as text.
-      output += "<";
-      index += 1;
+      // Not a tag (for example "2 < 3"): keep the whole slice as text and
+      // continue after it so a long "< < < … >" run is scanned only once.
+      output += input.slice(index, tagEnd + 1);
+      index = tagEnd + 1;
       continue;
     }
     index = tagEnd + 1;

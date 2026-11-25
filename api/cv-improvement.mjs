@@ -72,12 +72,9 @@ export default async function handler(req, res) {
     const isMatchImpactEndpoint = req.url && req.url.endsWith("/match-impact");
 
     if (isMatchImpactEndpoint) {
-      // Handle match impact analysis endpoint
-      const validation = validateRequest(body);
-      if (!validation.valid) {
-        return res.status(400).json({ error: validation.error, code: validation.code });
-      }
-
+      // Handle match impact analysis endpoint. Validate the fields this branch
+      // actually uses; the generic helper expects `profile`, which the client
+      // contract (MatchImpactRequest) does not send.
       const { job, originalProfile, improvedProfile } = body;
 
       if (!job || typeof job !== "object") {

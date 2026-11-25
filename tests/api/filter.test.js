@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   stripHtml,
+  htmlToPlainText,
   detectLanguage,
   employmentMatches,
   applySearchFilters,
@@ -105,6 +106,13 @@ describe("API filter - stripHtml (plain text extraction for descriptionPlain)", 
     expect(result).not.toContain("onerror");
     expect(result).not.toContain("alert(1)");
     expect(result).toBe("");
+  });
+
+  it("6b) decodes entity-encoded and double-encoded markup before stripping", () => {
+    expect(stripHtml("&lt;p&gt;Hello&lt;/p&gt;")).toBe("Hello");
+    expect(stripHtml("&amp;lt;p&amp;gt;Hello&amp;lt;/p&amp;gt;")).toBe("Hello");
+    expect(stripHtml("&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;")).toBe("");
+    expect(htmlToPlainText("<b>Bold</b> &amp; text")).toBe("Bold & text");
   });
 
   it("7) Exact production job - descriptionPlain contains NO HTML artifacts", () => {

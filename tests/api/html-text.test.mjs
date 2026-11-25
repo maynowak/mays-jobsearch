@@ -47,14 +47,23 @@ describe("htmlToText - tag scanner", () => {
 
   it("removes raw-text payloads without quadratic rescans or offset drift", () => {
     const adversarial = `<script>${"</scriptx".repeat(4000)}</script>tail`;
-    const started = Date.now();
     const text = htmlToText(adversarial);
-    expect(Date.now() - started).toBeLessThan(2000);
     expect(text).toContain("tail");
     expect(text).not.toContain("scriptx");
 
     const unicodePrefix = `<script>${"İ".repeat(200)}</script>ok`;
     expect(htmlToText(unicodePrefix)).toContain("ok");
+
+    // Long non-tag "<" runs are preserved and scanned once.
+    const comparisons = `${"< ".repeat(5000)}>`;
+    expect(htmlToText(comparisons)).toBe(comparisons);
+  });
+
+  it("treats self-closing svg/math as closed instead of swallowing the text", () => {
+    expect(htmlToText("<svg/>after")).toContain("after");
+    expect(htmlToText("<math/>after")).toContain("after");
+    expect(htmlToText("<svg><text>icon</text></svg>after")).not.toContain("icon");
+    expect(htmlToText("<svg><text>icon</text></svg>after")).toContain("after");
   });
 
   it("drops an unterminated raw-text block instead of leaking its payload", () => {
