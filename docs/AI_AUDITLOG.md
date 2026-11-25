@@ -1,3 +1,15 @@
+2026-11-25 · JM-PROFILE-LAYOUT-CONSISTENCY-13 — STABLE PROFILE FRAME & WIDER APPLICATIONS WORKSPACE
+- Typ: Layout/Responsive, gemeinsame Shell, CSS-Custom-Properties, bestehende Browser-E2E erweitert
+- Status: **READY FOR VISUAL REVIEW**
+- Branch: `feature/jm-profile-layout-consistency-13`; Basis `origin/main` `e92d78b`; Implementierung `d183105`; Branch gepusht; kein Main-Merge/Deployment, kein Force-Push, keine Branch-Löschung.
+- Ausgangsursache: `.dashboard-v2--applications { width: min(1600px, 98vw) }` änderte die gesamte Profil-Shell (Header/Sidebar/Content), `.dashboard-v2--applications .dashboard-v2__layout { 0.22fr }` veränderte die Sidebar-Breite, `body:has(.dashboard-v2--applications) .navbar { position: relative }` deaktivierte die sticky Hauptnavigation nur in Bewerbungen, und der Applications-Stack-Breakpoint lag bei 980 px statt 767 px. Bei 1440 px: Header 130/1180 vs. 14/1411, Sidebar 130/279 vs. 14/249, Main 439/871 vs. 293/1132.
+- Umsetzung: gemeinsame Shell-Variablen (`--jm-profile-shell-width`, `--jm-profile-layout-gap`, `--jm-profile-sidebar-width`); ab 1024 px erweitert sich ausschließlich `.dashboard-v2--applications` per `flex`/Margin nach rechts, Header bleibt auf Shell-Breite, Sidebar behält Position/Breite; Applications-Navbar-Exception und 980-px-Stacking entfernt, alle Bereiche nutzen sticky Navigation und dieselben Breakpoints; die Applications-Arbeitsfläche wird intern bei ≤980 px einspaltig. Keine TSX-/API-/Persistenz-/Auth-/Consent-/ATS-/KI-Änderung.
+- Verifikation: `tsc`/Build PASS; fokussierte Dashboard-/Profil-/Applications-Suiten **85 PASS** (5 Dateien); serielle Vollsuite **2105 PASS / 5 skipped** (202 Dateien); erweiterte Browser-E2E `jm-profile-applications-responsive-fix-01` PASS für 320/390/768/900/980/1024/1440/1920 (Header in allen sechs Bereichen identisch, Sidebar ab 768 px identisch, 0 Overflow, Navigation sticky bzw. Mobile-Switcher, Keyboard-Tabwechsel mit `aria-current`, Reduced Motion); erweiterte `jm-application-edit-tab-navigation-01` PASS (bestehender Dialog-/Eigenanschreiben-Flow plus Edit-Form-/Dialog-Clipping bei 320–1920, 0 Overflow); `git diff --check`/Secret-Scan PASS.
+- Ergebnis: bei 1440 px Header 130/1180 und Sidebar 130/279 in allen Bereichen; Applications-Main 439/977 statt vorher 293/1132, bei 1920 px 679/1217 (andere Bereiche 871). Kein pauschales Verkleinern anderer Profilbereiche.
+- Screenshots: `docs/reports/assets/JM-PROFILE-LAYOUT-CONSISTENCY-13/` (before/after 1440 und 390, after 1024/1920 sowie Applications-Responsive-Serien).
+- Grenzen: Applications-Header bleibt bewusst auf Shell-Breite, dadurch reicht die Applications-Karte rechts darüber hinaus; Wide-Mode erst ab 1024 px; keine echten Bewerbungs-/Kontodaten verändert.
+- Bericht: `docs/reports/JM-PROFILE-LAYOUT-CONSISTENCY-13.md`.
+
 2026-11-25 · JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — EDIT-SWITCH DECISION & OWN COVER LETTER
 - Typ: UI-Navigation, Dirty-State-Vergleich, Dialog/Accessibility, nicht-KI-Anschreibeneditor, Unit-/Browser-E2E
 - Status: **READY FOR VISUAL REVIEW**
