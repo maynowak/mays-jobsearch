@@ -1,3 +1,15 @@
+2026-11-25 · JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — EDIT-SWITCH DECISION & OWN COVER LETTER
+- Typ: UI-Navigation, Dirty-State-Vergleich, Dialog/Accessibility, nicht-KI-Anschreibeneditor, Unit-/Browser-E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch: `feature/jm-application-edit-tab-navigation-01`; Basis `origin/main` `c058555`; Schritt 1 `0d1c15b` (Tab-/Bewerbungswechsel mit Entscheidung), Schritt 2 `87475e1` (eigenes Anschreiben); Branch gepusht; kein Main-Merge/Deployment, kein Force-Push.
+- Umsetzung Schritt 1: `ApplicationEditForm` vergleicht echte `EditDraft`-Werte mit der geladenen Bewerbung; unverändert → sofortiger Wechsel ohne Warnung; geändert → `alertdialog` mit Speichern/Verwerfen/Weiter bearbeiten, Pending-Navigation erst nach bestätigtem Speichern oder Verwerfen, Fehler behält Dialog und alle Eingaben, Escape/Fokusrückgabe, Reset bei Repository-/Session-Wechsel. Imperatives `ApplicationEditFormHandle` (`save`, `focus`) statt Formular-State im Parent. Bestehender `letterDirty`-Schutz unverändert.
+- Umsetzung Schritt 2: `ApplicationOwnLetterEditor` im Dokumente-Tab als gleichwertige, explizite Alternative zur KI; Anzeige des Speichermodus, Vorschau, explizites Speichern über `repository.update()` mit `expectedVersion` und `coverLetterDraft`/`documentStatus`, Session- oder RIS-Remote-Pfad, keine neue Version, bestehende Versionen unverändert, Erfolg erst nach bestätigtem Write, Fehler behält Text. Ungespeicherter eigener Text nutzt denselben Wechseldialog; keine KI-, Auto-Speicher- oder Auto-Versionsaufrufe.
+- Tests: `tsc`/Build PASS; fokussierte Applications-/Formular-/Letter-Suiten PASS (u. a. unverändert wechseln, Save-Erfolg/-Fehler, Verwerfen, Bewerbungswechsel, eigenes Anschreiben Session/Remote, Reload, Edit, Fehlererhalt, keine Version, kein KI-Call); serielle Vollsuite **2105 PASS / 5 skipped** (202 Dateien); Browser-E2E `jm-application-edit-tab-navigation-01` PASS (synthetische Identität, gemockte BFF, 409-Retry, eigener Text + Reload, Version 1 unverändert, Session-Modus ohne Remote-Write, 0 AI-Calls, 0 Console-/Page-Errors, 0 Overflow 1440/390).
+- Datenschutz/AI: keine neue Datenkategorie, kein neuer Consent-Zweck, keine neue Persistenz/API; `coverLetterDraft` bleibt im bestehenden Bewerbungsdatensatz, Session bleibt memory-only, Remote nutzt bestehende Capability-/Consent-Gates; keine RIS-/AWS-/Terraform-/Cognito-Änderung.
+- Screenshots: `docs/reports/assets/JM-APPLICATION-EDIT-TAB-NAVIGATION-01/` (`edit-unsaved-dialog-1440.png`, `own-letter-saved-1440.png`, `session-mode-390.png`).
+- Grenzen: kein authentifizierter echter RIS-Write; Remote-Verhalten über Vertrag und gemockte BFF verifiziert.
+- Bericht: `docs/reports/JM-APPLICATION-EDIT-TAB-NAVIGATION-01.md`.
+
 2026-11-25 · JM-APPLICATION-SAVE-UX-01 — STORAGE-MODE-AWARE DRAFT CONFIRMATION
 - Typ: UI-Erfolgsmeldung, Session-/Remote-Speichermodus, i18n, Unit-/Browser-E2E
 - Status: **READY FOR REVIEW**

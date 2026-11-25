@@ -16642,3 +16642,100 @@ body:has(.dashboard-v2--applications) .navbar-glass.scrolled {
     margin: 8px 60px 0 0;
   }
 }
+
+/* JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — explicit, model-free own-letter editor. */
+.applications-edit-navigation {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.applications-edit-navigation h4,
+.applications-edit-navigation p {
+  margin: 0;
+}
+
+.applications-edit-navigation__actions,
+.applications-own-letter__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.applications-own-letter {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 96%, var(--accent));
+}
+
+.applications-own-letter__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.applications-own-letter__head h4,
+.applications-own-letter__storage-note,
+.applications-own-letter__empty,
+.applications-own-letter__notice {
+  margin: 0;
+}
+
+.applications-own-letter__storage-note,
+.applications-own-letter__empty {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.applications-own-letter__editor {
+  display: grid;
+  gap: 10px;
+}
+
+.applications-own-letter__editor textarea {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+}
+
+.applications-own-letter__preview {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.applications-own-letter__preview > .applications-cover-letter {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.applications-own-letter__notice {
+  color: var(--brand-dark);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.applications-own-letter :is(button, textarea):focus-visible,
+.applications-edit-navigation button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .applications-edit-navigation__actions,
+  .applications-edit-navigation__actions > button,
+  .applications-own-letter__actions,
+  .applications-own-letter__actions > button,
+  .applications-own-letter__head > button {
+    width: 100%;
+  }
+}

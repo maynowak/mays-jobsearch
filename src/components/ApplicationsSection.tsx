@@ -19,7 +19,8 @@ import type {
 } from "../lib/applications/contractTypes";
 import { ApplicationValidationError } from "../lib/applications/applicationValidation";
 import { canTransitionApplicationStatus } from "../lib/applications/applicationDomain";
-import ApplicationEditForm from "./ApplicationEditForm";
+import ApplicationEditForm, { type ApplicationEditFormHandle } from "./ApplicationEditForm";
+import ApplicationOwnLetterEditor, { type ApplicationOwnLetterEditorHandle } from "./ApplicationOwnLetterEditor";
 import ApplicationCard from "./ApplicationCard";
 import ApplicationMigrationDialog from "./ApplicationMigrationDialog";
 import ApplicationLetterComparison from "./ApplicationLetterComparison";
@@ -56,6 +57,10 @@ interface Props {
 }
 
 type ApplicationTab = "overview" | "communication" | "documents" | "history";
+type PendingNavigation = {
+  target: { kind: "tab"; tab: ApplicationTab } | { kind: "application"; localId: string };
+  source: "edit" | "ownLetter";
+};
 type ApplicationFilter = "all" | ApplicationStatus | "followUpOpen" | "followUpOverdue";
 type ApplicationSort = "newest" | "oldest" | "followUp";
 
@@ -170,7 +175,10 @@ export default function ApplicationsSection({
     useState<SessionApplicationV1 | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [editDirty, setEditDirty] = useState(false);
+  const [ownLetterDirty, setOwnLetterDirty] = useState(false);
   const [editError, setEditError] = useState("");
+  const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
   const [activeTab, setActiveTab] = useState<ApplicationTab>("overview");
   const [followUpDue, setFollowUpDue] = useState("");
   const [followUpNote, setFollowUpNote] = useState("");
@@ -184,7 +192,6 @@ export default function ApplicationsSection({
   });
   const overviewHeadingRef = useRef<HTMLHeadingElement>(null);
   const applicationsListRef = useRef<HTMLUListElement>(null);
-  const draftDetailsRef = useRef<HTMLDetailsElement>(null);
   const mountedRef = useRef(true);
   const applicationsRef = useRef<SessionApplicationV1[]>([]);
   const repositoryRef = useRef(repository);
@@ -192,6 +199,10 @@ export default function ApplicationsSection({
   const operationsRef = useRef<Set<AbortController>>(new Set());
   const runningRef = useRef(false);
   const appliedNavigationRef = useRef<Props["navigationTarget"]>(null);
+  const editFormRef = useRef<ApplicationEditFormHandle | null>(null);
+  const ownLetterEditorRef = useRef<ApplicationOwnLetterEditorHandle | null>(null);
+  const pendingNavigationRef = useRef<PendingNavigation | null>(null);
+  const pendingNavigationSaveRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     onChangedRef.current = onChanged;
@@ -244,7 +255,11 @@ export default function ApplicationsSection({
 
   useEffect(() => {
     setEditing(false);
+    setEditDirty(false);
+    setOwnLetterDirty(false);
     setEditError("");
+    pendingNavigationRef.current = null;
+    setPendingNavigation(null);
     setPendingSubmit(false);
     setDeleteConfirmId(null);
     setLetterDirty(false);
@@ -417,18 +432,109 @@ export default function ApplicationsSection({
   const tabId = (tab: ApplicationTab) => `${tabBaseId}-tab-${tab}`;
   const panelId = (tab: ApplicationTab) => `${tabBaseId}-panel-${tab}`;
 
-  const selectApplication = (id: string): boolean => {
-    if (editing) {
-      setError(t("applications.edit.finishFirst"));
-      return false;
+  const applyPendingNavigation = (target: PendingNavigation["target"]) => {
+    if (target.kind === "tab") {
+      setActiveTab(target.tab);
+      setError("");
+      requestAnimationFrame(() => tabRefs.current[target.tab]?.focus());
+      return;
     }
+    setSelectedId(target.localId);
+    setActiveTab("overview");
+    setEditing(false);
+    setEditDirty(false);
+    setOwnLetterDirty(false);
+    setEditError("");
+    setError("");
+    setPendingSubmit(false);
+    setDeleteConfirmId(null);
+    requestAnimationFrame(() => overviewHeadingRef.current?.focus({ preventScroll: true }));
+  };
+
+  const beginPendingNavigation = (target: PendingNavigation["target"], source: PendingNavigation["source"]) => {
+    const pending: PendingNavigation = { target, source };
+    pendingNavigationRef.current = pending;
+    setPendingNavigation(pending);
+    setError("");
+    requestAnimationFrame(() => pendingNavigationSaveRef.current?.focus());
+  };
+
+  const guardNavigation = (target: PendingNavigation["target"]): boolean => {
     if (letterDirty) {
       setError(t("applications.letterComparison.finishFirst"));
       return false;
     }
+    if (editing) {
+      if (editDirty) {
+        beginPendingNavigation(target, "edit");
+        return false;
+      }
+      setEditing(false);
+      setEditDirty(false);
+      setEditError("");
+    }
+    if (ownLetterDirty) {
+      beginPendingNavigation(target, "ownLetter");
+      return false;
+    }
+    return true;
+  };
+
+  const continueEditing = () => {
+    const source = pendingNavigationRef.current?.source;
+    pendingNavigationRef.current = null;
+    setPendingNavigation(null);
+    requestAnimationFrame(() => {
+      if (source === "ownLetter") ownLetterEditorRef.current?.focus();
+      else editFormRef.current?.focus();
+    });
+  };
+
+  const discardPendingEdit = () => {
+    const pending = pendingNavigationRef.current;
+    if (!pending) return;
+    pendingNavigationRef.current = null;
+    setPendingNavigation(null);
+    if (pending.source === "ownLetter") {
+      ownLetterEditorRef.current?.discard();
+      setOwnLetterDirty(false);
+    } else {
+      setEditing(false);
+      setEditDirty(false);
+      setEditError("");
+    }
+    applyPendingNavigation(pending.target);
+  };
+
+  const savePendingEdit = () => {
+    const pending = pendingNavigationRef.current;
+    if (!pending) return;
+    if (pending.source === "ownLetter") ownLetterEditorRef.current?.save();
+    else editFormRef.current?.save();
+  };
+
+  useEffect(() => {
+    if (!pendingNavigation) return;
+    const frame = requestAnimationFrame(() => pendingNavigationSaveRef.current?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      continueEditing();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [pendingNavigation]);
+
+  const selectApplication = (id: string): boolean => {
+    if (id === selectedId) return true;
+    if (!guardNavigation({ kind: "application", localId: id })) return false;
     setSelectedId(id);
     setActiveTab("overview");
     setEditing(false);
+    setEditDirty(false);
     setEditError("");
     setPendingSubmit(false);
     setDeleteConfirmId(null);
@@ -438,14 +544,7 @@ export default function ApplicationsSection({
 
   const selectTab = (tab: ApplicationTab): boolean => {
     if (tab === activeTab) return true;
-    if (editing) {
-      setError(t("applications.edit.finishFirst"));
-      return false;
-    }
-    if (letterDirty) {
-      setError(t("applications.letterComparison.finishFirst"));
-      return false;
-    }
+    if (!guardNavigation({ kind: "tab", tab })) return false;
     setActiveTab(tab);
     setError("");
     return true;
@@ -480,11 +579,9 @@ export default function ApplicationsSection({
   const handleOpenDraft = () => {
     if (!selectTab("documents")) return;
     requestAnimationFrame(() => {
-      const details = draftDetailsRef.current;
-      if (!details) return;
-      details.open = true;
-      scrollToTarget(details);
-      details.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true });
+      const ownLetter = document.getElementById("applications-own-letter");
+      scrollToTarget(ownLetter);
+      ownLetterEditorRef.current?.open();
     });
   };
 
@@ -739,6 +836,7 @@ export default function ApplicationsSection({
   const handleSaveEdits = (changes: SessionApplicationUpdateChanges) => {
     if (!selected) return;
     setEditError("");
+    const pending = pendingNavigationRef.current;
     void run(
       async (signal, current) => {
         const updated = await repository.update(selected.localId, {
@@ -749,14 +847,51 @@ export default function ApplicationsSection({
         if (!current()) return;
         replace(updated);
         setEditing(false);
+        setEditDirty(false);
+        if (pending?.source === "edit") {
+          pendingNavigationRef.current = null;
+          setPendingNavigation(null);
+          applyPendingNavigation(pending.target);
+        }
       },
       (message, err) => {
         setEditError(message);
         if (err instanceof ApplicationRepositoryError && err.code === "session_ended") {
           setEditing(false);
+          setEditDirty(false);
+          pendingNavigationRef.current = null;
+          setPendingNavigation(null);
         }
       }
     );
+  };
+
+  const handleSaveOwnLetter = async (content: string): Promise<void> => {
+    if (!selected) throw new Error("No application selected");
+    const applicationId = selected.localId;
+    const expectedVersion = selected.version;
+    const updated = await runResult(async (signal, current) => {
+      const nextApplication = await repository.update(applicationId, {
+        expectedVersion,
+        changes: {
+          coverLetterDraft: content,
+          documentStatus: content.trim() ? "draft" : "missing",
+        },
+        signal,
+      });
+      if (!current()) {
+        throw new ApplicationRepositoryError("Application update was aborted", "aborted");
+      }
+      return nextApplication;
+    });
+    replace(updated);
+    setOwnLetterDirty(false);
+    const pending = pendingNavigationRef.current;
+    if (pending?.source === "ownLetter") {
+      pendingNavigationRef.current = null;
+      setPendingNavigation(null);
+      applyPendingNavigation(pending.target);
+    }
   };
 
   const handleExport = (application: SessionApplicationV1) => {
@@ -1144,6 +1279,45 @@ export default function ApplicationsSection({
                 ))}
               </div>
 
+              {pendingNavigation && (
+                <div
+                  className="applications-confirm applications-edit-navigation"
+                  role="alertdialog"
+                  aria-labelledby="applications-edit-unsaved-title"
+                  aria-describedby="applications-edit-unsaved-text"
+                >
+                  <h4 id="applications-edit-unsaved-title">{t(
+                    pendingNavigation.source === "ownLetter"
+                      ? "applications.ownLetter.unsavedTitle"
+                      : "applications.edit.unsavedTitle"
+                  )}</h4>
+                  <p id="applications-edit-unsaved-text">{t(
+                    pendingNavigation.source === "ownLetter"
+                      ? "applications.ownLetter.unsavedText"
+                      : "applications.edit.unsavedText"
+                  )}</p>
+                  <div className="applications-edit-navigation__actions">
+                    <button
+                      ref={pendingNavigationSaveRef}
+                      type="button"
+                      className="letter-btn"
+                      onClick={savePendingEdit}
+                      disabled={busy}
+                    >
+                      {pendingNavigation.source === "ownLetter"
+                        ? t("applications.ownLetter.saveAndSwitch")
+                        : t("applications.edit.saveAndSwitch")}
+                    </button>
+                    <button type="button" className="btn-ghost" onClick={discardPendingEdit} disabled={busy}>
+                      {t("applications.edit.discardChanges")}
+                    </button>
+                    <button type="button" className="btn-ghost" onClick={continueEditing}>
+                      {t("applications.edit.continueEditing")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {error && <p className="letter-review-warning" role="alert">{error}</p>}
 
               {activeTab === "overview" && (
@@ -1156,13 +1330,16 @@ export default function ApplicationsSection({
                 >
                   {editing ? (
                     <ApplicationEditForm
+                      ref={editFormRef}
                       key={`${selected.localId}-${selected.version}`}
                       application={selected}
                       busy={busy}
                       error={editError}
                       onSave={handleSaveEdits}
+                      onDirtyChange={setEditDirty}
                       onCancel={() => {
                         setEditing(false);
+                        setEditDirty(false);
                         setEditError("");
                       }}
                     />
@@ -1466,10 +1643,15 @@ export default function ApplicationsSection({
                         )}
                       </select>
                     </label>
-                    <details ref={draftDetailsRef}>
-                      <summary>{t("applications.coverLetterDraft")}</summary>
-                      <pre className="applications-cover-letter">{selected.documents.coverLetterDraft || "-"}</pre>
-                    </details>
+                    <ApplicationOwnLetterEditor
+                      key={`${selected.localId}-own-letter`}
+                      ref={ownLetterEditorRef}
+                      value={selected.documents.coverLetterDraft}
+                      storageMode={storageMode}
+                      busy={busy}
+                      onDirtyChange={setOwnLetterDirty}
+                      onSave={handleSaveOwnLetter}
+                    />
                     <p><strong>{t("applications.versions")}:</strong> {selected.documents.coverLetterVersions.length}</p>
                     <button
                       type="button"

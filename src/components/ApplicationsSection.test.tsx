@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import ApplicationsSection from "./ApplicationsSection";
 import { createSessionApplication, transitionSessionStatus, type SessionApplicationV1 } from "../lib/applications/sessionApplications";
@@ -554,25 +554,136 @@ describe("APP-02 ApplicationsSection", () => {
     expect(screen.getByRole("tabpanel", { name: "Dokumente" })).toBeInTheDocument();
   });
 
-  it("requires saving or cancelling before switching tabs or applications while editing", async () => {
-    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
-    renderSection([detailed(), { ...draft({ localId: "local-2", job: otherJob }) }]);
-    fireEvent.click(
-      await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ })
-    );
-    await screen.findByRole("heading", { name: "Senior Fullstack Developer", level: 3 });
-    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
-    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
-
+  it("switches tabs without a warning while the edit form is unchanged", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
     fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
-    expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("alert")).toHaveTextContent(/speichere oder brich/i);
-    expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+    expect(screen.getByRole("tab", { name: "Dokumente" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Dokumente" })).toBeInTheDocument();
+    expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("asks for a decision when switching tabs with real changes", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Geändert" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+
     expect(screen.getByRole("tab", { name: "Übersicht" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByLabelText("Name")).toHaveValue("Anna Beispiel");
+    expect(screen.getByRole("alertdialog", { name: "Ungespeicherte Änderungen" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Speichern und wechseln" })).toHaveFocus());
+    fireEvent.click(screen.getByRole("button", { name: "Weiter bearbeiten" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Geändert");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })));
+  });
+
+  it("removes dirty state when values are reverted", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    const notes = screen.getByLabelText("Persönliche Notizen");
+    fireEvent.change(notes, { target: { value: "Kurz geändert" } });
+    fireEvent.change(notes, { target: { value: "Bestehende persönliche Notiz" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+
+    expect(screen.getByRole("tab", { name: "Dokumente" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("discards changes before opening the requested tab", async () => {
+    const { onChanged } = renderSectionWithChanges([detailed()]);
+    await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" });
+    onChanged.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Verwerfen" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Verlauf" }));
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen verwerfen" }));
+
+    expect(screen.getByRole("tab", { name: "Verlauf" })).toHaveAttribute("aria-selected", "true");
+    expect(onChanged).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("tab", { name: "Übersicht" }));
+    expect(screen.getByText("Bestehende persönliche Notiz")).toBeInTheDocument();
+  });
+
+  it("saves changes before opening the requested tab", async () => {
+    const { onChanged } = renderSectionWithChanges([detailed()]);
+    onChanged.mockClear();
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    await screen.findByRole("form", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Speichern und wechseln" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Speichern und wechseln" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Dokumente" })).toHaveAttribute("aria-selected", "true")
+    );
+    const updated = onChanged.mock.calls.at(-1)?.[0][0] as SessionApplicationV1;
+    expect(updated.notes).toBe("Speichern und wechseln");
+    expect(screen.queryByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeNull();
+  });
+
+  it("keeps the edit form and values when saving from the switch dialog fails", async () => {
+    const base = createSessionApplicationRepository({ initial: [detailed()] });
+    const conflicted: ApplicationRepository = {
+      ...base,
+      update: async () => {
+        throw new ApplicationRepositoryError("conflict", "version_conflict");
+      },
+    };
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={conflicted} />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    await screen.findByRole("form", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Nicht verlieren" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Speichern und wechseln" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/zwischenzeitlich geändert/i);
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Nicht verlieren");
     expect(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+  });
+
+  it("protects unsaved edits when selecting another application", async () => {
+    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
+    renderSection([detailed(), draft({ localId: "local-2", job: otherJob })]);
+    fireEvent.click(await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Nicht wechseln" } });
+    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Senior Fullstack Developer", level: 3 })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Änderungen verwerfen" }));
+    expect(screen.getByRole("heading", { name: "Cloud Engineer", level: 3 })).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("closes the edit switch dialog with Escape and keeps editing", async () => {
+    renderSection([detailed()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    await screen.findByRole("form", { name: "Bewerbungsdaten bearbeiten" });
+    fireEvent.change(screen.getByLabelText("Persönliche Notizen"), { target: { value: "Weiter" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Dokumente" }));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.getByLabelText("Persönliche Notizen")).toHaveValue("Weiter");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("form", { name: "Bewerbungsdaten bearbeiten" })));
+  });
+
+  it("selects another application without a warning when the edit form is unchanged", async () => {
+    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
+    renderSection([detailed(), draft({ localId: "local-2", job: otherJob })]);
+    fireEvent.click(await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Bewerbungsdaten bearbeiten" }));
+    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+    expect(screen.getByRole("heading", { name: "Cloud Engineer", level: 3 })).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 
   it("returns to overview and shows the newly selected application", async () => {
@@ -941,6 +1052,173 @@ describe("JM-APPLICATION-SAVE-UX-01 manual draft save feedback", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create as draft" }));
     expect(await screen.findByText("Application draft saved in your account.")).toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("JM-APPLICATION-EDIT-TAB-NAVIGATION-01 own letter", () => {
+  const savedVersion = {
+    versionId: "letter-v1",
+    jobId: job.jobId,
+    createdAt: NOW,
+    content: "Existing generated version",
+    source: "generated" as const,
+  };
+
+  function withOwnLetter(application: SessionApplicationV1, text: string, versions = [savedVersion]) {
+    return {
+      ...application,
+      documents: {
+        ...application.documents,
+        coverLetterDraft: text,
+        coverLetterVersions: versions,
+        documentStatus: text.trim() ? "draft" as const : "missing" as const,
+      },
+    };
+  }
+
+  async function openOwnLetter() {
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    return screen.getByRole("region", { name: "Eigenes Anschreiben" });
+  }
+
+  it("creates a session own letter without AI calls or a new version", async () => {
+    const existing = withOwnLetter(draft(), "");
+    const repository = createSessionApplicationRepository({ initial: [existing] });
+    const updateSpy = vi.spyOn(repository, "update");
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={repository} storageMode="session" isAuthenticated />
+      </LangProvider>
+    );
+    const ownLetter = await openOwnLetter();
+    expect(ownLetter).toHaveTextContent("Nur für diese Sitzung gespeichert.");
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben hinterlegen" }));
+    const content = "Sehr geehrte Damen und Herren,\n\nmein eigenes synthetisches Anschreiben.";
+    fireEvent.change(within(ownLetter).getByRole("textbox", { name: "Dein Anschreibentext" }), {
+      target: { value: content },
+    });
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben speichern" }));
+    expect(await within(ownLetter).findByText("Dein eigenes Anschreiben wurde gespeichert.")).toBeInTheDocument();
+
+    const updated = (await repository.get(existing.localId))!;
+    expect(updated.documents.coverLetterDraft).toBe(content);
+    expect(updated.documents.documentStatus).toBe("draft");
+    expect(updated.documents.coverLetterVersions).toEqual([savedVersion]);
+    expect(updated.job).toEqual(existing.job);
+    expect(updated.status).toBe(existing.status);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledWith(existing.localId, expect.objectContaining({
+      expectedVersion: existing.version,
+      changes: { coverLetterDraft: content, documentStatus: "draft" },
+    }));
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("edits a saved own draft without changing existing versions", async () => {
+    const existing = withOwnLetter(draft(), "Mein eigener Entwurf.");
+    const repository = createSessionApplicationRepository({ initial: [existing] });
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={repository} storageMode="remote" isAuthenticated />
+      </LangProvider>
+    );
+    const ownLetter = await openOwnLetter();
+    expect(ownLetter).toHaveTextContent("Über RIS in deinem Konto gespeichert.");
+    expect(within(ownLetter).getByText("Mein eigener Entwurf.")).toBeInTheDocument();
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben bearbeiten" }));
+    const text = within(ownLetter).getByRole("textbox", { name: "Dein Anschreibentext" });
+    fireEvent.change(text, { target: { value: "Nachträglich bearbeitet." } });
+    expect(within(ownLetter).getAllByText("Nachträglich bearbeitet.")).toHaveLength(2);
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben speichern" }));
+    await within(ownLetter).findByText("Dein eigenes Anschreiben wurde gespeichert.");
+    const updated = (await repository.get(existing.localId))!;
+    expect(updated.documents.coverLetterDraft).toBe("Nachträglich bearbeitet.");
+    expect(updated.documents.coverLetterVersions).toEqual([savedVersion]);
+  });
+
+  it("preserves own text and does not report success on a repository failure", async () => {
+    const existing = withOwnLetter(draft(), "");
+    const base = createSessionApplicationRepository({ initial: [existing] });
+    const repository: ApplicationRepository = {
+      ...base,
+      update: async () => { throw new ApplicationRepositoryError("conflict", "version_conflict"); },
+    };
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={repository} storageMode="remote" isAuthenticated />
+      </LangProvider>
+    );
+    const ownLetter = await openOwnLetter();
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben hinterlegen" }));
+    const text = within(ownLetter).getByRole("textbox", { name: "Dein Anschreibentext" });
+    fireEvent.change(text, { target: { value: "Text bei Fehler behalten." } });
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben speichern" }));
+    expect(await within(ownLetter).findByText("Das Anschreiben konnte nicht gespeichert werden. Dein Text ist weiterhin vorhanden.")).toBeInTheDocument();
+    expect(text).toHaveValue("Text bei Fehler behalten.");
+    expect(within(ownLetter).queryByText("Dein eigenes Anschreiben wurde gespeichert.")).toBeNull();
+  });
+
+  it("protects the own-letter edit on tab switch and can save it first", async () => {
+    const existing = withOwnLetter(draft(), "");
+    const repository = createSessionApplicationRepository({ initial: [existing] });
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={repository} />
+      </LangProvider>
+    );
+    const ownLetter = await openOwnLetter();
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben hinterlegen" }));
+    fireEvent.change(within(ownLetter).getByRole("textbox", { name: "Dein Anschreibentext" }), {
+      target: { value: "Vor Tabwechsel speichern." },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Verlauf" }));
+    expect(screen.getByRole("alertdialog", { name: "Ungespeichertes Anschreiben" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Anschreiben speichern und wechseln" }));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Verlauf" })).toHaveAttribute("aria-selected", "true"));
+    expect((await repository.get(existing.localId))?.documents.coverLetterDraft).toBe("Vor Tabwechsel speichern.");
+  });
+
+  it("discards own-letter edits before switching without saving them", async () => {
+    const existing = withOwnLetter(draft(), "");
+    const repository = createSessionApplicationRepository({ initial: [existing] });
+    const updateSpy = vi.spyOn(repository, "update");
+    render(
+      <LangProvider>
+        <ApplicationsSection repository={repository} />
+      </LangProvider>
+    );
+    const ownLetter = await openOwnLetter();
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben hinterlegen" }));
+    fireEvent.change(within(ownLetter).getByRole("textbox", { name: "Dein Anschreibentext" }), {
+      target: { value: "Verwerfen." },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Verlauf" }));
+    fireEvent.click(within(screen.getByRole("alertdialog", { name: "Ungespeichertes Anschreiben" }))
+      .getByRole("button", { name: "Änderungen verwerfen" }));
+    expect(screen.getByRole("tab", { name: "Verlauf" })).toHaveAttribute("aria-selected", "true");
+    expect(updateSpy).not.toHaveBeenCalled();
+    expect((await repository.get(existing.localId))?.documents.coverLetterDraft).toBe("");
+  });
+
+  it("asks before switching to another application with unsaved own text", async () => {
+    const otherJob = { ...job, jobId: "job-2", title: "Cloud Engineer", companyName: "Other AG" };
+    renderSection([
+      withOwnLetter(detailed(), ""),
+      withOwnLetter(draft({ localId: "local-2", job: otherJob }), ""),
+    ]);
+    fireEvent.click(await screen.findByRole("button", { name: /Senior Fullstack Developer.*Siemens AG/ }));
+    const ownLetter = await openOwnLetter();
+    fireEvent.click(within(ownLetter).getByRole("button", { name: "Eigenes Anschreiben hinterlegen" }));
+    fireEvent.change(within(ownLetter).getByRole("textbox", { name: "Dein Anschreibentext" }), {
+      target: { value: "Nicht verlieren" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Cloud Engineer/ }));
+
+    const dialog = screen.getByRole("alertdialog", { name: "Ungespeichertes Anschreiben" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Weiter bearbeiten" }));
+    expect(screen.getByRole("heading", { name: "Senior Fullstack Developer", level: 3 })).toBeInTheDocument();
+    expect(within(ownLetter).getByRole("textbox", { name: "Dein Anschreibentext" })).toHaveValue("Nicht verlieren");
   });
 });
 

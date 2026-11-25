@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type { ApplicationChannel, ApplicationSalaryV1, SalaryPeriod } from "../lib/applications/contractTypes";
 import type {
@@ -13,6 +13,12 @@ interface Props {
   error: string;
   onSave: (changes: SessionApplicationUpdateChanges) => void;
   onCancel: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
+}
+
+export interface ApplicationEditFormHandle {
+  save: () => void;
+  focus: () => void;
 }
 
 interface EditDraft {
@@ -129,17 +135,34 @@ function buildChanges(draft: EditDraft, t: (key: string) => string): SessionAppl
   };
 }
 
-export default function ApplicationEditForm({ application, busy, error, onSave, onCancel }: Props) {
+const ApplicationEditForm = forwardRef<ApplicationEditFormHandle, Props>(function ApplicationEditForm({
+  application,
+  busy,
+  error,
+  onSave,
+  onCancel,
+  onDirtyChange,
+}, ref) {
   const { t } = useLang();
+  const initialDraft = useMemo(() => draftFromApplication(application), [application]);
   const [draft, setDraft] = useState<EditDraft>(() => draftFromApplication(application));
   const [localError, setLocalError] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const dirty = Object.keys(initialDraft).some(
+    (key) => draft[key as keyof EditDraft] !== initialDraft[key as keyof EditDraft]
+  );
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
   const update = <K extends keyof EditDraft>(field: K, value: EditDraft[K]) => {
     setDraft((current) => ({ ...current, [field]: value }));
   };
 
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const submitDraft = () => {
     if (busy) return;
     setLocalError("");
     try {
@@ -149,11 +172,23 @@ export default function ApplicationEditForm({ application, busy, error, onSave, 
     }
   };
 
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    submitDraft();
+  };
+
+  useImperativeHandle(ref, () => ({
+    save: submitDraft,
+    focus: () => formRef.current?.focus(),
+  }), [busy, draft, onSave, t]);
+
   const visibleError = localError || error;
 
   return (
     <form
+      ref={formRef}
       className="applications-edit"
+      tabIndex={-1}
       onSubmit={submit}
       noValidate
       aria-label={t("applications.edit.title")}
@@ -276,7 +311,9 @@ export default function ApplicationEditForm({ application, busy, error, onSave, 
       </div>
     </form>
   );
-}
+});
+
+export default ApplicationEditForm;
 
 function SalaryFields({
   label,
