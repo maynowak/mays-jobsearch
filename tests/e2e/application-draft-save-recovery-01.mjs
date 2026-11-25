@@ -206,9 +206,12 @@ async function run(browser) {
     await page.waitForTimeout(150);
     const retained = await page.getByLabel(/Stellenbeschreibung/).inputValue();
     if (retained !== description) throw new Error("form text was lost after failed create");
+    if (await page.getByText("Bewerbungsentwurf in deinem Konto gespeichert.").count()) {
+      throw new Error("remote create failure incorrectly showed a success message");
+    }
 
     await page.getByRole("button", { name: "Als Entwurf anlegen" }).click();
-    await page.getByText("Bewerbungsentwurf für diese Sitzung angelegt.").waitFor();
+    await page.getByText("Bewerbungsentwurf in deinem Konto gespeichert.").waitFor();
     if (calls.creates.length !== 2) throw new Error(`expected two create attempts, got ${calls.creates.length}`);
     if (calls.keys.length !== 2 || calls.keys[0] !== calls.keys[1] || !calls.keys[0]) {
       throw new Error(`idempotency key was not reused: ${calls.keys.join(" | ")}`);

@@ -825,6 +825,7 @@ export default function ApplicationsSection({
     job: Job,
     reference: ApplicationJobReferenceV1
   ) => {
+    setNewApplicationNotice("");
     if (!isAuthenticated) {
       setNewApplicationError(t("applications.new.authRequired"));
       throw new Error("Authentication required");
@@ -849,7 +850,11 @@ export default function ApplicationsSection({
       notify(page.items);
       setSelectedId(application.localId);
       setActiveTab("overview");
-      setNewApplicationNotice(t("applications.new.draftCreated"));
+      setNewApplicationNotice(t(
+        storageMode === "remote"
+          ? "applications.new.draftCreatedRemote"
+          : "applications.new.draftCreated"
+      ));
       setNewApplicationOpen(false);
     } catch (err) {
       setNewApplicationError(errorLabel(t, err));

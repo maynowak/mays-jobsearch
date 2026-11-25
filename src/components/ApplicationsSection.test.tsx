@@ -49,6 +49,9 @@ function Harness({
   cvBuilderProfiles = [],
   persistentCvs = [],
   onOpenCvProfile,
+  storageMode = "session",
+  isAuthenticated = false,
+  repository: initialRepository,
 }: {
   initial: SessionApplicationV1[];
   onChanged?: (applications: SessionApplicationV1[]) => void;
@@ -56,11 +59,16 @@ function Harness({
   cvBuilderProfiles?: CvBuilderProfileV1[];
   persistentCvs?: PersistentCv[];
   onOpenCvProfile?: (cvId: string) => void;
+  storageMode?: "session" | "remote";
+  isAuthenticated?: boolean;
+  repository?: ApplicationRepository;
 }) {
-  const [repository] = useState(() => createSessionApplicationRepository({ initial }));
+  const [repository] = useState(() => initialRepository ?? createSessionApplicationRepository({ initial }));
   return (
     <ApplicationsSection
       repository={repository}
+      storageMode={storageMode}
+      isAuthenticated={isAuthenticated}
       onChanged={onChanged}
       cvDocuments={cvDocuments}
       cvBuilderProfiles={cvBuilderProfiles}
@@ -840,5 +848,100 @@ describe("APP-02 ApplicationsSection", () => {
     expect(staleSubmitted).toBe(false);
     expect((await nextSession.list()).items).toHaveLength(0);
   });
+
+
+describe("JM-APPLICATION-SAVE-UX-01 manual draft save feedback", () => {
+  const description = "Du entwickelst React-Anwendungen und bringst Erfahrung mit TypeScript und barrierefreien Oberflächen mit.";
+
+  async function openAndSaveDraft() {
+    fireEvent.click(screen.getByRole("button", { name: /Neue Bewerbung/ }));
+    fireEvent.change(await screen.findByLabelText(/Stellenbeschreibung/), {
+      target: { value: description },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Als Entwurf anlegen" }));
+  }
+
+  it("shows the account message after a remote create is confirmed", async () => {
+    const repository = createSessionApplicationRepository();
+    const createSpy = vi.spyOn(repository, "create");
+    render(
+      <LangProvider>
+        <Harness initial={[]} repository={repository} storageMode="remote" isAuthenticated />
+      </LangProvider>
+    );
+    await openAndSaveDraft();
+    expect(await screen.findByText("Bewerbungsentwurf in deinem Konto gespeichert.")).toBeInTheDocument();
+    expect(screen.queryByText("Bewerbungsentwurf für diese Sitzung angelegt.")).toBeNull();
+    expect(createSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the session message after a session create is confirmed", async () => {
+    const repository = createSessionApplicationRepository();
+    render(
+      <LangProvider>
+        <Harness initial={[]} repository={repository} storageMode="session" isAuthenticated />
+      </LangProvider>
+    );
+    await openAndSaveDraft();
+    expect(await screen.findByText("Bewerbungsentwurf für diese Sitzung angelegt.")).toBeInTheDocument();
+    expect(screen.queryByText("Bewerbungsentwurf in deinem Konto gespeichert.")).toBeNull();
+  });
+
+  it("never claims success when the RIS/repository create fails", async () => {
+    const base = createSessionApplicationRepository();
+    const repository: ApplicationRepository = {
+      ...base,
+      create: async () => {
+        throw new ApplicationRepositoryError("remote failure", "unavailable");
+      },
+    };
+    render(
+      <LangProvider>
+        <Harness initial={[]} repository={repository} storageMode="remote" isAuthenticated />
+      </LangProvider>
+    );
+    await openAndSaveDraft();
+    expect(await screen.findByText("Der Entwurf konnte nicht angelegt werden. Bitte erneut versuchen.")).toBeInTheDocument();
+    expect(screen.queryByText("Bewerbungsentwurf in deinem Konto gespeichert.")).toBeNull();
+    expect(screen.queryByText("Bewerbungsentwurf für diese Sitzung angelegt.")).toBeNull();
+  });
+
+  it("keeps the existing duplicate message and does not create another draft", async () => {
+    const existing = draft();
+    const base = createSessionApplicationRepository({ initial: [existing] });
+    const createSpy = vi.spyOn(base, "create");
+    const repository: ApplicationRepository = {
+      ...base,
+      findByJob: async () => existing,
+    };
+    render(
+      <LangProvider>
+        <Harness initial={[existing]} repository={repository} storageMode="remote" isAuthenticated />
+      </LangProvider>
+    );
+    await openAndSaveDraft();
+    expect(await screen.findByText("Für diese Stelle besteht bereits ein Bewerbungsentwurf.")).toBeInTheDocument();
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(screen.queryByText("Bewerbungsentwurf in deinem Konto gespeichert.")).toBeNull();
+  });
+
+  it("renders the remote English confirmation without extra API calls", async () => {
+    localStorage.setItem("mj-lang", "en");
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const repository = createSessionApplicationRepository();
+    render(
+      <LangProvider>
+        <Harness initial={[]} repository={repository} storageMode="remote" isAuthenticated />
+      </LangProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /New application/ }));
+    fireEvent.change(await screen.findByLabelText(/Job description/), {
+      target: { value: "You build accessible React applications with TypeScript and test automation experience." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create as draft" }));
+    expect(await screen.findByText("Application draft saved in your account.")).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
 
 });
