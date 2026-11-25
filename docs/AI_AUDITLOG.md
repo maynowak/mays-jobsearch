@@ -1,3 +1,17 @@
+2026-11-25 · JM-SECURITY-CODEQL-RELEASE-01 — CONTROLLED MERGE & PRODUCTION VERIFICATION
+- Typ: Release, PR-Merge, automatische Vercel-Production-Deployments, Production-Smoke, Job-Display-Regression, Übersetzungsfehler
+- Status: **PRODUCTION VERIFICATION FAILED — HOTFIX REQUIRED** (nicht PRODUCTION VERIFIED)
+- Branch/PR: `security/jm-codeql-remediation-01` → PR [#68](https://github.com/maynowak/mays-jobsearch/pull/68); geprüfter HEAD `1cbba4e`; Merge mit `--match-head-commit` als `b4157e5`; `origin/main` `b4157e5`; kein Force-Push, keine Branch-Löschung.
+- Deployments: `mays-jobsearch` `dpl_AWaZMp1gMfLeL4BA9UCVby1E7rFE`, `mays-job-matcher` `dpl_HETitnDLu17FSTeopvp2j7YHSyoc`, beide Production READY; Footer `production · main · b4157e5`; kein manuelles `vercel --prod`.
+- Security: Baseline 86 Alerts → **0** auf `1cbba4e` (Run 45679171026, PR-Run 45678578404); keine Dismissals, keine Regel-/Dateiausschlüsse; `codeql.yml`, `package.json`, `vercel.json`, `api/ris/**`, AWS/Terraform/Cognito/Consent unverändert.
+- Gates: `tsc`/Build/`node --check`/`git diff --check`/Secret-Scan PASS; serielle Vollsuite **2158 PASS / 5 skipped** (203 Dateien, 3 opt-in Live-Suiten skipped); fokussierte Security-Suiten 182 PASS (12 Dateien); neue deterministische Job-Display-E2E PASS (1440/390, 0 XSS/Errors/Overflow).
+- Job-Display-Vergleich: 16 Fixtures `main aa57500` vs. Release; kein unerwarteter Textverlust, Block-/Listen-/Tabellenstruktur erhalten, Entities/Doppel-Encoding korrekt, URLs intakt, Script/Style/SVG/MathML entfernt; 0 unsichere Muster in Ausgaben.
+- Production-Smoke: 8 Routen × Desktop/Mobile HTTP 200, 0 Errors, 0 Overflow; eine echte Suche → 50 Karten, 4 Stichproben 5.140–6.910 Zeichen, 0 Roh-HTML/XSS/Entity-Leaks, 1 `/api/jobs`, 0 `/api/match`, 0 `/api/job-details`.
+- Blocker: Übersetzungsansicht zeigt den Roh-Wrapper `{"translation":"…"}`. Ursache `parseTranslation()`-Fallback bei ungültigem Modell-JSON (unescaped Quotes/Newlines). **Vorbestehend, keine Regression** (Parser auf `aa57500` identisch; 0 Diff-Treffer); Release änderte nur die Eingabe-Extraktion. Kein Rollback empfohlen (behebt nichts, bringt 86 Alerts zurück).
+- Freigabe offen: separater Hotfix (tolerantes Entpacken/Unescapen + Client-Guard + Regressionstests), danach CodeQL/Vollsuite/Preview/Production-Übersetzung erneut prüfen.
+- AI/Privacy/Data-Flow: keine neue Datenkategorie, kein neuer Provider, keine zusätzlichen Modellaufrufe durch die Tests (gemockt); Production-Suche ohne KI-Bewertung; keine echten Bewerbungen/CVs verändert; keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung; keine Secrets in Bericht/Logs.
+- Bericht: `docs/reports/JM-SECURITY-CODEQL-RELEASE-01-REPORT.md`.
+
 2026-11-25 · JM-SECURITY-CODEQL-REMEDIATION-01 — CODEQL SECURITY FINDINGS REMEDIATION
 - Typ: Security-Inventar, HTML-/XSS-Härtung, URL-Hostvalidierung, CSPRNG-Session-IDs, Test-/E2E-Hygiene, Runtime-Defekt, Regressionstests
 - Status: **READY FOR SECURITY REVIEW**
