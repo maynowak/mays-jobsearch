@@ -146,6 +146,69 @@ describe("CvBuilderImportDialog", () => {
     expect(screen.getByRole("button", { name: "📸 Screenshot-Ansicht" })).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("expands and collapses all sections without entering screenshot mode and keeps the radar", async () => {
+    const { container } = renderDialog({ layoutMode: "fullpage" });
+    await chooseLocal(container);
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+
+    const details = Array.from(container.querySelectorAll<HTMLDetailsElement>(".cv-import-section__details"));
+    expect(details.length).toBeGreaterThan(0);
+    details.forEach((detail) => expect(detail.open).toBe(false));
+    expect(container.querySelector(".cv-import-radar")).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" }));
+    details.forEach((detail) => expect(detail.open).toBe(true));
+    expect(screen.getByRole("button", { name: "Alle Abschnitte einklappen" })).toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelector(".cv-import-workspace")).not.toHaveClass("cv-import-workspace--screenshot");
+    expect(container.querySelector(".cv-import-radar")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "📸 Screenshot-Ansicht" })).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte einklappen" }));
+    details.forEach((detail) => expect(detail.open).toBe(false));
+    expect(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" })).toHaveAttribute("aria-pressed", "false");
+    expect(container.querySelector(".cv-import-radar")).not.toBeNull();
+  });
+
+  it("keeps review decisions and restores the expanded state after screenshot mode", async () => {
+    vi.mocked(extractPdfText).mockResolvedValue(`${pdfText}\n\nSonstiges\nPrüfzeile Layout 1\nPrüfzeile Layout 2`);
+    const { container } = renderDialog({ layoutMode: "fullpage" });
+    await chooseLocal(container);
+    await screen.findByText("Wir haben folgende Angaben in deinem Lebenslauf gefunden.");
+
+    const firstItem = container.querySelector('[data-cv-import-candidate-index="0"]') as HTMLElement;
+    const target = within(firstItem).getByRole("combobox", { name: /Zuordnen zu/ }) as HTMLSelectElement;
+    fireEvent.change(target, { target: { value: "projects" } });
+    fireEvent.click(within(firstItem).getByRole("button", { name: "Übernehmen" }));
+    expect(firstItem).toHaveClass("is-accepted");
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" }));
+    const details = Array.from(container.querySelectorAll<HTMLDetailsElement>(".cv-import-section__details"));
+    details.forEach((detail) => expect(detail.open).toBe(true));
+
+    fireEvent.click(screen.getByRole("button", { name: "📸 Screenshot-Ansicht" }));
+    expect(container.querySelector(".cv-import-workspace")).toHaveClass("cv-import-workspace--screenshot");
+    expect(container.querySelector(".cv-import-radar")).toBeNull();
+    details.forEach((detail) => expect(detail.open).toBe(true));
+
+    fireEvent.click(screen.getByRole("button", { name: "Screenshot-Ansicht beenden" }));
+    expect(container.querySelector(".cv-import-workspace")).not.toHaveClass("cv-import-workspace--screenshot");
+    expect(container.querySelector(".cv-import-radar")).not.toBeNull();
+    details.forEach((detail) => expect(detail.open).toBe(true));
+    expect(firstItem).toHaveClass("is-accepted");
+    expect(target).toHaveValue("projects");
+  });
+
+  it("uses English expand and collapse labels", async () => {
+    localStorage.setItem("mj-lang", "en");
+    const { container } = renderDialog({ layoutMode: "fullpage" });
+    await chooseLocal(container);
+    await screen.findByText(/CV analysed|Wir haben folgende Angaben/);
+    expect(screen.getByRole("button", { name: "Expand all sections" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expand all sections" }));
+    expect(screen.getByRole("button", { name: "Collapse all sections" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "📸 Screenshot view" })).toBeInTheDocument();
+  });
+
   it("can exclude a section before transfer", async () => {
     const onImported = vi.fn();
     const { container } = renderDialog({ onImported });

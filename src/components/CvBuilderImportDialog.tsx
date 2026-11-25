@@ -93,6 +93,7 @@ export default function CvBuilderImportDialog({
   const [busyRisId, setBusyRisId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [screenshotMode, setScreenshotMode] = useState(false);
+  const [allSectionsExpanded, setAllSectionsExpanded] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -149,6 +150,23 @@ export default function CvBuilderImportDialog({
     if (step === "preview" || !screenshotMode) return;
     setScreenshotMode(false);
   }, [step, screenshotMode]);
+
+  useEffect(() => {
+    if (!open || step !== "preview") return;
+    const workspace = workspaceRef.current;
+    if (!workspace) return;
+    const details = Array.from(
+      workspace.querySelectorAll<HTMLDetailsElement>(".cv-import-section__details")
+    );
+    if (details.length === 0) {
+      setAllSectionsExpanded(false);
+      return;
+    }
+    const sync = () => setAllSectionsExpanded(details.every((detail) => detail.open));
+    sync();
+    details.forEach((detail) => detail.addEventListener("toggle", sync));
+    return () => details.forEach((detail) => detail.removeEventListener("toggle", sync));
+  }, [open, step, result]);
 
   useEffect(() => {
     if (!open) return;
@@ -436,6 +454,16 @@ export default function CvBuilderImportDialog({
     scrollTo(document.getElementById("cv-import-review-title"));
   };
 
+  const toggleAllSections = () => {
+    const details = Array.from(
+      workspaceRef.current?.querySelectorAll<HTMLDetailsElement>(".cv-import-section__details") ?? []
+    );
+    if (details.length === 0) return;
+    const next = !details.every((detail) => detail.open);
+    details.forEach((detail) => { detail.open = next; });
+    setAllSectionsExpanded(next);
+  };
+
   const toggleScreenshotMode = () => {
     const details = Array.from(
       workspaceRef.current?.querySelectorAll<HTMLDetailsElement>(".cv-import-section__details") ?? []
@@ -507,6 +535,18 @@ export default function CvBuilderImportDialog({
                 onClick={scrollToDecisionPanel}
               >
                 {t("cvBuilder.import.decisionJumpTop")}
+              </button>
+            )}
+            {fullpage && step === "preview" && (
+              <button
+                type="button"
+                className="btn-ghost cv-import-expand-toggle"
+                aria-pressed={allSectionsExpanded}
+                onClick={toggleAllSections}
+              >
+                {allSectionsExpanded
+                  ? t("cvBuilder.import.collapseAll")
+                  : t("cvBuilder.import.expandAll")}
               </button>
             )}
             {fullpage && step === "preview" && (

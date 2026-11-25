@@ -10,7 +10,9 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-CV-IMPORT-NAVIGATOR-02");
+// JM-CV-IMPORT-EXPANDED-VIEW-UX-01 extends this existing radar E2E with the
+// independent expanded view, marker re-measurement and screenshot restoration.
+const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-CV-IMPORT-EXPANDED-VIEW-UX-01");
 const port = 5262;
 const base = `http://localhost:${port}`;
 const models = {
@@ -151,6 +153,32 @@ async function radarSnapshot(page) {
   });
 }
 
+async function sectionOpenStates(page) {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll(".cv-import-section__details"))
+      .map((detail) => (detail instanceof HTMLDetailsElement ? detail.open : false))
+  );
+}
+
+async function assertMarkerPositions(page, label) {
+  const snapshot = await radarSnapshot(page);
+  if (snapshot.markers.length < 12) throw new Error(`${label}: too few markers (${snapshot.markers.length})`);
+  for (const marker of snapshot.markers) {
+    if (marker.expected === null || Math.abs(marker.top - marker.expected) > 2) {
+      throw new Error(`${label}: marker ${marker.id} position ${marker.top} != ${marker.expected}`);
+    }
+  }
+  return snapshot;
+}
+
+async function assertSectionState(page, expected, label) {
+  const states = await sectionOpenStates(page);
+  if (states.length === 0) throw new Error(`${label}: no collapsible sections`);
+  if (!states.every((open) => open === expected)) {
+    throw new Error(`${label}: section states ${states.join(",")} != ${expected}`);
+  }
+}
+
 async function run() {
   const pdf = await makePdf(35);
   const vite = startVite();
@@ -163,6 +191,11 @@ async function run() {
     await context.addInitScript(() => localStorage.setItem("mj-lang", "de"));
     const page = await context.newPage();
     const errors = [];
+    const apiRequests = [];
+    page.on("request", (request) => {
+      const path = new URL(request.url()).pathname;
+      if (path.startsWith("/api/")) apiRequests.push(`${request.method()} ${path}`);
+    });
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
       if (message.type() === "error") errors.push(message.text());
@@ -192,6 +225,35 @@ async function run() {
       throw new Error("pending status is not conveyed by aria text");
     }
     await page.screenshot({ path: resolve(evidenceDir, "radar-1440.png") });
+
+    await assertSectionState(page, false, "initial 1440");
+    const requestsBeforeLayout = apiRequests.length;
+    await page.getByRole("button", { name: "Alle Abschnitte aufklappen" }).click();
+    await page.waitForTimeout(700);
+    await assertSectionState(page, true, "expanded 1440");
+    if ((await page.locator(".cv-import-radar").count()) !== 1) {
+      throw new Error("expanded view removed the radar");
+    }
+    if (await page.locator(".cv-import-workspace").evaluate((node) => node.classList.contains("cv-import-workspace--screenshot"))) {
+      throw new Error("expanding sections entered screenshot mode");
+    }
+    if ((await page.getByRole("button", { name: "Alle Abschnitte einklappen" }).getAttribute("aria-pressed")) !== "true") {
+      throw new Error("expand-all button did not report pressed state");
+    }
+    await assertMarkerPositions(page, "expanded 1440");
+    await page.screenshot({ path: resolve(evidenceDir, "expanded-1440.png"), fullPage: true });
+
+    await page.getByRole("button", { name: "Alle Abschnitte einklappen" }).click();
+    await page.waitForTimeout(700);
+    await assertSectionState(page, false, "collapsed 1440");
+    if ((await page.locator(".cv-import-radar").count()) !== 1) {
+      throw new Error("collapse removed the radar");
+    }
+    await assertMarkerPositions(page, "collapsed 1440");
+    await page.screenshot({ path: resolve(evidenceDir, "collapsed-1440.png") });
+    if (apiRequests.length !== requestsBeforeLayout) {
+      throw new Error(`layout toggles issued API requests: ${apiRequests.slice(requestsBeforeLayout).join(",")}`);
+    }
 
     await page.locator(".cv-import-radar .match-radar__rail").hover();
     await page.waitForTimeout(250);
@@ -286,11 +348,38 @@ async function run() {
 
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.waitForTimeout(200);
+
+    // Expanded state must survive screenshot mode and restore unchanged.
+    await page.getByRole("button", { name: "Alle Abschnitte aufklappen" }).click();
+    await page.waitForTimeout(500);
+    await assertSectionState(page, true, "before screenshot 1440");
+    const requestsBeforeScreenshot = apiRequests.length;
     await page.getByRole("button", { name: "📸 Screenshot-Ansicht" }).click();
     if ((await page.locator(".cv-import-radar").count()) !== 0) throw new Error("radar remains mounted in screenshot mode");
+    await assertSectionState(page, true, "screenshot 1440");
     await page.screenshot({ path: resolve(evidenceDir, "radar-1440-screenshot-mode.png") });
     await page.getByRole("button", { name: "Screenshot-Ansicht beenden" }).click();
     await page.locator(".cv-import-radar").waitFor();
+    await assertSectionState(page, true, "after screenshot 1440");
+    await assertMarkerPositions(page, "after screenshot 1440");
+    if (apiRequests.length !== requestsBeforeScreenshot) {
+      throw new Error(`screenshot mode issued API requests: ${apiRequests.slice(requestsBeforeScreenshot).join(",")}`);
+    }
+
+    // Collapsed state must also be restored unchanged.
+    await page.getByRole("button", { name: "Alle Abschnitte einklappen" }).click();
+    await page.waitForTimeout(500);
+    await assertSectionState(page, false, "before screenshot collapsed 1440");
+    await page.getByRole("button", { name: "📸 Screenshot-Ansicht" }).click();
+    await assertSectionState(page, true, "screenshot expanded 1440");
+    await page.getByRole("button", { name: "Screenshot-Ansicht beenden" }).click();
+    await page.locator(".cv-import-radar").waitFor();
+    await assertSectionState(page, false, "after screenshot collapsed 1440");
+    await assertMarkerPositions(page, "after collapsed screenshot 1440");
+    const completedAfterScreenshot = page.locator('[data-radar-marker-id="cv-import-candidate-0"]');
+    if ((await completedAfterScreenshot.getAttribute("aria-label"))?.includes("Eingeschlossen") !== true) {
+      throw new Error("screenshot mode changed an import decision");
+    }
 
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.waitForTimeout(200);
@@ -301,6 +390,21 @@ async function run() {
     await assertNoOverflow(page, "tablet 768");
     await assertTriggerClearOfCard(page, "tablet 768");
     await page.screenshot({ path: resolve(evidenceDir, "radar-768.png") });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(200);
+    await page.getByRole("button", { name: "Alle Abschnitte aufklappen" }).click();
+    await page.waitForTimeout(500);
+    await assertSectionState(page, true, "expanded 390");
+    await assertNoOverflow(page, "expanded 390");
+    await page.screenshot({ path: resolve(evidenceDir, "expanded-390.png"), fullPage: true });
+    await page.getByRole("button", { name: "📸 Screenshot-Ansicht" }).click();
+    if ((await page.locator(".cv-import-radar").count()) !== 0) throw new Error("radar remains mounted in mobile screenshot mode");
+    await assertSectionState(page, true, "screenshot 390");
+    await page.screenshot({ path: resolve(evidenceDir, "screenshot-mode-390.png") });
+    await page.getByRole("button", { name: "Screenshot-Ansicht beenden" }).click();
+    await page.locator(".cv-import-radar").waitFor();
+    await assertSectionState(page, true, "after screenshot 390");
 
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width: 390, height: 844 });
@@ -325,6 +429,7 @@ async function run() {
       mobileEntries,
       mobileCandidates,
       initialY,
+      apiRequests: [...new Set(apiRequests)],
       evidenceDir,
     }, null, 2));
   } finally {

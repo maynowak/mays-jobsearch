@@ -9,6 +9,16 @@
 - Screenshots: `docs/reports/assets/JM-PROFILE-LAYOUT-CONSISTENCY-13/` (before/after 1440 und 390, after 1024/1920 sowie Applications-Responsive-Serien).
 - Grenzen: Applications-Header bleibt bewusst auf Shell-Breite, dadurch reicht die Applications-Karte rechts darüber hinaus; Wide-Mode erst ab 1024 px; keine echten Bewerbungs-/Kontodaten verändert.
 - Bericht: `docs/reports/JM-PROFILE-LAYOUT-CONSISTENCY-13.md`.
+2026-11-25 · JM-CV-IMPORT-EXPANDED-VIEW-UX-01 — EXPANDED CV VIEW & SCREENSHOT MODE SEPARATION
+- Typ: CV-Importvorschau, Radar-Sichtbarkeit, `<details>`-Zustände, bestehende Browser-E2E erweitert
+- Status: **READY FOR VISUAL REVIEW**
+- Branch: `feature/jm-cv-import-expanded-view-ux-01`; Basis `origin/main` `e92d78b`; Implementierung `754ed1e`; Branch gepusht; kein Main-Merge/Deployment, kein Force-Push.
+- Ausgangsursache: `toggleScreenshotMode()` koppelte das Öffnen aller `.cv-import-section__details` an `screenshotMode`; der Radar wurde nur bei `!screenshotMode` gerendert. Eine vollständige CV-Ansicht mit Radar war nicht möglich, und der Screenshot-Modus war der einzige Weg zum Aufklappen.
+- Umsetzung: separater `allSectionsExpanded`-Zustand, synchronisiert über native `toggle`-Events der `<details>`; neuer Fullpage-Button „Alle Abschnitte aufklappen/einklappen“ mit `aria-pressed`, der ausschließlich die Abschnitte öffnet/schließt und den Screenshot-Modus nicht betritt. Radar bleibt in beiden Zuständen sichtbar. Screenshot-Modus speichert weiterhin den Ausgangszustand, öffnet für die Aufnahme alle Abschnitte, blendet Radar/Bedienelemente aus und stellt beim Verlassen exakt den vorherigen Aufklappzustand wieder her. Keine Änderung am RadarNavigator-Kern, keine Import-/Mapping-/Entscheidungslogik.
+- Tests: `tsc`/Build PASS; fokussierte Import-/Radar-Suiten **39 PASS** (3 Dateien); serielle Vollsuite siehe Ausführungslog; erweiterte E2E `jm-cv-import-navigator-02` PASS (14 Marker, 10 Kandidaten-Marker, Markerpositionen nach Expand/Collapse und nach Screenshot-Rückkehr innerhalb 2 px, Radar in Expand/Collapse sichtbar, Screenshot Radar 0, Entscheidung nach Screenshot unverändert, Mobile 390 Expand/Screenshot ohne Overflow, 0 API-Requests durch Ansichtswechsel, 0 Console-/Page-Errors); Regression `cv-import-ux-07` und `cv-builder-import-ux-02d` PASS.
+- Screenshots: `docs/reports/assets/JM-CV-IMPORT-EXPANDED-VIEW-UX-01/` (`before-normal-1440/390`, `before-screenshot-1440/390`, `expanded-1440/390`, `collapsed-1440`, `radar-1440-screenshot-mode`, `screenshot-mode-390`, Radar-Serien).
+- Grenzen: Screenshot-Modus klappt weiterhin für die Aufnahme alle Abschnitte auf und stellt danach den vorherigen Zustand wieder her; der Skills-Block besitzt keine `<details>`-Hülle und ist immer sichtbar; sichtbarer Summary-Text bleibt „Details anzeigen“.
+- Bericht: `docs/reports/JM-CV-IMPORT-EXPANDED-VIEW-UX-01.md`.
 
 2026-11-25 · JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — EDIT-SWITCH DECISION & OWN COVER LETTER
 - Typ: UI-Navigation, Dirty-State-Vergleich, Dialog/Accessibility, nicht-KI-Anschreibeneditor, Unit-/Browser-E2E
@@ -2668,9 +2678,7 @@
 - Tests: Build (tsc+vite), node --check api/**/*.mjs, vitest run (69 passed | 3 skipped, 807 passed | 5 skipped)
 - AI-/Privacy-/Data-Flow impact: none.
 - Log: docs/reports/07-01-LOGOUT-FIX-01-EXECUTION_LOG.md
-=================================================
 EXECUTION LOG / CRASH RECOVERY — MANDATORY
-=================================================
 
 Maintain a current execution log throughout the audit:
 
@@ -2714,9 +2722,7 @@ IMPORTANT:
 The execution log itself is part of the audit workflow and must be
 kept accurate even if the audit remains completely read-only.
 
-=================================================
 CHANGE RECORD — AUTH / COGNITO (REFERENCE)
-=================================================
 
 2026-10-23 · JOBMATCHER-COGNITO-IDP-FIX-01
 - Change: App Client `5hb3f6dj5ialg77jf4blur9g6g` (User Pool
@@ -2730,9 +2736,7 @@ CHANGE RECORD — AUTH / COGNITO (REFERENCE)
   password fields; unregistered redirect_uri still rejected.
 - Log: docs/reports/04-03-COGNITO-IDP-FIX-01-EXECUTION_LOG.md
 
-=================================================
 CHANGE RECORD — PRODUCTION REDIRECT (REFERENCE)
-=================================================
 
 2026-10-23 · JOBMATCHER-PRODUCTION-REDIRECT-FIX-01
 - Status: Kein Fix erforderlich. Produktion korrekt konfiguriert.
@@ -2742,9 +2746,7 @@ CHANGE RECORD — PRODUCTION REDIRECT (REFERENCE)
 - AI-/Privacy-/Data-Flow impact: none.
 - Log: docs/reports/05-01-PRODUCTION-REDIRECT-FIX-01-EXECUTION_LOG.md
 
-=================================================
 CHANGE RECORD — AUTH SESSION UI (REFERENCE)
-=================================================
 
 2026-10-23 · JOBMATCHER-AUTH-SESSION-UI-01
 - Change: Navbar nutzt Auth-State in allen Modi (Glass + Non-Glass).
@@ -3021,9 +3023,7 @@ CHANGE RECORD — AUTH SESSION UI (REFERENCE)
 - Log: docs/AI_AUDITLOG.md aktualisiert
 
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-01 - IMPLEMENTATION COMPLETE
-================================================================================
 
 2026-10-24 · MAYS-AURORA-GLASS-DASHBOARD-01
 - Typ: Feature-Implementierung (Dashboard mit Glassmorphismus)
@@ -3053,9 +3053,7 @@ MAYS-AURORA-GLASS-DASHBOARD-01 - IMPLEMENTATION COMPLETE
 
 ---
 
-================================================================================
 JOBMATCHER-PRODUCTION-CONNECTION-INCIDENT-01
-================================================================================
 
 2026-10-24 · JOBMATCHER-PRODUCTION-CONNECTION-INCIDENT-01
 - Typ: Produktionsdiagnose / Incident Report
@@ -3081,9 +3079,7 @@ JOBMATCHER-PRODUCTION-CONNECTION-INCIDENT-01
 - Log: Dieser Eintrag
 
 
-================================================================================
 MAYS-AURORA-GLASS-LOCAL-PREVIEW-02
-================================================================================
 
 2026-10-25 · MAYS-AURORA-GLASS-LOCAL-PREVIEW-02
 - Typ: Routing-Fix für /dev/dashboard
@@ -3105,9 +3101,7 @@ MAYS-AURORA-GLASS-LOCAL-PREVIEW-02
 - Log: commit ac9bbc1
 
 
-================================================================================
 MAYS-AURORA-GLASS-LOCAL-PREVIEW-03
-================================================================================
 
 2026-10-25 · MAYS-AURORA-GLASS-LOCAL-PREVIEW-03
 - Typ: UI-Korrektur (Duplication Fix)
@@ -3125,9 +3119,7 @@ MAYS-AURORA-GLASS-LOCAL-PREVIEW-03
 - Log: commit 33f212b
 
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-03B
-================================================================================
 
 2026-10-25 · MAYS-AURORA-GLASS-DASHBOARD-03B
 - Typ: Layout-Implementierung (Sidebar, Desktop-Grid)
@@ -3150,9 +3142,7 @@ MAYS-AURORA-GLASS-DASHBOARD-03B
 - Log: commit (noch zu erstellen)
 
 
-================================================================================
 MAYS-AURORA-COGNITO-INTEGRATION-TEST-FIX
-================================================================================
 
 2026-10-25 · MAYS-AURORA-COGNITO-INTEGRATION-TEST-FIX
 - Typ: Test-Compatibility Fix für Dashboard-Integration
@@ -3172,9 +3162,7 @@ MAYS-AURORA-COGNITO-INTEGRATION-TEST-FIX
 - Log: commit (noch zu erstellen)
 
 
-================================================================================
 JOBMATCHER-AURORA-COGNITO-INTEGRATION-05 OPERATION COMPLETE
-================================================================================
 
 2026-10-25 · COMPREHENSIVE STATUS
 
@@ -3237,11 +3225,8 @@ Commits:
 1. **Browser-Verifikation**: User muss http://localhost:5173/dev/dashboard testen
 2. **Kein Produktionsdeploy** ohne explizite Freigabe
 
-================================================================================
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-06 - FINAL STATUS
-================================================================================
 
 2026-10-26 · PROFESSIONAL DASHBOARD CONTINUATION
 
@@ -3282,11 +3267,8 @@ User MUST verify at http://localhost:5173/dev/dashboard:
 - Tests: ✅ 821 passed | 5 skipped
 - Browser: NOT VERIFIED
 
-================================================================================
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-06 - FINAL LAYOUT REFINEMENTS
-================================================================================
 
 ## IMPLEMENTATION COMPLETED
 
@@ -3337,11 +3319,8 @@ MAYS-AURORA-GLASS-DASHBOARD-06 - FINAL LAYOUT REFINEMENTS
 - ✅ Build: PASSING
 - ✅ Tests: 821 passed | 5 skipped
 
-================================================================================
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-06 - CSS CONSOLIDATION COMPLETE
-================================================================================
 
 ## CSS-Konsolidierung abgeschlossen
 
@@ -3384,11 +3363,8 @@ MAYS-AURORA-GLASS-DASHBOARD-06 - CSS CONSOLIDATION COMPLETE
 5. Sidebar korrekt positioniert
 6. Demo-Badge sichtbar
 
-================================================================================
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-06-FINAL
-================================================================================
 
 2026-10-26 · CSS Layout Fixes Complete
 
@@ -3431,11 +3407,8 @@ HEAD: c3fe23a (MAYS-AURORA-GLASS-DASHBOARD-06-FINAL)
 6. In Dev-Modus kein Logout-Button
 7. `/profil` mit echter Auth zeigt Logout
 
-================================================================================
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-06-FINAL – DOM/CSS CONTRACT FIX COMPLETE
-================================================================================
 
 ## FINAL IMPLEMENTATION
 
@@ -3469,11 +3442,8 @@ Tests: ✅ 821 passed | 5 skipped
 ### Remaining:
 **VISUAL VERIFICATION PENDING**
 
-================================================================================
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-06 – ROOT CONTAINER FIX
-================================================================================
 
 2026-10-27 · ROOT CONTAINER FIX (nachgewiesene Breitenbegrenzung behoben)
 
@@ -3521,9 +3491,7 @@ IMPLEMENTED – VISUAL VERIFICATION PENDING
 Kein Produktionsdeploy, keine AWS/Cognito/DNS-Änderungen.
 
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-07 – FEATURE GRID POLISH
-================================================================================
 
 2026-10-27 · Feature-Grid-Polish (3 Kacheln gleichmaessig nebeneinander)
 
@@ -3572,9 +3540,7 @@ IMPLEMENTED - VISUAL VERIFICATION PENDING
 Kein Produktionsdeploy, keine AWS/Cognito/DNS/Aenderungen.
 
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-07-R – MINIMAL REGRESSION RECOVERY
-================================================================================
 
 2026-10-27 · Breitenregression aus DASHBOARD-07 behoben (nur src/styles.css)
 
@@ -3631,9 +3597,7 @@ REGRESSION RECOVERED — VISUAL VERIFIED fuer K1-K5/K8 (Browsermessung
 bestaetigt); K6/K7 vorbestehend und referenzidentisch (Restproblem).
 Kein Push, kein Produktionsdeploy, keine AWS/Cognito/DNS-Aenderungen.
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-09 — IMPLEMENTATION COMPLETE
-================================================================================
 
 2026-10-29 · i18n implementation and verification
 
@@ -3666,9 +3630,7 @@ Git:
   untouched and unstaged.
 - Push completed to `origin/main`; no deployment.
 
-================================================================================
 MAYS-DASHBOARD-09-R — TRANSLATIONS + LANDING FOOTER
-================================================================================
 
 2026-10-29 · Implementation and verification
 
@@ -3703,9 +3665,7 @@ Verification:
   API syntax and dictionary coverage. Implementation and documentation commits
   `9cda9f8` and `475b57d` were pushed to `origin/main`; no deployment.
 
-================================================================================
 MAYS-AUTH-NAVBAR-10 — LOGOUT + SHARED LANDING NAVBAR
-================================================================================
 
 2026-10-29 · Implementation and verification
 
@@ -3735,9 +3695,7 @@ Verification:
 - Implementation commit `35ac935` and documentation commit `396d8d8` were pushed
   to `origin/main`; no deployment performed.
 
-================================================================================
 MAYS-UI-ORCHESTRATOR-01 — S0 BESTAND UND EIGNUNG
-================================================================================
 
 2026-10-29 · S0 complete
 
@@ -3761,9 +3719,7 @@ MAYS-UI-ORCHESTRATOR-01 — S0 BESTAND UND EIGNUNG
 - S0 result report: `docs/reports/13-01-MAYS-UI-S0-BASELINE.md`.
 - AI-/Privacy-/Data-Flow impact: none; documentation-only stage.
 
-================================================================================
 MAYS-UI-S1 — GEMEINSAME KOMPONENTEN AUF BESTEHENDER CSS-BASIS
-================================================================================
 
 2026-10-29 · S1 complete
 
@@ -3784,9 +3740,7 @@ MAYS-UI-S1 — GEMEINSAME KOMPONENTEN AUF BESTEHENDER CSS-BASIS
 - S1 report: `docs/reports/14-01-MAYS-UI-S1-COMPONENTS.md`.
 - S1 implementation commit: `680dc59`; no push or deployment.
 
-================================================================================
 MAYS-UI-S2 — AURORA-DASHBOARD-VORSCHAU
-================================================================================
 
 2026-10-29 · S2 complete
 
@@ -3807,9 +3761,7 @@ MAYS-UI-S2 — AURORA-DASHBOARD-VORSCHAU
 - S2 report: `docs/reports/15-01-MAYS-UI-S2-AURORA-DASHBOARD.md`.
 - S2 implementation commit: `3d00a54`; no push or deployment.
 
-================================================================================
 MAYS-UI-S3 — PROFIL AN DASHBOARD-V2 ANBINDEN
-================================================================================
 
 2026-10-29 · S3 complete
 
@@ -3831,9 +3783,7 @@ MAYS-UI-S3 — PROFIL AN DASHBOARD-V2 ANBINDEN
 - S3 report: `docs/reports/16-01-MAYS-UI-S3-PROFIL-ANBINDUNG.md`.
 - S3 implementation commit: `0682f8f`; no push or deployment.
 
-================================================================================
 MAYS-UI-S4 — FEINSCHLIFF UND TECHNISCHE ABNAHME
-================================================================================
 
 2026-10-29 · S4 implementation complete; profile replacement intentionally stopped
 
@@ -3866,9 +3816,7 @@ MAYS-UI-S4 — FEINSCHLIFF UND TECHNISCHE ABNAHME
 - S4 comparison screenshots were regenerated from final HEAD `e3b0d9b` with
   fresh build identity; no real user data included.
 
-================================================================================
 MAYS-UI-S5 — FACHBEREICHE ALS ARBEITSPAKETE
-================================================================================
 
 2026-10-29 · Planning complete; no feature implementation
 
@@ -3891,9 +3839,7 @@ MAYS-UI-S5 — FACHBEREICHE ALS ARBEITSPAKETE
 - AI/privacy/data-flow impact: documentation records existing flows and future
   gates only; no new data flow was introduced.
 
-================================================================================
 MAYS-UI-S5.2-A — VORHANDENE CV-PROFILE IM DASHBOARD
-================================================================================
 
 2026-10-29 · Implementation complete locally; DEV preview only
 
@@ -3918,9 +3864,7 @@ MAYS-UI-S5.2-A — VORHANDENE CV-PROFILE IM DASHBOARD
   processing boundaries remain unchanged.
 - Report: `docs/reports/19-01-MAYS-UI-S5.2-A-CV-DASHBOARD.md`.
 
-================================================================================
 MAYS-UI-S5.2-A-R1 — WEITEREN CV HOCHLADEN REPARIEREN
-================================================================================
 
 2026-10-29 · Implementation complete; Chromium verified; Firefox NOT VERIFIED
 
@@ -3942,9 +3886,7 @@ MAYS-UI-S5.2-A-R1 — WEITEREN CV HOCHLADEN REPARIEREN
   was not used as an API verification claim.
 - Report: `docs/reports/20-01-MAYS-UI-S5.2-A-R1-WEITERER-CV-UPLOAD.md`.
 
-================================================================================
 MAYS-UI-S5.2-A-R2 — CV-VERARBEITUNG BLOCKIERT SCROLLEN
-================================================================================
 
 2026-10-29 · Implementation complete; Chromium verified; Firefox NOT VERIFIED
 
@@ -3968,9 +3910,7 @@ MAYS-UI-S5.2-A-R2 — CV-VERARBEITUNG BLOCKIERT SCROLLEN
   available.
 - Report: `docs/reports/21-01-MAYS-UI-S5.2-A-R2-CV-WORKFLOW-DIALOG.md`.
 
-================================================================================
 MAYS-UI-RELEASE-2.2.0 — KLASSIFIZIERUNG UND TESTFIXTURE
-================================================================================
 
 2026-10-29 · Release preparation
 
@@ -3986,9 +3926,7 @@ MAYS-UI-RELEASE-2.2.0 — KLASSIFIZIERUNG UND TESTFIXTURE
 - No secret, personal address, token, domain or infrastructure configuration was
   added to the release commits.
 
-================================================================================
 MAYS-UI-RELEASE-2.2.0 — RELEASE PREPARATION
-================================================================================
 
 2026-10-29 · Classification and feature-branch preparation complete
 
@@ -4008,9 +3946,7 @@ MAYS-UI-RELEASE-2.2.0 — RELEASE PREPARATION
   examples and personal-data drafts were not staged.
 - Main integration and Vercel publication remain pending explicit release gates.
 
-================================================================================
 MAYS-UI-RELEASE-2.2.0 — MAIN UND VERCEL ABNAHME
-================================================================================
 
 2026-10-29 · Released
 
@@ -4045,9 +3981,7 @@ MAYS-UI-RELEASE-2.2.0 — MAIN UND VERCEL ABNAHME
 - Final production footer: `Version 2.2.0 · production · main · dc9fb6f` on
   `/`, `/search` and `/profil`; `/dev/dashboard-v2` returns 404.
 
-================================================================================
 MAYS-UI-S4 — VERSION 2.2.0
-================================================================================
 
 2026-10-29 · Version bump complete
 
@@ -4060,9 +3994,7 @@ MAYS-UI-S4 — VERSION 2.2.0
 - Build and Footer checks performed on Landingpage, Searchpage and Dashboard;
   no `/profil` replacement, push, deployment or infrastructure change.
 
-================================================================================
 MAYS-AURORA-GLASS-DASHBOARD-08 — DASHBOARD LAYOUT (NAVBAR/FOOTER/TEXT/GRID)
-================================================================================
 
 2026-10-27 · Vier Dashboard-Layout-Probleme behoben
 (src/App.tsx, src/components/Navbar.tsx, src/styles.css; +95/-20)
