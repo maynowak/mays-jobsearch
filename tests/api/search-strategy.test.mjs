@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   normalizeSkills,
   calculateThreshold,
@@ -9,11 +9,8 @@ import {
   scoreJobBySkills,
   filterJobsBySkillThreshold,
   buildCandidatePool,
-  applySearchStrategy,
   applySearchStrategyWithTargetRole,
   MAX_SKILLS,
-  DEFAULT_CANDIDATE_POOL_TARGET,
-  MIN_CANDIDATE_POOL_TARGET,
 } from "../../api/_lib/searchStrategy.mjs";
 
 describe("Search Strategy - Skill Normalization", () => {
@@ -383,7 +380,7 @@ describe("Search Strategy - Hard Filters Preservation", () => {
   it("employmentType filter works with skill search", async () => {
     const { applySearchFilters } = await import("../../api/_lib/filter.mjs");
     const { buildCandidatePool } = await import("../../api/_lib/searchStrategy.mjs");
-    const pool = buildCandidatePool(["aws", "terraform"], jobs, { id: "test" });
+    const pool = buildCandidatePool(skills, jobs, { id: "test" });
     const filtered = applySearchFilters(pool.jobs, { radiusKm: null, workMode: [], employmentType: "full_time" });
     
     // Only full_time jobs should remain
@@ -395,7 +392,7 @@ describe("Search Strategy - Hard Filters Preservation", () => {
     const { applySearchFilters } = await import("../../api/_lib/filter.mjs");
     const { buildCandidatePool } = await import("../../api/_lib/searchStrategy.mjs");
     
-    const pool = buildCandidatePool(["aws", "terraform"], jobs, { id: "test" });
+    const pool = buildCandidatePool(skills, jobs, { id: "test" });
     const filtered = applySearchFilters(pool.jobs, { radiusKm: null, workMode: ["remote"], employmentType: "" });
     
     // Only remote jobs should remain
@@ -406,7 +403,7 @@ describe("Search Strategy - Hard Filters Preservation", () => {
     const { applySearchFilters } = await import("../../api/_lib/filter.mjs");
     const { buildCandidatePool } = await import("../../api/_lib/searchStrategy.mjs");
     
-    const pool = buildCandidatePool(["aws", "terraform"], jobs, { id: "test" });
+    const pool = buildCandidatePool(skills, jobs, { id: "test" });
     // Frankfurt with radius 0 (exact) should only match Frankfurt
     const filtered = applySearchFilters(pool.jobs, { radiusKm: 0, workMode: [], employmentType: "" });
     

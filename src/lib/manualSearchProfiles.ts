@@ -1,4 +1,5 @@
 import type { Job, Profile } from "../types";
+import { secureRandomIdSuffix } from "./secureRandomId";
 
 // MAYS-SEARCH-PROFILE-MANUAL-01:
 // Unabhaengige, manuell definierbare Suchprofile.
@@ -155,7 +156,7 @@ export function validateManualSearchProfileDraft(
 }
 
 function defaultCreateId(): string {
-  return `manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `manual-${Date.now()}-${secureRandomIdSuffix()}`;
 }
 
 /** Legt ein neues manuelles Suchprofil aus einer Formulareingabe an. */

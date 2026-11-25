@@ -1,5 +1,4 @@
 import { HttpError } from "./_lib/filter.mjs";
-import { chat } from "./_lib/ai.mjs";
 import {
   formulateCVText,
   validateRecommendationSafety,

@@ -154,7 +154,6 @@ async function assertNoOverflow(page, name) {
 async function runWidth(browser, width, pdfBytes) {
   const { context, page, apiCalls, consoleErrors } = await preparePage(browser, width);
   await importPdf(page, pdfBytes);
-  const modal = page.locator(".cv-import-modal");
   if (!(await page.getByText("Prüfliste").count())) throw new Error("review list missing");
   if ((await page.locator(".cv-import-review__item").count()) !== 10) throw new Error("expected 10 review items");
   if (!(await page.getByText("Seite 1 von 6").count())) throw new Error("pagination missing");

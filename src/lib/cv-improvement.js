@@ -170,16 +170,15 @@ export function applyRecommendations(profile, selectedRecommendationIds, allReco
   };
 }
 
-function compareAtsResults(before, after) {
+/**
+ * Delta between two ATS analyses. Exported as `computeImprovementDelta` for
+ * /api/cv-improvement (reanalyze endpoint); previously the handler imported a
+ * name that did not exist, so the endpoint failed at runtime
+ * (CodeQL js/call-to-non-callable).
+ */
+export function computeImprovementDelta(before, after) {
   const beforeSummary = before.summary;
   const afterSummary = after.summary;
-
-  const scoreDelta = after.scores.overall - before.scores.overall;
-  const coverageDelta = after.scores.keywordMatch - before.scores.keywordMatch;
-  const matchedDelta = after.summary.matched - beforeSummary.matched;
-  const partialDelta = afterSummary.partial - beforeSummary.partial;
-  const gapDelta = afterSummary.gap - beforeSummary.gap;
-  const unknownDelta = afterSummary.unknown - beforeSummary.unknown;
 
   const beforeMatches = new Map(before.matches.map(m => [m.requirementId, m]));
   const afterMatches = new Map(after.matches.map(m => [m.requirementId, m]));

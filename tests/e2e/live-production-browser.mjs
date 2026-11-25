@@ -14,21 +14,18 @@
 //   LIVE_CDP_PORT=9223
 
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import playwright from "playwright";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, "../..");
 const baseUrl = (process.env.LIVE_BASE_URL ?? "https://www.mays-job-matcher.app").replace(/\/$/, "");
 const cdpPort = Number(process.env.LIVE_CDP_PORT ?? "9223");
 const profileDir = process.env.LIVE_PROFILE_DIR ?? "/tmp/opencode/mays-live-e2e-profile";
 const mode = process.argv[2] ?? "open";
-const evidenceDir = resolve(
-  process.env.LIVE_EVIDENCE_DIR ??
-    `/tmp/opencode/live-production-browser-e2e/${new Date().toISOString().replace(/[:.]/g, "-")}`
-);
+const configuredEvidenceDir = process.env.LIVE_EVIDENCE_DIR
+  ? resolve(process.env.LIVE_EVIDENCE_DIR)
+  : "";
 const widths = (process.env.LIVE_WIDTHS ?? "320,390,430,768,1024,1440")
   .split(",")
   .map((value) => Number(value.trim()))
@@ -139,7 +136,10 @@ async function runReadOnlyChecks() {
     );
   }
 
-  await mkdir(evidenceDir, { recursive: true });
+  // A private, uniquely named directory avoids predictable paths in the
+  // shared temp directory (CodeQL js/insecure-temporary-file).
+  const evidenceDir = configuredEvidenceDir || (await mkdtemp(join(tmpdir(), "mays-live-e2e-")));
+  await mkdir(evidenceDir, { recursive: true, mode: 0o700 });
   const results = [];
   for (const width of widths) {
     await page.setViewportSize({ width, height: width <= 430 ? 844 : 900 });
@@ -169,7 +169,8 @@ async function runReadOnlyChecks() {
       },
       null,
       2
-    )
+    ),
+    { mode: 0o600 }
   );
   console.log(
     JSON.stringify(

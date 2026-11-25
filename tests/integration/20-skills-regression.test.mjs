@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { isHostname } from "../helpers/url.mjs";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("../../api/_lib/cache.mjs", () => ({
@@ -43,10 +44,8 @@ vi.mock("../../api/_lib/identity.mjs", () => ({
   sessionCookieHeader: () => "",
 }));
 
-const { chat } = await import("../../api/_lib/ai.mjs");
 const { cacheGet, cacheSet, cacheDel } = await import("../../api/_lib/cache.mjs");
 const { fetchAllJobs } = await import("../../api/_lib/sources/index.mjs");
-const { normalizeSkills } = await import("../../api/_lib/searchStrategy.mjs");
 const { tokenize } = await import("../../api/_lib/filter.mjs");
 
 const baseArbeitnowJob = {
@@ -84,7 +83,7 @@ function setupFetchMock(overrides = {}) {
 
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
-    if (u.includes("arbeitnow.com")) {
+    if (isHostname(u, "www.arbeitnow.com")) {
       return new Response(JSON.stringify({ data: arbeitnowJobs }), { status: 200 });
     }
     if (u.includes("/v2/acts/")) {
@@ -109,13 +108,6 @@ function setupFetchMock(overrides = {}) {
   } else {
     vi.mocked(cacheGet).mockResolvedValue(null);
   }
-}
-
-function setupAllDisabled() {
-  globalThis.fetch = vi.fn(() => {
-    throw new Error("should not be called");
-  });
-  vi.mocked(cacheGet).mockResolvedValue(null);
 }
 
 beforeEach(() => {
@@ -240,7 +232,7 @@ describe("REGRESSION: 20 Skills Multi-Word Preservation", () => {
       "Oracle"
     ];
 
-    const tokens = tokenize(TWENTY_SKILLS);
+    const tokens = tokenize(skills);
     expect(tokens).toHaveLength(20);
     expect(tokens).toContain("spring boot");
     expect(tokens).toContain("java ee/j2ee");

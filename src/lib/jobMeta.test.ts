@@ -40,6 +40,15 @@ describe("jobMeta - descriptionPreview HTML entity decoding", () => {
     expect(result).toBe("Short text with entity");
   });
 
+  it("decodes double-encoded markup and strips it before preview", () => {
+    const html = "&amp;lt;p&amp;gt;AWS &amp;amp; Terraform&amp;lt;/p&amp;gt;";
+    expect(descriptionPreview(html, 200, true)).toBe("AWS & Terraform");
+  });
+
+  it("keeps comparison text and no closing tag fragments", () => {
+    expect(descriptionPreview("<p>Gehalt &lt; 80k.</p>", 200, true)).toBe("Gehalt < 80k.");
+  });
+
   it("returns null for empty or whitespace-only HTML", () => {
     expect(descriptionPreview("", 100, true)).toBeNull();
     expect(descriptionPreview("   ", 100, true)).toBeNull();

@@ -111,7 +111,7 @@ describe("safeHtml - prepareHtmlForRender", () => {
   });
 
   it("decodes entity-encoded HTML before sanitizing", () => {
-    const input = "<p><strong>Hello</strong></p>";
+    const input = "&lt;p&gt;&lt;strong&gt;Hello&lt;/strong&gt;&lt;/p&gt;";
     const result = prepareHtmlForRender(input);
     expect(result).toContain("<p>");
     expect(result).toContain("<strong>Hello</strong>");
@@ -119,16 +119,16 @@ describe("safeHtml - prepareHtmlForRender", () => {
   });
 
   it("decodes double-encoded HTML before sanitizing", () => {
-    const input = '<div class="content-intro"><h3><strong>Who We Are</strong></h3>';
+    const input = "&amp;lt;div&amp;gt;&amp;lt;h3&amp;gt;&amp;lt;strong&amp;gt;Who We Are&amp;lt;/strong&amp;gt;&amp;lt;/h3&amp;gt;";
     const result = prepareHtmlForRender(input);
-    expect(result).toContain('<div class="content-intro">');
+    expect(result).toContain("<div>");
     expect(result).toContain("<h3>");
     expect(result).toContain("<strong>Who We Are</strong>");
     expect(result).toContain("</h3>");
   });
 
   it("decodes nested double-encoded entities before sanitizing", () => {
-    const input = "<p>Hello</p>";
+    const input = "&amp;lt;p&amp;gt;Hello&amp;lt;/p&amp;gt;";
     const result = prepareHtmlForRender(input);
     expect(result).toContain("<p>Hello</p>");
   });
@@ -216,5 +216,40 @@ describe("safeHtml - renderSanitizedHtml", () => {
     expect(result?.props.dangerouslySetInnerHTML?.__html).not.toContain("<script>");
     expect(result?.props.dangerouslySetInnerHTML?.__html).not.toContain("onerror");
     expect(result?.props.dangerouslySetInnerHTML?.__html).toContain("<p>Safe</p>");
+  });
+
+  it("sanitizes entity-encoded script payloads before rendering", () => {
+    const input = "&lt;script&gt;alert(1)&lt;/script&gt;&lt;p&gt;Safe&lt;/p&gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("<script");
+    expect(result).not.toContain("alert(1)");
+    expect(result).toContain("<p>Safe</p>");
+  });
+
+  it("decodes genuine double-encoded HTML before sanitizing", () => {
+    const input = "&amp;lt;p&amp;gt;Hello&amp;lt;/p&amp;gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<p>Hello</p>");
+  });
+
+  it("decodes genuine triple-encoded HTML before sanitizing", () => {
+    const input = "&amp;amp;lt;p&amp;amp;gt;Triple&amp;amp;lt;/p&amp;amp;gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<p>Triple</p>");
+  });
+
+  it("sanitizes double-encoded event handlers before rendering", () => {
+    const input = "&amp;lt;img src=x onerror=alert(1)&amp;gt;&lt;p&gt;Safe&lt;/p&gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("onerror");
+    expect(result).not.toContain("alert(1)");
+    expect(result).toContain("<p>Safe</p>");
+  });
+
+  it("keeps an unterminated script payload out of the rendered HTML", () => {
+    const input = "<p>Safe</p><script>alert('never closed')<p>hidden";
+    const result = prepareHtmlForRender(input);
+    expect(result).not.toContain("alert");
+    expect(result).toContain("<p>Safe</p>");
   });
 });

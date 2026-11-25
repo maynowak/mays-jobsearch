@@ -9,7 +9,7 @@ import { createApifySource } from "./apify/index.mjs";
 import { countJobSourceRequest } from "../usage.mjs";
 import { guestAllowedSources } from "../sourcePolicy.mjs";
 import { applySearchFilters } from "../filter.mjs";
-import { applySearchStrategy, applySearchStrategyWithTargetRole } from "../searchStrategy.mjs";
+import { applySearchStrategyWithTargetRole } from "../searchStrategy.mjs";
 import { getConfig } from "../config.mjs";
 import { geocodeCity } from "../geo.mjs";
 

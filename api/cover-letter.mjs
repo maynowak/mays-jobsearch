@@ -1,4 +1,5 @@
 import { HttpError } from "./_lib/filter.mjs";
+import { htmlToText } from "./_lib/htmlText.mjs";
 import { chat } from "./_lib/ai.mjs";
 
 const MAX_JOB_TITLE = 300;
@@ -39,10 +40,7 @@ function readBody(req) {
 }
 
 function plainText(value) {
-  return String(value ?? "")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
+  return htmlToText(value, { blockNewlines: false, brNewlines: false })
     .replace(/\u0000/g, "")
     .replace(/\r\n?/g, "\n")
     .replace(/[ \t]{2,}/g, " ")

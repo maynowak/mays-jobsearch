@@ -86,32 +86,33 @@ describe("API filter - stripHtml (plain text extraction for descriptionPlain)", 
   it("4) HTML entities inside text decode to readable characters", () => {
     const input = "Salary < 50000 & score > 3 &nbsp; test 'quote' \"double\"";
     const result = stripHtml(input);
-    // < 50000 & score > treated as tag and stripped, &nbsp; -> space, & -> &
-    // Whitespace collapsed by stripHtml
-    expect(result).toBe("Salary 3 test 'quote' \"double\"");
-    expect(result).not.toContain("<");
-    expect(result).not.toContain(">");
-    expect(result).not.toContain("&");
+    // Comparison text is kept (it is not a tag), &nbsp; -> space, & -> &.
+    // Whitespace collapsed by stripHtml.
+    expect(result).toBe("Salary < 50000 & score > 3 test 'quote' \"double\"");
   });
 
-  it("5) Mathematical comparison characters treated as tags and stripped", () => {
+  it("5) Mathematical comparison characters are preserved as text", () => {
     const input = "Salary < 50000 and score > 3";
     const result = stripHtml(input);
-    // < 50000 and > 3 look like tags and get stripped
-    // "Salary " before tag remains, "3" after tag remains
-    expect(result).toBe("Salary 3");
-    expect(result).not.toContain("<");
-    expect(result).not.toContain(">");
+    // A "<" followed by a space is not a tag; dropping it would corrupt text.
+    expect(result).toBe("Salary < 50000 and score > 3");
   });
 
-  it("6) XSS payloads produce safe plain text (tag content remains as text)", () => {
+  it("6) XSS payloads produce safe plain text (script bodies are removed)", () => {
     const input = '<script>alert(1)</script><img src=x onerror="alert(1)">';
     const result = stripHtml(input);
-    // Tag structure removed, but text content inside tags remains
+    // Raw-text bodies and attribute payloads must not reach prompts/ATS text.
     expect(result).not.toContain("<script>");
     expect(result).not.toContain("onerror");
-    expect(result).toContain("alert(1)"); // Text content preserved
-    // Note: result is not empty because text content inside tags is preserved
+    expect(result).not.toContain("alert(1)");
+    expect(result).toBe("");
+  });
+
+  it("6b) decodes entity-encoded and double-encoded markup before stripping", () => {
+    expect(stripHtml("&lt;p&gt;Hello&lt;/p&gt;")).toBe("Hello");
+    expect(stripHtml("&amp;lt;p&amp;gt;Hello&amp;lt;/p&amp;gt;")).toBe("Hello");
+    expect(stripHtml("&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;")).toBe("");
+    expect(htmlToPlainText("<b>Bold</b> &amp; text")).toBe("Bold & text");
   });
 
   it("7) Exact production job - descriptionPlain contains NO HTML artifacts", () => {

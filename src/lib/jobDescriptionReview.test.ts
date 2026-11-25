@@ -146,6 +146,37 @@ describe("JM-COVER-LETTER-02: deterministic description review", () => {
     expect(normalized.length).toBeLessThanOrEqual(MAX_DESCRIPTION_INPUT_LENGTH);
   });
 
+  it("strips script payloads for all end-tag spellings and decodes entities", () => {
+    const normalized = normalizeDescriptionText(
+      "<p>A &amp; B</p><script>ALERT_1()</script ><script>ALERT_2()</SCRIPT\n>" +
+        "<style>.x{content:'ALERT_3'}</style><noscript>ALERT_4</noscript><iframe src=x>ALERT_5</iframe>"
+    );
+    expect(normalized).toContain("A & B");
+    for (const leaked of ["ALERT_1", "ALERT_2", "ALERT_3", "ALERT_4", "ALERT_5", "<script", "<style"]) {
+      expect(normalized).not.toContain(leaked);
+    }
+  });
+
+  it("keeps plain comparison text instead of dropping it as markup", () => {
+    expect(normalizeDescriptionText("<p>2 < 3 und 4 > 1</p>")).toContain("2 < 3 und 4 > 1");
+  });
+
+  it("strips double-encoded markup instead of exposing raw tags", () => {
+    const normalized = normalizeDescriptionText(
+      "&amp;lt;p&amp;gt;AWS &amp;amp; Terraform&amp;lt;/p&amp;gt;&amp;lt;p&amp;gt;Erfahrung mit Kubernetes&amp;lt;/p&amp;gt;"
+    );
+    expect(normalized).toBe("AWS & Terraform\n\nErfahrung mit Kubernetes");
+    expect(normalized).not.toContain("&lt;");
+    expect(normalized).not.toContain("<p>");
+  });
+
+  it("keeps comparison text without leaking closing tags", () => {
+    const normalized = normalizeDescriptionText("<p>Gehalt &lt; 80k.</p><p>Weiter &gt; 3.</p>");
+    expect(normalized).toContain("Gehalt < 80k.");
+    expect(normalized).toContain("Weiter > 3.");
+    expect(normalized).not.toContain("</p>");
+  });
+
   it("handles a multilingual description", () => {
     const result = checkPlausibility(
       job,

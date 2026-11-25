@@ -93,9 +93,10 @@ function startRestServer() {
           const result = await redisCommand(command.map(String));
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ result }));
-        } catch (error) {
+        } catch {
           res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: String(error?.message ?? error) }));
+          // Never echo internal error details from the mock server.
+          res.end(JSON.stringify({ error: "rest_server_error" }));
         }
       });
     });

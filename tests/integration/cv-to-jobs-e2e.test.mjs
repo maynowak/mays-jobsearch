@@ -1,5 +1,6 @@
 // @vitest-environment node
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { isHostname } from "../helpers/url.mjs";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock all external dependencies
 vi.mock("../../api/_lib/cache.mjs", () => ({
@@ -44,12 +45,10 @@ vi.mock("../../api/_lib/identity.mjs", () => ({
   sessionCookieHeader: () => "",
 }));
 
-const { chat } = await import("../../api/_lib/ai.mjs");
 const { cacheGet, cacheSet, cacheDel } = await import("../../api/_lib/cache.mjs");
 const { fetchAllJobs } = await import("../../api/_lib/sources/index.mjs");
 const { applySearchStrategyWithTargetRole } = await import("../../api/_lib/searchStrategy.mjs");
 const { normalizeSkills, scoreJobBySkills, calculateThreshold } = await import("../../api/_lib/searchStrategy.mjs");
-const { tokenize } = await import("../../api/_lib/filter.mjs");
 const { analyzeJobForAts } = await import("../../api/_lib/ats.mjs");
 
 const baseArbeitnowJob = {
@@ -87,7 +86,7 @@ function setupFetchMock(overrides = {}) {
 
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
-    if (u.includes("arbeitnow.com")) {
+    if (isHostname(u, "www.arbeitnow.com")) {
       return new Response(JSON.stringify({ data: arbeitnowJobs }), { status: 200 });
     }
     if (u.includes("/v2/acts/")) {
@@ -112,13 +111,6 @@ function setupFetchMock(overrides = {}) {
   } else {
     vi.mocked(cacheGet).mockResolvedValue(null);
   }
-}
-
-function setupAllDisabled() {
-  globalThis.fetch = vi.fn(() => {
-    throw new Error("should not be called");
-  });
-  vi.mocked(cacheGet).mockResolvedValue(null);
 }
 
 beforeEach(() => {
@@ -179,7 +171,6 @@ describe("E2E: CV to Jobs Flow", () => {
       expect(result.meta.targetRoleMatches).toBeGreaterThan(0);
 
       // Jobs matching targetRole should be included even with 0 skill overlap
-      const targetRoleJob = result.jobs.find(j => j.slug === "4");
       const cloudJob = result.jobs.find(j => j.title.includes("Cloud"));
       expect(cloudJob).toBeDefined();
     });
@@ -259,7 +250,6 @@ describe("E2E: CV to Jobs Flow", () => {
       expect(result.meta.targetRoleMatches).toBeGreaterThan(0);
 
       // Jobs matching targetRole should be included even with 0 skill overlap
-      const targetRoleJob = result.jobs.find(j => j.slug === "4");
       const cloudJob = result.jobs.find(j => j.title.includes("Cloud"));
       expect(cloudJob).toBeDefined();
     });

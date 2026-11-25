@@ -226,7 +226,7 @@ async function main() {
     throw new Error("missing UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN");
   }
 
-  let host = "unknown";
+  let host;
   try {
     host = new URL(url).hostname;
   } catch {

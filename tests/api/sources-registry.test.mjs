@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { isHostname } from "../helpers/url.mjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../api/_lib/cache.mjs", () => ({
@@ -68,10 +69,10 @@ function setupFetchMock(overrides = {}) {
 
   globalThis.fetch = vi.fn(async (url) => {
     const u = String(url);
-    if (geocode && u.includes("nominatim.openstreetmap.org")) {
+    if (geocode && isHostname(u, "nominatim.openstreetmap.org")) {
       return new Response(JSON.stringify([{ lat: "50.1", lon: "8.6" }]), { status: 200 });
     }
-    if (u.includes("arbeitnow.com")) {
+    if (isHostname(u, "www.arbeitnow.com")) {
       return new Response(JSON.stringify({ data: arbeitnowJobs }), { status: 200 });
     }
     if (u.includes("/v2/acts/")) {

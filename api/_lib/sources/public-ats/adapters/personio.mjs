@@ -134,7 +134,6 @@ function normalizePersonioJob(positionNode, sourceId) {
   const recruitingCategory = extractText(positionNode, "recruitingCategory");
   const title = extractText(positionNode, "name");
   const employmentType = extractText(positionNode, "employmentType");
-  const schedule = extractText(positionNode, "schedule");
   const seniority = extractText(positionNode, "seniority");
   const yearsOfExperience = extractText(positionNode, "yearsOfExperience");
   const createdAtStr = extractText(positionNode, "createdAt");

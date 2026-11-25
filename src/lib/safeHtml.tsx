@@ -1,25 +1,7 @@
 import DOMPurify from "dompurify";
+import { decodeHtmlEntities } from "../../api/_lib/htmlText.mjs";
 
-let decoder: HTMLTextAreaElement | null = null;
-
-function decodeHtmlEntitiesOnce(html: string): string {
-  if (!decoder) decoder = document.createElement("textarea");
-  decoder.innerHTML = html;
-  return decoder.value;
-}
-
-export function decodeHtmlEntities(html: string): string {
-  if (!html) return "";
-  let current = html;
-  let iterations = 0;
-  while (iterations < 4) {
-    const next = decodeHtmlEntitiesOnce(current);
-    if (next === current) break;
-    current = next;
-    iterations += 1;
-  }
-  return current;
-}
+export { decodeHtmlEntities };
 
 function escapeHtmlText(value: string): string {
   return String(value)

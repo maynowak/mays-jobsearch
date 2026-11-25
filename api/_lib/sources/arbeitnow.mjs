@@ -1,7 +1,6 @@
 import {
   HttpError,
   tokenize,
-  stripHtml,
   htmlToPlainText,
   locationMatches,
   keywordHits,

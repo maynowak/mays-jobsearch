@@ -1,3 +1,5 @@
+import { decodeHtmlEntities, htmlToText } from "../../api/_lib/htmlText.mjs";
+
 export function toEpochMs(value: number | string | undefined | null): number | null {
   if (value == null) return null;
   const n = Number(value);
@@ -65,17 +67,10 @@ export function contractTypeLabelKey(value: string | undefined): string | null {
 }
 
 function stripHtml(html: string): string {
-  return html
-    .replace(/<\/?[a-zA-Z][^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&/g, "&")
-    .replace(/"/g, '"')
-    .replace(/'/g, "'")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/'/g, "'")
-    .replace(/&#x2F;/g, "/")
-    .replace(/&#x24;/g, "$")
+  // decode -> strip -> decode keeps double-encoded markup out of the preview.
+  return decodeHtmlEntities(
+    htmlToText(decodeHtmlEntities(html), { blockNewlines: false, brNewlines: false })
+  )
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -85,6 +80,7 @@ export function descriptionPreview(
   previewLength: number,
   expanded: boolean
 ): string | null {
+  // SECURITY: text-only output. Render it as a React text node, never as HTML.
   if (!description) return null;
   const plainText = stripHtml(description);
   if (!plainText) return null;

@@ -20,11 +20,7 @@ function normalizeRecruiteeJob(job, sourceId) {
   const employmentType = job.employment_type_code || "";
   const remote = job.remote === true;
 
-  const descriptionHtml = ""; // Recruitee public feed doesn't include description
-  const descriptionPlain = "";
-
   const createdAt = job.created_at ? Date.parse(job.created_at) : NaN;
-  const updatedAt = job.updated_at ? Date.parse(job.updated_at) : NaN;
 
   const externalId = `rc-${job.id}`;
 

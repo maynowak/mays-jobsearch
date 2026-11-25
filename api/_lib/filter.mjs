@@ -1,3 +1,5 @@
+import { decodeHtmlEntities, htmlToText } from "./htmlText.mjs";
+
 export class HttpError extends Error {
   constructor(status, message, code = "error") {
     super(message);
@@ -65,42 +67,18 @@ export function tokenize(input) {
     .filter((t) => t.length > 0);
 }
 
-function decodeHtmlEntitiesOnce(html) {
-  return String(html)
-    .replace(/&nbsp;/g, " ")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#x2F;/g, "/")
-    .replace(/&#x24;/g, "$")
-    .replace(/&amp;/g, "&");
-}
-
-function decodeHtmlEntities(html) {
-  let current = String(html);
-  for (let i = 0; i < 4; i++) {
-    const next = decodeHtmlEntitiesOnce(current);
-    if (next === current) break;
-    current = next;
-  }
-  return current;
-}
-
 export function stripHtml(html) {
+  // Decode first (feeds may double-encode markup), then remove tags and
+  // raw-text bodies (script/style/noscript/…) with the shared scanner, so
+  // prompt/ATS text cannot carry hidden markup payloads. Output is text-only.
   const decoded = decodeHtmlEntities(html);
-  return decoded
-    .replace(/<[^>]*>/g, " ")
+  return decodeHtmlEntities(htmlToText(decoded, { blockNewlines: false, brNewlines: false }))
     .replace(/\s+/g, " ")
     .trim();
 }
 
 export function htmlToPlainText(html) {
-  const decoded = decodeHtmlEntities(html);
-  return decoded
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return stripHtml(html);
 }
 
 const GERMAN_STOPWORDS = new Set([
