@@ -1,3 +1,97 @@
+2026-11-25 · JM-RELEASE-DOCS-CONSOLIDATION-02 — RELEASE DOCUMENTATION CONSOLIDATION
+- Typ: Docs-Integration, sechs offene Release-/Analysebranches, Auditlog-Zusammenführung, PR-Vorbereitung
+- Status: **READY FOR DOCUMENTATION MERGE REVIEW**
+- Branch: `docs/jm-release-docs-consolidation-02`; Basis `origin/main` `ee2ce6f`; kein Produktcode, kein RIS-/AWS-/Terraform-/Cognito-/Consent-Eingriff, kein Main-Merge/Deployment.
+- Übernommen: Application-Edit-Release (`c79e480`), Docs-Release (`81803b3`), Translation-Hotfix-Release (`b783e3f`), Security/CodeQL-Release (`cc65290`), UX-Production-Release (`414ee0b`, inkl. 8 Screenshots), XREPO-Parallelanalyse (`0df5f3a`). Alle sechs Reports fehlten auf Main.
+- De-Dupe: `JM-SECURITY-CODEQL-REMEDIATION-01` war bereits auf Main und wurde nicht erneut übernommen; vom Security-Branch wurden nur die zwei fehlenden Auditblöcke (`JM-TRANSLATION-JSON-UNWRAP-01`, `JM-SECURITY-CODEQL-RELEASE-01`) ergänzt. Feature-/Integrationsberichte der bereits gemergten Releases bleiben unverändert.
+- Chronologie: PR #70 `ee2ce6f`, PR #69 `776112b`, PR #68 `b4157e5`, XREPO-Basis `aa57500`/RIS `97a60df`, Docs-Release `aa57500`, UX-Release `df1fe01`, Application-Edit `e92d78b`. Aktueller Production-Stand bleibt `ee2ce6f`.
+- Security/CodeQL: PR #68 dokumentiert `PRODUCTION VERIFICATION FAILED — HOTFIX REQUIRED` (Translation-Wrapper); PR #69 aktive JS/TS-Kategorie 0 Findings, 21 Legacy-Alerts der retired `/language:javascript`-Kategorie; PR #70 zusätzliche Härtung, Live-Provider-Check pending. Keine pauschale „null offene Alerts“-Aussage.
+- XREPO: Jobsearch-/RIS-Grenze erhalten; P0-Erasure-Lifecycle-Parität und Art.-9-Gap dokumentiert; RIS-Repo nicht verändert.
+- Validierung: relative Linkprüfung, Screenshot-Pfade, `git diff --check`, Secret-Scan; Gesamtdiff ausschließlich Docs/Assets.
+- Bericht: `docs/reports/JM-RELEASE-DOCS-CONSOLIDATION-02.md`.
+
+2026-11-25 · JM-JOB-DETAILS-TRANSLATION-HOTFIX-01 — CONTROLLED MAIN MERGE & PRODUCTION VERIFICATION
+- Typ: Hotfix-Release, PR-Merge, automatische Vercel-Production-Deployments, Public/Synthetic-Production-Regression
+- Status: **PRODUCTION VERIFIED — LIVE PROVIDER CHECK PENDING**
+- PR [#70](https://github.com/maynowak/mays-jobsearch/pull/70); Feature-HEAD `4fa23b0`; vorherige Main-Basis `776112b` (PR #69 erhalten); Merge/Production-SHA `ee2ce6f`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Gates: Diff nur Translation-Hotfix; `tsc`/Build PASS; fokussiert **102 PASS**; serielle Vollsuite **2190 PASS / 5 skipped**; CodeQL PASS; Vercel-Previews/Deployments PASS; PR `CLEAN`/`MERGEABLE`; `git diff --check`/Secret-Scan PASS.
+- Production: `dpl_3eXKThhq6nLW7iLdGpwTFt9cizV4` (`mays-jobsearch`) und `dpl_2X99wovTzU4arSiW14qGVChK4xNv` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · ee2ce6f`; Public Smoke `/`, `/search`, `/profil`, `/datenschutz`, `/impressum`, `/anmelden`, `/cv-builder/workspace` bei 1440/390 je 200, 0 Overflow, 0 Console-/Page-Errors.
+- Production-Regression (synthetische Mock-APIs gegen das Production-Bundle): Jobdetails mit Entities/Aufzählungen/URL vollständig, keine Scripts/Styles/onerror, `window.__xss=0`; Translation-Wrapper → kontrollierter Fehler + Original, Clean-HTML → sanitisiert, keine Wrapper sichtbar, 0 unerwartete Calls/Errors.
+- Live-Provider-Check: eine harmlose synthetische Anfrage → HTTP 502 `model_unavailable`; kein unkontrollierter Retry, keine echten Nutzerdaten. Daher Status ausdrücklich **LIVE PROVIDER CHECK PENDING**.
+- Grenzen: Live-Provider-Übersetzung in diesem Fenster nicht bestätigt; Parser bleibt fail-closed für abgeschnittene Wrapper und >30k; keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung.
+- Dokumentation: `docs/reports/JM-JOB-DETAILS-TRANSLATION-HOTFIX-01-PRODUCTION.md`; Docs-Branch `docs/jm-job-details-translation-hotfix-01-release`.
+
+2026-11-25 · JM-TRANSLATION-JSON-UNWRAP-01 — PRODUCTION HOTFIX
+- Typ: Hotfix, Übersetzungsanzeige, toleranter JSON-Parser, Client-Guard, Regressionstests
+- Status: **DEPLOYED & CLIENT-VERIFIED** (Live-Modellübersetzung wegen Provider-502 offen)
+- Branch/PR: `fix/jm-translation-json-unwrap-01`; Commit `54703a8`; PR #69; Merge mit `--match-head-commit` als `776112b`; kein Force-Push, keine Branch-Löschung.
+- Ursache: Modell lieferte ungültiges JSON (unescaped Quotes/Newlines) oder abgeschnittene/double-encoded Antworten; `parseTranslation` fiel auf Rohtext zurück und zeigte `{"translation":"…"}`. Vorbestehend, nicht durch das Security-Release verursacht.
+- Fix: strikte JSON-Extraktion, tolerantes Entpacken (fenced/double-encoded/truncated/malformed) mit JSON-Escape-Decoding, nie Wrapper an den Client; Client-Guard `unwrapTranslationEnvelope`. Keine neue Abhängigkeit, keine Vertragsänderung.
+- Tests: 6 neue API-Fälle + 5 Client-Guard-Fälle; CodeQL PR-Run 45688309791 PASS; Vollsuite **2166 PASS / 5 skipped** (204 Dateien); Build/tsc/Secret/Diff PASS.
+- Deployments: `dpl_93oR7aAqqAGHRk6hJNo77kLrZ2KB` (mays-jobsearch), `dpl_2iMsaug3vqaHe3ss2ba5B5SbnWdE` (mays-job-matcher), Production READY, Footer `production · main · 776112b`.
+- Production: 8 Routen × Desktop/Mobile weiterhin 200/0 Fehler/0 Overflow; Client-Guard auf der Live-Domain mit gemockter Wrapper-Antwort verifiziert (kein `{"translation"`, 0 Errors). Echte Modellübersetzung derzeit 502 `model_unavailable`; Server-Parser durch Tests abgedeckt, Live-Check offen.
+- CodeQL `main`: 0 offene Alerts in `/language:javascript-typescript` (Analyse 45689378465, 0 Ergebnisse). 21 Altsignale der retired Kategorie `/language:javascript` bleiben offen; keine Dismissals.
+- AI/Privacy: keine neue Datenkategorie, kein neuer Provider, keine zusätzlichen Modellaufrufe in Tests; Production-Test mit synthetischer Anzeige, keine echten Bewerbungen/CVs verändert.
+- Bericht: `docs/reports/JM-SECURITY-CODEQL-RELEASE-01-REPORT.md`.
+
+2026-11-25 · JM-SECURITY-CODEQL-RELEASE-01 — CONTROLLED MERGE & PRODUCTION VERIFICATION
+- Typ: Release, PR-Merge, automatische Vercel-Production-Deployments, Production-Smoke, Job-Display-Regression, Übersetzungsfehler
+- Status: **PRODUCTION VERIFICATION FAILED — HOTFIX REQUIRED** (nicht PRODUCTION VERIFIED)
+- Branch/PR: `security/jm-codeql-remediation-01` → PR [#68](https://github.com/maynowak/mays-jobsearch/pull/68); geprüfter HEAD `1cbba4e`; Merge mit `--match-head-commit` als `b4157e5`; `origin/main` `b4157e5`; kein Force-Push, keine Branch-Löschung.
+- Deployments: `mays-jobsearch` `dpl_AWaZMp1gMfLeL4BA9UCVby1E7rFE`, `mays-job-matcher` `dpl_HETitnDLu17FSTeopvp2j7YHSyoc`, beide Production READY; Footer `production · main · b4157e5`; kein manuelles `vercel --prod`.
+- Security: Baseline 86 Alerts → **0** auf `1cbba4e` (Run 45679171026, PR-Run 45678578404); keine Dismissals, keine Regel-/Dateiausschlüsse; `codeql.yml`, `package.json`, `vercel.json`, `api/ris/**`, AWS/Terraform/Cognito/Consent unverändert.
+- Gates: `tsc`/Build/`node --check`/`git diff --check`/Secret-Scan PASS; serielle Vollsuite **2158 PASS / 5 skipped** (203 Dateien, 3 opt-in Live-Suiten skipped); fokussierte Security-Suiten 182 PASS (12 Dateien); neue deterministische Job-Display-E2E PASS (1440/390, 0 XSS/Errors/Overflow).
+- Job-Display-Vergleich: 16 Fixtures `main aa57500` vs. Release; kein unerwarteter Textverlust, Block-/Listen-/Tabellenstruktur erhalten, Entities/Doppel-Encoding korrekt, URLs intakt, Script/Style/SVG/MathML entfernt; 0 unsichere Muster in Ausgaben.
+- Production-Smoke: 8 Routen × Desktop/Mobile HTTP 200, 0 Errors, 0 Overflow; eine echte Suche → 50 Karten, 4 Stichproben 5.140–6.910 Zeichen, 0 Roh-HTML/XSS/Entity-Leaks, 1 `/api/jobs`, 0 `/api/match`, 0 `/api/job-details`.
+- Blocker: Übersetzungsansicht zeigt den Roh-Wrapper `{"translation":"…"}`. Ursache `parseTranslation()`-Fallback bei ungültigem Modell-JSON (unescaped Quotes/Newlines). **Vorbestehend, keine Regression** (Parser auf `aa57500` identisch; 0 Diff-Treffer); Release änderte nur die Eingabe-Extraktion. Kein Rollback empfohlen (behebt nichts, bringt 86 Alerts zurück).
+- Freigabe offen: separater Hotfix (tolerantes Entpacken/Unescapen + Client-Guard + Regressionstests), danach CodeQL/Vollsuite/Preview/Production-Übersetzung erneut prüfen.
+- AI/Privacy/Data-Flow: keine neue Datenkategorie, kein neuer Provider, keine zusätzlichen Modellaufrufe durch die Tests (gemockt); Production-Suche ohne KI-Bewertung; keine echten Bewerbungen/CVs verändert; keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung; keine Secrets in Bericht/Logs.
+- Bericht: `docs/reports/JM-SECURITY-CODEQL-RELEASE-01-REPORT.md`.
+
+2026-11-25 · XREPO-PARALLEL-ORCHESTRATION-01 — PARALLEL JOBSEARCH↔RIS ANALYSIS
+- Typ: Vier parallele Read-only-Analyseagenten (Erasure P0, Consent P0, Integration P1, Integration P2), Cross-Repo-Konsolidierung
+- Status: **XREPO PARALLEL ANALYSIS COMPLETE**
+- Branch: `docs/xrepo-parallel-analysis-01`; Basis Jobsearch `origin/main` `aa57500`; RIS-Basis `origin/main` `97a60df`; keine Implementierung, kein Merge/Deployment, keine AWS-/Terraform-Operation, keine Schreib-/Löschoperation.
+- Befunde: **A P0** Jobsearch-BFF `/v1/partner/me/erasure` fehlt in RIS-Main/OpenAPI/API-STANDARD; RIS-Main hat nur `POST /me/erasure`; Partner-Route existiert auf `70a9fb9`/`451c12e`, nicht auf Main. **B P0** RIS-IaC auf Main verdrahtet `CV_STORAGE_CONSENT_ENFORCED`, `SEARCH_PROFILE_STORAGE_CONSENT_ENFORCED`, `CONSENT_NOTICE_STATE_ENFORCED` und `CONSENT_PILOT_ALLOWLIST` nicht; ein Apply von Main würde Live-Enforcement still abschwächen. Zusätzlich Doku-Drift `CONSENT-V1.md` („nicht deployt“). **C P1** Remote-Anschreibenversionen und `adoptCoverLetter` sind in Jobsearch-Adaptern nicht implementiert, obwohl BFF/RIS sie unterstützen; Suchprofil-Updates senden keine optimistische `version`, ATS-BFF lehnt sie ab; Builder-CV-Referenzen werden im Remote-UI angeboten, aber vom BFF/RIS-Vertrag abgelehnt. **D P2** RIS Privacy-Inspect/Export ist nicht über Jobsearch-BFF/UI erreichbar; CV-Listenlimit BFF 100 vs RIS 50; Multi-Source-/Multi-Location-Jobs werden ohne Pre-Check generisch mit 422 abgelehnt.
+- Sicherheit: Erasure-404 ist fail-closed, aber Verfügbarkeits-/Privacy-Risiko; Consent-IaC-Drift ist kritisch; RIS akzeptiert Art.-9-lose Grants ohne BFF; Pilot-Allowlist ist überladen; Privacy-Export enthält PII und ist standardmäßig PARTIAL; keine Live-AWS-Prüfung durchgeführt.
+- Empfehlungen: RIS-Erasure-Partnerroute auf Main vorwärts korrigieren; RIS-Consent-IaC/Doku alignen und Plan ohne Env-Entfernung nachweisen; danach Jobsearch Builder-CV-Restriktion, Remote-Versionierung, Profile-Versionierung; Multi-Source-Pre-Check; Privacy-Export nur mit Privacy/Legal-Freigabe; CV-Limit auf 50 clampen. Details/Reihenfolge/Freigaben im Bericht.
+- Bericht: `docs/reports/XREPO-PARALLEL-ORCHESTRATION-01-REPORT.md`; Workspace-Kopie `XREPO-PARALLEL-ORCHESTRATION-01-REPORT.md` (gleicher Inhalt); RIS-Dokumentation separat vorgeschlagen.
+- Grenzen: Agenten read-only; Agent B/C nutzten gepinnte Blobs/Snapshots ohne Shell; Live-`ris-dev`-Route/Flags nicht geprüft, separater Read-only-AWS-Freigabepunkt; keine Code-/API-/AWS-/Terraform-/Consent-Änderung.
+
+2026-11-25 · JM-DOC-RELEASE-01 — CONTROLLED DOCUMENTATION RELEASE
+- Typ: freigegebener Docs-PR-Merge, automatische Vercel-Production-Deployments, Public Smoke
+- Status: **DOCUMENTATION PRODUCTION VERIFIED**
+- PR [#67](https://github.com/maynowak/mays-jobsearch/pull/67); Docs-HEAD `ccaaffd`; vorherige Main-Basis `df1fe01`; Merge-Commit/Production-SHA `aa57500`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Umfang: 27 Dateien, +1803/−199, ausschließlich Dokumentation; keine Code-/API-/RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-/CI-CD-Änderung. CodeQL ist per Path-Filter auf `src/**`, `api/**`, Paket-/Lock- und CodeQL-Config begrenzt und wird bei einem reinen Docs-Diff bewusst nicht gestartet.
+- Review: README, Roadmap, Architektur inkl. Jobsearch↔RIS-Grenze, User Guide, Development/Deployment, Wiki, Matrix und Konsistenzbericht geprüft; relative Linkprüfung 25 Dokumente PASS; `git diff --check` PASS; Secret-Scan sauber; Screenshot-Pfade vorhanden; keine unbestätigten Produktivfunktionen.
+- Deployments: `dpl_p4GBqFNoYENBgqjFN3iyN47mCTve` (`mays-jobsearch`) und `dpl_HgJoHfifWLqftxW58nHs7VxcLB8G` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · aa57500`; Smoke `/`, `/datenschutz`, `/impressum` bei 1440/390 je 200, 0 Overflow, 0 Console-/Page-Errors.
+- Dokumentation: `docs/reports/JM-DOC-RELEASE-01-PRODUCTION.md`; Docs-Branch `docs/jm-doc-release-01`.
+- Grenzen: keine Produktänderung, keine RIS-/AWS-/Terraform-Operation; RIS-Repository in Phase 1 nicht verändert.
+
+2026-11-25 · JM-UX-CONSOLIDATED-RELEASE-01 — CONTROLLED MAIN MERGE & PRODUCTION VERIFICATION
+- Typ: freigegebener PR-Merge, automatische Vercel-Production-Deployments, Public Smoke, authentifizierte Read-only-Production-E2E
+- Status: **PRODUCTION VERIFIED**
+- PR [#66](https://github.com/maynowak/mays-jobsearch/pull/66); Integrations-HEAD `5ef5df8`; Main-Basis `e92d78b`; Merge-Commit `df1fe01`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Gates: PR `MERGEABLE`/`CLEAN`; erwarteter Diff 94 Dateien (+1643/−136); `tsc`/Build PASS; fokussiert Profile/Applications **85**, CV-Import **31**, CV-Editor **31**, Applications-Edit/Dialog/Own-Letter **71**; serielle Vollsuite **2113 PASS / 5 skipped** (202 Dateien); Integration-E2E Profile/Import/Editor/Applications und Regressionen `cv-import-ux-07`/`cv-builder-ux-08` PASS; CodeQL PASS; beide Vercel-Previews, Vercel Deployments und Preview Comments PASS; `git diff --check`/Secret-Scan PASS.
+- Production: automatische Deployments `dpl_GXVGsTs1u98y2952bCqGUVuCtBgE` (`mays-jobsearch`) und `dpl_BrrdddUMvZ21YyUTWn8z6RidGVPr` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · df1fe01`. Public Smoke: 42 Checks bei 320/390/768/1024/1440/1920 über `/`, `/profil`, `/profil?tab=applications`, `/datenschutz`, `/impressum`, `/anmelden`, `/cv-builder/workspace`, 0 Overflow, 0 Console-/Page-Errors; Import/Editor guest bei 1440/390 PASS.
+- Authentifizierte Production-E2E (bestehende Session, read-only, keine Tokens/Cookies gelesen): Profil-Header 123/1180/94 und Sidebar 123/279 in allen sechs Bereichen identisch, Applications-Main 970 vs. 871; Edit-Dialog/unchanged Tabwechsel und Eigenanschreiben erreichbar ohne Speichern; Import-, Editor-Expand/Collapse und Screenshot-Modus PASS; **0** Write-Requests, 0 Console-/Page-Errors. Keine authentifizierten Screenshots committet (Kontodaten), nur strukturelle Assertions.
+- Screenshots: `docs/reports/assets/JM-UX-CONSOLIDATED-RELEASE-01/` (integriert, synthetisch) und `docs/reports/assets/JM-UX-CONSOLIDATED-RELEASE-01-PRODUCTION/` (Production guest, CV-Import/Editor 1440/390).
+- Grenzen: `cv-builder-workflow-02a` bleibt vorbestehende Altlast (alter Buttontext, identisch auf `e92d78b`); Applications-Arbeitsfläche bewusst schmaler als die frühere 1600-px-Shell; erster Integrations-Vollauf mit unabhängigem Docker-`beforeAll`-Timeout, isoliert und im Wiederholungslauf grün.
+- Cleanup: keine synthetischen Serverdaten, 0 Writes im authentifizierten Lauf, Chrome-Session geschlossen, keine `mj-rest-redis-*`-Container, keine Tokens/Cookies in Bericht/Screenshots.
+- Dokumentation: `docs/reports/JM-UX-CONSOLIDATED-RELEASE-01-PRODUCTION.md`; Docs-Branch `docs/jm-ux-consolidated-release-01-production`; kein Ris-/AWS-/Terraform-/Cognito-/Consent-/Storage-/ATS-/KI-/Persistenz-/CI-CD-Eingriff.
+
+2026-11-25 · JM-APPLICATION-EDIT-TAB-NAVIGATION-01 — CONTROLLED MAIN RELEASE & PRODUCTION E2E
+- Typ: kontrollierter PR-Merge, automatische Vercel-Production-Deployments, Public Smoke, authentifizierter RIS-Browser-E2E, DE/EN/A11y, Docs-Branch
+- Status: **PRODUCTION VERIFIED**
+- PR [#65](https://github.com/maynowak/mays-jobsearch/pull/65), Feature-Head `9688978`, Basis `c058555`, Merge-Commit `e92d78b`; `--match-head-commit` geprüft; kein Force-Push, keine Branch-Löschung, kein manuelles Deployment.
+- Gates: Diff 13 Dateien (+1312/−41) ausschließlich erwartet; `tsc`/Build PASS; fokussiert **69 PASS**; serielle Vollsuite **2105 PASS / 5 skipped**; Mock-Browser-E2E PASS; CodeQL PASS; beide Vercel-Previews, Vercel Deployments und Preview Comments PASS; PR `MERGEABLE`/`CLEAN`.
+- Production: automatische Deployments `dpl_G8GUCGNnEXTPcothF5UTRccLxL1J` (`mays-jobsearch`) und `dpl_6gTLYaUPr7qmwauyQoG8tBWutUmn` (`mays-job-matcher`) READY; beide Domains Footer `Version 2.2.0 · production · main · e92d78b`; Smoke `/`, `/profil`, `/profil?tab=applications`, `/datenschutz`, `/impressum`, `/anmelden`, `/cv-builder/workspace` je 200, 0 Overflow (320/390/1440), 0 Console-/Page-Errors, Guest-Hinweis vorhanden.
+- Authentifizierter RIS-E2E: bestehender Production-Chromium-Tab via CDP, keine Tokens/Cookies gelesen oder kopiert; Remote-Storage aktiv; ausschließlich synthetischer Datensatz (`OpenCode Synthetic QA`). Create → eigenes Anschreiben speichern (PATCH) → Reload mit identischem Text → Bearbeiten/Speichern → Tabwechsel nach bestätigtem Speichern → Dirty-Dialog-Speicherung → Reload bestätigt Text → Versionen unverändert 0, **kein `action=version`** → Delete → Reload ohne Datensatz. 0 AI-/Profile-/Match-/ATS-Calls, 0 5xx, keine echten Bewerbungen verändert. Insgesamt 1 Create, 3 Updates, 1 Delete.
+- DE/EN/A11y: zusätzlicher englischer Mock-BFF-Lauf bei 1440/390 PASS (Dialogtitel/Aktionen, Fokus auf Speichern, Escape erhält Werte, eigenes Anschreiben + Remote-Hinweis, Versionen unverändert, 0 Overflow, 0 AI-Calls).
+- Grenze: Remote-`addCoverLetterVersion` ist im bestehenden 01C-Adapter nicht implementiert; deshalb wurde im authentifizierten Lauf der unveränderte Bestand 0 und das Fehlen eines Versions-Writes geprüft; Erhalt einer bestehenden Version (1→1) ist durch Mock-E2E und Unit-Tests belegt.
+- Datenschutz/AI: keine neue Datenkategorie, kein neuer Consent-Zweck, keine neue Persistenz/API; keine RIS-/AWS-/Terraform-/Cognito-/Consent-/Storage-Vertragsänderung; keine echten Kontodaten in Bericht oder Commit.
+- Bericht: `docs/reports/JM-APPLICATION-EDIT-TAB-NAVIGATION-01-CONTROLLED-MAIN-RELEASE.md`.
+
 2026-11-25 · JM-JOB-DETAILS-TRANSLATION-HOTFIX-01 — TRANSLATION JSON RECOVERY & PRODUCTION-SAFE DISPLAY
 - Typ: Hotfix Jobdetails-Übersetzung, begrenzter JSON-Parser, Client-Guard, HTML-Security-Regression, synthetische E2E
 - Status: **READY FOR HOTFIX RELEASE APPROVAL**
