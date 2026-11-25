@@ -1,3 +1,15 @@
+2026-11-25 · JM-JOB-DETAILS-TRANSLATION-HOTFIX-01 — TRANSLATION JSON RECOVERY & PRODUCTION-SAFE DISPLAY
+- Typ: Hotfix Jobdetails-Übersetzung, begrenzter JSON-Parser, Client-Guard, HTML-Security-Regression, synthetische E2E
+- Status: **READY FOR HOTFIX RELEASE APPROVAL**
+- Branch: `hotfix/jm-job-details-translation-01`; Basis `origin/main` `b4157e5`; Implementierung `21aa4bd`; Draft-PR #70; kein Main-Merge/Deployment, keine RIS-/AWS-/Terraform-/Cognito-/Consent-Änderung.
+- Ursache: `parseTranslation()` fiel bei jedem JSON-Parse-Fehler auf den rohen Modelltext zurück. Dadurch wurden Wrapper wie `{"translation":"…"}` oder abgeschnittene Wrapper sichtbar; der Client rendert das API-Ergebnis über den bestehenden sanitisierten HTML-Pfad.
+- Umsetzung: striktes JSON-Parsing zuerst; danach ausschließlich begrenzte Extraktion eines eindeutig erkennbaren `translation`-Wrappers (escaped/malformed Quotes, unescapte Newlines, doppelt codiertes JSON, Fences); keine allgemeine JSON-Reparatur. Abgeschnittene/nicht übersetzbare Wrapper liefern `""` → 502, Original bleibt erhalten. Plain-Text-Fallback nur für Nicht-Wrapper. Übersetzungen >30k Zeichen schlagen fehl statt still gekürzt zu werden. Client-Guard `normalizeTranslationForDisplay()` verhindert die Anzeige offensichtlicher Wrapper ohne zweite Modellanfrage; validierte Übersetzungen bleiben im bestehenden DOMPurify-Pfad.
+- Tests: `tsc`/Build PASS; fokussiert **94 PASS** (5 Dateien: API-Translation, Job-Details, RemainingCard, Translation-Guard, safeHtml); Browser-E2E `jm-job-details-translation-hotfix-01` PASS (Wrapper → Fehler + Original, Clean-HTML → sanitisiert, kein `window.__xss`, 0 unerwartete Calls/Errors); bestehende Job-Display-/Security-E2E PASS; serielle Vollsuite **2182 PASS / 5 skipped** (207 Dateien); `git diff --check`/Secret-Scan PASS.
+- Sicherheit: keine neue HTML-Ausgabe, kein `dangerouslySetInnerHTML` außerhalb des bestehenden Sanitizers, keine neue Modellanfrage bei Wrapper-Fehler, Originaltext bleibt bei Fehlern erhalten; keine XSS-Regression.
+- Grenzen: keine allgemeine Reparatur beliebig beschädigten JSONs; mehrdeutige Wrapper werden bewusst nicht gerendert; >30k Übersetzungen werden abgelehnt; keine echten Provider-Aufrufe.
+- Screenshots: `docs/reports/assets/JM-JOB-DETAILS-TRANSLATION-HOTFIX-01/` (`before-translation-1440.png`, `after-wrapper-error-1440.png`, `after-clean-translation-1440.png`).
+- Bericht: `docs/reports/JM-JOB-DETAILS-TRANSLATION-HOTFIX-01.md`.
+
 2026-11-25 · JM-SECURITY-CODEQL-REMEDIATION-01 — CODEQL SECURITY FINDINGS REMEDIATION
 - Typ: Security-Inventar, HTML-/XSS-Härtung, URL-Hostvalidierung, CSPRNG-Session-IDs, Test-/E2E-Hygiene, Runtime-Defekt, Regressionstests
 - Status: **READY FOR SECURITY REVIEW**
