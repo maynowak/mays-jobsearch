@@ -48,6 +48,7 @@
     "test:e2e:cv-builder-mapping-02c": "node tests/e2e/cv-builder-mapping-02c.mjs",
     "test:e2e:cv-builder-import-ux-02d": "node tests/e2e/cv-builder-import-ux-02d.mjs",
     "test:e2e:cv-import-navigator-02": "node tests/e2e/jm-cv-import-navigator-02.mjs",
+    "test:e2e:cv-editor-navigator-03": "node tests/e2e/jm-cv-editor-navigator-03.mjs",
     "test:e2e:cv-builder-real-world-qa-02e": "node tests/e2e/cv-builder-real-world-qa-02e.mjs",
     "test:e2e:cv-builder-full-page-workspace-03a": "node tests/e2e/cv-builder-full-page-workspace-03a.mjs",
     "test:e2e:cv-builder-ux-06": "node tests/e2e/cv-builder-ux-06-navigation-drafts.mjs",

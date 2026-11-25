@@ -1,3 +1,15 @@
+2026-11-24 · JM-CV-EDITOR-NAVIGATOR-03 — CV EDITOR RADAR
+- Typ: Fullpage-Editor-Navigation, Validierungsfokus, Turbo-Hände-Koordination, Accessibility/E2E
+- Status: **READY FOR VISUAL REVIEW**
+- Branch: `feature/jm-cv-editor-navigator-03`; Basis `origin/main` `fbefde3`; Implementierung `b6cf43d`; Branch gepusht; kein Main-Merge, kein Deployment.
+- Umsetzung: `RadarNavigator` nur im Fullpage-Editor; Ziele für alle acht Abschnitte, Fehlerübersicht und Speicher-/Exportaktionen. Glass-Schiene links (Abstand zu rechten Turbo-Händen und Vorschau), mobiler Trigger oberhalb der Karte. Eingeklappte Abschnitte werden vor Scroll geöffnet; Status in Hover-/Panel-/ARIA-Text und Farben Cyan/Amber/Rot/Türkis.
+- Validierung: Fehleranzahl am Abschnitt, Validierungsziel, tatsächlicher Feldfokus plus Highlight; mobile Rückkehr in Bearbeitungsansicht; `goToFirstError()` unverändert. Fehler-/Aktionsstatus aktualisieren sich nach Korrektur; keine Validierungsregel geändert.
+- Turbo-Hände: unverändertes Verhalten plus imperativer `stop()`-Handle; Radar `onBeforeNavigate` stoppt laufende Hand-Animation. Native non-passive Wheel-Steuerung aus CORE bleibt; Screenshot-Modus entfernt Radar und Hände.
+- Tests: fokussiert **108 PASS** (8 neue Editor-Navigator-Tests); Browser-E2E `jm-cv-editor-navigator-03` PASS (9+ Marker, 8 mobile Abschnitte, 5 Labels, Scroll-Aktivierung, Tastatur stoppt Turbo-Hände mit 0 `scrollBy`, Fehlerfokus/-highlight, Fehlerkorrektur, Preview-Rückkehr, Wide/Screenshot, 1920/1440/768/390, 0 Overflow/Errors); bestehende Editor-, Import- und Match-Radar-E2E PASS; Build/Diff/Secret-Scan PASS; Vollsuite **2086 PASS / 5 skipped** (202 Dateien); ältere `cv-builder-workflow-02a` erwartet weiterhin den vorbestehenden alten Button-Text und ist keine Radar-Regression.
+- Screenshots: `docs/reports/assets/JM-CV-EDITOR-NAVIGATOR-03/`.
+- Grenzen: keine RIS-/AWS-/Cognito-/Consent-/Storage-/Parser-/PDF-Export-Änderung; kein Main-Merge/Deployment.
+- Bericht: `docs/reports/JM-CV-EDITOR-NAVIGATOR-03.md`.
+
 2026-11-24 · JM-CV-IMPORT-NAVIGATOR-02 — CV IMPORT RADAR
 - Typ: Fullpage-Import-Navigation, Wiederverwendung CORE-01, Status-/Pagination-/Filter-Adapter, Accessibility/E2E
 - Status: **READY FOR VISUAL REVIEW**
