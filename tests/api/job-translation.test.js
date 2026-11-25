@@ -5,7 +5,7 @@ vi.mock("../../api/_lib/ai.mjs", () => ({
   chat: vi.fn(),
 }));
 
-import handler from "../../api/job-details.mjs";
+import handler, { parseTranslation } from "../../api/job-details.mjs";
 import { chat } from "../../api/_lib/ai.mjs";
 import { HttpError } from "../../api/_lib/filter.mjs";
 
@@ -177,5 +177,50 @@ describe("JM-JOB-TRANSLATION-01: job translation API", () => {
     expect(prompt).not.toContain("ALERT_TOKEN_4");
     expect(prompt).not.toContain("ALERT_TOKEN_5");
     expect(prompt).not.toContain("<script");
+  });
+});
+
+
+describe("JM-JOB-DETAILS-TRANSLATION-HOTFIX-01: bounded translation parsing", () => {
+  it.each([
+    ["valid JSON", '{"translation":"Wir suchen eine Fachkraft."}', "Wir suchen eine Fachkraft."],
+    ["escaped quotes", '{"translation":"Er sagte: \\"Hallo\\"."}', 'Er sagte: "Hallo".'],
+    ["malformed inner quotes", '{"translation":"Er sagte: "Hallo"."}', 'Er sagte: "Hallo".'],
+    ["unescaped newline", '{"translation":"Zeile 1\nZeile 2"}', "Zeile 1\nZeile 2"],
+    ["truncated before quote", '{"translation":"Abgeschnitten', ""],
+    ["double-encoded JSON", JSON.stringify(JSON.stringify({ translation: "Doppelt kodiert." })), "Doppelt kodiert."],
+    ["plain text", "Einfacher Text mit Umlauten äöü.", "Einfacher Text mit Umlauten äöü."],
+    ["fenced JSON", '```json\n{"translation":"Gefenced."}\n```', "Gefenced."],
+    ["invalid object", '{"foo":"bar"}', ""],
+    ["empty", "   ", ""],
+  ])("parses %s", (_label, input, expected) => {
+    expect(parseTranslation(input)).toBe(expected);
+  });
+
+  it("rejects an oversized translation instead of silently truncating it", () => {
+    expect(parseTranslation(JSON.stringify({ translation: "x".repeat(30001) }))).toBe("");
+  });
+
+  it("never returns a visible JSON wrapper for malformed model output", async () => {
+    vi.mocked(chat).mockResolvedValueOnce('{"translation":"Wir suchen "Fachkräfte" für AWS."}');
+    const res = await call(englishJob);
+    expect(res.statusCode).toBe(200);
+    expect(res.data.translation).toBe('Wir suchen "Fachkräfte" für AWS.');
+    expect(res.data.translation).not.toContain('{"translation"');
+  });
+
+  it("fails closed for a truncated wrapper and keeps the original available", async () => {
+    vi.mocked(chat).mockResolvedValueOnce('{"translation":"Abgeschnitten');
+    const res = await call(englishJob);
+    expect(res.statusCode).toBe(502);
+    expect(res.data.code).toBe("bad_ai_response");
+    expect(res.data.translation).toBeUndefined();
+  });
+
+  it("fails closed for an invalid JSON object without a translation", async () => {
+    vi.mocked(chat).mockResolvedValueOnce('{"foo":"bar"}');
+    const res = await call(englishJob);
+    expect(res.statusCode).toBe(502);
+    expect(res.data.translation).toBeUndefined();
   });
 });

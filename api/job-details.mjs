@@ -35,27 +35,112 @@ function translationPlainText(value) {
     .trim();
 }
 
-function parseTranslation(content) {
-  let text = String(content ?? "").trim();
-  text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-  if (!text) return "";
+function stripTranslationFence(value) {
+  return value
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+}
 
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start !== -1 && end > start) {
+function looksLikeTranslationWrapper(value) {
+  return /^(?:```(?:json)?\s*)?["']?\s*\{\s*\\?["']?translation/i.test(value);
+}
+
+function decodeTranslationString(raw) {
+  try {
+    return JSON.parse(`"${raw}"`);
+  } catch {
+    // Bounded escape recovery for clearly recognizable wrapper strings only.
+    return raw
+      .replace(/\\u([0-9a-fA-F]{4})/g, (_match, hex) =>
+        String.fromCharCode(Number.parseInt(hex, 16)))
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t")
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\")
+      .replace(/\u0000/g, "");
+  }
+}
+
+function extractTranslationWrapper(value) {
+  const key = /"?translation"?\s*:/i.exec(value);
+  if (!key) return null;
+  const rest = value.slice(key.index + key[0].length).trimStart();
+  if (rest[0] !== '"') return null;
+
+  // Use the last unescaped quote before the closing brace. This keeps
+  // malformed inner quotes inside the translation while still rejecting
+  // arbitrary JSON structures.
+  const brace = value.lastIndexOf("}");
+  const limit = brace > key.index ? brace : rest.length;
+  let quote = -1;
+  let escaped = false;
+  for (let index = 1; index < limit; index += 1) {
+    const char = rest[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === '"') quote = index;
+  }
+  if (quote < 1) return null;
+  return decodeTranslationString(rest.slice(1, quote));
+}
+
+function translationCandidate(value, depth = 0) {
+  const text = stripTranslationFence(String(value ?? "").trim());
+  if (!text) return "";
+  if (looksLikeTranslationWrapper(text) && depth < 2) {
+    return parseTranslation(text, depth + 1);
+  }
+  if (text.length > MAX_TRANSLATION_OUTPUT) return "";
+  if (looksLikeTranslationWrapper(text)) return "";
+  return text;
+}
+
+export function parseTranslation(content, depth = 0) {
+  const raw = String(content ?? "").trim();
+  if (!raw) return "";
+
+  // 1. Strict JSON parsing, including a leading/trailing markdown fence.
+  const fenced = stripTranslationFence(raw);
+  for (const candidate of [raw, fenced]) {
     try {
-      const parsed = JSON.parse(text.slice(start, end + 1));
-      if (typeof parsed.translation === "string" && parsed.translation.trim()) {
-        return parsed.translation.trim().slice(0, MAX_TRANSLATION_OUTPUT);
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object" && typeof parsed.translation === "string") {
+        return translationCandidate(parsed.translation, depth);
+      }
+      // 6. Double-encoded JSON string.
+      if (typeof parsed === "string") {
+        const nested = translationCandidate(parsed, depth);
+        if (nested) return nested;
       }
     } catch {
-      // Fall through to the plain-text fallback below.
+      // Continue with the bounded wrapper extraction.
     }
   }
 
-  // Some compatible models ignore the JSON instruction. The result is still
-  // used as plain text, but never rendered as unsanitized HTML.
-  return text.slice(0, MAX_TRANSLATION_OUTPUT);
+  // 2-4. Recognizable wrapper extraction for escaped, over-escaped or
+  // newline-containing quotes. No general JSON repair.
+  const extracted = extractTranslationWrapper(fenced);
+  if (extracted !== null) {
+    const candidate = translationCandidate(extracted, depth);
+    if (candidate) return candidate;
+  }
+
+  // 5/8. A truncated or unusable wrapper must never be returned as text.
+  if (looksLikeTranslationWrapper(fenced)) return "";
+
+  // A JSON-like answer without a usable translation is not rendered as text.
+  if (/^[\[{]/.test(fenced)) return "";
+
+  // 7. Plain-text fallback only for answers that are not JSON wrappers.
+  return translationCandidate(fenced, depth);
 }
 
 async function handleTranslation(req, res, body) {

@@ -456,6 +456,51 @@ it("renders expanded description as actual HTML (DOM elements) when expanded", a
     expect(screen.getByText(/English original description/i)).toBeInTheDocument();
   });
 
+  it("rejects an unprocessed translation wrapper and keeps the original", async () => {
+    const job = createTestJob({
+      language: "en",
+      description: "<p>English original description.</p>",
+      descriptionPlain: "English original description. ".repeat(12),
+    });
+    vi.mocked(translateJobDescription).mockReset();
+    vi.mocked(translateJobDescription).mockResolvedValueOnce({
+      translation: '{"translation":"Deutsche Fassung."}',
+      sourceLanguage: "en",
+      targetLanguage: "de",
+      translated: true,
+    });
+
+    renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Deutsch lesen" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Übersetzung ist derzeit nicht verfügbar/i);
+    expect(screen.getByText(/English original description/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\{"translation"/i)).not.toBeInTheDocument();
+  });
+
+  it("sanitizes translated HTML and does not create an XSS path", async () => {
+    const job = createTestJob({
+      language: "en",
+      description: "<p>English original description.</p>",
+      descriptionPlain: "English original description. ".repeat(12),
+    });
+    vi.mocked(translateJobDescription).mockReset();
+    vi.mocked(translateJobDescription).mockResolvedValueOnce({
+      translation: '<p>Deutsche Fassung mit <strong>HTML</strong>.</p><img src=x onerror="window.__xss=1"><script>window.__xss=2</script>',
+      sourceLanguage: "en",
+      targetLanguage: "de",
+      translated: true,
+    });
+
+    const { container } = renderWithProvider(job);
+    fireEvent.click(screen.getByRole("button", { name: "Deutsch lesen" }));
+
+    expect(await screen.findByText(/Deutsche Fassung mit/i)).toBeInTheDocument();
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector("script")).toBeNull();
+    expect(container.innerHTML).not.toContain("window.__xss");
+  });
+
   it("allows selecting another supported model after model_unavailable", async () => {
     __resetModelsCacheForTests();
     vi.mocked(fetchModels).mockResolvedValue({
