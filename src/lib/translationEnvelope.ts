@@ -15,3 +15,17 @@ export function unwrapTranslationEnvelope(value: string): string {
   }
   return body.replace(/^"|"$/g, "").trim();
 }
+
+
+const UNPROCESSED_WRAPPER = /^(?:```(?:json)?\s*)?["']?\s*\{\s*\\?["']?translation\b/i;
+
+/**
+ * Strict display guard. The server owns parsing; the client only rejects an
+ * obviously unprocessed wrapper so it can show the controlled error state and
+ * keep the original description.
+ */
+export function normalizeTranslationForDisplay(value: string): string | null {
+  const text = String(value ?? "").trim();
+  if (!text || UNPROCESSED_WRAPPER.test(text)) return null;
+  return text;
+}
