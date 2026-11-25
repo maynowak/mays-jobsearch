@@ -1,3 +1,12 @@
+2026-11-25 · JM-APPLICATION-SAVE-UX-01 — STORAGE-MODE-AWARE DRAFT CONFIRMATION
+- Typ: UI-Erfolgsmeldung, Session-/Remote-Speichermodus, i18n, Unit-/Browser-E2E
+- Status: **READY FOR REVIEW**
+- Branch: `fix/jm-application-save-ux-01`; Basis `origin/main` `431f938`; Implementierung `2029a4e`; Branch gepusht; kein Main-Merge/Deployment.
+- Umsetzung: `handleSaveManualDraft()` leert alte Notices, zeigt nach bestätigtem Remote-Create/List die Konto-Meldung, im Session-Modus die Sitzungsmeldung. Fehler zeigen keine Erfolgsmeldung; Duplikat-, Idempotenz-, Formular- und Repository-Verhalten unverändert. Neuer i18n-Schlüssel `applications.new.draftCreatedRemote`; Session-Schlüssel bleibt.
+- Tests: fokussiert **59 PASS** in Applications-/Formular-Tests; Remote-Recovery-E2E PASS (Create-Fehler ohne Erfolgsmeldung, Idempotency-Retry, Konto-Meldung, Reload, 0 AI-Calls); Session-E2E DE/EN PASS; Build/Diff/Secret-Scan PASS; Vollsuite **2091 PASS / 5 skipped** (202 Dateien).
+- Grenzen: keine RIS-/AWS-/Cognito-/Consent-/Storage-Vertrags-/Datenänderung, keine zusätzlichen API-/KI-Aufrufe.
+- Bericht: `docs/reports/JM-APPLICATION-SAVE-UX-01.md`.
+
 2026-11-24 · JM-CV-EDITOR-NAVIGATOR-03 — CV EDITOR RADAR
 - Typ: Fullpage-Editor-Navigation, Validierungsfokus, Turbo-Hände-Koordination, Accessibility/E2E
 - Status: **READY FOR VISUAL REVIEW**
