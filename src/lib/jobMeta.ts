@@ -77,6 +77,7 @@ export function descriptionPreview(
   previewLength: number,
   expanded: boolean
 ): string | null {
+  // SECURITY: text-only output. Render it as a React text node, never as HTML.
   if (!description) return null;
   const plainText = stripHtml(description);
   if (!plainText) return null;

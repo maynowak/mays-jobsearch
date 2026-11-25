@@ -16,6 +16,12 @@ const NAMED_ENTITIES = Object.freeze({
   gt: ">",
   quot: '"',
   apos: "'",
+  AMP: "&",
+  LT: "<",
+  GT: ">",
+  QUOT: '"',
+  COPY: "\u00a9",
+  REG: "\u00ae",
   nbsp: "\u00a0",
   thinsp: "\u2009",
   ensp: "\u2002",
@@ -149,6 +155,14 @@ const BLOCK_ELEMENTS = new Set([
 
 const ENTITY_PATTERN = /&(?:#([0-9]{1,7})|#[xX]([0-9a-fA-F]{1,6})|([a-zA-Z][a-zA-Z0-9]{1,31}));/g;
 
+/**
+ * Legacy named references that browsers also decode without a terminating
+ * semicolon in text ("Tom &amp Jerry", "&nbsp text"). Kept to the safe core
+ * set and not applied before "-"/"=" or word characters so that URL query
+ * strings such as "?a=1&copy=2" stay intact.
+ */
+const LEGACY_ENTITY_PATTERN = /&(amp|AMP|lt|LT|gt|GT|quot|QUOT|nbsp|copy|COPY|reg|REG)(?!;)(?![\w=])/g;
+
 function decodeEntityMatch(match, decimal, hex, name) {
   if (name) return NAMED_ENTITIES[name] ?? match;
   const codePoint = decimal ? Number.parseInt(decimal, 10) : Number.parseInt(hex, 16);
@@ -165,7 +179,9 @@ function decodeEntityMatch(match, decimal, hex, name) {
 export function decodeHtmlEntities(value) {
   let text = String(value ?? "");
   for (let round = 0; round < 4; round += 1) {
-    const next = text.replace(ENTITY_PATTERN, decodeEntityMatch);
+    const next = text
+      .replace(ENTITY_PATTERN, decodeEntityMatch)
+      .replace(LEGACY_ENTITY_PATTERN, (match, name) => NAMED_ENTITIES[name] ?? match);
     if (next === text) break;
     text = next;
   }
@@ -203,22 +219,33 @@ function parseTag(raw) {
   while (index < raw.length && /[A-Za-z0-9:-]/.test(raw[index])) index += 1;
   const name = raw.slice(nameStart, index).toLowerCase();
   if (!/^[a-z][a-z0-9:-]*$/.test(name)) return null;
-  const selfClosing = /\/\s*$/.test(raw);
+  // HTML parsers ignore a trailing "/" on non-void elements, so "<script/>"
+  // still opens a raw-text element. Only void elements are self-closing.
+  const selfClosing = VOID_ELEMENTS.has(name);
   return { name, closing, selfClosing };
 }
 
+function isClosingTagAt(input, index, name) {
+  if (input[index] !== "<" || input[index + 1] !== "/") return false;
+  for (let offset = 0; offset < name.length; offset += 1) {
+    const char = input[index + 2 + offset];
+    if (char === undefined || char.toLowerCase() !== name[offset]) return false;
+  }
+  const after = input[index + 2 + name.length];
+  return after === undefined || after === ">" || after === "/" || /\s/.test(after);
+}
+
 function findRawTextEnd(input, from, name) {
-  const needle = `</${name}`;
-  let index = from;
-  while (index < input.length) {
-    const found = input.toLowerCase().indexOf(needle, index);
-    if (found === -1) return input.length;
-    const after = input[found + needle.length];
-    if (after === undefined || after === ">" || after === "/" || /\s/.test(after)) {
-      const end = findTagEnd(input, found + 1);
+  // Case-insensitive scan without lowercasing the whole input per candidate:
+  // keeps this linear for adversarial "</scriptx</scriptx…" payloads and
+  // avoids offset drift from characters whose lowercase form is longer.
+  let index = input.indexOf("</", from);
+  while (index !== -1) {
+    if (isClosingTagAt(input, index, name)) {
+      const end = findTagEnd(input, index + 2);
       return end === -1 ? input.length : end + 1;
     }
-    index = found + needle.length;
+    index = input.indexOf("</", index + 2);
   }
   return input.length;
 }

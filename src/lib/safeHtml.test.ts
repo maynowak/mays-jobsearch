@@ -226,6 +226,18 @@ describe("safeHtml - renderSanitizedHtml", () => {
     expect(result).toContain("<p>Safe</p>");
   });
 
+  it("decodes genuine double-encoded HTML before sanitizing", () => {
+    const input = "&amp;lt;p&amp;gt;Hello&amp;lt;/p&amp;gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<p>Hello</p>");
+  });
+
+  it("decodes genuine triple-encoded HTML before sanitizing", () => {
+    const input = "&amp;amp;lt;p&amp;amp;gt;Triple&amp;amp;lt;/p&amp;amp;gt;";
+    const result = prepareHtmlForRender(input);
+    expect(result).toContain("<p>Triple</p>");
+  });
+
   it("sanitizes double-encoded event handlers before rendering", () => {
     const input = "&amp;lt;img src=x onerror=alert(1)&amp;gt;&lt;p&gt;Safe&lt;/p&gt;";
     const result = prepareHtmlForRender(input);

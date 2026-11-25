@@ -30,6 +30,33 @@ describe("htmlToText - tag scanner", () => {
     expect(text).toContain("safe");
   });
 
+  it("removes XHTML-style self-closing script/textarea bodies", () => {
+    for (const input of [
+      "<script/>alert(1)</script>visible",
+      "<script />alert(1)</script >visible",
+      "<textarea/>ALERT_TA</textarea>visible",
+      "<style/>.x{content:'ALERT_CSS'}</style>visible",
+    ]) {
+      const text = htmlToText(input);
+      expect(text).not.toContain("alert");
+      expect(text).not.toContain("ALERT_TA");
+      expect(text).not.toContain("ALERT_CSS");
+      expect(text).toContain("visible");
+    }
+  });
+
+  it("removes raw-text payloads without quadratic rescans or offset drift", () => {
+    const adversarial = `<script>${"</scriptx".repeat(4000)}</script>tail`;
+    const started = Date.now();
+    const text = htmlToText(adversarial);
+    expect(Date.now() - started).toBeLessThan(2000);
+    expect(text).toContain("tail");
+    expect(text).not.toContain("scriptx");
+
+    const unicodePrefix = `<script>${"İ".repeat(200)}</script>ok`;
+    expect(htmlToText(unicodePrefix)).toContain("ok");
+  });
+
   it("drops an unterminated raw-text block instead of leaking its payload", () => {
     const text = htmlToText("<p>before</p><script>alert('never closed')<p>hidden");
     expect(text).toContain("before");
@@ -95,7 +122,15 @@ describe("decodeHtmlEntities - named and numeric entities", () => {
   });
 
   it("keeps plain ampersands and unknown entities untouched", () => {
-    expect(decodeHtmlEntities("AT&T and &unknown; and &amp")).toBe("AT&T and &unknown; and &amp");
+    expect(decodeHtmlEntities("AT&T and &unknown; and &bogus;")).toBe("AT&T and &unknown; and &bogus;");
+  });
+
+  it("decodes legacy references without semicolon in text but protects URLs", () => {
+    expect(decodeHtmlEntities("Tom &amp Jerry")).toBe("Tom & Jerry");
+    expect(decodeHtmlEntities("A&nbsp B")).toBe("A\u00a0 B");
+    expect(decodeHtmlEntities("&copy 2024")).toBe("\u00a9 2024");
+    expect(decodeHtmlEntities("&AMP; &LT;")).toBe("& <");
+    expect(decodeHtmlEntities("?a=1&copy=2&reg=3")).toBe("?a=1&copy=2&reg=3");
   });
 
   it("rejects invalid numeric code points instead of producing control characters", () => {

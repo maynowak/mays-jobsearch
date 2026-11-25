@@ -96,6 +96,8 @@ function stripHtml(value: string): string {
 }
 
 export function normalizeDescriptionText(value: string | null | undefined): string {
+  // SECURITY: text-only output. Never use the result as HTML or pass it to
+  // innerHTML / dangerouslySetInnerHTML; all rendering paths treat it as text.
   const raw = String(value ?? "").replace(/\r\n?/g, "\n");
   if (!raw.trim()) return "";
   return stripHtml(raw)
