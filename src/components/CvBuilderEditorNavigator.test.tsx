@@ -147,11 +147,23 @@ describe("JM-CV-EDITOR-NAVIGATOR-03", () => {
 
   it("removes the radar and hands in screenshot mode and restores them", async () => {
     const { container } = render(<Harness />);
+    const sections = Array.from(container.querySelectorAll<HTMLDetailsElement>(".cv-builder-section"));
+    expect(sections.length).toBeGreaterThanOrEqual(8);
+    sections.forEach((section) => expect(section.open).toBe(false));
+
+    fireEvent.click(screen.getByRole("button", { name: "Alle Abschnitte aufklappen" }));
+    sections.forEach((section) => expect(section.open).toBe(true));
+    expect(container.querySelector(".cv-editor-radar")).not.toBeNull();
+    expect(container.querySelector(".cv-builder-scroll-hands")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Alle Abschnitte einklappen" })).toHaveAttribute("aria-pressed", "true");
+
     fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
     expect(container.querySelector(".cv-editor-radar")).toBeNull();
     expect(container.querySelector(".cv-builder-scroll-hands")).toBeNull();
+    sections.forEach((section) => expect(section.open).toBe(true));
     fireEvent.click(screen.getByRole("button", { name: "Ansicht wechseln" }));
     expect(container.querySelector(".cv-editor-radar")).not.toBeNull();
     expect(container.querySelector(".cv-builder-scroll-hands")).not.toBeNull();
+    sections.forEach((section) => expect(section.open).toBe(true));
   });
 });
