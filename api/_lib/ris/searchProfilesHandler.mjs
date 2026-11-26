@@ -84,11 +84,22 @@ function normalizeAtsBody(body, partial = false) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     throw new RisClientError("invalid_body", 422, "Request body is invalid");
   }
-  const allowed = new Set(["name", "targetRoles", "skills", "criteria"]);
+  // Optimistic versioning only applies to PUT. Creates must stay version-free;
+  // the version is taken from the loaded record by the caller.
+  const allowed = new Set([
+    "name", "targetRoles", "skills", "criteria",
+    ...(partial ? ["version"] : []),
+  ]);
   if (Object.keys(body).some((key) => !allowed.has(key))) {
     throw new RisClientError("validation_error", 422, "ATS profile contains an unexpected field");
   }
   const normalized = { ...body };
+  if (partial && body.version !== undefined) {
+    if (!Number.isInteger(body.version) || body.version < 1) {
+      throw new RisClientError("validation_error", 422, "version is invalid");
+    }
+    normalized.version = body.version;
+  }
   if (!partial || body.name !== undefined) {
     if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 200) {
       throw new RisClientError("validation_error", 422, "name is invalid");

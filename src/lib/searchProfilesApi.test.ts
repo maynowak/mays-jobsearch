@@ -3,7 +3,13 @@ import {
   createAtsProfile,
   createCvSearchProfile,
   createManualSearchProfile,
+  deleteAtsProfile,
+  deleteCvSearchProfile,
+  deleteManualSearchProfile,
+  isSearchProfileVersionConflict,
   updateAtsProfile,
+  updateCvSearchProfile,
+  updateManualSearchProfile,
   fetchSearchProfileConsent,
   listManualSearchProfiles,
   SearchProfilesApiError,
@@ -72,6 +78,7 @@ describe("search-profiles BFF client", () => {
       name: "  ATS Cloud  ",
       targetRoles: [" DevOps ", "DevOps"],
       skills: [" Terraform ", "Terraform", "cloud architecture", "Cloud architecture"],
+      version: 3,
     });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toContain("/api/ris/search-profiles?type=ats&id=ats-1&searchProfileId=sp-1");
@@ -79,6 +86,7 @@ describe("search-profiles BFF client", () => {
       name: "ATS Cloud",
       targetRoles: ["DevOps"],
       skills: ["Terraform", "cloud architecture", "Cloud architecture"],
+      version: 3,
     });
   });
 
@@ -90,6 +98,115 @@ describe("search-profiles BFF client", () => {
       targetRoles: ["DevOps"],
       skills: ["Terraform"],
     })).rejects.toThrow(/name/i);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("sends the loaded version in manual PUT and DELETE requests", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, { manualSearchProfileId: "msp-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    await updateManualSearchProfile("token", "msp-1", {
+      name: "Cloud",
+      version: 4,
+    });
+    let [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(String(init.body))).toMatchObject({ name: "Cloud", version: 4 });
+
+    await deleteManualSearchProfile("token", "msp-1", 4);
+    [url, init] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
+    expect(init.method).toBe("DELETE");
+    expect(url).toContain("/api/ris/search-profiles?type=manual&id=msp-1&version=4");
+  });
+
+  it("sends the loaded version in CV-search PUT and DELETE requests", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, { searchProfileId: "sp-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    await updateCvSearchProfile("token", "cv-1", "sp-1", {
+      name: "Cloud",
+      version: 2,
+    });
+    let [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(String(init.body))).toMatchObject({ name: "Cloud", version: 2 });
+
+    await deleteCvSearchProfile("token", "cv-1", "sp-1", 2);
+    [url, init] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
+    expect(init.method).toBe("DELETE");
+    expect(url).toContain("/api/ris/search-profiles?type=cv");
+    expect(url).toContain("cvId=cv-1");
+    expect(url).toContain("id=sp-1");
+    expect(url).toContain("version=2");
+  });
+
+  it("sends the loaded version in ATS PUT and DELETE requests", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, { atsSearchProfileId: "ats-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    await updateAtsProfile("token", "sp-1", "ats-1", {
+      name: "ATS",
+      version: 5,
+    });
+    let [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(String(init.body))).toMatchObject({ name: "ATS", version: 5 });
+
+    await deleteAtsProfile("token", "sp-1", "ats-1", 5);
+    [url, init] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
+    expect(init.method).toBe("DELETE");
+    expect(url).toContain("/api/ris/search-profiles?type=ats&id=ats-1&searchProfileId=sp-1&version=5");
+  });
+
+  it("never adds a version to create requests", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(201, { schemaVersion: 1 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await createManualSearchProfile("token", {
+      name: "Manual",
+      searchConfig: {
+        skills: "aws",
+        targetRoles: [],
+        city: "",
+        radiusKm: null,
+        workModes: [],
+        employmentTypes: ["full_time"],
+      },
+      matchingPreferences: { requiredSkills: [], preferredSkills: [], excludedTerms: [] },
+    });
+    await createCvSearchProfile("token", "cv-1", {
+      name: "CV",
+      searchConfig: {
+        skills: "aws",
+        targetRoles: [],
+        city: "",
+        radiusKm: null,
+        workModes: [],
+        employmentTypes: ["full_time"],
+      },
+    });
+    await createAtsProfile("token", "sp-1", {
+      name: "ATS",
+      targetRoles: [],
+      skills: ["aws"],
+    });
+    for (const [, init] of fetchMock.mock.calls as unknown as Array<[string, RequestInit]>) {
+      expect(JSON.parse(String(init.body))).not.toHaveProperty("version");
+    }
+  });
+
+  it("classifies a 409 version conflict and refuses an update without a loaded version", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(409, {
+      error: "RIS rejected the search-profile request",
+      code: "version_conflict",
+    })));
+    const conflict = await updateCvSearchProfile("token", "cv-1", "sp-1", {
+      name: "Cloud",
+      version: 2,
+    }).catch((error: unknown) => error);
+    expect(isSearchProfileVersionConflict(conflict)).toBe(true);
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(updateManualSearchProfile("token", "msp-1", {
+      name: "Cloud",
+    } as never)).rejects.toMatchObject({ code: "version_required" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

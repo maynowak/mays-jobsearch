@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { LangProvider } from "../i18n";
 import { createManualSearchProfile } from "../lib/manualSearchProfiles";
 import type { ManualSearchProfile } from "../lib/manualSearchProfiles";
+import { SearchProfilesApiError } from "../lib/searchProfilesApi";
 import ManualSearchProfilesSection from "./ManualSearchProfilesSection";
 
 const sampleProfile = (overrides: Partial<Parameters<typeof createManualSearchProfile>[0]> = {}) =>
@@ -84,8 +85,9 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
     fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
 
     expect(onSave).toHaveBeenCalledTimes(1);
-    const [draft, existingId] = onSave.mock.calls[0];
+    const [draft, existingId, version] = onSave.mock.calls[0];
     expect(existingId).toBeNull();
+    expect(version).toBeUndefined();
     expect(draft.name).toBe("AWS Cloud Engineer");
     expect(draft.searchConfig.targetRoles).toEqual(["Cloud Engineer", "AWS Solutions Architect"]);
     expect(draft.searchConfig.city).toBe("Darmstadt");
@@ -170,7 +172,50 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
 
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave.mock.calls[0][1]).toBe(profile.id);
+    expect(onSave.mock.calls[0][2]).toBeUndefined();
     expect(onSave.mock.calls[0][0].name).toBe("Renamed");
+  });
+
+  it("passes the loaded durable version on edit and delete", async () => {
+    const profile = { ...sampleProfile(), version: 4 };
+    const { onSave, onDelete } = renderSection([profile]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: "Renamed" } });
+    fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
+
+    expect(onSave.mock.calls[0][1]).toBe(profile.id);
+    expect(onSave.mock.calls[0][2]).toBe(4);
+    await waitFor(() => expect(screen.queryByLabelText("Profilname")).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: "Löschen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Jetzt löschen" }));
+    expect(onDelete).toHaveBeenCalledWith(profile.id, 4);
+  });
+
+  it("shows a clear conflict error and no success notice for a stale version", async () => {
+    const profile = { ...sampleProfile(), version: 4 };
+    const onSave = vi.fn().mockRejectedValue(
+      new SearchProfilesApiError("conflict", 409, "version_conflict")
+    );
+    render(
+      <LangProvider>
+        <ManualSearchProfilesSection
+          profiles={[profile]}
+          onSave={onSave}
+          onDelete={vi.fn()}
+          onDuplicate={vi.fn()}
+          onSearch={vi.fn()}
+        />
+      </LangProvider>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Profilname"), { target: { value: "Stale" } });
+    fireEvent.click(screen.getByRole("button", { name: "Für diese Sitzung speichern" }));
+
+    expect(await screen.findByText(/anderen Sitzung geändert/)).toBeTruthy();
+    expect(screen.queryByText("Profil für diese Sitzung gespeichert.")).toBeNull();
   });
 
   it("shows an error and no success notice when saving fails", async () => {
@@ -249,7 +294,7 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
     expect(onDelete).not.toHaveBeenCalled();
     expect(screen.getByText("Dieses Profil löschen?")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Jetzt löschen" }));
-    expect(onDelete).toHaveBeenCalledWith(profile.id);
+    expect(onDelete).toHaveBeenCalledWith(profile.id, undefined);
     await waitFor(() => {
       expect(screen.getByRole("status").textContent).toContain("gelöscht");
     });
@@ -297,7 +342,8 @@ describe("MAYS-SEARCH-PROFILE-MANUAL-01: Job preferences UI", () => {
       expect.objectContaining({
         searchConfig: expect.objectContaining({ city: "Berlin", radiusKm: 5 }),
       }),
-      null
+      null,
+      undefined
     );
   });
 });

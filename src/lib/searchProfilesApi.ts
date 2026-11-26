@@ -76,6 +76,34 @@ export class SearchProfilesApiError extends Error {
   }
 }
 
+/**
+ * 409 is the RIS conflict status for a stale optimistic version. The BFF
+ * forwards either the upstream `version_conflict` code or its own `conflict`
+ * fallback, so both are treated as a conflict.
+ */
+export function isSearchProfileVersionConflict(error: unknown): error is SearchProfilesApiError {
+  return error instanceof SearchProfilesApiError
+    && (error.status === 409 || error.code === "version_conflict" || error.code === "conflict");
+}
+
+export function requireSearchProfileVersion(version: number | undefined): number {
+  if (!Number.isInteger(version) || (version as number) < 1) {
+    throw new SearchProfilesApiError(
+      "A loaded search-profile version is required for update and delete",
+      undefined,
+      "version_required"
+    );
+  }
+  return version as number;
+}
+
+export type VersionedUpdateCVSearchProfileInputV1 =
+  UpdateCVSearchProfileInputV1 & { version: number };
+export type VersionedUpdateATSProfileInputV1 =
+  UpdateATSProfileInputV1 & { version: number };
+export type VersionedUpdateManualSearchProfileInputV1 =
+  UpdateManualSearchProfileInputV1 & { version: number };
+
 const PROFILES_PATH = "/api/ris/search-profiles";
 const CONSENT_PATH = "/api/ris/search-profile-consents";
 
@@ -109,6 +137,7 @@ function profilesQuery(type: SearchProfileType, ids: {
   searchProfileId?: string;
   cursor?: string;
   limit?: number;
+  version?: number;
 } = {}): string {
   const params = new URLSearchParams({ type });
   if (ids.id) params.set("id", ids.id);
@@ -116,6 +145,7 @@ function profilesQuery(type: SearchProfileType, ids: {
   if (ids.searchProfileId) params.set("searchProfileId", ids.searchProfileId);
   if (ids.cursor) params.set("cursor", ids.cursor);
   if (ids.limit !== undefined) params.set("limit", String(ids.limit));
+  if (ids.version !== undefined) params.set("version", String(requireSearchProfileVersion(ids.version)));
   return `${PROFILES_PATH}?${params.toString()}`;
 }
 
@@ -146,16 +176,21 @@ export async function createManualSearchProfile(
 export async function updateManualSearchProfile(
   token: string,
   id: string,
-  input: UpdateManualSearchProfileInputV1
+  input: VersionedUpdateManualSearchProfileInputV1
 ): Promise<ManualSearchProfileV1> {
+  const body = { ...input, version: requireSearchProfileVersion(input.version) };
   return request<ManualSearchProfileV1>(profilesQuery("manual", { id }), token, {
     method: "PUT",
-    body: JSON.stringify(input),
+    body: JSON.stringify(body),
   });
 }
 
-export async function deleteManualSearchProfile(token: string, id: string): Promise<void> {
-  await request<Record<string, unknown>>(profilesQuery("manual", { id }), token, {
+export async function deleteManualSearchProfile(
+  token: string,
+  id: string,
+  version: number
+): Promise<void> {
+  await request<Record<string, unknown>>(profilesQuery("manual", { id, version }), token, {
     method: "DELETE",
   });
 }
@@ -182,16 +217,22 @@ export async function updateCvSearchProfile(
   token: string,
   cvId: string,
   id: string,
-  input: UpdateCVSearchProfileInputV1
+  input: VersionedUpdateCVSearchProfileInputV1
 ): Promise<CVSearchProfileV1> {
+  const body = { ...input, version: requireSearchProfileVersion(input.version) };
   return request<CVSearchProfileV1>(profilesQuery("cv", { cvId, id }), token, {
     method: "PUT",
-    body: JSON.stringify(input),
+    body: JSON.stringify(body),
   });
 }
 
-export async function deleteCvSearchProfile(token: string, cvId: string, id: string): Promise<void> {
-  await request<Record<string, unknown>>(profilesQuery("cv", { cvId, id }), token, {
+export async function deleteCvSearchProfile(
+  token: string,
+  cvId: string,
+  id: string,
+  version: number
+): Promise<void> {
+  await request<Record<string, unknown>>(profilesQuery("cv", { cvId, id, version }), token, {
     method: "DELETE",
   });
 }
@@ -221,22 +262,28 @@ export async function updateAtsProfile(
   token: string,
   searchProfileId: string,
   id: string,
-  input: UpdateATSProfileInputV1
+  input: VersionedUpdateATSProfileInputV1
 ): Promise<ATSSearchProfileV1> {
+  const normalized = normalizeUpdateATSProfileInput({
+    ...input,
+    version: requireSearchProfileVersion(input.version),
+  });
   return request<ATSSearchProfileV1>(profilesQuery("ats", { searchProfileId, id }), token, {
     method: "PUT",
-    body: JSON.stringify(normalizeUpdateATSProfileInput(input)),
+    body: JSON.stringify({ ...normalized, version: requireSearchProfileVersion(input.version) }),
   });
 }
 
 export async function deleteAtsProfile(
   token: string,
   searchProfileId: string,
-  id: string
+  id: string,
+  version: number
 ): Promise<void> {
-  await request<Record<string, unknown>>(profilesQuery("ats", { searchProfileId, id }), token, {
-    method: "DELETE",
-  });
+  await request<Record<string, unknown>>(
+    profilesQuery("ats", { searchProfileId, id, version }), token,
+    { method: "DELETE" }
+  );
 }
 
 function mapConsent(value: SearchProfileConsent | null | undefined): SearchProfileConsent | null {

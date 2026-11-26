@@ -2630,10 +2630,14 @@ export default function App() {
     matchingPreferences: draft.matchingPreferences,
   });
 
-  const handleSaveManualProfile = async (draft: ManualSearchProfileDraft, existingId: string | null) => {
+  const handleSaveManualProfile = async (
+    draft: ManualSearchProfileDraft,
+    existingId: string | null,
+    version?: number
+  ) => {
     if (persistentSearchProfiles.persistentView) {
       if (!persistentSearchProfiles.active) throw new Error("consent_required");
-      await persistentSearchProfiles.saveManual(draft, existingId);
+      await persistentSearchProfiles.saveManual(draft, existingId, version);
       return;
     }
     const store = manualProfileStoreRef.current;
@@ -2650,9 +2654,9 @@ export default function App() {
     refreshManualProfiles();
   };
 
-  const handleDeleteManualProfile = async (id: string) => {
+  const handleDeleteManualProfile = async (id: string, version?: number) => {
     if (persistentSearchProfiles.persistentView) {
-      await persistentSearchProfiles.deleteManual(id);
+      await persistentSearchProfiles.deleteManual(id, version);
       return;
     }
     const repositories = profileRepositoriesRef.current;

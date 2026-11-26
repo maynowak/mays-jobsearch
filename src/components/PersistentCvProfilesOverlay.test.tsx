@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { LangProvider } from "../i18n";
 import type { PersistentSearchProfiles } from "../lib/usePersistentSearchProfiles";
+import { SearchProfilesApiError } from "../lib/searchProfilesApi";
 import PersistentCvProfilesOverlay from "./PersistentCvProfilesOverlay";
 
 function profiles(overrides: Partial<PersistentSearchProfiles> = {}): PersistentSearchProfiles {
@@ -215,6 +216,142 @@ describe("PersistentCvProfilesOverlay loading and hierarchy", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Zugehörige ATS-Profile anzeigen" })[0]);
     expect(await screen.findByText("Noch kein ATS-Profil zu diesem Suchprofil.")).toBeInTheDocument();
     expect(screen.queryByText("Frontend ATS")).toBeNull();
+  });
+});
+
+describe("PersistentCvProfilesOverlay optimistic versioning", () => {
+  const cvProfile = {
+    schemaVersion: 1,
+    searchProfileId: "sp-1",
+    cvId: "cv-1",
+    name: "Frontend Berlin",
+    origin: "cv",
+    searchConfig: {
+      skills: "React, TypeScript",
+      targetRoles: ["Frontend"],
+      city: "Berlin",
+      radiusKm: 25,
+      workModes: ["remote"],
+      employmentTypes: ["full_time"],
+    },
+    createdAt: "2026-11-09T10:00:00Z",
+    updatedAt: "2026-11-09T10:00:00Z",
+    version: 2,
+  } as never;
+  const atsProfile = {
+    schemaVersion: 1,
+    atsSearchProfileId: "ats-1",
+    searchProfileId: "sp-1",
+    name: "Frontend ATS",
+    targetRoles: ["Frontend"],
+    skills: ["React"],
+    createdAt: "2026-11-09T10:00:00Z",
+    updatedAt: "2026-11-09T10:00:00Z",
+    version: 3,
+  } as never;
+
+  it("sends the loaded CV version on update and delete", async () => {
+    const updateCv = vi.fn(async () => cvProfile);
+    const deleteCv = vi.fn(async () => undefined);
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv: vi.fn(async () => [cvProfile]),
+      listAts: vi.fn(async () => []),
+      updateCv,
+      deleteCv,
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay cvId="cv-1" cvName="Lebenslauf.pdf" profiles={value} onClose={vi.fn()} />
+      </LangProvider>
+    );
+
+    await screen.findByText("Frontend Berlin");
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Updated" } });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+
+    await waitFor(() => {
+      expect(updateCv).toHaveBeenCalledWith(
+        "cv-1",
+        "sp-1",
+        expect.objectContaining({ name: "Updated", version: 2 })
+      );
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Löschen" })[0]);
+    await waitFor(() => {
+      expect(deleteCv).toHaveBeenCalledWith("cv-1", "sp-1", 2);
+    });
+  });
+
+  it("sends the loaded ATS version on update and delete", async () => {
+    const updateAts = vi.fn(async () => atsProfile);
+    const deleteAts = vi.fn(async () => undefined);
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv: vi.fn(async () => [cvProfile]),
+      listAts: vi.fn(async () => [atsProfile]),
+      updateAts,
+      deleteAts,
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay cvId="cv-1" cvName="Lebenslauf.pdf" profiles={value} onClose={vi.fn()} />
+      </LangProvider>
+    );
+
+    await screen.findByText("Frontend Berlin");
+    fireEvent.click(screen.getByRole("button", { name: "Zugehörige ATS-Profile anzeigen" }));
+    await screen.findByText("Frontend ATS");
+    const atsCard = screen.getByText("Frontend ATS").closest("li") as HTMLElement;
+    fireEvent.click(within(atsCard).getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "ATS Updated" } });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+
+    await waitFor(() => {
+      expect(updateAts).toHaveBeenCalledWith(
+        "sp-1",
+        "ats-1",
+        expect.objectContaining({ name: "ATS Updated", version: 3 })
+      );
+    });
+
+    const refreshedCard = screen.getByText("Frontend ATS").closest("li") as HTMLElement;
+    fireEvent.click(within(refreshedCard).getByRole("button", { name: "Löschen" }));
+    await waitFor(() => {
+      expect(deleteAts).toHaveBeenCalledWith("sp-1", "ats-1", 3);
+    });
+  });
+
+  it("reloads and shows a conflict instead of overwriting a stale record", async () => {
+    const listCv = vi.fn(async () => [cvProfile]);
+    const updateCv = vi.fn().mockRejectedValue(
+      new SearchProfilesApiError("conflict", 409, "version_conflict")
+    );
+    const value = profiles({
+      active: true,
+      persistentView: true,
+      listCv,
+      listAts: vi.fn(async () => []),
+      updateCv,
+    });
+    render(
+      <LangProvider>
+        <PersistentCvProfilesOverlay cvId="cv-1" cvName="Lebenslauf.pdf" profiles={value} onClose={vi.fn()} />
+      </LangProvider>
+    );
+
+    await screen.findByText("Frontend Berlin");
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Stale" } });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+
+    expect(await screen.findByText(/anderen Sitzung geändert/)).toBeInTheDocument();
+    await waitFor(() => expect(listCv).toHaveBeenCalledTimes(2));
+    expect(updateCv).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -164,6 +164,82 @@ describe("/api/ris/search-profiles", () => {
     });
   });
 
+  it("leitet die geladene Version bei manuellen PUT- und DELETE-Aufrufen weiter", async () => {
+    risResponse = response(200, { manualSearchProfileId: "msp-1", version: 3 });
+    const body = { name: "Cloud", version: 3 };
+    const putRes = makeRes();
+    await handler(request("PUT", {
+      query: { type: "manual", id: "msp-1" },
+      body,
+    }), putRes);
+    expect(putRes.statusCode).toBe(200);
+    expect(risCalls()[0][0]).toContain("/v1/partner/me/manual-search-profiles/msp-1");
+    expect(risCalls()[0][1].method).toBe("PUT");
+    expect(JSON.parse(risCalls()[0][1].body)).toEqual(body);
+
+    risResponse = response(204, null);
+    const deleteRes = makeRes();
+    await handler(request("DELETE", {
+      query: { type: "manual", id: "msp-1", version: "3" },
+    }), deleteRes);
+    expect(deleteRes.statusCode).toBe(204);
+    expect(risCalls()[1][1].method).toBe("DELETE");
+    expect(risCalls()[1][0]).toContain("?version=3");
+  });
+
+  it("behält die Version bei einem normalisierten ATS-PUT", async () => {
+    risResponse = response(200, {
+      schemaVersion: 1,
+      atsSearchProfileId: "ats-1",
+      searchProfileId: "sp-1",
+      name: "Cloud ATS",
+      targetRoles: ["Cloud"],
+      skills: ["AWS"],
+      createdAt: "2026-11-19T10:00:00Z",
+      updatedAt: "2026-11-19T10:10:00Z",
+      version: 4,
+    });
+    const res = makeRes();
+    await handler(request("PUT", {
+      query: { type: "ats", searchProfileId: "sp-1", id: "ats-1" },
+      body: {
+        name: "  Cloud ATS  ",
+        targetRoles: ["Cloud", "Cloud"],
+        skills: ["AWS"],
+        version: 4,
+      },
+    }), res);
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(risCalls()[0][1].body)).toEqual({
+      name: "Cloud ATS",
+      targetRoles: ["Cloud"],
+      skills: ["AWS"],
+      version: 4,
+    });
+  });
+
+  it("weist eine Version beim ATS-POST vor dem RIS-Aufruf ab", async () => {
+    const res = makeRes();
+    await handler(request("POST", {
+      query: { type: "ats", searchProfileId: "sp-1" },
+      body: { name: "Cloud ATS", targetRoles: ["Cloud"], skills: ["AWS"], version: 1 },
+    }), res);
+    expect(res.statusCode).toBe(422);
+    expect(res.body.code).toBe("validation_error");
+    expect(risCalls()).toHaveLength(0);
+  });
+
+  it("leitet die Version beim ATS-DELETE weiter", async () => {
+    risResponse = response(204, null);
+    const res = makeRes();
+    await handler(request("DELETE", {
+      query: { type: "ats", searchProfileId: "sp-1", id: "ats-1", version: "4" },
+    }), res);
+    expect(res.statusCode).toBe(204);
+    expect(risCalls()[0][1].method).toBe("DELETE");
+    expect(risCalls()[0][0]).toContain("?version=4");
+  });
+
   it("speichert ein ATS-Profil und lädt es anschließend wieder", async () => {
     const created = {
       schemaVersion: 1,

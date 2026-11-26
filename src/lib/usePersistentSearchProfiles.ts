@@ -6,8 +6,6 @@ import type {
   CreateCVSearchProfileInputV1,
   CreateManualSearchProfileInputV1,
   ManualSearchProfileV1,
-  UpdateATSProfileInputV1,
-  UpdateCVSearchProfileInputV1,
 } from "./profiles/contractTypes";
 import {
   createAtsProfile,
@@ -26,11 +24,28 @@ import {
   updateCvSearchProfile,
   updateManualSearchProfile,
   withdrawSearchProfileConsent,
+  isSearchProfileVersionConflict,
+  requireSearchProfileVersion,
   SearchProfilesApiError,
   type SearchProfileConsent,
   type SearchProfileConsentState,
+  type VersionedUpdateATSProfileInputV1,
+  type VersionedUpdateCVSearchProfileInputV1,
 } from "./searchProfilesApi";
 import type { ManualSearchProfile, ManualSearchProfileDraft } from "./manualSearchProfiles";
+
+async function reloadAfterConflict(refresh: () => Promise<void>): Promise<void> {
+  try {
+    await refresh();
+  } catch {
+    // Keep the original 409 as the primary error; the next manual refresh can
+    // retry the reload.
+  }
+}
+
+function versionRequirement(version: number | undefined): number {
+  return requireSearchProfileVersion(version);
+}
 
 function mapManual(profile: ManualSearchProfileV1): ManualSearchProfile {
   return {
@@ -52,6 +67,7 @@ function mapManual(profile: ManualSearchProfileV1): ManualSearchProfile {
     },
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
+    ...(typeof profile.version === "number" ? { version: profile.version } : {}),
   };
 }
 
@@ -77,17 +93,29 @@ export interface PersistentSearchProfiles {
   refresh: () => Promise<void>;
   grantConsent: () => Promise<SearchProfileConsent>;
   withdrawConsent: () => Promise<SearchProfileConsent>;
-  saveManual: (draft: ManualSearchProfileDraft, existingId: string | null) => Promise<void>;
-  deleteManual: (id: string) => Promise<void>;
+  saveManual: (
+    draft: ManualSearchProfileDraft,
+    existingId: string | null,
+    version?: number
+  ) => Promise<void>;
+  deleteManual: (id: string, version?: number) => Promise<void>;
   duplicateManual: (id: string) => Promise<void>;
   listCv: (cvId: string) => Promise<CVSearchProfileV1[]>;
   createCv: (cvId: string, input: CreateCVSearchProfileInputV1) => Promise<CVSearchProfileV1>;
-  updateCv: (cvId: string, id: string, input: UpdateCVSearchProfileInputV1) => Promise<CVSearchProfileV1>;
-  deleteCv: (cvId: string, id: string) => Promise<void>;
+  updateCv: (
+    cvId: string,
+    id: string,
+    input: VersionedUpdateCVSearchProfileInputV1
+  ) => Promise<CVSearchProfileV1>;
+  deleteCv: (cvId: string, id: string, version: number) => Promise<void>;
   listAts: (searchProfileId: string) => Promise<ATSSearchProfileV1[]>;
   createAts: (searchProfileId: string, input: CreateATSProfileInputV1) => Promise<ATSSearchProfileV1>;
-  updateAts: (searchProfileId: string, id: string, input: UpdateATSProfileInputV1) => Promise<ATSSearchProfileV1>;
-  deleteAts: (searchProfileId: string, id: string) => Promise<void>;
+  updateAts: (
+    searchProfileId: string,
+    id: string,
+    input: VersionedUpdateATSProfileInputV1
+  ) => Promise<ATSSearchProfileV1>;
+  deleteAts: (searchProfileId: string, id: string, version: number) => Promise<void>;
 }
 
 export function usePersistentSearchProfiles(
@@ -192,22 +220,38 @@ export function usePersistentSearchProfiles(
 
   const saveManual = useCallback(async (
     draft: ManualSearchProfileDraft,
-    existingId: string | null
+    existingId: string | null,
+    version?: number
   ) => {
     const current = tokenRef.current;
     if (!current) throw new Error("search_profile_storage_unavailable");
-    if (existingId) {
-      await updateManualSearchProfile(current, existingId, manualInput(draft));
-    } else {
-      await createManualSearchProfile(current, manualInput(draft));
+    try {
+      if (existingId) {
+        await updateManualSearchProfile(current, existingId, {
+          ...manualInput(draft),
+          version: versionRequirement(version),
+        });
+      } else {
+        await createManualSearchProfile(current, manualInput(draft));
+      }
+    } catch (err) {
+      // A stale version must not be overwritten. Reload so the user sees the
+      // newer record; the caller still receives the conflict to show an error.
+      if (isSearchProfileVersionConflict(err)) await reloadAfterConflict(refresh);
+      throw err;
     }
     await refresh();
   }, [refresh]);
 
-  const deleteManual = useCallback(async (id: string) => {
+  const deleteManual = useCallback(async (id: string, version?: number) => {
     const current = tokenRef.current;
     if (!current) throw new Error("search_profile_storage_unavailable");
-    await deleteManualSearchProfile(current, id);
+    try {
+      await deleteManualSearchProfile(current, id, versionRequirement(version));
+    } catch (err) {
+      if (isSearchProfileVersionConflict(err)) await reloadAfterConflict(refresh);
+      throw err;
+    }
     await refresh();
   }, [refresh]);
 
@@ -238,17 +282,17 @@ export function usePersistentSearchProfiles(
   }, []);
 
   const updateCv = useCallback(async (
-    cvId: string, id: string, input: UpdateCVSearchProfileInputV1
+    cvId: string, id: string, input: VersionedUpdateCVSearchProfileInputV1
   ) => {
     const current = tokenRef.current;
     if (!current) throw new Error("search_profile_storage_unavailable");
     return updateCvSearchProfile(current, cvId, id, input);
   }, []);
 
-  const deleteCv = useCallback(async (cvId: string, id: string) => {
+  const deleteCv = useCallback(async (cvId: string, id: string, version: number) => {
     const current = tokenRef.current;
     if (!current) throw new Error("search_profile_storage_unavailable");
-    await deleteCvSearchProfile(current, cvId, id);
+    await deleteCvSearchProfile(current, cvId, id, requireSearchProfileVersion(version));
   }, []);
 
   const listAts = useCallback(async (searchProfileId: string) => {
@@ -266,17 +310,17 @@ export function usePersistentSearchProfiles(
   }, []);
 
   const updateAts = useCallback(async (
-    searchProfileId: string, id: string, input: UpdateATSProfileInputV1
+    searchProfileId: string, id: string, input: VersionedUpdateATSProfileInputV1
   ) => {
     const current = tokenRef.current;
     if (!current) throw new Error("search_profile_storage_unavailable");
     return updateAtsProfile(current, searchProfileId, id, input);
   }, []);
 
-  const deleteAts = useCallback(async (searchProfileId: string, id: string) => {
+  const deleteAts = useCallback(async (searchProfileId: string, id: string, version: number) => {
     const current = tokenRef.current;
     if (!current) throw new Error("search_profile_storage_unavailable");
-    await deleteAtsProfile(current, searchProfileId, id);
+    await deleteAtsProfile(current, searchProfileId, id, requireSearchProfileVersion(version));
   }, []);
 
   return {
