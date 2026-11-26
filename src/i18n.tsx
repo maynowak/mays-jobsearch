@@ -1129,8 +1129,11 @@ const en: Dict = {
   "applications.cvSource.uploaded": "Uploaded CV",
   "applications.cvSource.persistent": "Permanently stored CVs",
   "applications.cvSource.builder": "My created CVs",
+  "applications.cvSource.builderRemoteReadOnly": "not storable in RIS",
   "applications.cvReferenceUnavailable":
     "The assigned CV is no longer available. Select another CV explicitly.",
+  "applications.cvReferenceBuilderRemoteUnsupported":
+    "A self-created CV cannot be stored with an RIS application. The existing reference stays read-only; choose an uploaded CV instead.",
   "applications.changeCvReference": "Change assigned CV",
   "applications.openCvProfile": "Open assigned CV",
   "applications.cvNone": "No CV assigned",
@@ -3053,8 +3056,11 @@ const de: Dict = {
   "applications.cvSource.uploaded": "Hochgeladener Lebenslauf",
   "applications.cvSource.persistent": "Dauerhaft gespeicherte Lebensläufe",
   "applications.cvSource.builder": "Meine erstellten Lebensläufe",
+  "applications.cvSource.builderRemoteReadOnly": "nicht dauerhaft speicherbar",
   "applications.cvReferenceUnavailable":
     "Der zugeordnete Lebenslauf ist nicht mehr verfügbar. Wähle ausdrücklich einen anderen.",
+  "applications.cvReferenceBuilderRemoteUnsupported":
+    "Ein selbst erstellter Lebenslauf kann nicht dauerhaft mit einer RIS-Bewerbung verknüpft werden. Die bestehende Zuordnung bleibt schreibgeschützt erhalten; wähle stattdessen einen hochgeladenen Lebenslauf.",
   "applications.changeCvReference": "Zugeordneten Lebenslauf ändern",
   "applications.openCvProfile": "Zugeordneten Lebenslauf öffnen",
   "applications.cvNone": "Kein Lebenslauf zugeordnet",

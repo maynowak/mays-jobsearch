@@ -174,6 +174,120 @@ describe("RIS remote application repository", () => {
     expect(String(fetchImpl.mock.calls[0][0])).toContain("action=metrics");
   });
 
+  it("legt eine Anschreibenversion per POST action=cover-letter an und lädt die Bewerbung neu", async () => {
+    const fetchImpl = makeFetch(
+      jsonResponse(201, { version: { versionId: "v2" } }),
+      jsonResponse(200, { application: fixture({ version: 6 }) })
+    );
+    const repo = makeRepo(fetchImpl);
+
+    const result = await repo.addCoverLetterVersion("app-1", {
+      expectedVersion: 5,
+      version: {
+        versionId: "v2",
+        jobId: "job-1",
+        createdAt: "2026-11-05T11:00:00Z",
+        content: "Synthetic cover letter",
+        source: "manual",
+      },
+    });
+
+    expect(result.version).toBe(6);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+
+    const [postUrl, postInit] = fetchImpl.mock.calls[0];
+    expect(String(postUrl)).toBe("/api/ris/applications?id=app-1&action=cover-letter");
+    expect(postInit?.method).toBe("POST");
+    expect(headerOf(fetchImpl, 0, "Authorization")).toBe(`Bearer ${TOKEN}`);
+    const body = JSON.parse(postInit?.body as string);
+    expect(body.expectedVersion).toBe(5);
+    expect(body.version).toMatchObject({
+      versionId: "v2",
+      jobId: "job-1",
+      content: "Synthetic cover letter",
+      source: "manual",
+    });
+
+    const [getUrl, getInit] = fetchImpl.mock.calls[1];
+    expect(String(getUrl)).toBe("/api/ris/applications?id=app-1");
+    expect(getInit?.method).toBe("GET");
+  });
+
+  it("mappt 409 beim Anschreiben-POST auf version_conflict ohne Nachladen", async () => {
+    const fetchImpl = makeFetch(
+      jsonResponse(409, { error: "Application was changed", code: "version_conflict" })
+    );
+    const repo = makeRepo(fetchImpl);
+
+    await expect(
+      repo.addCoverLetterVersion("app-1", {
+        expectedVersion: 1,
+        version: {
+          versionId: "v2",
+          jobId: "job-1",
+          createdAt: "2026-11-05T11:00:00Z",
+          content: "Synthetic cover letter",
+          source: "manual",
+        },
+      })
+    ).rejects.toMatchObject({ code: "version_conflict" });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("mappt 403 beim Anschreiben-POST auf forbidden", async () => {
+    const fetchImpl = makeFetch(jsonResponse(403, { error: "denied", code: "forbidden" }));
+    const repo = makeRepo(fetchImpl);
+    await expect(
+      repo.addCoverLetterVersion("app-1", {
+        expectedVersion: 1,
+        version: {
+          versionId: "v2",
+          jobId: "job-1",
+          createdAt: "2026-11-05T11:00:00Z",
+          content: "Synthetic cover letter",
+          source: "manual",
+        },
+      })
+    ).rejects.toMatchObject({ code: "forbidden" });
+  });
+
+  it("lehnt ungültige Anschreibenversionen vor jedem Request ab", async () => {
+    const fetchImpl = makeFetch(jsonResponse(201, { version: {} }));
+    const repo = makeRepo(fetchImpl);
+    await expect(
+      repo.addCoverLetterVersion("app-1", {
+        expectedVersion: 1,
+        version: {
+          versionId: "v2",
+          jobId: "",
+          createdAt: "2026-11-05T11:00:00Z",
+          content: "",
+          source: "manual",
+        },
+      })
+    ).rejects.toMatchObject({ code: "validation_error" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("behält adoptCoverLetter als nicht unterstützt, weil kein atomarer RIS-Endpunkt existiert", async () => {
+    const fetchImpl = makeFetch(jsonResponse(200, { application: fixture() }));
+    const repo = makeRepo(fetchImpl);
+    await expect(
+      repo.addCoverLetterVersion("app-1", {
+        expectedVersion: 1,
+        version: {
+          versionId: "v1",
+          jobId: "job-1",
+          createdAt: "2026-11-05T11:00:00Z",
+          content: "x",
+          source: "manual",
+        },
+      })
+    ).resolves.toMatchObject({ applicationId: "app-1" });
+    // The port has no atomic adopt operation; the UI adopts by updating the draft.
+    expect("adoptCoverLetter" in repo).toBe(false);
+  });
+
   it("mappt 422 auf validation_error (nicht unterstützte Felder)", async () => {
     const fetchImpl = makeFetch(
       jsonResponse(422, { error: "location is unsupported", code: "unsupported_location_multiple" })

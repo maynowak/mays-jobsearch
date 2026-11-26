@@ -190,12 +190,23 @@ export function createRemoteApplicationRepository(
     },
 
     async addCoverLetterVersion(
-      _localId: string,
-      _input: SessionCoverLetterVersionInput
+      localId: string,
+      input: SessionCoverLetterVersionInput
     ): Promise<SessionApplicationV1> {
-      throw notSupported();
+      const updated = await port.addCoverLetterVersion(
+        localId,
+        { expectedVersion: input.expectedVersion, version: input.version },
+        { signal: input.signal }
+      );
+      return toSessionApplication(updated);
     },
 
+    /**
+     * Deliberately unsupported: the BFF/RIS contract has no atomic
+     * "adopt cover letter" endpoint. The interactive draft-adoption flow in
+     * ApplicationsSection updates the draft through `update()` instead, so a
+     * compound call here would not be atomic and could lose the version bump.
+     */
     async adoptCoverLetter(
       _localId: string,
       _input: SessionAdoptCoverLetterInput

@@ -129,17 +129,33 @@ describe("remote session bridge", () => {
       repo.addHistory("app-1", { kind: "note", expectedVersion: 1, id: "n1", at: "2026-11-05T10:00:00Z", text: "x" })
     ).rejects.toMatchObject({ code: "not_supported" });
     await expect(
-      repo.addCoverLetterVersion("app-1", {
-        expectedVersion: 1,
-        version: { versionId: "v1", jobId: "job-1", createdAt: "x", content: "x", source: "manual" },
-      })
-    ).rejects.toMatchObject({ code: "not_supported" });
-    await expect(
       repo.adoptCoverLetter("app-1", {
         expectedVersion: 1,
         version: { versionId: "v1", jobId: "job-1", createdAt: "x", content: "x", source: "manual" },
       })
     ).rejects.toMatchObject({ code: "not_supported" });
+  });
+
+  it("reicht Anschreibenversionen an den Remote-Port weiter und mappt die Antwort", async () => {
+    const port = fakePort();
+    const repo = createRemoteApplicationRepository(port);
+    const version = {
+      versionId: "v2",
+      jobId: "job-1",
+      createdAt: "2026-11-05T11:00:00Z",
+      content: "Synthetic cover letter",
+      source: "manual" as const,
+    };
+    const updated = await repo.addCoverLetterVersion("app-1", {
+      expectedVersion: 2,
+      version,
+      signal: undefined,
+    });
+    expect(updated.localId).toBe("app-1");
+    expect(updated).not.toHaveProperty("applicationId");
+    const [id, input] = vi.mocked(port.addCoverLetterVersion).mock.calls[0];
+    expect(id).toBe("app-1");
+    expect(input).toEqual({ expectedVersion: 2, version });
   });
 
   it("exportiert als nicht-lokalen Export", async () => {
