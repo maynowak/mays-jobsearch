@@ -1,10 +1,13 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useLang } from "../i18n";
 import type {
   SessionApplicationUpdateChanges,
   SessionApplicationV1,
 } from "../lib/applications/sessionApplications";
-import type { ApplicationMigrationPortV1, ApplicationRepository } from "../lib/applications/repositoryTypes";
+import type {
+  ApplicationMigrationPortV1,
+  ApplicationRepository,
+} from "../lib/applications/repositoryTypes";
 import type { CvDocument, Job, ModelOption } from "../types";
 import type { PersistentCv } from "../lib/cvStorageApi";
 import type { CvBuilderProfileV1 } from "../lib/cvBuilder/profileTypes";
@@ -63,6 +66,7 @@ type PendingNavigation = {
 };
 type ApplicationFilter = "all" | ApplicationStatus | "followUpOpen" | "followUpOverdue";
 type ApplicationSort = "newest" | "oldest" | "followUp";
+type ApplicationLoadState = "loading" | "ready" | "empty" | "error";
 
 const QUICK_FILTERS: readonly { id: ApplicationFilter; labelKey: string }[] = [
   { id: "all", labelKey: "applications.cockpit.all" },
@@ -156,7 +160,12 @@ export default function ApplicationsSection({
   const locale = lang === "de" ? "de-DE" : "en-GB";
   const [applications, setApplications] = useState<SessionApplicationV1[]>([]);
   const [migrationOpen, setMigrationOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loadState, setLoadState] = useState<ApplicationLoadState>("loading");
+  const [loadError, setLoadError] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
   const [busy, setBusy] = useState(false);
   const [letterDirty, setLetterDirty] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -196,6 +205,12 @@ export default function ApplicationsSection({
   const applicationsRef = useRef<SessionApplicationV1[]>([]);
   const repositoryRef = useRef(repository);
   const onChangedRef = useRef(onChanged);
+  const loadRequestRef = useRef(0);
+  const loadControllerRef = useRef<AbortController | null>(null);
+  const loadMoreControllerRef = useRef<AbortController | null>(null);
+  const loadMoreRequestRef = useRef(false);
+  const loadGenerationRef = useRef(0);
+  const nextCursorRef = useRef<string | null>(null);
   const operationsRef = useRef<Set<AbortController>>(new Set());
   const runningRef = useRef(false);
   const appliedNavigationRef = useRef<Props["navigationTarget"]>(null);
@@ -213,6 +228,8 @@ export default function ApplicationsSection({
     return () => {
       mountedRef.current = false;
       operationsRef.current.forEach((controller) => controller.abort());
+      loadControllerRef.current?.abort();
+      loadMoreControllerRef.current?.abort();
     };
   }, []);
 
@@ -228,30 +245,63 @@ export default function ApplicationsSection({
     onChangedRef.current?.(next);
   };
 
+  const commitFirstPage = useCallback(
+    (items: SessionApplicationV1[], cursor: string | null) => {
+      applicationsRef.current = items;
+      setApplications(items);
+      nextCursorRef.current = cursor;
+      setNextCursor(cursor);
+      setLoadState(items.length > 0 ? "ready" : "empty");
+      setLoadError("");
+      onChangedRef.current?.(items);
+    },
+    []
+  );
+
+  const retryLoad = () => setReloadToken((current) => current + 1);
+
   useEffect(() => {
-    let active = true;
+    const requestId = loadRequestRef.current + 1;
+    loadRequestRef.current = requestId;
+    loadGenerationRef.current += 1;
+    loadControllerRef.current?.abort();
+    loadMoreControllerRef.current?.abort();
+    loadMoreControllerRef.current = null;
+    loadMoreRequestRef.current = false;
+    setLoadingMore(false);
+    setLoadMoreError("");
+
     const controller = new AbortController();
-    setLoading(true);
+    loadControllerRef.current = controller;
+    const repositoryAtStart = repository;
+    const isCurrent = () =>
+      mountedRef.current &&
+      loadRequestRef.current === requestId &&
+      repositoryRef.current === repositoryAtStart &&
+      !controller.signal.aborted;
+
+    setLoadState("loading");
+    setLoadError("");
+    nextCursorRef.current = null;
+    setNextCursor(null);
+
     repository
       .list({ signal: controller.signal })
       .then((page) => {
-        if (!active) return;
-        applicationsRef.current = page.items;
-        setApplications(page.items);
-        onChangedRef.current?.(page.items);
+        if (!isCurrent()) return;
+        commitFirstPage(page.items, page.nextCursor ?? null);
       })
       .catch((err) => {
-        if (!active || (err instanceof ApplicationRepositoryError && err.code === "aborted")) return;
-        setError(errorLabel(t, err));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        if (!isCurrent()) return;
+        if (err instanceof ApplicationRepositoryError && err.code === "aborted") return;
+        setLoadState("error");
+        setLoadError(errorLabel(t, err));
       });
+
     return () => {
-      active = false;
       controller.abort();
     };
-  }, [repository, t, refreshToken]);
+  }, [repository, t, refreshToken, reloadToken, commitFirstPage]);
 
   useEffect(() => {
     setEditing(false);
@@ -426,6 +476,47 @@ export default function ApplicationsSection({
       operationsRef.current.delete(controller);
       runningRef.current = false;
       if (mountedRef.current) setBusy(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    const cursor = nextCursorRef.current;
+    if (!cursor || loadMoreRequestRef.current) return;
+    const generation = loadGenerationRef.current;
+    const repositoryAtStart = repository;
+    const controller = new AbortController();
+    loadMoreRequestRef.current = true;
+    loadMoreControllerRef.current = controller;
+    setLoadingMore(true);
+    setLoadMoreError("");
+    const isCurrent = () =>
+      mountedRef.current &&
+      loadGenerationRef.current === generation &&
+      repositoryRef.current === repositoryAtStart &&
+      !controller.signal.aborted;
+    try {
+      const page = await repository.list({ cursor, signal: controller.signal });
+      if (!isCurrent()) return;
+      const existing = applicationsRef.current;
+      const seen = new Set(existing.map((application) => application.localId));
+      const appended = page.items.filter((application) => !seen.has(application.localId));
+      const next = appended.length > 0 ? [...existing, ...appended] : existing;
+      applicationsRef.current = next;
+      setApplications(next);
+      nextCursorRef.current = page.nextCursor ?? null;
+      setNextCursor(page.nextCursor ?? null);
+      setLoadMoreError("");
+      onChangedRef.current?.(next);
+    } catch (err) {
+      if (!isCurrent()) return;
+      if (err instanceof ApplicationRepositoryError && err.code === "aborted") return;
+      setLoadMoreError(errorLabel(t, err));
+    } finally {
+      if (loadMoreControllerRef.current === controller) {
+        loadMoreControllerRef.current = null;
+        loadMoreRequestRef.current = false;
+        if (mountedRef.current) setLoadingMore(false);
+      }
     }
   };
 
@@ -982,7 +1073,9 @@ export default function ApplicationsSection({
         idempotencyKey: `manual-draft:${reference.jobId}`,
       });
       const page = await repository.list();
-      notify(page.items);
+      if (mountedRef.current && repositoryRef.current === repository) {
+        commitFirstPage(page.items, page.nextCursor ?? null);
+      }
       setSelectedId(application.localId);
       setActiveTab("overview");
       setNewApplicationNotice(t(
@@ -1048,6 +1141,9 @@ export default function ApplicationsSection({
         : `uploaded:${selectedCvReference.cvId}`
     : "none";
 
+  const isLoading = loadState === "loading";
+  const isLoadError = loadState === "error";
+
   return (
     <section className="applications-section" aria-labelledby="applications-title">
       <div className="applications-section__head">
@@ -1099,9 +1195,18 @@ export default function ApplicationsSection({
         <p className="applications-new__ok" role="status">{newApplicationNotice}</p>
       )}
 
-      {loading && <p role="status">{t("applications.loading")}</p>}
+      {isLoading && <p role="status">{t("applications.loading")}</p>}
 
-      {!loading && applications.length > 0 && (
+      {isLoadError && (
+        <div className="applications-load-error" role="alert">
+          <p>{loadError || t("applications.loadError")}</p>
+          <button type="button" className="btn-ghost" onClick={retryLoad}>
+            {t("applications.retry")}
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !isLoadError && applications.length > 0 && (
         <div className="applications-cockpit">
           <section className="applications-metrics" aria-labelledby="applications-metrics-title">
             <h3 id="applications-metrics-title">{t("applications.cockpit.title")}</h3>
@@ -1161,7 +1266,7 @@ export default function ApplicationsSection({
         </div>
       )}
 
-      {!loading && applications.length > 0 && (
+      {!isLoading && !isLoadError && applications.length > 0 && (
         <div className="applications-quick-filters" role="group" aria-label={t("applications.cockpit.quickFilters")}>
           {QUICK_FILTERS.map(({ id, labelKey }) => (
             <button
@@ -1177,48 +1282,76 @@ export default function ApplicationsSection({
         </div>
       )}
 
-      <div className="applications-controls">
-        <label className="letter-field">
-          <span>{t("applications.filter")}</span>
-          <select value={filter} onChange={(event) => setFilter(event.target.value as ApplicationFilter)}>
-            <option value="all">{t("applications.filterAll")}</option>
-            {STATUS_ORDER.map((status) => (
-              <option key={status} value={status}>{statusLabel(t, status)}</option>
-            ))}
-            <option value="followUpOpen">{t("applications.cockpit.openFollowUps")}</option>
-            <option value="followUpOverdue">{t("applications.cockpit.overdue")}</option>
-          </select>
-        </label>
-        <label className="letter-field">
-          <span>{t("applications.sort")}</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value as ApplicationSort)}>
-            <option value="newest">{t("applications.sortNewest")}</option>
-            <option value="oldest">{t("applications.sortOldest")}</option>
-            <option value="followUp">{t("applications.cockpit.sortFollowUp")}</option>
-          </select>
-        </label>
-      </div>
-
-      {!loading && applications.length === 0 ? (
-        <div className="applications-empty">
-          <h3>{t("applications.emptyTitle")}</h3>
-          <p>{t("applications.emptyText")}</p>
+      {!isLoading && !isLoadError && (
+        <div className="applications-controls">
+          <label className="letter-field">
+            <span>{t("applications.filter")}</span>
+            <select value={filter} onChange={(event) => setFilter(event.target.value as ApplicationFilter)}>
+              <option value="all">{t("applications.filterAll")}</option>
+              {STATUS_ORDER.map((status) => (
+                <option key={status} value={status}>{statusLabel(t, status)}</option>
+              ))}
+              <option value="followUpOpen">{t("applications.cockpit.openFollowUps")}</option>
+              <option value="followUpOverdue">{t("applications.cockpit.overdue")}</option>
+            </select>
+          </label>
+          <label className="letter-field">
+            <span>{t("applications.sort")}</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value as ApplicationSort)}>
+              <option value="newest">{t("applications.sortNewest")}</option>
+              <option value="oldest">{t("applications.sortOldest")}</option>
+              <option value="followUp">{t("applications.cockpit.sortFollowUp")}</option>
+            </select>
+          </label>
         </div>
-      ) : (
-        <div className="applications-layout">
-          <ul ref={applicationsListRef} className="applications-list" aria-label={t("applications.listAria")}>
-            {visible.length === 0 ? <li className="applications-empty">{t("applications.noFilterResults")}</li> : visible.map((application) => (
-              <li key={application.localId}>
-                <ApplicationCard
-                  application={application}
-                  selected={selected?.localId === application.localId}
-                  onSelect={() => selectApplication(application.localId)}
-                />
-              </li>
-            ))}
-          </ul>
+      )}
 
-          {selected ? (
+      {!isLoading && !isLoadError ? (
+        applications.length === 0 ? (
+          <div className="applications-empty">
+            <h3>{t("applications.emptyTitle")}</h3>
+            <p>{t("applications.emptyText")}</p>
+          </div>
+        ) : (
+          <div className="applications-layout">
+            <div className="applications-list-shell">
+              <ul ref={applicationsListRef} className="applications-list" aria-label={t("applications.listAria")}>
+                {visible.length === 0 ? <li className="applications-empty">{t("applications.noFilterResults")}</li> : visible.map((application) => (
+                  <li key={application.localId}>
+                    <ApplicationCard
+                      application={application}
+                      selected={selected?.localId === application.localId}
+                      onSelect={() => selectApplication(application.localId)}
+                    />
+                  </li>
+                ))}
+              </ul>
+
+              {nextCursor ? (
+                <div className="applications-load-more">
+                  {loadMoreError ? (
+                    <>
+                      <p className="letter-review-warning" role="alert">{loadMoreError}</p>
+                      <button type="button" className="btn-ghost" onClick={handleLoadMore}>
+                        {t("applications.loadMoreRetry")}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                      aria-busy={loadingMore}
+                    >
+                      {loadingMore ? t("applications.loadingMore") : t("applications.loadMore")}
+                    </button>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            {selected ? (
             <article className="applications-detail" aria-label={t("applications.detailAria")}>
               <div className="applications-detail__head">
                 <div>
@@ -1746,8 +1879,9 @@ export default function ApplicationsSection({
               </div>
             </article>
           ) : null}
-        </div>
-      )}
+          </div>
+        )
+      ) : null}
       {migration ? (
         <ApplicationMigrationDialog
           open={migrationOpen}
