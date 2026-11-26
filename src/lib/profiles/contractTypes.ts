@@ -125,6 +125,8 @@ export interface UpdateCVSearchProfileInputV1 {
   name?: string;
   description?: string;
   searchConfig?: SearchConfigurationV1;
+  /** Optimistic concurrency token of the loaded record. Never invented. */
+  version?: number;
 }
 
 export interface CreateATSProfileInputV1 {
@@ -139,6 +141,8 @@ export interface UpdateATSProfileInputV1 {
   targetRoles?: string[];
   skills?: string[];
   criteria?: ATSCriteriaV1;
+  /** Optimistic concurrency token of the loaded record. Never invented. */
+  version?: number;
 }
 
 export interface CreateManualSearchProfileInputV1 {
@@ -153,4 +157,6 @@ export interface UpdateManualSearchProfileInputV1 {
   description?: string;
   searchConfig?: SearchConfigurationV1;
   matchingPreferences?: MatchingPreferencesV1;
+  /** Optimistic concurrency token of the loaded record. Never invented. */
+  version?: number;
 }

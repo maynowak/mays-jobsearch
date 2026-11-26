@@ -20,6 +20,7 @@ import {
   SEARCH_PROFILE_STORAGE_CONSENT_PARAGRAPHS,
   SEARCH_PROFILE_STORAGE_CONSENT_TEXT_VERSION,
 } from "../lib/searchProfileStorageConsent";
+import { isSearchProfileVersionConflict } from "../lib/searchProfilesApi";
 import type { SearchProfileConsentState } from "../lib/searchProfilesApi";
 
 // MAYS-SEARCH-PROFILE-MANUAL-01:
@@ -37,8 +38,12 @@ import type { SearchProfileConsentState } from "../lib/searchProfilesApi";
 interface Props {
   profiles: readonly ManualSearchProfile[];
   busy?: boolean;
-  onSave: (draft: ManualSearchProfileDraft, existingId: string | null) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onSave: (
+    draft: ManualSearchProfileDraft,
+    existingId: string | null,
+    version?: number
+  ) => Promise<void>;
+  onDelete: (id: string, version?: number) => Promise<void>;
   onDuplicate: (id: string) => Promise<void>;
   onSearch: (profile: ManualSearchProfile) => void;
   storageMode?: "session" | "persistent";
@@ -53,6 +58,7 @@ interface Props {
 
 interface FormState {
   id: string | null;
+  version?: number;
   name: string;
   description: string;
   targetRolesText: string;
@@ -83,6 +89,7 @@ const emptyForm = (): FormState => ({
 
 const formFromProfile = (profile: ManualSearchProfile): FormState => ({
   id: profile.id,
+  ...(profile.version === undefined ? {} : { version: profile.version }),
   name: profile.name,
   description: profile.description ?? "",
   targetRolesText: formatTargetRoles(profile.searchConfig.targetRoles ?? []),
@@ -194,7 +201,7 @@ export default function ManualSearchProfilesSection({
 
     setPendingAction("save");
     try {
-      await onSave(draft, form.id);
+      await onSave(draft, form.id, form.version);
       setError(null);
       restoreFocusRef.current = true;
       setForm(null);
@@ -206,18 +213,20 @@ export default function ManualSearchProfilesSection({
         setForm(null);
         return;
       }
-      setError(t("manualProfiles.error.save"));
+      setError(isSearchProfileVersionConflict(error)
+        ? t("manualProfiles.error.conflict")
+        : t("manualProfiles.error.save"));
     } finally {
       setPendingAction(null);
     }
   };
 
-  const confirmDelete = async (id: string) => {
+  const confirmDelete = async (id: string, version?: number) => {
     if (pendingAction) return;
     setError(null);
     setPendingAction(`delete:${id}`);
     try {
-      await onDelete(id);
+      await onDelete(id, version);
       setPendingDeleteId(null);
       setNotice(t("manualProfiles.notice.deleted"));
     } catch (error) {
@@ -227,7 +236,9 @@ export default function ManualSearchProfilesSection({
         setPendingDeleteId(null);
         return;
       }
-      setError(t("manualProfiles.error.delete"));
+      setError(isSearchProfileVersionConflict(error)
+        ? t("manualProfiles.error.conflict")
+        : t("manualProfiles.error.delete"));
     } finally {
       setPendingAction(null);
     }
@@ -626,7 +637,7 @@ export default function ManualSearchProfilesSection({
                       <span className="field-hint" role="alert">
                         {t("manualProfiles.deleteConfirm")}
                       </span>
-                      <Button variant="danger" onClick={() => void confirmDelete(profile.id)} disabled={busy || pendingAction !== null}>
+                      <Button variant="danger" onClick={() => void confirmDelete(profile.id, profile.version)} disabled={busy || pendingAction !== null}>
                         {t("manualProfiles.deleteConfirmButton")}
                       </Button>
                       <Button variant="ghost" onClick={() => setPendingDeleteId(null)} disabled={busy || pendingAction !== null}>

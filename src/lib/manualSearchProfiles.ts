@@ -48,6 +48,11 @@ export interface ManualSearchProfile {
   createdAt: string;
   /** ISO-Zeitstempel; wird bei fachlichen Aenderungen aktualisiert. */
   updatedAt: string;
+  /**
+   * Optimistic concurrency token for durable RIS records. Session-only
+   * profiles have no version and must not invent one.
+   */
+  version?: number;
 }
 
 /** Formulareingabe (ohne technische Felder wie id/Timestamps). */
@@ -104,6 +109,7 @@ export function cloneManualSearchProfile(profile: ManualSearchProfile): ManualSe
     matchingPreferences: clonePreferences(profile.matchingPreferences),
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
+    ...(profile.version === undefined ? {} : { version: profile.version }),
   };
 }
 

@@ -8,6 +8,7 @@ import type {
   WorkMode,
 } from "../lib/profiles/contractTypes";
 import type { PersistentSearchProfiles } from "../lib/usePersistentSearchProfiles";
+import { isSearchProfileVersionConflict } from "../lib/searchProfilesApi";
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
 import SkillChips from "./SkillChips";
@@ -30,6 +31,11 @@ const split = (value: string): string[] =>
 
 const splitSkills = (value: string): string[] =>
   value.split(/[,;\n]+/).map((entry) => entry.trim()).filter(Boolean);
+
+const requireEditingVersion = (version: number | null, message: string): number => {
+  if (!Number.isInteger(version) || (version as number) < 1) throw new Error(message);
+  return version as number;
+};
 
 export default function PersistentCvProfilesOverlay({
   cvId,
@@ -56,7 +62,9 @@ export default function PersistentCvProfilesOverlay({
   const [atsSkills, setAtsSkills] = useState("");
   const [busy, setBusy] = useState(false);
   const [editingCvId, setEditingCvId] = useState<string | null>(null);
+  const [editingCvVersion, setEditingCvVersion] = useState<number | null>(null);
   const [editingAtsId, setEditingAtsId] = useState<string | null>(null);
+  const [editingAtsVersion, setEditingAtsVersion] = useState<number | null>(null);
   const [showCvForm, setShowCvForm] = useState(false);
   const [showAtsForm, setShowAtsForm] = useState(false);
   const [expandedAtsParent, setExpandedAtsParent] = useState<string | null>(null);
@@ -114,6 +122,7 @@ export default function PersistentCvProfilesOverlay({
 
   const resetCvForm = () => {
     setEditingCvId(null);
+    setEditingCvVersion(null);
     setName("");
     setDescription("");
     setSkills("");
@@ -125,6 +134,7 @@ export default function PersistentCvProfilesOverlay({
 
   const resetAtsForm = () => {
     setEditingAtsId(null);
+    setEditingAtsVersion(null);
     setAtsName("");
     setAtsRoles("");
     setAtsSkills("");
@@ -139,6 +149,7 @@ export default function PersistentCvProfilesOverlay({
 
   const startEditCv = (profile: CVSearchProfileV1) => {
     setEditingCvId(profile.searchProfileId);
+    setEditingCvVersion(Number.isInteger(profile.version) ? profile.version : null);
     setName(profile.name);
     setDescription(profile.description ?? "");
     setSkills(profile.searchConfig.skills);
@@ -159,6 +170,7 @@ export default function PersistentCvProfilesOverlay({
 
   const startEditAts = (parentId: string, profile: ATSSearchProfileV1) => {
     setEditingAtsId(profile.atsSearchProfileId);
+    setEditingAtsVersion(Number.isInteger(profile.version) ? profile.version : null);
     setAtsParent(parentId);
     setAtsName(profile.name);
     setAtsRoles(profile.targetRoles.join(", "));
@@ -179,7 +191,10 @@ export default function PersistentCvProfilesOverlay({
         searchConfig: searchConfig(),
       };
       if (editingCvId) {
-        await profiles.updateCv(cvId, editingCvId, input);
+        await profiles.updateCv(cvId, editingCvId, {
+          ...input,
+          version: requireEditingVersion(editingCvVersion, "search_profile_version_required"),
+        });
       } else {
         await profiles.createCv(cvId, input);
       }
@@ -187,7 +202,12 @@ export default function PersistentCvProfilesOverlay({
       await load();
       onProfilesChanged?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "search_profile_create_failed");
+      if (isSearchProfileVersionConflict(err)) {
+        await load();
+        setError(t("searchProfiles.versionConflict"));
+      } else {
+        setError(err instanceof Error ? err.message : "search_profile_create_failed");
+      }
     } finally {
       setBusy(false);
     }
@@ -208,7 +228,10 @@ export default function PersistentCvProfilesOverlay({
         skills: split(atsSkills),
       };
       if (editingAtsId) {
-        await profiles.updateAts(atsParent, editingAtsId, input);
+        await profiles.updateAts(atsParent, editingAtsId, {
+          ...input,
+          version: requireEditingVersion(editingAtsVersion, "ats_profile_version_required"),
+        });
       } else {
         await profiles.createAts(atsParent, input);
       }
@@ -218,7 +241,12 @@ export default function PersistentCvProfilesOverlay({
       await load();
       onProfilesChanged?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ats_profile_create_failed");
+      if (isSearchProfileVersionConflict(err)) {
+        await load();
+        setError(t("searchProfiles.versionConflict"));
+      } else {
+        setError(err instanceof Error ? err.message : "ats_profile_create_failed");
+      }
     } finally {
       setBusy(false);
     }
@@ -296,7 +324,9 @@ export default function PersistentCvProfilesOverlay({
           <>
             {error && (
               <div className="alert alert-error profile-manager__error" role="alert">
-                <p>{t("searchProfiles.loadError")}</p>
+                <p>{error === t("searchProfiles.versionConflict")
+                  ? error
+                  : t("searchProfiles.loadError")}</p>
                 <Button variant="ghost" disabled={loading} onClick={() => { void load(); }}>
                   {t("searchProfiles.retry")}
                 </Button>
@@ -380,12 +410,17 @@ export default function PersistentCvProfilesOverlay({
                             void (async () => {
                               setBusy(true);
                               try {
-                                await profiles.deleteCv(cvId, profile.searchProfileId);
+                                await profiles.deleteCv(cvId, profile.searchProfileId, profile.version);
                                 if (editingCvId === profile.searchProfileId) resetCvForm();
                                 await load();
                                 onProfilesChanged?.();
                               } catch (err) {
-                                setError(err instanceof Error ? err.message : "search_profile_delete_failed");
+                                if (isSearchProfileVersionConflict(err)) {
+                                  await load();
+                                  setError(t("searchProfiles.versionConflict"));
+                                } else {
+                                  setError(err instanceof Error ? err.message : "search_profile_delete_failed");
+                                }
                               } finally {
                                 setBusy(false);
                               }
@@ -442,11 +477,20 @@ export default function PersistentCvProfilesOverlay({
                                         void (async () => {
                                           setBusy(true);
                                           try {
-                                            await profiles.deleteAts(profile.searchProfileId, ats.atsSearchProfileId);
+                                            await profiles.deleteAts(
+                                              profile.searchProfileId,
+                                              ats.atsSearchProfileId,
+                                              ats.version
+                                            );
                                             await load();
                                             onProfilesChanged?.();
                                           } catch (err) {
-                                            setError(err instanceof Error ? err.message : "ats_profile_delete_failed");
+                                            if (isSearchProfileVersionConflict(err)) {
+                                              await load();
+                                              setError(t("searchProfiles.versionConflict"));
+                                            } else {
+                                              setError(err instanceof Error ? err.message : "ats_profile_delete_failed");
+                                            }
                                           } finally {
                                             setBusy(false);
                                           }
