@@ -732,6 +732,10 @@ export default function ApplicationsSection({
     if (!selected) return;
     let cvReference: SessionApplicationV1["documents"]["cvReference"] | null = null;
     if (value.startsWith("builder:")) {
+      // RIS ApplicationV1 cannot store a builder-CV reference losslessly (the
+      // BFF rejects it with builder_cv_unsupported). Never write a new builder
+      // reference in remote mode and never silently drop an existing one.
+      if (storageMode === "remote") return;
       const cvId = value.slice("builder:".length);
       const profile = cvBuilderProfiles.find((entry) => entry.cvId === cvId);
       if (!profile) return;
@@ -1116,6 +1120,12 @@ export default function ApplicationsSection({
 
   const selectedCvReference = selected?.documents.cvReference ?? null;
   const selectedCvSource = selectedCvReference?.cvSource ?? "uploaded";
+  const remoteStorage = storageMode === "remote";
+  // A persisted builder reference cannot be round-tripped through RIS. Keep it
+  // visible and read-only instead of deleting it or offering new builder CVs.
+  const selectedBuilderCvRemote = Boolean(
+    remoteStorage && selectedCvReference && selectedCvSource === "builder"
+  );
   const selectedBuilderCv =
     selectedCvReference && selectedCvSource === "builder"
       ? cvBuilderProfiles.find((profile) => profile.cvId === selectedCvReference.cvId) ?? null
@@ -1711,6 +1721,11 @@ export default function ApplicationsSection({
                         {t("applications.cvReferenceUnavailable")}
                       </p>
                     )}
+                    {selectedBuilderCvRemote && (
+                      <p className="applications-session-note" role="alert">
+                        {t("applications.cvReferenceBuilderRemoteUnsupported")}
+                      </p>
+                    )}
                     {selectedBuilderCv && onOpenCvProfile && (
                       <button
                         type="button"
@@ -1728,9 +1743,13 @@ export default function ApplicationsSection({
                         disabled={busy}
                       >
                         <option value="none">{t("applications.cvNone")}</option>
-                        {selectedCvReference && !selectedCvAvailable && (
+                        {selectedCvReference && (selectedBuilderCvRemote || !selectedCvAvailable) && (
                           <option value={selectedCvValue}>
-                            {t("applications.cvReferenceUnavailable")}
+                            {selectedBuilderCvRemote
+                              ? `${selectedCvReference.label || selectedCvReference.cvId} — ${t(
+                                  "applications.cvSource.builderRemoteReadOnly"
+                                )}`
+                              : t("applications.cvReferenceUnavailable")}
                           </option>
                         )}
                         {cvDocuments.length > 0 && (
@@ -1758,7 +1777,7 @@ export default function ApplicationsSection({
                             ))}
                           </optgroup>
                         )}
-                        {cvBuilderProfiles.length > 0 && (
+                        {!remoteStorage && cvBuilderProfiles.length > 0 && (
                           <optgroup label={t("applications.cvSource.builder")}>
                             {cvBuilderProfiles.map((profile) => (
                               <option

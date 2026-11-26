@@ -296,6 +296,74 @@ describe("APP-02 ApplicationsSection", () => {
     expect(screen.getByLabelText("Zugeordneten Lebenslauf ändern")).toHaveValue("builder:cvb-missing");
   });
 
+  it("offers builder CVs for new selection in session mode", async () => {
+    const builder = makeBuilderProfile();
+    render(
+      <LangProvider>
+        <Harness initial={[draft()]} cvBuilderProfiles={[builder]} storageMode="session" />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    const select = screen.getByLabelText("Zugeordneten Lebenslauf ändern");
+    expect(
+      within(select).getByRole("group", { name: "Meine erstellten Lebensläufe" })
+    ).toBeInTheDocument();
+  });
+
+  it("does not offer builder CVs for new remote selections", async () => {
+    const builder = makeBuilderProfile();
+    render(
+      <LangProvider>
+        <Harness initial={[draft()]} cvBuilderProfiles={[builder]} storageMode="remote" />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+    const select = screen.getByLabelText("Zugeordneten Lebenslauf ändern");
+    expect(
+      within(select).queryByRole("group", { name: "Meine erstellten Lebensläufe" })
+    ).toBeNull();
+  });
+
+  it("keeps a persisted builder CV reference read-only in remote mode without deleting it", async () => {
+    const builder = makeBuilderProfile();
+    const application = {
+      ...draft(),
+      documents: {
+        ...draft().documents,
+        cvReference: { cvId: builder.cvId, label: builder.name, cvSource: "builder" as const },
+      },
+    };
+    const repository = createSessionApplicationRepository({ initial: [application] });
+    const updateSpy = vi.spyOn(repository, "update");
+    render(
+      <LangProvider>
+        <Harness
+          initial={[application]}
+          repository={repository}
+          cvBuilderProfiles={[builder]}
+          storageMode="remote"
+        />
+      </LangProvider>
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Dokumente" }));
+
+    expect(
+      screen.getByText(/nicht dauerhaft mit einer RIS-Bewerbung verknüpft werden/)
+    ).toBeInTheDocument();
+    const select = screen.getByLabelText("Zugeordneten Lebenslauf ändern");
+    expect(select).toHaveValue(`builder:${builder.cvId}`);
+    expect(within(select).getByText(/nicht dauerhaft speicherbar/)).toBeInTheDocument();
+    expect(
+      within(select).queryByRole("group", { name: "Meine erstellten Lebensläufe" })
+    ).toBeNull();
+
+    const optionValues = Array.from(select.querySelectorAll("option")).map((option) => option.value);
+    expect(optionValues.filter((value) => value.startsWith("builder:"))).toEqual([
+      `builder:${builder.cvId}`,
+    ]);
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+
   it("records feedback, interview and note without changing the status", async () => {
     renderSection([submitted()]);
     fireEvent.click(await screen.findByRole("tab", { name: "Kommunikation" }));

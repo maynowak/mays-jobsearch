@@ -13,6 +13,7 @@ import type {
   ApplicationDeletionReceiptV1,
   ApplicationExportV1,
   ApplicationV1,
+  CoverLetterVersionV1,
   CreateApplicationDraftInputV1,
   TransitionApplicationStatusInputV1,
   UpdateApplicationDraftInputV1,
@@ -100,6 +101,41 @@ function assertNotes(input: { notes?: string }): void {
 function assertExpectedVersion(value: number): void {
   if (!Number.isInteger(value) || value < 1) {
     throw new ApplicationRepositoryError("expectedVersion is required", "validation_error");
+  }
+}
+
+/**
+ * Mirrors the server-side `toRisCoverLetterVersion` mapping so invalid input
+ * fails before any network call. The BFF/RIS contract accepts only the three
+ * documented sources and a non-empty, bounded content string.
+ */
+function assertCoverLetterVersion(version: CoverLetterVersionV1): void {
+  if (!version || typeof version !== "object") {
+    throw new ApplicationRepositoryError("cover-letter version is required", "validation_error");
+  }
+  if (!["generated", "revised", "manual"].includes(version.source)) {
+    throw new ApplicationRepositoryError("cover-letter source is unsupported", "validation_error");
+  }
+  if (typeof version.jobId !== "string" || !version.jobId.trim() || version.jobId.length > 500) {
+    throw new ApplicationRepositoryError("cover-letter jobId is required", "validation_error");
+  }
+  if (typeof version.content !== "string" || !version.content.trim() || version.content.length > 100000) {
+    throw new ApplicationRepositoryError("cover-letter content is invalid", "validation_error");
+  }
+  if (
+    version.versionId !== undefined &&
+    (typeof version.versionId !== "string" || !version.versionId.trim() || version.versionId.length > 500)
+  ) {
+    throw new ApplicationRepositoryError("cover-letter versionId is invalid", "validation_error");
+  }
+  if (version.language !== undefined && version.language !== "de" && version.language !== "en") {
+    throw new ApplicationRepositoryError("cover-letter language is unsupported", "validation_error");
+  }
+  if (
+    version.model !== undefined &&
+    (typeof version.model !== "string" || !version.model.trim() || version.model.length > 500)
+  ) {
+    throw new ApplicationRepositoryError("cover-letter model is invalid", "validation_error");
   }
 }
 
@@ -318,11 +354,29 @@ export function createRisApplicationRepository(
     },
 
     async addCoverLetterVersion(
-      _applicationId: string,
-      _input: AddApplicationCoverLetterVersionInputV1,
-      _options?: ApplicationReadOptions
+      applicationId: string,
+      input: AddApplicationCoverLetterVersionInputV1,
+      readOptions: ApplicationReadOptions = {}
     ): Promise<ApplicationV1> {
-      throw unavailable("RIS cover-letter responses are not part of the 01C adapter contract");
+      assertCoverLetterVersion(input.version);
+      assertExpectedVersion(input.expectedVersion);
+      // The BFF forwards this to RIS `/cover-letter-versions` and returns only
+      // `{ version }`, so re-read the application to give callers the complete
+      // updated ApplicationV1 (including the new optimistic-concurrency token).
+      await request(
+        `?id=${encodeURIComponent(applicationId)}&action=cover-letter`,
+        {
+          method: "POST",
+          body: { expectedVersion: input.expectedVersion, version: input.version },
+        },
+        readOptions.signal
+      );
+      const payload = await request(
+        `?id=${encodeURIComponent(applicationId)}`,
+        { method: "GET" },
+        readOptions.signal
+      );
+      return parseApplication(parseEnvelope(payload, "application"));
     },
 
     async export(
