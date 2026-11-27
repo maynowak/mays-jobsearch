@@ -7751,3 +7751,17 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - AI-/Privacy-/Data-Flow: keine neuen Datenflüsse oder Credentials; Demo-Daten synthetisch und browserlokal; keine RIS-Schreiboperationen, keine kostenpflichtigen KI-Aufrufe.
 - Live-Preview (`060c86d`): `/` und `/profil` HTTP 200; `/profil` mit `x-robots-tag: noindex, nofollow`; derselbe E2E gegen die Preview 14/14 PASS.
 - Evidence: `docs/reports/assets/JM-DEMO-01/demo-desktop.png`, `demo-mobile.png` (Live-Preview).
+
+## 2026-11-27 — JM-DEMO-EXIT-01 — WHITE SCREEN FIX
+
+**Status:** `READY FOR VISUAL REVIEW`
+
+**Report:** [27-11-JM-DEMO-EXIT-01-EXECUTION_LOG.md](reports/27-11-JM-DEMO-EXIT-01-EXECUTION_LOG.md)
+
+- Branch `feature/jm-one-click-demo-01`, PR #74; kein Main-Merge, kein Production-Deployment, keine Cognito-/RIS-/AWS-/Consent-Änderung.
+- Auf Basis des bereits fixierten CI-Regressors von JM-DEMO-01 wurde der Demo-Ausstieg robuster gemacht.
+- Ursache für möglichen weißen Bildschirm: `navigateInApp` (`window.history.pushState`) erzeugte bei der Übergabe von `/profil nach `/` einen neuen History-Eintrag, der bei manchen Render-Situationen zu einer inkonsistenten App-Zustandsübergänge führen konnte.
+- Fix: `onExitDemo`-Handler im Profil-Zweig von `App.tsx` ersetzt `navigateInApp("/")` durch `window.location.replace("/")`, welcher den aktuellen History-Eintrag überschreibt statt einen neuen hinzuzufügen. Das Demo-Key-Entfernen (`window.localStorage.removeItem("mj-demo-mode-open")` bleibt unverändert.
+- Authentifizierte Sitzungen bleiben vollständig unberührt, da nur der lokale Demo-Schlüssel gelöscht wird.
+- Verifikation: Der bestehende E2E-Test `npm run test:e2e:demo` besteht komplett (14/14 Checks inkl. Exit, DE/EN, 0 RIS-/BFF-Schreibrequests). Fokussierte Unit-Tests 28/28 PASS. Build erfolgreich.
+- AI-/Privacy-/Data-Flow: keine neuen Datenflüsse oder Credentials; nur lokale localStorage-Änderung am Demo-Schlüssel.
