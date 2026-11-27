@@ -14,6 +14,7 @@ Kein Main-Merge, kein Production-Deployment, keine Cognito-/RIS-/AWS-Änderung.
 
 - Branch: `feature/jm-one-click-demo-01`
 - Basis-HEAD vor diesem Fix: `9631a11`
+- Implementierungs-Commit: `76584bb`
 - PR: #74 (OPEN, base `main`)
 - Main-Basis: `75a0ecc`
 
