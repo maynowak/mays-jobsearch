@@ -4588,10 +4588,11 @@ export default function App() {
         user={DEMO_USER}
         isDemo
         onExitDemo={() => {
-          // Nur den Demo-Schlüssel entfernen; authentifizierte Sitzungen und
-          // echte Profildaten bleiben unberührt.
+          // Demo-Status entfernen und zur Startseite navigieren.
+          // window.location.replace verhindert einen neuen History-Eintrag,
+          // was bei manchen Navigationen einen weißen Bildschirm verhindern kann.
           window.localStorage.removeItem("mj-demo-mode-open");
-          navigateInApp("/");
+          window.location.replace("/");
         }}
         cvSection={dashboardCvSection}
         applicationsSection={dashboardApplicationsSection}
