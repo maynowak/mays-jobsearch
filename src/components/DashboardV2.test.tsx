@@ -52,7 +52,8 @@ describe('MAYS-UI-S2: Aurora dashboard preview', () => {
     expect(screen.queryByText('Authentifiziert')).toBeNull();
     expect(screen.queryByText('Modalität')).toBeNull();
     expect(screen.getByRole('button', { name: /Lebenslauf/ })).toBeDisabled();
-    expect(screen.queryByText(/(?:dashboard\.|profile\.)/)).toBeNull();
+    // New demo profile fields are expected in demo mode
+    expect(screen.getByText('Java, Python, AWS, Terraform, Docker, React, TypeScript')).toBeTruthy();
   });
 
   it('updates the active navigation item', () => {

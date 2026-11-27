@@ -62,6 +62,7 @@ interface Lp2Copy {
   finalTitle: string;
   finalText: string;
   finalButton: string;
+  demoButtonLabel: string;
 }
 
 const STRINGS: Record<Lp2Lang, Lp2Copy> = {
@@ -69,6 +70,7 @@ const STRINGS: Record<Lp2Lang, Lp2Copy> = {
     eyebrow: "MAY'S JOB MATCHER",
     titleA: "Finde Jobs,",
     titleAccent: "die wirklich zu dir passen.",
+    demoButtonLabel: "Demo ausprobieren",
     subtitle:
       "Entdecke Stellen aus mehreren Quellen, definiere eigene Suchprofile und vergleiche Anforderungen mit deinen Qualifikationen – auf Wunsch mit KI-Unterstützung.",
     findJobs: "Jetzt passende Jobs finden",
@@ -146,6 +148,7 @@ const STRINGS: Record<Lp2Lang, Lp2Copy> = {
     eyebrow: "MAY'S JOB MATCHER",
     titleA: "Find jobs",
     titleAccent: "that really fit you.",
+    demoButtonLabel: "Demo try out",
     subtitle:
       "Discover jobs from multiple sources, define your own search profiles and compare requirements with your skills – with optional AI support.",
     findJobs: "Find matching jobs now",
@@ -266,6 +269,14 @@ export default function LandingPage2(): React.ReactElement {
             </a>
             <a className="lp2-cta-secondary" href="#lp2-how">
               {t.learnMore}
+            </a>
+            <a className="lp2-cta-demo" href="javascript:void(0)" onClick={() => {
+              window.localStorage.setItem('mj-may-help-open', 'true');
+              if (window.location.pathname + window.location.search !== '/dashboard?tab=profile') {
+                window.history.pushState({}, '', '/dashboard?tab=profile');
+              }
+            }}>
+              {t.demoButtonLabel}
             </a>
           </div>
           <p className="lp2-hero-note">{t.heroNote}</p>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import profileGlobeUrl from '../assets/images/jm-profile-globe.webp';
+import { DEMO_IT_PROFILE } from '../lib/demoData';
 import { useLang } from '../i18n';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
@@ -81,6 +82,7 @@ const DashboardV2 = ({
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
   const [mayOpen, setMayOpen] = useState(initialMayOpen);
+  const effectiveDemo = isDemo || typeof window !== "undefined" && window.localStorage.getItem("mj-may-help-open") === "true";
   const mayButtonRef = useRef<HTMLButtonElement>(null);
   const mayPanelRef = useRef<HTMLDivElement>(null);
 
@@ -208,26 +210,63 @@ const DashboardV2 = ({
             <div className="dashboard-v2__card-heading">
               <h2>{t('dashboard.personalData')}</h2>
               <div className="dashboard-v2__heading-actions">
-                <Badge tone={isDemo ? 'neutral' : 'active'}>{isDemo ? t('dashboard.demo') : t('dashboard.authStatus')}</Badge>
+                <Badge tone={effectiveDemo ? 'neutral' : 'active'}>{effectiveDemo ? t('dashboard.demo') : t('dashboard.authStatus')}</Badge>
                 {!isDemo && onLogout ? (
                   <Button variant="danger" onClick={onLogout}>{t('auth.logout')}</Button>
                 ) : null}
               </div>
             </div>
-            <dl className="dashboard-v2__details">
-              <div>
-                <dt>{t('profile.email')}</dt>
-                <dd>{user.email || '-'}</dd>
-              </div>
-              <div>
-                <dt>{t('profile.sub')}</dt>
-                <dd>{user.sub || '-'}</dd>
-              </div>
-              <div>
-                <dt>{t('profile.name')}</dt>
-                <dd>{user.name || '-'}</dd>
-              </div>
-            </dl>
+            {effectiveDemo ? (
+              <dl className="dashboard-v2__details">
+                <div>
+                  <dt>{t('profile.email')}</dt>
+                  <dd>{user.email || '-'}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.sub')}</dt>
+                  <dd>{user.sub || '-'}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.name')}</dt>
+                  <dd>{user.name || '-'}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.skills')}</dt>
+                  <dd>{DEMO_IT_PROFILE.skills}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.targetRoles')}</dt>
+                  <dd>{DEMO_IT_PROFILE.targetRoles}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.city')}</dt>
+                  <dd>{DEMO_IT_PROFILE.city}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.workModes')}</dt>
+                  <dd>{DEMO_IT_PROFILE.workModes.toString()}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.employmentTypes')}</dt>
+                  <dd>{DEMO_IT_PROFILE.employmentTypes.toString()}</dd>
+                </div>
+              </dl>
+            ) : (
+              <dl className="dashboard-v2__details">
+                <div>
+                  <dt>{t('profile.email')}</dt>
+                  <dd>{user.email || '-'}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.sub')}</dt>
+                  <dd>{user.sub || '-'}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile.name')}</dt>
+                  <dd>{user.name || '-'}</dd>
+                </div>
+              </dl>
+            )}
           </Card>
 
           <Card className="dashboard-v2__development-card">
@@ -256,7 +295,7 @@ const DashboardV2 = ({
               <div>
                 <span className="dashboard-v2__status-icon" aria-hidden="true">✓</span>
                 <div>
-                  <p>{isDemo ? t('dashboard.demo') : t('dashboard.authStatus')}</p>
+                  <p>{effectiveDemo ? t('dashboard.demo') : t('dashboard.authStatus')}</p>
                   <strong>{isDemo ? t('dashboard.demoMode') : t('dashboard.active')}</strong>
                 </div>
               </div>
