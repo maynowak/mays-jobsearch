@@ -4577,6 +4577,37 @@ export default function App() {
   }
 
   if (isProfile) {
+    // STEP 1: Demo-Modus für anonyme Benutzer priorisieren
+    const demoMode = typeof window !== "undefined" && window.localStorage.getItem("mj-demo-mode-open") === "true";
+
+    if (!isAuth && demoMode) {
+      // Anonymer Benutzer mit aktivem Demo-Modus → synthetisches Demo-Profil
+      return (
+        <ErrorBoundary
+          title={t("error.boundaryTitle")}
+          message={t("error.boundaryMessage")}
+          reloadLabel={t("error.boundaryReload")}
+        >
+          <Navbar route={route} glass hideOnScroll onNavigate={navigateInApp} />
+          <main className="container legal-main layout-dashboard layout-profile-command">
+            <ProfileParticles />
+            <DashboardV2
+              user={DEMO_USER}
+              isDemo
+              cvSection={dashboardCvSection}
+              applicationsSection={dashboardApplicationsSection}
+              preferencesSection={dashboardPreferencesSection}
+            />
+          </main>
+          {cvProcessingUI}
+          {cvBuilderUi}
+          {letterModalNode}
+          <Footer />
+        </ErrorBoundary>
+      );
+    }
+
+    // Fallback: authentifizierter Benutzer oder anonymer Benutzer ohne Demo-Modus
     return (
       <ErrorBoundary
         title={t("error.boundaryTitle")}
