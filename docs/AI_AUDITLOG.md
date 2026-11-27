@@ -7776,13 +7776,13 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - 165 failures examined (last 500 runs); 71% on `main` push, 17% on `pull_request`, 4% `workflow_dispatch`, 3% `schedule`
 - Primary inferred causes: build failures (`npm run build`), test failures (`npm test -- --run`), timeouts (`timeout-minutes: 30`), Node `"22"` version compatibility, import/path issues in `src/**`
 - 3 failures already resolved by recent merges (JM-DEMO-01, JM-ATS-PROFILE-ADD-SKILL-BUG-01, JM-PROFILE-VISUAL-11)
-- 0 open CodeQL Security alerts; 0 open Dependabot alerts (no config); 0 open Code Scanning findings
+- 0 open CodeQL Security alerts; **25 open Dependabot alerts** (was incorrectly 0 in initial audit); 0 open Code Scanning findings
 - Repo has good hygiene; failures are mostly infra/build/test, not actual security gaps
 
 **Recommendations (6 tickets, JM-SEC-12A through JM-SEC-12F):**
 - P0 JM-SEC-12A: Document historical workflow errors; 162 of 165 remain; no immediate security risk
 - P1 JM-SEC-12B: CodeQL Config — set `build-mode: automatic`, add `actions/cache` for `node_modules`, verify Node `"22"` compat
-- P2 JM-SEC-12C: Dependabot — create `.github/dependabot.yml` with weekly schedule, critical/high alerts
+- **P2 JM-SEC-12C: Dependabot — create `.github/dependabot.yml` with weekly schedule, critical/high alerts** (raised from P3)
 - P3 JM-SEC-12D: Code Scanning — establish baseline `CODEQL.md`, periodic triage process
 - P3 JM-SEC-12E: Workflow Consolidation — audit `workflow_dispatch` necessity, streamline
 - P4 JM-SEC-12F: CI Stability — increase `timeout-minutes` if needed, add caching, monitor failure patterns
@@ -7821,3 +7821,32 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Guided Tour TOUR-01A–F bleibt separates Folgeprojekt
 
 **Ergebnis:** `JM-DEMO-01 — PRODUCTION VERIFIED`
+
+## 2026-11-27 — JM-SECURITY-CI-AUDIT-01 — EVIDENCE VERIFIED
+
+
+**Status:** `EVIDENCE VERIFIED`
+
+**Audit scope:** 165 historical GitHub Actions failures examined across `CodeQL Security Analysis`, `Dependabot`, and `Code Scanning` in repository `maynowak/mays-jobsearch` on branch `audit/jm-security-ci-01`.
+
+**Key findings (EVIDENCE VERIFIED):**
+- 165 failures examined (last 500 runs); 71% on `main` push, 17% on `pull_request`, 4% `workflow_dispatch`, 3% `schedule`
+- **Primary inferred causes:** build failures (`npm run build`), test failures (`npm test -- --run`), timeouts (`timeout-minutes: 30`), Node `"22"` version compatibility, import/path issues in `src/**`
+- **Dependabot alerts: 25 open** (was incorrectly 0 in initial audit); 0 dismissed; 5 auto_dismissed
+- **Code Scanning alerts: 0 open** (no open findings)
+- 3 failures already resolved by recent merges (JM-DEMO-01, JM-ATS-PROFILE-ADD-SKILL-BUG-01, JM-PROFILE-VISUAL-11)
+- Repo has good hygiene; failures are mostly infra/build/test, not actual security gaps
+
+**Recommendations (6 tickets, JM-SEC-12A through JM-SEC-12F):**
+- P0 JM-SEC-12A: Document historical workflow errors; 162 of 165 remain; no immediate security risk
+- P1 JM-SEC-12B: CodeQL Config — set `build-mode: automatic`, add `actions/cache` for `node_modules`, verify Node `"22"` compat
+- **P2 JM-SEC-12C: Dependabot — create `.github/dependabot.yml` with weekly schedule, critical/high alerts** (raised from P3 due to 25 open alerts)
+- P3 JM-SEC-12D: Code Scanning — establish baseline `CODEQL.md`, periodic triage process
+- P3 JM-SEC-12E: Workflow Consolidation — audit `workflow_dispatch` necessity, streamline
+- P4 JM-SEC-12F: CI Stability — increase `timeout-minutes` if needed, add caching, monitor failure patterns
+
+**Next steps:** Create dependabot.yml, update codeql.yml, formalize CODEQL.md baseline, schedule triage cadence.
+
+**No Main-Merge, no Production-Deployment.** Audit remains on `audit/jm-security-ci-01` as release candidate.
+
+**Report:** `docs/reports/01- JM-SECURITY-CI-AUDIT-01-EXTRACTION_LOG.md`, `docs/reports/02- JM-SECURITY-CI-AUDIT-01-AUDIT_REPORT.md`
