@@ -7749,4 +7749,5 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Demo-UX: sichtbarer „Demo beenden“-Button, fiktiver Datenhinweis, korrekte DE/EN-Texte, kein abgeschnittener Header-Hinweis; `LandingHero` trennt Demo- und May-Hilfe-Status.
 - Verifikation: fokussierte Tests 28/28 PASS; Build PASS; Browser-E2E `npm run test:e2e:demo` 14/14 Checks PASS inkl. Reload, Ausstieg, DE/EN und 0 RIS-/BFF-Schreibrequests; Vollsuite 2187 PASS / 2 lastabhängige Timeouts in wechselnden Dateien (`CvBuilderEditorRisStorage` bzw. `ManualSearchProfiles.integration`, beide isoliert PASS).
 - AI-/Privacy-/Data-Flow: keine neuen Datenflüsse oder Credentials; Demo-Daten synthetisch und browserlokal; keine RIS-Schreiboperationen, keine kostenpflichtigen KI-Aufrufe.
-- Evidence: `docs/reports/assets/JM-DEMO-01/demo-desktop.png`, `demo-mobile.png`.
+- Live-Preview (`060c86d`): `/` und `/profil` HTTP 200; `/profil` mit `x-robots-tag: noindex, nofollow`; derselbe E2E gegen die Preview 14/14 PASS.
+- Evidence: `docs/reports/assets/JM-DEMO-01/demo-desktop.png`, `demo-mobile.png` (Live-Preview).

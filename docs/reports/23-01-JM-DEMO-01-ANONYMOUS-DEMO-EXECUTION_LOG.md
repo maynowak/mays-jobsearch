@@ -111,6 +111,40 @@ PASS Keine RIS-/BFF-Schreibrequests im Demo-Modus
 JM-DEMO-01 E2E: ALL CHECKS PASSED
 ```
 
+### Live-Preview-Verifikation (Vercel)
+
+Preview: `https://mays-jobsearch-git-feature-jm-one-click-demo-01-maymilly.vercel.app`
+
+```text
+/         -> HTTP 200
+/profil   -> HTTP 200
+/profil   -> x-robots-tag: noindex, nofollow
+```
+
+Derselbe Browser-E2E gegen die Live-Preview:
+
+```text
+BASE_URL="https://mays-jobsearch-git-feature-jm-one-click-demo-01-maymilly.vercel.app" \
+  npm run test:e2e:demo
+
+PASS Landingpage geöffnet
+PASS /profil ohne Anmeldung geöffnet
+PASS Synthetisches Profil und Demo-Hinweis sichtbar
+PASS Demo-Status ist im eigenen Schlüssel gespeichert
+PASS May-Hilfe bleibt geschlossen und getrennt vom Demo-Status
+PASS Demo-Bereich erreichbar: Lebenslauf
+PASS Demo-Bereich erreichbar: Bewerbungen
+PASS Demo-Bereich erreichbar: Job-Präferenzen
+PASS Reload bleibt im Demo-Profil
+PASS Englische Demo-Beschriftung korrekt
+PASS Demo-Status wurde beim Beenden entfernt
+PASS Nach dem Beenden erscheinen keine Demodaten mehr
+PASS Erneuter /profil-Aufruf zeigt keine Demodaten mehr
+PASS Keine RIS-/BFF-Schreibrequests im Demo-Modus
+
+JM-DEMO-01 E2E: ALL CHECKS PASSED
+```
+
 ### Vollständige Vitest-Suite
 
 ```text
@@ -152,8 +186,8 @@ ausschließlich die zwei Profil-Tests fehl.
 
 ## 11. Evidence
 
-- Desktop: `docs/reports/assets/JM-DEMO-01/demo-desktop.png` (1440 × 1789)
-- Mobile: `docs/reports/assets/JM-DEMO-01/demo-mobile.png` (390 × 2313)
+- Desktop: `docs/reports/assets/JM-DEMO-01/demo-desktop.png` (1440 × 1789, Live-Preview `060c86d`)
+- Mobile: `docs/reports/assets/JM-DEMO-01/demo-mobile.png` (390 × 2313, Live-Preview `060c86d`)
 - E2E-Skript: `tests/e2e/jm-demo-e2e-test.mjs`
 - npm-Skript: `npm run test:e2e:demo`
 

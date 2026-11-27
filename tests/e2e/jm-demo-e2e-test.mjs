@@ -17,7 +17,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
 const evidenceDir = resolve(repoRoot, "docs/reports/assets/JM-DEMO-01");
 const port = 5219;
-const base = `http://localhost:${port}`;
+const externalBase = process.env.BASE_URL?.replace(/\/$/, "");
+const base = externalBase || `http://localhost:${port}`;
 
 const DEMO_KEY = "mj-demo-mode-open";
 const MAY_HELP_KEY = "mj-may-help-open";
@@ -62,7 +63,7 @@ async function waitForText(page, text, timeout = 15000) {
 }
 
 async function run() {
-  const vite = startVite();
+  const vite = externalBase ? null : startVite();
   let browser;
   const writeRequests = [];
 
@@ -176,10 +177,12 @@ async function run() {
     console.log("\nJM-DEMO-01 E2E: ALL CHECKS PASSED");
   } finally {
     if (browser) await browser.close();
-    try {
-      process.kill(-vite.pid, "SIGTERM");
-    } catch {
-      /* already stopped */
+    if (vite) {
+      try {
+        process.kill(-vite.pid, "SIGTERM");
+      } catch {
+        /* already stopped */
+      }
     }
   }
 }
