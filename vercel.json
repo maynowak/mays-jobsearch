@@ -112,11 +112,6 @@
       "source": "/api/ris/router",
       "destination": "/404",
       "permanent": false
-    },
-    {
-      "source": "/dashboard?tab=profile",
-      "destination": "/app.html",
-      "permanent": false
     }
   ],
   "rewrites": [
