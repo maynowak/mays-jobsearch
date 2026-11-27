@@ -7765,3 +7765,34 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Authentifizierte Sitzungen bleiben vollständig unberührt, da nur der lokale Demo-Schlüssel gelöscht wird.
 - Verifikation: Der bestehende E2E-Test `npm run test:e2e:demo` besteht komplett (14/14 Checks inkl. Exit, DE/EN, 0 RIS-/BFF-Schreibrequests). Fokussierte Unit-Tests 28/28 PASS. Build erfolgreich.
 - AI-/Privacy-/Data-Flow: keine neuen Datenflüsse oder Credentials; nur lokale localStorage-Änderung am Demo-Schlüssel.
+
+## 2026-11-27 — JM-DEMO-01 — PRODUCTION VERIFIED
+
+**Status:** `PRODUCTION VERIFIED`
+
+**Merge:** PR #74 nach `main` (Fast-forward: `75a0ecc` → `62c225f`). Kein Force-Push, kein manuelles Deployment.
+
+**Vercel Production:** Automatisches Deployment ausgelöst durch `git push origin main`. Production-Delay von ca. 4 Minuten bis zur Bereitstellung. Danach read-only Überprüfung aller relevanten URLs.
+
+**Preflight (STEP 1):** PR #74 OPEN, mergefähig, erwarteter HEAD `62c225f`. Alle CI-Checks grün (fokussierte Tests 28/28 PASS, E2E 14/14 PASS, Build PASS, SEO-Metadata 54/54 PASS).
+
+**Merge (STEP 2):** Kontrollierter Merge nach `main`. 18 Dateien geändert, 961 Insertionen, 51 Löschungen. Fast-forward-Merge. Keine weiteren PRs gemergt, kein Force-Push.
+
+**Production Verification (STEP 3):**
+- `/` → HTTP 200, indexierbar (`index,follow`, canonical)
+- `/profil` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- `/search` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- `/cv-builder/workspace` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- Legal Seiten (`/datenschutz`, `/impressum`, `/datenschutzprinzipien`) → HTTP 200
+- Sitemap enthält ausschließlich vier öffentliche URLs (Landing page + 3 legal pages)
+- Demo-Einstieg und Demo-Ausstieg funktionieren ohne echte RIS/BFF-Schreibrequests
+
+**Abschluss (STEP 4):**
+- Production-Deployment-ID: Vercel Deployment `mays-jobsearch-67xpj4hn0-maymilly.vercel.app` (Building → Ready)
+- Commit-SHA: `62c225f` (main)
+- Auditlog aktualisiert: Einträge für JM-DEMO-01, JM-DEMO-EXIT-01, JM-DEMO-GUIDED-TOUR-01
+- Änderungen sauber committen und pushen (`git push origin main`)
+- Keine ungefragten weiteren Deployments
+- Guided Tour TOUR-01A–F bleibt separates Folgeprojekt
+
+**Ergebnis:** `JM-DEMO-01 — PRODUCTION VERIFIED`
