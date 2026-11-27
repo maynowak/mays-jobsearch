@@ -39,6 +39,9 @@ const EXPECTED_DESCRIPTION =
   "Finde Jobs, die wirklich zu dir passen – mit individuellen Suchprofilen, KI-gestütztem Job Matching und Lebenslaufanalyse. Organisiere deine Jobsuche mit May's Job Matcher.";
 const EXPECTED_IMAGE = "https://www.mays-job-matcher.app/job-matcher-next-step.webp";
 
+// Legal pages that are now served as indexable static HTML
+const LEGAL_ROUTES = ["/datenschutz", "/impressum", "/datenschutzprinzipien"] as const;
+
 describe("landing page SEO metadata (index.html)", () => {
   it("declares German as document language", () => {
     expect(indexDoc.documentElement.getAttribute("lang")).toBe("de");
@@ -105,10 +108,16 @@ describe("robots.txt and sitemap.xml", () => {
     expect(robotsTxt).toContain("Sitemap: https://www.mays-job-matcher.app/sitemap.xml");
   });
 
-  it("contains only the released landing page", () => {
+  it("contains landing page and all three public legal pages", () => {
     expect(sitemapXml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
-    expect(sitemapXml.match(/<url>/g)).toHaveLength(1);
+    // Count all <url> entries (landing page + 3 legal pages)
+    expect(sitemapXml.match(/<url>/g)).toHaveLength(4);
     expect(sitemapXml).toContain(`<loc>${HOME_URL}</loc>`);
+    // Legal pages are now indexable and in sitemap
+    for (const route of LEGAL_ROUTES) {
+      expect(sitemapXml).toContain(`<loc>https://www.mays-job-matcher.app${route}</loc>`);
+    }
+    // Private app routes should NOT be in sitemap
     for (const route of APP_ROUTES) {
       expect(sitemapXml).not.toContain(`<loc>https://www.mays-job-matcher.app${route}</loc>`);
     }
@@ -126,6 +135,12 @@ describe("vercel.json indexing protection", () => {
     expect(value).toContain("noindex");
   });
 
+  // Legal pages no longer have noindex headers - they are served as static HTML
+  it.each([...LEGAL_ROUTES])("does NOT send noindex for legal page %s (indexable static HTML)", (route) => {
+    const rule = headerFor(route);
+    expect(rule, `unexpected header rule for ${route}`).toBeUndefined();
+  });
+
   it("protects the raw app shell and development previews", () => {
     expect(headerFor("/app.html")).toBeDefined();
     expect(headerFor("/dev/(.*)")).toBeDefined();
@@ -141,8 +156,14 @@ describe("vercel.json routing and platform configuration", () => {
   const rewriteFor = (source: string) =>
     (vercel.rewrites ?? []).find((rewrite) => rewrite.source === source);
 
-  it.each([...APP_ROUTES])("serves %s through the non-indexable app shell", (route) => {
+  // Private app routes should still be served through app.html
+  it.each([...APP_ROUTES])("serves %s through the app shell (noindex)", (route) => {
     expect(rewriteFor(route)?.destination).toBe("/app.html");
+  });
+
+  // Legal pages should NOT have rewrites - served as static files
+  it.each([...LEGAL_ROUTES])("does NOT rewrite legal page %s (served as static HTML)", (route) => {
+    expect(rewriteFor(route)).toBeUndefined();
   });
 
   it("preserves the pre-existing API rewrites", () => {
@@ -204,11 +225,19 @@ describe("route inventory drift guard", () => {
     expect(configured).toEqual([...APP_ROUTES].sort());
   });
 
-  it("covers every route literal used by App.tsx and rootRoute.ts", () => {
+  it("covers all app routes (excludes legal pages which are static HTML)", () => {
     const literals = routeLiterals();
-    expect(literals.length).toBeGreaterThan(0);
-    for (const route of literals) {
+    const LEGAL = ["/datenschutz", "/datenschutzprinzipien", "/impressum"];
+    const appLiterals = literals.filter((route) => !LEGAL.includes(route));
+    expect(appLiterals.length).toBeGreaterThan(0);
+    for (const route of appLiterals) {
       expect(APP_ROUTES, `route ${route} is missing from APP_ROUTES`).toContain(route);
+    }
+  });
+
+  it("does not include legal routes in APP_ROUTES (they are static HTML)", () => {
+    for (const route of LEGAL_ROUTES) {
+      expect(APP_ROUTES, `legal route ${route} should NOT be in APP_ROUTES`).not.toContain(route);
     }
   });
 });

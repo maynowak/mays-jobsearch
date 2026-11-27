@@ -3,12 +3,14 @@
 // `X-Robots-Tag: noindex` header. This helper keeps client-side transitions and
 // the Vite development fallback (which serves index.html for every route) from
 // leaking the landing-page canonical into private routes.
+// Legal pages (datenschutz, impressum, datenschutzprinziepien) are now
+// served as static HTML from public/ and are explicitly indexed.
 export const HOME_URL = "https://www.mays-job-matcher.app/";
 export const INDEX_ROBOTS = "index,follow,max-image-preview:large";
 export const PRIVATE_ROBOTS = "noindex,nofollow";
 
-// Routes that must never be indexed. Each one is served through app.html and
-// receives an X-Robots-Tag header in vercel.json.
+// Routes that must never be indexed (private application routes).
+// Legal pages are NOT in this list - they are served as static HTML.
 export const APP_ROUTES = [
   "/search",
   "/cv-builder/workspace",
@@ -18,10 +20,10 @@ export const APP_ROUTES = [
   "/auth/callback",
   "/profil",
   "/email-bestaetigen",
-  "/impressum",
-  "/datenschutz",
-  "/datenschutzprinzipien",
 ] as const;
+
+// Legal pages served as static HTML - they have their own meta tags and should not be modified
+export const LEGAL_ROUTES = ["/datenschutz", "/datenschutzprinzipien", "/impressum"] as const;
 
 
 export function applyRouteSeoHead(pathname: string, doc?: Document): void {
@@ -29,6 +31,12 @@ export function applyRouteSeoHead(pathname: string, doc?: Document): void {
   if (!target) return;
 
   const isHome = (pathname || "/") === "/" || pathname === "/index.html";
+  const isLegalRoute = LEGAL_ROUTES.includes(pathname as any);
+
+  // Legal pages are served as static HTML with their own meta tags
+  // Do not modify them via client-side JavaScript
+  if (isLegalRoute) return;
+
   let robots = target.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
   if (!robots) {
     robots = target.createElement("meta");
