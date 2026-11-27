@@ -212,6 +212,13 @@ export default function AtsOverlay({ job, profile, onClose, onAtsAnalyzed, crite
       return;
     }
 
+    // Explicitly update effectiveSkillsRef.current to include the new skill
+    // before runReevaluation, so the duplicate check recognizes it.
+    const currentSkills = effectiveSkillsRef.current?.split(",").map((s) => s.trim()).filter((s) => s) || [];
+    if (!currentSkills.includes(skill)) {
+      effectiveSkillsRef.current = currentSkills.concat(skill).join(", ");
+    }
+
     setAddedSkillKeys((prev) => new Set(prev).add(key));
     setRecError("");
     await runReevaluation(skill);
