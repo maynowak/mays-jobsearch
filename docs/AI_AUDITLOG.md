@@ -7712,3 +7712,26 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Tests: `ProfileCommandCenter.test.tsx` 6/6 PASS; visueller E2E 1920/1440/768/390 plus Hilfe, Lebenslauf, Bewerbungen, Einstellungen PASS; Reduced Motion PASS; 0 horizontaler Overflow; Build PASS (1,44 s); Vollsuite **2030 PASS / 11 skipped**; `git diff --check` PASS.
 - AI-/Privacy-/Data-Flow: keine neuen Datenflüsse, Speicherorte, Berechtigungen oder Credentials; rein visuelle CSS-Änderung.
 - Evidence: `docs/reports/assets/JM-PROFILE-VISUAL-11/`; Report `docs/reports/JM-PROFILE-VISUAL-11.md`.
+
+## 2026-11-27 — JM-MARKETING-04B — PUBLIC LEGAL PAGES SEO
+
+**Status:** `COMPLETE (READ-ONLY)`
+
+**Report:** [18-01-JM-MARKETING-04-LEGAL-SEO-EXECUTION_LOG.md](docs/reports/18-01-JM-MARKETING-04-LEGAL-SEO-EXECUTION_LOG.md), [18-02-JM-MARKETING-04-LEGAL-SEO-REPORT.md](docs/reports/18-02-JM-MARKETING-04-LEGAL-SEO-REPORT.md), [18-03-JM-SEO-SEARCH-CONSOLE-REDIRECT-INDEXING-01-EXECUTION_LOG.md](docs/reports/18-03-JM-SEO-SEARCH-CONSOLE-REDIRECT-INDEXING-01-EXECUTION_LOG.md), [18-04-JM-SEO-SEARCH-CONSOLE-REDIRECT-INDEXING-01-REPORT.md](docs/reports/18-04-JM-SEO-SEARCH-CONSOLE-REDIRECT-INDEXING-01-REPORT.md)
+
+**Wichtige Befunde:**
+- Öffentliche Rechtsseiten (`/datenschutz`, `/impressum`, `/datenschutzprinzipien`) wurden von `noindex` befreit und liefern jetzt vollständige HTML-Inhalte
+- URL-Schreibweise wurde von `datenschutzprinziepien` (falsch) nach `datenschutzprinzipien` (korrigiert)
+- Sitemap wurde um `/datenschutzprinzipien` erweitert
+- Vercel-Rewrites für Rechtsseiten entfernt, statische HTML-Dateien erstellt
+- `app.html` behält `noindex,nofollow` für private Routen bei
+- Private Routen (`/search`, `/profil`, `/anmelden`, etc.) bleiben `noindex,nofollow`
+
+**Empfohlene Maßnahmen für JM-MARKETING-04C:**
+- Preview-Deployment verifizieren
+- PR gegen Main erstellen
+- CI und Tests prüfen
+- Kontrolliert mergen
+- Automatisches Vercel-Deployment prüfen
+- Productive HTTP- und SEO-Verifikation durchführen
+- Search-Console-Status gesondert dokumentieren

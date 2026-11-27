@@ -49,18 +49,6 @@
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
-      "source": "/impressum",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
-    },
-    {
-      "source": "/datenschutz",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
-    },
-    {
-      "source": "/datenschutzprinzipien",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
-    },
-    {
       "source": "/app.html",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
@@ -150,19 +138,7 @@
       "destination": "/app.html"
     },
     {
-      "source": "/impressum",
-      "destination": "/app.html"
-    },
-    {
       "source": "/email-bestaetigen",
-      "destination": "/app.html"
-    },
-    {
-      "source": "/datenschutz",
-      "destination": "/app.html"
-    },
-    {
-      "source": "/datenschutzprinzipien",
       "destination": "/app.html"
     }
   ]
