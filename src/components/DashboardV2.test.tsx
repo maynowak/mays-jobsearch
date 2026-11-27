@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { LangProvider } from '../i18n';
 import DashboardV2, { DEMO_USER } from './DashboardV2';
@@ -54,6 +54,40 @@ describe('MAYS-UI-S2: Aurora dashboard preview', () => {
     expect(screen.getByRole('button', { name: /Lebenslauf/ })).toBeDisabled();
     // New demo profile fields are expected in demo mode
     expect(screen.getByText('Java, Python, AWS, Terraform, Docker, React, TypeScript')).toBeTruthy();
+    expect(screen.getByText(/Alle personenbezogenen Angaben sind fiktiv/)).toBeTruthy();
+  });
+
+  it('offers an explicit demo exit without touching authenticated state', () => {
+    const onExitDemo = vi.fn();
+    render(
+      <LangProvider>
+        <DashboardV2 user={DEMO_USER} isDemo onExitDemo={onExitDemo} />
+      </LangProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Demo beenden' }));
+    expect(onExitDemo).toHaveBeenCalledTimes(1);
+  });
+
+  it('never overlays authenticated data with demo data from a stale demo key', () => {
+    localStorage.setItem('mj-demo-mode-open', 'true');
+    try {
+      render(
+        <LangProvider>
+          <DashboardV2
+            user={{ email: 'real@example.invalid', sub: 'real-sub', name: 'Real User' }}
+            isDemo={false}
+            onLogout={() => undefined}
+          />
+        </LangProvider>
+      );
+
+      expect(screen.getByText('real@example.invalid')).toBeTruthy();
+      expect(screen.queryByText(/Java, Python, AWS/)).toBeNull();
+      expect(screen.getByRole('button', { name: 'Logout' })).toBeTruthy();
+    } finally {
+      localStorage.removeItem('mj-demo-mode-open');
+    }
   });
 
   it('updates the active navigation item', () => {

@@ -148,7 +148,7 @@ const STRINGS: Record<Lp2Lang, Lp2Copy> = {
     eyebrow: "MAY'S JOB MATCHER",
     titleA: "Find jobs",
     titleAccent: "that really fit you.",
-    demoButtonLabel: "Demo try out",
+    demoButtonLabel: "Try the demo",
     subtitle:
       "Discover jobs from multiple sources, define your own search profiles and compare requirements with your skills – with optional AI support.",
     findJobs: "Find matching jobs now",

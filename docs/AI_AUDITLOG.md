@@ -7735,3 +7735,18 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Automatisches Vercel-Deployment prüfen
 - Productive HTTP- und SEO-Verifikation durchführen
 - Search-Console-Status gesondert dokumentieren
+
+## 2026-11-27 — JM-DEMO-01 — ANONYMOUS DEMO CI REGRESSION FIX
+
+**Status:** `CI GREEN / READY FOR FINAL VISUAL REVIEW`
+
+**Report:** [23-01-JM-DEMO-01-ANONYMOUS-DEMO-EXECUTION_LOG.md](reports/23-01-JM-DEMO-01-ANONYMOUS-DEMO-EXECUTION_LOG.md)
+
+- Branch `feature/jm-one-click-demo-01`, PR #74; kein Main-Merge, kein Production-Deployment, keine Cognito-/RIS-/AWS-Änderung.
+- CI-Fehler am Commit `9631a11`: `ProfileCommandCenter.test.tsx` und `ProfileParticles.test.tsx` erwarteten je 3 Vorkommen, fanden 4. Ursache war ein doppeltes Profil-Shell im Demo-Zweig von `App.tsx`.
+- Fix: Demo- und Normalzustand teilen sich ein einziges `/profil`-Shell; nur der innere Dashboard-Knoten unterscheidet sich. Die Tests bleiben bei der fachlich korrekten Erwartung 3 (drei Routen, je ein Shell); kein Test deaktiviert.
+- Härtung: `effectiveDemo = isDemo`, damit ein verbliebener `mj-demo-mode-open`-Schlüssel authentifizierte Profile niemals überlagert.
+- Demo-UX: sichtbarer „Demo beenden“-Button, fiktiver Datenhinweis, korrekte DE/EN-Texte, kein abgeschnittener Header-Hinweis; `LandingHero` trennt Demo- und May-Hilfe-Status.
+- Verifikation: fokussierte Tests 28/28 PASS; Build PASS; Browser-E2E `npm run test:e2e:demo` 14/14 Checks PASS inkl. Reload, Ausstieg, DE/EN und 0 RIS-/BFF-Schreibrequests; Vollsuite 2187 PASS / 2 lastabhängige Timeouts in wechselnden Dateien (`CvBuilderEditorRisStorage` bzw. `ManualSearchProfiles.integration`, beide isoliert PASS).
+- AI-/Privacy-/Data-Flow: keine neuen Datenflüsse oder Credentials; Demo-Daten synthetisch und browserlokal; keine RIS-Schreiboperationen, keine kostenpflichtigen KI-Aufrufe.
+- Evidence: `docs/reports/assets/JM-DEMO-01/demo-desktop.png`, `demo-mobile.png`.

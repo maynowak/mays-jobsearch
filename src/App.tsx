@@ -4577,55 +4577,49 @@ export default function App() {
   }
 
   if (isProfile) {
-    // STEP 1: Demo-Modus für anonyme Benutzer priorisieren
+    // STEP 1: Demo-Modus für anonyme Benutzer priorisieren.
+    // Authentifizierte Nutzer sehen immer ihr eigenes Profil; synthetische
+    // Demo-Daten dürfen deren Daten niemals überlagern.
     const demoMode = typeof window !== "undefined" && window.localStorage.getItem("mj-demo-mode-open") === "true";
 
-    if (!isAuth && demoMode) {
+    const profileDashboard = !isAuth && demoMode ? (
       // Anonymer Benutzer mit aktivem Demo-Modus → synthetisches Demo-Profil
-      return (
-        <ErrorBoundary
-          title={t("error.boundaryTitle")}
-          message={t("error.boundaryMessage")}
-          reloadLabel={t("error.boundaryReload")}
-        >
-          <Navbar route={route} glass hideOnScroll onNavigate={navigateInApp} />
-          <main className="container legal-main layout-dashboard layout-profile-command">
-            <ProfileParticles />
-            <DashboardV2
-              user={DEMO_USER}
-              isDemo
-              cvSection={dashboardCvSection}
-              applicationsSection={dashboardApplicationsSection}
-              preferencesSection={dashboardPreferencesSection}
-            />
-          </main>
-          {cvProcessingUI}
-          {cvBuilderUi}
-          {letterModalNode}
-          <Footer />
-        </ErrorBoundary>
-      );
-    }
+      <DashboardV2
+        user={DEMO_USER}
+        isDemo
+        onExitDemo={() => {
+          // Nur den Demo-Schlüssel entfernen; authentifizierte Sitzungen und
+          // echte Profildaten bleiben unberührt.
+          window.localStorage.removeItem("mj-demo-mode-open");
+          navigateInApp("/");
+        }}
+        cvSection={dashboardCvSection}
+        applicationsSection={dashboardApplicationsSection}
+        preferencesSection={dashboardPreferencesSection}
+      />
+    ) : (
+      // Authentifizierter Benutzer oder anonymer Benutzer ohne Demo-Modus
+      <DashboardV2AuthenticatedPreview
+        cvSection={dashboardCvSection}
+        applicationsSection={dashboardApplicationsSection}
+        preferencesSection={dashboardPreferencesSection}
+        cvStorageEnabled={persistentCvStorage.enabled}
+        cvStorageConsentStatus={persistentCvStorage.consent?.consent?.status ?? null}
+        searchProfileStorageEnabled={persistentSearchProfiles.available}
+        searchProfileConsentStatus={persistentSearchProfiles.consent?.consent?.status ?? null}
+      />
+    );
 
-    // Fallback: authentifizierter Benutzer oder anonymer Benutzer ohne Demo-Modus
     return (
       <ErrorBoundary
         title={t("error.boundaryTitle")}
         message={t("error.boundaryMessage")}
         reloadLabel={t("error.boundaryReload")}
       >
-          <Navbar route={route} glass hideOnScroll onNavigate={navigateInApp} />
+        <Navbar route={route} glass hideOnScroll onNavigate={navigateInApp} />
         <main className="container legal-main layout-dashboard layout-profile-command">
           <ProfileParticles />
-          <DashboardV2AuthenticatedPreview
-            cvSection={dashboardCvSection}
-            applicationsSection={dashboardApplicationsSection}
-            preferencesSection={dashboardPreferencesSection}
-            cvStorageEnabled={persistentCvStorage.enabled}
-            cvStorageConsentStatus={persistentCvStorage.consent?.consent?.status ?? null}
-            searchProfileStorageEnabled={persistentSearchProfiles.available}
-            searchProfileConsentStatus={persistentSearchProfiles.consent?.consent?.status ?? null}
-          />
+          {profileDashboard}
         </main>
         {cvProcessingUI}
         {cvBuilderUi}

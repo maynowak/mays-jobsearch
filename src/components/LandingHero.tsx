@@ -5,17 +5,8 @@ import { useLang } from "../i18n";
 // Die PRODUKTIONS-Landingpage auf "/" ist LandingPage2.tsx (siehe dort die
 // Historie; TOP-MENU-01).
 
-const MAY_HELP_STORAGE_KEY = "mj-may-help-open";
+// JM-DEMO-01: Der Demo-Status ist bewusst vom May-Hilfe-Status getrennt.
 const DEMO_STORAGE_KEY = "mj-demo-mode-open";
-
-function initialMayOpen(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem(MAY_HELP_STORAGE_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
 
 function initialDemoOpen(): boolean {
   if (typeof window === "undefined") return false;
@@ -33,10 +24,10 @@ function navigateInApp(href: string) {
 
 export default function LandingHero() {
   const { t } = useLang();
-  const [isDemo, setIsDemo] = useState(() => initialMayOpen() || initialDemoOpen());
+  const [isDemo, setIsDemo] = useState(initialDemoOpen);
 
   useEffect(() => {
-    setIsDemo(initialMayOpen() || initialDemoOpen());
+    setIsDemo(initialDemoOpen());
   }, []);
 
   return (

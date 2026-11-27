@@ -21,6 +21,8 @@ export interface DashboardV2Props {
   user: DashboardUser;
   isDemo: boolean;
   onLogout?: () => void;
+  // JM-DEMO-01: Demo-Modus verlassen, ohne authentifizierte Daten zu berühren.
+  onExitDemo?: () => void;
   cvSection?: ReactNode;
   applicationsSection?: ReactNode;
   // MAYS-SEARCH-PROFILE-MANUAL-01: "Job-Praferenzen" (manuelle Suchprofile).
@@ -39,7 +41,6 @@ export const DEMO_USER: DashboardUser = {
 };
 
 const MAY_HELP_STORAGE_KEY = 'mj-may-help-open';
-const DEMO_STORAGE_KEY = 'mj-demo-mode-open';
 
 function initialMayOpen(): boolean {
   if (typeof window === 'undefined') return false;
@@ -71,6 +72,7 @@ const DashboardV2 = ({
   user,
   isDemo,
   onLogout,
+  onExitDemo,
   cvSection,
   applicationsSection,
   preferencesSection,
@@ -83,7 +85,10 @@ const DashboardV2 = ({
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
   const [mayOpen, setMayOpen] = useState(initialMayOpen);
-  const effectiveDemo = isDemo || typeof window !== "undefined" && window.localStorage.getItem(DEMO_STORAGE_KEY) === "true";
+  // JM-DEMO-01: Nur der explizit übergebene Demo-Status zählt. Ein eventuell
+  // verbliebener localStorage-Schlüssel darf authentifizierte Profile niemals
+  // mit synthetischen Daten überlagern.
+  const effectiveDemo = isDemo;
   const mayButtonRef = useRef<HTMLButtonElement>(null);
   const mayPanelRef = useRef<HTMLDivElement>(null);
 
@@ -145,6 +150,11 @@ const DashboardV2 = ({
           {isDemo ? (
             <div className="dashboard-v2__demo-note">
               <strong>{t('dashboard.demoNote.title')}</strong> {t('dashboard.demoNote.text')}
+              {onExitDemo ? (
+                <Button variant="ghost" className="dashboard-v2__demo-exit" onClick={onExitDemo}>
+                  {t('demo.exitLabel')}
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </div>
