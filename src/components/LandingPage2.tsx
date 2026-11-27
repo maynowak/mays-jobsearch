@@ -270,11 +270,8 @@ export default function LandingPage2(): React.ReactElement {
             <a className="lp2-cta-secondary" href="#lp2-how">
               {t.learnMore}
             </a>
-            <a className="lp2-cta-demo" href="javascript:void(0)" onClick={() => {
-              window.localStorage.setItem('mj-may-help-open', 'true');
-              if (window.location.pathname + window.location.search !== '/dashboard?tab=profile') {
-                window.history.pushState({}, '', '/dashboard?tab=profile');
-              }
+            <a className="lp2-cta-demo" href="/dashboard?tab=profile" onClick={() => {
+              window.localStorage.setItem('mj-demo-mode-open', 'true');
             }}>
               {t.demoButtonLabel}
             </a>

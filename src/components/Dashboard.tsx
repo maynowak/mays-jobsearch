@@ -43,7 +43,7 @@ export default function Dashboard({ user: overrideUser }: DashboardProps = {}) {
       {/* Dev Mode Badge */}
       {isDev && overrideUser && (
         <div className="aurora-dev-badge">
-          {t("dashboard.devBadge")}
+          {t("dashboard.demoMode")}
         </div>
       )}
 

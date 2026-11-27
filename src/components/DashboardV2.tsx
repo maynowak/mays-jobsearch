@@ -39,6 +39,7 @@ export const DEMO_USER: DashboardUser = {
 };
 
 const MAY_HELP_STORAGE_KEY = 'mj-may-help-open';
+const DEMO_STORAGE_KEY = 'mj-demo-mode-open';
 
 function initialMayOpen(): boolean {
   if (typeof window === 'undefined') return false;
@@ -82,7 +83,7 @@ const DashboardV2 = ({
   const { t } = useLang();
   const [activeId, setActiveId] = useState(initialDashboardTab);
   const [mayOpen, setMayOpen] = useState(initialMayOpen);
-  const effectiveDemo = isDemo || typeof window !== "undefined" && window.localStorage.getItem("mj-may-help-open") === "true";
+  const effectiveDemo = isDemo || typeof window !== "undefined" && window.localStorage.getItem(DEMO_STORAGE_KEY) === "true";
   const mayButtonRef = useRef<HTMLButtonElement>(null);
   const mayPanelRef = useRef<HTMLDivElement>(null);
 
@@ -136,7 +137,7 @@ const DashboardV2 = ({
           draggable={false}
         />
         <div className="dashboard-v2__header-copy">
-          {isDemo ? <Badge tone="neutral">{t('dashboard.devBadge')}</Badge> : <Badge tone="active">{t('dashboard.active')}</Badge>}
+          {isDemo ? <Badge tone="neutral">{t('dashboard.demoMode')}</Badge> : <Badge tone="active">{t('dashboard.active')}</Badge>}
           <h1 id="dashboard-v2-title">{t('profile.title')}</h1>
           <p>{t('dashboard.subtitle')}</p>
         </div>

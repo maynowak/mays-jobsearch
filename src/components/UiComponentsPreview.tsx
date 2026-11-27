@@ -17,7 +17,7 @@ const UiComponentsPreview = () => {
   return (
     <section className="ui-components-preview" aria-labelledby="ui-components-preview-title">
       <div className="ui-components-preview__heading">
-        <p className="aurora-dev-badge">{t('dashboard.devBadge')}</p>
+        <p className="aurora-dev-badge">{t('dashboard.demoMode')}</p>
         <h1 id="ui-components-preview-title">{t('profile.title')}</h1>
         <p>{t('dashboard.subtitle')}</p>
       </div>

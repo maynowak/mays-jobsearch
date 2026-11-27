@@ -6,11 +6,21 @@ import { useLang } from "../i18n";
 // Historie; TOP-MENU-01).
 
 const MAY_HELP_STORAGE_KEY = "mj-may-help-open";
+const DEMO_STORAGE_KEY = "mj-demo-mode-open";
 
 function initialMayOpen(): boolean {
   if (typeof window === "undefined") return false;
   try {
     return window.localStorage.getItem(MAY_HELP_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function initialDemoOpen(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(DEMO_STORAGE_KEY) === "true";
   } catch {
     return false;
   }
@@ -23,10 +33,10 @@ function navigateInApp(href: string) {
 
 export default function LandingHero() {
   const { t } = useLang();
-  const [isDemo, setIsDemo] = useState(initialMayOpen);
+  const [isDemo, setIsDemo] = useState(() => initialMayOpen() || initialDemoOpen());
 
   useEffect(() => {
-    setIsDemo(initialMayOpen);
+    setIsDemo(initialMayOpen() || initialDemoOpen());
   }, []);
 
   return (
@@ -50,7 +60,7 @@ export default function LandingHero() {
         <button
           className="landing-cta-demo"
           onClick={() => {
-            window.localStorage.setItem(MAY_HELP_STORAGE_KEY, "true");
+            window.localStorage.setItem(DEMO_STORAGE_KEY, "true");
             setIsDemo(true);
             navigateInApp("/dashboard?tab=profile");
           }}
