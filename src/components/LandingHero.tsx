@@ -62,7 +62,7 @@ export default function LandingHero() {
           onClick={() => {
             window.localStorage.setItem(DEMO_STORAGE_KEY, "true");
             setIsDemo(true);
-            navigateInApp("/dashboard?tab=profile");
+            navigateInApp("/profil");
           }}
           aria-label={t("demo.accessibilityLabel")}
         >
