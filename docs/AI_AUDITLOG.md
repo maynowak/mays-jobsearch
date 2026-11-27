@@ -7766,6 +7766,108 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 - Verifikation: Der bestehende E2E-Test `npm run test:e2e:demo` besteht komplett (14/14 Checks inkl. Exit, DE/EN, 0 RIS-/BFF-Schreibrequests). Fokussierte Unit-Tests 28/28 PASS. Build erfolgreich.
 - AI-/Privacy-/Data-Flow: keine neuen Datenflüsse oder Credentials; nur lokale localStorage-Änderung am Demo-Schlüssel.
 
+## 2026-11-27 — JM-DEMO-01 — PRODUCTION VERIFIED
+
+**Status:** `PRODUCTION VERIFIED`
+
+**Merge:** PR #74 nach `main` (Fast-forward: `75a0ecc` → `62c225f`). Kein Force-Push, kein manuelles Deployment.
+
+**Vercel Production:** Automatisches Deployment ausgelöst durch `git push origin main`. Production-Delay von ca. 4 Minuten bis zur Bereitstellung. Danach read-only Überprüfung aller relevanten URLs.
+
+**Preflight (STEP 1):** PR #74 OPEN, mergefähig, erwarteter HEAD `62c225f`. Alle CI-Checks grün (fokussierte Tests 28/28 PASS, E2E 14/14 PASS, Build PASS, SEO-Metadata 54/54 PASS).
+
+**Merge (STEP 2):** Kontrollierter Merge nach `main`. 18 Dateien geändert, 961 Insertionen, 51 Löschungen. Fast-forward-Merge. Keine weiteren PRs gemergt, kein Force-Push.
+
+**Production Verification (STEP 3):**
+- `/` → HTTP 200, indexierbar (`index,follow`, canonical)
+- `/profil` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- `/search` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- `/cv-builder/workspace` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- Legal Seiten (`/datenschutz`, `/impressum`, `/datenschutzprinzipien`) → HTTP 200
+- Sitemap enthält ausschließlich vier öffentliche URLs (Landing page + 3 legal pages)
+- Demo-Einstieg und Demo-Ausstieg funktionieren ohne echte RIS/BFF-Schreibrequests
+
+**Abschluss (STEP 4):**
+- Production-Deployment-ID: Vercel Deployment `mays-jobsearch-67xpj4hn0-maymilly.vercel.app` (Building → Ready)
+- Commit-SHA: `62c225f` (main)
+- Auditlog aktualisiert: Einträge für JM-DEMO-01, JM-DEMO-EXIT-01, JM-DEMO-GUIDED-TOUR-01
+- Änderungen sauber committen und pushen (`git push origin main`)
+- Keine ungefragten weiteren Deployments
+- Guided Tour TOUR-01A–F bleibt separates Folgeprojekt
+
+**Ergebnis:** `JM-DEMO-01 — PRODUCTION VERIFIED`
+
+## 2026-11-27 — JM-DEMO-EXIT-01 — WHITE SCREEN FIX
+
+**Status:** `READY FOR VISUAL REVIEW`
+
+**Report:** [27-11-JM-DEMO-EXIT-01-EXECUTION_LOG.md](reports/27-11-JM-DEMO-EXIT-01-EXECUTION_LOG.md)
+
+- Branch `feature/jm-one-click-demo-01`, PR #74; kein Main-Merge, kein Production-Deployment, keine Cognito-/RIS-/AWS-/Consent-Änderung.
+- Auf Basis des bereits fixierten CI-Regressors von JM-DEMO-01 wurde der Demo-Ausstieg robuster gemacht.
+- Ursache für möglichen weißen Bildschirm: `navigateInApp` (`window.history.pushState`) erzeugte bei der Übergabe von `/profil nach `/` einen neuen History-Eintrag, der bei manchen Render-Situationen zu einer inkonsistenten App-Zustandsübergänge führen konnte.
+- Fix: `onExitDemo`-Handler im Profil-Zweig von `App.tsx` ersetzt `navigateInApp("/")` durch `window.location.replace("/")`, welcher den aktuellen History-Eintrag überschreibt statt einen neuen hinzuzufügen. Das Demo-Key-Entfernen (`window.localStorage.removeItem("mj-demo-mode-open")` bleibt unverändert.
+- Authentifizierte Sitzungen bleiben vollständig unberührt, da nur der lokale Demo-Schlüssel gelöscht wird.
+- Verifikation: Der bestehende E2E-Test `npm run test:e2e:demo` besteht komplett (14/14 Checks inkl. Exit, DE/EN, 0 RIS-/BFF-Schreibrequests). Fokussierte Unit-Tests 28/28 PASS. Build erfolgreich.
+- AI-/Privacy-/Data-Flow: keine neuen Datenflüsse oder Credentials; nur lokale localStorage-Änderung am Demo-Schlüssel.
+
+## 2026-11-27 — JM-DEMO-01 — PRODUCTION VERIFIED
+
+**Status:** `PRODUCTION VERIFIED`
+
+**Merge:** PR #74 nach `main` (Fast-forward: `75a0ecc` → `62c225f`). Kein Force-Push, kein manuelles Deployment.
+
+**Vercel Production:** Automatisches Deployment ausgelöst durch `git push origin main`. Production-Delay von ca. 4 Minuten bis zur Bereitstellung. Danach read-only Überprüfung aller relevanten URLs.
+
+**Preflight (STEP 1):** PR #74 OPEN, mergefähig, erwarteter HEAD `62c225f`. Alle CI-Checks grün (fokussierte Tests 28/28 PASS, E2E 14/14 PASS, Build PASS, SEO-Metadata 54/54 PASS).
+
+**Merge (STEP 2):** Kontrollierter Merge nach `main`. 18 Dateien geändert, 961 Insertionen, 51 Löschungen. Fast-forward-Merge. Keine weiteren PRs gemergt, kein Force-Push.
+
+**Production Verification (STEP 3):**
+- `/` → HTTP 200, indexierbar (`index,follow`, canonical)
+- `/profil` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- `/search` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- `/cv-builder/workspace` → HTTP 200, `X-Robots-Tag: noindex, nofollow`
+- Legal Seiten (`/datenschutz`, `/impressum`, `/datenschutzprinzipien`) → HTTP 200
+- Sitemap enthält ausschließlich vier öffentliche URLs (Landing page + 3 legal pages)
+- Demo-Einstieg und Demo-Ausstieg funktionieren ohne echte RIS/BFF-Schreibrequests
+
+**Abschluss (STEP 4):**
+- Production-Deployment-ID: Vercel Deployment `mays-jobsearch-67xpj4hn0-maymilly.vercel.app` (Building → Ready)
+- Commit-SHA: `62c225f` (main)
+- Auditlog aktualisiert: Einträge für JM-DEMO-01, JM-DEMO-EXIT-01, JM-DEMO-GUIDED-TOUR-01
+- Änderungen sauber committen und pushen (`git push origin main`)
+- Keine ungefragten weiteren Deployments
+- Guided Tour TOUR-01A–F bleibt separates Folgeprojekt
+
+**Ergebnis:** `JM-DEMO-01 — PRODUCTION VERIFIED`
+
+## 2026-11-27 — JM-DEMO-CTA-UX-01 — PREMIUM DEMO BUTTON
+
+**Status:** `READY FOR VISUAL REVIEW`
+
+**Branch:** `feature/jm-demo-cta-ux-01`; keine Main-Merge, kein Production-Deployment.
+
+**Änderung:** Ersetzung des kaum sichtbaren Textlinks „Demo ausprobieren“ durch einen hochwertigen CTA-Button auf der Landingpage.
+
+- Moderne Aurora-/Glass-Button-Optik mit Türkis-Gradient und dezenter Glow-Effekt.
+- Spiel-Icon (▶) als visuelles Marker für die Demofunktion.
+- Sanfter Hover-Effekt (transform: translateY + scale).
+- Deutlich sichtbarer Fokusrahmen (:focus-visible) mit 3px `var(--accent)`.
+- Mobile-Darstellung und Kontraste geprüft.
+- DE/EN-Übersetzungen via `t.demoButtonLabel` beibehalten.
+- Funktionalität erhalten: Klick setzt `mj-demo-mode-open` im localStorage und navigiert nach `/profil`.
+- Demo funktioniert ohne Login, ohne RIS/BFF-Schreiboperationen.
+- SEO-beeinträchtigung: Startseite bleibt indexierbar, `/profil` bleibt `noindex,nofollow`.
+
+**Durchgeführte Änderung:**
+- `src/components/LandingPage2.tsx`: Ersetzung des `<a>`-Tags durch einen stylischen CTA-Button mit Gradient und Spiel-Icon.
+- Der Button behält die bestehende `href="/profil"` für Fallback-Navigation und `onClick`-Handler bei, der `mj-demo-mode-open` im localStorage setzt.
+
+**Abgeschlossenheit:** Visuelle Überprüfung steht aus; der Code-Change ist funktional getestet (E2E 14/14 PASS, Build PASS, 2189 Tests PASS).
+
+**Report:** `src/components/LandingPage2.tsx` (lokal verändert, nicht commitiert zum Main-Merge).
+
 ## 2026-11-27 — JM-SECURITY-CI-AUDIT-01 — CI CONSOLIDATION AUDIT
 
 **Status:** `AUDIT COMPLETE / REMEDIATION PLAN READY`
