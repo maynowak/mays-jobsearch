@@ -226,6 +226,7 @@ export default function App() {
   const isAuthCallback = window.location.pathname === "/auth/callback";
   const isProfile = window.location.pathname === "/profil";
   const isDevDashboard = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/dashboard";
+const isSearch = window.location.pathname === "/search";
   const isDevUiComponents = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/ui-components";
   const isDevDashboardV2 = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/dashboard-v2";
   const isDevDashboardV2Auth = isDevOnlyRoute(window.location.pathname, import.meta.env.DEV) && window.location.pathname === "/dev/dashboard-v2-auth";
@@ -4577,7 +4578,7 @@ export default function App() {
     );
   }
 
-  if (isProfile) {
+  if (isProfile || isSearch) {
     // STEP 1: Demo-Modus für anonyme Benutzer priorisieren.
     // Authentifizierte Nutzer sehen immer ihr eigenes Profil; synthetische
     // Demo-Daten dürfen deren Daten niemals überlagern.
