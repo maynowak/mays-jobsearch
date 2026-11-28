@@ -8034,3 +8034,33 @@ Nach genehmigtem Merge und bestandenem Production-Smoke:
 **Next steps:** Continue monitoring Dependabot alerts; consider automating periodic update reviews.
 
 **Report:** `docs/reports/01- JM-SECURITY-CI-AUDIT-01-EXTRACTION_LOG.md`, `docs/reports/02- JM-SECURITY-CI-AUDIT-01-AUDIT_REPORT.md`
+
+## 2026-11-28 — JM-SEC-12C-REMEDIATION-01 — REMEDIATION COMPLETE
+
+
+**Status:** `PARTIALLY REMEDIATED`
+
+**Execution completed:** 2026-11-28
+
+**Remediation actions performed:**
+1. Package version updates: dompurify 3.4.14→3.4.17, sharp 0.35.4→0.35.5, undici 8.10.0→8.13.1, source-map-js 1.2.1→1.2.4
+2. Build verification: `npm run build` — PASS
+3. SEO tests: 54/54 PASS
+4. E2E demo: 14/14 PASS
+5. Full test suite: 2187/2189 PASS (2 pre-existing failures in ManualSearchProfiles integration)
+6. Dependabot PRs: 4 opened (dompurify, sharp, undici, source-map-js)
+
+**Result:** `JM-SEC-12C — PARTIALLY REMEDIATED`
+
+**Remaining open alerts:** 21 of 25 (beyond the 4 addressable via Dependabot PRs)
+
+**Abschuss:**
+- 4 von 25 Alert-Kategorien durch Dependabot-PRs adressiert
+- Paketversionen aktualisiert und Build geprüft
+- Keine neuen Sicherheitsanfälligkeiten eingeführt
+- Vorhandene Test-Fehlschläge unverändert
+
+**Abschlussschema:**
+`JM-SEC-12C — PARTIALLY REMEDIATED`
+
+Mit dokumentierten Restbefinden für weitere Dependabot-Updates.
