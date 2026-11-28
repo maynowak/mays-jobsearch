@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DemoBanner } from "./components/DemoBanner";
 import { createPortal } from "react-dom";
 import { acquireBodyScrollLock, releaseBodyScrollLock } from "./lib/scrollLock";
 import { applyRouteSeoHead } from "./lib/seoHead";
@@ -4621,6 +4622,7 @@ export default function App() {
         <main className="container legal-main layout-dashboard layout-profile-command">
           <ProfileParticles />
           {profileDashboard}
+          <DemoBanner />
         </main>
         {cvProcessingUI}
         {cvBuilderUi}
