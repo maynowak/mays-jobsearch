@@ -33,10 +33,21 @@ export function DemoBanner() {
   // Demo-Banner nur auf erlaubten Routen und bei anonymem User zeigen
   if (!isDemoRoute || isHomeRoute || isAuthenticated) return null;
 
-  // Einklappzustand aus localStorage laden (lazy Initialisierung)
-  const [expanded, setExpanded] = useState(true); // true = ausgeklappt
+  // Einklappzustand direkt aus localStorage lesen (lazy Initialisierung)
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tour-01a-banner-expanded");
+      if (saved !== null) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed === "boolean") return parsed;
+      }
+    } catch {
+      /* invalid localStorage value - fall back to default */
+    }
+    return true; // default: expanded
+  });
 
-  // Zustand über Reload/Routing hinweg persistente Speicherung
+  // persistentere Speicherung beim Ändern (ohne den Initialisierungs-Effekt zu überschreiben)
   useEffect(() => {
     try {
       localStorage.setItem("tour-01a-banner-expanded", JSON.stringify(expanded));
@@ -44,18 +55,6 @@ export function DemoBanner() {
       /* noop */
     }
   }, [expanded]);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("tour-01a-banner-expanded");
-      if (saved !== null) {
-        const parsed = JSON.parse(saved);
-        if (typeof parsed === "boolean") setExpanded(parsed);
-      }
-    } catch {
-      /* invalid localStorage value - fall back to default */
-    }
-  }, []);
 
   // Demo-Ausstieg
   const handleExit = () => {
@@ -87,15 +86,15 @@ export function DemoBanner() {
         background: bgColor,
         color: "white",
         margin: "0.5rem",
-        maxWidth: "25rem",
+        maxWidth: "20rem",
         width: "100%",
         maxHeight: "min(30vh, 15rem)",
-        padding: expanded ? "0.75rem 1rem" : "0.35rem",
+        padding: expanded ? "0.5rem 0.75rem" : "0.25rem",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         boxShadow: glassEffect,
-        borderRadius: "0.5rem",
+        borderRadius: "0.3rem",
       }}
     >
       <span style={{ flex: 1, marginRight: "0.5rem" }}>
@@ -108,7 +107,7 @@ export function DemoBanner() {
       <button
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
-        aria-label={expanded ? "Banner einklappen" : "Banner ausklappen"}
+        aria-label={expanded ? t("banner einklappen") : t("banner ausklappen")}
         style={{
           flex: "0 0 auto",
           marginLeft: "0.5rem",
@@ -124,7 +123,7 @@ export function DemoBanner() {
         −
       </button>
 
-      {/* Eigenständiger Exit-Button */}
+      {/* Eigenständiger Demo-Exit-Button */}
       <button
         onClick={handleExit}
         aria-label={exitLabel}
