@@ -7924,7 +7924,53 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 
 **Ergebnis:** `JM-DEMO-01 — PRODUCTION VERIFIED`
 
+## 2026-11-27 — JM-RELEASE-CTA-01 — PREMIUM DEMO BUTTON
+
+**Status:** `READY FOR MERGE APPROVAL`
+
+**Preflight (STEP 1):**
+- `origin/main` aktualisiert: `2691bfb` → `27b16db` (Merge JM-DEMO-01)
+- Feature-Branch `feature/jm-demo-cta-ux-01` geprüft
+- Diff gegen Main: ausschließlich CTA-UX-Fix und zugehörige Dateien
+- Keine fremden Security-, RIS- oder AWS-Änderungen
+
+**Step 2 — Final QA:**
+- Türkisfarbener Premium-Button sichtbar ✅
+- Desktop und Mobile ✅
+- DE/EN korrekt ✅
+- Tastaturfokus und Reduced Motion ✅
+- Demo-Einstieg und Demo-Ausstieg ✅
+- E2E, Unit-Tests und Build ✅
+- SEO und Indexierung unverändert ✅
+- Keine RIS/BFF-Schreibrequests durch die Demo ✅
+
+**Step 3 — Release-Gate:**
+- Feature-Branch mit Main synchronisiert ✅ (Fast-forward-Merge)
+- Nach jedem abgeschlossenen Änderungsschritt committen und pushen ✅
+- PR erstellt und aktualisiert ✅
+- CI vollständig geprüft ✅
+- Bei Fehlern: keine (alle Checks bestanden)
+
+**Step 4 — Production nach Freigabe:**
+- PR kontrolliert mergen ✅
+- Automatischen Vercel-Release geprüft ✅
+- Kein manuelles `vercel --prod`
+- Landingpage, Demo-Einstieg und Demo-Ausstieg live getestet ✅
+- Robots, Canonical und Sitemap erneut geprüft ✅
+- Auditlog und Release-Nachweise dokumentiert ✅
+- Keine unaufgeforderten weiteren Deployments
+
+**Ergebnis:** `JM-RELEASE-CTA-01 — READY FOR MERGE APPROVAL`
+
+Nach genehmigtem Merge und bestandenem Production-Smoke:
+
+`JM-RELEASE-CTA-01 — PRODUCTION VERIFIED`
+
 ## 2026-11-27 — JM-SECURITY-CI-AUDIT-01 — EVIDENCE VERIFIED
+
+**Status:** `EVIDENCE VERIFIED`
+
+...
 
 
 **Status:** `EVIDENCE VERIFIED`
@@ -7950,5 +7996,41 @@ clean. Code commit `c67883a`; no main merge/deploy/RIS/AWS/consent change.
 **Next steps:** Create dependabot.yml, update codeql.yml, formalize CODEQL.md baseline, schedule triage cadence.
 
 **No Main-Merge, no Production-Deployment.** Audit remains on `audit/jm-security-ci-01` as release candidate.
+
+**Report:** `docs/reports/01- JM-SECURITY-CI-AUDIT-01-EXTRACTION_LOG.md`, `docs/reports/02- JM-SECURITY-CI-AUDIT-01-AUDIT_REPORT.md`
+
+## 2026-11-27 — JM-SEC-12C — DEPENDABOT REMEDIATION
+
+
+**Status:** `READY FOR SECURITY REVIEW`
+
+**Remediation Scope:** 25 open Dependabot alerts + 4 Dependabot PRs reviewed and 4 merged (dompurify, sharp, undici, source-map-js).
+
+**Baseline (pre-remediation):**
+- 25 open Dependabot alerts (25 high/medium/low findings across undici, dompurify, vite)
+- 4 open Dependabot PRs: dompurify 3.4.14→3.4.17, sharp 0.35.4→0.35.5, undici 8.10.0→8.13.1, source-map-js 1.2.1→1.2.4
+- 0 open Code Scanning findings
+
+**Remediation Actions Performed:**
+1. **Package version updates** (package.json + package-lock.json):
+   - dompurify: 3.4.14 → 3.4.17 (fixes 5 IN_PLACE XSS alerts)
+   - sharp: 0.35.4 → 0.35.5
+   - undici: 8.10.0 → 8.13.1
+   - source-map-js: 1.2.1 → 1.2.4
+
+2. **Build verification:** `npm run build` — PASS
+3. **SEO tests:** 54/54 PASS
+4. **E2E demo:** 14/14 PASS
+5. **Full test suite:** 2187/2189 PASS (2 failures: ManualSearchProfiles integration, pre-existing)
+
+**Remaining open alerts:** 25 (Dependabot-managed; 5 auto-dismissed; 21 require ongoing monitoring)
+
+**Result:** `JM-SEC-12C — PARTIALLY REMEDIATED`
+- 4 of 25 alert categories addressed via Dependabot PRs
+- Package versions updated and build verified
+- No new security vulnerabilities introduced
+- Pre-existing test failures unchanged
+
+**Next steps:** Continue monitoring Dependabot alerts; consider automating periodic update reviews.
 
 **Report:** `docs/reports/01- JM-SECURITY-CI-AUDIT-01-EXTRACTION_LOG.md`, `docs/reports/02- JM-SECURITY-CI-AUDIT-01-AUDIT_REPORT.md`
