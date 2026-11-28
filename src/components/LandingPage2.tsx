@@ -272,8 +272,9 @@ export default function LandingPage2(): React.ReactElement {
             </a>
             <a className="lp2-cta-demo" href="/profil" onClick={() => {
               window.localStorage.setItem('mj-demo-mode-open', 'true');
-            }}>
-              {t.demoButtonLabel}
+            }}
+            >
+              ▶{t.demoButtonLabel}
             </a>
           </div>
           <p className="lp2-hero-note">{t.heroNote}</p>

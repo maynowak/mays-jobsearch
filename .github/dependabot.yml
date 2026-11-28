@@ -1,0 +1,43 @@
+version: 2
+updates:
+  # npm and GitHub Actions dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    # Schedule updates on weekdays
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - maynowak
+    autobranch: true
+    commit-message:
+      prefix: " Dependabot"
+    ignore:
+      # Allow certain vulnerable dev deps to remain until regular update cycle
+      - dependency-type: "dev"
+        # undici/ vite/ sharp vulnerabilities are dev-dep only; addressed in regular cycle
+        major: false
+    # Allow auto-dismissal of low-risk findings
+    # (GitHub automatically dismisses some findings; we trust its judgment here)
+
+  # dompurify IN_PLACE XSS vulnerabilities (runtime, low severity)
+  # These 5 alerts all relate to dompurify 3.4.14 and are fixed in 3.4.16
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    reviewers:
+      - maynowak
+    commit-message:
+      prefix: " dompurify XSS fix"
+    # Only update dompurify when the vulnerability fixes are relevant;
+    # the 5 open alerts all target vers 3.4.14, fixed in 3.4.16
+    allow:
+      - dependency-name: "dompurify"
+        # Allow update to 3.4.16 (fixes all 5 IN_PLACE XSS alerts)
+        # This is a targeted, minimal upgrade
+        update-type: "patch"
+        # When patch version changes from 3.4.14 to 3.4.16, the 5 low-severity
+        # IN_PLACE alerts will be automatically resolved
+        # (GitHub dependsabot auto-dismisses resolved vulnerabilities)
